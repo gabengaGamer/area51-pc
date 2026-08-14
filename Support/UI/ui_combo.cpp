@@ -4,16 +4,12 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
-#include "..\AudioMgr\audioMgr.hpp"
+#include "Entropy.hpp"
+#include "../AudioMgr/AudioMgr.hpp"
 
 #include "ui_combo.hpp"
 #include "ui_manager.hpp"
 #include "ui_font.hpp"
-//#include "ui_listbox.hpp"
-//#include "ui_dlg_list.hpp"
-//#include "ui_dlg_combolist.hpp"
-
 //=========================================================================
 //  Defines
 //=========================================================================
@@ -50,7 +46,6 @@ ui_combo::ui_combo( void )
 
 ui_combo::~ui_combo( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -64,14 +59,12 @@ xbool ui_combo::Create( s32 UserID, ui_manager* pManager, const irect& Position,
     // Initialize data
     
     m_iElement1 = m_pManager->FindElement( "button_combo1" );
-    //m_iElement2 = m_pManager->FindElement( "button_combo2" );
     ASSERT( m_iElement1 != -1 );
-    //ASSERT( m_iElement2 != -1 );
 
     m_NavFlags          = 0;
     m_iSelection        = -1;
     m_LabelWidth        = 0;
-    m_Font              = g_UiMgr->FindFont("small");
+    m_Font              = m_pManager->FindFont("small");
 
     return Success;
 }
@@ -83,17 +76,12 @@ void ui_combo::Render( s32 ox, s32 oy )
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
-        xcolor  LabelColor1 = XCOLOR_WHITE;
-        xcolor  LabelColor2 = XCOLOR_BLACK;
         xcolor  TextColor1  = XCOLOR_WHITE;
-        xcolor  TextColor2  = XCOLOR_BLACK;
-        s32     State       = 0;
+        s32 const State     = GetVisualState( IsActive() );
 
         // Calculate rectangle
-        irect    br;
         irect    r, r2;
-        br.Set( (m_Position.l+ox), (m_Position.t+oy), (m_Position.r+ox), (m_Position.b+oy) );
-        r = br;
+        r.Set( (m_Position.l+ox), (m_Position.t+oy), (m_Position.r+ox), (m_Position.b+oy) );
         r2 = r;
         r.r = r.l + m_LabelWidth;
         r2.l = r.r;
@@ -101,47 +89,16 @@ void ui_combo::Render( s32 ox, s32 oy )
         // set item color
         if( m_iSelection != -1 )
         {
-            LabelColor1 = m_Items[m_iSelection].Color; 
             TextColor1  = m_Items[m_iSelection].Color; 
         }
         else
         {
-            LabelColor1 = xcolor(255,252,204,255);
             TextColor1  = xcolor(255,252,204,255);
         }
 
-        // Render appropriate state
         if( m_Flags & WF_DISABLED )
         {
-            State = ui_manager::CS_DISABLED;
-            LabelColor1 = XCOLOR_GREY;
-            LabelColor2 = XCOLOR_BLACK;
             TextColor1  = XCOLOR_GREY;
-            TextColor2  = XCOLOR_BLACK;
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_HIGHLIGHT )
-        {
-            State = ui_manager::CS_HIGHLIGHT;
-            LabelColor2 = XCOLOR_BLACK;
-            TextColor2  = XCOLOR_BLACK;
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_SELECTED )
-        {
-            State = ui_manager::CS_SELECTED;
-            LabelColor2 = XCOLOR_BLACK;
-            TextColor2  = XCOLOR_BLACK;
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == (WF_HIGHLIGHT|WF_SELECTED) )
-        {
-            State = ui_manager::CS_HIGHLIGHT_SELECTED;
-            LabelColor2 = XCOLOR_BLACK;
-            TextColor2  = XCOLOR_BLACK;
-        }
-        else
-        {
-            State = ui_manager::CS_NORMAL;
-            LabelColor2 = XCOLOR_BLACK;
-            TextColor2  = XCOLOR_BLACK;
         }
 
         if( m_iSelection != -1 )
@@ -149,12 +106,8 @@ void ui_combo::Render( s32 ox, s32 oy )
             if( !m_Items[m_iSelection].Enabled )
             {
                 TextColor1  = XCOLOR_GREY;
-                TextColor2  = XCOLOR_BLACK;
             }
 
-            // Add Highlight to list
-            if( m_Flags & WF_HIGHLIGHT )
-                m_pManager->AddHighlight( m_UserID, br );
         }
 
         // Render bitmap (if any)
@@ -163,10 +116,6 @@ void ui_combo::Render( s32 ox, s32 oy )
             if( m_Items[m_iSelection].BitmapID != -1 )
             {
                 m_pManager->RenderBitmap( m_Items[m_iSelection].BitmapID, r2 );
-                // Render single field Combo
-                //r2.Inflate( 12, 0 );
-                //r2.Translate( 0, 1 );
-                //m_pManager->RenderElement( m_iElement2, r2, 0 );
             }
             else
             {
@@ -183,12 +132,6 @@ void ui_combo::Render( s32 ox, s32 oy )
         // Render Selection Text
         if( m_iSelection != -1 )
         {
-// Stupid hack
-//#if defined(TARGET_PC)
-//            r2.Translate( 0, (s32)(-1.0f * g_UiMgr->GetScaleY()) );
-//#else
-//            r2.Translate( 0, -1 );
-//#endif
             m_pManager->RenderText( m_Font, r2, ui_font::h_center|ui_font::v_center, TextColor1, m_Items[m_iSelection].Label );
         }
 
@@ -202,30 +145,23 @@ void ui_combo::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void ui_combo::OnFocusGained( ui_win* pWin )
-{
-    ui_control::OnFocusGained( pWin );
-}
-
-//=========================================================================
-
-void ui_combo::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void ui_combo::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
     xbool bHandled = FALSE;
 
     if ( m_NavFlags & CB_CHANGE_ON_NAV )
     {
         // check 
-        if (Code == ui_manager::NAV_LEFT)
+        if (Code == ui_navigation::Left)
         {
             // Move Back in List
-            OnPadShoulder( pWin, -1 );
+            OnPage( pWin, -1 );
             bHandled = TRUE;
         }
-        else if (Code == ui_manager::NAV_RIGHT)
+        else if (Code == ui_navigation::Right)
         {
             // Move Forward in List
-            OnPadShoulder( pWin, 1 );
+            OnPage( pWin, 1 );
             bHandled = TRUE;
         }
 
@@ -234,7 +170,7 @@ void ui_combo::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, 
         {
             if( ( m_NavFlags & CB_NOTIFY_PARENT ) || ( !bHandled ) )
             {
-                m_pParent->OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+                m_pParent->OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
             }
         }
     }
@@ -242,68 +178,76 @@ void ui_combo::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, 
     {
         // Pass up chain
         if( m_pParent )
-            m_pParent->OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+            m_pParent->OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
     }
 }
 
 //=========================================================================
 
-void ui_combo::OnPadSelect( ui_win* pWin )
+void ui_combo::OnAccept( ui_win* pWin )
 {
     if ( m_NavFlags & CB_CHANGE_ON_SELECT )
     {
         // Move Forward in List
-        OnPadShoulder( pWin, 1 );
+        OnPage( pWin, 1 );
 
         // Pass up chain
         if( m_pParent )
         {
             if( m_NavFlags & CB_NOTIFY_PARENT ) 
             {
-                m_pParent->OnPadSelect( pWin );
+                m_pParent->OnAccept( pWin );
             }
         }
     }
     else
     {
         if ( m_pParent )
-            m_pParent->OnPadSelect ( pWin );
+            m_pParent->OnAccept ( pWin );
     }
 }
 
 //=========================================================================
 
-void ui_combo::OnPadShoulder( ui_win* pWin, s32 Direction )
+void ui_combo::OnPage( ui_win* pWin, s32 Direction )
 {
     (void)pWin;
 
-    // Apply movement
-    if( Direction != 0 )
+    if( (Direction == 0) || (m_Items.GetCount() == 0) )
     {
-        // check that we have > 1 item
-        if( m_Items.GetCount() < 2 )
+        return;
+    }
+
+    s32 const OldSelection = m_iSelection;
+    s32 iSelection = (m_iSelection == -1)
+                   ? ((Direction > 0) ? 0 : m_Items.GetCount() - 1)
+                   : m_iSelection;
+
+    for( s32 i = 0; i < m_Items.GetCount(); i++ )
+    {
+        if( (OldSelection != -1) || (i > 0) )
         {
-            g_AudioMgr.Play( "InvalidEntry" ); 
+            iSelection += Direction;
+            if( iSelection < 0 )
+                iSelection = m_Items.GetCount() - 1;
+            else if( iSelection >= m_Items.GetCount() )
+                iSelection = 0;
         }
-        else
+
+        if( m_Items[iSelection].Enabled )
         {
-            s32 OldSelection = m_iSelection;
-
-            m_iSelection += Direction;
-            if( m_iSelection < 0 )
-                m_iSelection = m_Items.GetCount()-1;
-            if( m_iSelection >= m_Items.GetCount() )
-                m_iSelection = 0;
-            if( m_Items.GetCount() == 0 )
-                m_iSelection = -1;
-
-            if( (m_iSelection != OldSelection) && m_pParent )
+            m_iSelection = iSelection;
+            if( m_iSelection != OldSelection )
             {
-                m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)(uaddr)m_iSelection );
-                g_AudioMgr.Play( "Toggle" ); 
+                Notify( ui_notification_type::ComboSelectionChanged, m_iSelection );
+                g_AudioMgr.Play( "Toggle" );
             }
+            return;
         }
     }
+
+    m_iSelection = OldSelection;
+    g_AudioMgr.Play( "InvalidEntry" );
 }
 
 //=========================================================================
@@ -347,9 +291,7 @@ s32 ui_combo::AddItem( const xwchar* Label, uaddr Data1, uaddr Data2 )
 
 void ui_combo::SetItemEnabled( s32 iItem, xbool State )
 {
-    (void)iItem;
-    (void)State;
-
+    ASSERT( (iItem >= 0) && (iItem < m_Items.GetCount()) );
     m_Items[iItem].Enabled = State;
 }
 
@@ -357,6 +299,7 @@ void ui_combo::SetItemEnabled( s32 iItem, xbool State )
 
 void ui_combo::SetItemBitmap( s32 iItem, s32 ID )
 {
+    ASSERT( (iItem >= 0) && (iItem < m_Items.GetCount()) );
     m_Items[iItem].BitmapID = ID;
 }
 
@@ -364,6 +307,7 @@ void ui_combo::SetItemBitmap( s32 iItem, s32 ID )
 
 void ui_combo::SetItemColor( s32 iItem, xcolor Color )
 {
+    ASSERT( (iItem >= 0) && (iItem < m_Items.GetCount()) );
     m_Items[iItem].Color = Color;
 }
 
@@ -371,27 +315,31 @@ void ui_combo::SetItemColor( s32 iItem, xcolor Color )
 
 void ui_combo::DeleteAllItems( void )
 {
+    s32 const OldSelection = m_iSelection;
     m_iSelection = -1;
     m_Items.Delete( 0, m_Items.GetCount() );
 
-    if( m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)(uaddr)m_iSelection );
+    if( OldSelection != m_iSelection )
+        Notify( ui_notification_type::ComboSelectionChanged, m_iSelection );
 }
 
 //=========================================================================
 
 void ui_combo::DeleteItem( s32 iItem )
 {
-    s32 OldSelection = m_iSelection;
-
-    if( iItem < m_iSelection ) m_iSelection--;
-    if( m_iSelection < 0 ) m_iSelection = 0;
-    if( m_iSelection > m_Items.GetCount() ) m_iSelection = m_Items.GetCount() - 1;
-    if( m_Items.GetCount() == 0 ) m_iSelection = -1;
+    ASSERT( (iItem >= 0) && (iItem < m_Items.GetCount()) );
+    s32 const OldSelection = m_iSelection;
     m_Items.Delete( iItem );
 
-    if( (m_iSelection != OldSelection) && m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)(uaddr)m_iSelection );
+    if( m_Items.GetCount() == 0 )
+        m_iSelection = -1;
+    else if( iItem < OldSelection )
+        m_iSelection = OldSelection - 1;
+    else if( iItem == OldSelection )
+        m_iSelection = MIN( iItem, m_Items.GetCount() - 1 );
+
+    if( (m_iSelection != OldSelection) || (iItem == OldSelection) )
+        Notify( ui_notification_type::ComboSelectionChanged, m_iSelection );
 }
 
 //=========================================================================
@@ -414,6 +362,7 @@ const xwstring& ui_combo::GetItemLabel( s32 iItem ) const
 
 s32 ui_combo::GetItemBitmap( s32 iItem ) const
 {
+    ASSERT( (iItem >= 0) && (iItem < m_Items.GetCount()) );
     return m_Items[iItem].BitmapID;
 }
 
@@ -464,7 +413,7 @@ xbool ui_combo::GetSelectedItemEnabled( void ) const
 
 //=========================================================================
 
-s32 ui_combo::FindItemByLabel( const xwstring& Label )
+s32 ui_combo::FindItemByLabel( const xwstring& Label ) const
 {
     s32     i;
     s32     iFound = -1;
@@ -483,7 +432,7 @@ s32 ui_combo::FindItemByLabel( const xwstring& Label )
 
 //=========================================================================
 
-s32 ui_combo::FindItemByData( uaddr Data, s32 Index )
+s32 ui_combo::FindItemByData( uaddr Data, s32 Index ) const
 {
     ASSERT( (Index >= 0) && (Index < COMBO_DATA_FIELDS) );
 
@@ -515,46 +464,47 @@ void ui_combo::SetSelection( s32 iSelection )
 {
     ASSERT( (iSelection >= -1) && (iSelection < m_Items.GetCount()) );
 
-    m_iSelection = iSelection;
+    if( m_iSelection == iSelection )
+        return;
 
-    if( m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_COMBO_SELCHANGE, (void*)(uaddr)m_iSelection );
+    m_iSelection = iSelection;
+    Notify( ui_notification_type::ComboSelectionChanged, m_iSelection );
 }
 
 //=========================================================================
 
 void ui_combo::ClearSelection( void )
 {
-    m_iSelection = -1;
+    SetSelection( -1 );
 }
 
 //=========================================================================
 
-void ui_combo::OnLBDown ( ui_win* pWin )
+void ui_combo::OnPointerDown( ui_win* pWin, s32 x, s32 y )
 {
-#ifdef TARGET_PC
-    // Get cursor screen position
-    s32 cx, cy;
-    g_UiMgr->GetMousePos( m_UserID, cx, cy );
+    (void)y;
 
     // Get combo actual screen bounds
     irect r( 0, 0, m_Position.GetWidth(), m_Position.GetHeight() );
     LocalToScreen( r );
 
-    // Arrow hit zone ( use combo height as width )
-    s32 arrowW = r.GetHeight() * 2;
+    // Arrow hit zones are square and follow the control height.
+    s32 const ArrowWidth = r.GetHeight();
 
-    if( cx < r.l + arrowW )
+    if( x < r.l + ArrowWidth )
     {
         // Left arrow - previous item
-        OnPadShoulder( pWin, -1 );
+        OnPage( pWin, -1 );
     }
-    else if( cx > r.r - arrowW )
+    else if( x >= r.r - ArrowWidth )
     {
         // Right arrow - next item
-        OnPadShoulder( pWin, 1 );
+        OnPage( pWin, 1 );
     }
-#endif
+    else
+    {
+        OnAccept( pWin );
+    }
 }
 
 //=========================================================================

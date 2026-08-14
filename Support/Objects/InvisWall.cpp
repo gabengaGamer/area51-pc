@@ -12,10 +12,11 @@
 // INCLUDE
 //==========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "InvisWall.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "OccluderMgr\OccluderMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "OccluderMgr/OccluderMgr.hpp"
 
 //==========================================================================
 // DEFINES
@@ -62,7 +63,7 @@ static struct invisible_wall_desc : public object_desc
     {
         object_desc::OnEditorRender( Object );
         Object.OnDebugRender();
-        return EDITOR_ICON_PORTAL;
+        return static_cast<s32>( EditorIcon::Portal );
     }
 #endif // X_EDITOR
 
@@ -124,15 +125,13 @@ void invisible_wall_obj::OnRender( void )
 
 void invisible_wall_obj::OnDebugRender( void )
 {
-    CONTEXT( "invisible_wall_obj::OnDebugRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "invisible_wall_obj::OnDebugRender" );
 
     matrix4 L2W = GetL2W();
-    draw_SetL2W( L2W );
     bbox Wall(vector3(-m_Width/2,-m_Height/2,m_Depth/2), vector3(m_Width/2,m_Height/2,-m_Depth/2));
-    draw_Volume( Wall, xcolor(255,0,0,128) );
-    draw_ClearL2W();
+    render::debug::Volume( Wall, L2W, xcolor(255,0,0,128) );
 
-    draw_BBox    ( GetBBox(), xcolor(255,255,255,255) );
+    render::debug::Box    ( GetBBox(), xcolor(255,255,255,255) );
 }
 
 #endif // !defined( CONFIG_RETAIL )
@@ -144,10 +143,8 @@ void invisible_wall_obj::OnDebugRender( void )
 void invisible_wall_obj::OnRenderTransparent( void )
 {
     matrix4 L2W = GetL2W();
-    draw_SetL2W( L2W );
     bbox Wall(vector3(-m_Width/2,-m_Height/2,m_Depth/2), vector3(m_Width/2,m_Height/2,-m_Depth/2));
-    draw_Volume( Wall, xcolor(0,255,0,64) );
-    draw_ClearL2W();
+    render::debug::Volume( Wall, L2W, xcolor(0,255,0,64) );
 }
 
 #endif // !defined( CONFIG_RETAIL )
@@ -214,7 +211,7 @@ xbool invisible_wall_obj::OnProperty( prop_query& I )
 
 void invisible_wall_obj::OnColCheck( void )
 {
-    CONTEXT("invisible_wall_obj::OnColCheck");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "invisible_wall_obj::OnColCheck");
 
     //
     // Compute corners

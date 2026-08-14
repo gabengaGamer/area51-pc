@@ -5,16 +5,16 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "debris_cannon.hpp"
-#include "e_Draw.hpp"
 #include "e_ScratchMem.hpp"
-#include "..\Support\GameLib\StatsMgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "Render\RigidGeom.hpp"
-#include "NetworkMgr\Networkmgr.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "..\Objects\Player.hpp"
+#include "../Support/GameLib/StatsMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Render/RigidGeom.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "../Objects/Player/Player.hpp"
 
 //=============================================================================
 // CONSTANTS
@@ -27,11 +27,7 @@ static const f32        kFADE_TIME                  = 3.0f;
 //    The fx_handles are used for the smoke and fire trailers that attach
 //    to random bits of debris.
 //
-#ifdef TARGET_XBOX
 static const s32        k_MAX_DEBRIS_CANNON_ACTIVE_FX_HANDLES       = 8*4;
-#else
-static const s32        k_MAX_DEBRIS_CANNON_ACTIVE_FX_HANDLES       = 8;
-#endif
 
 // An attempt to throttle the number of active fx
 static s32 s_DebrisCannonActiveFXHandles = 0;
@@ -196,7 +192,7 @@ s32 debris_cannon::GetFreeFragment( void )
 void debris_cannon::ReleaseFragment( s32 iFragment )
 {
     ASSERT((iFragment >= 0) && (iFragment < MAX_FRAGMENTS));
-    if ((iFragment >= 0) || (iFragment < MAX_FRAGMENTS))
+    if ((iFragment < 0) || (iFragment >= MAX_FRAGMENTS))
         return;
 
     m_Fragment[iFragment].m_bInUse = FALSE;
@@ -211,7 +207,7 @@ void debris_cannon::ReleaseFragment( s32 iFragment )
 
 //=============================================================================
 
-void debris_cannon::OnAdvanceLogic      ( f32 DeltaTime )
+void debris_cannon::OnAdvanceSimulation      ( f32 DeltaTime )
 {
     // Handle total time calculations
     m_TotalTime += DeltaTime;
@@ -290,7 +286,7 @@ void debris_cannon::OnAdvanceLogic      ( f32 DeltaTime )
         xcolor C = XCOLOR_WHITE;
         if (F.m_bInactive)
             C = XCOLOR_RED;
-        //draw_Label( F.m_Position, XCOLOR_WHITE, "%d",F.m_BounceCount);
+        //render::debug::Label( F.m_Position, XCOLOR_WHITE, "%d",F.m_BounceCount);
 
         L2W.Setup( vector3(1,1,1), F.m_Orientation, F.m_Position );
 
@@ -419,7 +415,7 @@ void debris_cannon::UpdateFragments     ( f32 DeltaTime )
 
         F.m_OldPosition = F.m_Position;
 
-        F.m_Velocity *= 1.0f - (0.05f * DeltaTime);
+        F.m_Velocity *= x_exp( -0.05f * DeltaTime );
         F.m_Velocity += kDEBRIS_GRAVITY * DeltaTime;        
         vector3 Delta = F.m_Velocity * DeltaTime;
         F.m_Position = F.m_OldPosition + Delta;

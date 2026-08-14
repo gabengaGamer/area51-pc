@@ -4,8 +4,8 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
-#include "..\AudioMgr\audioMgr.hpp"
+#include "Entropy.hpp"
+#include "../AudioMgr/AudioMgr.hpp"
 
 #include "ui_tabbed_dialog.hpp"
 #include "ui_manager.hpp"
@@ -49,7 +49,6 @@ ui_tabbed_dialog::ui_tabbed_dialog( void )
 
 ui_tabbed_dialog::~ui_tabbed_dialog( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -95,23 +94,6 @@ void ui_tabbed_dialog::Render( s32 ox, s32 oy )
 {
     s32     i;
     
-#ifdef TARGET_PC
-    // Adjust where the parent gets drawn according to the resolution.
-/*    if( m_pParent == NULL )
-    {        
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        s32 midX = XRes>>1;
-        s32 midY = YRes>>1;
-
-        s32 dx = midX - 256;
-        s32 dy = midY - 256;
-        ox = dx;
-        oy = dy;
-    }
-*/
-#endif
-
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
@@ -144,7 +126,7 @@ void ui_tabbed_dialog::Render( s32 ox, s32 oy )
         {
             xcolor  TextColor1   = XCOLOR_WHITE;
             xcolor  TextColor2   = XCOLOR_BLACK;
-            s32     State = ui_manager::CS_NORMAL;
+            s32     State = ui_control::CS_NORMAL;
 
             // Set Tab Width
             if( m_TabWidth == -1 )
@@ -157,10 +139,7 @@ void ui_tabbed_dialog::Render( s32 ox, s32 oy )
             {
                 TextColor1   = XCOLOR_WHITE;
                 TextColor2   = XCOLOR_BLACK;
-                State = ui_manager::CS_HIGHLIGHT;
-
-                // Add Highlight to list
-                m_pManager->AddHighlight( m_UserID, r, m_Flags & WF_HIGHLIGHT );
+                State = ui_control::CS_HIGHLIGHTED;
             }
 
             m_pManager->RenderElement( m_iElementTab, r, State );
@@ -188,7 +167,7 @@ void ui_tabbed_dialog::Render( s32 ox, s32 oy )
 //=========================================================================
 //=========================================================================
 
-void ui_tabbed_dialog::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void ui_tabbed_dialog::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
     (void)pWin;
     (void)Presses;
@@ -196,23 +175,22 @@ void ui_tabbed_dialog::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 R
     (void)WrapX;
     (void)WrapY;
 
-//    ui_manager::user*   pUser   = m_pManager->GetUser( m_UserID );
     s32                 dx      = 0;
     s32                 dy      = 0;
 
     // Which way are we moving
     switch( Code )
     {
-    case ui_manager::NAV_UP:
+    case ui_navigation::Up:
         dy = -1;
         break;
-    case ui_manager::NAV_DOWN:
+    case ui_navigation::Down:
         dy = 1;
         break;
-    case ui_manager::NAV_LEFT:
+    case ui_navigation::Left:
         dx = -1;
         break;
-    case ui_manager::NAV_RIGHT:
+    case ui_navigation::Right:
         dx = 1;
         break;
     }
@@ -224,7 +202,6 @@ void ui_tabbed_dialog::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 R
         if( iTab <                  0 ) iTab = m_Tabs.GetCount()-1;
         if( iTab >= m_Tabs.GetCount() ) iTab = 0;
         ActivateTab( iTab );
-//        audio_Play( SFX_FRONTEND_CURSOR_MOVE_01,AUDFLAG_CHANNELSAVER );	//-- Jhowa
     }
 
     // If moving down then jump to the first available control in the dialog for the active tab
@@ -243,7 +220,7 @@ void ui_tabbed_dialog::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 R
 
 //=========================================================================
 
-void ui_tabbed_dialog::OnPadSelect( ui_win* pWin )
+void ui_tabbed_dialog::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -254,12 +231,11 @@ void ui_tabbed_dialog::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void ui_tabbed_dialog::OnPadBack( ui_win* pWin )
+void ui_tabbed_dialog::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
     m_pManager->EndDialog( m_UserID, TRUE );
-//    audio_Play( SFX_FRONTEND_SELECT_01_CLOSE,AUDFLAG_CHANNELSAVER );	//-- Jhowa
 }
 
 //=========================================================================
@@ -334,22 +310,6 @@ void ui_tabbed_dialog::ActivateTab( s32 iTab )
 
     if( iTab >= m_Tabs.GetCount() ) iTab = 0;
 
-/*
-    // When only 1 tab goto the first available control on that page
-    if( m_Tabs.GetCount() == 1 )
-    {
-        for( s32 i=0 ; i<m_Tabs[iTab].pDialog->GetNumControls() ; i++ )
-        {
-            if( m_Tabs[iTab].pDialog->GotoControl( i ) )
-            {
-                ui_dialog* pDialog = m_Tabs[iTab].pDialog;
-                pDialog->SetFlags( pDialog->GetFlags() | WF_VISIBLE );
-                return;
-            }
-        }
-    }
-*/
-
     // Hide previous Tab
     if( m_iActiveTab != -1 )
     {
@@ -378,7 +338,7 @@ void ui_tabbed_dialog::ActivateTab( s32 iTab )
     if( m_iActiveTab != OldActiveTab )
     {
         if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_TAB_CHANGE, (void*)(uaddr)m_iActiveTab );
+            Notify( ui_notification_type::TabChanged, static_cast<s32>( m_iActiveTab  ) );
     }
 }
 
@@ -427,59 +387,31 @@ const xwstring& ui_tabbed_dialog::GetTabLabel( s32 iTab ) const
 
 //=========================================================================
 
-void ui_tabbed_dialog::OnLBDown ( ui_win* pWin )
+void ui_tabbed_dialog::OnPointerDown( ui_win* pWin, s32 x, s32 y )
 {
-    (void)pWin;
+    s32 LocalX = x;
+    s32 LocalY = y;
+    ScreenToLocal( LocalX, LocalY );
+    if( (LocalY < 0) || (LocalY >= 21) )
+    {
+        ui_dialog::OnPointerDown( pWin, x, y );
+        return;
+    }
 
-#ifdef TARGET_PC
-    s32 x, y;
-    s32 Width = 0;
+    s32 Left = 4;
 
     // Go through all the tabs.
     for( s32 i = 0; i < m_Tabs.GetCount(); i++ )
     {
-        x = m_MouseX;
-        y = m_MouseY;
-        s32 w;
-
-        // If the tab width is -1 then the width of the tab is stored inside m_Tabs.
-        if( m_TabWidth  == -1 )
-        {   
-            w = m_Tabs[i].w;
-        }
-        else
-        {
-            w = m_TabWidth;
-        }
-
-        m_Tabs[i].pDialog->ScreenToLocal( x, y );
-        
-        // Accumulate the width from the previous tab.
-        Width += w;
-        x -= Width;
-        if( x < 0 )
+        s32 const Width = (m_TabWidth == -1) ? m_Tabs[i].w : m_TabWidth;
+        if( (LocalX >= Left) && (LocalX < Left + Width) )
         {
             ActivateTab( i );
-//            audio_Play( SFX_FRONTEND_CURSOR_MOVE_01,AUDFLAG_CHANNELSAVER );	//-- Jhowa
             return;
         }
-    
+
+        Left += Width;
     }
-#endif
-}
-
-//=========================================================================
-
-void ui_tabbed_dialog::OnMouseMove ( ui_win* pWin, s32 x, s32 y )
-{
-    (void)pWin;
-    (void)x;
-    (void)y;
-
-#ifdef TARGET_PC
-    m_MouseX = x;
-    m_MouseY = y;
-#endif
 }
 
 //=========================================================================

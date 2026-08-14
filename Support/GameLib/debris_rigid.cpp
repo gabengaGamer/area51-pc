@@ -6,8 +6,7 @@
 // INCLUDES
 //=============================================================================
 
-#include "Debris\debris_rigid.hpp"
-#include "e_Draw.hpp"
+#include "Debris/debris_rigid.hpp"
 
 
 //=============================================================================
@@ -110,7 +109,7 @@ bbox debris_rigid::GetLocalBBox ( void ) const
 
     if( pRigidGeom )
     {
-        return( pRigidGeom->m_Collision.BBox );
+        return( pRigidGeom->m_collision.BBox );
     }
     
     return( bbox( vector3( 20.0f, 20.0f, 20.0f),
@@ -121,7 +120,7 @@ bbox debris_rigid::GetLocalBBox ( void ) const
 
 void debris_rigid::OnRender ( void )
 {
-    CONTEXT("debris_rigid::OnRender");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "debris_rigid::OnRender");
     rigid_geom* pRigidGeom = m_RigidInst.GetRigidGeom();
     
     if( pRigidGeom )
@@ -142,7 +141,7 @@ void debris_rigid::UpdatePhysics   ( f32 DeltaTime )
 {
     if(m_Inactive )
         return;
-    CONTEXT("debris_rigid::UpdatePhysics");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "debris_rigid::UpdatePhysics");
     //update the spin
     f32 fTimeSpeed = DeltaTime * 4.0f;
 

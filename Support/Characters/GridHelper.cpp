@@ -1,4 +1,4 @@
-#include "gridhelper.hpp"
+#include "GridHelper.hpp"
 
 vector3 grid_helper::GetRandomAimPos( f32 LookYOffset )
 {

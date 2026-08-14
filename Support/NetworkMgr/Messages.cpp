@@ -9,8 +9,8 @@
 #include "Messages.hpp"
 #include "MsgMgr.hpp"
 #include "MsgClient.hpp"
-#include "StringMgr\StringMgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 //==============================================================================
 

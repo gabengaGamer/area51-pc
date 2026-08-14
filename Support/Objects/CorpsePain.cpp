@@ -9,9 +9,9 @@
 //==============================================================================
 
 #include "CorpsePain.hpp"
-#include "Objects\Actor\Actor.hpp"
+#include "Objects/Actor/Actor.hpp"
 #include "Corpse.hpp"
-#include "Objects\ParticleEmiter.hpp"
+#include "Objects/ParticleEmiter.hpp"
 
 
 //==============================================================================

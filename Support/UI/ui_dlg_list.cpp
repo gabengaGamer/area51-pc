@@ -4,8 +4,8 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
-#include "..\AudioMgr\audioMgr.hpp"
+#include "Entropy.hpp"
+#include "../AudioMgr/AudioMgr.hpp"
 
 #include "ui_dlg_list.hpp"
 #include "ui_manager.hpp"
@@ -82,7 +82,6 @@ ui_dlg_list::ui_dlg_list( void )
 
 ui_dlg_list::~ui_dlg_list( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -117,12 +116,7 @@ xbool ui_dlg_list::Create( s32                        UserID,
     r.Deflate( 8, 8 );
     m_pList->SetPosition( r );
 
-    m_pList->SetFlags( m_pList->GetFlags() | WF_SELECTED );
-
-#ifdef TARGET_PC
-    m_InsideListBox = TRUE;
-    m_UserID        = UserID;
-#endif
+    m_pList->SetActive( TRUE );
 
     // Return success code
     return Success;
@@ -135,14 +129,6 @@ void ui_dlg_list::Render( s32 ox, s32 oy )
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
-        xcolor  Color       = XCOLOR_WHITE;
-
-        // Set color if highlighted or selected or disabled
-        if( m_Flags & WF_DISABLED )
-            Color = XCOLOR_GREY;
-        if( m_Flags & (WF_HIGHLIGHT|WF_SELECTED) )
-            Color = XCOLOR_RED;
-
         // Get window rectangle
         irect   r;
         r.Set( m_Position.l+ox, m_Position.t+oy, m_Position.r+ox, m_Position.b+oy );
@@ -182,22 +168,17 @@ void ui_dlg_list::SetResultPtr( s32* pResultPtr )
 
 //=========================================================================
 
-void ui_dlg_list::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void ui_dlg_list::OnNotify( ui_notification const& Event )
 {
-    (void)pWin;
-    (void)pSender;
-    (void)Command;
-    (void)pData;
-
-    if( pSender == (ui_win*)m_pList )
+    if( Event.m_pSender == (ui_win*)m_pList )
     {
-        if( Command == WN_LIST_ACCEPTED )
+        if( Event.m_Type == ui_notification_type::ListAccepted )
         {
             if( m_pResultPtr && (m_pList->GetSelection() != -1) )
                 *m_pResultPtr = m_pList->GetSelectedItemData();
             m_pManager->EndDialog( m_UserID, TRUE );
         }
-        else if( Command == WN_LIST_CANCELLED )
+        else if( Event.m_Type == ui_notification_type::ListCancelled )
         {
             m_pManager->EndDialog( m_UserID, TRUE );
         }
@@ -206,32 +187,14 @@ void ui_dlg_list::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, void* pD
 
 //=========================================================================
 
-void ui_dlg_list::OnLBDown ( ui_win* pWin )
+void ui_dlg_list::OnPointerDown( ui_win* pWin, s32 x, s32 y )
 {
     (void)pWin;
-#ifdef TARGET_PC
-    
-    if( !m_InsideListBox )
+
+    if( !m_Position.PointInRect( x, y ) )
     {
         m_pManager->EndDialog( m_UserID );
     }
-#endif
-}
-
-//=========================================================================
-
-void ui_dlg_list::OnMouseMove ( ui_win* pWin, s32 x, s32 y )
-{
-    (void)pWin;
-    (void)x;
-    (void)y;
-#ifdef TARGET_PC
-    if( m_Position.PointInRect( x, y ) )
-        m_InsideListBox = TRUE;
-    else
-        m_InsideListBox = FALSE;
-
-#endif
 }
 
 //=========================================================================

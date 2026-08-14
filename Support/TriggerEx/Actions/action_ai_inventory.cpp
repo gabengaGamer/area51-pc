@@ -9,9 +9,9 @@
 //=========================================================================
 
 #include "action_ai_inventory.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Characters\Character.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Characters/Character.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 #include "Inventory/Inventory2.hpp"
 
 //=========================================================================

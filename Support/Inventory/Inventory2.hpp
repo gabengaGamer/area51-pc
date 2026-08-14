@@ -11,7 +11,8 @@
 
 #include "x_types.hpp"
 #include "x_bitstream.hpp"
-#include "objects/object.hpp"
+#include "Objects/object.hpp"
+#include "Menu/DebugMenuDefine.hpp"
 
 //=========================================================================
 // INVENTORY ENUMERATION

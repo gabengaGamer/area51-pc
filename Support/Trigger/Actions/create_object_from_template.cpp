@@ -9,13 +9,14 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\create_object_from_template.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/create_object_from_template.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "..\Support\Templatemgr\TemplateMgr.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "../Support/TemplateMgr/TemplateMgr.hpp"
 
-#include "Dictionary\global_dictionary.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 #include "Entropy.hpp"
 
@@ -37,7 +38,7 @@ m_RandomVectorExtent(0.0f,0.0f,0.0f)
 
 void create_object_from_template::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * create_object_from_template::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * create_object_from_template::Execute" );
         
     (void) pParent;
 
@@ -66,9 +67,9 @@ void  create_object_from_template::OnRender ( void )
 #ifdef TARGET_PC
     vector3 MyPosition =  GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
 
-    draw_Line( MyPosition, m_Position, s_CreateTemplateColor );
-    draw_BBox( bbox(m_Position, 100.0f), s_CreateTemplateColor );
-    draw_Label( m_Position, s_CreateTemplateColor, GetTypeName() );
+    render::debug::Line( MyPosition, m_Position, s_CreateTemplateColor );
+    render::debug::Box( bbox(m_Position, 100.0f), s_CreateTemplateColor );
+    render::debug::Label( m_Position, s_CreateTemplateColor, GetTypeName() );
 #endif
 }
 

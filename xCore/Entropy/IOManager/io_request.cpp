@@ -46,7 +46,7 @@ void io_request::SetRequest( io_open_file*   pOpenFile,
                              priority        Priority,
                              xbool           UseSema,
                              u32             Destination,
-                             u32             UserData,
+                             uaddr           UserData,
                              operation       Operation, 
                              callback_fn*    pCallback )
 {

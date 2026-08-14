@@ -1,10 +1,10 @@
 #include "CheckPointMgr.hpp"
-#include "GameLib\LevelLoader.hpp"
-#include "Objects\Render\PostEffectMgr.hpp"
-#include "..\Support\TriggerEx\TriggerEx_Object.hpp"
-#include "Objects\LevelSettings.hpp"
-#include "Sound\SoundEmitter.hpp"
-#include "objects\hudobject.hpp"
+#include "GameLib/LevelLoader.hpp"
+#include "Objects/Render/PostEffectMgr.hpp"
+#include "../Support/TriggerEx/TriggerEx_Object.hpp"
+#include "Objects/LevelSettings.hpp"
+#include "Sound/SoundEmitter.hpp"
+#include "Objects/HudObject.hpp"
 #include "StateMgr/PlayerProfile.hpp"
 #include "StateMgr/StateMgr.hpp"
 
@@ -73,6 +73,7 @@ xbool check_point_mgr::Restore( xbool bIsDebugAdvance )
     (void)bIsDebugAdvance;
     object* pObject;
     xbool   Result = FALSE;
+    const f32 RestoreDeltaSeconds = 0.0f;
 
     // Stop all audio.
     g_AudioMgr.ReleaseAll();
@@ -143,7 +144,7 @@ xbool check_point_mgr::Restore( xbool bIsDebugAdvance )
                         Trigger.ForceStartTrigger();
 
                         // Run the debug advance trigger logic once.
-                        Trigger.OnAdvanceLogic( 0.033f );
+                        Trigger.OnAdvanceSimulation( RestoreDeltaSeconds );
                     }
                 }
 #endif    
@@ -164,7 +165,7 @@ xbool check_point_mgr::Restore( xbool bIsDebugAdvance )
                         // the safe zones for hud rendering are correct.
                         s32     XRes, YRes;
                         eng_GetRes( XRes, YRes );
-                        view& rView0 = pPlayer->GetInterpView();
+                        view& rView0 = pPlayer->GetSimulationView();
                         rView0.SetViewport( 0, 0, XRes, YRes );
 
                         // Finally init the hud.
@@ -192,7 +193,7 @@ xbool check_point_mgr::Restore( xbool bIsDebugAdvance )
                         Trigger.ForceStartTrigger();
 
                         // Run the trigger logic once.
-                        Trigger.OnAdvanceLogic( 0.033f );
+                        Trigger.OnAdvanceSimulation( RestoreDeltaSeconds );
                         
                         // Now NUKE it!
                         g_ObjMgr.DestroyObject( GUID );
@@ -212,7 +213,7 @@ xbool check_point_mgr::Restore( xbool bIsDebugAdvance )
                     Trigger.ForceStartTrigger();
              
                     // Run the respawn trigger logic once.
-                    Trigger.OnAdvanceLogic( 0.033f );
+                    Trigger.OnAdvanceSimulation( RestoreDeltaSeconds );
                     
                     // Now NUKE it!
                     g_ObjMgr.DestroyObject( CP.RespawnGUID );

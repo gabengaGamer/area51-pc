@@ -9,8 +9,8 @@
 
 //==============================================================================
 
-#include "objects\object.hpp"
-#include "Auxiliary\fx_RunTime\Fx_Mgr.hpp"
+#include "Objects/object.hpp"
+#include "FX/fx_Mgr.hpp"
 
 //==============================================================================
 

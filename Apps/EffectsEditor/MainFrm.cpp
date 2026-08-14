@@ -15,7 +15,8 @@
 #include "resource.h"
 #include "MouseMode.hpp"
 
-#include "x_context.hpp"
+#include "x_profile.hpp"
+#include "UI/ui_renderer.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -91,9 +92,9 @@ CMainFrame::CMainFrame()
 {
     RECT Window;
     ::GetWindowRect( ::GetDesktopWindow(), &Window );
-    d3deng_SetWindowHandle( GetSafeHwnd() );
-    d3deng_SetParentHandle( GetSafeHwnd() );
-    d3deng_SetResolution( Window.right - Window.left, Window.bottom - Window.top );
+    eng_SetWindowHandle( GetSafeHwnd() );
+    eng_SetParentWindowHandle( GetSafeHwnd() );
+    eng_SetResolution( Window.right - Window.left, Window.bottom - Window.top );
 
     // Init pointers for KeyBar keyframe info
     m_pKeySets          = NULL;
@@ -111,10 +112,8 @@ CMainFrame::~CMainFrame()
     // destroy texture manager
     delete fx_core::g_pTextureMgr;
 
+    g_UIRenderer.Kill();
     eng_Kill();
-#ifdef cgalley
-//    x_ContextSaveProfile( "c:\\profile.txt" );
-#endif
 	x_Kill();
 
     // Cleanup pointers for KeyBar keyframe info
@@ -277,8 +276,9 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/,
     Height = Rect.bottom;
 
     // do it here to give the window time to be generated
-    d3deng_SetWindowHandle( this->GetSafeHwnd() );
+    eng_SetWindowHandle( this->GetSafeHwnd() );
     eng_Init();
+    VERIFY( g_UIRenderer.Init() );
 
     // g_pTextureMgr = new texture_mgr;
 
@@ -769,4 +769,3 @@ void CMainFrame::OnTimeZoomTimeExtents()
 }
 
 //---------------------------------------------------------------------------
-

@@ -28,7 +28,6 @@
 #include "StateMgr/MapList.hpp"
 #include "StateMgr/StateMgr.hpp"
 #include "Configuration/GameConfig.hpp"
-#include "NetworkMgr/Voice/VoiceMgr.hpp"
 
 //#include "../game/source/onlineui/OnlineUI.hpp"
 
@@ -251,7 +250,7 @@ void game_client::ProcessLoginResponse( netstream& BitStream )
 
     // TODO Use Server Public Key to Calculate BF Key.
     BitStream.ReadString( ServerPublicDHKey );
-    
+
 #if defined( ENABLE_ENCRYPTION )
     if( x_strlen( ServerPublicDHKey ) == 0 )
     {
@@ -282,8 +281,6 @@ void game_client::ProcessMissionResponse( netstream& BitStream )
     BitStream.ReadFlag( FriendlyFire );
     BitStream.ReadFlag( IsVoiceEnabled );
     BitStream.ReadS32 ( GameType );
-
-    g_VoiceMgr.SetIsGameVoiceEnabled( IsVoiceEnabled );
 
     // This is a HACK to get the circuits properly initialized.
     GameMgr.SetGameType( (game_type)GameType );
@@ -515,7 +512,7 @@ exit_reason game_client::Update( f32 DeltaTime )
         m_PacketSendDelay -= DeltaTime;
         if( m_PacketSendDelay <= 0.0f )
         {
-            while( m_PacketSendDelay < 0.0f )
+            while( m_PacketSendDelay <= 0.0f )
             {
                 m_PacketSendDelay += m_ConnMgr.GetShipInterval();
             }

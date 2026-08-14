@@ -92,11 +92,6 @@ const object_desc& gray::GetObjectType( void )
 // GRAY CHARACTER
 //=========================================================================
 
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( push )
-    #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
-#endif
-
 gray::gray() :
     m_Idle   ( *this, character_state::STATE_IDLE    ),
 /*    m_Alert  ( *this, character_state::STATE_ALERT   ),
@@ -112,10 +107,6 @@ gray::gray() :
     m_FriendFlags |= ( FACTION_GRAY ) ;
     m_gShield      = NULL_GUID;
 }
-
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( pop )
-#endif
 
 //=========================================================================
 

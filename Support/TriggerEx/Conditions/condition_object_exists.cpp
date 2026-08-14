@@ -8,9 +8,10 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "condition_object_exists.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
 
 //=========================================================================
@@ -126,15 +127,15 @@ void condition_object_exists::OnDebugRender ( s32 Index )
             break;
         }
 
-        draw_BBox( pObject->GetBBox(), XCOLOR_PURPLE );
+        render::debug::Box( pObject->GetBBox(), XCOLOR_PURPLE );
 
         if (!GetElse())
         {
-            draw_Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[If %d]%s", Index, Info.Get()) );
+            render::debug::Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[If %d]%s", Index, Info.Get()) );
         }
         else
         {
-            draw_Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[Else If %d]%s", Index, Info.Get()) );
+            render::debug::Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[Else If %d]%s", Index, Info.Get()) );
         }
     }
 }

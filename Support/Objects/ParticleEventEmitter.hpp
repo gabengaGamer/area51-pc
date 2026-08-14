@@ -5,7 +5,7 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 //=========================================================================
 // CLASS
@@ -18,7 +18,7 @@ public:
 
                             particle_event_emitter              ( void );
     virtual s32             GetMaterial                         ( void ) const { return MAT_TYPE_NULL; }
-    virtual void            OnAdvanceLogic                      ( f32 DeltaTime );      
+    virtual void            OnAdvanceSimulation                      ( f32 DeltaTime );      
     virtual void            OnMove                              ( const vector3& NewPos   );      
     virtual void            OnTransform                         ( const matrix4& L2W      );
     virtual bbox            GetLocalBBox                        ( void ) const;      

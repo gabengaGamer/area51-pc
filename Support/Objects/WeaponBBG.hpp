@@ -8,7 +8,7 @@
 // INCLUDES
 //=========================================================================
 #include "NewWeapon.hpp"
-#include "x_bitmap.hpp"
+#include "Render/Texture.hpp"
 
 //=========================================================================
 class weapon_bbg : public new_weapon
@@ -29,7 +29,7 @@ public:
     virtual	void	            OnEnumProp		        ( prop_enum& list );
 	virtual	xbool	            OnProperty		        ( prop_query& rPropQuery );
 
-    virtual void                OnAdvanceLogic          ( f32 DeltaTime );
+    virtual void                OnAdvanceSimulation          ( f32 DeltaTime );
     virtual void                InitWeapon              ( const vector3& rInitPos, render_state rRenderState, guid OwnerGuid );
 
     virtual	void				InitWeapon			    (   const char* pSkinFileName , 
@@ -84,6 +84,22 @@ public:
     virtual s32                 IncrementZoom               ( void );
 
 protected:
+    enum
+    {
+        MAX_LASER_SEGMENTS = 3
+    };
+
+    struct laser_segment
+    {
+        vector3 Start;
+        vector3 End;
+        vector3 ImpactPoint;
+        vector3 ImpactNormal;
+        xbool   HasImpact;
+    };
+
+    void                ClearLaserPath               ( void );
+    void                UpdateLaserPath              ( player& Player );
        
     virtual	xbool				FireWeaponProtected		    ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
     virtual	xbool				FireSecondaryProtected	    ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
@@ -124,7 +140,7 @@ protected:
     f32                         m_SecondaryFireSpeed;
     f32                         m_SecondaryFireBaseForce;
     f32                         m_SecondaryFireMaxForce;
-    f32                         m_LastUpdateTime;       // since we don't get OnAdvanceLogic calls if weapon isn't equipped... store off time.
+    f32                         m_LastUpdateTime;       // since we don't get OnAdvanceSimulation calls if weapon isn't equipped... store off time.
     f32                         m_bIsAltFiring;    
     f32                         m_LastAmmoBurnTime;
     s32                         m_AmmoBurned;
@@ -132,8 +148,11 @@ protected:
 
     rhandle<char>               m_hBulletAudioPackage;  // Audio package for the weapon's bullets.
 
-    rhandle<xbitmap>            m_LaserBitmap;
-    rhandle<xbitmap>            m_LaserFixupBitmap;
+    rhandle<texture>            m_LaserTexture;
+    rhandle<texture>            m_LaserFixupTexture;
+    laser_segment               m_LaserSegments[MAX_LASER_SEGMENTS];
+    s32                         m_LaserSegmentCount;
+    xbool                       m_LaserLockedOn;
 };
 
 //===========================================================================

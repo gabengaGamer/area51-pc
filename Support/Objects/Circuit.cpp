@@ -15,9 +15,10 @@ Circuit\\+DM+Tag+INF+   = 00 - NONE             no      no      yes
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Circuit.hpp"
 #include "MP_Settings.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 
 //==============================================================================
 //  FUNCTIONS
@@ -120,9 +121,9 @@ void circuit::OnEnumProp( prop_enum& List )
                          PROP_TYPE_HEADER | 
                          PROP_TYPE_DONT_SAVE | 
                          PROP_TYPE_DONT_EXPORT | 
-                         PROP_TYPE_DONT_SAVE_MEMCARD );
+                         PROP_TYPE_DONT_SAVE_GAME );
 
-    u32 Flags = PROP_TYPE_DONT_SHOW | PROP_TYPE_DONT_SAVE | PROP_TYPE_DONT_SAVE_MEMCARD;
+    u32 Flags = PROP_TYPE_DONT_SHOW | PROP_TYPE_DONT_SAVE | PROP_TYPE_DONT_SAVE_GAME;
     List.PropEnumInt( "Circuit\\Init(0)", "Startup values.", Flags );
     List.PropEnumInt( "Circuit\\Init(1)", "Startup values.", Flags );
 
@@ -133,7 +134,7 @@ void circuit::OnEnumProp( prop_enum& List )
                            "\0\0", "",
                            PROP_TYPE_DONT_SHOW | 
                            PROP_TYPE_DONT_EXPORT | 
-                           PROP_TYPE_DONT_SAVE_MEMCARD );
+                           PROP_TYPE_DONT_SAVE_GAME );
     }
 
     if( mp_settings::s_GameTypeBits )
@@ -142,7 +143,7 @@ void circuit::OnEnumProp( prop_enum& List )
                            mp_settings::GetCircuitEnum(), "",
                            PROP_TYPE_DONT_SAVE | 
                            PROP_TYPE_DONT_EXPORT | 
-                           PROP_TYPE_DONT_SAVE_MEMCARD );
+                           PROP_TYPE_DONT_SAVE_GAME );
     }
 #endif
 }
@@ -295,8 +296,8 @@ void circuit::SpecialRender( vector3& Position )
 
     Hi.GetY() = mp_settings::s_HighY + 1000.0f;
 
-    draw_Line ( Lo, Hi, Color );
-    draw_Point( Hi, Color, 3 );
+    render::debug::Line ( Lo, Hi, Color );
+    render::debug::Point( Hi, Color, 3 );
 }
 
 //------------------------------------------------------------------------------

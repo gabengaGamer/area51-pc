@@ -8,7 +8,7 @@
 // INCLUDES
 //=========================================================================
 
-#include "animdata.hpp"
+#include "AnimData.hpp"
 //#include "parsing/bitstream.hpp"
 #include "x_bitstream.hpp"
 

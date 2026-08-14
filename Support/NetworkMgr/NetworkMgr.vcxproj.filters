@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0">
   <ItemGroup>
     <Filter Include="Connection">
       <UniqueIdentifier>{280ff596-639c-451e-a510-bfbec9a812c2}</UniqueIdentifier>
@@ -63,19 +63,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Blowfish.cpp">
-      <Filter>Connection</Filter>
-    </ClCompile>
     <ClCompile Include="ConnMgr.cpp">
       <Filter>Connection</Filter>
     </ClCompile>
     <ClCompile Include="DebugTicker.cpp">
-      <Filter>Connection</Filter>
-    </ClCompile>
-    <ClCompile Include="Dh.cpp">
-      <Filter>Connection</Filter>
-    </ClCompile>
-    <ClCompile Include="integer.cpp">
       <Filter>Connection</Filter>
     </ClCompile>
     <ClCompile Include="MatchMgr_Common.cpp">
@@ -171,15 +162,6 @@
     <ClCompile Include="..\Objects\PlayerNet.cpp">
       <Filter>NetObjects</Filter>
     </ClCompile>
-    <ClCompile Include="NetPickup.cpp">
-      <Filter>NetObjects\Defunct</Filter>
-    </ClCompile>
-    <ClCompile Include="NetPlayer.cpp">
-      <Filter>NetObjects\Defunct</Filter>
-    </ClCompile>
-    <ClCompile Include="NetRocket.cpp">
-      <Filter>NetObjects\Defunct</Filter>
-    </ClCompile>
     <ClCompile Include="Move.cpp">
       <Filter>MoveMgr</Filter>
     </ClCompile>
@@ -189,7 +171,7 @@
     <ClCompile Include="UpdateMgr.cpp">
       <Filter>UpdateMgr</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\headset_common.cpp">
+    <ClCompile Include="Voice\Headset_Common.cpp">
       <Filter>VoiceMgr</Filter>
     </ClCompile>
     <ClCompile Include="Voice\VoiceMgr.cpp">
@@ -201,109 +183,112 @@
     <ClCompile Include="Voice\lpc10.cpp">
       <Filter>VoiceMgr\Codecs</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\speex.cpp">
+    <ClCompile Include="Voice\Speex.cpp">
       <Filter>VoiceMgr\Codecs</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\bits.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\bits.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\cb_search.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\cb_search.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\exc_10_16_table.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\exc_10_16_table.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\exc_10_32_table.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\exc_10_32_table.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\exc_20_32_table.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\exc_20_32_table.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\exc_5_256_table.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\exc_5_256_table.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\exc_5_64_table.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\exc_5_64_table.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\exc_8_128_table.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\exc_8_128_table.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\filters.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\fftwrap.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\gain_table.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\filters.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\gain_table_lbr.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\gain_table.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\hexc_10_32_table.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\gain_table_lbr.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\hexc_table.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\hexc_10_32_table.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\high_lsp_tables.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\hexc_table.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\jitter.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\high_lsp_tables.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\lbr_48k_tables.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\kiss_fft.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\lpc.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\kiss_fftr.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\lsp.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\lpc.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\lsp_tables_nb.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\lsp.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\ltp.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\lsp_tables_nb.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\math_approx.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\ltp.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\mdf.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\modes.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\misc.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\modes_wb.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\modes.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\nb_celp.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\nb_celp.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\quant_lsp.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\preprocess.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\sb_celp.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\quant_lsp.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\smallft.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\sb_celp.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\speex.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\smallft.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\speex_callbacks.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\speex_callbacks.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\speex_header.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\speex_header.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\stereo.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\stereo.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\vbr.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\vbr.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\vorbis_psy.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
-    <ClCompile Include="Voice\Speex\vq.c">
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\vq.c">
+      <Filter>VoiceMgr\Codecs\Speex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xCore\3rdParty\Speex\libspeex\window.c">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClCompile>
     <ClCompile Include="GameSpy\available.c">
@@ -463,7 +448,7 @@
       <Filter>Downloader\zlib</Filter>
     </ClCompile>
     <ClCompile Include="NetworkMgr.cpp" />
-    <ClCompile Include="Voice\Headset_PC.cpp">
+    <ClCompile Include="Voice\Headset_Windows.cpp">
       <Filter>VoiceMgr</Filter>
     </ClCompile>
   </ItemGroup>
@@ -540,100 +525,118 @@
     <ClInclude Include="Voice\VoiceProxy.hpp">
       <Filter>VoiceMgr</Filter>
     </ClInclude>
+    <ClInclude Include="Voice\Headset.hpp">
+      <Filter>VoiceMgr</Filter>
+    </ClInclude>
     <ClInclude Include="Voice\lpc10.hpp">
       <Filter>VoiceMgr\Codecs</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\speex.hpp">
+    <ClInclude Include="Voice\Speex.hpp">
       <Filter>VoiceMgr\Codecs</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\arch.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\arch.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\cb_search.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\cb_search.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\cb_search_sse.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\cb_search_sse.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\filters.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\filters.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\filters_sse.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\filters_sse.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\fixed_arm.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\fixed_arm4.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\fixed_debug.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\fixed_arm5e.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\fixed_generic.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\fixed_bfin.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\lpc.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\fixed_debug.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\lsp.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\fixed_generic.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\ltp.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\fftwrap.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\ltp_sse.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\kiss_fft.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\math_approx.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\kiss_fftr.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\misc.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\lpc.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\modes.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\lsp.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\nb_celp.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\ltp.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\quant_lsp.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\ltp_sse.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\sb_celp.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\math_approx.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\smallft.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\modes.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\speex.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\nb_celp.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\speex_bits.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\quant_lsp.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\speex_callbacks.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\sb_celp.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\speex_echo.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\smallft.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\speex_header.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\stack_alloc.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\speex_jitter.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\vbr.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\speex_preprocess.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\vq.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\speex_stereo.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\vq_sse.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\stack_alloc.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\libspeex\vorbis_psy.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\vbr.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\include\speex\speex.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
-    <ClInclude Include="Voice\Speex\vq.h">
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\include\speex\speex_bits.h">
+      <Filter>VoiceMgr\Codecs\Speex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\include\speex\speex_callbacks.h">
+      <Filter>VoiceMgr\Codecs\Speex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\include\speex\speex_config_types.h.in">
+      <Filter>VoiceMgr\Codecs\Speex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\include\speex\speex_header.h">
+      <Filter>VoiceMgr\Codecs\Speex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\include\speex\speex_stereo.h">
+      <Filter>VoiceMgr\Codecs\Speex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xCore\3rdParty\Speex\include\speex\speex_types.h">
       <Filter>VoiceMgr\Codecs\Speex</Filter>
     </ClInclude>
     <ClInclude Include="GameSpy\serverbrowsing\sb_ascii.h">

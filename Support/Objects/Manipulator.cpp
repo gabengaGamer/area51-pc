@@ -1,7 +1,8 @@
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Manipulator.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "EventMgr\EventMgr.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "EventMgr/EventMgr.hpp"
 
 //=========================================================================
 // OBJECT DESCRIPTION
@@ -32,7 +33,7 @@ static struct manipulator_desc : public object_desc
     virtual s32     OnEditorRender  ( object& Object ) const 
     { 
         object_desc::OnEditorRender( Object );
-        return EDITOR_ICON_GEAR; 
+        return static_cast<s32>( EditorIcon::Gear ); 
     }
 
 #endif // X_EDITOR
@@ -222,7 +223,7 @@ xbool manipulator::OnProperty( prop_query& I )
 #ifndef X_RETAIL
 void manipulator::OnDebugRender  ( void )
 {
-    CONTEXT( "manipulator::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "manipulator::OnRender" );
 
 #ifdef X_EDITOR
 
@@ -238,7 +239,7 @@ void manipulator::OnDebugRender  ( void )
        
             if( pObject ) 
             {
-                draw_Line( GetPosition(), pObject->GetBBox().GetCenter(), xcolor( 255,0,0,255) );
+                render::debug::Line( GetPosition(), pObject->GetBBox().GetCenter(), xcolor( 255,0,0,255) );
             }
         }
     }
@@ -323,9 +324,9 @@ void manipulator::UpdateObjects( void )
 
 //=========================================================================
 
-void manipulator::OnAdvanceLogic( f32 DelaTime )
+void manipulator::OnAdvanceSimulation( f32 DelaTime )
 {
-    CONTEXT( "anim_surface::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "anim_surface::OnAdvanceSimulation" );
 
     // If nothing is loaded there is nothing to do
     if( m_hAnimGroup.IsLoaded() == FALSE )

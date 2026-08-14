@@ -9,7 +9,7 @@
 //==============================================================================
 
 #include "LensFilter.hpp"
-#include "Render\\Render.hpp"
+#include "Render/Render.hpp"
 
 //==============================================================================
 // OBJECT DESCRIPTION
@@ -35,7 +35,7 @@ static struct lens_filter_desc : public object_desc
         virtual s32 OnEditorRender  ( object& Object ) const 
         { 
             (void)Object;
-            return EDITOR_ICON_NOTE;
+            return static_cast<s32>( EditorIcon::Note );
         }
 #endif // X_EDITOR
 
@@ -217,7 +217,7 @@ void lens_filter::OnActivate( xbool bFlag )
 
 //==============================================================================
 
-void lens_filter::OnAdvanceLogic( f32 DeltaTime )
+void lens_filter::OnAdvanceSimulation( f32 DeltaTime )
 {
     // determine if we have finished fading in or out
     if( m_CurrentState == STATE_FADE_IN )

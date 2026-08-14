@@ -185,7 +185,7 @@ inline void xbitmap::SetVRAMID( s32 VRAMID ) const
 
 inline u32 xbitmap::GetFlags( void ) const
 {
-    return( m_Flags );
+    return( m_flags );
 }
 
 //==============================================================================

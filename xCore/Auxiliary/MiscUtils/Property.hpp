@@ -83,7 +83,7 @@ enum prop_type
     PROP_TYPE_DONT_SHOW         = (1<<23), 
     PROP_TYPE_DONT_EXPORT       = (1<<24), 
     PROP_TYPE_EXPOSE            = (1<<25),   
-    PROP_TYPE_DONT_SAVE_MEMCARD = (1<<26),  // This flag MUST be set if the property value is
+    PROP_TYPE_DONT_SAVE_GAME = (1<<26),  // This flag MUST be set if the property value is
                                             // dynamic and shouldn't be saved
     PROP_TYPE_DONT_COPY         = (1<<27),   
 };
@@ -142,7 +142,7 @@ public:
         char        m_Name[128];
         //char        m_Enum[X_MAX_PATH];
         xstring     m_String;
-        u32         m_Type;
+        u32         m_type;
         const char* m_pComment;
 
         friend class prop_enum;
@@ -372,8 +372,8 @@ public:
 protected:
 
     char    m_Name[128];
-    u32     m_Type;
-    char    m_Data[256] PS2_ALIGNMENT( 16 );
+    u32     m_type;
+    char    m_Data[256];
 };
 
 //=========================================================================
@@ -433,7 +433,7 @@ public:
     {
         ParseString( pName );
         m_bRead       = bRead;
-        m_Type        = (u32)Type;
+        m_type        = (u32)Type;
         m_pData       = (void*)&Data;
         m_DataSize    = sizeof(T);
         m_RootPath[0] = 0;
@@ -534,7 +534,7 @@ protected:
     {
         ParseString( pName );
         m_bRead       = TRUE;
-        m_Type        = (u32)Type;
+        m_type        = (u32)Type;
         m_DataSize    = 0;
         m_pData       = pData; 
         m_RootPath[0] = 0;
@@ -547,7 +547,7 @@ protected:
         m_RootPath[0] = 0;
         m_RootLength  = 0;
         m_bRead       = FALSE;
-        m_Type        = (u32)Type;
+        m_type        = (u32)Type;
         m_DataSize    = 0;
         m_pData       = (void*)pData;
         m_RootPath[0] = 0;
@@ -602,7 +602,7 @@ protected:
 
     inline void GenericVarString( char* pData, s32 MaxStrLen )
     { 
-        ASSERT( m_Type & PROP_TYPE_STRING );
+        ASSERT( m_type & PROP_TYPE_STRING );
         
         if( m_bRead )
         {
@@ -627,7 +627,7 @@ protected:
 
     s32     m_nIndices;
     s32     m_Index[16];
-    u32     m_Type;
+    u32     m_type;
     s32     m_DataSize;
     void*   m_pData;
 
@@ -658,9 +658,9 @@ extern prop_enum  g_PropEnum;
 //=========================================================================
 
 inline const char* prop_enum::node::GetName       ( void ) const      { return m_Name; }
-inline u32         prop_enum::node::GetType       ( void ) const      { return m_Type; }
+inline u32         prop_enum::node::GetType       ( void ) const      { return m_type; }
 inline const char* prop_enum::node::GetComment    ( void ) const      { return m_pComment; }
-inline void        prop_enum::node::SetFlags      ( u32 Flags )       { m_Type |= Flags; }
+inline void        prop_enum::node::SetFlags      ( u32 Flags )       { m_type |= Flags; }
 
 inline prop_enum::node::node( void )
 {
@@ -842,7 +842,7 @@ void prop_enum::node::Set( const char* pString, const char* pComment, u32 aFlags
     ASSERT( pString );
     ASSERT( x_strlen( pString ) < 128 );
     x_strcpy( m_Name, pString );
-    m_Type     = aFlags;
+    m_type     = aFlags;
     m_pComment = pComment;
 }
 
@@ -862,12 +862,12 @@ void prop_enum::node::Set( const char* pString, const char* pComment, u32 aFlags
 //=========================================================================
 //=========================================================================
 
-inline prop_container::prop_container   ( void ) { m_Name[0]=0; m_Type=0; m_Data[0]=0x0; }
+inline prop_container::prop_container   ( void ) { m_Name[0]=0; m_type=0; m_Data[0]=0x0; }
 
 inline void prop_container::InitPropEnum( const prop_enum::node& EnumNode )
 {
     x_strcpy( m_Name, EnumNode.GetName() );
-    m_Type   = EnumNode.GetType();
+    m_type   = EnumNode.GetType();
 };
 
 inline void prop_container::InitFloat   ( const char* pName, const f32&      Data ) { InitGeneric( pName, PROP_TYPE_FLOAT,    (const void*)&Data ); }
@@ -920,8 +920,8 @@ inline void prop_container::SetFileName ( const char*       Data ) { SetGeneric(
 inline void prop_container::SetButton   ( const char*       Data ) { SetGeneric( (const void*) Data ); }
 
 inline const char* prop_container::GetName     ( void ) const { return m_Name; }
-inline u32         prop_container::GetType     ( void ) const { return (m_Type  & PROP_TYPE_BASIC_MASK); }
-inline u32         prop_container::GetTypeFlags( void ) const { return m_Type; }
+inline u32         prop_container::GetType     ( void ) const { return (m_type  & PROP_TYPE_BASIC_MASK); }
+inline u32         prop_container::GetTypeFlags( void ) const { return m_type; }
 inline void*       prop_container::GetRawData( void )       { return m_Data; }
 inline void*       prop_container::GetRawData( void ) const { return (void*)m_Data; }
 inline void        prop_container::SetName   ( const char* pName ) { ASSERT(pName); x_strcpy( m_Name, pName); }
@@ -930,7 +930,7 @@ inline void        prop_container::SetName   ( const char* pName ) { ASSERT(pNam
 inline
 s32 prop_container::GetDataSize( void ) const
 {
-    switch( m_Type & PROP_TYPE_BASIC_MASK )
+    switch( m_type & PROP_TYPE_BASIC_MASK )
     {
     case PROP_TYPE_FLOAT:       return sizeof(f32);
     case PROP_TYPE_VECTOR2:     return sizeof(vector2);
@@ -969,7 +969,7 @@ void prop_container::InitGeneric( const char* pName, prop_type Type, const void*
     }
 
     // copy the type
-    m_Type = Type;
+    m_type = Type;
     SetGeneric( pData );
 }
 
@@ -977,7 +977,7 @@ void prop_container::InitGeneric( const char* pName, prop_type Type, const void*
 inline
 void prop_container::SetGeneric( const void* pData )
 {
-    switch( m_Type & PROP_TYPE_BASIC_MASK )
+    switch( m_type & PROP_TYPE_BASIC_MASK )
     {
     case PROP_TYPE_FLOAT:       x_memmove( m_Data, pData, sizeof(f32) );         break;
     case PROP_TYPE_VECTOR2:     x_memmove( m_Data, pData, sizeof(vector2) );     break;
@@ -1004,7 +1004,7 @@ void prop_container::SetGeneric( const void* pData )
 inline
 void prop_container::GetGeneric( void* pData ) const
 {
-    switch( m_Type & PROP_TYPE_BASIC_MASK )
+    switch( m_type & PROP_TYPE_BASIC_MASK )
     {
     case PROP_TYPE_FLOAT:       x_memmove( pData, m_Data, sizeof(f32) );         break;
     case PROP_TYPE_VECTOR2:     x_memmove( pData, m_Data, sizeof(vector2) );     break;
@@ -1043,7 +1043,7 @@ void prop_container::GetGeneric( void* pData ) const
 //=========================================================================
 inline             prop_query::prop_query    ( void ) { m_pData = NULL; m_RootPath[0]=0; m_RootLength=0;}
 
-inline prop_type   prop_query::GetQueryType  ( void )            const { return ClearType(m_Type); }
+inline prop_type   prop_query::GetQueryType  ( void )            const { return ClearType(m_type); }
 inline prop_type   prop_query::ClearType     ( u32        Type ) const { return (prop_type)(Type&PROP_TYPE_BASIC_MASK); }
 inline prop_type   prop_query::ClearType     ( prop_type  Type ) const { return (prop_type)(((u32)Type)&PROP_TYPE_BASIC_MASK); }
 
@@ -1236,7 +1236,7 @@ prop_query& prop_query::RQuery( prop_container& Container )
 {
     ParseString( Container.GetName() );
     m_bRead       = TRUE;
-    m_Type        = Container.GetType();
+    m_type        = Container.GetType();
     m_DataSize    = Container.GetDataSize();
     m_pData       = Container.GetRawData();
     m_RootPath[0] = 0;
@@ -1259,7 +1259,7 @@ prop_query& prop_query::WQuery( const prop_container& Container )
 {
     ParseString( Container.GetName() );
     m_bRead       = FALSE;
-    m_Type        = Container.GetType();
+    m_type        = Container.GetType();
     m_DataSize    = Container.GetDataSize();
     m_pData       = (void*)Container.GetRawData();
     m_RootPath[0] = 0;

@@ -195,7 +195,7 @@ xbool archive::Init( const byte* pData, s32 Length )
             if( t.ReadMs() > 100.0f )
             {
                 LOG_MESSAGE( "archive::Init", "NetworkMgr update needed during decompress." );
-                g_NetworkMgr.Update( t.ReadSec() );
+                g_NetworkMgr.UpdateFrame( MIN( t.ReadSec(), 0.25f ) );
                 t.Reset();
                 t.Start();
             }

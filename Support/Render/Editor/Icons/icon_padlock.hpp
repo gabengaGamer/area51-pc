@@ -253,5 +253,4 @@ static s16 s_iicon_padlock[] =
 };
 
 
-#define DRAW_ICON_PADLOCK() draw_icon( NUM_FACETS_ICON_PADLOCK, NUM_VERTICES_ICON_PADLOCK, s_vicon_padlock, s_iicon_padlock )
 

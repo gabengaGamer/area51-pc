@@ -1,25 +1,13 @@
 <Solution>
   <Configurations>
     <BuildType Name="Debug" />
-    <BuildType Name="Debug Xbox" />
     <BuildType Name="EDITOR-Debug" />
     <BuildType Name="OptDebug" />
-    <BuildType Name="OptDebug Xbox" />
     <BuildType Name="QA" />
-    <BuildType Name="QA Xbox" />
     <BuildType Name="Release" />
-    <BuildType Name="Release Xbox" />
-    <BuildType Name="VIEWER-Debug" />
+    <Platform Name="ARM64" />
     <Platform Name="Win32" />
+    <Platform Name="x64" />
   </Configurations>
-  <Project Path="UserInterface.vcxproj">
-    <BuildType Solution="Debug Xbox|*" Project="Debug" />
-    <BuildType Solution="OptDebug Xbox|*" Project="OptDebug" />
-    <BuildType Solution="QA Xbox|*" Project="QA" />
-    <BuildType Solution="Release Xbox|*" Project="Release" />
-    <Platform Solution="Debug Xbox|*" Project="Xbox" />
-    <Platform Solution="OptDebug Xbox|*" Project="Xbox" />
-    <Platform Solution="QA Xbox|*" Project="Xbox" />
-    <Platform Solution="Release Xbox|*" Project="Xbox" />
-  </Project>
+  <Project Path="UserInterface.vcxproj" Id="ebc1773d-9bcc-4125-8069-f3ec6637b4bb" />
 </Solution>

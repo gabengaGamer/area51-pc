@@ -11,15 +11,15 @@
 // INCLUDES
 //=========================================================================
 
-#include "Characters\Character.hpp"
+#include "Characters/Character.hpp"
 #include "SoldierLoco.hpp"
-#include "Characters\BaseStates\Character_Idle_State.hpp"
-#include "Characters\BaseStates\Character_Alert_State.hpp"
-#include "Characters\BaseStates\Character_Search_State.hpp"
-#include "Characters\BaseStates\Character_Cover_State.hpp"
-#include "Characters\BaseStates\Character_Alarm_State.hpp"
-#include "Characters\BaseStates\Character_Turret_State.hpp"
-#include "Characters\BaseStates\Character_Death_State.hpp"
+#include "Characters/BaseStates/Character_Idle_State.hpp"
+#include "Characters/BaseStates/Character_Alert_State.hpp"
+#include "Characters/BaseStates/Character_Search_State.hpp"
+#include "Characters/BaseStates/Character_Cover_State.hpp"
+#include "Characters/BaseStates/Character_Alarm_State.hpp"
+#include "Characters/BaseStates/Character_Turret_State.hpp"
+#include "Characters/BaseStates/Character_Death_State.hpp"
 #include "Soldier_Attack_State.hpp"
 #include "BlackOp_Attack_State.hpp"
 #include "BlackOp_Cover_State.hpp"

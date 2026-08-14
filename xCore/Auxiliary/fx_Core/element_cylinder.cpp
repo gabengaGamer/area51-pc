@@ -1,5 +1,6 @@
 #include "controller.hpp"
 #include "element_cylinder.hpp"
+#include "PreviewRender.hpp"
 #include "effect.hpp"
 
 namespace fx_core
@@ -138,36 +139,15 @@ void element_cylinder::Render( f32 T )
         GetL2WAtTime  ( T, L2W   );
         GetColorAtTime( T, Color );
 
-        // Determine blend mode
-        s32 DrawBlendMode = 0;
-        switch( m_CombineMode )
-        {
-            case COMBINEMODE_ADDITIVE:
-                DrawBlendMode = DRAW_BLEND_ADD;
-                break;
-            case COMBINEMODE_SUBTRACTIVE:
-                DrawBlendMode = DRAW_BLEND_SUB;
-                break;
-        }
-
-        // Set L2W
-        draw_SetL2W( L2W );
-
-        // draw flags
-        u32 DrawFlags = DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_CULL_NONE | DRAW_USE_ALPHA | DrawBlendMode;
-
-        if ( (m_MappingTileV == 1.0f) && (m_MappingScrollV == 0.0f) ) { DrawFlags |= DRAW_V_CLAMP; }
-        //if ( DrawBlendMode != 0 )                                     { DrawFlags |= DRAW_NO_ZWRITE; }
-        if ( !m_ZRead )                                               { DrawFlags |= DRAW_NO_ZBUFFER; }
-
-        // Start drawing
-        draw_Begin( DRAW_TRIANGLES, DrawFlags );
-
         // Setup bitmap
         if ( m_BitmapName.IsEmpty() )
             m_BitmapName = "fx_default.xbmp";
 
         g_pTextureMgr->ActivateBitmap( m_BitmapName );
+        const xbool clampV = (m_MappingTileV == 1.0f) && (m_MappingScrollV == 0.0f);
+        const render::primitive_draw_desc material =
+            CreatePreviewMaterial( g_pTextureMgr->GetTexture( m_BitmapName ), m_CombineMode, m_ZRead, FALSE, clampV );
+        render::PrimitiveBatch batch( material );
 
         // Setup for drawing
         f32 RadiansPerSegmentU  = DEG_TO_RAD( 360.f / (f32)m_nSegments );
@@ -180,7 +160,6 @@ void element_cylinder::Render( f32 T )
         f32 MapScrollU          = m_MappingScrollU * MapScrollTime;
         f32 MapScrollV          = m_MappingScrollV * MapScrollTime;
 
-        f32 Radius  = 0.5f;
         f32 Radius1 = 0.5f * m_SizeTop;
         f32 Radius2 = 0.5f * m_SizeBottom;
 
@@ -265,24 +244,21 @@ void element_cylinder::Render( f32 T )
                 u4 = u2 - (MappingPerSegmentU * 0.5f);
             }
 
-            // Draw UV Quad
-            draw_UV( u1, v1 );    draw_Color( NewTopColor    );     draw_Vertex( x[0],  0.5f, z[0] );
-            draw_UV( u3, v3 );    draw_Color( NewBottomColor );     draw_Vertex( x[2], -0.5f, z[2] );
-            draw_UV( u4, v4 );    draw_Color( NewBottomColor );     draw_Vertex( x[3], -0.5f, z[3] );
-
-            draw_UV( u1, v1 );    draw_Color( NewTopColor    );     draw_Vertex( x[0],  0.5f, z[0] );
-            draw_UV( u4, v4 );    draw_Color( NewBottomColor );     draw_Vertex( x[3], -0.5f, z[3] );
-            draw_UV( u2, v2 );    draw_Color( NewTopColor    );     draw_Vertex( x[1],  0.5f, z[1] );
+            batch.AddTriangle(
+                render::primitive_vertex( vector3( x[0],  0.5f, z[0] ), vector2( u1, v1 ), NewTopColor ),
+                render::primitive_vertex( vector3( x[2], -0.5f, z[2] ), vector2( u3, v3 ), NewBottomColor ),
+                render::primitive_vertex( vector3( x[3], -0.5f, z[3] ), vector2( u4, v4 ), NewBottomColor ) );
+            batch.AddTriangle(
+                render::primitive_vertex( vector3( x[0],  0.5f, z[0] ), vector2( u1, v1 ), NewTopColor ),
+                render::primitive_vertex( vector3( x[3], -0.5f, z[3] ), vector2( u4, v4 ), NewBottomColor ),
+                render::primitive_vertex( vector3( x[1],  0.5f, z[1] ), vector2( u2, v2 ), NewTopColor ) );
         }
 
-        // End drawing
-        draw_End();
+        batch.Submit( L2W );
 
         // Render element bbox
         RenderBBox( T );
 
-        // Reset L2W
-        draw_ClearL2W();
     }
 
     // Render the translation path of the object

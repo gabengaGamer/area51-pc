@@ -8,11 +8,12 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_create_template.hpp"
-#include "..\Support\Templatemgr\TemplateMgr.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "Objects\Group.hpp"
+#include "../Support/TemplateMgr/TemplateMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Objects/Group.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS
@@ -106,15 +107,15 @@ void action_create_template::OnDebugRender ( s32 Index )
         {
             vector3 MarkerPosition =  pMarker->GetPosition();
 
-            draw_Line( GetPositionOwner(), MarkerPosition, s_CreateTemplateColor );
-            draw_BBox( bbox(MarkerPosition, 100.0f), s_CreateTemplateColor );
+            render::debug::Line( GetPositionOwner(), MarkerPosition, s_CreateTemplateColor );
+            render::debug::Box( bbox(MarkerPosition, 100.0f), s_CreateTemplateColor );
             if (!GetElse())
             {
-                draw_Label( MarkerPosition, s_CreateTemplateColor, xfs("[%d]Create Template", Index) );
+                render::debug::Label( MarkerPosition, s_CreateTemplateColor, xfs("[%d]Create Template", Index) );
             }
             else
             {
-                draw_Label( MarkerPosition, s_CreateTemplateColor, xfs("[Else %d]Create Template", Index) );
+                render::debug::Label( MarkerPosition, s_CreateTemplateColor, xfs("[Else %d]Create Template", Index) );
             }
         }
     }

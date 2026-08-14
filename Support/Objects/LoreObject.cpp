@@ -6,34 +6,30 @@
 // INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "LoreObject.hpp"
-#include "e_Draw.hpp"
 #include "e_View.hpp"
 #include "Entropy.hpp"
 #include "x_math.hpp"
-#include "..\Support\TriggerEx\triggerex_object.hpp"
+#include "../Support/TriggerEx/TriggerEx_Object.hpp"
 
-#include "InputMgr\GamePad.hpp"
-#include "Objects\HudObject.hpp"
+#include "InputMgr/GamePad.hpp"
+#include "Objects/HudObject.hpp"
+#include "UI/ui_renderer.hpp"
 
-#include "GameTextMgr\GameTextMgr.hpp"
-#include "StringMgr\StringMgr.hpp"
+#include "GameTextMgr/GameTextMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
 
 // collision/polycache stuff
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
 
 #ifndef X_EDITOR
-#include "StateMgr\StateMgr.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "NetworkMgr\MsgMgr.hpp"
-#include "StateMgr\LoreList.hpp"
-#endif
-
-#ifdef TARGET_XBOX
-// see nasty HACK comment below
-extern void xbox_GetRes( s32& XRes,s32& YRes );
+#include "StateMgr/StateMgr.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "NetworkMgr/MsgMgr.hpp"
+#include "StateMgr/LoreList.hpp"
 #endif
 
 //=========================================================================
@@ -45,7 +41,7 @@ xbool g_bDrawLODebug = FALSE;
 xbool g_ShowLoreObjectCollision = FALSE;
 #endif
 
-rhandle<xbitmap>            lore_object::m_Bracket;
+rhandle<texture>            lore_object::m_Bracket;
 
 f32 s_LoreItemMsgFadeTime   = 2.0f;
 f32 g_LO_OffsetY            = 5.0f;
@@ -83,7 +79,7 @@ static struct lore_object_desc : public object_desc
             FLAGS_BURN_VERTEX_LIGHTING  |
             FLAGS_NO_ICON               |
             FLAGS_IS_DYNAMIC            |
-            FLAGS_TARGETS_OBJS ) {}         
+            FLAGS_TARGETS_OBJS          ) {}
 
     //---------------------------------------------------------------------
 
@@ -99,7 +95,7 @@ static struct lore_object_desc : public object_desc
     virtual s32 OnEditorRender( object& Object ) const
     {
         object_desc::OnEditorRender( Object );
-        return EDITOR_ICON_ANCHOR; 
+        return static_cast<s32>( EditorIcon::Anchor );
         //return -1;
     }
 
@@ -210,7 +206,7 @@ void lore_object::OnDebugRender( void )
 
         if( pRigidGeom )
         {            
-            draw_BBox( GetBBox() );
+            render::debug::Box( GetBBox() );
             return;
         }
     }
@@ -219,10 +215,10 @@ void lore_object::OnDebugRender( void )
     {             
         bbox BBox = m_FocusBox;
         BBox.Transform( GetL2W() );
-        draw_BBox( BBox, XCOLOR_GREEN );
+        render::debug::Box( BBox, XCOLOR_GREEN );
     }
 
-    draw_Marker( GetPosition() );
+    render::debug::Marker( GetPosition() );
 }
 #endif // X_RETAIL
 
@@ -232,7 +228,7 @@ f32 g_LO_RenderDist = 600.0f;
 f32 g_Dist = 0.0f;
 void lore_object::OnRender( void )
 {
-    CONTEXT( "lore_object::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "lore_object::OnRender" );
 
     rigid_geom* pRigidGeom = m_RigidInst.GetRigidGeom();
 
@@ -266,33 +262,10 @@ void lore_object::OnRender( void )
     else
     {
 #ifdef X_EDITOR
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif // X_EDITOR
     }
 }
-/*
-{
-    rigid_geom* pRigidGeom = m_RigidInst.GetRigidGeom();
-
-    if( pRigidGeom )
-    {
-        u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
-
-        // Setup Render Matrix
-        m_RenderL2W = GetL2W();
-        //m_RenderL2W.SetRotation(m_TotalSpin);
-
-        m_RigidInst.SetVMeshMask( m_VMeshMask );
-        m_RigidInst.Render( &m_RenderL2W, Flags, m_RigidInst.GetLODMask(m_RenderL2W) );
-    }
-
-#ifdef X_EDITOR
-    //    draw_Line( GetPosition() , GetPosition() + m_NormalCollision );
-    //    draw_Line( GetPosition() , GetPosition() + m_Velocity , XCOLOR_BLUE );
-#endif // X_EDITOR
-}
-*/
-
 //=========================================================================
 void lore_object::DoCollisionCheck( player *pPlayer, vector3 &StartPos, vector3 &EndPos )
 {
@@ -317,26 +290,13 @@ void lore_object::DoCollisionCheck( player *pPlayer, vector3 &StartPos, vector3 
 }
 
 //=========================================================================
-void lore_object::OnAdvanceLogic( f32 DeltaTime )
+void lore_object::OnAdvanceSimulation( f32 DeltaTime )
 {
     if( !m_bActive )
     {
         return;
     }
-    //
-    // This deals with the fact that the LO will not run OnRenderTransparent 
-    // when off screen, which meant that if you walked through it, 
-    // m_bLookingAt would stay true until the LO again entered the screen.
-    // This code assumes that if you haven't rendered (where m_bRendered is 
-    // set to true) since the last logic pass, then you must not be looking
-    // at the LO.
-    //
-    if( !m_bRendered )
-    {
-        m_bLookingAt = FALSE;
-    }
-    m_bRendered = FALSE;
-    
+
     player* pPlayer = SMP_UTIL_GetActivePlayer();
     if( !pPlayer )
         return;
@@ -405,49 +365,51 @@ void lore_object::OnAdvanceLogic( f32 DeltaTime )
         }
     }
 
-    //
-    // Pulse the color.
-    //
+    if( m_ViewType == SELECT_BRACKETS )
     {
-        m_ColorPhase += 2.0f * DeltaTime;
-        if( m_ColorPhase > 2.0f )
-            m_ColorPhase = 0.0f;
+        const view& SimulationView = pPlayer->GetSimulationView();
+        const vector3 RayStart = SimulationView.GetPosition();
+        const vector3 RayEnd   = RayStart + SimulationView.GetViewZ() * m_ViewDist;
+        f32 HitTime;
+        m_bLookingAt = GetFocusBBox().Intersect( HitTime, RayStart, RayEnd );
+    }
+    else
+    {
+        m_bLookingAt = FALSE;
     }
 
-    //
-    // Update the animation state.
-    //
+    // Pulse the focus color using simulation time.
+    m_ColorPhase += 2.0f * DeltaTime;
+    if( m_ColorPhase > 2.0f )
     {
-        // Bracket displacement.
-        if( m_bHasLOS && m_bInViewRange )
-        {
-            m_AnimState -= 3.0f * DeltaTime;
-        }
-        else
-        {
-            m_AnimState += 3.0f * DeltaTime;
-        }
-
-        // Text opacity.
-        if( (m_AnimState < 0.1f) && m_bInTextRange )
-        {
-            m_TextAlphaState += DeltaTime * 3.0f;
-        }
-        else
-        {
-            m_TextAlphaState -= DeltaTime * 3.0f;
-        }
-
-        // Bound them both.
-        m_AnimState      = MINMAX( 0.0f, m_AnimState,      1.0f );
-        m_TextAlphaState = MINMAX( 0.0f, m_TextAlphaState, 1.0f );
-
-        // Have to map this piecewise function which makes the 
-        // last 30% of transition fully opaque onto the alpha.
-        m_MaxAlpha = (s32)(255 * ((m_AnimState <= 0.3f) ? 
-            (1.0f) : 
-            (1.0f - ((m_AnimState - 0.3f) / 0.7f))));
+        m_ColorPhase = 0.0f;
     }
+
+    // Update bracket displacement and text opacity.
+    if( m_bHasLOS && m_bInViewRange )
+    {
+        m_AnimState -= 3.0f * DeltaTime;
+    }
+    else
+    {
+        m_AnimState += 3.0f * DeltaTime;
+    }
+
+    if( (m_AnimState < 0.1f) && m_bInTextRange )
+    {
+        m_TextAlphaState += DeltaTime * 3.0f;
+    }
+    else
+    {
+        m_TextAlphaState -= DeltaTime * 3.0f;
+    }
+
+    m_AnimState      = MINMAX( 0.0f, m_AnimState,      1.0f );
+    m_TextAlphaState = MINMAX( 0.0f, m_TextAlphaState, 1.0f );
+    m_MaxAlpha       = (u8)(255 * ((m_AnimState <= 0.3f) ?
+        1.0f :
+        (1.0f - ((m_AnimState - 0.3f) / 0.7f))));
+
 }
 
 //=========================================================================
@@ -521,16 +483,14 @@ inline xcolor Interpolate( xcolor Color1, xcolor Color2, f32 Percentage )
 
 void lore_object::OnRenderTransparent( void )
 {
-    CONTEXT( "lore_object::OnRenderTransparent" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "lore_object::OnRenderTransparent" );
 
     if( !m_bActive || (m_AnimState == 1.0f) )
     {
         return;
     }
 
-    m_bRendered = TRUE;
-
-    bbox BBox = GetFocusBBox();
+    bbox BBox = GetRenderFocusBBox();
     player* pPlayer = SMP_UTIL_GetActivePlayer();
     if( !pPlayer )
         return;
@@ -543,9 +503,19 @@ void lore_object::OnRenderTransparent( void )
                     
     rect ViewDimensions;
 
-    // If we have LOs in SS then this will have to be looked at! 
-    view& rView = pPlayer->GetInterpView();
+    const view& rView = pPlayer->GetRenderView();
+    if( rView.PointToScreen( BBox.GetCenter() ).GetZ() <= 0.001f )
+    {
+        return;
+    }
+
     rView.GetViewport( ViewDimensions );
+
+    const irect ScreenViewport( (s32)ViewDimensions.Min.X,
+                                (s32)ViewDimensions.Min.Y,
+                                (s32)ViewDimensions.Max.X,
+                                (s32)ViewDimensions.Max.Y );
+    g_UIRenderer.PushHudSpace( ScreenViewport );
     
     // Draw the LO
 
@@ -584,56 +554,27 @@ void lore_object::OnRenderTransparent( void )
                 MinY = x_min( MinY, P2D.GetY() );
             }
 
-#ifdef TARGET_XBOX
-            // dstewart HACK - Because of the wacky screen scaling that goes on the xbox, rView
-            // does not report accurate screen coordinates. This is a problem all over the game,
-            // but it is too late in the project to try to do a proper fix, so here's another
-            // hack. This won't work in split-screen, but we shouldn't have lore objects in
-            // split screen anyway.
-            s32 OptW, OptH;
-            xbox_GetRes( OptW, OptH );
-            MinX *= ( (f32)OptW / (f32)ViewDimensions.GetWidth() );
-            MaxX *= ( (f32)OptW / (f32)ViewDimensions.GetWidth() );
-            MinY *= ( (f32)OptH / (f32)ViewDimensions.GetHeight() );
-            MaxY *= ( (f32)OptH / (f32)ViewDimensions.GetHeight() );
-#endif
+            const vector2 HudMin = g_UIRenderer.GetViewport().ScreenToHud(
+                vector2( MinX, MinY ), ScreenViewport );
+            const vector2 HudMax = g_UIRenderer.GetViewport().ScreenToHud(
+                vector2( MaxX, MaxY ), ScreenViewport );
+            MinX = HudMin.X;
+            MinY = HudMin.Y;
+            MaxX = HudMax.X;
+            MaxY = HudMax.Y;
 
-            // Figure out if the player is looking at the LO
-            // real quick while we have the appropriate data.
-            {
-                if( IN_RANGE( MinX, ViewDimensions.GetCenter().X, MaxX ) && 
-                    IN_RANGE( MinY, ViewDimensions.GetCenter().Y, MaxY ) )
-                {
-                    m_bLookingAt = TRUE;
-                }
-                else
-                {
-                    m_bLookingAt = FALSE;
-                }
-            }
             vector3 P3D[4];
             P3D[ 0 ].Set( MinX, MinY, 0.0f );
             P3D[ 1 ].Set( MaxX, MinY, 0.0f );
             P3D[ 2 ].Set( MaxX, MaxY, 0.0f );
             P3D[ 3 ].Set( MinX, MaxY, 0.0f );
-
 #ifndef CONFIG_RETAIL 
             if( g_bDrawLODebug )
             {
-                draw_BBox( BBox, XCOLOR_AQUA );
-                draw_Begin( DRAW_LINES, DRAW_2D );
+                render::debug::Box( BBox, XCOLOR_AQUA );
+                g_UIRenderer.DrawRect( rect( MinX, MinY, MaxX, MaxY ), XCOLOR_GREEN, TRUE );
 
-                xcolor RectColor = XCOLOR_GREEN;
-                draw_Color( RectColor );
-                for( i = 0; i < 4; i++ )
-                {
-                    draw_Vertex( P3D[ i % 4 ] );
-                    draw_Vertex( P3D[ (i + 1) % 4 ] );
-                }
-
-                draw_End();
-
-                draw_Marker( GetPosition(), XCOLOR_BLUE );
+                render::debug::Marker( GetPosition(), XCOLOR_BLUE );
             }
 #endif
 
@@ -684,28 +625,30 @@ void lore_object::OnRenderTransparent( void )
             f32 BracketSize = x_sqrt( x_min( MaxX - MinX, MaxY - MinY ) ) / 30.0f;
             f32 CornerOffset = 100.0f;
 
-            xbitmap* pBitmap = m_Bracket.GetPointer();
-            vector2 WH( (f32)pBitmap->GetWidth(), (f32)pBitmap->GetHeight() );
+            texture* pTexture = m_Bracket.GetPointer();
+            if( !pTexture )
+                break;
+            const xbitmap& Bitmap = pTexture->m_bitmap;
+            vector2 WH( (f32)Bitmap.GetWidth(), (f32)Bitmap.GetHeight() );
 
             WH.Scale( BracketSize );
 
-            draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA|DRAW_TEXTURED | DRAW_NO_ZWRITE  );
-            draw_SetTexture( *pBitmap );
-
             vector3 Displacement = m_AnimState * CornerOffset * (-RightOne + UpOne);
-            draw_SpriteUV( P3D[ 0 ] + Displacement, WH, TL, BR, RenderColor, 0.0f );
+            vector3 ScreenPosition = P3D[0] + Displacement;
+            g_UIRenderer.DrawImage( *pTexture, vector2( ScreenPosition.GetX(), ScreenPosition.GetY() ), WH, TL, BR, RenderColor, 0.0f );
 
             Displacement = m_AnimState * CornerOffset * (UpOne + RightOne);
-            draw_SpriteUV( P3D[ 1 ] + Displacement, WH, TL, BR, RenderColor, -PI / 2.0f );
+            ScreenPosition = P3D[1] + Displacement;
+            g_UIRenderer.DrawImage( *pTexture, vector2( ScreenPosition.GetX(), ScreenPosition.GetY() ), WH, TL, BR, RenderColor, -PI / 2.0f );
 
 
             Displacement = m_AnimState * CornerOffset * (RightOne - UpOne);
-            draw_SpriteUV( P3D[ 2 ] + Displacement, WH, TL, BR, RenderColor, -PI );
+            ScreenPosition = P3D[2] + Displacement;
+            g_UIRenderer.DrawImage( *pTexture, vector2( ScreenPosition.GetX(), ScreenPosition.GetY() ), WH, TL, BR, RenderColor, -PI );
 
             Displacement = m_AnimState * CornerOffset * (-UpOne - RightOne);
-            draw_SpriteUV( P3D[ 3 ] + Displacement, WH, TL, BR, RenderColor, 3.0f * -PI / 2.0f );
-
-            draw_End();
+            ScreenPosition = P3D[3] + Displacement;
+            g_UIRenderer.DrawImage( *pTexture, vector2( ScreenPosition.GetX(), ScreenPosition.GetY() ), WH, TL, BR, RenderColor, 3.0f * -PI / 2.0f );
 
             // Draw the Label.
 #ifndef X_EDITOR
@@ -747,6 +690,8 @@ void lore_object::OnRenderTransparent( void )
     default:
         break;
     }
+
+    g_UIRenderer.PopHudSpace();
 }
 
 //=========================================================================
@@ -785,6 +730,19 @@ bbox lore_object::GetFocusBBox( void ) const
     // transform to world space
     FocusBBox.Transform( GetL2W() );
 
+    return FocusBBox;
+}
+
+//=========================================================================
+
+bbox lore_object::GetRenderFocusBBox( void ) const
+{
+    rigid_geom* pRigidGeom = m_RigidInst.GetRigidGeom();
+
+    bbox FocusBBox = (pRigidGeom && m_bUseGeometrySize)
+                   ? pRigidGeom->m_BBox
+                   : m_FocusBox;
+        FocusBBox.Transform( GetL2W() );
     return FocusBBox;
 }
 
@@ -962,7 +920,7 @@ xbool lore_object::GetColDetails( s32 Key, detail_tri& Tri )
     if( !pRigidGeom )
         return( FALSE );
 
-    if( !pRigidGeom->m_Collision.nHighClusters )
+    if( !pRigidGeom->m_collision.nHighClusters )
         return( FALSE );
 
     return RigidGeom_GetColDetails( pRigidGeom,
@@ -1012,7 +970,7 @@ void lore_object::OnColRender( xbool bRenderHigh )
 
 void lore_object::OnColCheck( void )
 {
-    CONTEXT("lore_object::DoColCheck");    
+    X_PROFILE_SCOPE_CATEGORY( "Context", "lore_object::DoColCheck");
     rigid_geom* pRigidGeom = m_RigidInst.GetRigidGeom();
 
     /*
@@ -1027,7 +985,7 @@ void lore_object::OnColCheck( void )
 
     if( pRigidGeom )
     {
-        BBox = pRigidGeom->m_BBox ;        
+        BBox = pRigidGeom->m_BBox ;
     }
 
     // put BBox in worldspace

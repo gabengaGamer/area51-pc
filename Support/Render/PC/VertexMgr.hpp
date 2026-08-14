@@ -1,150 +1,170 @@
 //=========================================================================
-//  
-//  Vertex Manager for PC
-//  
+//
+//  VertexMgr.hpp
+//
 //=========================================================================
 
 #ifndef VERTEX_MANAGER_HPP
 #define VERTEX_MANAGER_HPP
 
 //=========================================================================
-//  PLATFORM CHECK
+//  BASE INCLUDES
 //=========================================================================
 
-#include "x_types.hpp"
-
-#if !defined(TARGET_PC)
-#error "This is only for the PC target platform. Please check build exclusion rules"
-#endif
+#include "x_files.hpp"
 
 //=========================================================================
 // INCLUDES
 //=========================================================================
 
-#include "Entropy.hpp"
 #include "x_array.hpp"
-#include "GeomMgr/GeomMgr.hpp"
+#include "e_RenderBuffer.hpp"
 
 //=========================================================================
 // CLASS
 //=========================================================================
 
-class vertex_mgr
-{    
-
-//=========================================================================
-
+class VertexMgr
+{
 public:
+    struct PreparedMesh
+    {
+        PreparedMesh ( void );
+    
+        xbool Allocate ( s32 nVertices, s32 nIndices, s32 vertexStride );
+        void  Clear    ( void );
+        xbool IsValid  ( void ) const;
+    
+        void*       GetVertexData ( void );
+        void const* GetVertexData ( void ) const;
+        u16*        GetIndexData  ( void );
+        u16 const*  GetIndexData  ( void ) const;
+    
+        s32 GetVertexCount  ( void ) const;
+        s32 GetIndexCount   ( void ) const;
+        s32 GetVertexStride ( void ) const;
+    
+private:
+        xarray<byte> m_vertices;
+        xarray<u16>  m_indices;
+        s32          m_vertexCount;
+        s32          m_vertexStride;
+    };
+    
+    // Indices remain local to the mesh. Draws bind the owning pools at offset
+    // zero and select the vertex suballocation through BaseVertex. Pool IDs are
+    // part of the range so callers can form multi-draw runs without rebinding
+    // buffers for every mesh.
+    struct mesh_range
+    {
+        s32 FirstIndex;
+        s32 IndexCount;
+        s32 BaseVertex;
+        s32 VertexPool;
+        s32 IndexPool;
+    
+        mesh_range( void ) : FirstIndex( 0 ), IndexCount( 0 ), BaseVertex( 0 ), VertexPool( -1 ), IndexPool( -1 )
+        {
+        }
+    };
+    
+public:
+    VertexMgr  ( void );
+    ~VertexMgr ( void );
+    
+    void Init ( s32 vertexStride );
+    void Kill ( void );
+    
+    static xbool PrepareMesh ( PreparedMesh& prepared, void const* pVertex, s32 nVertices, u16 const* pIndex,
+                               s32 nIndices, s32 vertexStride );
+    
+    xhandle AddMesh    ( PreparedMesh const& prepared );
+    void    RemoveMesh ( xhandle hMesh );
+    
+    xbool BindMesh          ( xhandle hMesh ) const;
+    xbool BindPools         ( mesh_range const& range ) const;
+    xbool BindVertexIndices ( mesh_range const& range, u32 slot ) const;
+    xbool GetMeshDrawRange  ( xhandle hMesh, mesh_range& range ) const;
 
-    void        Init                ( s32 VStride );
-    void        Kill                ( void );
-    xhandle     AddDList            ( void* pVertex, s32 nVertices, u16* pIndex, s32 nIndices, s32 nPrims );
-    void        DelDList            ( xhandle hDList );
-    void        BeginRender         ( void );
-    void        DrawDList           ( xhandle hDList, const matrix4* pWorld = NULL );
-    void        DrawDListInstanced  ( xhandle hDList, s32 nInstances );
-    void*       LockDListVerts      ( xhandle hDList );
-    void        UnlockDListVerts    ( xhandle hDList );
-    void*       LockDListIndices    ( xhandle hDList, s32& Index );
-    void        UnlockDListIndices  ( xhandle hDList );
-    void        InvalidateCache     ( void );
-    s32         GetDListVertexOffset( xhandle hDList ) const;
-
-//=========================================================================
-
-protected:
-
+private:
     enum
     {
-        START_HASH_ENTRY = 8,           // 2^8 = 256 This is where the hash starts
-        NUM_HASH_ENTRIES = 8,           // 2^( MIN_HASH_ENTRY + NUM_HASH_ENTRIES )
-
-        MAX_VERTEX_POOL  = 0xffff,      // This has to be less or equal to 0xffff
-        MAX_INDEX_POOL   = 0xffff,      // This can be anything really.
-
-        FLAGS_FULL       = (1<<0),      // Full/Empty
-        FLAGS_VERTEX     = (1<<1),      // Vertex/Index
+        DEFAULT_VERTEX_POOL_CAPACITY = 65536,
+        DEFAULT_INDEX_POOL_CAPACITY = 65536,
+        MAX_MESH_VERTICES = 65536
     };
-
-    struct dlist
-    {   
-        s32                         nPrims;           // Number of primitives to render
-        xhandle                     hVertexNode;      // Vertex node contains all the info for vertices
-        xhandle                     hIndexNode;       // Index node contains all the info for the indices
+    
+    struct free_range
+    {
+        s32 Offset;
+        s32 Count;
+    
+        free_range( void ) : Offset( 0 ), Count( 0 )
+        {
+        }
     };
-
+    
     struct pool
     {
-        s32                         nItems;           // Number of items in the list
-        xhandle                     hFirstNode;       // Fist node in the list  
-        s32                         Stride;           // The stride of an item
+        rbuffer            Buffer;
+        rbuffer            VertexIndexBuffer;
+        s32                Capacity;
+        s32                Stride;
+        xarray<free_range> FreeRanges;
+    
+        pool( void );
+        ~pool( void );
+    
+        pool( pool const& ) = delete;
+        pool& operator=( pool const& ) = delete;
     };
-
-    struct index_pool : public pool
+    
+    // Render-buffer backends retain their owner's address. The pools therefore
+    // live separately from the pointer array that indexes them.
+    using PoolArray = xarray<pool*>;
+    
+    struct allocation
     {
-        ID3D11Buffer*               pBuffer;          // DX11 index buffer
+        s32 PoolIndex;
+        s32 Offset;
+        s32 Count;
+    
+        allocation( void ) : PoolIndex( -1 ), Offset( 0 ), Count( 0 )
+        {
+        }
+    
+        xbool IsValid( void ) const
+        {
+            return ( PoolIndex >= 0 ) && ( Offset >= 0 ) && ( Count > 0 );
+        }
     };
-
-    struct vertex_pool : public pool
+    
+    struct mesh
     {
-        ID3D11Buffer*               pBuffer;          // DX11 vertex buffer
+        allocation VertexAllocation;
+        allocation IndexAllocation;
     };
 
-    struct node
-    {
-        s32                         User;             // Number of nodes allocated by the user
-        s32                         Count;            // Number of actual items in the node
-        s32                         Offset;           // Where in the buffer are our items
-        xhandle                     hPool;            // Which pool from a pool type we are talking about
-        u32                         Flags;            // Flags for the node
-        xhandle                     hGlobalNext;      // Global link list for a given pool
-        xhandle                     hGlobalPrev;      // Global link list for a given pool
-        xhandle                     hHashNext;        // Next in Hash 
-        xhandle                     hHashPrev;        // Prev in Hash
-    };
+private:
+    xbool AllocateRange ( PoolArray& pools, s32 count, s32 stride, u32 usageFlags, s32 defaultCapacity,
+                          char const* pDebugName, allocation& allocation );
+    void  ReleaseRange  ( PoolArray& pools, allocation const& allocation );
+    xbool CreatePool    ( PoolArray& pools, s32 capacity, s32 stride, u32 usageFlags, char const* pDebugName );
 
-//=========================================================================
-
-protected:
-
-    xhandle AllocIndexSet           ( s32 nIndices );
-    xhandle AllocVertexSet          ( s32 nVertices, s32 Stride );
-
-    xhandle AllocNode               ( s32 nItems, xbool bVertex, s32 Stride=0 );
-    void    FreeNode                ( xhandle hNode, xbool bVertex );
-    s32     NextLog2                ( u32 n );
-    s32     GetHashEntry            ( s32 nIndices, xbool bVertex );
-    void    RemoveNodeFormHash      ( xhandle hNode, xbool bVertex );
-    void    AddNodeToHash           ( xhandle hNode, xbool bVertex );
-
-    void    ActivateStreams         ( xhandle hDList );
-
-//=========================================================================
-
-protected:
-
-    xharray<node>           m_lNode;                          // List of allocated/Free nodes for vertices
-    xharray<dlist>          m_lDList;                         // List of display lists that have the rendering info
-
-    xharray<vertex_pool>    m_lVertexPool;                    // Pool for vertices
-    xharray<index_pool>     m_lIndexPool;                     // Pool for vertices
-
-    xhandle                 m_VertHash [ NUM_HASH_ENTRIES ];  // Hash entri containing empty nodes
-    xhandle                 m_IndexHash[ NUM_HASH_ENTRIES ];  // Hash entri containing empty nodes
-
-    s32                     m_Stride;                         // Vertex stride
-
-    xhandle                 m_LastVertexPool;
-    xhandle                 m_LastIndexPool;
+private:
+    xharray<mesh> m_meshes;
+    PoolArray     m_vertexPools;
+    PoolArray     m_indexPools;
+    s32           m_vertexStride;
+    xbool         m_isInitialized;
 };
 
-//==============================================================================
+//=========================================================================
 //  GLOBAL INSTANCE
-//==============================================================================
+//=========================================================================
 
-extern vertex_mgr g_RigidVertMgr;
+extern VertexMgr g_RigidVertMgr;
 
 //=========================================================================
-// END
+#endif // VERTEX_MANAGER_HPP
 //=========================================================================
-#endif

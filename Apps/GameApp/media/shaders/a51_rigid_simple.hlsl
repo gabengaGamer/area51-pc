@@ -2,8 +2,12 @@
 //
 //  a51_rigid_simple.hlsl
 //
-//  Simple rigidgeom uber-shader for A51.
+//  Simple rigid geometry shader.
 //
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
 //==============================================================================
 
 #include "common/material_flags.hlsl"
@@ -21,16 +25,17 @@
 
 #define GEOM_HAS_VERTEX_COLOR 1
 
-//------------------------------------------------------------------------------
+//==============================================================================
+//  TYPES
+//==============================================================================
 
 struct VS_INPUT
 {
-    float3 Position   : POSITION;
-    float3 Normal     : NORMAL;
-    float4 Color      : COLOR0;
-    float2 UV         : TEXCOORD0;
-    uint   VertexID   : SV_VertexID;
-    uint   InstanceID : SV_InstanceID;
+    float3 Position   : TEXCOORD0;
+    float3 Normal     : TEXCOORD1;
+    float2 UV         : TEXCOORD2;
+    uint   InstanceIndex : TEXCOORD3;
+    uint   VertexIndex   : TEXCOORD4;
 };
 
 //------------------------------------------------------------------------------
@@ -55,13 +60,13 @@ struct GEOM_PIXEL_INPUT
 #include "common/geom_local_shadow_maps.hlsl"
 
 //==============================================================================
-//  VERTEX SHADER
+//  SHADERS
 //==============================================================================
 
 GEOM_PIXEL_INPUT VSMain( VS_INPUT input )
 {
     GEOM_PIXEL_INPUT output;
-    const uint instanceID = input.InstanceID;
+    const uint instanceID = input.InstanceIndex;
 
     float4 worldPos    = mul( RigidInstances[instanceID].World, float4( input.Position, 1.0f ) );
     float4 viewPos     = mul( View, worldPos );
@@ -76,21 +81,27 @@ GEOM_PIXEL_INPUT VSMain( VS_INPUT input )
     output.ViewNormal = viewNormal;
     output.InstanceID = instanceID;
 
-    output.Color = input.Color;
+    output.Color = 1.0f.xxxx;
     if( RigidInstances[instanceID].ColorOffset != 0xFFFFFFFFu )
     {
-        const uint localVertex = input.VertexID - RigidInstances[instanceID].BaseVertex;
-        output.Color = DecodeRigidVertexColor( RigidVertexColors[RigidInstances[instanceID].ColorOffset + localVertex] );
+        const uint colorIndex = RigidInstances[instanceID].ColorOffset + input.VertexIndex;
+        output.Color = DecodeRigidVertexColor( RigidVertexColors[colorIndex] );
     }
 
     return output;
 }
 
 //==============================================================================
-//  PIXEL SHADER
+
+GEOM_PIXEL_OUTPUT PSMain( GEOM_PIXEL_INPUT input, bool isFrontFace : SV_IsFrontFace )
+{
+    return ShadeGeometryPixel( input, isFrontFace );
+}
+
 //==============================================================================
 
-GEOM_PIXEL_OUTPUT PSMain( GEOM_PIXEL_INPUT input )
+float4 PSScene( GEOM_PIXEL_INPUT input, bool isFrontFace : SV_IsFrontFace ) : SV_Target0
 {
-    return ShadeGeometryPixel( input );
+    const GEOM_PIXEL_OUTPUT shaded = ShadeGeometryPixel( input, isFrontFace );
+    return GeomApplyForwardFog( shaded.FinalColor, input );
 }

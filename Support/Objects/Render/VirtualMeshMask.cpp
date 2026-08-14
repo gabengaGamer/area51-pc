@@ -5,8 +5,8 @@
 //==============================================================================
 
 #include "VirtualMeshMask.hpp"
-#include "MiscUtils\Property.hpp"
-#include "Render\Geom.hpp"
+#include "MiscUtils/Property.hpp"
+#include "Render/geom.hpp"
 
 //==============================================================================
 // STATICS

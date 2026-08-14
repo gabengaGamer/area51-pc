@@ -1,0 +1,763 @@
+//==============================================================================
+//
+//  fx_SPEmitter.cpp
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
+#include "Render/PrimitiveDebug.hpp"
+#include "fx_SPEmitter.hpp"
+#include "fx_Render.hpp"
+#include "x_profile.hpp"
+
+#ifdef DEBUG_FX
+#include "e_Engine.hpp"
+#endif
+
+//==============================================================================
+//  STATIC-LIBRARY REGISTRATION ANCHOR
+//==============================================================================
+
+s32 fx_SPEmitter;
+
+//==============================================================================
+//  FUNCTIONS
+//==============================================================================
+
+inline 
+static byte* Align16Ptr( byte* pData )
+{
+    return (byte*)(((uaddr)pData + 15) & ~((uaddr)15));
+}
+
+//==============================================================================
+
+s32 SPEmitterMemoryFn( const fx_element_def& ElementDef )
+{
+    fx_edef_spemitter& EmitterDef = (fx_edef_spemitter&)ElementDef;
+
+    s32 nParticles = EmitterDef.NParticles;
+
+    u32 Size = sizeof( fx_spemitter );
+
+    Size += sizeof(fx_sparticle) * nParticles;
+    Size += sizeof(vector4     ) * nParticles;
+    Size += sizeof(vector4     ) * nParticles;
+
+    Size = ALIGN_16( Size );
+    Size += (EmitterDef.Flags & SPE_REVERSE_MODE) ? sizeof(vector3     ) * nParticles : 0;
+
+    Size = ALIGN_16( Size );
+    Size += sizeof(vector3) * nParticles;
+
+    Size = ALIGN_16( Size );
+    Size += sizeof(u32) * nParticles;
+
+    Size = ALIGN_16( Size );
+    Size += (EmitterDef.Flags & SPE_VELOCITY_ORIENTED) ? 0 : sizeof(vector2) * nParticles;
+
+    // The extra 15 here is because the allocator on the PC is not 16 byte aligned but the preceeding
+    // code assumes 16 byte alignment, the 15 gives room for any error.
+    return ALIGN_16( Size + 15 );
+}
+
+//==============================================================================
+
+void fx_spemitter::Initialize( const fx_element_def* pElementDef, 
+                                     f32*            pInput )
+{
+    // Let the base class take care of the basics.
+    fx_element::Initialize( pElementDef, pInput );
+
+    //
+    // Now, on to the sprite particle emitter specific details.
+    //
+
+    s32                i;
+    fx_edef_spemitter& EmitterDef = (fx_edef_spemitter&)(*pElementDef);
+
+    //
+    // TO DO - Do a better job with this stuff in here.
+    //
+
+    if( EmitterDef.Flags & SPE_BURST_MODE )
+        m_EmitGap = (EmitterDef.TimeStop - EmitterDef.TimeStart) / EmitterDef.NParticles;
+    else
+        m_EmitGap = EmitterDef.LifeSpan / EmitterDef.NParticles;
+
+    m_NActive      = 0;
+    m_PCursor      = 0;
+    m_EmitClock    = 0;
+    m_EmitCycle    = EmitterDef.LifeSpan;
+    m_Emitting     = TRUE;
+    m_PrevL2WReady = FALSE;
+    m_Color.Set( 255, 255, 255, (u8)0 );
+
+    s32 nParticles = EmitterDef.NParticles;
+    byte* pData = (byte*)(this+1);
+    m_pParticles    = (fx_sparticle*)pData; pData += sizeof(fx_sparticle) * nParticles;
+    m_pPositions    = (vector4*     )pData; pData += sizeof(vector4     ) * nParticles;
+    m_pVelocities   = (vector4*     )pData; pData += sizeof(vector4     ) * nParticles;
+    
+    pData = Align16Ptr( pData );
+    m_pStartPos     = (EmitterDef.Flags & SPE_REVERSE_MODE) ? (vector3*)pData : (vector3*)0;
+    pData += (EmitterDef.Flags & SPE_REVERSE_MODE) ? sizeof(vector3) * nParticles : 0;
+
+    pData = Align16Ptr( pData );
+    m_pStartVel     = (vector3*)pData;
+    pData += sizeof(vector3) * nParticles;
+
+    pData = Align16Ptr( pData );
+    m_pColors       = (u32*)pData;
+    pData += sizeof(u32) * nParticles;
+
+    pData = Align16Ptr( pData );
+    m_pRotAndScales = (EmitterDef.Flags & SPE_VELOCITY_ORIENTED) ? (vector2*)0 : (vector2*)pData;
+    pData += (EmitterDef.Flags & SPE_VELOCITY_ORIENTED) ? 0 : sizeof(vector2) * nParticles;
+
+    vector4     InactivePos( 0.0f, 0.0f, 0.0f, 0.0f );
+    InactivePos.GetIW() = 0x8000;
+
+    for( i = 0; i < nParticles; i++ )
+    {
+        fx_sparticle& P = m_pParticles[i];
+        m_pPositions[i] = InactivePos;
+        P.EmitTime      = i * m_EmitGap;
+//      P.AgeRate       = 1.0f / EmitterDef.LifeSpan;
+        P.StartSpin     = (EmitterDef.MinSpinRate == EmitterDef.MaxSpinRate) 
+                          ? EmitterDef.MinSpinRate
+                          : x_frand( R_0, R_360 );
+    }
+}
+
+//==============================================================================
+
+void fx_spemitter::AdvanceLogic( const fx_effect_base* pEffect, f32 DeltaTime )
+{
+    EmissionLogic( pEffect, DeltaTime );
+    ParticleLogic( pEffect, DeltaTime );
+}
+
+//==============================================================================
+
+inline 
+f32 fast_rand( f32 Min, f32 Max )
+{
+    static s32 Seed = 15827;
+    Seed = Seed * 214013 + 2531011;
+    f32 r = (f32)((Seed >> 16) & X_RAND_MAX);
+    return( ((r / (f32)X_RAND_MAX) * (Max-Min)) + Min );
+}
+
+//==============================================================================
+
+void fx_spemitter::EmissionLogic( const fx_effect_base* pEffect, f32 DeltaTime )
+{
+    X_PROFILE_SCOPE_CATEGORY( "Context", "fx_spemitter::EmissionLogic" );
+
+    const matrix4&     L2W = GetL2W( pEffect );
+    matrix4            StartVelL2W;    
+    fx_edef_spemitter& EmitterDef = (fx_edef_spemitter&)(*m_pElementDef);
+
+    if( m_Emitting && !pEffect->IsSuspended() )
+    {
+        // Time to stop m_Emitting?
+        if( pEffect->GetAge() >= EmitterDef.TimeStop )
+            m_Emitting = FALSE;
+
+        if( EmitterDef.Flags & SPE_WORLD_SPACE )
+        {
+            StartVelL2W = L2W;
+            StartVelL2W.ClearTranslation();
+        }
+
+        // Read some values for the loop
+        const vector3p& VMin            = EmitterDef.MinVelocity;
+        const vector3p& VMax            = EmitterDef.MaxVelocity;
+        s32             nActive         = m_NActive;
+        s32             iCursor         = m_PCursor;
+        const u32       EmitterDefFlags = EmitterDef.Flags;
+        vector3         p;
+        vector3         v;
+
+        // Kill old particles and emit new ones.
+        m_EmitClock += DeltaTime;
+        while( m_Emitting && (m_pParticles[iCursor].EmitTime < m_EmitClock) )
+        {
+            fx_sparticle& P    = m_pParticles[iCursor];
+
+            // Due to floating point error, the particles will sometimes have
+            // a sliver of life left in them and thus still active.  Time for
+            // an early retirement!
+            if( m_pPositions[iCursor].GetIW() != 0x8000 )
+            {
+                nActive -= 1;
+            }
+
+            // Emit this particle.
+            m_pPositions[iCursor].GetIW() = 0x0000;
+            P.SpinRate = fast_rand( EmitterDef.MinSpinRate, EmitterDef.MaxSpinRate );
+            P.Age      = m_EmitClock - m_pParticles[iCursor].EmitTime;
+
+            if( EmitterDefFlags & SPE_EMIT_FROM_VOLUME )
+            {
+                f32 x = fast_rand( -0.5f, 0.5f );
+                f32 y = fast_rand( -0.5f, 0.5f );
+                f32 z = fast_rand( -0.5f, 0.5f );
+                p.Set( x, y, z );
+            }
+            else
+            {
+                p.Zero();
+            }
+
+            v.Set( fast_rand( VMin.X, VMax.X ),
+                   fast_rand( VMin.Y, VMax.Y ),
+                   fast_rand( VMin.Z, VMax.Z ) );
+
+            if( EmitterDefFlags & SPE_WORLD_SPACE )
+            {
+                v = StartVelL2W * v;
+
+                if( (m_PrevL2WReady) &&
+                    (DeltaTime > 0.0f) && 
+                    (DeltaTime > (m_EmitGap * 1.25f)) )
+                {
+                    // It is very likely that more than one particle will be 
+                    // emitted during this logic.  To prevent "clumping", we
+                    // must interpolate the point from which the particles 
+                    // emit.  We have the previous L2W and the current L2W.
+
+                    f32     t  = P.Age / DeltaTime;
+                    vector3 P1 = m_PreviousL2W * p;
+                    vector3 P2 =           L2W * p;
+                    p = (P1 * t) + (P2 * (1.0f - t));
+                }
+                else
+                {
+                    p = L2W * p;
+                }
+            }
+
+            if( EmitterDefFlags & SPE_REVERSE_MODE )
+            {
+                m_pStartPos[iCursor] = p;
+            }
+
+            m_pStartVel[iCursor] = v;
+            m_pPositions [iCursor] = p;
+            m_pVelocities[iCursor] = v;
+
+            nActive += 1;
+            iCursor += 1;
+
+            if( iCursor >= EmitterDef.NParticles )
+            {
+                iCursor    = 0;
+                m_EmitClock -= m_EmitCycle;
+
+                if( EmitterDefFlags & SPE_BURST_MODE )
+                {
+                    m_Emitting = FALSE;
+                }
+            }
+        }
+
+        // Write back out the cache variables
+        m_NActive = nActive;
+        m_PCursor = iCursor;
+
+        if( EmitterDefFlags & SPE_WORLD_SPACE )
+        {
+            m_PrevL2WReady = TRUE;
+            m_PreviousL2W  = L2W;
+        }
+    }
+}
+
+//==============================================================================
+
+void fx_spemitter::ParticleLogic( const fx_effect_base* pEffect, f32 DeltaTime )
+{
+    X_PROFILE_SCOPE_CATEGORY( "Context", "fx_spemitter::ParticleLogic" );
+
+    s32                 i;
+    f32                 MaxRadius;
+    s32                 BoxSkip    = 0;
+    fx_edef_spemitter&  EmitterDef = (fx_edef_spemitter&)(*m_pElementDef);
+    vector3             Gravity3( 0.0f, EmitterDef.Gravity, 0.0f );
+
+    m_BBox.Clear();
+
+    MaxRadius = 0.0f;
+
+    if( m_NActive == 0 )
+    {
+        m_BBox = pEffect->GetL2W() * m_Translate;
+        return;
+    }
+
+    f32     UniScale  = pEffect->GetUniformScale();
+
+    vector4 ElementColor( m_Color.R / 255.0f,
+                          m_Color.G / 255.0f,
+                          m_Color.B / 255.0f,
+                          m_Color.A / 255.0f );
+
+    if( EmitterDef.Flags & SPE_SCALE_SPRITE_SIZE )
+        UniScale *= GetUniformScale();
+
+    // Get Max frames from the EmitterDef such that 0 <= Max < EmitterDef.NKeyFrames-1
+    f32 Max = EmitterDef.NKeyFrames - 1.00001f;
+    if( Max < 0.0f )
+        Max = 0.0f;
+
+    // Get render buffer pointers
+    vector4*    pPosition       = m_pPositions;
+    u32*        pColor          = m_pColors;
+    vector4*    pVelocity       = m_pVelocities;
+    vector2*    pRotAndScale    = m_pRotAndScales;
+
+//    vector4     Gravity4( 0.0f, EmitterDef.Gravity, 0.0f, 0.0f );
+    vector4     InactivePos( 0.0f, 0.0f, 0.0f, 0.0f );
+    InactivePos.GetIW() = 0x8000;
+
+    // Advance the logic on all of the particles.
+    for( i = 0; i < EmitterDef.NParticles; i++ )
+    {
+        fx_sparticle& P = m_pParticles[i];
+        P.Age += DeltaTime;     // P.Age += P.AgeRate * DeltaTime;
+
+        if( m_pPositions[i].GetIW() != 0x8000 )
+        {
+            if( P.Age >= EmitterDef.LifeSpan )
+            {
+                m_NActive -= 1;
+
+                *pPosition++ = InactivePos;
+                pColor++;
+                pVelocity++;
+                if( pRotAndScale )
+                    pRotAndScale++;
+            }
+            else
+            {
+//                f32 Age       = (EmitterDef.Flags & SPE_REVERSE_MODE) ? 
+//                                (EmitterDef.LifeSpan - P.Age) :
+//                                (P.Age);
+//                f32 Factor    = Age * Age * 0.5f;
+
+                // Figure out which keyframes to use and a blend factor.
+                // TO DO - Rig the parametric age to be the frames.
+                f32 Frame  = (P.Age / EmitterDef.LifeSpan) * Max;
+                s32 Lo     = (s32)Frame;
+                s32 Hi     = Lo + 1;
+                f32 LoMix  = Hi - Frame;
+                f32 HiMix  = Frame - Lo;
+
+                if( Max == 0 )
+                {
+                    Hi    = 0;
+                    LoMix = 1.0f;
+                    HiMix = 0.0f;
+                }
+
+                // Calculate Color
+                xcolor Color;
+                Color.R = (u8)(((EmitterDef.Key[Lo].Color.R * LoMix)  + 
+                                (EmitterDef.Key[Hi].Color.R * HiMix)) *
+                                (ElementColor.GetX()));
+
+                Color.G = (u8)(((EmitterDef.Key[Lo].Color.G * LoMix)  + 
+                                (EmitterDef.Key[Hi].Color.G * HiMix)) *
+                                (ElementColor.GetY()));
+
+                Color.B = (u8)(((EmitterDef.Key[Lo].Color.B * LoMix)  + 
+                                (EmitterDef.Key[Hi].Color.B * HiMix)) *
+                                (ElementColor.GetZ()));
+
+                Color.A = (u8)(((EmitterDef.Key[Lo].Color.A * LoMix)  + 
+                                (EmitterDef.Key[Hi].Color.A * HiMix)) *
+                                (ElementColor.GetW()));
+
+                *pColor++ = (Color.A << 24) | (Color.B << 16) | (Color.G << 8) | Color.R;
+
+                // Calculate Scale
+                f32 Scale = ((EmitterDef.Key[Lo].Scale * LoMix) + (EmitterDef.Key[Hi].Scale * HiMix));
+
+                vector4 v;
+                vector3 p;
+
+                if( EmitterDef.Flags & SPE_REVERSE_MODE )
+                {
+
+                    f32 Age    = (EmitterDef.LifeSpan - P.Age);
+                    f32 Factor = Age * Age * 0.5f;
+
+                    vector3 sp = m_pStartPos[i];
+                    vector3 sv = m_pStartVel[i];
+
+                    // Calc position
+                    p = sp + sv * ((EmitterDef.Acceleration * Factor) + Age) - Gravity3 * Factor;
+
+                    // Calc velocity
+                    v = sv + sv * (EmitterDef.Acceleration * P.Age) - Gravity3 * P.Age;
+                    v.GetW() = Scale;
+
+                    *pPosition = p;
+                    *pVelocity = v;
+                }
+                else
+                {
+                    // Update position
+                    p = *(vector3*)pPosition;
+                    p += *(vector3*)pVelocity * DeltaTime;
+                    *(vector3*)pPosition = p;
+                    ((s32*)pPosition)[3] = 0x0000;
+
+                    // Update velocity
+                    v = *pVelocity;
+                    v += m_pStartVel[i] * (EmitterDef.Acceleration * DeltaTime);
+                    v.GetY() -= EmitterDef.Gravity * DeltaTime;
+                    v.GetW() = Scale;
+                    *pVelocity = v;
+                }
+
+                pPosition++;
+                pVelocity++;
+
+                // Velocity & Scale or Rotation & Scale
+                if( !(EmitterDef.Flags & SPE_VELOCITY_ORIENTED) )
+                {
+                    radian Rotation = P.StartSpin + P.SpinRate * P.Age;
+                    Rotation = x_ModAngle2( Rotation ); // TODO: Optimize this?
+                    pRotAndScale->Set( Rotation, Scale );
+                    pRotAndScale++;
+                }
+
+                if( BoxSkip-- <= 0 )
+                {
+                    m_BBox    += p;
+                    MaxRadius  = MAX( MaxRadius, Scale * UniScale * 0.75f );
+                    BoxSkip    = m_NActive >> 2;
+                }
+            }
+        }
+        else
+        {
+            pPosition++;
+            pColor++;
+            pVelocity++;
+            if( pRotAndScale )
+                pRotAndScale++;
+        }
+    }
+
+    if( m_NActive == 0 )
+    {
+        m_BBox = pEffect->GetL2W() * m_Translate;
+        return;
+    }
+
+    if( !(EmitterDef.Flags & SPE_WORLD_SPACE) )
+    {
+        m_BBox.Transform( GetL2W( pEffect ) );
+    }
+    m_BBox.Inflate( MaxRadius, MaxRadius, MaxRadius );
+}
+
+//==============================================================================
+
+void fx_spemitter::SubmitRender( const fx_effect_base* pEffect ) const
+{
+    X_PROFILE_SCOPE_CATEGORY( "Context", "fx_spemitter::SubmitRender" );
+
+    fx_edef_spemitter& EmitterDef = (fx_edef_spemitter&)(*m_pElementDef);
+
+    if( m_NActive == 0 )
+        return;
+
+    if( (m_NActive + fx_mgr::GetSpritesThisFrame()) > fx_mgr::GetSpriteBudget() )
+    {
+        return;
+    }
+    else
+    {
+        fx_mgr::AddSpritesThisFrame( m_NActive );
+    }
+
+    f32 UniScale = pEffect->GetUniformScale();
+
+    const texture* pDiffuse = pEffect->GetDiffuseTexture( EmitterDef.BitmapIndex );
+
+    if( !pDiffuse )
+        return;
+
+    if( EmitterDef.Flags & SPE_SCALE_SPRITE_SIZE )
+        UniScale *= GetUniformScale();
+
+    const render::primitive_draw_desc Material =
+        fx_CreateMaterial( *pDiffuse, EmitterDef.CombineMode, EmitterDef.ReadZ );
+
+    if( EmitterDef.Flags & SPE_VELOCITY_ORIENTED )
+    {
+        matrix4  LocalToWorld;
+        matrix4* pLocalToWorld = NULL;
+        matrix4  VelocityMatrix;
+
+        VelocityMatrix.Identity();
+
+        if( (EmitterDef.Flags & SPE_WORLD_SPACE) == 0 )
+        {
+            LocalToWorld = GetL2W( pEffect );
+            pLocalToWorld = &LocalToWorld;
+            VelocityMatrix.Setup( m_Scale, m_Rotate, vector3( 0.0f, 0.0f, 0.0f ) );
+        }
+
+        VERIFY( render::SubmitPrimitiveVelocityBillboards( Material,
+                                                           EmitterDef.NParticles,
+                                                           UniScale * 0.5f,
+                                                           pLocalToWorld,
+                                                           &VelocityMatrix,
+                                                           m_pPositions,
+                                                           m_pVelocities,
+                                                           m_pColors ) );
+    }
+    else
+    {
+        matrix4  LocalToWorld;
+        matrix4* pLocalToWorld = NULL;
+        if( (EmitterDef.Flags & SPE_WORLD_SPACE) == 0 )
+        {
+            LocalToWorld = GetL2W( pEffect );
+            pLocalToWorld = &LocalToWorld;
+        }
+
+        VERIFY( render::SubmitPrimitiveBillboards( Material,
+                                                   EmitterDef.NParticles,
+                                                   UniScale * 0.5f,
+                                                   pLocalToWorld,
+                                                   m_pPositions,
+                                                   m_pRotAndScales,
+                                                   m_pColors ) );
+    }
+
+    // *************** //
+    // DEBUG RENDERING //
+    // *************** //
+
+#ifdef DEBUG_FX
+    s32 i;
+//    fx_sparticle* pParticle = (fx_sparticle*)(this+1);
+
+    if( !FXDebug.ElementReserved )
+        return;
+
+    if( FXDebug.ElementSpriteCenter )
+    {
+        if( EmitterDef.Flags & SPE_WORLD_SPACE )
+        {
+            // WORLD MOVEMENT //
+
+            for( i = 0; i < EmitterDef.NParticles; i++ )
+            {
+//                const fx_sparticle& P = pParticle[i];
+                if( m_pPositions[i].GetIW() != 0x8000 )
+                {
+                    render::debug::Point( *(vector3*)&m_pPositions[i], XCOLOR_WHITE );
+                }
+            }
+        }
+        else
+        {
+            // LOCAL MOVEMENT //
+
+            const matrix4& L2W = GetL2W( pEffect );
+
+            for( i = 0; i < EmitterDef.NParticles; i++ )
+            {
+//                const fx_sparticle& P = pParticle[i];
+                if( m_pPositions[i].GetIW() != 0x8000 )
+                {
+                    render::debug::Point( L2W * *(vector3*)&m_pPositions[i], XCOLOR_WHITE );
+                }
+            }
+        }        
+    }
+
+    if( FXDebug.ElementWire )
+    {
+        if( EmitterDef.Flags & SPE_VELOCITY_ORIENTED )
+        {
+            // *** VELOCITY ORIENTED *** //
+            const render::primitive_draw_desc wireMaterial( NULL,
+                                                            render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                            render::PRIMITIVE_BLEND_OPAQUE,
+                                                            render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                            render::PRIMITIVE_RASTER_WIREFRAME_NO_CULL,
+                                                            render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                            render::PRIMITIVE_LAYER_SURFACE );
+            render::PrimitiveBatch wireBatch( wireMaterial );
+
+            vector3 LineOfSight = eng_GetView()->GetViewZ();
+            vector3 Velocity;
+            vector3 Right;
+            vector3 Up;
+            vector3 Fore;
+            vector3 Aft;
+
+            const matrix4& PL2W = GetL2W( pEffect );
+                  matrix4  VelocityToWorld = PL2W;
+            VelocityToWorld.ClearTranslation();
+
+            for( i = 0; i < EmitterDef.NParticles; i++ )
+            {
+//                const fx_sparticle& P = pParticle[i];
+
+                if( m_pPositions[i].GetIW() != 0x8000 )
+                {
+                    f32 Scale  = m_pVelocities[i].GetW() * UniScale;
+//                    f32 DeltaV = EmitterDef.Acceleration * P.Age;
+
+                    Velocity         = *(vector3*)&m_pVelocities[i];
+
+                    if( !(EmitterDef.Flags & SPE_WORLD_SPACE) )
+                        Velocity = VelocityToWorld * Velocity;
+
+                    Velocity.Normalize();
+
+                    Right  = Velocity;
+                    Up     = LineOfSight.Cross( Right );
+                    Right *= Scale;
+                    Up    *= Scale;
+
+                    if( EmitterDef.Flags & SPE_WORLD_SPACE )
+                    {
+                        Fore   = *(vector3*)&m_pPositions[i] + Right;
+                        Aft    = *(vector3*)&m_pPositions[i] - Right;
+                    }
+                    else
+                    {
+                        Fore   = PL2W * *(vector3*)&m_pPositions[i]; 
+                        Aft    = Fore;              
+                        Fore  += Right;             
+                        Aft   -= Right;             
+                    }
+
+                    const vector3 positions[4] = { Fore - Up, Aft - Up, Aft + Up, Fore + Up };
+                    const vector2 uvs[4] = { vector2( 0.0f, 0.0f ), vector2( 1.0f, 0.0f ),
+                                             vector2( 1.0f, 1.0f ), vector2( 0.0f, 1.0f ) };
+                    const xcolor colors[4] = { XCOLOR_BLUE, XCOLOR_BLUE, XCOLOR_BLUE, XCOLOR_BLUE };
+                    wireBatch.AddQuad( positions, uvs, colors );
+                }
+            }
+            matrix4 identity;
+            identity.Identity();
+            wireBatch.Submit( identity );
+        }
+        else
+        {
+            vector2 WH;
+            vector2 UV0( 0, 0 );
+            vector2 UV1( 1, 1 );
+
+            const render::primitive_draw_desc wireMaterial( NULL,
+                                                            render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                            render::PRIMITIVE_BLEND_OPAQUE,
+                                                            render::PRIMITIVE_DEPTH_READ_WRITE,
+                                                            render::PRIMITIVE_RASTER_WIREFRAME_NO_CULL,
+                                                            render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                            render::PRIMITIVE_LAYER_SURFACE );
+
+            if( EmitterDef.Flags & SPE_WORLD_SPACE )
+            {
+                // *** SPIN ORIENTED / WORLD MOVEMENT *** //
+
+                for( i = 0; i < EmitterDef.NParticles; i++ )
+                {
+//                    const fx_sparticle& P = pParticle[i];
+                    if( m_pPositions[i].GetIW() != 0x8000 )
+                    {
+                        f32 S = m_pRotAndScales[i].Y * UniScale;
+                        WH( S, S );
+                        render::SubmitPrimitiveSprite( wireMaterial, *(vector3*)&m_pPositions[i], WH, UV0, UV1,
+                                                       XCOLOR_BLUE, m_pRotAndScales[i].X );
+                    }
+                }
+            }
+            else
+            {
+                // *** SPIN ORIENTED / LOCAL MOVEMENT *** //
+
+                const matrix4& L2W = GetL2W( pEffect );
+
+                for( i = 0; i < EmitterDef.NParticles; i++ )
+                {
+//                    const fx_sparticle& P = pParticle[i];
+                    if( m_pPositions[i].GetIW() != 0x8000 )
+                    {
+                        f32 S = m_pRotAndScales[i].Y * UniScale;
+                        WH( S, S );
+                        render::SubmitPrimitiveSprite( wireMaterial, L2W * *(vector3*)&m_pPositions[i], WH, UV0,
+                                                       UV1, XCOLOR_BLUE, m_pRotAndScales[i].X );
+                    }
+                }
+            } 
+            
+        }
+    }
+
+    if( FXDebug.ElementSpriteCount )
+    {
+        render::debug::Label( pEffect->GetL2W() * m_Translate, XCOLOR_YELLOW, "%d", m_NActive );
+    }
+
+    fx_element::SubmitRender( pEffect );
+#endif // DEBUG_FX
+}
+
+//==============================================================================
+
+xbool fx_spemitter::IsFinished( const fx_effect_base* pEffect ) const
+{
+    return( (m_NActive == 0) && fx_element::IsFinished( pEffect ) );
+}
+
+//==============================================================================
+
+void fx_spemitter::Reset( void )
+{
+    s32                i;
+    fx_edef_spemitter& EmitterDef = (fx_edef_spemitter&)(*m_pElementDef);
+
+    fx_element::Reset();
+
+    //
+    // TO DO - Do a better job with this stuff in here.
+    //
+
+    m_NActive       = 0;
+    m_PCursor       = 0;
+    m_EmitClock     = 0;
+    m_EmitCycle     = EmitterDef.LifeSpan;
+    m_Emitting      = TRUE;
+    m_PrevL2WReady  = FALSE;
+
+//    fx_sparticle* pParticle = (fx_sparticle*)(this + 1);
+
+    for( i = 0; i < EmitterDef.NParticles; i++ )
+    {
+//        fx_sparticle& P = pParticle[i];
+        m_pPositions[i].GetIW() = 0x8000;
+    }
+}
+
+//==============================================================================
+
+#undef new
+REGISTER_FX_ELEMENT_CLASS( fx_spemitter, "SPEMITTER", SPEmitterMemoryFn );
+
+//==============================================================================

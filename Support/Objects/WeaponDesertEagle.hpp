@@ -29,7 +29,7 @@ public:
     virtual ammo_priority       GetPrimaryAmmoPriority  ( void ){ return AMMO_PRIMARY; }
     virtual ammo_priority       GetSecondaryAmmoPriority( void ){ return AMMO_PRIMARY; }
 
-    virtual void                OnAdvanceLogic          ( f32 DeltaTime );      
+    virtual void                OnAdvanceSimulation          ( f32 DeltaTime );      
 
     virtual	void	            OnEnumProp		        ( prop_enum& list );
 	virtual	xbool	            OnProperty		        ( prop_query& rPropQuery );

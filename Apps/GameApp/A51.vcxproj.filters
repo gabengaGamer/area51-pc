@@ -21,28 +21,31 @@
     <ClCompile Include="Config.cpp">
       <Filter>Configuration</Filter>
     </ClCompile>
+    <ClCompile Include="FramePacer.cpp" />
+    <ClCompile Include="FrameTiming.cpp" />
     <ClCompile Include="IniFile.cpp">
       <Filter>Configuration</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Version.cpp" />
+    <ClCompile Include="GameAppPlatform_Windows.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.hpp">
       <Filter>Configuration</Filter>
     </ClInclude>
+    <ClInclude Include="FramePacer.hpp" />
+    <ClInclude Include="FrameTiming.hpp" />
     <ClInclude Include="IniFile.hpp">
       <Filter>Configuration</Filter>
     </ClInclude>
     <ClInclude Include="main.hpp" />
+    <ClInclude Include="A51Resources.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="media\saves.rdf">
+    <ResourceCompile Include="A51.rc" />
+    <Image Include="media\Dreamland51.ico">
       <Filter>Media</Filter>
-    </None>
-    <None Include="media\title.rdf">
-      <Filter>Media</Filter>
-    </None>
-    <None Include="main_pc.inl" />
+    </Image>
   </ItemGroup>
 </Project>

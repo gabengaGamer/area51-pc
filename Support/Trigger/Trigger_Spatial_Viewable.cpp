@@ -8,12 +8,13 @@
 //  INCLUDES
 //=========================================================================
 
-#include "Trigger\Trigger_Spatial_Viewable.hpp"
-#include "Trigger\Trigger_Manager.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Trigger/Trigger_Spatial_Viewable.hpp"
+#include "Trigger/Trigger_Manager.hpp"
 #include "Entropy.hpp"
-#include "Render\Editor\editor_icons.hpp"
+#include "Render/Editor/EditorIcons.hpp"
 
-#include "Objects\Door.hpp"
+#include "Objects/Door.hpp"
 
 //=========================================================================
 // STATIC DEFINITIONS AND CONSTS
@@ -50,8 +51,8 @@ static struct trigger_spatial_viewable_desc : public object_desc
     virtual s32  OnEditorRender( object& Object ) const
     {
         object_desc::OnEditorRender( Object );
-        draw_Label( Object.GetPosition(), XCOLOR_RED, "<<OBSOLETE>>" );    
-        return EDITOR_ICON_TRIGGER;
+        render::debug::Label( Object.GetPosition(), XCOLOR_RED, "<<OBSOLETE>>" );    
+        return static_cast<s32>( EditorIcon::Trigger );
     }
 
 #endif // X_EDITOR
@@ -122,7 +123,7 @@ void trigger_spatial_viewable::OnDebugRender( void )
 
 void trigger_spatial_viewable::ExecuteLogic ( f32 DeltaTime )
 {    
-    TRIGGER_CONTEXT("trigger_spatial_viewable::ExecuteLogic");
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "trigger_spatial_viewable::ExecuteLogic");
 
     trigger_spatial_object::ExecuteLogic( DeltaTime );
 }

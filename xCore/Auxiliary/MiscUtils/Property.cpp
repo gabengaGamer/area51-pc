@@ -1,6 +1,6 @@
 #include "Property.hpp"
-#include "Parsing\TextIn.hpp"
-#include "Parsing\TextOut.hpp"
+#include "Parsing/TextIn.hpp"
+#include "Parsing/TextOut.hpp"
 #include <stdio.h>
 
 //=========================================================================
@@ -515,7 +515,7 @@ void prop_interface::OnPaste( const xarray<prop_container>& Container )
 //=========================================================================
             prop_query::prop_query    ( void ) { m_pData = NULL; m_RootPath[0]=0; m_RootLength=0;}
 
-prop_type   prop_query::GetQueryType  ( void )            const { return ClearType(m_Type); }
+prop_type   prop_query::GetQueryType  ( void )            const { return ClearType(m_type); }
 prop_type   prop_query::ClearType     ( u32        Type ) const { return (prop_type)(Type&PROP_TYPE_BASIC_MASK); }
 prop_type   prop_query::ClearType     ( prop_type  Type ) const { return (prop_type)(((u32)Type)&PROP_TYPE_BASIC_MASK); }
 
@@ -708,7 +708,7 @@ prop_query& prop_query::RQuery( prop_container& Container )
 {
     ParseString( Container.GetName() );
     m_bRead       = TRUE;
-    m_Type        = Container.GetType();
+    m_type        = Container.GetType();
     m_DataSize    = Container.GetDataSize();
     m_pData       = Container.GetRawData();
     m_RootPath[0] = 0;
@@ -731,7 +731,7 @@ prop_query& prop_query::WQuery( const prop_container& Container )
 {
     ParseString( Container.GetName() );
     m_bRead       = FALSE;
-    m_Type        = Container.GetType();
+    m_type        = Container.GetType();
     m_DataSize    = Container.GetDataSize();
     m_pData       = (void*)Container.GetRawData();
     m_RootPath[0] = 0;
@@ -751,12 +751,12 @@ prop_query& prop_query::WQuery( const prop_container& Container )
 //=========================================================================
 //=========================================================================
 
-prop_container::prop_container   ( void ) { m_Name[0]=0; m_Type=0; m_Data[0]=0x0; }
+prop_container::prop_container   ( void ) { m_Name[0]=0; m_type=0; m_Data[0]=0x0; }
 
 void prop_container::InitPropEnum( const prop_enum::node& EnumNode )
 {
     x_strcpy( m_Name, EnumNode.GetName() );
-    m_Type   = EnumNode.GetType();
+    m_type   = EnumNode.GetType();
 };
 
 void prop_container::InitFloat   ( const char* pName, const f32&      Data ) { InitGeneric( pName, PROP_TYPE_FLOAT,    (const void*)&Data ); }
@@ -809,8 +809,8 @@ void prop_container::SetFileName ( const char*       Data ) { SetGeneric( (const
 void prop_container::SetButton   ( const char*       Data ) { SetGeneric( (const void*) Data ); }
 
 const char* prop_container::GetName     ( void ) const { return m_Name; }
-u32         prop_container::GetType     ( void ) const { return (m_Type  & PROP_TYPE_BASIC_MASK); }
-u32         prop_container::GetTypeFlags( void ) const { return m_Type; }
+u32         prop_container::GetType     ( void ) const { return (m_type  & PROP_TYPE_BASIC_MASK); }
+u32         prop_container::GetTypeFlags( void ) const { return m_type; }
 void*       prop_container::GetRawData( void )       { return m_Data; }
 void*       prop_container::GetRawData( void ) const { return (void*)m_Data; }
 void        prop_container::SetName   ( const char* pName ) { ASSERT(pName); x_strcpy( m_Name, pName); }
@@ -819,7 +819,7 @@ void        prop_container::SetName   ( const char* pName ) { ASSERT(pName); x_s
 
 s32 prop_container::GetDataSize( void ) const
 {
-    switch( m_Type & PROP_TYPE_BASIC_MASK )
+    switch( m_type & PROP_TYPE_BASIC_MASK )
     {
     case PROP_TYPE_FLOAT:       return sizeof(f32);
     case PROP_TYPE_VECTOR2:     return sizeof(vector2);
@@ -858,7 +858,7 @@ void prop_container::InitGeneric( const char* pName, prop_type Type, const void*
     }
 
     // copy the type
-    m_Type = Type;
+    m_type = Type;
     SetGeneric( pData );
 }
 
@@ -866,7 +866,7 @@ void prop_container::InitGeneric( const char* pName, prop_type Type, const void*
 
 void prop_container::SetGeneric( const void* pData )
 {
-    switch( m_Type & PROP_TYPE_BASIC_MASK )
+    switch( m_type & PROP_TYPE_BASIC_MASK )
     {
     case PROP_TYPE_FLOAT:       x_memmove( m_Data, pData, sizeof(f32) );         break;
     case PROP_TYPE_VECTOR2:     x_memmove( m_Data, pData, sizeof(vector2) );     break;
@@ -893,7 +893,7 @@ void prop_container::SetGeneric( const void* pData )
 
 void prop_container::GetGeneric( void* pData ) const
 {
-    switch( m_Type & PROP_TYPE_BASIC_MASK )
+    switch( m_type & PROP_TYPE_BASIC_MASK )
     {
     case PROP_TYPE_FLOAT:       x_memmove( pData, m_Data, sizeof(f32) );         break;
     case PROP_TYPE_VECTOR2:     x_memmove( pData, m_Data, sizeof(vector2) );     break;
@@ -932,9 +932,9 @@ void prop_container::GetGeneric( void* pData ) const
 //=========================================================================
 
 const char* prop_enum::node::GetName       ( void ) const      { return m_Name; }
-u32         prop_enum::node::GetType       ( void ) const      { return m_Type; }
+u32         prop_enum::node::GetType       ( void ) const      { return m_type; }
 const char* prop_enum::node::GetComment    ( void ) const      { return m_pComment; }
-void        prop_enum::node::SetFlags      ( u32 Flags )       { m_Type |= Flags; }
+void        prop_enum::node::SetFlags      ( u32 Flags )       { m_type |= Flags; }
 
 prop_enum::node::node( void )
 {
@@ -1116,7 +1116,7 @@ void prop_enum::node::Set( const char* pString, const char* pComment, u32 aFlags
     ASSERT( pString );
     ASSERT( x_strlen( pString ) < 128 );
     x_strcpy( m_Name, pString );
-    m_Type     = aFlags;
+    m_type     = aFlags;
     m_pComment = pComment;
 }
 

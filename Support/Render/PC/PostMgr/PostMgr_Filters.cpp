@@ -7,14 +7,10 @@
 //==============================================================================
 
 //==============================================================================
-//  PLATFORM CHECK
+//  BASE INCLUDES
 //==============================================================================
 
 #include "x_types.hpp"
-
-#if !defined(TARGET_PC)
-#error "This is only for the PC target platform. Please check build exclusion rules"
-#endif
 
 //==============================================================================
 //  INCLUDES
@@ -23,240 +19,342 @@
 #include "PostMgr.hpp"
 
 //==============================================================================
-//  EXTERNAL VARIABLES
-//==============================================================================
-
-extern ID3D11Device*           g_pd3dDevice;
-extern ID3D11DeviceContext*    g_pd3dContext;
-
-//==============================================================================
 //  FILE-LOCAL TYPES AND HELPERS
 //==============================================================================
 
 namespace
 {
-    // Constants
-    static const s32 kMipRampSampleCount = 256;
+// Constants
+static s32 const kMipRampSampleCount = 256;
+static f32 const kPainBlurReferenceWidth = 256.0f;
+static f32 const kPainBlurReferenceHeight = 192.0f;
+static f32 const s_ClearColorTransparent[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-    // Constant buffer layout
-    struct cb_post_filters
+// Constant buffer layout
+struct PostFilterConstants
+{
+    vector4 Params0;
+    vector4 Params1;
+    vector4 Params2;
+    vector4 Params3;
+    vector4 Params4;
+    vector4 Params5;
+    vector4 Params6;
+    vector4 ScreenWarps[MAX_POST_SCREEN_WARPS];
+};
+
+// Helper functions
+static void SetClearColor( f32 pDst[4], f32 const pSrc[4] )
+{
+    pDst[0] = pSrc[0];
+    pDst[1] = pSrc[1];
+    pDst[2] = pSrc[2];
+    pDst[3] = pSrc[3];
+}
+
+static void ReleaseFilterTarget( rtarget& target )
+{
+    rtarget_EndPass();
+    rtarget_Destroy( target );
+    target = rtarget();
+}
+
+static xbool HasTextureAndSRV( rtarget const& target )
+{
+    return rtarget_HasTexture( target ) && rtarget_HasShaderResource( target );
+}
+
+static xbool IsFilterTargetValid( rtarget const& target, u32 width, u32 height, rtarget_format format )
+{
+    return rtarget_HasRenderTarget( target ) && rtarget_HasShaderResource( target ) && ( target.Desc.Width == width ) &&
+           ( target.Desc.Height == height ) && ( target.Desc.Format == format );
+}
+
+static xbool CreateFilterTarget( rtarget& target, u32 width, u32 height, rtarget_format format, char const* pDebugName )
+{
+    if ( IsFilterTargetValid( target, width, height, format ) )
     {
-        vector4 Params0;
-        vector4 Params1;
-        vector4 Params2;
-        vector4 Params3;
-        vector4 Params4;
-        vector4 Params5;
-        vector4 Params6;
-        vector4 ScreenWarps[MAX_POST_SCREEN_WARPS];
-    };
-
-    // Helper functions
-    static
-    void ReleaseFilterTarget( rtarget& Target )
-    {
-        rtarget_Unregister( Target );
-        rtarget_Destroy( Target );
-        Target = rtarget();
-    }
-
-    static
-    void ReleaseFilterTexture( ID3D11Texture2D*& pTexture, ID3D11ShaderResourceView*& pSRV )
-    {
-        if( pSRV )
-        {
-            pSRV->Release();
-            pSRV = NULL;
-        }
-
-        if( pTexture )
-        {
-            pTexture->Release();
-            pTexture = NULL;
-        }
-    }
-
-    static
-    xbool EnsureFilterTarget( rtarget& Target, const rtarget* pSourceTarget )
-    {
-        if( !pSourceTarget || !pSourceTarget->Desc.Width || !pSourceTarget->Desc.Height )
-            return FALSE;
-
-        rtarget_registration reg;
-        reg.Policy         = RTARGET_SIZE_ABSOLUTE;
-        reg.BaseWidth      = pSourceTarget->Desc.Width;
-        reg.BaseHeight     = pSourceTarget->Desc.Height;
-        reg.Format         = pSourceTarget->Desc.Format;
-        reg.SampleCount    = 1;
-        reg.SampleQuality  = 0;
-        reg.bBindAsTexture = TRUE;
-
-        return rtarget_GetOrCreate( Target, reg );
-    }
-
-    static
-    xbool EnsureAbsoluteFilterTarget( rtarget& Target, u32 Width, u32 Height, rtarget_format Format )
-    {
-        if( !Width || !Height )
-            return FALSE;
-
-        rtarget_registration reg;
-        reg.Policy         = RTARGET_SIZE_ABSOLUTE;
-        reg.BaseWidth      = Width;
-        reg.BaseHeight     = Height;
-        reg.Format         = Format;
-        reg.SampleCount    = 1;
-        reg.SampleQuality  = 0;
-        reg.bBindAsTexture = TRUE;
-
-        return rtarget_GetOrCreate( Target, reg );
-    }
-
-    static
-    xbool CopyRenderTargetToTarget( rtarget& Destination, const rtarget* pSourceTarget )
-    {
-        if( !g_pd3dContext || !Destination.pTexture || !pSourceTarget || !pSourceTarget->pTexture )
-            return FALSE;
-
-        D3D11_TEXTURE2D_DESC sourceDesc;
-        pSourceTarget->pTexture->GetDesc( &sourceDesc );
-
-        if( sourceDesc.SampleDesc.Count > 1 )
-        {
-            g_pd3dContext->ResolveSubresource( Destination.pTexture,
-                                               0,
-                                               pSourceTarget->pTexture,
-                                               0,
-                                               sourceDesc.Format );
-        }
-        else
-        {
-            g_pd3dContext->CopyResource( Destination.pTexture, pSourceTarget->pTexture );
-        }
-
         return TRUE;
     }
 
-    static
-    const rtarget* GetCurrentPostTarget( void )
+    rtarget_EndPass();
+    rtarget_Destroy( target );
+
+    rtarget_desc desc;
+    desc.Width = width;
+    desc.Height = height;
+    desc.Format = format;
+    desc.SampleCount = 1;
+    desc.SampleQuality = 0;
+    desc.bBindAsTexture = TRUE;
+    desc.pDebugName = pDebugName;
+    SetClearColor( desc.ClearColor, s_ClearColorTransparent );
+
+    return rtarget_Create( target, desc );
+}
+
+static xbool EnsureFilterTarget( rtarget& target, rtarget const* pSourceTarget, char const* pDebugName )
+{
+    if ( !pSourceTarget || !pSourceTarget->Desc.Width || !pSourceTarget->Desc.Height )
     {
-        const rtarget* pTarget = rtarget_GetCurrentTarget( 0 );
-        if( !pTarget )
-            pTarget = g_GBufferMgr.GetGBufferTarget( GBUFFER_FINAL_COLOR );
-        if( !pTarget )
-            pTarget = rtarget_GetBackBuffer();
+        return FALSE;
+    }
+
+    return CreateFilterTarget( target, pSourceTarget->Desc.Width, pSourceTarget->Desc.Height,
+                               pSourceTarget->Desc.Format, pDebugName );
+}
+
+static xbool EnsureAbsoluteFilterTarget( rtarget& target, u32 width, u32 height, rtarget_format format,
+                                         char const* pDebugName )
+{
+    if ( !width || !height )
+    {
+        return FALSE;
+    }
+
+    return CreateFilterTarget( target, width, height, format, pDebugName );
+}
+
+static rtarget_color_attachment_desc BuildColorAttachment( rtarget const* pTarget, rtarget_load_op loadOp )
+{
+    rtarget_color_attachment_desc color;
+    color.pTarget = pTarget;
+    color.LoadOp = loadOp;
+    color.StoreOp = RTARGET_STORE_STORE;
+    SetClearColor( color.ClearColor, s_ClearColorTransparent );
+    return color;
+}
+
+static rtarget_depth_attachment_desc BuildDepthAttachment( rtarget const* pTarget, rtarget_load_op loadOp )
+{
+    rtarget_depth_attachment_desc depth;
+    depth.pTarget        = pTarget;
+    depth.DepthLoadOp    = loadOp;
+    depth.DepthStoreOp   = RTARGET_STORE_STORE;
+    depth.StencilLoadOp  = loadOp;
+    depth.StencilStoreOp = RTARGET_STORE_STORE;
+    depth.ClearDepth     = 1.0f;
+    depth.ClearStencil   = 0;
+    return depth;
+}
+
+static xbool BeginFilterColorPass( rtarget const* pTarget, rtarget_load_op loadOp )
+{
+    if ( !pTarget || !rtarget_HasRenderTarget( *pTarget ) )
+    {
+        return FALSE;
+    }
+
+    rtarget_color_attachment_desc color = BuildColorAttachment( pTarget, loadOp );
+
+    rtarget_EndPass();
+    return rtarget_BeginPass( &color, 1, NULL );
+}
+
+static xbool BeginFilterColorDepthPass( rtarget const* pTarget, rtarget const* pDepthTarget,
+                                        rtarget_load_op colorLoadOp, rtarget_load_op depthLoadOp )
+{
+    if ( !pTarget || !rtarget_HasRenderTarget( *pTarget ) )
+    {
+        return FALSE;
+    }
+
+    rtarget_color_attachment_desc color = BuildColorAttachment( pTarget, colorLoadOp );
+
+    rtarget_depth_attachment_desc        depth;
+    rtarget_depth_attachment_desc const* pDepth = NULL;
+    if ( pDepthTarget )
+    {
+        if ( !rtarget_HasDepthStencil( *pDepthTarget ) )
+        {
+            return FALSE;
+        }
+
+        depth = BuildDepthAttachment( pDepthTarget, depthLoadOp );
+        pDepth = &depth;
+    }
+
+    rtarget_EndPass();
+    return rtarget_BeginPass( &color, 1, pDepth );
+}
+
+static xbool CopyRenderTargetToTarget( rtarget& destination, rtarget const* pSourceTarget )
+{
+    if ( !pSourceTarget )
+    {
+        return FALSE;
+    }
+
+    rtarget_EndPass();
+    return rtarget_Copy( destination, *pSourceTarget );
+}
+
+static rtarget const* GetCurrentPostTarget( void )
+{
+    rtarget const* pTarget = rtarget_GetCurrentTarget( 0 );
+    if ( pTarget )
+    {
         return pTarget;
     }
+
+    frame_render_targets targets;
+    return g_GBufferMgr.GetFrameTargets( targets ) ? targets.pSceneColor : NULL;
 }
+
+static xbool BindFilterConstants( shader const& shader, PostFilterConstants const& constants )
+{
+    return shader_PushUniformData( shader, SHADER_STAGE_PIXEL, "FilterParams", &constants, sizeof( constants ) );
+}
+
+static xbool BindFilterSampler( shader const& shader, char const* pName, shader_resource const* pResource,
+                                rstate_sampler const& sampler )
+{
+    return shader_BindSampler( shader, SHADER_STAGE_PIXEL, pName, pResource, &sampler );
+}
+
+static void BuildFilterConstants( PostFilterConstants& constants, f32 motionIntensity, f32 zoom, radian angle,
+                                  f32 alphaSub, f32 alphaScale, f32 centerU, f32 centerV )
+{
+    x_memset( &constants, 0, sizeof( constants ) );
+
+    constants.Params0.Set( x_clamp( motionIntensity, 0.0f, 1.0f ), zoom, x_sin( angle ), x_cos( angle ) );
+    constants.Params1.Set( alphaSub / 255.0f, alphaScale / 255.0f, 0.0f, 0.0f );
+    constants.Params6.Set( centerU, centerV, 0.0f, 0.0f );
+}
+
+static void BuildScreenWarpConstants( PostFilterConstants& constants, PostScreenWarpParams const& screenWarp,
+                                      u32 copyWidth, u32 copyHeight )
+{
+    x_memset( &constants, 0, sizeof( constants ) );
+
+    constants.Params2.Set( 0.0f, ( copyWidth > 0 ) ? ( 1.0f / static_cast<f32>( copyWidth ) ) : 0.0f,
+                           ( copyHeight > 0 ) ? ( 1.0f / static_cast<f32>( copyHeight ) ) : 0.0f, 0.0f );
+
+    view const* pView = eng_GetView();
+    if ( pView )
+    {
+        s32 warpCount = 0;
+        for ( s32 i = 0; ( i < screenWarp.Count ) && ( warpCount < MAX_POST_SCREEN_WARPS ); ++i )
+        {
+            if ( pView->SphereInView( screenWarp.WorldPos[i], screenWarp.Radius[i], view::WORLD ) ==
+                 view::VISIBLE_NONE )
+            {
+                continue;
+            }
+
+            vector3 const screenPos = pView->PointToScreen( screenWarp.WorldPos[i], view::WORLD );
+            f32 const     screenRadius =
+                pView->CalcScreenSize( screenWarp.WorldPos[i], screenWarp.Radius[i], view::WORLD ) * 0.5f;
+            if ( screenRadius <= 0.0f )
+            {
+                continue;
+            }
+
+            constants.ScreenWarps[warpCount].Set( screenPos.GetX(), screenPos.GetY(), screenRadius,
+                                                  MAX( screenWarp.Amount[i], 0.001f ) );
+            warpCount++;
+        }
+
+        constants.Params2.GetX() = static_cast<f32>( warpCount );
+    }
+}
+} // namespace
 
 //==============================================================================
 //  FILTER RESOURCE MANAGEMENT
 //==============================================================================
 
-post_mgr::filter_resources::filter_resources()
+PostMgr::FilterResources::FilterResources()
 {
-    History           = rtarget();
-    Post[0]           = rtarget();
-    Post[1]           = rtarget();
-    for( s32 i = 0; i < MAX_POST_MIPS; ++i )
+    History = rtarget();
+    Post[0] = rtarget();
+    Post[1] = rtarget();
+    for ( s32 i = 0; i < MAX_POST_MIPS; ++i )
+    {
         Mip[i] = rtarget();
-    ActiveSourceIndex = 0;
-    ActiveTargetIndex = 1;
-    bPostChainActive  = FALSE;
-    pMotionBlurPS      = NULL;
-    pMipCompositePS    = NULL;
-    pRadialBlurPS      = NULL;
-    pScreenWarpPS      = NULL;
-    pNoisePS           = NULL;
-    pConstantBuffer    = NULL;
-    pMipRampTexture    = NULL;
-    pMipRampSRV        = NULL;
-    CopyWidth          = 0;
-    CopyHeight         = 0;
-    CopyFormat         = RTARGET_FORMAT_COUNT;
-    MipSourceWidth     = 0;
-    MipSourceHeight    = 0;
-    MipSourceFormat    = RTARGET_FORMAT_COUNT;
-    bHistoryValid      = FALSE;
+    }
+    Pain = rtarget();
+    PainScratch = rtarget();
+    ActiveSourceIndex    = 0;
+    ActiveTargetIndex    = 1;
+    bPostChainActive     = FALSE;
+    MotionBlurPS         = shader();
+    MipDownsamplePS      = shader();
+    PainBlurPS           = shader();
+    MipCompositePS       = shader();
+    MipCompositeCustomPS = shader();
+    RadialBlurPS         = shader();
+    ScreenWarpPS         = shader();
+    NoisePS              = shader();
+    ScreenFadePS         = shader();
+    MipRampTexture       = vram_texture();
+    LinearSampler        = rstate_sampler();
+    PointSampler         = rstate_sampler();
+    CopyWidth            = 0;
+    CopyHeight           = 0;
+    CopyFormat           = RTARGET_FORMAT_COUNT;
+    MipSourceWidth       = 0;
+    MipSourceHeight      = 0;
+    MipSourceFormat      = RTARGET_FORMAT_COUNT;
+    bHistoryValid        = FALSE;
 }
 
 //==============================================================================
 
-void post_mgr::filter_resources::Initialize( void )
+void PostMgr::FilterResources::Initialize( void )
 {
     Shutdown();
 
-    if( !g_pd3dDevice )
-        return;
+    shader_LoadFromEcs( MotionBlurPS, "post_filters_motion_blur_ps.ps.ecs" );
+    shader_LoadFromEcs( MipDownsamplePS, "post_filters_mip_downsample_ps.ps.ecs" );
+    shader_LoadFromEcs( PainBlurPS, "post_filters_pain_blur_ps.ps.ecs" );
+    shader_LoadFromEcs( MipCompositePS, "post_filters_mip_composite_ps.ps.ecs" );
+    shader_LoadFromEcs( MipCompositeCustomPS, "post_filters_mip_composite_custom_ps.ps.ecs" );
+    shader_LoadFromEcs( RadialBlurPS, "post_filters_radial_blur_ps.ps.ecs" );
+    shader_LoadFromEcs( ScreenWarpPS, "post_filters_screen_warp_ps.ps.ecs" );
+    shader_LoadFromEcs( NoisePS, "post_filters_noise_ps.ps.ecs" );
+    shader_LoadFromEcs( ScreenFadePS, "post_filters_screen_fade_ps.ps.ecs" );
+    rstate_CreateSampler( LinearSampler, RSTATE_SAMPLER_PRESET_LINEAR_CLAMP, "PostFilterLinear" );
+    rstate_CreateSampler( PointSampler, RSTATE_SAMPLER_PRESET_POINT_CLAMP, "PostFilterPoint" );
 
-    char shaderPath[256];
-    x_sprintf( shaderPath, "a51_post_filters.hlsl" );
-
-    char* pSource = shader_LoadSourceFromFile( shaderPath );
-    if( !pSource )
-        return;
-
-    pMotionBlurPS   = shader_CompilePixel( pSource, "PS_MotionBlur", "ps_5_0", shaderPath );
-    pMipCompositePS = shader_CompilePixel( pSource, "PS_MipComposite", "ps_5_0", shaderPath );
-    pRadialBlurPS   = shader_CompilePixel( pSource, "PS_RadialBlur", "ps_5_0", shaderPath );
-    pScreenWarpPS   = shader_CompilePixel( pSource, "PS_ScreenWarp", "ps_5_0", shaderPath );
-    pNoisePS        = shader_CompilePixel( pSource, "PS_Noise", "ps_5_0", shaderPath );
-    pConstantBuffer = shader_CreateConstantBuffer( sizeof(cb_post_filters), CB_TYPE_DYNAMIC );
-
-    x_free( pSource );
+    if ( !MotionBlurPS || !MipDownsamplePS || !PainBlurPS || !MipCompositePS || !MipCompositeCustomPS ||
+         !RadialBlurPS || !ScreenWarpPS || !NoisePS || !ScreenFadePS || !LinearSampler || !PointSampler )
+    {
+        x_DebugMsg( "PostMgr: WARNING - Failed to initialize filter resources\n" );
+    }
 }
 
 //==============================================================================
 
-void post_mgr::filter_resources::Shutdown( void )
+void PostMgr::FilterResources::Shutdown( void )
 {
     ReleaseFilterTarget( History );
     ReleaseFilterTarget( Post[0] );
     ReleaseFilterTarget( Post[1] );
-    for( s32 i = 0; i < MAX_POST_MIPS; ++i )
+    for ( s32 i = 0; i < MAX_POST_MIPS; ++i )
+    {
         ReleaseFilterTarget( Mip[i] );
-    ReleaseFilterTexture( pMipRampTexture, pMipRampSRV );
-
-    if( pMotionBlurPS )
-    {
-        pMotionBlurPS->Release();
-        pMotionBlurPS = NULL;
     }
+    ReleaseFilterTarget( Pain );
+    ReleaseFilterTarget( PainScratch );
+    vram_DestroyTexture( MipRampTexture );
+    rstate_DestroySampler( LinearSampler );
+    rstate_DestroySampler( PointSampler );
 
-    if( pMipCompositePS )
-    {
-        pMipCompositePS->Release();
-        pMipCompositePS = NULL;
-    }
+    shader_Destroy( MotionBlurPS );
+    shader_Destroy( MipDownsamplePS );
+    shader_Destroy( PainBlurPS );
+    shader_Destroy( MipCompositePS );
+    shader_Destroy( MipCompositeCustomPS );
+    shader_Destroy( RadialBlurPS );
+    shader_Destroy( ScreenWarpPS );
+    shader_Destroy( NoisePS );
+    shader_Destroy( ScreenFadePS );
 
-    if( pRadialBlurPS )
-    {
-        pRadialBlurPS->Release();
-        pRadialBlurPS = NULL;
-    }
-
-    if( pScreenWarpPS )
-    {
-        pScreenWarpPS->Release();
-        pScreenWarpPS = NULL;
-    }
-
-    if( pNoisePS )
-    {
-        pNoisePS->Release();
-        pNoisePS = NULL;
-    }
-
-    if( pConstantBuffer )
-    {
-        pConstantBuffer->Release();
-        pConstantBuffer = NULL;
-    }
-
-    CopyWidth     = 0;
-    CopyHeight    = 0;
-    CopyFormat    = RTARGET_FORMAT_COUNT;
-    MipSourceWidth  = 0;
+    CopyWidth = 0;
+    CopyHeight = 0;
+    CopyFormat = RTARGET_FORMAT_COUNT;
+    MipSourceWidth = 0;
     MipSourceHeight = 0;
     MipSourceFormat = RTARGET_FORMAT_COUNT;
     bHistoryValid = FALSE;
@@ -265,20 +363,16 @@ void post_mgr::filter_resources::Shutdown( void )
 
 //==============================================================================
 
-xbool post_mgr::filter_resources::EnsureCopyTargets( const rtarget* pSourceTarget )
+xbool PostMgr::FilterResources::EnsureCopyTargets( rtarget const* pSourceTarget )
 {
-    if( !pSourceTarget || !pSourceTarget->pTexture )
+    if ( !pSourceTarget || !rtarget_HasTexture( *pSourceTarget ) )
+    {
         return FALSE;
+    }
 
-    if( History.pTexture &&
-        History.pShaderResourceView &&
-        Post[0].pTexture &&
-        Post[0].pShaderResourceView &&
-        Post[1].pTexture &&
-        Post[1].pShaderResourceView &&
-        (CopyWidth  == pSourceTarget->Desc.Width) &&
-        (CopyHeight == pSourceTarget->Desc.Height) &&
-        (CopyFormat == pSourceTarget->Desc.Format) )
+    if ( HasTextureAndSRV( History ) && HasTextureAndSRV( Post[0] ) && HasTextureAndSRV( Post[1] ) &&
+         ( CopyWidth == pSourceTarget->Desc.Width ) && ( CopyHeight == pSourceTarget->Desc.Height ) &&
+         ( CopyFormat == pSourceTarget->Desc.Format ) )
     {
         return TRUE;
     }
@@ -286,29 +380,31 @@ xbool post_mgr::filter_resources::EnsureCopyTargets( const rtarget* pSourceTarge
     ReleaseFilterTarget( History );
     ReleaseFilterTarget( Post[0] );
     ReleaseFilterTarget( Post[1] );
-    CopyWidth     = 0;
-    CopyHeight    = 0;
-    CopyFormat    = RTARGET_FORMAT_COUNT;
+    CopyWidth = 0;
+    CopyHeight = 0;
+    CopyFormat = RTARGET_FORMAT_COUNT;
     bHistoryValid = FALSE;
     ResetPostChain();
 
-    if( !EnsureFilterTarget( History, pSourceTarget ) )
+    if ( !EnsureFilterTarget( History, pSourceTarget, "PostFilterHistory" ) )
+    {
         return FALSE;
+    }
 
-    if( !EnsureFilterTarget( Post[0], pSourceTarget ) )
+    if ( !EnsureFilterTarget( Post[0], pSourceTarget, "PostFilterPost0" ) )
     {
         ReleaseFilterTarget( History );
         return FALSE;
     }
 
-    if( !EnsureFilterTarget( Post[1], pSourceTarget ) )
+    if ( !EnsureFilterTarget( Post[1], pSourceTarget, "PostFilterPost1" ) )
     {
         ReleaseFilterTarget( History );
         ReleaseFilterTarget( Post[0] );
         return FALSE;
     }
 
-    CopyWidth  = pSourceTarget->Desc.Width;
+    CopyWidth = pSourceTarget->Desc.Width;
     CopyHeight = pSourceTarget->Desc.Height;
     CopyFormat = pSourceTarget->Desc.Format;
     return TRUE;
@@ -316,52 +412,58 @@ xbool post_mgr::filter_resources::EnsureCopyTargets( const rtarget* pSourceTarge
 
 //==============================================================================
 
-xbool post_mgr::filter_resources::EnsureMipTargets( const rtarget* pSourceTarget )
+xbool PostMgr::FilterResources::EnsureMipTargets( rtarget const* pSourceTarget )
 {
-    if( !pSourceTarget || !pSourceTarget->pTexture )
+    if ( !pSourceTarget || !rtarget_HasTexture( *pSourceTarget ) )
+    {
         return FALSE;
+    }
 
     xbool bTargetsValid = TRUE;
-    for( s32 i = 0; i < MAX_POST_MIPS; ++i )
+    for ( s32 i = 0; i < MAX_POST_MIPS; ++i )
     {
-        if( !Mip[i].pTexture || !Mip[i].pShaderResourceView )
+        if ( !HasTextureAndSRV( Mip[i] ) )
         {
             bTargetsValid = FALSE;
             break;
         }
     }
 
-    if( bTargetsValid &&
-        (MipSourceWidth  == pSourceTarget->Desc.Width) &&
-        (MipSourceHeight == pSourceTarget->Desc.Height) &&
-        (MipSourceFormat == pSourceTarget->Desc.Format) )
+    if ( bTargetsValid && ( MipSourceWidth == pSourceTarget->Desc.Width ) &&
+         ( MipSourceHeight == pSourceTarget->Desc.Height ) && ( MipSourceFormat == pSourceTarget->Desc.Format ) )
     {
         return TRUE;
     }
 
-    for( s32 i = 0; i < MAX_POST_MIPS; ++i )
+    for ( s32 i = 0; i < MAX_POST_MIPS; ++i )
+    {
         ReleaseFilterTarget( Mip[i] );
+    }
 
-    MipSourceWidth  = 0;
+    MipSourceWidth = 0;
     MipSourceHeight = 0;
     MipSourceFormat = RTARGET_FORMAT_COUNT;
 
-    u32 Width  = MAX( pSourceTarget->Desc.Width  >> 1, 1u );
-    u32 Height = MAX( pSourceTarget->Desc.Height >> 1, 1u );
-    for( s32 i = 0; i < MAX_POST_MIPS; ++i )
+    u32                width = MAX( ( pSourceTarget->Desc.Width * 2u + 2u ) / 5u, 1u );
+    u32                height = MAX( ( pSourceTarget->Desc.Height * 2u + 2u ) / 5u, 1u );
+    static char const* sMipTargetNames[MAX_POST_MIPS] = { "PostFilterMip0", "PostFilterMip1", "PostFilterMip2" };
+
+    for ( s32 i = 0; i < MAX_POST_MIPS; ++i )
     {
-        if( !EnsureAbsoluteFilterTarget( Mip[i], Width, Height, pSourceTarget->Desc.Format ) )
+        if ( !EnsureAbsoluteFilterTarget( Mip[i], width, height, pSourceTarget->Desc.Format, sMipTargetNames[i] ) )
         {
-            for( s32 j = 0; j <= i; ++j )
+            for ( s32 j = 0; j <= i; ++j )
+            {
                 ReleaseFilterTarget( Mip[j] );
+            }
             return FALSE;
         }
 
-        Width  = MAX( Width  >> 1, 1u );
-        Height = MAX( Height >> 1, 1u );
+        width = MAX( width >> 1, 1u );
+        height = MAX( height >> 1, 1u );
     }
 
-    MipSourceWidth  = pSourceTarget->Desc.Width;
+    MipSourceWidth = pSourceTarget->Desc.Width;
     MipSourceHeight = pSourceTarget->Desc.Height;
     MipSourceFormat = pSourceTarget->Desc.Format;
     return TRUE;
@@ -369,29 +471,37 @@ xbool post_mgr::filter_resources::EnsureMipTargets( const rtarget* pSourceTarget
 
 //==============================================================================
 
-xbool post_mgr::filter_resources::BeginPostChain( const rtarget* pSourceTarget )
+xbool PostMgr::FilterResources::BeginPostChain( rtarget const* pSourceTarget )
 {
-    if( !EnsureCopyTargets( pSourceTarget ) )
+    if ( !EnsureCopyTargets( pSourceTarget ) )
+    {
         return FALSE;
+    }
 
-    if( !CopyRenderTargetToTarget( Post[0], pSourceTarget ) )
+    if ( !CopyRenderTargetToTarget( Post[0], pSourceTarget ) )
+    {
         return FALSE;
+    }
 
     ActiveSourceIndex = 0;
     ActiveTargetIndex = 1;
-    bPostChainActive  = TRUE;
+    bPostChainActive = TRUE;
     return TRUE;
 }
 
 //==============================================================================
 
-xbool post_mgr::filter_resources::CaptureHistory( const rtarget* pSourceTarget )
+xbool PostMgr::FilterResources::CaptureHistory( rtarget const* pSourceTarget )
 {
-    if( !EnsureCopyTargets( pSourceTarget ) )
+    if ( !EnsureCopyTargets( pSourceTarget ) )
+    {
         return FALSE;
+    }
 
-    if( !CopyRenderTargetToTarget( History, pSourceTarget ) )
+    if ( !CopyRenderTargetToTarget( History, pSourceTarget ) )
+    {
         return FALSE;
+    }
 
     bHistoryValid = TRUE;
     return TRUE;
@@ -399,7 +509,7 @@ xbool post_mgr::filter_resources::CaptureHistory( const rtarget* pSourceTarget )
 
 //==============================================================================
 
-void post_mgr::filter_resources::InvalidateHistory( void )
+void PostMgr::FilterResources::InvalidateHistory( void )
 {
     bHistoryValid = FALSE;
     ResetPostChain();
@@ -407,78 +517,84 @@ void post_mgr::filter_resources::InvalidateHistory( void )
 
 //==============================================================================
 
-const rtarget* post_mgr::filter_resources::GetPostSource( void ) const
+rtarget const* PostMgr::FilterResources::GetPostSource( void ) const
 {
-    if( !bPostChainActive )
+    if ( !bPostChainActive )
+    {
         return NULL;
+    }
 
     return &Post[ActiveSourceIndex];
 }
 
 //==============================================================================
 
-const rtarget* post_mgr::filter_resources::GetMipTarget( s32 Index ) const
+rtarget const* PostMgr::FilterResources::GetMipTarget( s32 index ) const
 {
-    if( (Index < 0) || (Index >= MAX_POST_MIPS) )
+    if ( ( index < 0 ) || ( index >= MAX_POST_MIPS ) )
+    {
         return NULL;
+    }
 
-    if( !Mip[Index].pTexture || !Mip[Index].pShaderResourceView )
+    if ( !HasTextureAndSRV( Mip[index] ) )
+    {
         return NULL;
+    }
 
-    return &Mip[Index];
+    return &Mip[index];
 }
 
 //==============================================================================
 
-xbool post_mgr::filter_resources::BindPostTarget( void )
+xbool PostMgr::FilterResources::BindPostTarget( void )
 {
-    if( !bPostChainActive )
+    if ( !bPostChainActive )
+    {
         return FALSE;
+    }
 
-    return rtarget_SetTargets( &Post[ActiveTargetIndex], 1, NULL );
+    return BeginFilterColorPass( &Post[ActiveTargetIndex], RTARGET_LOAD_CLEAR );
 }
 
 //==============================================================================
 
-xbool post_mgr::filter_resources::PrimePostTarget( void )
+xbool PostMgr::FilterResources::PrimePostTarget( void )
 {
-    const rtarget* pSource = GetPostSource();
-    if( !pSource || !BindPostTarget() )
+    rtarget const* pSource = GetPostSource();
+    if ( !pSource || !BindPostTarget() )
+    {
         return FALSE;
+    }
 
-    composite_Blit( *pSource,
-                    COMPOSITE_BLEND_COPY,
-                    1.0f,
-                    NULL,
-                    STATE_SAMPLER_POINT_CLAMP );
+    composite_Blit( *pSource, COMPOSITE_BLEND_COPY, 1.0f, NULL, RSTATE_SAMPLER_PRESET_POINT_CLAMP );
     return TRUE;
 }
 
 //==============================================================================
 
-void post_mgr::filter_resources::SwapPostTargets( void )
+void PostMgr::FilterResources::SwapPostTargets( void )
 {
-    if( !bPostChainActive )
+    if ( !bPostChainActive )
+    {
         return;
+    }
 
-    s32 index         = ActiveSourceIndex;
+    s32 index = ActiveSourceIndex;
     ActiveSourceIndex = ActiveTargetIndex;
     ActiveTargetIndex = index;
 }
 
 //==============================================================================
 
-xbool post_mgr::filter_resources::ResolvePostChain( void )
+xbool PostMgr::FilterResources::ResolvePostChain( void )
 {
-    const rtarget* pSource = GetPostSource();
-    if( !pSource )
+    rtarget const* pSource = GetPostSource();
+    if ( !pSource )
+    {
         return FALSE;
+    }
 
-    composite_Blit( *pSource,
-                    COMPOSITE_BLEND_COPY,
-                    1.0f,
-                    NULL,
-                    STATE_SAMPLER_POINT_CLAMP );
+    composite_Blit( *pSource, COMPOSITE_BLEND_COPY, 1.0f, NULL, RSTATE_SAMPLER_PRESET_POINT_CLAMP );
 
     ResetPostChain();
     return TRUE;
@@ -486,453 +602,524 @@ xbool post_mgr::filter_resources::ResolvePostChain( void )
 
 //==============================================================================
 
-void post_mgr::filter_resources::ResetPostChain( void )
+void PostMgr::FilterResources::ResetPostChain( void )
 {
     ActiveSourceIndex = 0;
     ActiveTargetIndex = 1;
-    bPostChainActive  = FALSE;
+    bPostChainActive = FALSE;
 }
 
 //==============================================================================
 
-xbool post_mgr::filter_resources::IsPostChainActive( void ) const
+xbool PostMgr::FilterResources::IsPostChainActive( void ) const
 {
     return bPostChainActive;
 }
 
 //==============================================================================
 
-xbool post_mgr::filter_resources::UpdateMipRampTexture( const xbitmap* pBitmap )
+xbool PostMgr::FilterResources::UpdateMipRampTexture( xbitmap const* pBitmap )
 {
-    if( !g_pd3dDevice || !g_pd3dContext || !pBitmap )
-        return FALSE;
-
-    if( !pMipRampTexture || !pMipRampSRV )
+    if ( !pBitmap )
     {
-        ReleaseFilterTexture( pMipRampTexture, pMipRampSRV );
+        return FALSE;
+    }
 
-        D3D11_TEXTURE2D_DESC desc;
-        x_memset( &desc, 0, sizeof(desc) );
-        desc.Width              = kMipRampSampleCount;
-        desc.Height             = 1;
-        desc.MipLevels          = 1;
-        desc.ArraySize          = 1;
-        desc.Format             = DXGI_FORMAT_R8G8B8A8_UNORM;
-        desc.SampleDesc.Count   = 1;
-        desc.Usage              = D3D11_USAGE_DEFAULT;
-        desc.BindFlags          = D3D11_BIND_SHADER_RESOURCE;
+    if ( !vram_IsValid( MipRampTexture ) )
+    {
+        vram_texture_desc desc;
+        desc.Width = kMipRampSampleCount;
+        desc.Height = 1;
+        desc.Format = VRAM_TEXTURE_FORMAT_RGBA8;
+        desc.UsageFlags = VRAM_TEXTURE_USAGE_SAMPLED;
+        desc.pDebugName = "PostFilterMipRamp";
 
-        HRESULT hr = g_pd3dDevice->CreateTexture2D( &desc, NULL, &pMipRampTexture );
-        if( FAILED(hr) || !pMipRampTexture )
+        if ( !vram_CreateTexture( MipRampTexture, desc ) )
         {
-            ReleaseFilterTexture( pMipRampTexture, pMipRampSRV );
-            return FALSE;
-        }
-
-        D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-        x_memset( &srvDesc, 0, sizeof(srvDesc) );
-        srvDesc.Format                    = desc.Format;
-        srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
-        srvDesc.Texture2D.MipLevels       = 1;
-        srvDesc.Texture2D.MostDetailedMip = 0;
-
-        hr = g_pd3dDevice->CreateShaderResourceView( pMipRampTexture, &srvDesc, &pMipRampSRV );
-        if( FAILED(hr) || !pMipRampSRV )
-        {
-            ReleaseFilterTexture( pMipRampTexture, pMipRampSRV );
             return FALSE;
         }
     }
 
-    const s32 Width  = pBitmap->GetWidth();
-    const s32 Height = pBitmap->GetHeight();
-    const s32 Count  = Width * Height;
-    if( Count <= 0 )
+    s32 const width = pBitmap->GetWidth();
+    s32 const height = pBitmap->GetHeight();
+    s32 const count = width * height;
+    if ( count <= 0 )
+    {
         return FALSE;
-
-    u8 Ramp[kMipRampSampleCount * 4];
-    x_memset( Ramp, 0, sizeof(Ramp) );
-
-    for( s32 i = 0; i < kMipRampSampleCount; ++i )
-    {
-        const f32 SampleT  = (kMipRampSampleCount > 1) ? ((f32)i / (f32)(kMipRampSampleCount - 1)) : 0.0f;
-        const s32 SourceIX = MIN( (s32)(SampleT * (f32)(Count - 1) + 0.5f), Count - 1 );
-        const s32 SourceX  = SourceIX % Width;
-        const s32 SourceY  = SourceIX / Width;
-        const xcolor Color = pBitmap->GetPixelColor( SourceX, SourceY );
-
-        Ramp[i * 4 + 0] = Color.R;
-        Ramp[i * 4 + 1] = Color.G;
-        Ramp[i * 4 + 2] = Color.B;
-        Ramp[i * 4 + 3] = Color.A;
     }
 
-    g_pd3dContext->UpdateSubresource( pMipRampTexture, 0, NULL, Ramp, kMipRampSampleCount * 4, 0 );
-    return TRUE;
-}
+    u8 ramp[kMipRampSampleCount * 4];
+    x_memset( ramp, 0, sizeof( ramp ) );
 
-//==============================================================================
-
-void post_mgr::filter_resources::UpdateConstants( f32 MotionIntensity, f32 Zoom, radian Angle, f32 AlphaSub, f32 AlphaScale, f32 CenterU, f32 CenterV )
-{
-    if( !pConstantBuffer || !g_pd3dContext )
-        return;
-
-    cb_post_filters cbData;
-    x_memset( &cbData, 0, sizeof(cbData) );
-    cbData.Params0.Set( x_clamp( MotionIntensity, 0.0f, 1.0f ),
-                        Zoom,
-                        x_sin( Angle ),
-                        x_cos( Angle ) );
-    cbData.Params1.Set( AlphaSub / 255.0f,
-                        AlphaScale / 255.0f,
-                        0.0f,
-                        0.0f );
-    cbData.Params6.Set( CenterU,
-                        CenterV,
-                        0.0f,
-                        0.0f );
-
-    shader_UpdateConstantBuffer( pConstantBuffer, &cbData, sizeof(cb_post_filters) );
-    g_pd3dContext->PSSetConstantBuffers( 4, 1, &pConstantBuffer );
-}
-
-//==============================================================================
-
-void post_mgr::filter_resources::UpdateScreenWarpConstants( const post_screen_warp_params& ScreenWarp )
-{
-    if( !pConstantBuffer || !g_pd3dContext )
-        return;
-
-    cb_post_filters cbData;
-    x_memset( &cbData, 0, sizeof(cbData) );
-
-    cbData.Params2.Set( 0.0f,
-                        (CopyWidth  > 0) ? (1.0f / (f32)CopyWidth)  : 0.0f,
-                        (CopyHeight > 0) ? (1.0f / (f32)CopyHeight) : 0.0f,
-                        0.0f );
-
-    const view* pView = eng_GetView();
-    if( pView )
+    for ( s32 i = 0; i < kMipRampSampleCount; ++i )
     {
-        s32 WarpCount = 0;
-        for( s32 i = 0; (i < ScreenWarp.Count) && (WarpCount < MAX_POST_SCREEN_WARPS); ++i )
-        {
-            if( pView->SphereInView( ScreenWarp.WorldPos[i], ScreenWarp.Radius[i], view::WORLD ) == view::VISIBLE_NONE )
-                continue;
+        f32 const    sampleT = ( kMipRampSampleCount > 1 )
+                                   ? ( static_cast<f32>( i ) / static_cast<f32>( kMipRampSampleCount - 1 ) )
+                                   : 0.0f;
+        s32 const    sourceIx = MIN( static_cast<s32>( sampleT * static_cast<f32>( count - 1 ) + 0.5f ), count - 1 );
+        s32 const    sourceX = sourceIx % width;
+        s32 const    sourceY = sourceIx / width;
+        xcolor const color = pBitmap->GetPixelColor( sourceX, sourceY );
 
-            const vector3 ScreenPos = pView->PointToScreen( ScreenWarp.WorldPos[i], view::WORLD );
-            const f32 ScreenRadius  = pView->CalcScreenSize( ScreenWarp.WorldPos[i], ScreenWarp.Radius[i], view::WORLD ) * 0.5f;
-            if( ScreenRadius <= 0.0f )
-                continue;
-
-            cbData.ScreenWarps[WarpCount].Set( ScreenPos.GetX(),
-                                               ScreenPos.GetY(),
-                                               ScreenRadius,
-                                               MAX( ScreenWarp.Amount[i], 0.001f ) );
-            WarpCount++;
-        }
-
-        cbData.Params2.GetX() = (f32)WarpCount;
+        ramp[i * 4 + 0] = color.R;
+        ramp[i * 4 + 1] = color.G;
+        ramp[i * 4 + 2] = color.B;
+        ramp[i * 4 + 3] = color.A;
     }
 
-    shader_UpdateConstantBuffer( pConstantBuffer, &cbData, sizeof(cb_post_filters) );
-    g_pd3dContext->PSSetConstantBuffers( 4, 1, &pConstantBuffer );
+    vram_texture_upload_desc upload;
+    upload.Region.Width = kMipRampSampleCount;
+    upload.Region.Height = 1;
+    upload.Region.Depth = 1;
+    upload.pData = ramp;
+    upload.Size = kMipRampSampleCount * 4;
+    upload.RowPitch = kMipRampSampleCount * 4;
+    upload.SlicePitch = kMipRampSampleCount * 4;
+    upload.bCycle = TRUE;
+
+    return vram_UploadTexture( MipRampTexture, upload );
 }
 
 //==============================================================================
+
 //  EFFECT IMPLEMENTATIONS
 //==============================================================================
 
-void post_mgr::ExecuteMotionBlur( void )
+void PostMgr::ExecuteMotionBlur( void )
 {
-    if( !g_pd3dContext || !m_FilterResources.pMotionBlurPS || !m_FilterResources.bHistoryValid || !m_FilterResources.History.pShaderResourceView )
+    if ( !m_FilterResources.MotionBlurPS || !m_FilterResources.bHistoryValid ||
+         !rtarget_HasShaderResource( m_FilterResources.History ) )
+    {
         return;
+    }
 
-    if( !GetCurrentPostTarget() )
+    if ( !GetCurrentPostTarget() )
+    {
         return;
+    }
 
-    PrepareFullscreenQuad();
-    m_FilterResources.UpdateConstants( m_MotionBlur.Intensity, 1.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f );
+    PostFilterConstants constants;
+    BuildFilterConstants( constants, m_motionBlur.Intensity, 1.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f );
+    if ( !BindFilterConstants( m_FilterResources.MotionBlurPS, constants ) )
+    {
+        return;
+    }
 
-    composite_Blit( m_FilterResources.History,
-                    COMPOSITE_BLEND_ALPHA,
-                    1.0f,
-                    m_FilterResources.pMotionBlurPS,
-                    STATE_SAMPLER_LINEAR_CLAMP );
-
-    ID3D11ShaderResourceView* pNullSRV = NULL;
-    g_pd3dContext->PSSetShaderResources( 0, 1, &pNullSRV );
+    composite_Blit( m_FilterResources.History, COMPOSITE_BLEND_ALPHA, 1.0f, &m_FilterResources.MotionBlurPS,
+                    RSTATE_SAMPLER_PRESET_LINEAR_CLAMP, "PostSource" );
 }
 
 //==============================================================================
 
-void post_mgr::ExecuteRadialBlur( void )
+void PostMgr::ExecuteRadialBlur( void )
 {
-    const rtarget* pSource = m_FilterResources.GetPostSource();
-    if( !g_pd3dContext || !m_FilterResources.pRadialBlurPS || !pSource )
+    rtarget const* pSource = m_FilterResources.GetPostSource();
+    if ( !m_FilterResources.RadialBlurPS || !pSource )
+    {
         return;
+    }
 
     BuildScreenMips( 1 );
 
-    const rtarget* pBlurSource = m_FilterResources.GetMipTarget( 0 );
-    if( !pBlurSource || !pBlurSource->pShaderResourceView )
+    rtarget const* pBlurSource = m_FilterResources.GetMipTarget( 0 );
+    if ( !pBlurSource || !rtarget_HasShaderResource( *pBlurSource ) )
+    {
         pBlurSource = pSource;
+    }
 
-    if( !m_FilterResources.PrimePostTarget() )
+    if ( !m_FilterResources.PrimePostTarget() )
+    {
         return;
+    }
 
-    PrepareFullscreenQuad();
+    f32 const centerU = ( pSource->Desc.Width > 0 )
+                            ? x_clamp( ( static_cast<f32>( m_postViewL + m_postViewR ) * 0.5f ) /
+                                           static_cast<f32>( pSource->Desc.Width ),
+                                       0.0f, 1.0f )
+                            : 0.5f;
+    f32 const centerV = ( pSource->Desc.Height > 0 )
+                            ? x_clamp( ( static_cast<f32>( m_postViewT + m_postViewB ) * 0.5f ) /
+                                           static_cast<f32>( pSource->Desc.Height ),
+                                       0.0f, 1.0f )
+                            : 0.5f;
 
-    const f32 CenterU = (pSource->Desc.Width  > 0) ? x_clamp( ((f32)(m_PostViewL + m_PostViewR) * 0.5f) / (f32)pSource->Desc.Width,  0.0f, 1.0f ) : 0.5f;
-    const f32 CenterV = (pSource->Desc.Height > 0) ? x_clamp( ((f32)(m_PostViewT + m_PostViewB) * 0.5f) / (f32)pSource->Desc.Height, 0.0f, 1.0f ) : 0.5f;
+    PostFilterConstants constants;
+    BuildFilterConstants( constants, 0.0f, m_radialBlur.Zoom, m_radialBlur.Angle, m_radialBlur.AlphaSub,
+                          m_radialBlur.AlphaScale, centerU, centerV );
+    if ( !BindFilterConstants( m_FilterResources.RadialBlurPS, constants ) )
+    {
+        return;
+    }
 
-    m_FilterResources.UpdateConstants( 0.0f,
-                                       m_RadialBlur.Zoom,
-                                       m_RadialBlur.Angle,
-                                       m_RadialBlur.AlphaSub,
-                                       m_RadialBlur.AlphaScale,
-                                       CenterU,
-                                       CenterV );
-    composite_Blit( *pBlurSource,
-                    COMPOSITE_BLEND_ALPHA,
-                    1.0f,
-                    m_FilterResources.pRadialBlurPS,
-                    STATE_SAMPLER_LINEAR_CLAMP );
+    composite_Blit( *pBlurSource, COMPOSITE_BLEND_ALPHA, 1.0f, &m_FilterResources.RadialBlurPS,
+                    RSTATE_SAMPLER_PRESET_LINEAR_CLAMP, "PostSource" );
 
-    m_FilterResources.UpdateConstants( 0.0f,
-                                       m_RadialBlur.Zoom,
-                                       -m_RadialBlur.Angle,
-                                       m_RadialBlur.AlphaSub,
-                                       m_RadialBlur.AlphaScale,
-                                       CenterU,
-                                       CenterV );
-    composite_Blit( *pBlurSource,
-                    COMPOSITE_BLEND_ALPHA,
-                    1.0f,
-                    m_FilterResources.pRadialBlurPS,
-                    STATE_SAMPLER_LINEAR_CLAMP );
+    BuildFilterConstants( constants, 0.0f, m_radialBlur.Zoom, -m_radialBlur.Angle, m_radialBlur.AlphaSub,
+                          m_radialBlur.AlphaScale, centerU, centerV );
+    if ( !BindFilterConstants( m_FilterResources.RadialBlurPS, constants ) )
+    {
+        return;
+    }
 
-    ID3D11ShaderResourceView* pNullSRV = NULL;
-    g_pd3dContext->PSSetShaderResources( 0, 1, &pNullSRV );
+    composite_Blit( *pBlurSource, COMPOSITE_BLEND_ALPHA, 1.0f, &m_FilterResources.RadialBlurPS,
+                    RSTATE_SAMPLER_PRESET_LINEAR_CLAMP, "PostSource" );
+
     m_FilterResources.SwapPostTargets();
 }
 
 //==============================================================================
 
-void post_mgr::ExecuteScreenWarps( void )
+void PostMgr::ExecuteScreenWarps( void )
 {
-    const rtarget* pSource = m_FilterResources.GetPostSource();
-    if( !g_pd3dContext || !m_FilterResources.pScreenWarpPS || !pSource || (m_ScreenWarp.Count <= 0) )
+    rtarget const* pSource = m_FilterResources.GetPostSource();
+    if ( !m_FilterResources.ScreenWarpPS || !pSource || ( m_ScreenWarp.Count <= 0 ) )
+    {
         return;
+    }
 
-    if( !m_FilterResources.BindPostTarget() )
+    if ( !m_FilterResources.BindPostTarget() )
+    {
         return;
+    }
 
-    PrepareFullscreenQuad();
-    m_FilterResources.UpdateScreenWarpConstants( m_ScreenWarp );
+    PostFilterConstants constants;
+    BuildScreenWarpConstants( constants, m_ScreenWarp, m_FilterResources.CopyWidth, m_FilterResources.CopyHeight );
+    if ( !BindFilterConstants( m_FilterResources.ScreenWarpPS, constants ) )
+    {
+        return;
+    }
 
-    ID3D11ShaderResourceView* pWarpBase = pSource->pShaderResourceView;
-    g_pd3dContext->PSSetShaderResources( 1, 1, &pWarpBase );
+    if ( !BindFilterSampler( m_FilterResources.ScreenWarpPS, "FilterSource1", rtarget_GetShaderResource( *pSource ),
+                             m_FilterResources.LinearSampler ) )
+    {
+        return;
+    }
 
-    composite_Blit( *pSource,
-                    COMPOSITE_BLEND_COPY,
-                    1.0f,
-                    m_FilterResources.pScreenWarpPS,
-                    STATE_SAMPLER_LINEAR_CLAMP );
+    composite_Blit( *pSource, COMPOSITE_BLEND_COPY, 1.0f, &m_FilterResources.ScreenWarpPS,
+                    RSTATE_SAMPLER_PRESET_LINEAR_CLAMP, "PostSource" );
 
-    ID3D11ShaderResourceView* pNullSRVs[2] = { NULL, NULL };
-    g_pd3dContext->PSSetShaderResources( 0, 2, pNullSRVs );
     m_FilterResources.SwapPostTargets();
 }
 
 //==============================================================================
 
-void post_mgr::ExecuteMipFilter( void )
+void PostMgr::ExecuteMipFilter( void )
 {
-    const s32 palette = m_MipFilter.PaletteIndex;
-    if( !g_pd3dContext || !m_FilterResources.pMipCompositePS || !m_FilterResources.pConstantBuffer )
+    s32 const palette = m_mipFilter.PaletteIndex;
+    if ( ( palette < 0 ) || ( palette >= 4 ) )
+    {
         return;
+    }
 
-    if( (palette < 0) || (palette >= 4) )
+    s32 const count = MIN( m_mipFilter.Count[palette], MAX_POST_MIPS );
+    if ( count <= 0 )
+    {
         return;
+    }
 
-    const s32 count = MIN( m_MipFilter.Count[palette], MAX_POST_MIPS );
-    if( count <= 0 )
+    rtarget const* pTarget = GetCurrentPostTarget();
+    if ( !pTarget )
+    {
         return;
+    }
 
-    const rtarget* pTarget = GetCurrentPostTarget();
-    const rtarget* pDepthTarget = rtarget_GetCurrentDepth();
-    const rtarget* pLinearDepthTarget = g_GBufferMgr.GetGBufferTarget( GBUFFER_LINEAR_DEPTH );
-    if( !pTarget || !pLinearDepthTarget || !pLinearDepthTarget->pShaderResourceView )
+    if ( m_mipFilter.Fn[palette] == render::FALLOFF_CONSTANT )
+    {
+        f32 const offset = m_mipFilter.Offset[palette];
+        if ( ( x_abs( offset ) < 0.001f ) || !m_FilterResources.MipDownsamplePS ||
+             !m_FilterResources.PainBlurPS )
+        {
+            return;
+        }
+
+        u32 const painWidth = pTarget->Desc.Width;
+        u32 const painHeight = pTarget->Desc.Height;
+        if ( !EnsureAbsoluteFilterTarget( m_FilterResources.Pain, painWidth, painHeight, pTarget->Desc.Format,
+                                          "PostFilterPain" ) ||
+             !EnsureAbsoluteFilterTarget( m_FilterResources.PainScratch, painWidth, painHeight,
+                                          pTarget->Desc.Format, "PostFilterPainScratch" ) ||
+             !BeginFilterColorPass( &m_FilterResources.Pain, RTARGET_LOAD_CLEAR ) )
+        {
+            return;
+        }
+
+        PostFilterConstants downsampleConstants;
+        x_memset( &downsampleConstants, 0, sizeof( downsampleConstants ) );
+        downsampleConstants.Params5.Set( 0.0f, 0.0f, 1.0f / static_cast<f32>( pTarget->Desc.Width ),
+                                         1.0f / static_cast<f32>( pTarget->Desc.Height ) );
+        if ( !BindFilterConstants( m_FilterResources.MipDownsamplePS, downsampleConstants ) )
+        {
+            return;
+        }
+
+        composite_Blit( *pTarget, COMPOSITE_BLEND_COPY, 1.0f, &m_FilterResources.MipDownsamplePS,
+                        RSTATE_SAMPLER_PRESET_LINEAR_CLAMP, "PostSource" );
+
+        xcolor const& color = m_mipFilter.Color[palette];
+        f32 const     blendWeight = static_cast<f32>( color.A / 2 ) / 255.0f;
+
+        PostFilterConstants horizontalConstants;
+        x_memset( &horizontalConstants, 0, sizeof( horizontalConstants ) );
+        horizontalConstants.Params3.Set( color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, blendWeight );
+        horizontalConstants.Params5.Set( 0.0f, 0.0f, offset / ( kPainBlurReferenceWidth * 8.0f ), 0.0f );
+        horizontalConstants.Params6.Set( 0.0f, 0.0f, 0.0f, 0.0f );
+
+        if ( !BeginFilterColorPass( &m_FilterResources.PainScratch, RTARGET_LOAD_CLEAR ) ||
+             !BindFilterConstants( m_FilterResources.PainBlurPS, horizontalConstants ) )
+        {
+            return;
+        }
+
+        composite_Blit( m_FilterResources.Pain, COMPOSITE_BLEND_COPY, 1.0f, &m_FilterResources.PainBlurPS,
+                        RSTATE_SAMPLER_PRESET_LINEAR_CLAMP, "PostSource" );
+
+        PostFilterConstants verticalConstants;
+        x_memset( &verticalConstants, 0, sizeof( verticalConstants ) );
+        verticalConstants.Params3.Set( color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, blendWeight );
+        verticalConstants.Params5.Set( 0.0f, 0.0f, 0.0f, offset / ( kPainBlurReferenceHeight * 8.0f ) );
+        verticalConstants.Params6.Set( 1.0f, 0.0f, 0.0f, 0.0f );
+
+        if ( !BeginFilterColorPass( pTarget, RTARGET_LOAD_LOAD ) ||
+             !BindFilterConstants( m_FilterResources.PainBlurPS, verticalConstants ) )
+        {
+            return;
+        }
+
+        composite_Blit( m_FilterResources.PainScratch, COMPOSITE_BLEND_COPY, 1.0f,
+                        &m_FilterResources.PainBlurPS,
+                        RSTATE_SAMPLER_PRESET_LINEAR_CLAMP, "PostSource" );
         return;
+    }
+
+    rtarget const* pDepthTarget = rtarget_GetCurrentDepth();
+    rtarget const* pNormalDepthTarget = g_GBufferMgr.GetGBufferTarget( GBufferTarget::NormalDepth );
+    if ( !pNormalDepthTarget || !rtarget_HasShaderResource( *pNormalDepthTarget ) )
+    {
+        return;
+    }
 
     BuildScreenMips( count );
 
-    const rtarget* pMipTarget = m_FilterResources.GetMipTarget( count - 1 );
-    if( !pMipTarget || !pMipTarget->pShaderResourceView )
-        return;
-
-    if( !rtarget_SetTargets( pTarget, 1, pDepthTarget ) )
-        return;
-
-    const xbool bUseCustom = (m_MipFilter.Fn[palette] == render::FALLOFF_CUSTOM);
-    if( bUseCustom )
+    rtarget const* pMipTarget = m_FilterResources.GetMipTarget( count - 1 );
+    if ( !pMipTarget || !rtarget_HasShaderResource( *pMipTarget ) )
     {
-        if( !m_pMipTexture || !m_FilterResources.UpdateMipRampTexture( m_pMipTexture ) )
-            return;
+        return;
     }
 
-    cb_post_filters cbData;
-    x_memset( &cbData, 0, sizeof(cbData) );
-    cbData.Params3.Set( m_MipFilter.Color[palette].R / 128.0f,
-                        m_MipFilter.Color[palette].G / 128.0f,
-                        m_MipFilter.Color[palette].B / 128.0f,
-                        m_MipFilter.Color[palette].A / 128.0f );
-    cbData.Params4.Set( (f32)m_MipFilter.Fn[palette],
-                        m_MipFilter.Param1[palette],
-                        m_MipFilter.Param2[palette],
-                        m_MipFilter.Offset[palette] );
-    cbData.Params5.Set( m_PostNearZ,
-                        m_PostFarZ,
-                        (pTarget->Desc.Width  > 0) ? (1.0f / (f32)pTarget->Desc.Width)  : 0.0f,
-                        (pTarget->Desc.Height > 0) ? (1.0f / (f32)pTarget->Desc.Height) : 0.0f );
-    cbData.Params6.Set( bUseCustom ? 1.0f : 0.0f,
-                        0.0f,
-                        0.0f,
-                        0.0f );
+    if ( !BeginFilterColorDepthPass( pTarget, pDepthTarget, RTARGET_LOAD_LOAD, RTARGET_LOAD_LOAD ) )
+    {
+        return;
+    }
 
-    shader_UpdateConstantBuffer( m_FilterResources.pConstantBuffer, &cbData, sizeof(cb_post_filters) );
-    g_pd3dContext->PSSetConstantBuffers( 4, 1, &m_FilterResources.pConstantBuffer );
+    xbool const   bUseCustom = ( m_mipFilter.Fn[palette] == render::FALLOFF_CUSTOM );
+    shader const& pixelShader = bUseCustom ? m_FilterResources.MipCompositeCustomPS : m_FilterResources.MipCompositePS;
+    if ( !pixelShader )
+    {
+        return;
+    }
 
-    ID3D11ShaderResourceView* pResources[2] = { pLinearDepthTarget->pShaderResourceView, NULL };
-    if( bUseCustom )
-        pResources[1] = m_FilterResources.pMipRampSRV;
-    g_pd3dContext->PSSetShaderResources( 1, 2, pResources );
+    if ( bUseCustom )
+    {
+        if ( !m_pMipTexture || !m_FilterResources.UpdateMipRampTexture( m_pMipTexture ) )
+        {
+            return;
+        }
+    }
 
-    PrepareFullscreenQuad();
-    composite_Blit( *pMipTarget,
-                    COMPOSITE_BLEND_ALPHA,
-                    1.0f,
-                    m_FilterResources.pMipCompositePS,
-                    STATE_SAMPLER_LINEAR_CLAMP );
+    PostFilterConstants cbData;
+    x_memset( &cbData, 0, sizeof( cbData ) );
+    cbData.Params3.Set( m_mipFilter.Color[palette].R / 128.0f, m_mipFilter.Color[palette].G / 128.0f,
+                        m_mipFilter.Color[palette].B / 128.0f, 0.0f );
+    cbData.Params4.Set( static_cast<f32>( m_mipFilter.Fn[palette] ), m_mipFilter.Param1[palette],
+                        m_mipFilter.Param2[palette], m_mipFilter.Offset[palette] );
+    cbData.Params5.Set( m_postNearZ, m_postFarZ,
+                        ( pTarget->Desc.Width > 0 ) ? ( 1.0f / static_cast<f32>( pTarget->Desc.Width ) ) : 0.0f,
+                        ( pTarget->Desc.Height > 0 ) ? ( 1.0f / static_cast<f32>( pTarget->Desc.Height ) ) : 0.0f );
+    cbData.Params6.Set( static_cast<f32>( count ), 0.0f, 0.0f, 0.0f );
 
-    ID3D11ShaderResourceView* pNullResources[2] = { NULL, NULL };
-    g_pd3dContext->PSSetShaderResources( 1, 2, pNullResources );
+    if ( !BindFilterConstants( pixelShader, cbData ) )
+    {
+        return;
+    }
+
+    if ( !BindFilterSampler( pixelShader, "FilterSource1", rtarget_GetShaderResource( *pNormalDepthTarget ),
+                             m_FilterResources.PointSampler ) )
+    {
+        return;
+    }
+
+    if ( bUseCustom )
+    {
+        if ( !BindFilterSampler( pixelShader, "FilterRamp", vram_GetShaderResource( m_FilterResources.MipRampTexture ),
+                                 m_FilterResources.LinearSampler ) )
+        {
+            return;
+        }
+    }
+
+    composite_Blit( *pMipTarget, COMPOSITE_BLEND_ALPHA, 1.0f, &pixelShader, RSTATE_SAMPLER_PRESET_LINEAR_CLAMP,
+                    "PostSource" );
 }
 
 //==============================================================================
 
-void post_mgr::ExecuteNoiseFilter( void )
+void PostMgr::ExecuteNoiseFilter( void )
 {
-    if( !g_pd3dContext || !m_FilterResources.pNoisePS || !m_FilterResources.pConstantBuffer )
+    if ( !m_FilterResources.NoisePS )
+    {
         return;
-    const rtarget* pLinearDepthTarget = g_GBufferMgr.GetGBufferTarget( GBUFFER_LINEAR_DEPTH );
-    if( !pLinearDepthTarget || !pLinearDepthTarget->pShaderResourceView )
+    }
+    rtarget const* pNormalDepthTarget = g_GBufferMgr.GetGBufferTarget( GBufferTarget::NormalDepth );
+    if ( !pNormalDepthTarget || !rtarget_HasShaderResource( *pNormalDepthTarget ) )
+    {
         return;
+    }
 
-    cb_post_filters cbData;
-    x_memset( &cbData, 0, sizeof(cbData) );
+    PostFilterConstants cbData;
+    x_memset( &cbData, 0, sizeof( cbData ) );
 
-    const f32 aNorm = m_Simple.NoiseColor.A / 255.0f;
-    cbData.Params3.Set( m_Simple.NoiseColor.R / 255.0f,
-                        m_Simple.NoiseColor.G / 255.0f,
-                        m_Simple.NoiseColor.B / 255.0f,
+    f32 const aNorm = m_simple.NoiseColor.A / 255.0f;
+    cbData.Params3.Set( m_simple.NoiseColor.R / 255.0f, m_simple.NoiseColor.G / 255.0f, m_simple.NoiseColor.B / 255.0f,
                         aNorm * aNorm * aNorm );
 
-    cbData.Params6.Set( (f32)x_rand(),
-                        (f32)x_rand(),
-                        0.0f,
-                        0.0f );
+    cbData.Params6.Set( static_cast<f32>( x_rand() ), static_cast<f32>( x_rand() ), 0.0f, 0.0f );
 
-    shader_UpdateConstantBuffer( m_FilterResources.pConstantBuffer, &cbData, sizeof(cb_post_filters) );
-    g_pd3dContext->PSSetConstantBuffers( 4, 1, &m_FilterResources.pConstantBuffer );
-    PrepareFullscreenQuad();
-    composite_Blit( *pLinearDepthTarget,
-                    COMPOSITE_BLEND_ALPHA,
-                    1.0f,
-                    m_FilterResources.pNoisePS,
-                    STATE_SAMPLER_POINT_CLAMP );
+    if ( !BindFilterConstants( m_FilterResources.NoisePS, cbData ) )
+    {
+        return;
+    }
+
+    composite_Blit( *pNormalDepthTarget, COMPOSITE_BLEND_ALPHA, 1.0f, &m_FilterResources.NoisePS,
+                    RSTATE_SAMPLER_PRESET_POINT_CLAMP );
 }
 
 //==============================================================================
 
-void post_mgr::ExecuteScreenFade( void )
+void PostMgr::ExecuteScreenFadeLate( void )
 {
-    if( !g_pd3dContext )
+    if ( !m_Flags.DoScreenFade || !rtarget_IsBackBufferPassActive() )
+    {
         return;
+    }
 
-    PrepareFullscreenQuad();
+    rtarget const* pSourceTarget = g_GBufferMgr.GetGBufferTarget( GBufferTarget::FinalColor );
+    rtarget const* pBackBuffer   = rtarget_GetCurrentTarget( 0 );
+    if ( !m_FilterResources.ScreenFadePS || !pSourceTarget || !pBackBuffer ||
+         ( pSourceTarget == pBackBuffer ) || !rtarget_HasShaderResource( *pSourceTarget ) ||
+         !rtarget_HasRenderTarget( *pBackBuffer ) )
+    {
+        return;
+    }
 
-    irect Rect;
-    Rect.l = m_PostViewL;
-    Rect.t = m_PostViewT;
-    Rect.r = m_PostViewR;
-    Rect.b = m_PostViewB;
+    PostFilterConstants constants;
+    x_memset( &constants, 0, sizeof( constants ) );
+    constants.Params3.Set( m_simple.FadeColor.R / 255.0f, m_simple.FadeColor.G / 255.0f, m_simple.FadeColor.B / 255.0f,
+                           m_simple.FadeColor.A / 255.0f );
+    if ( !BindFilterConstants( m_FilterResources.ScreenFadePS, constants ) )
+    {
+        return;
+    }
 
-    state_SetBlend( STATE_BLEND_ALPHA );
-    draw_Rect( Rect, m_Simple.FadeColor, FALSE, DRAW_UI_RTARGET );
+    rdraw_scissor viewScissor;
+    viewScissor.X = m_postViewL;
+    viewScissor.Y = m_postViewT;
+    viewScissor.Width = m_postViewR - m_postViewL;
+    viewScissor.Height = m_postViewB - m_postViewT;
+    if ( !rdraw_SetScissor( viewScissor ) )
+    {
+        return;
+    }
+
+    composite_Blit( *pSourceTarget, COMPOSITE_BLEND_ALPHA, 1.0f, &m_FilterResources.ScreenFadePS,
+                    RSTATE_SAMPLER_PRESET_POINT_CLAMP );
+
+    rdraw_scissor fullScissor;
+    fullScissor.X = 0;
+    fullScissor.Y = 0;
+    fullScissor.Width = static_cast<s32>( pBackBuffer->Desc.Width );
+    fullScissor.Height = static_cast<s32>( pBackBuffer->Desc.Height );
+    rdraw_SetScissor( fullScissor );
 }
 
 //==============================================================================
 //  SUPPORT FUNCTIONS
 //==============================================================================
 
-void post_mgr::BuildMipPalette( render::post_falloff_fn Fn, xcolor Color, f32 Param1, f32 Param2, s32 PaletteIndex )
+void PostMgr::BuildMipPalette( render::post_falloff_fn fn, xcolor color, f32 param1, f32 param2, s32 paletteIndex )
 {
-    if( (m_MipFilter.Fn[PaletteIndex] == Fn) &&
-        (m_MipFilter.Param1[PaletteIndex] == Param1) &&
-        (m_MipFilter.Param2[PaletteIndex] == Param2) &&
-        (m_MipFilter.Color[PaletteIndex] == Color) )
+    if ( ( m_mipFilter.Fn[paletteIndex] == fn ) && ( m_mipFilter.Param1[paletteIndex] == param1 ) &&
+         ( m_mipFilter.Param2[paletteIndex] == param2 ) && ( m_mipFilter.Color[paletteIndex] == color ) )
     {
         return;
     }
 
-    m_MipFilter.Fn[PaletteIndex] = Fn;
-    m_MipFilter.Param1[PaletteIndex] = Param1;
-    m_MipFilter.Param2[PaletteIndex] = Param2;
-    m_MipFilter.Color[PaletteIndex] = Color;
-    m_MipFilter.PaletteIndex = PaletteIndex;
+    m_mipFilter.Fn[paletteIndex] = fn;
+    m_mipFilter.Param1[paletteIndex] = param1;
+    m_mipFilter.Param2[paletteIndex] = param2;
+    m_mipFilter.Color[paletteIndex] = color;
+    m_mipFilter.PaletteIndex = paletteIndex;
 }
 
 //==============================================================================
 
-void post_mgr::CopyBackBuffer( void )
+void PostMgr::CopyBackBuffer( void )
 {
-    const rtarget* pTarget = GetCurrentPostTarget();
-    if( !pTarget )
+    rtarget const* pTarget = GetCurrentPostTarget();
+    if ( !pTarget )
+    {
         return;
+    }
 
     m_FilterResources.BeginPostChain( pTarget );
 }
 
 //==============================================================================
 
-void post_mgr::BuildScreenMips( s32 nMips )
+void PostMgr::BuildScreenMips( s32 nMips )
 {
-    if( nMips <= 0 )
+    if ( nMips <= 0 )
+    {
         return;
+    }
 
-    const rtarget* pSourceTarget = GetCurrentPostTarget();
-    if( !pSourceTarget || !pSourceTarget->pShaderResourceView )
+    rtarget const* pSourceTarget = GetCurrentPostTarget();
+    if ( !pSourceTarget || !rtarget_HasShaderResource( *pSourceTarget ) )
+    {
         return;
+    }
 
     nMips = MIN( nMips, MAX_POST_MIPS );
-    if( !m_FilterResources.EnsureMipTargets( pSourceTarget ) )
-        return;
-
-    const rtarget* pMipSource = pSourceTarget;
-    for( s32 i = 0; i < nMips; ++i )
+    if ( !m_FilterResources.EnsureMipTargets( pSourceTarget ) )
     {
-        const rtarget* pMipTarget = m_FilterResources.GetMipTarget( i );
-        if( !pMipTarget || !rtarget_SetTargets( pMipTarget, 1, NULL ) )
-            return;
+        return;
+    }
 
-        composite_Blit( *pMipSource,
-                        COMPOSITE_BLEND_COPY,
-                        1.0f,
-                        NULL,
-                        STATE_SAMPLER_LINEAR_CLAMP );
+    rtarget const* pMipSource = pSourceTarget;
+    for ( s32 i = 0; i < nMips; ++i )
+    {
+        rtarget const* pMipTarget = m_FilterResources.GetMipTarget( i );
+        if ( !BeginFilterColorPass( pMipTarget, RTARGET_LOAD_CLEAR ) )
+        {
+            return;
+        }
+
+        shader const* pDownsampleShader = NULL;
+        if ( i == 0 )
+        {
+            PostFilterConstants constants;
+            x_memset( &constants, 0, sizeof( constants ) );
+            constants.Params5.Set( 0.0f, 0.0f, 1.0f / static_cast<f32>( pMipSource->Desc.Width ),
+                                   1.0f / static_cast<f32>( pMipSource->Desc.Height ) );
+            if ( !m_FilterResources.MipDownsamplePS ||
+                 !BindFilterConstants( m_FilterResources.MipDownsamplePS, constants ) )
+            {
+                return;
+            }
+            pDownsampleShader = &m_FilterResources.MipDownsamplePS;
+        }
+
+        composite_Blit( *pMipSource, COMPOSITE_BLEND_COPY, 1.0f, pDownsampleShader,
+                        RSTATE_SAMPLER_PRESET_LINEAR_CLAMP, "PostSource" );
 
         pMipSource = pMipTarget;
     }
@@ -940,11 +1127,13 @@ void post_mgr::BuildScreenMips( s32 nMips )
 
 //==============================================================================
 
-void post_mgr::UpdateFilterHistoryBeforePresent( void )
+void PostMgr::UpdateFilterHistoryBeforePresent( void )
 {
-    const rtarget* pTarget = GetCurrentPostTarget();
-    if( !pTarget )
+    rtarget const* pTarget = GetCurrentPostTarget();
+    if ( !pTarget )
+    {
         return;
+    }
 
     m_FilterResources.CaptureHistory( pTarget );
 }

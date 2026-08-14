@@ -12,10 +12,10 @@
 
 
 #include "../ZoneMgr/ZoneMgr.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 #include "../../MiscUtils/SimpleUtils.hpp"
-#include "..\objects\object.hpp"
-#include "../objects/Portal.hpp"
+#include "../Objects/object.hpp"
+#include "../Objects/Portal.hpp"
 
 const f32   k_MaxYDiff = 200.0f;
 

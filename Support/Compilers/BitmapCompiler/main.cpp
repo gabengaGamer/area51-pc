@@ -1,7 +1,7 @@
 
 #include "x_files.hpp"
 #include "CommandLine.hpp"
-#include "Auxiliary\Bitmap\aux_Bitmap.hpp"
+#include "Auxiliary/Bitmap/aux_Bitmap.hpp"
 
 //=========================================================================
 // VARIABLES

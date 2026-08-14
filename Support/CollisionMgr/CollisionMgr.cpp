@@ -12,12 +12,12 @@
 #include "CollisionMgr.hpp"
 #include "x_stdio.hpp"
 #include "CollisionPrimatives.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "Entropy.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "GameLib\StatsMgr.hpp"
-#include "PlaySurfaceMgr\PlaySurfaceMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "PlaySurfaceMgr/PlaySurfaceMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
 
 //==============================================================================
 //  TYPES
@@ -716,7 +716,7 @@ void collision_mgr::ApplyTriangle(
 
 {
     LOG_STAT( k_stats_Collision );
-    CONTEXT( "collision_mgr::ApplyTriangle" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "collision_mgr::ApplyTriangle" );
 
     ASSERT( m_bApplyStarted );
 
@@ -757,7 +757,7 @@ void collision_mgr::ApplyQuad( const vector3&    P0,
                                      s32         PrimitiveKey )
 {
     LOG_STAT( k_stats_Collision );
-    CONTEXT( "collision_mgr::ApplyQuad" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "collision_mgr::ApplyQuad" );
 
     ASSERT( m_bApplyStarted );
 

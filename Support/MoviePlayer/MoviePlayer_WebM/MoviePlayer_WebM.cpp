@@ -22,15 +22,14 @@
 //  INCLUDES
 //==============================================================================
 
-#include <d3d11.h>
-
 #include "x_files.hpp"
 #include "x_threads.hpp"
 #include "x_memory.hpp"
 #include "Entropy.hpp"
-#include "../movieplayer.hpp"
+#include "../MoviePlayer.hpp"
 
 #include "MoviePlayer_WebM_Private.hpp"
+#include "UI/ui_renderer.hpp"
 
 // Auto include WebM libs
 #ifdef _MSC_VER
@@ -70,9 +69,7 @@ movie_private::movie_private(void)
     m_Height            = 0;
     m_Volume            = 1.0f;
     m_IsLooped          = FALSE;
-    m_bForceStretch     = TRUE;
-
-    m_pThread           = NULL;
+    m_WorkerService     = x_worker_service(HNULL);
     m_bThreadExit       = FALSE;
     m_bThreadRunning    = FALSE;
     m_bThreadFinished   = TRUE;
@@ -81,8 +78,6 @@ movie_private::movie_private(void)
     m_bVideoEOF         = FALSE;
     m_bThreadBusy       = FALSE;
 
-    m_pTexture          = NULL;
-    m_TextureVRAMID     = 0;
     m_LastVideoTime     = 0.0f;
     m_bHasPendingVideo  = FALSE;
     m_PendingVideoSample = movie_webm::sample();
@@ -99,17 +94,26 @@ movie_private::~movie_private(void)
 
 void movie_private::Init(void)
 {
-    if (m_pThread)
+    if (m_WorkerService.IsNonNull())
         return;
 
     m_bThreadExit     = FALSE;
     m_bThreadRunning  = FALSE;
     m_bThreadFinished = TRUE;
 
-    char* pArg = reinterpret_cast<char*>(this);
-    char* pArgs[2] = { pArg, NULL };
+    ASSERTS(x_WorkersIsInit(), "MoviePlayer_WebM requires x_workers to be initialized");
+    if (!x_WorkersIsInit())
+        return;
 
-    m_pThread = new xthread(ThreadEntry, "MoviePlayerWebM", 192 * 1024, 2, 1, pArgs);
+    if (!x_WorkerServiceStart(WorkerEntry, this, "MoviePlayerWebM", m_WorkerService))
+    {
+        ASSERTS(FALSE, "MoviePlayer_WebM failed to start worker service");
+        return;
+    }
+
+    #if X_WORKERS_DEBUG && X_WORKERS_DEBUG_LOG
+    x_DebugMsg("MoviePlayer_WebM: using x_worker service %08x\n", m_WorkerService.Handle);
+    #endif
 
     while (!m_bThreadRunning)
     {
@@ -119,7 +123,7 @@ void movie_private::Init(void)
 
 //==============================================================================
 
-xbool movie_private::Open(const char* pFilename, xbool PlayResident, xbool IsLooped)
+xbool movie_private::Open(const char* pFilename, xbool PlayResident, xbool IsLooped, x_language Language)
 {
     (void)PlayResident;
 
@@ -127,11 +131,15 @@ xbool movie_private::Open(const char* pFilename, xbool PlayResident, xbool IsLoo
         return FALSE;
 
     Init();
+    if (m_WorkerService.IsNull())
+        return FALSE;
+
     Close();
 
     m_IsLooped = IsLooped;
     m_Config   = movie_webm::player_config();
     m_Config.IsLooped = IsLooped;
+    m_Config.AudioLanguage = Language;
 
     if (!m_Container.Open(pFilename, m_Config))
     {
@@ -163,15 +171,15 @@ xbool movie_private::Open(const char* pFilename, xbool PlayResident, xbool IsLoo
     m_Height        = m_Config.Height;
     m_LastVideoTime = 0.0;
 
-    m_RenderData.DataMutex.Enter();
-    m_RenderData.pFrameData   = NULL;
-    m_RenderData.Width        = 0;
-    m_RenderData.Height       = 0;
-    m_RenderData.Pitch        = 0;
-    m_RenderData.FrameTime    = 0.0;
-    m_RenderData.bHasNewFrame = FALSE;
-    m_RenderData.bIsValid     = FALSE;
-    m_RenderData.DataMutex.Exit();
+    m_renderData.DataMutex.Enter();
+    m_renderData.pFrameData   = NULL;
+    m_renderData.Width        = 0;
+    m_renderData.Height       = 0;
+    m_renderData.Pitch        = 0;
+    m_renderData.FrameTime    = 0.0;
+    m_renderData.bHasNewFrame = FALSE;
+    m_renderData.bIsValid     = FALSE;
+    m_renderData.DataMutex.Exit();
 
     m_RenderBuffer.Clear();
 
@@ -209,15 +217,15 @@ void movie_private::Close(void)
 
     m_Clock.Stop();
 
-    m_RenderData.DataMutex.Enter();
-    m_RenderData.pFrameData   = NULL;
-    m_RenderData.Width        = 0;
-    m_RenderData.Height       = 0;
-    m_RenderData.Pitch        = 0;
-    m_RenderData.FrameTime    = 0.0;
-    m_RenderData.bHasNewFrame = FALSE;
-    m_RenderData.bIsValid     = FALSE;
-    m_RenderData.DataMutex.Exit();
+    m_renderData.DataMutex.Enter();
+    m_renderData.pFrameData   = NULL;
+    m_renderData.Width        = 0;
+    m_renderData.Height       = 0;
+    m_renderData.Pitch        = 0;
+    m_renderData.FrameTime    = 0.0;
+    m_renderData.bHasNewFrame = FALSE;
+    m_renderData.bIsValid     = FALSE;
+    m_renderData.DataMutex.Exit();
 
     m_RenderBuffer.Clear();
 
@@ -245,7 +253,7 @@ void movie_private::Kill(void)
 
 void movie_private::Shutdown(void)
 {
-    if (!m_pThread)
+    if (m_WorkerService.IsNull())
         return;
 
     m_bThreadExit = TRUE;
@@ -255,8 +263,12 @@ void movie_private::Shutdown(void)
         x_DelayThread(1);
     }
 
-    delete m_pThread;
-    m_pThread = NULL;
+    if (m_WorkerService.IsNonNull())
+    {
+        x_WorkerServiceWait(m_WorkerService);
+        x_WorkerServiceRelease(m_WorkerService);
+        m_WorkerService = x_worker_service(HNULL);
+    }
 }
 
 //==============================================================================
@@ -293,35 +305,32 @@ void movie_private::Resume(void)
 
 void movie_private::Render(void)
 {
-    if (!g_pd3dDevice)
-        return;
+    m_renderData.DataMutex.Enter();
 
-    m_RenderData.DataMutex.Enter();
-
-    const xbool hasNewFrame = m_RenderData.bHasNewFrame;
-    const xbool isValid     = m_RenderData.bIsValid;
+    const xbool hasNewFrame = m_renderData.bHasNewFrame;
+    const xbool isValid     = m_renderData.bIsValid;
 
     if (hasNewFrame && isValid)
     {
-        if (!m_pTexture)
+        if (!vram_IsValid(m_VideoTexture))
         {
             if (!CreateVideoTexture())
             {
-                m_RenderData.DataMutex.Exit();
+                m_renderData.DataMutex.Exit();
                 return;
             }
         }
 
         if (!UpdateVideoTexture())
         {
-            m_RenderData.DataMutex.Exit();
+            m_renderData.DataMutex.Exit();
             return;
         }
 
-        m_RenderData.bHasNewFrame = FALSE;
+        m_renderData.bHasNewFrame = FALSE;
     }
 
-    m_RenderData.DataMutex.Exit();
+    m_renderData.DataMutex.Exit();
 
     if (isValid)
     {
@@ -331,14 +340,9 @@ void movie_private::Render(void)
 
 //==============================================================================
 
-void movie_private::ThreadEntry(s32 argc, char** argv)
+void movie_private::WorkerEntry(void* pData)
 {
-    movie_private* pThis = NULL;
-
-    if ((argc > 0) && argv && argv[0])
-    {
-        pThis = reinterpret_cast<movie_private*>(argv[0]);
-    }
+    movie_private* pThis = reinterpret_cast<movie_private*>(pData);
 
     ASSERT(pThis);
 
@@ -401,7 +405,7 @@ void movie_private::ThreadLoop(void)
     const f64 frameDuration = (m_Config.FrameRate > 0.0f)
                               ? (1.0 / (f64)m_Config.FrameRate) : (1.0 / 30.0);
 
-    if (Sample.Type == movie_webm::STREAM_TYPE_AUDIO)
+    if (Sample.Type == movie_webm::STREAm_Type_AUDIO)
     {
         if (m_Config.HasAudio && (Sample.TimeSeconds > playbackTime + AUDIO_BUFFER_LEAD))
         {
@@ -421,7 +425,7 @@ void movie_private::ThreadLoop(void)
         return;
     }
 
-    if (Sample.Type != movie_webm::STREAM_TYPE_VIDEO)
+    if (Sample.Type != movie_webm::STREAm_Type_VIDEO)
     {
         m_Container.ReadSample(Sample);
         return;
@@ -485,7 +489,7 @@ xbool movie_private::PrimePlayback(void)
 
     while (m_Container.PeekSample(Sample))
     {
-        if (Sample.Type == movie_webm::STREAM_TYPE_AUDIO)
+        if (Sample.Type == movie_webm::STREAm_Type_AUDIO)
         {
             if (!m_Container.ReadSample(Sample))
                 break;
@@ -498,7 +502,7 @@ xbool movie_private::PrimePlayback(void)
             continue;
         }
 
-        if (Sample.Type == movie_webm::STREAM_TYPE_VIDEO)
+        if (Sample.Type == movie_webm::STREAm_Type_VIDEO)
         {
             if (!m_Container.ReadSample(Sample))
                 break;
@@ -546,7 +550,7 @@ void movie_private::PreloadAudio(f64 TargetTime)
         if (!m_Container.PeekSample(Sample))
             return;
 
-        if (Sample.Type != movie_webm::STREAM_TYPE_AUDIO)
+        if (Sample.Type != movie_webm::STREAm_Type_AUDIO)
             return;
 
         if (Sample.TimeSeconds > TargetTime)
@@ -592,15 +596,15 @@ void movie_private::UpdateRenderBuffer(const movie_webm::sample& Sample)
     m_RenderBuffer.SetCount(frameSize);
     x_memcpy(m_RenderBuffer.GetPtr(), pFrameData, frameSize);
 
-    m_RenderData.DataMutex.Enter();
-    m_RenderData.pFrameData   = m_RenderBuffer.GetPtr();
-    m_RenderData.Width        = width;
-    m_RenderData.Height       = height;
-    m_RenderData.Pitch        = pitch;
-    m_RenderData.FrameTime    = Sample.TimeSeconds;
-    m_RenderData.bHasNewFrame = TRUE;
-    m_RenderData.bIsValid     = TRUE;
-    m_RenderData.DataMutex.Exit();
+    m_renderData.DataMutex.Enter();
+    m_renderData.pFrameData   = m_RenderBuffer.GetPtr();
+    m_renderData.Width        = width;
+    m_renderData.Height       = height;
+    m_renderData.Pitch        = pitch;
+    m_renderData.FrameTime    = Sample.TimeSeconds;
+    m_renderData.bHasNewFrame = TRUE;
+    m_renderData.bIsValid     = TRUE;
+    m_renderData.DataMutex.Exit();
 }
 
 //==============================================================================
@@ -621,7 +625,7 @@ void movie_private::PumpAudio(f64 TargetTime)
             return;
         }
 
-        if (Sample.Type != movie_webm::STREAM_TYPE_AUDIO)
+        if (Sample.Type != movie_webm::STREAm_Type_AUDIO)
             return;
 
         if (Sample.TimeSeconds > TargetTime)
@@ -701,9 +705,9 @@ void movie_private::ResetPlayback(void)
     }
     m_LastVideoTime = 0.0;
 
-    m_RenderData.DataMutex.Enter();
-    m_RenderData.bHasNewFrame = FALSE;
-    m_RenderData.DataMutex.Exit();
+    m_renderData.DataMutex.Enter();
+    m_renderData.bHasNewFrame = FALSE;
+    m_renderData.DataMutex.Exit();
 
     m_bHasPendingVideo = FALSE;
     m_PendingVideoSample = movie_webm::sample();
@@ -712,15 +716,15 @@ void movie_private::ResetPlayback(void)
 
     if (!PrimePlayback())
     {
-        m_RenderData.DataMutex.Enter();
-        m_RenderData.pFrameData   = NULL;
-        m_RenderData.Width        = 0;
-        m_RenderData.Height       = 0;
-        m_RenderData.Pitch        = 0;
-        m_RenderData.FrameTime    = 0.0;
-        m_RenderData.bHasNewFrame = FALSE;
-        m_RenderData.bIsValid     = FALSE;
-        m_RenderData.DataMutex.Exit();
+        m_renderData.DataMutex.Enter();
+        m_renderData.pFrameData   = NULL;
+        m_renderData.Width        = 0;
+        m_renderData.Height       = 0;
+        m_renderData.Pitch        = 0;
+        m_renderData.FrameTime    = 0.0;
+        m_renderData.bHasNewFrame = FALSE;
+        m_renderData.bIsValid     = FALSE;
+        m_renderData.DataMutex.Exit();
 
         m_bPlaybackActive = FALSE;
         m_bVideoEOF       = TRUE;
@@ -739,142 +743,86 @@ void movie_private::ResetPlayback(void)
 
 xbool movie_private::CreateVideoTexture(void)
 {
-    if (!g_pd3dDevice || (m_Width <= 0) || (m_Height <= 0))
+    if ((m_renderData.Width <= 0) || (m_renderData.Height <= 0))
         return FALSE;
 
-    D3D11_TEXTURE2D_DESC Desc;
-    x_memset(&Desc, 0, sizeof(Desc));
-    Desc.Width              = m_Width;
-    Desc.Height             = m_Height;
-    Desc.MipLevels          = 1;
-    Desc.ArraySize          = 1;
-    Desc.Format             = DXGI_FORMAT_B8G8R8A8_UNORM;
-    Desc.SampleDesc.Count   = 1;
-    Desc.Usage              = D3D11_USAGE_DYNAMIC;
-    Desc.BindFlags          = D3D11_BIND_SHADER_RESOURCE;
-    Desc.CPUAccessFlags     = D3D11_CPU_ACCESS_WRITE;
+    DestroyVideoTexture();
 
-    HRESULT hr = g_pd3dDevice->CreateTexture2D(&Desc, NULL, &m_pTexture);
-    if (FAILED(hr) || (m_pTexture == NULL))
-    {
-        x_DebugMsg("MoviePlayer_WebM: Failed to create video texture.\n");
-        return FALSE;
-    }
-
-    m_TextureVRAMID = vram_Register(m_pTexture);
-    return (m_TextureVRAMID != 0);
+    vram_texture_desc Desc;
+    Desc.Width      = (u32)m_renderData.Width;
+    Desc.Height     = (u32)m_renderData.Height;
+    Desc.Format     = VRAM_TEXTURE_FORMAT_BGRA8;
+    Desc.UsageFlags = VRAM_TEXTURE_USAGE_SAMPLED;
+    Desc.pDebugName = "MovieVideoTexture";
+    return vram_CreateTexture(m_VideoTexture, Desc);
 }
 
 //==============================================================================
 
 void movie_private::DestroyVideoTexture(void)
 {
-    if (m_TextureVRAMID)
-    {
-        vram_Unregister(m_TextureVRAMID);
-        m_TextureVRAMID = 0;
-    }
-
-    if (m_pTexture)
-    {
-        m_pTexture->Release();
-        m_pTexture = NULL;
-    }
+    vram_DestroyTexture(m_VideoTexture);
 }
 
 //==============================================================================
 
 xbool movie_private::UpdateVideoTexture(void)
 {
-    if (!g_pd3dContext || !m_pTexture)
-        return FALSE;
-
-    if (!m_RenderData.pFrameData || (m_RenderData.Width <= 0) || (m_RenderData.Height <= 0))
-        return FALSE;
-
-    D3D11_MAPPED_SUBRESOURCE Mapped;
-    HRESULT hr = g_pd3dContext->Map(m_pTexture, 0, D3D11_MAP_WRITE_DISCARD, 0, &Mapped);
-    if (FAILED(hr))
-        return FALSE;
-
-    u8* pDst = reinterpret_cast<u8*>(Mapped.pData);
-    const u8* pSrc = m_RenderData.pFrameData;
-
-    for (s32 y = 0; y < m_RenderData.Height; ++y)
+    if (!vram_IsValid(m_VideoTexture) ||
+        !m_renderData.pFrameData ||
+        (m_renderData.Width <= 0) ||
+        (m_renderData.Height <= 0) ||
+        (m_renderData.Pitch <= 0))
     {
-        x_memcpy(pDst, pSrc, m_RenderData.Width * 4);
-        pDst += Mapped.RowPitch;
-        pSrc += m_RenderData.Pitch;
+        return FALSE;
     }
 
-    g_pd3dContext->Unmap(m_pTexture, 0);
-    return TRUE;
+    if ((m_VideoTexture.Desc.Width != (u32)m_renderData.Width) ||
+        (m_VideoTexture.Desc.Height != (u32)m_renderData.Height))
+    {
+        if (!CreateVideoTexture())
+            return FALSE;
+    }
+
+    vram_texture_upload_desc Upload;
+    Upload.Region.Width  = (u32)m_renderData.Width;
+    Upload.Region.Height = (u32)m_renderData.Height;
+    Upload.Region.Depth  = 1;
+    Upload.pData         = m_renderData.pFrameData;
+    Upload.Size          = (u32)(m_renderData.Pitch * m_renderData.Height);
+    Upload.RowPitch      = (u32)m_renderData.Pitch;
+    Upload.SlicePitch    = Upload.Size;
+    Upload.bCycle        = TRUE;
+    return vram_UploadTexture(m_VideoTexture, Upload);
 }
 
 //==============================================================================
 
 void movie_private::RenderVideoFrame(void)
 {
-    if (!g_pd3dContext || (m_TextureVRAMID == 0))
+    if (!vram_IsValid(m_VideoTexture))
         return;
 
-    s32 WindowWidth = 0;
-    s32 WindowHeight = 0;
-    eng_GetRes(WindowWidth, WindowHeight);
+    ui_viewport const& Viewport = g_UIRenderer.GetViewport();
+    rect const& Bounds = Viewport.GetLogicalBounds();
+    vector2 Position = Bounds.Min;
+    vector2 Size     = Bounds.GetSize();
+    vector2 UV0(0.0f, 0.0f);
+    vector2 UV1(1.0f, 1.0f);
 
-    f32 destX;
-    f32 destY;
-    f32 destW;
-    f32 destH;
-
-    if (m_bForceStretch)
+    const shader_resource* pVideoResource = vram_GetShaderResource(m_VideoTexture);
+    if (pVideoResource)
     {
-        destX = 0.0f;
-        destY = 0.0f;
-        destW = (f32)WindowWidth;
-        destH = (f32)WindowHeight;
+        g_UIRenderer.DrawImage(*pVideoResource,
+                               Position,
+                               Size,
+                               UV0,
+                               UV1,
+                               XCOLOR_WHITE,
+                               0.0f,
+                               UI_BLEND_ALPHA,
+                               UI_SAMPLER_LINEAR_CLAMP);
     }
-    else
-    {
-        const f32 aspectMovie  = (m_Height > 0) ? ((f32)m_Width / (f32)m_Height) : 1.0f;
-        const f32 aspectScreen = (WindowHeight > 0) ? ((f32)WindowWidth / (f32)WindowHeight) : 1.0f;
-
-        if (aspectScreen > aspectMovie)
-        {
-            destH = (f32)WindowHeight;
-            destW = destH * aspectMovie;
-            destX = ((f32)WindowWidth - destW) * 0.5f;
-            destY = 0.0f;
-        }
-        else
-        {
-            destW = (f32)WindowWidth;
-            destH = destW / aspectMovie;
-            destX = 0.0f;
-            destY = ((f32)WindowHeight - destH) * 0.5f;
-        }
-    }
-
-    draw_Begin(DRAW_QUADS, DRAW_2D | DRAW_UI_RTARGET | DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE);
-
-    if (!m_bForceStretch)
-    {
-        draw_SetTexture();
-        draw_Color(XCOLOR_BLACK);
-        draw_Vertex(0.0f, 0.0f, 0.5f);
-        draw_Vertex(0.0f, (f32)WindowHeight, 0.5f);
-        draw_Vertex((f32)WindowWidth, (f32)WindowHeight, 0.5f);
-        draw_Vertex((f32)WindowWidth, 0.0f, 0.5f);
-    }
-
-    vram_Activate(m_TextureVRAMID);
-    draw_Color(XCOLOR_WHITE);
-    draw_UV(0.0f, 0.0f); draw_Vertex(destX, destY, 0.5f);
-    draw_UV(0.0f, 1.0f); draw_Vertex(destX, destY + destH, 0.5f);
-    draw_UV(1.0f, 1.0f); draw_Vertex(destX + destW, destY + destH, 0.5f);
-    draw_UV(1.0f, 0.0f); draw_Vertex(destX + destW, destY, 0.5f);
-
-    draw_End();
 }
 
 //==============================================================================

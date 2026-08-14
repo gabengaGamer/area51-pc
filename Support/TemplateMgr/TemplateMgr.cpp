@@ -1,11 +1,12 @@
 
 #include "TemplateMgr.hpp"
 #include <stdio.h>
-#include "Auxiliary\MiscUtils\Property.hpp"
-#include "Parsing\TextIn.hpp"
-#include "Parsing\TextOut.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "Auxiliary/MiscUtils/Property.hpp"
+#include "Parsing/TextIn.hpp"
+#include "Parsing/TextOut.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 #include "NetworkMgr/NetworkMgr.hpp"
 #include "NetworkMgr/NetObj.hpp"
 
@@ -317,6 +318,11 @@ xbool template_mgr::CreateTemplate( const char* pName, const vector3& Pos, const
 
                     pObject->SetZone1( Zone1 );
                     pObject->SetZone2( Zone2 );
+
+                    if( pObject->IsKindOf( actor::GetRTTI() ) )
+                    {
+                        static_cast<actor*>( pObject )->InitZoneTracking();
+                    }
                 }
             }
 
@@ -479,6 +485,11 @@ guid template_mgr::CreateSingleTemplate( const char* pName, const vector3& Pos, 
 
                     pObject->SetZone1( Zone1 );
                     pObject->SetZone2( Zone2 );
+
+                    if( pObject->IsKindOf( actor::GetRTTI() ) )
+                    {
+                        static_cast<actor*>( pObject )->InitZoneTracking();
+                    }
                 }
             }
             return CreatedObjectGuid;

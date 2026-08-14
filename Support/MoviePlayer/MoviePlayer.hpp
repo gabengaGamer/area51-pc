@@ -33,7 +33,9 @@ public:
     void        Play            (void);
     void        Stop            (void);
     void        Render          (xbool InRenderLoop = FALSE);
-    void        SetVolume       (f32 Volume)                        { m_Private.SetVolume(Volume);          };
+    void        SetVolume       (f32 Volume);
+    void        SetLanguage     (x_language Language);
+    x_language  GetLanguage     (void) const                       { return m_Language;                    };
     void        Pause           (void)                              { m_Private.Pause();                    };
     void        Resume          (void)                              { m_Private.Resume();                   };
 
@@ -45,7 +47,8 @@ private:
     movie_private   m_Private;
     xbool           m_IsLooped;
     xbool           m_Finished;
-    friend  void    s_MoviePlayerThread(void*);
+    f32             m_Volume;
+    x_language      m_Language;
 };
 
 extern movie_player Movie;

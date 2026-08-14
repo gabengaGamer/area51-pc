@@ -7,13 +7,13 @@
 #ifndef EVENT_MGR_HPP
 #define EVENT_MGR_HPP
 
-#include "Animation\AnimData.hpp"
-#include "Animation\CharAnimPlayer.hpp"
-#include "Animation\AnimPlayer.hpp"
-#include "Loco\Loco.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Animation\BasePlayer.hpp"
+#include "Animation/AnimData.hpp"
+#include "Animation/CharAnimPlayer.hpp"
+#include "Animation/AnimPlayer.hpp"
+#include "Loco/Loco.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Animation/BasePlayer.hpp"
 
 //==============================================================================
 //  INCLUDES

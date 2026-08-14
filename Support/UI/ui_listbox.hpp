@@ -17,6 +17,7 @@
 #endif
 
 #include "ui_control.hpp"
+#include "ui_scrollbar.hpp"
 
 //==============================================================================
 //  ui_listbox
@@ -48,18 +49,21 @@ public:
                                               s32           Flags );
 
     virtual void    Render                  ( s32 ox=0, s32 oy=0 );
+    virtual void    RenderHeader            ( irect r );
     virtual void    RenderItem              ( irect r, const item& Item, const xcolor& c1, const xcolor& c2 );
 
     virtual void    SetPosition             ( const irect& Position );
 
-    virtual void    OnPadNavigate           ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void    OnPadShoulder           ( ui_win* pWin, s32 Direction );
-    virtual void    OnPadShoulder2          ( ui_win* pWin, s32 Direction );
-    virtual void    OnPadSelect             ( ui_win* pWin );
-    virtual void    OnPadBack               ( ui_win* pWin );
-    virtual void    OnMouseMove             ( ui_win* pWin, s32 x, s32 y );
-    virtual void    OnLBDown                ( ui_win* pWin );
-    virtual void    OnLBUp                  ( ui_win* pWin );
+    virtual void    OnNavigate              ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void    OnPage                  ( ui_win* pWin, s32 Direction );
+    virtual void    OnJump                  ( ui_win* pWin, s32 Direction );
+    virtual void    OnAccept                ( ui_win* pWin );
+    virtual void    OnCancel                ( ui_win* pWin );
+    virtual void    OnPointerMove           ( ui_win* pWin, s32 x, s32 y );
+    virtual void    OnPointerLeave          ( ui_win* pWin );
+    virtual void    OnPointerWheel          ( ui_win* pWin, s32 Delta );
+    virtual void    OnPointerDown           ( ui_win* pWin, s32 x, s32 y );
+    virtual void    OnPointerUp             ( ui_win* pWin, s32 x, s32 y );
     virtual void    OnUpdate                ( ui_win* pWin, f32 DeltaTime );
     virtual void    OnFocusGained           ( ui_win* pWin );
     virtual void    OnFocusLost             ( ui_win* pWin );
@@ -75,7 +79,7 @@ public:
     void            DeleteItem              ( s32 iItem );
     void            DeleteSelectedItem      ( void );
     void            EnableItem              ( s32 iItem, xbool State );
-    u32             GetItemFlags            ( s32 iItem );
+    u32             GetItemFlags            ( s32 iItem ) const;
 
     void            EnableBorders           ( void )                                    { m_ShowBorders = TRUE; }
     void            DisableBorders          ( void )                                    { m_ShowBorders = FALSE; }
@@ -105,17 +109,17 @@ public:
     void            SetItemColor            ( s32 iItem, const xcolor& Color );
     xcolor          GetItemColor            ( s32 iItem ) const;
 
-    s32             FindItemByLabel         ( const xwstring& Label );
-    s32             FindItemByData          ( uaddr Data, s32 Index = 0 );
+    s32             FindItemByLabel         ( const xwstring& Label ) const;
+    s32             FindItemByData          ( uaddr Data, s32 Index = 0 ) const;
 
     s32             GetSelection            ( void ) const;
     void            SetSelection            ( s32 iSelection );
     void            ClearSelection          ( void );
 
     void            EnsureVisible           ( s32 iItem );
-    s32             GetNumEnabledItems      ( void );
+    s32             GetNumEnabledItems      ( void ) const;
     
-    s32             GetCursorOffset         ( void );
+    s32             GetCursorOffset         ( void ) const;
     void            SetSelectionWithOffset  ( s32 iSelection, s32 Offset );
 
     void            SetBackgroundColor      ( xcolor Color );
@@ -124,6 +128,17 @@ public:
     void            AlphaSortList           ( void );
 
 protected:
+    s32             GetMaxFirstVisibleItem  ( void ) const;
+    xbool           SetFirstVisibleItem     ( s32 FirstVisibleItem );
+    xbool           ScrollItems             ( s32 ItemDelta );
+    s32             GetItemAt               ( s32 x, s32 y ) const;
+    s32             FindEnabledItem         ( s32 Start, s32 Direction ) const;
+    xbool           SelectUserItem          ( s32 iItem );
+    void            UpdateScrollBar         ( void );
+    void            UpdateVisibleItemCount  ( void );
+
+    //-------------------------------------------------------------------------
+
     xbool           m_ExitOnSelect;
     xbool           m_ExitOnBack;
     xbool           m_ShowBorders;
@@ -132,21 +147,8 @@ protected:
     xbool           m_AllowParentNavigate;
     xbool           m_DisableCursor;
     s32             m_iElementFrame;
-    s32             m_iElement_sb_arrowdown;
-    s32             m_iElement_sb_arrowup;
-    s32             m_iElement_sb_container;
-    s32             m_iElement_sb_thumb;
-#ifdef TARGET_PC
-    s32             m_TrackHighLight;
-    s32             m_MouseX;
-    s32             m_MouseY;
-    irect           m_UpArrow;
-    irect           m_DownArrow;
-    irect           m_ScrollBar;
-    xbool           m_MouseDown;
-    xbool           m_ScrollDown;
-    f32             m_ScrollTime;
-#endif
+    ui_scrollbar    m_ScrollBar;
+    s32             m_HoveredItem;
 
     xarray<item>    m_Items;
     s32             m_iSelection;

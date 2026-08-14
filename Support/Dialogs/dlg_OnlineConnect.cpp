@@ -4,22 +4,17 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_text.hpp"
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_listbox.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_listbox.hpp"
 
 #include "dlg_OnlineConnect.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\MatchMgr.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "MemCardMgr/MemCardMgr.hpp"
-#include "e_memcard.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/MatchMgr.hpp"
 #include "e_Network.hpp"
 
 #if defined(CONFIG_VIEWER)
@@ -35,16 +30,12 @@
 enum online_connect_controls
 {
     IDC_ONLINE_CONNECT_LISTBOX,
-    IDC_ONLINE_CONNECT_NAV_TEXT,
-    IDC_ONLINE_CONFIG_LISTBOX,
 };
 
 
 ui_manager::control_tem OnlineConnectControls[] = 
 {
-    { IDC_ONLINE_CONNECT_LISTBOX,   "IDS_SIGN_IN",          "listbox",  70,  60, 220, 238, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_CONFIG_LISTBOX,    "IDS_SELECT_CONFIG",    "listbox",  26,  60, 368, 238, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_CONNECT_NAV_TEXT,  "IDS_NULL",             "text",      0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_ONLINE_CONNECT_LISTBOX,   "IDS_SIGN_IN",          "listbox",  70,  60, 220, 238, 0, 0, 1, 1, ui_win::WF_VISIBLE },
 };
 
 
@@ -65,23 +56,9 @@ ui_manager::dialog_tem OnlineConnectDialog =
 //  Structs
 //=========================================================================
 
-//=========================================================================
-//  Data
-//=========================================================================
-//
-// Note: I may move all this crap in to the network layer.
-//
-static const char* s_ConfigDeviceList[]=
-{
-        "mc0:/BWNETCNF/BWNETCNF",
-        "mc1:/BWNETCNF/BWNETCNF",
-        //"pfs0:/BWNETCNF/BWNETCNF",
-        NULL,
-};
-s32 s_LastCardStatus[2];
-//=========================================================================
+//========================================================================= 
 //  Registration function
-//=========================================================================
+//========================================================================= 
 
 void dlg_online_connect_register( ui_manager* pManager )
 {
@@ -135,25 +112,19 @@ xbool dlg_online_connect::Create( s32                        UserID,
 
     // find controls
     m_pUserList     = (ui_listbox*) FindChildByID( IDC_ONLINE_CONNECT_LISTBOX  );
-    m_pNavText      = (ui_text*)    FindChildByID( IDC_ONLINE_CONNECT_NAV_TEXT );
-    m_pConfigList   = (ui_listbox*) FindChildByID( IDC_ONLINE_CONFIG_LISTBOX );
 
     // hide them
-    m_pConfigList->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pUserList  ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
 
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
 
     // set up user list
-    m_pUserList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pUserList->SetActive( TRUE );
     m_pUserList->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pUserList->DisableFrame();
     m_pUserList->SetExitOnSelect(FALSE);
@@ -161,17 +132,6 @@ xbool dlg_online_connect::Create( s32                        UserID,
     m_pUserList->EnableHeaderBar();
     m_pUserList->SetHeaderBarColor( xcolor(19,59,14,196) );
     m_pUserList->SetHeaderColor( xcolor(255,252,204,255) );
-
-    // set up configuration list
-    m_pConfigList->SetLineHeight( 32 );
-    m_pConfigList->SetFlag(ui_win::WF_SELECTED, TRUE);
-    m_pConfigList->SetBackgroundColor( xcolor (39,117,28,128) );
-    m_pConfigList->DisableFrame();
-    m_pConfigList->SetExitOnSelect(FALSE);
-    m_pConfigList->SetExitOnBack(TRUE);
-    m_pConfigList->EnableHeaderBar();
-    m_pConfigList->SetHeaderBarColor( xcolor(19,59,14,196) );
-    m_pConfigList->SetHeaderColor( xcolor(255,252,204,255) );
 
     // set initial focus
     GotoControl( (ui_control*)m_pUserList );
@@ -199,8 +159,6 @@ xbool dlg_online_connect::Create( s32                        UserID,
 
 void dlg_online_connect::Destroy( void )
 {
-    ASSERT( g_StateMgr.IsBackgroundThreadRunning()==FALSE );
-
     ui_dialog::Destroy();
 
     // kill screen wipe
@@ -215,11 +173,7 @@ void dlg_online_connect::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-    irect   rb;
-    s32     XRes;
-    s32     YRes;
-
-    eng_GetRes( XRes, YRes );
+    irect rb = g_UiMgr->GetUserBounds( m_UserID );
 
     g_UiMgr->RenderGouraudRect( rb, xcolor(0,0,0,180),
         xcolor(0,0,0,180),
@@ -273,12 +227,12 @@ void dlg_online_connect::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_online_connect::OnPadSelect( ui_win* pWin )
+void dlg_online_connect::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
     // check for match manager busy
-    if( g_MatchMgr.IsBusy() || g_StateMgr.IsBackgroundThreadRunning() )
+    if( g_MatchMgr.IsBusy() || g_NetworkMgr.IsOnlineStateChanging() )
     {
         // wait for the user accounts to populate the listbox
         return;
@@ -286,119 +240,6 @@ void dlg_online_connect::OnPadSelect( ui_win* pWin )
 
     switch( m_ConnectState )
     {
-        //
-        // We're picking a network configuration to use. Even though this will not be used on xbox,
-        // just leave the generic code model in there so we don't have so many ifdefs.
-        //
-        //------------------------------------------------------
-    case ACTIVATE_SELECT:
-        {
-            //
-            // Since we can only associate one value with a particular item, let's just
-            // cram two things in to an s32. Upper 16 bits, device index, lower 16 bits,
-            // configuration index.
-            //
-            InitScreenScaling( m_Position ); // Resize dialog back to original width
-            g_UiMgr->DisableScreenHighlight();
-            m_pConfigList->SetFlag( ui_win::WF_VISIBLE, FALSE );
-            m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-            //
-            // Did the memory card status change?
-            //
-            {
-                s32 i;
-                for( i=0; i<2; i++ )
-                {
-                    s32 Status = g_MemcardHardware.GetCardStatus( i );
-                    if( Status != s_LastCardStatus[i] )
-                    {
-                        s_LastCardStatus[i]=Status;
-
-                        // Stealing the text messages used in autosave. This is used to inform
-                        // the user the status of the cards changed.
-                        if( i==0 )
-                        {
-                            Failed( "IDS_AUTOSAVE_FAILED_CARD_CHANGED_SLOT_1", 0, CANCEL_RETRY_MANAGE, ACTIVATE_INIT );
-                        }
-                        else
-                        {
-                            Failed( "IDS_AUTOSAVE_FAILED_CARD_CHANGED_SLOT_2", 0, CANCEL_RETRY_MANAGE, ACTIVATE_INIT );
-                        }
-                        return;
-                    }
-                }
-            }
-
-            s32 DeviceIndex = m_pConfigList->GetSelectedItemData()>>16;
-            s32 ConfigIndex = m_pConfigList->GetSelectedItemData() & 0xffff;
-            // Yes, I know. Bad. We should not be using a hardcoded upperbound. Who cares eh?
-            ASSERT( (DeviceIndex >= 0) && (DeviceIndex < 3) );
-
-            // Just use the first one.
-            xtimer t;
-            t.Start();
-            const char* pCardCheckString;
-            if( DeviceIndex==0 )
-            {
-                pCardCheckString = "MC_CARD_CHECK_SLOT1";
-            }
-            else
-            {
-                pCardCheckString = "MC_CARD_CHECK_SLOT2";
-            }
-
-            irect r = irect(0,0,300,160);
-            if( m_PopUp==NULL )
-            {
-                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                    ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
-            }
-
-            m_PopUp->Configure( r,
-                -1.0f,
-                g_StringTableMgr( "ui", "IDS_NETWORK_POPUP"     ),
-                g_StringTableMgr( "ui",  pCardCheckString ),
-                xwstring( "" ) );
-            
-            g_StateMgr.StartBackgroundRendering();
-            m_Status = net_SetConfiguration( s_ConfigDeviceList[DeviceIndex], ConfigIndex );
-            g_StateMgr.StopBackgroundRendering();
-            t.Stop();
-            LOG_MESSAGE( "dlg_online_connect::OnSelect", "SetConfiguration took %2.02fms", t.ReadMs() );
-            if( m_Status < 0 )
-            {
-                switch( m_Status )
-                {
-                case NET_ERR_OTHER_SYSTEM:
-                    Failed("IDS_ONLINE_CONFIG_OTHER_SYSTEM", DeviceIndex+1);
-                    break;
-                case NET_ERR_NO_CONFIGURATION:
-                case NET_ERR_NO_CARD:
-                    Failed("IDS_ONLINE_CONFIG_NONE_PRESENT", 0, CANCEL_RETRY_MANAGE, CONNECT_MATCH_INIT );
-                    break;
-                case NET_ERR_NO_HARDWARE:
-                    Failed( "IDS_ONLINE_CONFIG_NO_HARDWARE", 0, OK_ONLY );
-                    break;
-                default:
-                    // We should not get any errors we don't know about
-                    ASSERT( FALSE );
-                    Failed("IDS_ONLINE_CONFIG_NONE_PRESENT");
-                    break;
-                }
-            }
-            else
-            {
-                SetConnectState( ACTIVATE_LOOP );
-                m_Done = FALSE;
-                m_Error = 0;
-                m_Timeout = 0.0f;
-            }
-            m_pConfigList->SetFlag( ui_win::WF_VISIBLE, FALSE );
-            m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-            return;
-        }
-        break;
-        //------------------------------------------------------
     case CONNECT_SELECT_USER:
         {
             // check if this is an existing user
@@ -415,7 +256,6 @@ void dlg_online_connect::OnPadSelect( ui_win* pWin )
 
                 // hide list
                 m_pUserList ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-                m_pNavText  ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
                 // disable highlight
                 g_UiMgr->DisableScreenHighlight();
@@ -446,14 +286,11 @@ void dlg_online_connect::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_online_connect::OnPadBack( ui_win* pWin )
+void dlg_online_connect::OnCancel( ui_win* pWin )
 {
     (void)pWin;
-    if( m_ConnectState==ACTIVATE_SELECT )
+    if( (m_ConnectState == CONNECT_IDLE) || (m_ConnectState == CONNECT_SELECT_USER) )
     {
-        if( g_StateMgr.IsBackgroundThreadRunning() )
-            return;
-
         // check for menu automation
         if( CONFIG_IS_AUTOSERVER || CONFIG_IS_AUTOCLIENT )
         {
@@ -464,7 +301,7 @@ void dlg_online_connect::OnPadBack( ui_win* pWin )
         {
             SetState( DIALOG_STATE_BACK );
 
-            m_pNavText   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
             // cancel connecting
             //g_AudioMgr.Play( "OptionBack" );
         }
@@ -476,14 +313,8 @@ void dlg_online_connect::OnPadBack( ui_win* pWin )
 void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 {
     (void)pWin;
-    (void)DeltaTime;
 
     s32 Result = m_PopUpResult;
-    // Limit deltatime size if we're debugging
-    if( DeltaTime > 0.25f )
-    {
-        DeltaTime = 1.0f/30.0f;
-    }
     m_Timeout += DeltaTime;
     // scale window if necessary
     if( g_UiMgr->IsScreenScaling() )
@@ -521,7 +352,6 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             else if( m_ConnectState == CONNECT_SELECT_USER )
             {
                 m_pUserList ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-                m_pNavText  ->SetFlag(ui_win::WF_VISIBLE, TRUE);
                 GotoControl( (ui_control*)m_pUserList );
 
                 // set highlight
@@ -533,7 +363,7 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 irect r = g_UiMgr->GetUserBounds( g_UiUserID );
                 LOG_MESSAGE( "dlg_online_connect::OnUpdate", "Opening dialog. ConnectState:%d", m_ConnectState );
                 m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                    ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+                    ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
                 m_PopUpResult = DLG_POPUP_IDLE;
 
                 r = irect(0,0,300,160);
@@ -549,13 +379,6 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     }
     else
     {
-        if( g_StateMgr.IsBackgroundThreadRunning() )
-        {
-            // update the glow bar
-            g_UiMgr->UpdateGlowBar(DeltaTime);
-            return;
-        }
-
         if( m_PopUp && (m_PopUpResult!=DLG_POPUP_IDLE) )
         {
             m_PopUp = NULL;
@@ -575,7 +398,6 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             case CONNECT_INIT:
                 UpdateConnectInit();
                 break;
-                break;
 
                 //------------------------------------------
             case CONNECT_WAIT:
@@ -587,31 +409,36 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 //------------------------------------------
             case CONFIG_INIT:
                 {
-
                     irect r( 0, 0, 300, 160 );
 
                     m_PopUp->Configure( r,
-                        0.25f,
+                        -1.0f,
                         g_StringTableMgr( "ui", "IDS_NETWORK_POPUP"            ),
                         g_StringTableMgr( "ui", "IDS_ONLINE_PLEASE_WAIT"       ),
                         g_StringTableMgr( "ui", "IDS_ONLINE_CONNECT_ESTABLISH" ) );
 
                     m_PopUp->EnableBlackout( FALSE );
+                    g_NetworkMgr.BeginOnlineStateChange( TRUE );
+                    SetConnectState( CONFIG_ONLINE_WAIT );
+                }
+                break;
 
+                //------------------------------------------
+            case CONFIG_ONLINE_WAIT:
+                {
+                    if( !g_NetworkMgr.IsOnlineStateChanging() )
+                    {
+                        g_NetworkMgr.BeginOnlineStateChange( TRUE );
+                        break;
+                    }
+
+                    if( !g_NetworkMgr.IsOnlineStateChangeDone() )
+                    {
+                        break;
+                    }
+
+                    g_NetworkMgr.FinishOnlineStateChange();
                     SetConnectState( ACTIVATE_INIT );
-
-                    // *** NOTE *** we must be very careful where we kick off the background
-                    // rendering.
-                    g_StateMgr.KillFrontEndMusic();
-                    g_StateMgr.StartBackgroundRendering();
-                    xtimer t;
-
-                    t.Start();
-                    g_NetworkMgr.SetOnline( TRUE );
-                    t.Stop();
-                    LOG_MESSAGE( "dlg_online_connect::OnUpdate", "SetOnline() call took %2.02fms", t.ReadMs() );
-                    g_StateMgr.StopBackgroundRendering();
-                    g_StateMgr.InitFrontEndMusic();
                 }
                 break;
 
@@ -621,134 +448,7 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 break;
 
                 //------------------------------------------
-            case ACTIVATE_SELECT:
-                ASSERT( g_StateMgr.IsBackgroundThreadRunning() == FALSE );
-                m_pConfigList->SetFlag( ui_win::WF_VISIBLE, TRUE );
-                m_pNavText->SetFlag( ui_win::WF_VISIBLE, TRUE );
-                g_UiMgr->SetScreenHighlight( m_pConfigList->GetPosition() );
-                break;
-
-                //------------------------------------------
-            case ACTIVATE_LOOP:
-                {
-                    if( m_Timeout < 30.0f )
-                    {
-                        m_Error = 0;
-                        m_Error = net_GetAttachStatus(m_Error);
-
-                        if ( (m_Error==ATTACH_STATUS_CONFIGURED) ||
-                            (m_Error==ATTACH_STATUS_ATTACHED) )
-                        {
-                            SetConnectState( ACTIVATE_WAIT_DHCP );
-                        }
-                        else
-                        {
-                            // Invalid net config file - its fatal!
-                            Failed("IDS_ONLINE_CONFIG_OTHER_SYSTEM", m_LastErrorSlot+1);
-                        }
-                    }
-                    else
-                    {
-                        // timed out!
-                        Failed("IDS_ONLINE_CONNECT_MATCHMAKER_FAILED");
-                    }
-
-                }
-                break;
-
-                //------------------------------------------
-            case ACTIVATE_WAIT_DHCP:
-                {
-                    // Wait until DHCP assigns us an address
-                    if( m_Timeout < 30.0f )
-                    {
-                        irect r( 0, 0, 300, 160 );
-
-                        //
-                        // User pressed cancel. This test has to be done prior to the reconfigure as
-                        // the configure function will clear out the popup result to idle.
-                        //
-                        if( Result != DLG_POPUP_IDLE )
-                        {
-                            m_PopUp = NULL;
-                            Failed( "IDS_ONLINE_CONNECT_ABORTED", 0, OK_ONLY );
-                            break;
-                        }
-
-                        if( m_PopUp == NULL )
-                        {
-                            LOG_MESSAGE( "dlg_online_connect::OnUpdate", "Opening dialog (ACTIVATE_WAIT_DHCP)" );
-                            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                                ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
-                            m_PopUpResult = DLG_POPUP_IDLE;
-                        }
-
-                        xwstring MessageText  = g_StringTableMgr( "ui", "IDS_ONLINE_PLEASE_WAIT" );
-                        MessageText += "\n";
-                        MessageText += g_StringTableMgr( "ui", "IDS_ONLINE_CONNECT_CONNECTING" );
-                        MessageText += "\n";
-                        MessageText += g_StringTableMgr( "ui", "IDS_ONLINE_TIMEOUT" );
-                        MessageText += xwstring( xfs("%d",(30-(s32)m_Timeout)) );
-
-                        m_PopUp->Configure( r,
-                            g_StringTableMgr( "ui", "IDS_NETWORK_POPUP" ), 
-                            FALSE, 
-                            TRUE, 
-                            FALSE, 
-                            MessageText,
-                            g_StringTableMgr( "ui", "IDS_NAV_CANCEL" ),
-                            &m_PopUpResult );
-
-                        m_PopUp->EnableBlackout( FALSE );
-
-                        net_GetInterfaceInfo( -1, m_Info );
-                        if( m_Info.Address )
-                        {
-                            SetConnectState( CONNECT_MATCH_INIT );
-                            break;
-                        }
-                        if( m_Info.IsAvailable==FALSE )
-                        {
-                            Failed( "IDS_ONLINE_CHECK_CABLE", 0, OK_ONLY );
-                            break;
-                        }
-
-                        s32 Error;
-
-                        Error = net_GetAttachStatus(Error);
-                        if( Error==ATTACH_STATUS_ERROR )
-                        {
-                            connect_status ConnStatus;
-
-                            net_GetConnectStatus( ConnStatus );
-                            // Literal error text from the connection
-                            if( ConnStatus.ErrorText[0] )
-                            {
-                                Failed( ConnStatus.ErrorText );
-                            }
-                            else
-                            {
-                                Failed( "IDS_ONLINE_CANNOT_CONNECT" );
-                            }
-                        }
-
-                    }
-                    else
-                    {
-                        Failed("IDS_ONLINE_CONNECT_TIMEOUT");
-                        break;
-                    }
-                    break;
-                }
-                break;
-
-                //------------------------------------------
             case CONNECT_MATCH_INIT:
-                if( g_StateMgr.IsBackgroundThreadRunning() )
-                {
-                    return;
-                }
-
                 {
                     irect r( 0, 0, 300, 160 );
 
@@ -756,7 +456,7 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     {
                         LOG_MESSAGE( "dlg_online_connect::UpdateAuthMachine", "Opening dialog" );
                         m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                            ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+                            ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
                         m_Timeout = 0.0f;
                         m_PopUpResult = DLG_POPUP_IDLE;
                     }
@@ -775,9 +475,6 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                         &m_PopUpResult );
                     m_PopUp->EnableBlackout( FALSE );
 
-                    g_StateMgr.StartBackgroundRendering();
-                    net_EndConfig();
-
                     s32 SystemId = net_GetSystemId();
 
                     g_MatchMgr.SetUniqueId( (const byte*)&SystemId, sizeof(SystemId) );
@@ -785,25 +482,19 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     net_socket& LocalSocket = g_NetworkMgr.GetSocket();
                     if( LocalSocket.IsEmpty()  )
                     {
-                        m_Status = LocalSocket.Bind( NET_GAME_PORT, NET_FLAGS_BROADCAST );
+                        s32 Status = LocalSocket.Bind( NET_GAME_PORT, NET_FLAGS_BROADCAST );
 
                         net_address     Broadcast;
                         Broadcast = net_address( m_Info.Broadcast, LocalSocket.GetPort() );
-                        ASSERT( m_Status );
+                        ASSERT( Status );
                         x_DebugMsg( "Network socket opened. Address is %s\n",LocalSocket.GetStrAddress() );
-                        m_Done = g_MatchMgr.Init( LocalSocket, Broadcast );
+                        g_MatchMgr.Init( LocalSocket, Broadcast );
                     }
                     g_MatchMgr.SetState( MATCH_AUTHENTICATE_MACHINE );
-                    g_StateMgr.StopBackgroundRendering();
 
                     m_Timeout = 0.0f;
 
                     SetConnectState( CONNECT_AUTHENTICATE_MACHINE );
-                }
-                break;
-
-                if( m_PopUp == NULL )
-                {
                 }
                 break;
 
@@ -866,7 +557,7 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     if( m_PopUp==NULL )
                     {
                         m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                            ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+                            ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
                     }
                     m_PopUp->Configure( r,
                         Title, 
@@ -926,11 +617,6 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 //------------------------------------------
             case CONNECT_DISCONNECT:
                 {
-                    if( g_StateMgr.IsBackgroundThreadRunning() )
-                    {
-                        return;
-                    }
-
                     irect r( 0, 0, 300, 260 );
                     xstring LabelText;
 
@@ -946,7 +632,7 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     }
                     LOG_MESSAGE( "dlg_online_connect::OnUpdate", "Opening dialog (CONNECT_FAILED)" );
                     m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                        ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+                        ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
                     m_PopUpResult = DLG_POPUP_IDLE;
 
                     m_PopUp->Configure( r,
@@ -960,172 +646,37 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
                     m_PopUp->EnableBlackout( FALSE );
 
-                    m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
-                    g_StateMgr.KillFrontEndMusic();
-                    g_StateMgr.StartBackgroundRendering();
-                    g_NetworkMgr.SetOnline( FALSE );
-                    g_StateMgr.StopBackgroundRendering();
+                    SetNavTextVisible( FALSE );
+                    g_NetworkMgr.BeginOnlineStateChange( FALSE );
+                    SetConnectState( CONNECT_DISCONNECT_WAIT );
+                }
+                break;
+
+                //------------------------------------------
+            case CONNECT_DISCONNECT_WAIT:
+                {
+                    if( !g_NetworkMgr.IsOnlineStateChanging() )
+                    {
+                        g_NetworkMgr.BeginOnlineStateChange( FALSE );
+                        break;
+                    }
+
+                    if( !g_NetworkMgr.IsOnlineStateChangeDone() )
+                    {
+                        break;
+                    }
+
+                    g_NetworkMgr.FinishOnlineStateChange();
+
                     //
                     // Reset exit reason so that we don't get two messages telling us the network is down.
                     //
                     g_ActiveConfig.SetExitReason( GAME_EXIT_CONTINUE );
-                    g_StateMgr.InitFrontEndMusic();
 
                     // Once we have actually disconnected, then we go back.
                     SetState( DIALOG_STATE_BACK );
                 }
                 break;
-                //------------------------------------------
-            case CONNECT_AUTO_UPDATE:
-                {
-                    // A required update to the XBox live service
-
-                    // set nav text
-                    xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_UPDATE_GAME" ));
-                    navText += g_StringTableMgr( "ui", "IDS_NAV_SIGN_OUT" );
-
-                    // pop up modal dialog and wait for response
-                    irect r( 0, 0, 300, 160 );
-
-                    m_PopUp->Configure( r,
-                        g_StringTableMgr( "ui", "IDS_SIGN_IN" ), 
-                        TRUE, 
-                        TRUE, 
-                        FALSE, 
-                        g_StringTableMgr( "ui", "IDS_SIGN_IN_REQUIRED_UPDATE" ),
-                        navText,
-                        &m_PopUpResult );
-
-                    m_PopUp->EnableBlackout( FALSE );
-
-                    // set state
-                    SetConnectState( CONNECT_AUTO_UPDATE_WAIT );
-                }
-                break;
-
-                //------------------------------------------
-            case CONNECT_AUTO_UPDATE_WAIT:
-                {
-                    // wait for response
-                    if( m_PopUpResult != DLG_POPUP_IDLE )
-                    {
-                        m_PopUp = NULL;
-                        if( m_PopUpResult == DLG_POPUP_YES )
-                        {
-                            g_StateMgr.Reboot( REBOOT_UPDATE );
-                            // boot to xbox dashboard
-                        }
-                        else
-                        {
-                            // sign out
-                            SetState( DIALOG_STATE_BACK );
-                            ASSERT( g_UiMgr->GetTopmostDialog(m_UserID) == this );
-                            g_UiMgr->EndDialog( g_UiUserID, TRUE );
-                            return;
-                        }
-                    }
-                }
-                break;
-
-                //------------------------------------------
-            case CONNECT_REQUIRED_MESSAGE:
-                {
-                    // A required message to read from the XBox live service
-
-                    // set nav text
-                    xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_DASHBOARD" ));
-                    navText += g_StringTableMgr( "ui", "IDS_NAV_SIGN_OUT" );
-
-                    // pop up modal dialog and wait for response
-                    irect r( 0, 0, 300, 160 );
-
-                    m_PopUp->Configure( r,
-                        g_StringTableMgr( "ui", "IDS_SIGN_IN" ), 
-                        TRUE, 
-                        TRUE, 
-                        FALSE, 
-                        g_StringTableMgr( "ui", "IDS_SIGN_IN_IMPORTANT_MESSAGE" ),
-                        navText,
-                        &m_PopUpResult );
-
-                    m_PopUp->EnableBlackout( FALSE );
-
-                    // set state
-                    SetConnectState( CONNECT_REQUIRED_MESSAGE_WAIT );
-                }
-                break;
-
-                //------------------------------------------
-            case CONNECT_REQUIRED_MESSAGE_WAIT:
-                {
-                    // wait for response
-                    if( m_PopUpResult != DLG_POPUP_IDLE )
-                    {
-                        m_PopUp = NULL;
-                        if( m_PopUpResult == DLG_POPUP_YES )
-                        {
-                            g_StateMgr.Reboot( REBOOT_MESSAGE );
-                            // boot to xbox dashboard
-                        }
-                        else
-                        {
-                            // sign out
-                            SetState( DIALOG_STATE_BACK );
-                            ASSERT( g_UiMgr->GetTopmostDialog(m_UserID) == this );
-                            g_UiMgr->EndDialog( g_UiUserID, TRUE );
-                            return;
-                        }
-                    }
-                }
-                break;
-
-                //------------------------------------------
-            case CONNECT_OPTIONAL_MESSAGE:
-                {
-                    // An optional message to read from the XBox live service
-
-                    // set nav text
-                    xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_READ_LATER" ));
-                    navText += g_StringTableMgr( "ui", "IDS_NAV_READ_MESSAGES" );
-
-                    // pop up modal dialog and wait for response
-                    irect r( 0, 0, 300, 160 );
-
-                    m_PopUp->Configure( r,
-                        g_StringTableMgr( "ui", "IDS_SIGN_IN" ), 
-                        TRUE, 
-                        TRUE, 
-                        FALSE, 
-                        g_StringTableMgr( "ui", "IDS_SIGN_IN_NEW_MESSAGE" ),
-                        navText,
-                        &m_PopUpResult );
-
-                    m_PopUp->EnableBlackout( FALSE );
-
-                    // set state
-                    SetConnectState( CONNECT_OPTIONAL_MESSAGE_WAIT );
-                }
-                break;
-
-                //------------------------------------------
-            case CONNECT_OPTIONAL_MESSAGE_WAIT:
-                {
-                    // wait for response
-                    if ( m_PopUpResult != DLG_POPUP_IDLE )
-                    {
-                        m_PopUp = NULL;
-                        if ( m_PopUpResult == DLG_POPUP_YES )
-                        {
-                            // continue with sign on
-                        }
-                        else
-                        {
-                            // boot to xbox dashboard
-                        }
-                    }
-                }
-                break;
-
                 //------------------------------------------
             case CONNECT_DONE:
 
@@ -1134,18 +685,9 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     irect r(0,0,300,160);
 
                     m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                        ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+                        ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
                     xwstring MessageText( g_StringTableMgr( "ui", "IDS_ONLINE_CONNECTED" ) );
-
-                    interface_info Info;
-
-                    net_GetInterfaceInfo( -1, Info );
-                    MessageText += "\n";
-                    MessageText += g_StringTableMgr( "ui", "IDS_ONLINE_IP_ADDRESS" );
-                    MessageText += " ";
-                    MessageText += net_address( Info.Address, 0 ).GetStrIP();
-                    MessageText += ".";
 
                     m_PopUp->Configure( r,
                         g_StringTableMgr( "ui", "IDS_NETWORK_POPUP" ), 
@@ -1250,11 +792,6 @@ void dlg_online_connect::Failed( const char* pFailureReason, s32 ErrorCode, canc
 {
     (void)ErrorCode;
 
-    if( g_StateMgr.IsBackgroundThreadRunning() )
-    {
-        g_StateMgr.StopBackgroundRendering();
-    }
-
     LOG_MESSAGE( "dlg_online_connect::Failed", "Failure Reason:%s", pFailureReason );
     x_strcpy( m_LabelText, pFailureReason);
 
@@ -1283,30 +820,21 @@ const char* dlg_online_connect::StateName( connect_states State )
     case CONNECT_IDLE:                  return "CONNECT_IDLE";
     case CONNECT_INIT:                  return "CONNECT_INIT";
     case CONNECT_WAIT:                  return "CONNECT_WAIT";
-    case SIGN_IN_INIT:                  return "SIGN_IN_INIT";
-    case SIGN_IN_WAIT:                  return "SIGN_IN_WAIT";
     case CONFIG_INIT:                   return "CONFIG_INIT";
+    case CONFIG_ONLINE_WAIT:            return "CONFIG_ONLINE_WAIT";
     case CONNECT_AUTHENTICATE_MACHINE:  return "CONNECT_AUTHENTICATE_MACHINE";
     case CONNECT_SELECT_USER:           return "CONNECT_SELECT_USER";
     case ACTIVATE_INIT:                 return "ACTIVATE_INIT";
-    case ACTIVATE_SELECT:               return "ACTIVATE_SELECT";
-    case ACTIVATE_LOOP:                 return "ACTIVATE_LOOP";
-    case ACTIVATE_WAIT_DHCP:            return "ACTIVATE_WAIT_DHCP";
     case CONNECT_MATCH_INIT:            return "CONNECT_MATCH_INIT";
     case CONNECT_AUTHENTICATE_USER:     return "CONNECT_AUTHENTICATE_USER";
     case CONNECT_FAILED:                return "CONNECT_FAILED";
     case CONNECT_FAILED_WAIT:           return "CONNECT_FAILED_WAIT";
-    case CONNECT_AUTO_UPDATE:           return "CONNECT_AUTO_UPDATE";
-    case CONNECT_AUTO_UPDATE_WAIT:      return "CONNECT_AUTO_UPDATE_WAIT";
-    case CONNECT_REQUIRED_MESSAGE:      return "CONNECT_REQUIRED_MESSAGE";
-    case CONNECT_REQUIRED_MESSAGE_WAIT: return "CONNECT_REQUIRED_MESSAGE_WAIT";
-    case CONNECT_OPTIONAL_MESSAGE:      return "CONNECT_OPTIONAL_MESSAGE";
-    case CONNECT_OPTIONAL_MESSAGE_WAIT: return "CONNECT_OPTIONAL_MESSAGE_WAIT";
     case CONNECT_DONE:                  return "CONNECT_DONE";
     case CONNECT_DONE_WAIT:             return "CONNECT_DONE_WAIT";
     case CONNECT_CHECK_MOTD:            return "CONNECT_CHECK_MOTD";
     case CONNECT_DISPLAY_MOTD:          return "CONNECT_DISPLAY_MOTD";
     case CONNECT_DISCONNECT:            return "CONNECT_DISCONNECT";
+    case CONNECT_DISCONNECT_WAIT:       return "CONNECT_DISCONNECT_WAIT";
     case NUM_CONNECT_STATES:            return "NUM_CONNECT_STATES";
     default:                            ASSERT( FALSE );
     }
@@ -1323,11 +851,8 @@ void dlg_online_connect::Configure( connect_mode ConnectMode )
     {
     case CONNECT_MODE_AUTH_USER:
         // Start the matchmaker authenticating the user, then wait for the authentication 
-        // to complete. This is not necessarily the prettiest way to do this but we are 
-        // splitting up what was the authentication process in to two stages now since the 
-        // profile needs to be picked first. XBOX Live may need to skip this stage as
-        // the user, at this point, should already be authenticated as they select their
-        // 'profile' seperately from their saved profile.
+        // to complete. Authentication is split into two stages because the profile is
+        // selected before the matchmaker authenticates it.
         g_MatchMgr.SetState( MATCH_CONNECT_MATCHMAKER );
         SetConnectState( CONNECT_AUTHENTICATE_USER );
         break;
@@ -1339,96 +864,6 @@ void dlg_online_connect::Configure( connect_mode ConnectMode )
     default:
         ASSERT(FALSE);
     }
-}
-
-//=========================================================================
-
-s32 dlg_online_connect::PopulateConfigurationList( void )
-{
-    // We go through our list of potential devices holding the configuration, then we add
-    // each to the list of configurations. When we return, we will respond with the # of
-    // configs found. If there are 0, then we give an error. If there is 1, then we will
-    // automatically connect with that one. Otherwise, the calling code will put up a dialog
-    // with the options to select from.
-    s32                 Status;
-    net_config_list     ConfigList;
-    s32                 LastUsefulError;
-    s32                 Index = 0;
-    s32                 i;
-    xbool               FoundConfig;
-
-    LastUsefulError = 0;
-    FoundConfig = FALSE;
-    m_pConfigList->DeleteAllItems();
-
-    m_LastErrorSlot = 0;
-    while( s_ConfigDeviceList[Index] )
-    {
-        const char* pCardCheckString;
-        if( Index==0 )
-        {
-            pCardCheckString = "MC_CARD_CHECK_SLOT1";
-        }
-        else
-        {
-            pCardCheckString = "MC_CARD_CHECK_SLOT2";
-        }
-        irect r = irect(0,0,300,160);
-        if( m_PopUp == NULL )
-        {
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
-            m_PopUpResult = DLG_POPUP_IDLE;
-        }
-
-        m_PopUp->Configure( r,
-            -1.0f,
-            g_StringTableMgr( "ui", "IDS_NETWORK_POPUP"     ),
-            g_StringTableMgr( "ui",  pCardCheckString ),
-            xwstring( "" ) );
-
-        Status = net_GetConfigList( s_ConfigDeviceList[Index], &ConfigList );
-        // If we found any valid configurations, add it to the main config list.
-        if( Status < 0 )
-        {
-            // Note: we may need to store additional info as to which device contained
-            // the error so we can display it to the user. This is where that would be
-            // done.
-            if( (Status != NET_ERR_NO_CARD) && (LastUsefulError == 0 ) )
-            {
-                m_LastErrorSlot = Index;
-                LastUsefulError = Status;
-            }
-        }
-        else
-        {
-            if( (Status == 0) && (m_LastErrorSlot == -1) )
-            {
-                m_LastErrorSlot = Index;
-            }
-            for( i = 0; i < ConfigList.Count; i++ )
-            {
-                if( ConfigList.Available[i] )
-                {
-                    m_pConfigList->AddItem( xwstring(ConfigList.Name[i]), (Index<<16)|i );
-                }
-                else
-                {
-                    m_LastErrorSlot = Index;
-                    LastUsefulError = NET_ERR_NO_CONFIGURATION;
-                }
-            }
-        }
-
-        Index++;
-    }
-
-    if( m_pConfigList->GetItemCount() > 0 )
-    {
-        m_pConfigList->SetSelection(0);
-        return m_pConfigList->GetItemCount();
-    }
-    return LastUsefulError;
 }
 
 //=========================================================================
@@ -1451,7 +886,7 @@ void dlg_online_connect::UpdateConnectInit( void )
         {
             LOG_MESSAGE( "dlg_online_connect::UpdateConnectInit", "Opening dialog" );
             m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+                ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
             m_PopUpResult = DLG_POPUP_IDLE;
         }
 
@@ -1474,145 +909,9 @@ void dlg_online_connect::UpdateConnectInit( void )
 
 void dlg_online_connect::UpdateActivateInit( void )
 {
-    interface_info Info;
-
-    net_GetInterfaceInfo(-1,Info);
-
-// Later, TODO
-
-#ifdef TARGET_PC
-    m_Info   = Info;
-    m_Done   = FALSE;
-    m_Error  = 0;
+    net_GetInterfaceInfo( -1, m_Info );
     m_Timeout = 0.0f;
     SetConnectState( CONNECT_MATCH_INIT );
-    return;
-#endif
-
-    if( Info.Address == 0 )
-    {
-        s32 Count;
-
-        g_StateMgr.StartBackgroundRendering();
-        xtimer t;
-        t.Start();
-        net_BeginConfig();
-        net_ActivateConfig( FALSE );
-        Count = PopulateConfigurationList();
-        t.Stop();
-        LOG_MESSAGE( "dlg_online_connect::OnUpdate", "Getting configuration list took %2.02fms", t.ReadMs() );
-        g_StateMgr.StopBackgroundRendering();
-
-        //
-        // hack hack hack! Prepare for checking card status while running
-        //
-        s32 Index = 0;
-        for( Index=0; Index<2; Index++ )
-        {
-            s_LastCardStatus[Index] = g_MemcardHardware.GetCardStatus( Index );
-        }
-        if( Count <= 0 )
-        {
-            switch( Count )
-            {
-            case 0:
-            case NET_ERR_NO_CARD:
-                Failed("IDS_ONLINE_CONFIG_NONE_PRESENT");
-                break;
-            case NET_ERR_NO_HARDWARE:
-                Failed("IDS_ONLINE_CONFIG_NO_HARDWARE", 0, OK_ONLY );
-                break;
-            case NET_ERR_OTHER_SYSTEM:
-                Failed("IDS_ONLINE_CONFIG_OTHER_SYSTEM", m_LastErrorSlot+1 );
-                break;
-            case NET_ERR_NO_CONFIGURATION:
-                Failed("IDS_ONLINE_CONFIG_NONE_PRESENT");
-                break;
-            case NET_ERR_CARD_NOT_FORMATTED:
-                Failed("IDS_ONLINE_CARD_NOT_FORMATTED", m_LastErrorSlot+1 );
-                break;
-            case NET_ERR_INVALID_CARD:
-                Failed("IDS_ONLINE_INVALID_CARD", m_LastErrorSlot+1 );
-                break;
-            default:
-                // We should not get any errors we don't know about dealing with.
-                ASSERT( FALSE );
-                break;
-            }
-        }
-        else
-        {
-            //
-            // If we have only one network configuration present, go ahead and activate it. We
-            // only present the configuration options if needed.
-            //
-            if( Count == 1 )
-            {
-                ASSERT( m_pConfigList->GetItemCount() == 1 );
-                s32 DeviceIndex = m_pConfigList->GetSelectedItemData()>>16;
-                s32 ConfigIndex = m_pConfigList->GetSelectedItemData() & 0xffff;
-
-                // Just use the first one.
-                g_StateMgr.StartBackgroundRendering();
-                xtimer t;
-
-                t.Start();
-                m_Status = net_SetConfiguration( s_ConfigDeviceList[DeviceIndex] , ConfigIndex );
-                t.Stop();
-                LOG_MESSAGE( "dlg_online_connect::OnUpdate", "SetConfiguration took %2.02fms", t.ReadMs() );
-                g_StateMgr.StopBackgroundRendering();
-                if( m_Status < 0 )
-                {
-                    switch( m_Status )
-                    {
-                    case NET_ERR_OTHER_SYSTEM:
-                        Failed("IDS_ONLINE_CONFIG_OTHER_SYSTEM", DeviceIndex+1);
-                        break;
-                    case NET_ERR_NO_CONFIGURATION:
-                    case NET_ERR_NO_CARD:
-                        Failed("IDS_ONLINE_CONFIG_NONE_PRESENT");
-                        break;
-                    case NET_ERR_NO_HARDWARE:
-                        Failed("IDS_ONLINE_CONFIG_NO_HARDWARE", 0, OK_ONLY );
-                        break;
-                    default:
-                        // We should not get any errors we don't know about
-                        ASSERT( FALSE );
-                        Failed("IDS_ONLINE_CONFIG_NONE_PRESENT");
-                        break;
-                    }
-                }
-                else
-                {
-                    SetConnectState( ACTIVATE_LOOP );
-                    m_Done = FALSE;
-                    m_Error = 0;
-                    m_Timeout = 0.0f;
-                }
-            }
-            else
-            {
-                // Open dialog containing the selections to pick. It *should* already be
-                // fully populated with the configurations available.
-                irect Position = m_Position;
-                Position.Inflate(30,0);
-                InitScreenScaling( Position );
-
-                SetConnectState( ACTIVATE_SELECT );
-                m_Done = FALSE;
-                m_Error = 0;
-                // destroy pop-up
-                ASSERT( g_UiMgr->GetTopmostDialog(m_UserID) == m_PopUp );
-                g_UiMgr->EndDialog( m_UserID, TRUE );
-                m_PopUp = NULL;
-            }
-        }
-    }
-    else
-    {
-        m_Done = TRUE;
-        SetConnectState( CONNECT_IDLE );
-    }
 }
 
 
@@ -1624,14 +923,13 @@ void dlg_online_connect::UpdateAuthUser( void )
     // This is the correct form of the return state of the matchmgr. At this point, more than one
     // status can be returned depending on why the matchmgr went idle. This will happen if there
     // is more than one user account, and the player needs to provide input, or needs to be presented
-    // with other options (such as boot-to-dash etc).
+    // with other options that require user input.
     //
 
     if( g_MatchMgr.IsBusy() )
     {
         if( m_Timeout > 30.0f )
         {
-            m_Done = FALSE;
             Failed("IDS_ONLINE_CONNECT_MATCHMAKER_FAILED");
             g_MatchMgr.SetState( MATCH_IDLE );
             return;
@@ -1652,7 +950,7 @@ void dlg_online_connect::UpdateAuthUser( void )
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
             LOG_MESSAGE( "dlg_online_connect::UpdateAuthUser", "Opening dialog" );
             m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+                ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
             m_PopUpResult = DLG_POPUP_IDLE;
         }
 
@@ -1700,7 +998,7 @@ void dlg_online_connect::UpdateAuthUser( void )
                 m_pUserList->SetSelection( 0 );
 
                 m_pUserList ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-                m_pNavText  ->SetFlag(ui_win::WF_VISIBLE, TRUE);
+                SetNavTextVisible( TRUE );
                 GotoControl( (ui_control*)m_pUserList );
 
                 // set highlight
@@ -1709,15 +1007,9 @@ void dlg_online_connect::UpdateAuthUser( void )
                 SetConnectState( CONNECT_SELECT_USER );
                 break;
             }
-        case AUTH_STAT_NEED_UPDATE:
-            SetConnectState( CONNECT_AUTO_UPDATE );
-            break;
         case AUTH_STAT_INVALID_ACCOUNT:
             Failed( "IDS_ONLINE_CONNECT_MATCHMAKER_REFUSED" );
             break;
-        case AUTH_STAT_URGENT_MESSAGE:
-            SetConnectState( CONNECT_REQUIRED_MESSAGE );
-            break;  
         case AUTH_STAT_CANNOT_CONNECT:
             Failed( "IDS_ONLINE_CONNECT_MATCHMAKER_FAILED" );
             break;
@@ -1744,14 +1036,13 @@ void dlg_online_connect::UpdateAuthMachine( void )
     // This is the correct form of the return state of the matchmgr. At this point, more than one
     // status can be returned depending on why the matchmgr went idle. This will happen if there
     // is more than one user account, and the player needs to provide input, or needs to be presented
-    // with other options (such as boot-to-dash etc).
+    // with other options that require user input.
     //
 
     if( g_MatchMgr.IsBusy() )
     {
         if( m_Timeout > 90.0f )
         {
-            m_Done = FALSE;
             Failed("IDS_ONLINE_CONNECT_TIMEOUT");
             g_MatchMgr.SetState( MATCH_IDLE );
             return;
@@ -1770,7 +1061,7 @@ void dlg_online_connect::UpdateAuthMachine( void )
         {
             LOG_MESSAGE( "dlg_online_connect::UpdateAuthMachine", "Opening dialog" );
             m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+                ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
             m_Timeout = 0.0f;
             m_PopUpResult = DLG_POPUP_IDLE;
         }
@@ -1826,7 +1117,7 @@ void dlg_online_connect::UpdateAuthMachine( void )
                 g_UiMgr->EndDialog( m_UserID, TRUE );
                 m_PopUp = NULL;
                 m_pUserList ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-                m_pNavText  ->SetFlag(ui_win::WF_VISIBLE, TRUE);
+                SetNavTextVisible( TRUE );
                 GotoControl( (ui_control*)m_pUserList );
 
                 // set highlight
@@ -1836,14 +1127,8 @@ void dlg_online_connect::UpdateAuthMachine( void )
                 SetConnectState( CONNECT_SELECT_USER );
                 break;
             }
-        case AUTH_STAT_NEED_UPDATE:
-            SetConnectState( CONNECT_AUTO_UPDATE );
-            break;
         case AUTH_STAT_INVALID_ACCOUNT:
             Failed("IDS_ONLINE_CONNECT_MATCHMAKER_REFUSED");
-            break;
-        case AUTH_STAT_URGENT_MESSAGE:
-            SetConnectState( CONNECT_REQUIRED_MESSAGE );
             break;
         case AUTH_STAT_CANNOT_CONNECT:
             {

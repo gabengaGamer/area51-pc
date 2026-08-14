@@ -4,19 +4,19 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_BigLeaderboard.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "NetworkMgr\Voice\VoiceMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "NetworkMgr/Voice/VoiceMgr.hpp"
 
 //=========================================================================
 //  Team Leaderboard Dialog
@@ -24,16 +24,15 @@
 
 ui_manager::control_tem BigLeaderboardControls[] = 
 {
-    { IDC_BIG_LEADERBOARD_ONE_DETAILS,  "IDS_NULL",        "blankbox",   24,  36, 216, 283, 0, 0, 1, 1, ui_win::WF_VISIBLE|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_BIG_LEADERBOARD_TWO_DETAILS,  "IDS_NULL",        "blankbox",  256,  36, 216, 283, 0, 0, 1, 1, ui_win::WF_VISIBLE|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },   
+    { IDC_BIG_LEADERBOARD_ONE_DETAILS,  "IDS_NULL",        "blankbox",   24,  36, 216, 283, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_BIG_LEADERBOARD_TWO_DETAILS,  "IDS_NULL",        "blankbox",  256,  36, 216, 283, 0, 0, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_BIG_LEADERBOARD_FRAME_ONE,    "IDS_NULL",        "frame",      22,  34, 220, 287, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_BIG_LEADERBOARD_FRAME_TWO,    "IDS_NULL",        "frame",     254,  34, 220, 287, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_BIG_LEADERBOARD_FRAME_MAIN,   "IDS_NULL",        "frame",      10,   24, 476, 309, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
+    { IDC_BIG_LEADERBOARD_FRAME_ONE,    "IDS_NULL",        "frame",      22,  34, 220, 287, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_BIG_LEADERBOARD_FRAME_TWO,    "IDS_NULL",        "frame",     254,  34, 220, 287, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_BIG_LEADERBOARD_FRAME_MAIN,   "IDS_NULL",        "frame",      10,   24, 476, 309, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
 
-    { IDC_BIG_LEADERBOARD_LOADING_TEXT, "IDS_NULL",        "text",      235, 395, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_BIG_LEADERBOARD_LOADING_PIPS, "IDS_NULL",        "text",      465, 395,  50,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_BIG_LEADERBOARD_NAV_TEXT,     "IDS_NULL",        "text",       25, 395, 200,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
+    { IDC_BIG_LEADERBOARD_LOADING_TEXT, "IDS_NULL",        "text",      235, 395, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_BIG_LEADERBOARD_LOADING_PIPS, "IDS_NULL",        "text",      465, 395,  50,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
 };
 
 
@@ -87,12 +86,6 @@ ui_win* dlg_big_leaderboard_factory( s32 UserID, ui_manager* pManager, ui_manage
 
 dlg_big_leaderboard::dlg_big_leaderboard( void )
 {
-#ifdef TARGET_PS2
-    if( x_GetTerritory() != XL_TERRITORY_AMERICA )
-    {
-        s_LineSpacing = 19;
-    }
-#endif
 }
 
 //=========================================================================
@@ -125,7 +118,6 @@ xbool dlg_big_leaderboard::Create( s32                        UserID,
     m_pPlayerTwoBox	= (ui_blankbox*)    FindChildByID( IDC_BIG_LEADERBOARD_TWO_DETAILS  );
     m_pLoadingText  = (ui_text*)        FindChildByID( IDC_BIG_LEADERBOARD_LOADING_TEXT );
     m_pLoadingPips  = (ui_text*)        FindChildByID( IDC_BIG_LEADERBOARD_LOADING_PIPS );
-    m_pNavText      = (ui_text*)        FindChildByID( IDC_BIG_LEADERBOARD_NAV_TEXT     );
     m_pFrameOne     = (ui_frame*)       FindChildByID( IDC_BIG_LEADERBOARD_FRAME_ONE    );
     m_pFrameTwo     = (ui_frame*)       FindChildByID( IDC_BIG_LEADERBOARD_FRAME_TWO    );
     m_pFrameMain    = (ui_frame*)       FindChildByID( IDC_BIG_LEADERBOARD_FRAME_MAIN   );
@@ -191,10 +183,8 @@ xbool dlg_big_leaderboard::Create( s32                        UserID,
     m_pStrIconFlags  = g_StringTableMgr( "ui", "IDS_ICON_FLAGS"      );
     m_pStrIconVotes  = g_StringTableMgr( "ui", "IDS_ICON_VOTES"      );
 
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, TRUE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
+    SetNavTextVisible( TRUE );
 
     // disable the highlight
     g_UiMgr->DisableScreenHighlight();
@@ -224,34 +214,14 @@ xbool dlg_big_leaderboard::Create( s32                        UserID,
         
         // resize frame1
         irect temp1 = m_pFrameOne->GetPosition();
-#ifdef TARGET_PS2
-        if( x_GetTerritory() != XL_TERRITORY_AMERICA )
-        {
-            temp1.t -= 28;
-            temp1.b += 22;
-        }
-        else
-#endif
-        {
-            temp1.t -= 26;
-            temp1.b += 22;
-        }
+        temp1.t -= 26;
+        temp1.b += 22;
         m_pFrameOne->SetPosition( temp1 );
         
         // resize frame2
         temp1 = m_pFrameTwo->GetPosition();
-#ifdef TARGET_PS2
-        if( x_GetTerritory() != XL_TERRITORY_AMERICA )
-        {
-            temp1.t -= 28;
-            temp1.b += 22;
-        }
-        else
-#endif
-        {
-            temp1.t -= 26;
-            temp1.b += 22;
-        }
+        temp1.t -= 26;
+        temp1.b += 22;
         m_pFrameTwo->SetPosition( temp1 );
 
         // resize main frame
@@ -296,14 +266,7 @@ void dlg_big_leaderboard::Render( s32 ox, s32 oy )
         return;
     }
 
-    s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+    rb = g_UiMgr->GetUserBounds( m_UserID );
     // render background rect
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
@@ -320,7 +283,7 @@ void dlg_big_leaderboard::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_big_leaderboard::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_big_leaderboard::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
     (void)pWin;
     (void)Presses;
@@ -332,10 +295,10 @@ void dlg_big_leaderboard::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s3
     // Which way are we moving
     switch( Code )
     {
-        case ui_manager::NAV_LEFT:
+        case ui_navigation::Left:
             CycleStatDisplay( FALSE );
             break;
-        case ui_manager::NAV_RIGHT:
+        case ui_navigation::Right:
             CycleStatDisplay( TRUE );
             break;
     }
@@ -343,7 +306,7 @@ void dlg_big_leaderboard::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s3
 
 //=========================================================================
 
-void dlg_big_leaderboard::OnPadDelete( ui_win* pWin )
+void dlg_big_leaderboard::OnDelete( ui_win* pWin )
 {
     (void)pWin;      
     
@@ -358,7 +321,7 @@ void dlg_big_leaderboard::OnPadDelete( ui_win* pWin )
 
             // Open a dialog to confirm quitting the online game component
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_pPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_pPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
             // get message text
             xwstring Message;
@@ -374,7 +337,7 @@ void dlg_big_leaderboard::OnPadDelete( ui_win* pWin )
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
 
             m_pPopUp->Configure( g_StringTableMgr( "ui", "IDS_QUIT_POPUP" ), TRUE, TRUE, FALSE, Message, navText, &m_PopUpResult );
         }
@@ -383,9 +346,15 @@ void dlg_big_leaderboard::OnPadDelete( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_big_leaderboard::OnPadSelect( ui_win* pWin )
+void dlg_big_leaderboard::OnAccept( ui_win* pWin )
 {
     (void)pWin;
+
+    if( m_Mode == LEADERBOARD_OVERLAY )
+    {
+        return;
+    }
+
     if( m_State == DIALOG_STATE_ACTIVE )
     {
         // goto the pause menu
@@ -403,7 +372,6 @@ void dlg_big_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     // update list box
     FillScoreList();
 
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
     xwstring NavText;
 
     switch( m_Mode )
@@ -419,9 +387,12 @@ void dlg_big_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         NavText += g_StringTableMgr( "ui", "IDS_NAV_ONLINE_MENU");
         break;
 
+    case LEADERBOARD_OVERLAY:
+        SetNavTextVisible( FALSE );
+        break;
+
     case LEADERBOARD_INTERLEVEL:
         {
-            m_pNavText->SetLabelFlags( ui_font::h_left|ui_font::v_top );
             NavText = m_pStrLevelDesc;
 
             xwstring LoadText("");
@@ -442,7 +413,7 @@ void dlg_big_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         ASSERT( FALSE );
     }
 
-    m_pNavText->SetLabel( NavText );
+    SetNavText( NavText );
     if( m_pPopUp )
     {
         if( m_PopUpResult != DLG_POPUP_IDLE )
@@ -456,7 +427,7 @@ void dlg_big_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             else
             {
                 // return to dialog
-                m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+                SetNavTextVisible( TRUE );
                 m_pPopUp = NULL;
             }
         }

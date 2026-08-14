@@ -1,7 +1,7 @@
 #ifndef __IGFMGR_HPP
 #define __IGFMGR_HPP
 
-#include "parsing\tokenizer.hpp"
+#include "Parsing/tokenizer.hpp"
 
 //============================================================================
 // IGF Manager
@@ -87,10 +87,10 @@ protected:
     // the structure of a field                     
     struct field                                            
     {                                                       
-        atom                    m_Type;                     // the type of chunk
+        atom                    m_type;                     // the type of chunk
         data_entry*             m_pName;                    // the name of the chunk
         data_entry*             m_pComment;                 // a comment for the chunk (optional)
-        void*                   m_pData;                    // pointer to the data (of type m_Type)
+        void*                   m_pData;                    // pointer to the data (of type m_type)
         field*                  m_pNext;                    // pointer to the next field
         field*                  m_pPrev;                    // pointer to the prev field
         xbool                   m_IsDataOwned;              // was the data allocated or is it simply referenced

@@ -27,13 +27,13 @@
 //  Includes
 //==============================================================================
 #include "Entropy.hpp"
-#include "ui/ui_dialog.hpp"
-#include "dialogs/dlg_PopUp.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "UI/ui_dialog.hpp"
+#include "Dialogs/dlg_PopUp.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 #include "Configuration/GameConfig.hpp"
-#include "Inventory\Inventory2.hpp"
-#include "CheckPointMgr/CheckpointMgr.hpp"
+#include "Inventory/Inventory2.hpp"
+#include "CheckPointMgr/CheckPointMgr.hpp"
 #include "LoreList.hpp"
 #include "StateMgr/PlayerProfile.hpp"
 
@@ -48,30 +48,33 @@ enum sm_states
 {
     SM_IDLE = 0,
 
-    SM_ESRB_NOTICE,
+    SM_STARTUP_INFO,
     SM_STARTUP_INTRO,
-    SM_MEMCARD_BOOT_CHECK,
+    SM_SAVE_DATA_BOOT_CHECK,
 
     SM_PRESS_START_SCREEN,
     
     SM_MAIN_MENU,
     SM_SETTINGS_MENU,
+    SM_SETTINGS_AUDIO,
     SM_SETTINGS_HEADSET,
-    SM_SETTINGS_GRAPHICS,	
-    SM_SETTINGS_MEMCARD_SELECT,
+    SM_SETTINGS_GRAPHICS,
+    SM_SETTINGS_DISPLAY,
+    SM_SETTINGS_LANGUAGE,
+    SM_SETTINGS_SAVE_DATA_SELECT,
     SM_MANAGE_PROFILES,
     SM_MANAGE_PROFILE_OPTIONS,
     SM_MANAGE_PROFILE_CONTROLS,
     SM_MANAGE_PROFILE_AVATAR,
     SM_MANAGE_PROFILE_SAVE_SELECT,
-    SM_MANAGE_PROFILE_MEMCARD_RESELECT,
+    SM_MANAGE_PROFILE_SAVE_DATA_RESELECT,
     SM_DEMO_EXIT,
     SM_CAMPAIGN_MENU,
     SM_CAMPAIGN_PROFILE_OPTIONS,
     SM_CAMPAIGN_PROFILE_CONTROLS,
     SM_CAMPAIGN_PROFILE_AVATAR,
     SM_CAMPAIGN_PROFILE_SAVE_SELECT,
-    SM_CAMPAIGN_MEMCARD_RESELECT,
+    SM_CAMPAIGN_SAVE_DATA_RESELECT,
     SM_LOAD_CAMPAIGN,
     SM_SAVE_CAMPAIGN,
     SM_RESUME_CAMPAIGN,
@@ -89,15 +92,18 @@ enum sm_states
     SM_PROFILE_CONTROLS_MP,
     SM_PROFILE_AVATAR_MP,
     SM_PROFILE_SAVE_SELECT_MP,
-    SM_MEMCARD_RESELECT_MP,
+    SM_SAVE_DATA_RESELECT_MP,
 
     SM_PROFILE_SELECT,
     SM_PROFILE_OPTIONS,
     SM_PROFILE_CONTROLS,
     SM_PROFILE_AVATAR,
+    SM_PROFILE_MOUSE_CONTROLS,
+    SM_PROFILE_GAMEPAD_CONTROLS,
 
     SM_ONLINE_SILENT_LOGON,
     SM_ONLINE_CONNECT,
+    SM_NETWORK_DISCONNECT,
     SM_ONLINE_AUTHENTICATE,
     SM_ONLINE_PROFILE_SELECT,
     SM_ONLINE_PROFILE_OPTIONS,
@@ -114,13 +120,12 @@ enum sm_states
     SM_ONLINE_FEEDBACK_MENU,
     SM_ONLINE_FEEDBACK_MENU_FRIEND,
     SM_ONLINE_FRIENDS_MENU,
-    SM_ONLINE_DOWNLOAD,
     SM_ONLINE_STATS,
     SM_ONLINE_EDIT_PROFILE,
     SM_ONLINE_EDIT_CONTROLS,
     SM_ONLINE_EDIT_AVATAR,
     SM_ONLINE_PROFILE_SAVE_SELECT,
-    SM_ONLINE_MEMCARD_RESELECT,
+    SM_ONLINE_SAVE_DATA_RESELECT,
     SM_ONLINE_LOGIN,    
 
     SM_ONLINE_HOST_MENU,
@@ -151,21 +156,27 @@ enum sm_states
     SM_PAUSE_OPTIONS,
     SM_PAUSE_CONTROLS,
     SM_PAUSE_SETTINGS,
+    SM_PAUSE_AUDIO,
     SM_PAUSE_HEADSET,
-    SM_PAUSE_GRAPHICS,	
+    SM_PAUSE_GRAPHICS,
+    SM_PAUSE_DISPLAY,
+    SM_PAUSE_LANGUAGE,
     SM_PAUSE_SETTINGS_SELECT,
     SM_PAUSE_PROFILE_SAVE_SELECT,
-    SM_PAUSE_MEMCARD_RESELECT,
+    SM_PAUSE_SAVE_DATA_RESELECT,
     SM_PAUSE_MP,
     SM_PAUSE_MP_SCORE,
     SM_PAUSE_MP_OPTIONS,
     SM_PAUSE_MP_CONTROLS,
     SM_PAUSE_MP_SETTINGS,
+    SM_PAUSE_MP_AUDIO,
     SM_PAUSE_MP_HEADSET,
-    SM_PAUSE_MP_GRAPHICS,	
+    SM_PAUSE_MP_GRAPHICS,
+    SM_PAUSE_MP_DISPLAY,
+    SM_PAUSE_MP_LANGUAGE,
     SM_PAUSE_MP_SETTINGS_SELECT,
     SM_PAUSE_MP_PROFILE_SAVE_SELECT,
-    SM_PAUSE_MP_MEMCARD_RESELECT,
+    SM_PAUSE_MP_SAVE_DATA_RESELECT,
 
     SM_PAUSE_ONLINE,
     SM_PAUSE_ONLINE_VOTE_MAP,
@@ -178,9 +189,13 @@ enum sm_states
     SM_PAUSE_ONLINE_OPTIONS,
     SM_PAUSE_ONLINE_CONTROLS,
     SM_PAUSE_ONLINE_SETTINGS,
+    SM_PAUSE_ONLINE_AUDIO,
     SM_PAUSE_ONLINE_HEADSET,
+    SM_PAUSE_ONLINE_GRAPHICS,
+    SM_PAUSE_ONLINE_DISPLAY,
+    SM_PAUSE_ONLINE_LANGUAGE,
     SM_PAUSE_ONLINE_SAVE_SELECT,
-    SM_PAUSE_ONLINE_MEMCARD_RESELECT,
+    SM_PAUSE_ONLINE_SAVE_DATA_RESELECT,
 
     SM_PAUSE_ONLINE_CHANGE_MAP,
     SM_PAUSE_ONLINE_KICK_PLAYER,
@@ -206,7 +221,7 @@ enum sm_states
 
     SM_GAME_EXIT_PROMPT_FOR_SAVE,
     SM_GAME_EXIT_SAVE_SELECT,
-    SM_GAME_EXIT_MEMCARD_RESELECT,
+    SM_GAME_EXIT_SAVE_DATA_RESELECT,
     SM_GAME_EXIT_SAVE_SETTINGS,
     SM_GAME_EXIT_SETTINGS_OVERWRITE,
     SM_GAME_EXIT_SETTINGS_SELECT,
@@ -282,14 +297,6 @@ enum sm_system_error
     SM_SYS_ERR_DUPLICATE_LOGIN,
 };
 
-enum card_data_mode
-{
-    SM_CARDMODE_PROFILE,
-    SM_CARDMODE_CONTENT,
-    SM_CARDMODE_SETTINGS,
-};
-
-
 // Where did a login originate from? This is used to determine where to go on a login failure
 // from ReportError
 enum login_source
@@ -307,11 +314,6 @@ enum login_source
 #define SM_MAX_AVATARS          16
 #define SM_MAX_PLAYERS          2
 #define USE_MOVIES              1
-
-// size of profile on HDD
-#define PROFILE_DIR_SIZE        32 * 1024 
-#define SETTINGS_DIR_SIZE       32 * 1024 
-
 
 //==============================================================================
 //  state_mgr
@@ -337,6 +339,7 @@ public:
     void                    CheckControllers                ( void );
 
     void                    Update                          ( f32 DeltaTime );
+    void                    UpdateLevelLoading              ( f32 DeltaTime );
     void                    Render                          ( void );
     void                    DummyScreen                     ( const char* message, xbool canSkip, s32 waitTime);  
 
@@ -369,6 +372,9 @@ public:
     void                    DisableBackgoundMovie           ( void );
     void                    PlayMovie                       ( const char* pFilename, xbool bResident, xbool bLooped );
     void                    CloseMovie                      ( void );
+    void                    RequestSimpleMovie              ( const char* pFilename );
+    xbool                   HasPendingSimpleMovie           ( void ) const;
+    void                    ProcessPendingSimpleMovie       ( void );
 
     // player inventory
     void                    BackupPlayerInventory           ( void );
@@ -438,10 +444,6 @@ public:
     // settings game exit save callback
     void                    OnGameExitSaveSettingsCB        ( void );
 
-    // save sizes
-    s32                     GetProfileSaveSize              ( void )                                { return m_ProfileSaveSize;  }
-    s32                     GetSettingsSaveSize             ( void )                                { return m_SettingsSaveSize; }
-
     xbool                   LoadConfiguration               ( void );
     
     void                    SetLocalPlayerSlot              ( s32 SlotID )                          { m_LocalPlayerSlot = SlotID; }
@@ -454,21 +456,13 @@ public:
     xbool                   IsShowingScores                 ( void )                                { return m_bShowingScores;      }
     void                    SetShowingScores                ( xbool Flag )                          { m_bShowingScores = Flag;      }
 
-    void                    StartBackgroundRendering        ( void );
-    void                    StopBackgroundRendering         ( void );
-    xbool                   IsBackgroundThreadRunning       ( void );
-
     void                    SilentSaveProfile               ( void );
     xbool                   IsAutosaveInProgress            ( void )                                { return m_bAutosaveInProgress;     }
-    xbool                   DisplayMemcardDialogs           ( void )                                { return !m_bDisableMemcardDialogs; }
-    
     xbool                   GetAutosaveProfile              ( void )                                { return m_bAutosaveProfile;        }
     void                    SetAutosaveProfile              ( xbool IsEnabled )                     { m_bAutosaveProfile = IsEnabled;   }
     void                    Reboot                          ( reboot_reason Reason );
     global_settings&        GetPendingSettings              ( void )                                { return m_PendingSettings;         }
     global_settings&        GetActiveSettings               ( void )                                { return m_ActiveSettings;          }
-    s32                     GetSettingsCardSlot             ( void )                                { return m_SettingsCardSlot;        }
-    void                    SetSettingsCardSlot             ( s32 CardSlot )                        { m_SettingsCardSlot = CardSlot;    }
     void                    InitPendingSettings             ( void );                                
     void                    ActivatePendingSettings         ( xbool MarkDirty = FALSE );                                
     xbool                   IsFollowingBuddy                ( void )                                { return m_bFollowBuddy;            }
@@ -478,18 +472,24 @@ private:
     void                    EnterState                      ( sm_states State );
     void                    ExitState                       ( sm_states State );
     void                    UpdateState                     ( sm_states State, f32 DeltaTime ); 
+    void                    QueueSimpleMovie                ( const char* pFilename,
+                                                              const char* pFallbackMessage,
+                                                              xbool WaitForCompletion,
+                                                              xbool RestoreBackground = FALSE );
+    xbool                   WaitForSimpleMovie              ( const char* pFilename,
+                                                              const char* pFallbackMessage );
 
-    void                    EnterESRBNotice                 ( void );
-    void                    UpdateESRBNotice                ( void );
-    void                    ExitESRBNotice                  ( void );
+    void                    EnterStartupInfo                ( void );
+    void                    UpdateStartupInfo               ( f32 DeltaTime );
+    void                    ExitStartupInfo                 ( void );
 
     void                    EnterStartupIntro               ( void );
     void                    UpdateStartupIntro              ( void );
     void                    ExitStartupIntro                ( void );
 
-    void                    EnterMemcardBootCheck           ( void );
-    void                    UpdateMemcardBootCheck          ( void );
-    void                    ExitMemcardBootCheck            ( void );
+    void                    EnterSaveDataBootCheck           ( void );
+    void                    UpdateSaveDataBootCheck          ( void );
+    void                    ExitSaveDataBootCheck            ( void );
 
     void                    EnterPressStart                 ( void );
     void                    UpdatePressStart                ( void );
@@ -503,6 +503,10 @@ private:
     void                    UpdateSettingsMenu              ( void );
     void                    ExitSettingsMenu                ( void );
 
+    void                    EnterSettingsAudio              ( void );
+    void                    UpdateSettingsAudio             ( void );
+    void                    ExitSettingsAudio               ( void );
+
     void                    EnterSettingsHeadset            ( void );
     void                    UpdateSettingsHeadset           ( void );
     void                    ExitSettingsHeadset             ( void );
@@ -511,9 +515,17 @@ private:
     void                    UpdateSettingsGraphics          ( void );
     void                    ExitSettingsGraphics            ( void );
 
-    void                    EnterSettingsMemcardSelect      ( void );
-    void                    UpdateSettingsMemcardSelect     ( void );
-    void                    ExitSettingsMemcardSelect       ( void );
+    void                    EnterSettingsDisplay            ( void );
+    void                    UpdateSettingsDisplay           ( void );
+    void                    ExitSettingsDisplay             ( void );
+
+    void                    EnterSettingsLanguage           ( void );
+    void                    UpdateSettingsLanguage          ( void );
+    void                    ExitSettingsLanguage            ( void );
+
+    void                    EnterSettingsSaveDataSelect      ( void );
+    void                    UpdateSettingsSaveDataSelect     ( void );
+    void                    ExitSettingsSaveDataSelect       ( void );
 
     void                    EnterManageProfiles             ( void );
     void                    UpdateManageProfiles            ( void );
@@ -535,9 +547,9 @@ private:
     void                    UpdateManageProfileSaveSelect   ( void );
     void                    ExitManageProfileSaveSelect     ( void );
 
-    void                    EnterManageMemcardReselect      ( void );
-    void                    UpdateManageMemcardReselect     ( void );
-    void                    ExitManageMemcardReselect       ( void );
+    void                    EnterManageSaveDataReselect      ( void );
+    void                    UpdateManageSaveDataReselect     ( void );
+    void                    ExitManageSaveDataReselect       ( void );
 
     void                    EnterDemoExit                   ( void );
     void                    UpdateDemoExit                  ( void );
@@ -563,9 +575,9 @@ private:
     void                    UpdateCampaignProfileSaveSelect ( void );
     void                    ExitCampaignProfileSaveSelect   ( void );
 
-    void                    EnterCampaignMemcardReselect    ( void );
-    void                    UpdateCampaignMemcardReselect   ( void );
-    void                    ExitCampaignMemcardReselect     ( void );
+    void                    EnterCampaignSaveDataReselect    ( void );
+    void                    UpdateCampaignSaveDataReselect   ( void );
+    void                    ExitCampaignSaveDataReselect     ( void );
 
     void                    EnterLoadCampaign               ( void );
     void                    UpdateLoadCampaign              ( void );
@@ -603,6 +615,11 @@ private:
     void                    UpdateProfileControls           ( void );
     void                    ExitProfileControls             ( void );
 
+    void                    EnterProfileMouseControls       ( void );
+    void                    EnterProfileGamepadControls     ( void );
+    void                    UpdateProfileDeviceControls     ( void );
+    void                    UpdateProfileControlsMenu       ( sm_states BackState, xbool CheckDisconnect );
+
     void                    EnterProfileAvatar              ( void );
     void                    UpdateProfileAvatar             ( void );
     void                    ExitProfileAvatar               ( void );
@@ -639,15 +656,19 @@ private:
     void                    UpdateProfileSaveSelectMP       ( void );
     void                    ExitProfileSaveSelectMP         ( void );
 
-    void                    EnterMemcardReselectMP          ( void );
-    void                    UpdateMemcardReselectMP         ( void );
-    void                    ExitMemcardReselectMP           ( void );
+    void                    EnterSaveDataReselectMP          ( void );
+    void                    UpdateSaveDataReselectMP         ( void );
+    void                    ExitSaveDataReselectMP           ( void );
 
     void            		EnterOnlineSilentLogin          ( void );
 
     void                    EnterOnlineConnect              ( void );
     void                    UpdateOnlineConnect             ( void );
     void                    ExitOnlineConnect               ( void );
+
+    void                    EnterNetworkDisconnect          ( void );
+    void                    UpdateNetworkDisconnect         ( void );
+    void                    ExitNetworkDisconnect           ( void );
 
     void                    EnterOnlineProfileSelect        ( void );
     void                    UpdateOnlineProfileSelect       ( void );
@@ -669,9 +690,9 @@ private:
     void                    UpdateOnlineProfileSaveSelect   ( void );
     void                    ExitOnlineProfileSaveSelect     ( void );
 
-    void                    EnterOnlineMemcardReselect      ( void );
-    void                    UpdateOnlineMemcardReselect     ( void );
-    void                    ExitOnlineMemcardReselect       ( void );
+    void                    EnterOnlineSaveDataReselect      ( void );
+    void                    UpdateOnlineSaveDataReselect     ( void );
+    void                    ExitOnlineSaveDataReselect       ( void );
 
     void                    EnterOnlineAuthenticate         ( void );
     void                    UpdateOnlineAuthenticate        ( void );
@@ -776,6 +797,9 @@ private:
     void                    EnterPlayingGame                ( void );
     void                    UpdatePlayingGame               ( void );
     void                    ExitPlayingGame                 ( void );
+    void                    UpdateScoreboardOverlay         ( void );
+    void                    OpenScoreboardOverlay           ( void );
+    void                    CloseScoreboardOverlay          ( void );
 
     void                    EnterPauseMain                  ( void );
     void                    UpdatePauseMain                 ( void );
@@ -793,6 +817,10 @@ private:
     void                    UpdatePauseSettings             ( void );
     void                    ExitPauseSettings               ( void );
 
+    void                    EnterPauseAudio                 ( void );
+    void                    UpdatePauseAudio                ( void );
+    void                    ExitPauseAudio                  ( void );
+
     void                    EnterPauseHeadset               ( void );
     void                    UpdatePauseHeadset              ( void );
     void                    ExitPauseHeadset                ( void );
@@ -801,17 +829,25 @@ private:
     void                    UpdatePauseGraphics             ( void );
     void                    ExitPauseGraphics               ( void );
 
+    void                    EnterPauseDisplay               ( void );
+    void                    UpdatePauseDisplay              ( void );
+    void                    ExitPauseDisplay                ( void );
+
+    void                    EnterPauseLanguage              ( void );
+    void                    UpdatePauseLanguage             ( void );
+    void                    ExitPauseLanguage               ( void );
+
     void                    EnterPauseSettingsSelect        ( void );
     void                    UpdatePauseSettingsSelect       ( void );
     void                    ExitPauseSettingsSelect         ( void );
 
-    void                    EnterPauseMemcardSaveSelect     ( void );
-    void                    UpdatePauseMemcardSaveSelect    ( void );
-    void                    ExitPauseMemcardSaveSelect      ( void );
+    void                    EnterPauseSaveDataSaveSelect     ( void );
+    void                    UpdatePauseSaveDataSaveSelect    ( void );
+    void                    ExitPauseSaveDataSaveSelect      ( void );
 
-    void                    EnterPauseMemcardReselect         ( void );
-    void                    UpdatePauseMemcardReselect        ( void );
-    void                    ExitPauseMemcardReselect          ( void );
+    void                    EnterPauseSaveDataReselect         ( void );
+    void                    UpdatePauseSaveDataReselect        ( void );
+    void                    ExitPauseSaveDataReselect          ( void );
 
     void                    EnterPauseMP                    ( void );
     void                    UpdatePauseMP                   ( void );
@@ -821,6 +857,10 @@ private:
     void                    UpdatePauseMPSettings           ( void );
     void                    ExitPauseMPSettings             ( void );
 
+    void                    EnterPauseMPAudio               ( void );
+    void                    UpdatePauseMPAudio              ( void );
+    void                    ExitPauseMPAudio                ( void );
+
     void                    EnterPauseMPHeadset             ( void );
     void                    UpdatePauseMPHeadset            ( void );
     void                    ExitPauseMPHeadset              ( void );
@@ -828,6 +868,14 @@ private:
     void                    EnterPauseMPGraphics            ( void );
     void                    UpdatePauseMPGraphics           ( void );
     void                    ExitPauseMPGraphics             ( void );
+
+    void                    EnterPauseMPDisplay             ( void );
+    void                    UpdatePauseMPDisplay            ( void );
+    void                    ExitPauseMPDisplay              ( void );
+
+    void                    EnterPauseMPLanguage            ( void );
+    void                    UpdatePauseMPLanguage           ( void );
+    void                    ExitPauseMPLanguage             ( void );
 
     void                    EnterPauseMPSettingsSelect      ( void );
     void                    UpdatePauseMPSettingsSelect     ( void );
@@ -841,13 +889,13 @@ private:
     void                    UpdatePauseMPControls           ( void );
     void                    ExitPauseMPControls             ( void );
 
-    void                    EnterPauseMPMemcardSaveSelect   ( void );
-    void                    UpdatePauseMPMemcardSaveSelect  ( void );
-    void                    ExitPauseMPMemcardSaveSelect    ( void );
+    void                    EnterPauseMPSaveDataSaveSelect   ( void );
+    void                    UpdatePauseMPSaveDataSaveSelect  ( void );
+    void                    ExitPauseMPSaveDataSaveSelect    ( void );
 
-    void                    EnterPauseMPMemcardReselect     ( void );
-    void                    UpdatePauseMPMemcardReselect    ( void );
-    void                    ExitPauseMPMemcardReselect      ( void );
+    void                    EnterPauseMPSaveDataReselect     ( void );
+    void                    UpdatePauseMPSaveDataReselect    ( void );
+    void                    ExitPauseMPSaveDataReselect      ( void );
 
     void                    EnterPauseOnline                ( void );
     void                    UpdatePauseOnline               ( void );
@@ -889,17 +937,33 @@ private:
     void                    UpdatePauseOnlineSettings       ( void );
     void                    ExitPauseOnlineSettings         ( void );
 
+    void                    EnterPauseOnlineAudio           ( void );
+    void                    UpdatePauseOnlineAudio          ( void );
+    void                    ExitPauseOnlineAudio            ( void );
+
     void                    EnterPauseOnlineHeadset         ( void );
     void                    UpdatePauseOnlineHeadset        ( void );
     void                    ExitPauseOnlineHeadset          ( void );
+
+    void                    EnterPauseOnlineGraphics        ( void );
+    void                    UpdatePauseOnlineGraphics       ( void );
+    void                    ExitPauseOnlineGraphics         ( void );
+
+    void                    EnterPauseOnlineDisplay         ( void );
+    void                    UpdatePauseOnlineDisplay        ( void );
+    void                    ExitPauseOnlineDisplay          ( void );
+
+    void                    EnterPauseOnlineLanguage        ( void );
+    void                    UpdatePauseOnlineLanguage       ( void );
+    void                    ExitPauseOnlineLanguage         ( void );
 
     void                    EnterPauseOnlineSaveSelect      ( void );
     void                    UpdatePauseOnlineSaveSelect     ( void );
     void                    ExitPauseOnlineSaveSelect       ( void );
 
-    void                    EnterPauseOnlineMemcardReselect ( void );
-    void                    UpdatePauseOnlineMemcardReselect( void );
-    void                    ExitPauseOnlineMemcardReselect  ( void );
+    void                    EnterPauseOnlineSaveDataReselect ( void );
+    void                    UpdatePauseOnlineSaveDataReselect( void );
+    void                    ExitPauseOnlineSaveDataReselect  ( void );
 
     void                    EnterPauseServerConfig          ( void );
     void                    UpdatePauseServerConfig         ( void );
@@ -1017,9 +1081,9 @@ private:
     void                    UpdateGameExitSaveSelect        ( void );
     void                    ExitGameExitSaveSelect          ( void );
 
-    void                    EnterGameExitMemcardReselect    ( void );
-    void                    UpdateGameExitMemcardReselect   ( void );
-    void                    ExitGameExitMemcardReselect     ( void );
+    void                    EnterGameExitSaveDataReselect    ( void );
+    void                    UpdateGameExitSaveDataReselect   ( void );
+    void                    ExitGameExitSaveDataReselect     ( void );
 
     void                    EnterGameExitSaveSettings       ( void );
     void                    UpdateGameExitSaveSettings      ( void );
@@ -1037,10 +1101,6 @@ private:
     void                    UpdateGameExitRedirect          ( void );
     void                    ExitGameExitRedirect            ( void );
 
-    void                    EnterOnlineDownload             ( void );
-    void                    UpdateOnlineDownload            ( void );
-    void                    ExitOnlineDownload              ( void );
-
     void                    EnterOnlineLogin                ( void );
     void                    UpdateOnlineLogin               ( void );
     void                    ExitOnlineLogin                 ( void );
@@ -1053,7 +1113,7 @@ private:
     void                    UpdateFollowBuddy               ( void );
     void                    ExitFollowBuddy                 ( void );
 
-    void                    DisconnectFromNetwork           ( void );
+    void                    BeginNetworkDisconnect          ( sm_states Destination );
     // This should be used at the start of every online state update function. This will make
     // sure that, should the network connection be lost, recovery can start.
     // Should be used in the form:
@@ -1076,6 +1136,10 @@ private:
     xbool                   m_bRetrySilentAutoSave;
     xbool                   m_bRetryAutoSaveMenu;
     xbool                   m_bPlayMovie;
+    xbool                   m_bSimpleMoviePending;
+    xbool                   m_bSimpleMovieCompleted;
+    xbool                   m_bSimpleMovieWaitForCompletion;
+    xbool                   m_bRestoreBackgroundAfterSimpleMovie;
     xbool                   m_bStartSaveGame;
     xbool                   m_bShowingScores;
 
@@ -1084,14 +1148,19 @@ private:
     sm_states               m_PrevState;
     f32                     m_Timeout;
     f32                     m_TimeoutTime;
+    f32                     m_StartupInfoTime;
+    s32                     m_StartupIntroMovieIndex;
+    xstring                 m_PendingSimpleMovieName;
+    xstring                 m_PendingSimpleMovieFallback;
 
     ui_dialog*              m_CurrentDialog;
+    ui_dialog*              m_pScoreboardDialog;
     dlg_popup*              m_PopUp;
     s32                     m_PopUpResult;
     xbool                   m_bUserWasEnabled;
+    voice_id                m_StartupInfoVoiceID;
 
-    xthread*                m_pBackgroundRenderer;
-    xbool                   m_BackgroundRendererRunning;
+    sm_states               m_NetworkDisconnectDestination;
     view                    m_View;
     xbool                   m_Exit;
 
@@ -1126,8 +1195,6 @@ private:
 
     global_settings         m_ActiveSettings;
     global_settings         m_PendingSettings;
-    s32                     m_SettingsCardSlot;
-
     // map cycle data
     s32                     m_MapCycle[MAP_CYCLE_SIZE];     // an array of map ids
     s32                     m_MapCycleIdx;                  // curr index into the map cycle
@@ -1154,18 +1221,12 @@ private:
     xbool                   m_bCreatingProfile;                     // we are creating a new profile
     xbool                   m_bAutosaveProfile;                     // Autosave profile is enabled.
     xbool                   m_bAutosaveInProgress;                  // Autosave is currently in progress
-    xbool                   m_bDisableMemcardDialogs;               // Should we display memcard dialogs
     xbool                   m_bFollowBuddy;                         // Following your buddy in to a game, SessionID in g_Pending
     login_source            m_LoginFailureDestination;
     xbool                   m_bSilentSigninStarted;
-    s32                     m_iCard;                                // Card slot in use for current operation
 
     // Save profile return callback
     xbool                   m_bControllerRequested[SM_MAX_PLAYERS];  // used to keep track of which controllers are supposed to be in use.
-
-    // save sizes
-    s32                     m_ProfileSaveSize;
-    s32                     m_SettingsSaveSize;
 
 };
 

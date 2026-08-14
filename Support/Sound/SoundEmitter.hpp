@@ -1,3 +1,9 @@
+//==============================================================================
+//
+// SoundEmitter.hpp
+//
+//==============================================================================
+
 #ifndef SOUND_EMITTER_HPP
 #define SOUND_EMITTER_HPP
 
@@ -5,11 +11,12 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 //=========================================================================
 // CLASS
 //=========================================================================
+
 class sound_emitter : public object
 {
 public:
@@ -28,7 +35,7 @@ public:
                             sound_emitter                       ( void );
     virtual bbox            GetLocalBBox                        ( void ) const;
     virtual s32             GetMaterial                         ( void ) const { return MAT_TYPE_NULL; }
-    virtual void            OnAdvanceLogic                      ( f32 DeltaTime );      
+    virtual void            OnAdvanceSimulation                      ( f32 DeltaTime );      
     virtual void            OnEnumProp                          ( prop_enum& List );
     virtual xbool           OnProperty                          ( prop_query& I );
     virtual void            OnActivate                          ( xbool Flag );
@@ -126,9 +133,6 @@ protected:
     xbool                   m_bForceActive;
     xbool                   m_bCollisionActivate;
 
-    xbool                   m_bReverbEnable;
-    f32                     m_WetDryMix;
-
     vector3 TestPoint;
     vector3 TestPoint2;
     vector3 TestPoint3;
@@ -143,6 +147,5 @@ protected:
 };
 
 //=========================================================================
-// END
+#endif // SOUND_EMITTER_HPP
 //=========================================================================
-#endif

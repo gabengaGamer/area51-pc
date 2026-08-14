@@ -5,9 +5,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "Object.hpp"
-#include "Obj_mgr\Obj_mgr.hpp"
-#include "TriggerEx\Affecters\object_affecter.hpp"
+#include "object.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "TriggerEx/Affecters/object_affecter.hpp"
 
 #define GROUP_MAX_CHILDREN              100
 

@@ -10,10 +10,10 @@
 //==============================================================================
 
 #include "VolumetricLight.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "E_Draw.hpp"
-#include "Render\Render.hpp"
+#include "Render/PrimitiveBatch.hpp"
+#include "Render/Render.hpp"
 
 //==============================================================================
 // DEFINES
@@ -45,7 +45,7 @@ static struct volumetric_light_obj_desc : public object_desc
         virtual s32  OnEditorRender( object& Object ) const
         {
             object_desc::OnEditorRender( Object );
-            return EDITOR_ICON_LIGHT_VOLUMETRIC;
+            return static_cast<s32>( EditorIcon::VolumetricLight );
         }
 #endif // X_EDITOR
 
@@ -80,7 +80,6 @@ volumetric_light_obj::volumetric_light_obj( void ) :
     m_nBytesAlloced ( 0 ),
     m_pData         ( NULL )
 {
-    InvalidateRenderState();
 }
 
 //==============================================================================
@@ -90,60 +89,6 @@ volumetric_light_obj::~volumetric_light_obj( void )
     m_nBytesAlloced = 0;
     if( m_pData )
         x_free( m_pData );
-}
-
-//==============================================================================
-
-void volumetric_light_obj::InvalidateRenderState( void )
-{
-    InitTransformInterpCache( m_RenderCache );
-}
-
-//==============================================================================
-
-void volumetric_light_obj::CaptureRenderInterpState( void )
-{
-    transform_interp_state Snapshot;
-    CaptureTransformInterpState( Snapshot, GetL2W() );
-    if( CaptureTransformInterpCache( m_RenderCache, Snapshot ) == INTERP_CAPTURE_CHANGED )
-        RegisterRenderInterpUpdate();
-}
-
-//==============================================================================
-
-void volumetric_light_obj::UpdateRenderInterpState( f32 Alpha )
-{
-    UpdateTransformInterpCache( m_RenderCache, Alpha );
-}
-
-//==============================================================================
-
-void volumetric_light_obj::ClearRenderInterpState( void )
-{
-    ClearTransformInterpCache( m_RenderCache );
-}
-
-//==============================================================================
-
-void volumetric_light_obj::InvalidateRenderInterpState( void )
-{
-    object::InvalidateRenderInterpState();
-    InvalidateTransformInterpCache( m_RenderCache );
-}
-
-//==============================================================================
-
-void volumetric_light_obj::SnapRenderInterpState( void )
-{
-    object::SnapRenderInterpState();
-    SnapTransformInterpCache( m_RenderCache, GetL2W() );
-}
-
-//==============================================================================
-
-const matrix4& volumetric_light_obj::GetRenderL2W( void ) const
-{
-    return GetTransformInterpCacheL2W( m_RenderCache, GetL2W() );
 }
 
 //==============================================================================
@@ -167,20 +112,24 @@ void volumetric_light_obj::OnDebugRender( void )
     Verts[6].Set(  EndRadius,  EndRadius, m_Length );
     Verts[7].Set( -EndRadius,  EndRadius, m_Length );
 
-    static s16 Indices[] =
+    static const u16 Indices[] =
     {
-        0, 1, 2, 3, 0, -1,
-        4, 5, 6, 7, 4, -1,
-        0, 4, -1, 1, 5, -1,
-        2, 6, -1, 3, 7, -1
+        0, 1, 1, 2, 2, 3, 3, 0,
+        4, 5, 5, 6, 6, 7, 7, 4,
+        0, 4, 1, 5, 2, 6, 3, 7
     };
+    render::primitive_vertex Vertices[8];
+    for( s32 i = 0; i < 8; ++i )
+        Vertices[i] = render::primitive_vertex( Verts[i], vector2( 0.0f, 0.0f ), Colors[i] );
 
-    draw_SetL2W( GetL2W() );
-    draw_Begin( DRAW_LINE_STRIPS );
-    draw_Colors( Colors, 8 );
-    draw_Verts( Verts, 8 );
-    draw_Execute( Indices, 24 );
-    draw_End();
+    const render::primitive_draw_desc Material( NULL,
+                                                render::PRIMITIVE_TOPOLOGY_LINE_LIST,
+                                                render::PRIMITIVE_BLEND_ALPHA,
+                                                render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::SubmitPrimitives( Material, GetL2W(), Vertices, 8, Indices, ARRAYSIZE( Indices ) );
 }
 #endif // X_EDITOR
 
@@ -222,10 +171,20 @@ void volumetric_light_obj::OnRenderTransparent( void )
     pData += ALIGN_16( sizeof(u32) * m_nSprites );
     ASSERT( pData == (m_pData + m_nBytesAlloced) );
 
-    // render using our already compiled data
-    render::SetDiffuseMaterial( pProjTex->m_Bitmap, render::BLEND_MODE_ADDITIVE, TRUE );
-    const matrix4& RenderL2W = GetRenderL2W();
-    render::Render3dSprites( m_nSprites, 1.0f, &RenderL2W, pPositions, pRotScales, pColors );
+    const render::primitive_draw_desc Material( pProjTex,
+                                                render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                render::PRIMITIVE_BLEND_ADDITIVE,
+                                                render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                render::PRIMITIVE_LAYER_ADDITIVE );
+    render::SubmitPrimitiveBillboards( Material,
+                                       m_nSprites,
+                                       1.0f,
+                                       &GetL2W(),
+                                       pPositions,
+                                       pRotScales,
+                                       pColors );
 }
 
 //==============================================================================
@@ -449,13 +408,6 @@ void volumetric_light_obj::SetupData( void )
         u8 G = (u8)((f32)m_StartColor.G + T * (f32)(m_EndColor.G - m_StartColor.G));
         u8 B = (u8)((f32)m_StartColor.B + T * (f32)(m_EndColor.B - m_StartColor.B));
         u8 A = (u8)((f32)m_StartColor.A + T * (f32)(m_EndColor.A - m_StartColor.A));
-
-#ifdef TARGET_PS2
-        R = (R==255) ? 0x80 : (R>>1);
-        G = (R==255) ? 0x80 : (G>>1);
-        B = (R==255) ? 0x80 : (B>>1);
-        A = (R==255) ? 0x80 : (A>>1);
-#endif
 
         // now fill the data into our arrays in the right format
         pVerts[i].Set( 0.0f, 0.0f, D, 0.0f );

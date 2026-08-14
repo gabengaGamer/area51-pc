@@ -5,24 +5,26 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "ProjectileBullett.hpp"
 #include "WeaponScanner.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "Objects\Projector.hpp"
-#include "render\LightMgr.hpp"
-#include "Objects\Player.hpp"
-#include "Objects\ParticleEmiter.hpp"
-#include "Objects\LoreObject.hpp"
-#include "Characters\Character.hpp"
-#include "corpse.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Objects/Projector.hpp"
+#include "Render/LightMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/LoreObject.hpp"
+#include "Characters/Character.hpp"
+#include "Corpse.hpp"
 #include "hud_Player.hpp"
 #include "HudObject.hpp"
 #include "hud_Scanner.hpp"
+#include "Render/PrimitiveBatch.hpp"
 
 #ifndef X_EDITOR
-#include "StateMgr\StateMgr.hpp"
-#include "NetworkMgr\MsgMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "NetworkMgr/MsgMgr.hpp"
 #endif
 
 
@@ -152,6 +154,7 @@ weapon_scanner::weapon_scanner( void )
 
     m_ScanTimesPerFace = 0;
     m_bCanScan = TRUE;
+    m_bBootUpAnimFinished = TRUE;
     m_bInitialScan = TRUE;
     m_bFlashEnclosures = FALSE;
     m_NumberOfFlashes = 0;
@@ -165,19 +168,19 @@ weapon_scanner::weapon_scanner( void )
     m_ScanState = SCAN_NONE;
     m_ScannedGuid = NULL_GUID;
 
-    m_LaserBitmap.SetName( PRELOAD_FILE("Tracer_Laser.xbmp") );
-    m_LaserFixupBitmap.SetName( PRELOAD_FILE("Tracer_Glow.xbmp") );    
+    m_LaserTexture.SetName( PRELOAD_FILE("Tracer_Laser.xbmp") );
+    m_LaserFixupTexture.SetName( PRELOAD_FILE("Tracer_Glow.xbmp") );
     m_FXScannerBox.SetName( PRELOAD_FILE("Scanner_Box.fxo") );
 
 #ifndef X_EDITOR
-    if ( m_LaserBitmap.GetPointer() == NULL )
+    if ( m_LaserTexture.GetPointer() == NULL )
     {
-        ASSERTS( 0, xfs( "Unable to load %s", m_LaserBitmap.GetName() ) );
+        ASSERTS( 0, xfs( "Unable to load %s", m_LaserTexture.GetName() ) );
     }
 
-    if ( m_LaserFixupBitmap.GetPointer() == NULL )
+    if ( m_LaserFixupTexture.GetPointer() == NULL )
     {
-        ASSERTS( 0, xfs( "Unable to load %s", m_LaserFixupBitmap.GetName() ) );
+        ASSERTS( 0, xfs( "Unable to load %s", m_LaserFixupTexture.GetName() ) );
     }
 
     if( m_FXScannerBox.GetPointer() == NULL )
@@ -466,8 +469,8 @@ void weapon_scanner::RenderWeapon(xbool bDebug, const xcolor& Ambient, xbool Clo
             // get our new end position
             EndPos = StartPos + (DistModifier*(EndPos-StartPos));
 
-            draw_Line(StartPos, EndPos);
-            draw_Sphere(EndPos, g_ScannerTestShereSize);
+            render::debug::Line(StartPos, EndPos);
+            render::debug::Sphere(EndPos, g_ScannerTestShereSize);
         }
     #endif
 #endif
@@ -478,7 +481,7 @@ f32 g_CharDetectAngle = 0.72f;
 xbool weapon_scanner::GetObjectPositionalInfo( guid objGuid, radian &AngleBetween, vector3 &StartPos, vector3 &EndPos )
 {
     player& Player = player::GetSafeType( *g_ObjMgr.GetObjectByGuid( m_ParentGuid ) );
-    view &View = Player.GetInterpView();
+    view& View = Player.GetSimulationView();
 
     f32 MaxScanDist = Lore_Min_Detect_DistanceTweak.GetF32();
     radian MaxDetectAngle = Lore_Min_Detect_AngleTweak.GetRadian();
@@ -784,7 +787,20 @@ void weapon_scanner::UpdateLoreCount(f32 DeltaTime)
                
         u32 TotalLore   = g_StateMgr.GetTotalLoreAcquired();
         u32 LevelLore   = g_StateMgr.GetLevelLoreAcquired(MapID);
-        m_LastLoreUpdate = g_LoreUpdateTime;
+        if( x_isvalid( g_LoreUpdateTime ) && (g_LoreUpdateTime > F32_MIN) )
+        {
+            // Keep the overshoot so this polling interval does not depend on
+            // how often the weapon is advanced.
+            do
+            {
+                m_LastLoreUpdate += g_LoreUpdateTime;
+            }
+            while( m_LastLoreUpdate <= 0.0f );
+        }
+        else
+        {
+            m_LastLoreUpdate = 0.0f;
+        }
 
         // hack into the ammo hud and put our number of lore acquired for this level into it.
         m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = LevelLore;
@@ -799,14 +815,21 @@ void weapon_scanner::UpdateLoreCount(f32 DeltaTime)
 }
 
 //==============================================================================
-void weapon_scanner::OnAdvanceLogic( f32 DeltaTime )
+void weapon_scanner::OnAdvanceSimulation( f32 DeltaTime )
 {
-    new_weapon::OnAdvanceLogic( DeltaTime );
+    new_weapon::OnAdvanceSimulation( DeltaTime );
 
     UpdateLoreCount(DeltaTime);
 
-    // Get the player.
-    player& Player = player::GetSafeType( *g_ObjMgr.GetObjectByGuid( m_ParentGuid ) );
+    object* pParent = g_ObjMgr.GetObjectByGuid( m_ParentGuid );
+    if( !pParent || !pParent->IsKindOf( player::GetRTTI() ) )
+    {
+        ClearScan();
+        m_bCanScan = TRUE;
+        return;
+    }
+
+    player& Player = *(player*)pParent;
 
     if( Player.IsFiring() )
     {
@@ -831,9 +854,6 @@ void weapon_scanner::OnAdvanceLogic( f32 DeltaTime )
                     g_AudioMgr.Play(pIdentifier);
 
 #ifndef X_EDITOR
-                    // Get the player.
-                    player& Player = player::GetSafeType( *g_ObjMgr.GetObjectByGuid( m_ParentGuid ) );
-
                     // invalid scan
                     MsgMgr.Message( MSG_SCAN_INVALID, Player.net_GetSlot() );
 #endif
@@ -896,21 +916,34 @@ void weapon_scanner::FlashLogic( f32 DeltaTime )
         m_CurrentFlashTime -= DeltaTime;
         if( m_CurrentFlashTime <= F32_MIN )
         {   
-            if( m_bFlashEnclosures )
+            if( x_isvalid( g_ScanFlashTime ) && (g_ScanFlashTime > F32_MIN) )
             {
-                // already flashing, turn them off
-                m_bFlashEnclosures = FALSE;
-                m_CurrentFlashTime = g_ScanFlashTime;
+                // Consume every elapsed flash interval and retain the
+                // fractional remainder instead of resetting to one full
+                // interval after each update.
+                while( (m_CurrentFlashTime <= 0.0f) &&
+                       (m_NumberOfFlashes < g_NumScanFlashes) )
+                {
+                    if( m_bFlashEnclosures )
+                    {
+                        // already flashing, turn them off
+                        m_bFlashEnclosures = FALSE;
+                    }
+                    else
+                    {
+                        // flash enclosures
+                        m_bFlashEnclosures = TRUE;
+                        m_NumberOfFlashes++;
+
+                        g_AudioMgr.Play("Toggle");
+                    }
+
+                    m_CurrentFlashTime += g_ScanFlashTime;
+                }
             }
             else
             {
-                // flash enclosures
-                m_bFlashEnclosures = TRUE;
-                m_NumberOfFlashes++;
-
-                g_AudioMgr.Play("Toggle");
-
-                m_CurrentFlashTime = g_ScanFlashTime;
+                m_CurrentFlashTime = 0.0f;
             }
         }
     }
@@ -952,23 +985,35 @@ void weapon_scanner::CheckForScanComplete( void )
             if( m_ScanState == SCAN_LORE || m_ScanState == SCAN_OBJECT )
             {
                 // deactivate lore item (should we delete?)
-                lore_object *pLO = (lore_object*)g_ObjMgr.GetObjectByGuid(m_ScanStartGuid);
+                object* pScanObject = g_ObjMgr.GetObjectByGuid( m_ScanStartGuid );
+                if( pScanObject && pScanObject->IsKindOf( lore_object::GetRTTI() ) )
+                {
+                    lore_object* pLO = (lore_object*)pScanObject;
 
-                // tell it we took/activated this item
-                pLO->OnAcquire();
+                    // tell it we took/activated this item
+                    pLO->OnAcquire();
 
-                // Get Lore Ident here
-                GetScannerVOIdent( pIdentifier, VO_SCAN_LORE );
-                g_AudioMgr.Play(pIdentifier);
+                    // Get Lore Ident here
+                    GetScannerVOIdent( pIdentifier, VO_SCAN_LORE );
+                    g_AudioMgr.Play(pIdentifier);
 
-                m_ScannedGuid = m_ScanEndGuid;
+                    m_ScannedGuid = m_ScanEndGuid;
+                }
+                else
+                {
+                    GetScannerVOIdent( pIdentifier, VO_SCAN_NOTHING );
+                    g_AudioMgr.Play(pIdentifier);
+                }
             }
             else  // do other non-lore samples here
             {
                 if( m_ScanState == SCAN_CHARACTER )
                 {
-                    character *pCharacter = (character*)g_ObjMgr.GetObjectByGuid(m_ScanStartGuid);
-                    pCharacter->NotifyScanEnd();
+                    object* pCharacterObject = g_ObjMgr.GetObjectByGuid( m_ScanStartGuid );
+                    if( pCharacterObject && pCharacterObject->IsKindOf( character::GetRTTI() ) )
+                    {
+                        ((character*)pCharacterObject)->NotifyScanEnd();
+                    }
                 }
                 else
                 if( m_ScanState == SCAN_CORPSE )
@@ -1020,9 +1065,15 @@ void weapon_scanner::CheckForScanComplete( void )
             if( pPlayer )
             {
                 hud_object *Hud = pPlayer->GetHud();
-                player_hud& PHud = Hud->GetPlayerHud( pPlayer->GetLocalSlot() );
-                hud_scanner* pAHud = (hud_scanner*)(PHud.m_HudComponents[HUD_ELEMENT_SCANNER]);
-                pAHud->NotifyScanComplete(pPlayer, m_ScannedGuid);
+                if( Hud )
+                {
+                    player_hud& PHud = Hud->GetPlayerHud( pPlayer->GetLocalSlot() );
+                    hud_scanner* pAHud = (hud_scanner*)(PHud.m_HudComponents[HUD_ELEMENT_SCANNER]);
+                    if( pAHud )
+                    {
+                        pAHud->NotifyScanComplete(pPlayer, m_ScannedGuid);
+                    }
+                }
             }
 
             g_AudioMgr.Play("Scanner_Acquired");
@@ -1046,7 +1097,13 @@ void weapon_scanner::OnRenderTransparent(void)
     // call base class render which basically just calls object::OnRenderTransparent()
     new_weapon::OnRenderTransparent();
 
-    player& Player = player::GetSafeType( *g_ObjMgr.GetObjectByGuid( m_ParentGuid ) );
+    object* pParent = g_ObjMgr.GetObjectByGuid( m_ParentGuid );
+    if( !pParent || !pParent->IsKindOf( player::GetRTTI() ) )
+    {
+        return;
+    }
+
+    player& Player = *(player*)pParent;
 
     // we're firing, we can scan and we've started the process (m_bInitialScan set to false)
     if( Player.IsFiring() && Player.AllowedToFire() && CanScan() && !m_bInitialScan )
@@ -1081,53 +1138,60 @@ static s16 g_ScanIndex[MAX_SCAN_POINTS]= {6,2, 0,4, // 0 - 3
 //==============================================================================
 void weapon_scanner::DrawEnclosures( void )
 {
-    draw_Begin(DRAW_TRIANGLES, DRAW_USE_ALPHA | DRAW_CULL_NONE );
-    draw_ClearL2W();    
+    const xcolor Color = m_bFlashEnclosures ? g_ScanEncFlash_Color : g_ScanEnc_Color;
+    render::primitive_vertex Vertices[MAX_SCAN_POINTS / 4 * 6];
+    u16 Indices[MAX_SCAN_POINTS / 4 * 6];
+    s32 VertexCount = 0;
 
-    if( m_bFlashEnclosures )
+    const s32 EnclosureCount = m_ScanIndex / 4;
+    for( s32 i = 0; i < EnclosureCount; ++i )
     {
-        draw_Color(g_ScanEncFlash_Color);
+        const s32 Index = i * 4;
+        const s16 QuadIndices[6] = { g_ScanIndex[Index],     g_ScanIndex[Index + 1], g_ScanIndex[Index + 2],
+                                     g_ScanIndex[Index + 2], g_ScanIndex[Index + 3], g_ScanIndex[Index] };
+        for( s32 j = 0; j < 6; ++j )
+        {
+            Vertices[VertexCount] = render::primitive_vertex( m_BBoxVerts[QuadIndices[j]], vector2( 0.0f, 0.0f ), Color );
+            Indices[VertexCount] = (u16)VertexCount;
+            ++VertexCount;
+        }
     }
-    else
-    {
-        draw_Color(g_ScanEnc_Color);
-    }
-    
-    s32 num = m_ScanIndex/4;
 
-    s32 ind = 0;    
-    
-    // build quads
-    for( s32 i = 0; i < num; i++ )
-    {
-        ind = i * 4;
+    if( VertexCount == 0 )
+        return;
 
-        // first tri
-        draw_Vertex(m_BBoxVerts[ g_ScanIndex[ind]   ]);
-        draw_Vertex(m_BBoxVerts[ g_ScanIndex[ind+1] ]);
-        draw_Vertex(m_BBoxVerts[ g_ScanIndex[ind+2] ]);
-
-        // second tri
-        draw_Vertex(m_BBoxVerts[ g_ScanIndex[ind+2] ]);
-        draw_Vertex(m_BBoxVerts[ g_ScanIndex[ind+3] ]);
-        draw_Vertex(m_BBoxVerts[ g_ScanIndex[ind]   ]);
-
-    }
-    draw_End();
+    const render::primitive_draw_desc Material( NULL,
+                                                render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                render::PRIMITIVE_BLEND_ALPHA,
+                                                render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                render::PRIMITIVE_LAYER_TRANSPARENT );
+    matrix4 Identity;
+    Identity.Identity();
+    render::SubmitPrimitives( Material, Identity, Vertices, VertexCount, Indices, VertexCount );
 }
 
 //==============================================================================
 void weapon_scanner::TESTEnclosures( void )
 {
-    draw_Begin(DRAW_TRIANGLES, DRAW_USE_ALPHA);
-    draw_ClearL2W();
-    draw_Color(g_ScanEnc_Color);
-
-    draw_Vertex(m_BBoxVerts[ ScanTestPoly[0] ] );
-    draw_Vertex(m_BBoxVerts[ ScanTestPoly[1] ] );
-    draw_Vertex(m_BBoxVerts[ ScanTestPoly[2] ] );
-
-    draw_End();
+    render::primitive_vertex Vertices[3] =
+    {
+        render::primitive_vertex( m_BBoxVerts[ScanTestPoly[0]], vector2( 0.0f, 0.0f ), g_ScanEnc_Color ),
+        render::primitive_vertex( m_BBoxVerts[ScanTestPoly[1]], vector2( 0.0f, 0.0f ), g_ScanEnc_Color ),
+        render::primitive_vertex( m_BBoxVerts[ScanTestPoly[2]], vector2( 0.0f, 0.0f ), g_ScanEnc_Color )
+    };
+    const u16 Indices[3] = { 0, 1, 2 };
+    const render::primitive_draw_desc Material( NULL,
+                                                render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                render::PRIMITIVE_BLEND_ALPHA,
+                                                render::PRIMITIVE_DEPTH_READ_WRITE,
+                                                render::PRIMITIVE_RASTER_SOLID,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                render::PRIMITIVE_LAYER_TRANSPARENT );
+    matrix4 Identity;
+    Identity.Identity();
+    render::SubmitPrimitives( Material, Identity, Vertices, 3, Indices, 3 );
 }
 
 //==============================================================================
@@ -1137,7 +1201,7 @@ void weapon_scanner::GetLaserHitLocation( player* pPlayer, vector3& EndPos, xboo
     radian Yaw;
 
     // the view's rotation
-    view &View = pPlayer->GetInterpView();
+    view& View = pPlayer->GetSimulationView();
 
     pPlayer->GetEyesPitchYaw( Pitch, Yaw );
    
@@ -1224,7 +1288,7 @@ void weapon_scanner::GetSamplingLaserHitLocation( player* pPlayer, vector3& EndP
     radian Yaw;
 
     // the view's rotation
-    view &View = pPlayer->GetInterpView();
+    view& View = pPlayer->GetSimulationView();
 
     pPlayer->GetEyesPitchYaw( Pitch, Yaw );
 
@@ -1307,14 +1371,21 @@ void weapon_scanner::DrawScanningLaser( void )
     }
 
     player* pPlayer = (player*)pObj;
+    const view* pView = eng_GetView();
+    const texture* pLaserTexture = m_LaserTexture.GetPointer();
+    const texture* pFixupTexture = m_LaserFixupTexture.GetPointer();
+    if( !pView || !pLaserTexture )
+        return;
 
-    draw_ClearL2W();
-
-    // set up drawing
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_CULL_NONE );
-
-    // set draw texture
-    draw_SetTexture( *m_LaserBitmap.GetPointer() );
+    const render::primitive_draw_desc LaserMaterial( pLaserTexture,
+                                                     render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                     render::PRIMITIVE_BLEND_ALPHA,
+                                                     render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                     render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                     render::PRIMITIVE_SAMPLER_ANISOTROPIC_WRAP,
+                                                     render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch LaserBatch( LaserMaterial );
+    LaserBatch.Reserve( 8, 12 );
 
     // get the point from which the "laser" emits
     vector3 StartPos, EndPos;
@@ -1328,28 +1399,54 @@ void weapon_scanner::DrawScanningLaser( void )
     xcolor C = g_Scan_LaserColor;
     C.A = (u8)Scanner_Laser_Alpha;
 
-    // always draw the 1st "laser" textured quad (the one coming out of the gun)
-    draw_OrientedQuad( StartPos, EndPos,
-        vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
-        C, C,
-        Scanner_Laser_Size, Scanner_Laser_Size );
+    LaserBatch.AddViewOrientedQuad( StartPos,
+                                    EndPos,
+                                    pView->GetPosition(),
+                                    vector2( 0.0f, 0.0f ),
+                                    vector2( 1.0f, 1.0f ),
+                                    C,
+                                    C,
+                                    Scanner_Laser_Size,
+                                    Scanner_Laser_Size );
 
     C = g_Scan2_LaserColor;
     C.A = (u8)Scanner_Laser_Alpha;
 
     GetSamplingLaserHitLocation(pPlayer, EndPos, bHitLoreObject);
 
-    // always draw the 2nd "laser" textured quad (sampling laser)
-    draw_OrientedQuad( StartPos, EndPos,
-        vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
-        C, C,
-        Scanner_Laser_Size, Scanner_Laser_Size );
-    
-    // now draw sampling "hit" bitmap
-    DrawLaserFixupBitmap((m_LaserFixupBitmap.GetPointer()), (Scanner_Laser_Size+0.5f), g_Scan2_LaserColor, g_CollisionMgr.m_Collisions[0]);
+    LaserBatch.AddViewOrientedQuad( StartPos,
+                                    EndPos,
+                                    pView->GetPosition(),
+                                    vector2( 0.0f, 0.0f ),
+                                    vector2( 1.0f, 1.0f ),
+                                    C,
+                                    C,
+                                    Scanner_Laser_Size,
+                                    Scanner_Laser_Size );
 
-    // engine stop drawing
-    draw_End();
+    matrix4 Identity;
+    Identity.Identity();
+    LaserBatch.Submit( Identity );
+
+    if( pFixupTexture && (g_CollisionMgr.m_nCollisions > 0) )
+    {
+        const collision_mgr::collision& Collision = g_CollisionMgr.m_Collisions[0];
+        const vector3 Center = Collision.Point + Collision.Plane.Normal * 0.5f;
+
+        const render::primitive_draw_desc FixupMaterial( pFixupTexture,
+                                                         render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                         render::PRIMITIVE_BLEND_ALPHA,
+                                                         render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                         render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                         render::PRIMITIVE_SAMPLER_ANISOTROPIC_WRAP,
+                                                         render::PRIMITIVE_LAYER_TRANSPARENT );
+        render::PrimitiveBatch FixupBatch( FixupMaterial );
+        FixupBatch.AddPlaneAlignedQuad( Center,
+                                        Collision.Plane.Normal,
+                                        Scanner_Laser_Size + 0.5f,
+                                        g_Scan2_LaserColor );
+        FixupBatch.Submit( Identity );
+    }
 
     if( g_TestScanPolys )
     {
@@ -1392,6 +1489,11 @@ void weapon_scanner::UpdateScanEffect( void )
     {
         vector3 StartPos, EndPos;
         s32 iBone = m_FiringPointBoneIndex[FIRE_POINT_DEFAULT];
+
+        if( iBone < 0 )
+        {
+            return;
+        }
 
         // get the point from which the "laser" emits
         StartPos = m_AnimPlayer[ m_CurrentRenderState ].GetBonePosition( iBone );

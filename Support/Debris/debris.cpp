@@ -5,10 +5,11 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
+
+#include "Render/PrimitiveDebug.hpp"
 #include "debris.hpp"
-#include "e_Draw.hpp"
-#include "audiomgr\AudioMgr.hpp"
-#include "..\Support\GameLib\StatsMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "../Support/GameLib/StatsMgr.hpp"
 
 xbool DEBRIS_USE_POLY_CACHE = TRUE;
 //=============================================================================
@@ -128,10 +129,10 @@ bbox debris::GetLocalBBox( void ) const
 
 //=============================================================================================
 
-void debris::OnAdvanceLogic      ( f32 DeltaTime )
+void debris::OnAdvanceSimulation      ( f32 DeltaTime )
 {
     LOG_STAT( k_stats_Debris );
-    CONTEXT("debris::OnAdvanceLogic");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "debris::OnAdvanceSimulation");
 
     m_LifeSpan -= DeltaTime;
 
@@ -140,7 +141,7 @@ void debris::OnAdvanceLogic      ( f32 DeltaTime )
     matrix4 NewL2W( vector3( 1.0f, 1.0f, 1.0f ), m_TotalSpin, newPos );
     OnTransform( NewL2W );
 
-    if( (m_LifeSpan < 0.0f) || m_KillMe || (newPos.GetY() < -8000.0f) )
+    if( (m_LifeSpan <= 0.0f) || m_KillMe || (newPos.GetY() < -8000.0f) )
     {
         g_ObjMgr.DestroyObject( GetGuid( ) );
     }
@@ -170,7 +171,7 @@ void debris::OnMove				( const vector3& rNewPos )
 void debris::OnRender            ( void )
 {
 #if !defined( CONFIG_RETAIL )
-    draw_Sphere( GetPosition(), GetLocalBBox().GetRadius() );
+    //render::debug::Sphere( GetPosition(), GetLocalBBox().GetRadius() );
 #endif // !defined( CONFIG_RETAIL )
 }
 
@@ -189,7 +190,7 @@ void debris::OnBounce(void )
 
 vector3 debris::OnProcessCollision( f32 DeltaTime )
 {
-    CONTEXT("debris::OnProcessCollision");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "debris::OnProcessCollision");
 
     if(m_Inactive)
         return GetPosition();
@@ -220,6 +221,9 @@ vector3 debris::OnProcessCollision( f32 DeltaTime )
 
     // Get speed and normalized direction
     f32     Speed = DeltaPos.Length();
+    if( Speed <= 0.0f )
+        return CurrentPos;
+
     vector3 Dir   = DeltaPos / Speed;
 
     // Process the collision
@@ -263,5 +267,4 @@ vector3 debris::OnProcessCollision( f32 DeltaTime )
 }
 
 //=============================================================================
-
 

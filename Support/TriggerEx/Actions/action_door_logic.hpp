@@ -11,9 +11,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\TriggerEx_Actions.hpp"
-#include "..\Affecters\object_affecter.hpp"
-#include "..\Support\Objects\Door.hpp "
+#include "../TriggerEx_Actions.hpp"
+#include "../Affecters/object_affecter.hpp"
+#include "../Support/Objects/Door.hpp"
 
 //=========================================================================
 // Check Property

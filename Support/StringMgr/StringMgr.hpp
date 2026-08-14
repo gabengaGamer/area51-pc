@@ -49,7 +49,9 @@ protected:
                         string_table    ( void );
                        ~string_table    ( void );
 
-    xbool               Load            ( const char* pTableName, const char* pFileName );
+    xbool               Load            ( const char* pTableName,
+                                          const char* pFileName,
+                                          x_language  Language );
     s32                 GetCount        ( void ) const ;
     const xwchar*       GetAt           ( s32 Index ) const;
     const xwchar*       GetAt               ( const char* lookupString ) const;
@@ -58,7 +60,8 @@ protected:
     const xwchar*       GetSoundDescString  ( const char* lookupString ) const;
 
 protected:
-    const char*     m_pTableName;
+    char            m_TableName[64];
+    char            m_SourceName[X_MAX_PATH];
     byte*           m_pData;
     s32             m_nStrings;
     s32             m_Version;
@@ -89,18 +92,24 @@ public:
 
     xbool               LoadTable       ( const char* pTableName, const char* pFileName );
     void                UnloadTable     ( const char* pTableName );
+    xbool               ReloadLocalizedTables
+                                        ( void );
     s32                 GetStringCount  ( const char* pTableName ) ;
     const xwchar*       operator ()     ( const char* pTableName, s32 Index, const xbool bLogNULLString = TRUE ) const;
     const xwchar*       operator ()     ( const char* pTableName, const char* TitleString, const xbool bLogNULLString = TRUE ) const;
     const xwchar*       GetSubTitleSpeaker( const char* pTableName, const char* SpeakerString, const xbool bLogNULLString = TRUE ) const;
     const xwchar*       GetSoundDescString( const char* pTableName, const char* SpeakerString, const xbool bLogNULLString = TRUE ) const;
     const char*         GetLocalizedName( const char* pFileName, char_string& LocalizedName ) const;
+    const char*         GetLocalizedName( const char* pFileName,
+                                          x_language  Language,
+                                          char_string& LocalizedName ) const;
 
 protected:
     const string_table* FindTable       ( const char* pTableName ) const;
 
     static xbool            m_Initialized;
     xarray<string_table*>   m_Tables;
+    xarray<string_table*>   m_RetiredTables;
 };
 
 //==============================================================================

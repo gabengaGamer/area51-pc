@@ -10,9 +10,9 @@
 
 #include "action_change_perception.hpp"
 
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "PerceptionMgr\PerceptionMgr.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "PerceptionMgr/PerceptionMgr.hpp"
 
 //=========================================================================
 //=========================================================================
@@ -76,7 +76,7 @@ xbool action_change_perception::Execute ( f32 DeltaTime )
     //we are blocking
     m_TimeDelayingSoFar += DeltaTime;
 
-    if (m_TimeDelayingSoFar > m_TimeRange)
+    if (m_TimeDelayingSoFar >= m_TimeRange)
     {
         //done with delay
         m_TimeDelayingSoFar = 0.0f;
@@ -176,5 +176,4 @@ const char* action_change_perception::GetDescription( void )
 }
 
 //=============================================================================
-
 

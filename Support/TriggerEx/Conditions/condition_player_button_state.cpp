@@ -9,10 +9,10 @@
 //=========================================================================
 
 #include "condition_player_button_state.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "..\Support\Objects\Player.hpp"
-#include "..\triggerex_object.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "../Support/Objects/Player/Player.hpp"
+#include "../TriggerEx_Object.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS
@@ -42,8 +42,8 @@ xbool condition_player_button_state::Execute( guid TriggerGuid )
     if( (m_ButtonID < ingame_pad::GAMEPLAY_ACTION_FIRST) || (m_ButtonID >= ingame_pad::GAMEPLAY_ACTION_END) )
         return FALSE;
 
-    f32 WasVal = g_IngamePad[ PlayerPad ].GetLogical( m_ButtonID ).GetWasValue();
-    f32 IsVal  = g_IngamePad[ PlayerPad ].GetLogical( m_ButtonID ).GetIsValue();
+    f32 WasVal = g_GameInput[ PlayerPad ].GetFrameLogical( m_ButtonID ).GetWasValue();
+    f32 IsVal  = g_GameInput[ PlayerPad ].GetFrameLogical( m_ButtonID ).GetIsValue();
     xbool WasPressed = WasVal > 0.25f;
     xbool IsPressed  = IsVal  > 0.25f;
 

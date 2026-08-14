@@ -13,10 +13,10 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\Obj_mgr.hpp"
-#include "..\auxiliary\fx_RunTime\Fx_Mgr.hpp"
-#include "..\Auxiliary\Miscutils\Dictionary.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "FX/fx_Mgr.hpp"
+#include "../Auxiliary/MiscUtils/dictionary.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 //=========================================================================
 // CLASS
@@ -243,12 +243,7 @@ protected:
     virtual         void        OnInit                  ( void );
     virtual         void        OnRender                ( void );
     virtual         void        OnRenderTransparent     ( void );
-    virtual         void        OnAdvanceLogic          ( f32 DeltaTime );    
-    virtual         void        UpdateRenderInterpState       ( f32 Alpha );
-    virtual         void        ClearRenderInterpState        ( void );
-    virtual         void        InvalidateRenderInterpState   ( void );
-    virtual         void        SnapRenderInterpState         ( void );
-
+    virtual         void        OnAdvanceSimulation          ( f32 DeltaTime );    
 #ifndef X_RETAIL
     virtual         void        OnDebugRender           ( void );    
 #endif // X_RETAIL
@@ -263,7 +258,6 @@ protected:
                     void        PlayRepeatedLogic       ( f32 DeltaTime );
                     void        PlayForeverLogic        ( f32 DeltaTime );
                     void        PlayPresistantLogic     ( f32 DeltaTime );
-                    void        SyncFXTransform         ( void );
      
 public:
 
@@ -291,7 +285,6 @@ protected:
 #endif // X_EDITOR
     
     bbox                    m_ParticleBBox;             // BBox of entire particle effect.
-    f32                     m_TimeSinceLastRender;      // Timer for turning off onadvance logic.
     xbool                   m_bDestroyed;               // Are we in the process of destroying the particle fx.
 
 protected:
@@ -333,4 +326,3 @@ void particle_emitter::SetColor( xcolor Color )
 // END
 //=========================================================================
 #endif
-

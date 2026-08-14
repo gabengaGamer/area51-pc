@@ -1,5 +1,5 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0">
   <ItemGroup>
     <Filter Include="Common">
       <UniqueIdentifier>{84cba3a4-a895-406c-961c-944c4ba12ac6}</UniqueIdentifier>
@@ -16,11 +16,26 @@
     <Filter Include="Audio">
       <UniqueIdentifier>{de2b6ffd-e14d-485a-962c-1a32a52583a0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Audio\Hardware">
-      <UniqueIdentifier>{c8a3d48c-ef4c-462f-8b8d-a26dc2be56b3}</UniqueIdentifier>
+    <Filter Include="Audio\backend">
+      <UniqueIdentifier>{a8b93901-8fe7-4e8d-994c-c9f8623a0001}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Audio\IAL">
-      <UniqueIdentifier>{1362aa4d-7c13-4214-9e23-05be4f003691}</UniqueIdentifier>
+    <Filter Include="Audio\backend\sdl">
+      <UniqueIdentifier>{a8b93902-8fe7-4e8d-994c-c9f8623a0002}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audio\codecs">
+      <UniqueIdentifier>{a8b93903-8fe7-4e8d-994c-c9f8623a0003}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audio\codecs\mp3">
+      <UniqueIdentifier>{a8b93904-8fe7-4e8d-994c-c9f8623a0004}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{a8b93905-8fe7-4e8d-994c-c9f8623a0005}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input\backend">
+      <UniqueIdentifier>{a8b93906-8fe7-4e8d-994c-c9f8623a0006}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input\backend\dinput">
+      <UniqueIdentifier>{a8b93907-8fe7-4e8d-994c-c9f8623a0007}</UniqueIdentifier>
     </Filter>
     <Filter Include="IOManager">
       <UniqueIdentifier>{f2ea50f4-8080-4b64-a540-69763c20e5da}</UniqueIdentifier>
@@ -28,30 +43,30 @@
     <Filter Include="Network">
       <UniqueIdentifier>{228dc53a-9cb3-4646-83ca-59e43d16ad36}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Network\PC">
+    <Filter Include="Network\Backend">
       <UniqueIdentifier>{81cc25d5-1979-4b76-abc4-88e30c6a67df}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MemCard">
-      <UniqueIdentifier>{a0b2c32e-1855-4d32-b441-3a7055b9351f}</UniqueIdentifier>
     </Filter>
     <Filter Include="IOManager\Device_Host">
       <UniqueIdentifier>{810e74a7-120f-4a49-bdc9-c12d7e954968}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SDLEngine">
+      <UniqueIdentifier>{7bcf1506-b0e7-4d0f-a56a-ef94a4c59644}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Common\e_Draw.cpp">
-      <Filter>Common</Filter>
+    <ClCompile Include="Input\e_Input.cpp">
+      <Filter>Input</Filter>
     </ClCompile>
-    <ClCompile Include="Common\e_Input.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="Common\e_InputActions.cpp">
-      <Filter>Common</Filter>
+    <ClCompile Include="Input\e_InputActions.cpp">
+      <Filter>Input</Filter>
     </ClCompile>
     <ClCompile Include="Common\e_ScratchMem.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="Common\e_SimpleAllocator.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\e_ECS.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="Common\e_Text.cpp">
@@ -60,37 +75,40 @@
     <ClCompile Include="Common\e_View.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="D3DEngine\d3deng.cpp">
-      <Filter>PC</Filter>
+    <ClCompile Include="Common\e_Platform.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="D3DEngine\d3deng_draw.cpp">
-      <Filter>PC</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DEngine\d3deng_input.cpp">
-      <Filter>PC</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DEngine\d3deng_vram.cpp">
-      <Filter>PC</Filter>
+    <ClCompile Include="Input\backend\dinput\input_dinput.cpp">
+      <Filter>Input\backend\dinput</Filter>
     </ClCompile>
     <ClCompile Include="Audio\audio_channel_mgr.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
-    <ClCompile Include="Audio\audio_debug.cpp">
+    <ClCompile Include="Audio\audio_stream_decoder_factory.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
-    <ClCompile Include="Audio\audio_io_request.cpp">
+    <ClCompile Include="Audio\audio_descriptor_runtime.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_element_channel_runtime.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
     <ClCompile Include="Audio\audio_mgr.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
-    <ClCompile Include="Audio\audio_mp3_mgr.cpp">
-      <Filter>Audio</Filter>
-    </ClCompile>
     <ClCompile Include="Audio\audio_package.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
-    <ClCompile Include="Audio\audio_ram_mgr.cpp">
+    <ClCompile Include="Audio\audio_package_registry.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_runtime.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_runtime_commands.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_spatial_mgr.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
     <ClCompile Include="Audio\audio_stream_controller.cpp">
@@ -99,17 +117,23 @@
     <ClCompile Include="Audio\audio_stream_mgr.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
+    <ClCompile Include="Audio\audio_stream_runtime.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio_stream_voice_binder.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
     <ClCompile Include="Audio\audio_voice_mgr.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
-    <ClCompile Include="Audio\Hardware\audio_hardware_pc.cpp">
-      <Filter>Audio\Hardware</Filter>
+    <ClCompile Include="Audio\backend\audio_backend.cpp">
+      <Filter>Audio\backend</Filter>
     </ClCompile>
-    <ClCompile Include="Audio\Hardware\audio_stream_pc.cpp">
-      <Filter>Audio\Hardware</Filter>
+    <ClCompile Include="Audio\backend\audio_output_mixer.cpp">
+      <Filter>Audio\backend</Filter>
     </ClCompile>
-    <ClCompile Include="Audio\IAL\IAL.cpp">
-      <Filter>Audio\IAL</Filter>
+    <ClCompile Include="Audio\backend\sdl\audio_output_sdl.cpp">
+      <Filter>Audio\backend\sdl</Filter>
     </ClCompile>
     <ClCompile Include="IOManager\io_cache.cpp">
       <Filter>IOManager</Filter>
@@ -129,50 +153,23 @@
     <ClCompile Include="IOManager\io_request.cpp">
       <Filter>IOManager</Filter>
     </ClCompile>
-    <ClCompile Include="Network\fifo.cpp">
+    <ClCompile Include="Network\FiFo.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Network\netaddress.cpp">
+    <ClCompile Include="Network\NetAddress.cpp">
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="Network\NetCommon.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Network\netsocket.cpp">
+    <ClCompile Include="Network\NetSocket.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Network\netstream.cpp">
+    <ClCompile Include="Network\NetStream.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Network\PC\NetLib.cpp">
-      <Filter>Network\PC</Filter>
-    </ClCompile>
-    <ClCompile Include="MemCard\memcard.cpp">
-      <Filter>MemCard</Filter>
-    </ClCompile>
-    <ClCompile Include="MemCard\memcard_pc.cpp">
-      <Filter>MemCard</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DEngine\d3deng_font.cpp">
-      <Filter>PC</Filter>
-    </ClCompile>
-    <ClCompile Include="Common\e_Virtual.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DEngine\d3deng_shader.cpp">
-      <Filter>PC</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DEngine\d3deng_rtarget.cpp">
-      <Filter>PC</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DEngine\d3deng_state.cpp">
-      <Filter>PC</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DEngine\d3deng_composite.cpp">
-      <Filter>PC</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DEngine\d3deng_draw_rt.cpp">
-      <Filter>PC</Filter>
+    <ClCompile Include="Network\Backend\NetLib_Windows.cpp">
+      <Filter>Network\Backend</Filter>
     </ClCompile>
     <ClCompile Include="IOManager\Device_Host\io_device_host_pc.cpp">
       <Filter>IOManager\Device_Host</Filter>
@@ -180,18 +177,84 @@
     <ClCompile Include="IOManager\Device_Host\io_device_host.cpp">
       <Filter>IOManager\Device_Host</Filter>
     </ClCompile>
+    <ClCompile Include="Audio\codecs\mp3\audio_mp3_stream_decoder.cpp">
+      <Filter>Audio\codecs\mp3</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\codecs\mp3\audio_mp3_stream_decoder_state.cpp">
+      <Filter>Audio\codecs\mp3</Filter>
+    </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng_composite.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng_core.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng_renderdraw.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng_renderbuffer.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng_rtarget.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng_shader.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng_state.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng_vram.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng_window.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng_font.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Audio\audio_channel_mgr.hpp">
       <Filter>Audio</Filter>
     </ClInclude>
+    <ClInclude Include="Audio\audio_command.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_command_queue.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_runtime.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_descriptor_runtime.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_element_channel_runtime.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
     <ClInclude Include="Audio\audio_package.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_package_registry.hpp">
       <Filter>Audio</Filter>
     </ClInclude>
     <ClInclude Include="Audio\audio_stream_controller.hpp">
       <Filter>Audio</Filter>
     </ClInclude>
+    <ClInclude Include="Audio\audio_stream_decoder.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
     <ClInclude Include="Audio\audio_stream_mgr.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_stream_runtime.hpp">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_stream_voice_binder.hpp">
       <Filter>Audio</Filter>
     </ClInclude>
     <ClInclude Include="Audio\audio_voice_mgr.hpp">
@@ -215,91 +278,98 @@
     <ClInclude Include="IOManager\io_request.hpp">
       <Filter>IOManager</Filter>
     </ClInclude>
-    <ClInclude Include="Network\fifo.hpp">
+    <ClInclude Include="Network\FiFo.hpp">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Network\netaddress.hpp">
+    <ClInclude Include="Network\NetAddress.hpp">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Network\netsocket.hpp">
+    <ClInclude Include="Network\NetSocket.hpp">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Network\netstream.hpp">
+    <ClInclude Include="Network\NetStream.hpp">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="e_Draw.hpp" />
     <ClInclude Include="e_ScratchMem.hpp" />
     <ClInclude Include="e_SimpleAllocator.hpp" />
     <ClInclude Include="e_Text.hpp" />
     <ClInclude Include="e_View.hpp" />
-    <ClInclude Include="e_Virtual.hpp" />
     <ClInclude Include="Entropy.hpp" />
     <ClInclude Include="e_Audio.hpp" />
+    <ClInclude Include="e_Composite.hpp" />
     <ClInclude Include="e_Engine.hpp" />
+    <ClInclude Include="e_Frame.hpp" />
     <ClInclude Include="e_Input.hpp" />
-    <ClInclude Include="e_InputActions.hpp" />
-    <ClInclude Include="e_Input_Gadget_Defines.hpp" />
+    <ClInclude Include="Input\e_InputActions.hpp">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\e_Input_Gadget_Defines.hpp">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\backend\input_backend.hpp">
+      <Filter>Input\backend</Filter>
+    </ClInclude>
     <ClInclude Include="e_Network.hpp" />
+    <ClInclude Include="e_RenderBuffer.hpp" />
+    <ClInclude Include="e_RenderState.hpp" />
+    <ClInclude Include="e_Shader.hpp" />
     <ClInclude Include="e_VRAM.hpp" />
-    <ClInclude Include="D3DEngine\d3deng_font.hpp">
-      <Filter>PC</Filter>
+    <ClInclude Include="SDLEngine\sdleng_private.hpp">
+      <Filter>SDLEngine</Filter>
     </ClInclude>
-    <ClInclude Include="D3DEngine\d3deng_private.hpp">
-      <Filter>PC</Filter>
+    <ClInclude Include="SDLEngine\sdleng_window.hpp">
+      <Filter>SDLEngine</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\audio_debug.hpp">
+    <ClInclude Include="Audio\audio_stream_decoder_factory.hpp">
       <Filter>Audio</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\audio_hardware.hpp">
+    <ClInclude Include="Audio\backend\audio_backend.hpp">
+      <Filter>Audio\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\backend\audio_render_command.hpp">
+      <Filter>Audio\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\backend\audio_render_command_queue.hpp">
+      <Filter>Audio\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio_helpers.hpp">
       <Filter>Audio</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\audio_inline.hpp">
+    <ClInclude Include="Audio\audio_types.hpp">
       <Filter>Audio</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\audio_io_request.hpp">
+    <ClInclude Include="Audio\audio_package_format.hpp">
       <Filter>Audio</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\audio_mp3_mgr.hpp">
+    <ClInclude Include="Audio\audio_spatial_mgr.hpp">
       <Filter>Audio</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\audio_private.hpp">
+    <ClInclude Include="Audio\audio_spatial_types.hpp">
       <Filter>Audio</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\audio_private_pkg.hpp">
-      <Filter>Audio</Filter>
+    <ClInclude Include="Audio\backend\audio_output_mixer.hpp">
+      <Filter>Audio\backend</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\audio_ram_mgr.hpp">
-      <Filter>Audio</Filter>
+    <ClInclude Include="Audio\backend\sdl\audio_output_sdl.hpp">
+      <Filter>Audio\backend\sdl</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\IAL\IAL.h">
-      <Filter>Audio\IAL</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\netdefines.hpp">
+    <ClInclude Include="Network\NetDefines.hpp">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="IOManager\io_header.hpp">
       <Filter>IOManager</Filter>
     </ClInclude>
-    <ClInclude Include="Audio\Hardware\audio_prologic2.hpp">
-      <Filter>Audio\Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DEngine\d3deng_shader.hpp">
-      <Filter>PC</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DEngine\d3deng_rtarget.hpp">
-      <Filter>PC</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DEngine\d3deng_state.hpp">
-      <Filter>PC</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DEngine\d3deng_composite.hpp">
-      <Filter>PC</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DEngine\d3deng_draw_rt.hpp">
-      <Filter>PC</Filter>
-    </ClInclude>
     <ClInclude Include="IOManager\Device_Host\io_device_host.hpp">
       <Filter>IOManager\Device_Host</Filter>
     </ClInclude>
+    <ClInclude Include="Audio\codecs\mp3\audio_mp3_stream_decoder_state.hpp">
+      <Filter>Audio\codecs\mp3</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\codecs\mp3\audio_mp3_stream_decoder.hpp">
+      <Filter>Audio\codecs\mp3</Filter>
+    </ClInclude>
+    <ClInclude Include="e_RenderTarget.hpp" />
+    <ClInclude Include="e_ECS.hpp" />
+    <ClInclude Include="e_RenderDraw.hpp" />
   </ItemGroup>
 </Project>

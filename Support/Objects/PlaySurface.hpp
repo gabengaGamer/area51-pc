@@ -6,9 +6,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Objects\Render\RigidInst.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Objects/Render/RigidInst.hpp"
 
 //=========================================================================
 // CLASS
@@ -52,20 +52,8 @@ protected:
     virtual void                OnColRender     ( xbool bRenderHigh );
             void                DoColRender     ( const matrix4* pBones, xbool High );
 #endif // X_RETAIL
-    virtual const matrix4&      GetRenderL2W    ( void ) const;
-    virtual void                CaptureRenderInterpState( void );
-    virtual void                UpdateRenderInterpState( f32 Alpha );
-    virtual void                ClearRenderInterpState( void );
-    virtual void                InvalidateRenderInterpState( void );
-    virtual void                SnapRenderInterpState( void );
-
 protected:
 
-            matrix4             m_RenderPrevL2W;
-            matrix4             m_RenderCurrL2W;
-            matrix4             m_RenderInterpL2W;
-            xbool               m_RenderStateValid;
-            xbool               m_RenderInterpActive;
     rigid_inst                  m_Inst;         // Render Instance for the Play Surface
 };
 

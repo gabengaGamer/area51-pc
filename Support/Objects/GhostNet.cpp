@@ -41,8 +41,8 @@
 //  STORAGE
 //==============================================================================
 
-const s32 g_FramesToBlendPos         = 3;
-const s32 g_FramesToBlendOrientation = 3;
+const f32 g_PositionBlendSeconds    = 3.0f / 60.0f;
+const f32 g_OrientationBlendSeconds = 3.0f / 60.0f;
 
 //==============================================================================
 //  UPDATE FUNCTIONS
@@ -564,11 +564,11 @@ void ghost::net_Activate( void )
 
     m_Net.pMoveMgr = g_NetworkMgr.GetMoveMgr( m_NetSlot );
 
-    m_Net.BlendPosX .Init( 1.000f, 500.0f, g_FramesToBlendPos        , FALSE );
-    m_Net.BlendPosY .Init( 1.000f, 500.0f, g_FramesToBlendPos        , FALSE );
-    m_Net.BlendPosZ .Init( 1.000f, 500.0f, g_FramesToBlendPos        , FALSE );
-    m_Net.BlendPitch.Init( 0.001f,     PI, g_FramesToBlendOrientation, TRUE  );
-    m_Net.BlendYaw  .Init( 0.001f,     PI, g_FramesToBlendOrientation, TRUE  );
+    m_Net.BlendPosX .Init( 1.000f, 500.0f, g_PositionBlendSeconds,    FALSE );
+    m_Net.BlendPosY .Init( 1.000f, 500.0f, g_PositionBlendSeconds,    FALSE );
+    m_Net.BlendPosZ .Init( 1.000f, 500.0f, g_PositionBlendSeconds,    FALSE );
+    m_Net.BlendPitch.Init( 0.001f,     PI, g_OrientationBlendSeconds, TRUE  );
+    m_Net.BlendYaw  .Init( 0.001f,     PI, g_OrientationBlendSeconds, TRUE  );
 
     m_Net.FireSeq = 0;
     m_Net.PainSeq = 0;
@@ -944,11 +944,11 @@ void ghost::net_Logic( void )
 
             if( !m_Dead )
             {
-                m_Net.Render.Position.Set( m_Net.BlendPosX.BlendLogic(),
-                                           m_Net.BlendPosY.BlendLogic(),
-                                           m_Net.BlendPosZ.BlendLogic() );
-                m_Net.Render.Pitch = m_Net.BlendPitch.BlendLogic();
-                m_Net.Render.Yaw   = m_Net.BlendYaw  .BlendLogic();
+                m_Net.Render.Position.Set( m_Net.BlendPosX.Advance( m_DeltaTime ),
+                                           m_Net.BlendPosY.Advance( m_DeltaTime ),
+                                           m_Net.BlendPosZ.Advance( m_DeltaTime ) );
+                m_Net.Render.Pitch = m_Net.BlendPitch.Advance( m_DeltaTime );
+                m_Net.Render.Yaw   = m_Net.BlendYaw  .Advance( m_DeltaTime );
 
                 Teleport( m_Net.Render.Position );
                 SetPitch( m_Net.Render.Pitch    );
@@ -970,11 +970,11 @@ void ghost::net_Logic( void )
 
             if( !m_Dead )
             {
-                m_Net.Render.Position.Set( m_Net.BlendPosX.BlendLogic(),
-                                           m_Net.BlendPosY.BlendLogic(),
-                                           m_Net.BlendPosZ.BlendLogic() );
-                m_Net.Render.Pitch = m_Net.BlendPitch.BlendLogic();
-                m_Net.Render.Yaw   = m_Net.BlendYaw  .BlendLogic();
+                m_Net.Render.Position.Set( m_Net.BlendPosX.Advance( m_DeltaTime ),
+                                           m_Net.BlendPosY.Advance( m_DeltaTime ),
+                                           m_Net.BlendPosZ.Advance( m_DeltaTime ) );
+                m_Net.Render.Pitch = m_Net.BlendPitch.Advance( m_DeltaTime );
+                m_Net.Render.Yaw   = m_Net.BlendYaw  .Advance( m_DeltaTime );
 
                 Teleport( m_Net.Render.Position );
                 SetPitch( m_Net.Render.Pitch    );

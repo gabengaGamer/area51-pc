@@ -5,8 +5,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "Object.hpp"
-#include "Obj_mgr\Obj_mgr.hpp"
+#include "object.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 #define COUPLER_MAX_CHILDREN     4
 
@@ -56,7 +56,7 @@ public:
 
 protected:
     virtual void            OnInit              ( void );     
-    virtual void            OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void            OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void            OnActivate          ( xbool bFlag   );
 
 #ifndef X_RETAIL

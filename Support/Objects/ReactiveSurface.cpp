@@ -1,8 +1,8 @@
 
-#include "reactivesurface.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Player.hpp"
+#include "ReactiveSurface.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Player/Player.hpp"
 
 xstring g_ReactiveSurfaceStringList;
 
@@ -228,11 +228,11 @@ xbool reactive_surface::OnProperty( prop_query&   I    )
 
 //=============================================================================
 
-void reactive_surface::OnAdvanceLogic( f32 DeltaTime )
+void reactive_surface::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "reactive_surface::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "reactive_surface::OnAdvanceSimulation" );
 
-    anim_surface::OnAdvanceLogic( DeltaTime );
+    anim_surface::OnAdvanceSimulation( DeltaTime );
 
     player* pPlayer = SMP_UTIL_GetActivePlayer();
     switch(m_State)

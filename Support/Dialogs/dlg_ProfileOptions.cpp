@@ -4,21 +4,21 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_blankbox.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_blankbox.hpp"
 
 #include "dlg_PopUp.hpp"
 #include "dlg_ProfileOptions.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "MemCardMgr/MemCardMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "SaveData/SaveDataMgr.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
@@ -44,23 +44,22 @@ s32 s_PDW = 185;
 
 ui_manager::control_tem ProfileOptionsControls_PAL[] = 
 {
-    { IDC_PROFILE_OPTIONS_CONTROLS,         "IDS_PROFILE_OPTIONS_CONTROLS",     "button",   s_PDX,   40,    s_PDW, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_OPTIONS_AVATAR,           "IDS_PROFILE_OPTIONS_AVATAR",       "button",   s_PDX,   80,    s_PDW, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_OPTIONS_DIFFICULTY,       "IDS_PROFILE_OPTIONS_DIFFICULTY",   "button",   s_PDX,  120,    s_PDW, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_ONLINE_STATUS,            "IDS_PROFILE_OPTIONS_ONLINE_STATUS","button",   s_PDX,  160,    s_PDW, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_OPTIONS_AUTOSAVE,         "IDS_PROFILE_OPTIONS_AUTOSAVE",     "button",   s_PDX,  200,    s_PDW, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_OPTIONS_ACCEPT,           "IDS_PROFILE_OPTIONS_ACCEPT",       "button",   s_PDX,  285,    s_PDW, 40, 0, 8, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PROFILE_OPTIONS_CONTROLS,         "IDS_PROFILE_OPTIONS_CONTROLS",     "button",   s_PDX,   40,    s_PDW, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_OPTIONS_AVATAR,           "IDS_PROFILE_OPTIONS_AVATAR",       "button",   s_PDX,   80,    s_PDW, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_OPTIONS_DIFFICULTY,       "IDS_PROFILE_OPTIONS_DIFFICULTY",   "button",   s_PDX,  120,    s_PDW, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_ONLINE_STATUS,            "IDS_PROFILE_OPTIONS_ONLINE_STATUS","button",   s_PDX,  160,    s_PDW, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_OPTIONS_AUTOSAVE,         "IDS_PROFILE_OPTIONS_AUTOSAVE",     "button",   s_PDX,  200,    s_PDW, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_OPTIONS_ACCEPT,           "IDS_PROFILE_OPTIONS_ACCEPT",       "button",   s_PDX,  285,    s_PDW, 40, 0, 8, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_PROFILE_DIFFICULTY_BBOX,          "IDS_PROFILE_SELECT_DIFFICULTY",    "blankbox", 63,      120,     265, 70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE | ui_win::WF_STATIC },
-    { IDC_PROFILE_DIFFICULTY_SELECT,        "IDS_NULL",                         "combo",    100,     140,   s_PDW, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PROFILE_DIFFICULTY_BBOX,          "IDS_PROFILE_SELECT_DIFFICULTY",    "blankbox", 63,      120,     265, 70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_STATIC },
+    { IDC_PROFILE_DIFFICULTY_SELECT,        "IDS_NULL",                         "combo",    100,     140,   s_PDW, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_PROFILE_STATUS_BBOX,              "IDS_PROFILE_SELECT_ONLINE_STATUS", "blankbox", 65,      160,     260, 70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE | ui_win::WF_STATIC },
-    { IDC_PROFILE_STATUS_SELECT,            "IDS_NULL",                         "combo",    85,      180,     220, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PROFILE_STATUS_BBOX,              "IDS_PROFILE_SELECT_ONLINE_STATUS", "blankbox", 65,      160,     260, 70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_STATIC },
+    { IDC_PROFILE_STATUS_SELECT,            "IDS_NULL",                         "combo",    85,      180,     220, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_PROFILE_AUTOSAVE_BBOX,            "IDS_PROFILE_SELECT_AUTOSAVE",      "blankbox", 30,      200,     326, 70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE | ui_win::WF_STATIC },
-    { IDC_PROFILE_AUTOSAVE_SELECT,          "IDS_NULL",                         "combo",    45,      220,     295, 40, 0, 7, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PROFILE_AUTOSAVE_BBOX,            "IDS_PROFILE_SELECT_AUTOSAVE",      "blankbox", 30,      200,     326, 70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_STATIC },
+    { IDC_PROFILE_AUTOSAVE_SELECT,          "IDS_NULL",                         "combo",    45,      220,     295, 40, 0, 7, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_PROFILE_OPTIONS_NAV_TEXT,         "IDS_NULL",                         "text",      0,        0,       0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 
 };
 
@@ -68,23 +67,22 @@ ui_manager::control_tem ProfileOptionsControls_PAL[] =
 
 ui_manager::control_tem ProfileOptionsControls_ENG[] =
 {
-    { IDC_PROFILE_OPTIONS_CONTROLS,         "IDS_PROFILE_OPTIONS_CONTROLS",     "button",   s_EDX,   40,    s_EDW, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_OPTIONS_AVATAR,           "IDS_PROFILE_OPTIONS_AVATAR",       "button",   s_EDX,   80,    s_EDW, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_OPTIONS_DIFFICULTY,       "IDS_PROFILE_OPTIONS_DIFFICULTY",   "button",   s_EDX,  120,    s_EDW, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_ONLINE_STATUS,            "IDS_PROFILE_OPTIONS_ONLINE_STATUS","button",   s_EDX,  160,    s_EDW, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_OPTIONS_AUTOSAVE,         "IDS_PROFILE_OPTIONS_AUTOSAVE",     "button",   s_EDX,  200,    s_EDW, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_OPTIONS_ACCEPT,           "IDS_PROFILE_OPTIONS_ACCEPT",       "button",   s_EDX,  285,    s_EDW, 40, 0, 8, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PROFILE_OPTIONS_CONTROLS,         "IDS_PROFILE_OPTIONS_CONTROLS",     "button",   s_EDX,   40,    s_EDW, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_OPTIONS_AVATAR,           "IDS_PROFILE_OPTIONS_AVATAR",       "button",   s_EDX,   80,    s_EDW, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_OPTIONS_DIFFICULTY,       "IDS_PROFILE_OPTIONS_DIFFICULTY",   "button",   s_EDX,  120,    s_EDW, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_ONLINE_STATUS,            "IDS_PROFILE_OPTIONS_ONLINE_STATUS","button",   s_EDX,  160,    s_EDW, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_OPTIONS_AUTOSAVE,         "IDS_PROFILE_OPTIONS_AUTOSAVE",     "button",   s_EDX,  200,    s_EDW, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_OPTIONS_ACCEPT,           "IDS_PROFILE_OPTIONS_ACCEPT",       "button",   s_EDX,  285,    s_EDW, 40, 0, 8, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_PROFILE_DIFFICULTY_BBOX,          "IDS_PROFILE_SELECT_DIFFICULTY",    "blankbox", 50,      120,     200,   70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE | ui_win::WF_STATIC },
-    { IDC_PROFILE_DIFFICULTY_SELECT,        "IDS_NULL",                         "combo",    s_EDX,   140,   s_EDW, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PROFILE_DIFFICULTY_BBOX,          "IDS_PROFILE_SELECT_DIFFICULTY",    "blankbox", 50,      120,     200,   70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_STATIC },
+    { IDC_PROFILE_DIFFICULTY_SELECT,        "IDS_NULL",                         "combo",    s_EDX,   140,   s_EDW, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_PROFILE_STATUS_BBOX,              "IDS_PROFILE_SELECT_ONLINE_STATUS", "blankbox", 50,      160,     200, 70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE | ui_win::WF_STATIC },
-    { IDC_PROFILE_STATUS_SELECT,            "IDS_NULL",                         "combo",    70,      180,     160, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PROFILE_STATUS_BBOX,              "IDS_PROFILE_SELECT_ONLINE_STATUS", "blankbox", 50,      160,     200, 70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_STATIC },
+    { IDC_PROFILE_STATUS_SELECT,            "IDS_NULL",                         "combo",    70,      180,     160, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_PROFILE_AUTOSAVE_BBOX,            "IDS_PROFILE_SELECT_AUTOSAVE",      "blankbox", 45,      200,     210, 70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE | ui_win::WF_STATIC },
-    { IDC_PROFILE_AUTOSAVE_SELECT,          "IDS_NULL",                         "combo",    55,      220,     190, 40, 0, 7, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PROFILE_AUTOSAVE_BBOX,            "IDS_PROFILE_SELECT_AUTOSAVE",      "blankbox", 45,      200,     210, 70, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_STATIC },
+    { IDC_PROFILE_AUTOSAVE_SELECT,          "IDS_NULL",                         "combo",    55,      220,     190, 40, 0, 7, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_PROFILE_OPTIONS_NAV_TEXT,         "IDS_NULL",                         "text",      0,        0,       0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -202,7 +200,6 @@ xbool dlg_profile_options::Create( s32                        UserID,
     m_pAutosaveBBox         = (ui_blankbox*)FindChildByID( IDC_PROFILE_AUTOSAVE_BBOX        );
     m_pAutosaveSelect       = (ui_combo*)   FindChildByID( IDC_PROFILE_AUTOSAVE_SELECT      );
 
-    m_pNavText              = (ui_text*)    FindChildByID( IDC_PROFILE_OPTIONS_NAV_TEXT     );
 
     s32 iControl = g_StateMgr.GetCurrentControl();
     if( (iControl == -1) || (GotoControl(iControl)==NULL) )
@@ -217,6 +214,9 @@ xbool dlg_profile_options::Create( s32                        UserID,
 
     m_CurrHL = 0;
     m_PopUp = NULL;
+    m_PopUpResult = DLG_POPUP_IDLE;
+    m_OriginalProfile = g_StateMgr.GetPendingProfile();
+    m_OriginalProfile.Checksum();
 
     // switch off the buttons to start
     m_pButtonControls       ->SetFlag(ui_win::WF_VISIBLE, FALSE);
@@ -232,7 +232,6 @@ xbool dlg_profile_options::Create( s32                        UserID,
     m_pOnlineStatusSelect   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pAutosaveBBox         ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pAutosaveSelect       ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText              ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // disable pop up selections
     m_pDifficultySelect     ->SetFlag(ui_win::WF_DISABLED, TRUE);
@@ -251,7 +250,7 @@ xbool dlg_profile_options::Create( s32                        UserID,
     m_pDifficultySelect->AddItem  ( g_StringTableMgr( "ui", "IDS_DIFFICULTY_MEDIUM" ), DIFFICULTY_MEDIUM );
     // check if hard is available
     player_profile& Profile = g_StateMgr.GetPendingProfile();
-    if( Profile.m_bHardUnlocked )
+    if( Profile.GetHardUnlocked() )
     {
         m_pDifficultySelect->AddItem  ( g_StringTableMgr( "ui", "IDS_DIFFICULTY_HARD"   ), DIFFICULTY_HARD   );
     }
@@ -282,9 +281,7 @@ xbool dlg_profile_options::Create( s32                        UserID,
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
   
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
     
     // initialize screen scaling
     InitScreenScaling( Position );
@@ -334,6 +331,7 @@ void dlg_profile_options::Configure( profile_dlg_types Type, xbool bCreate )
 
 void dlg_profile_options::Destroy( void )
 {
+    g_SaveDataMgr.CancelCallbacks( this );
     ui_dialog::Destroy();
 
     // kill screen wipe
@@ -354,14 +352,7 @@ void dlg_profile_options::Render( s32 ox, s32 oy )
     // render background filter
     if( m_Type != PROFILE_OPTIONS_NORMAL )
     {
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-        // Nasty hack to force PS2 to draw to rb.l = 0
-        rb.Set( -1, 0, XRes, YRes );
-#else
-        rb.Set( 0, 0, XRes, YRes );
-#endif
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
@@ -421,23 +412,12 @@ void dlg_profile_options::Render( s32 ox, s32 oy )
 
 void dlg_profile_options::OnSaveProfileCB( void )
 {
-#ifdef TARGET_PS2
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
-#else
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 );
-#endif
-    // if the save was successful (OR user wants to continue without saving)
-    if( Condition.SuccessCode )
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
     {
-        // continue without saving?
-        if( Condition.bCancelled )
-        {
-            // flag the profile as not saved
-            g_StateMgr.SetProfileNotSaved( g_StateMgr.GetPendingProfileIndex(), TRUE ); 
-        }
-
+        s32 const ProfileIndex = g_StateMgr.GetPendingProfileIndex();
         // update the changes in the profile
         g_StateMgr.ActivatePendingProfile();
+        g_StateMgr.InitPendingProfile( ProfileIndex );
 
         // continue onward
         g_AudioMgr.Play( "Select_Norm" );
@@ -447,18 +427,18 @@ void dlg_profile_options::OnSaveProfileCB( void )
     {
         // save failed!
         g_AudioMgr.Play( "Select_Norm" );
-        m_State = DIALOG_STATE_MEMCARD_ERROR;
+        m_State = DIALOG_STATE_SAVE_DATA_ERROR;
     }
 
     // get the profile list
     xarray<profile_info*>& ProfileNames = g_StateMgr.GetProfileList();
-    // get the current list from the memcard manager
-    g_UIMemCardMgr.GetProfileNames( ProfileNames );
+    // get the current list from the save data manager
+    g_SaveDataMgr.GetProfileNames( ProfileNames );
 }
 
 //=========================================================================
 
-void dlg_profile_options::OnPadSelect( ui_win* pWin )
+void dlg_profile_options::OnAccept( ui_win* pWin )
 {
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
@@ -496,7 +476,7 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
             // update nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_ACCEPT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_CANCEL" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
 
             player_profile& Profile = g_StateMgr.GetPendingProfile();
             m_pDifficultySelect->SetSelection( Profile.GetDifficultyLevel() );
@@ -519,7 +499,7 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
                 if( Checkpoint.MapID != -1 )
                 {
                     // we've got a checkpoint, so we must have started a campaign
-                    Profile.m_bDifficultyChanged = TRUE;
+                    Profile.SetDifficultyChanged( TRUE );
                 }
 
                 Profile.SetDifficultyLevel( m_pDifficultySelect->GetSelectedItemData() );
@@ -544,7 +524,7 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
             // update nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
 
             if( m_Type != PROFILE_OPTIONS_PAUSE )
                 m_pButtonAvatar     ->SetFlag(ui_win::WF_DISABLED, FALSE);
@@ -577,10 +557,10 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
             // update nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_ACCEPT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_CANCEL" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
 
             player_profile& Profile = g_StateMgr.GetPendingProfile();
-            m_pOnlineStatusSelect->SetSelection( Profile.m_bIsVisibleOnline );
+            m_pOnlineStatusSelect->SetSelection( Profile.GetVisibleOnline() );
 
             // set highlight
             g_UiMgr->SetScreenHighlight( m_pOnlineStatusBBox->GetPosition() );
@@ -591,7 +571,7 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
         {
             // set online status
             player_profile& Profile = g_StateMgr.GetPendingProfile();
-            Profile.m_bIsVisibleOnline = m_pOnlineStatusSelect->GetSelectedItemData();
+            Profile.SetVisibleOnline( m_pOnlineStatusSelect->GetSelectedItemData() );
 
             // hide combo box
             m_pOnlineStatusBBox     ->SetFlag(ui_win::WF_VISIBLE, FALSE);
@@ -612,7 +592,7 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
             // update nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
 
             if( m_Type != PROFILE_OPTIONS_PAUSE )
                 m_pButtonAvatar     ->SetFlag(ui_win::WF_DISABLED, FALSE);
@@ -644,10 +624,10 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
             // update nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_ACCEPT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_CANCEL" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
 
             player_profile& Profile = g_StateMgr.GetPendingProfile();
-            m_pAutosaveSelect->SetSelection( Profile.m_bAutosaveOn );
+            m_pAutosaveSelect->SetSelection( Profile.GetAutosaveOn() );
 
             // set highlight
             g_UiMgr->SetScreenHighlight( m_pAutosaveBBox->GetPosition() );
@@ -658,7 +638,7 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
         {
             // set autosave status
             player_profile& Profile = g_StateMgr.GetPendingProfile();
-            Profile.m_bAutosaveOn = m_pAutosaveSelect->GetSelectedItemData();
+            Profile.SetAutosaveOn( m_pAutosaveSelect->GetSelectedItemData() );
 
             // hide combo box
             m_pAutosaveBBox         ->SetFlag(ui_win::WF_VISIBLE, FALSE);
@@ -679,7 +659,7 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
             // update nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
 
             if( m_Type != PROFILE_OPTIONS_PAUSE )
                 m_pButtonAvatar     ->SetFlag(ui_win::WF_DISABLED, FALSE);
@@ -692,7 +672,7 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
         else if( pWin == (ui_win*)m_pButtonCreate )
         {
             // are we creating this profile?
-            if( m_bCreate )
+            if( m_bCreate && g_StateMgr.GetProfileNotSaved( g_StateMgr.GetPendingProfileIndex() ) )
             {
                 g_AudioMgr.Play("Select_Norm");
                 m_CurrentControl = IDC_PROFILE_OPTIONS_ACCEPT;
@@ -706,12 +686,10 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
                 // select this new profile
                 g_StateMgr.SetSelectedProfile( g_StateMgr.GetPendingProfileIndex(), NewProfile.GetHash() );
 
-                // attempt to save the profile to the default device (HDD for Xbox, appropriate location for PC)
-                // MemCardMgr should handle the platform difference. Card index 0 is used.
-                g_UIMemCardMgr.CreateProfile( 0, g_StateMgr.GetPendingProfileIndex(), this, &dlg_profile_options::OnProfileCreateCB );
+                g_SaveDataMgr.CreateProfile( g_StateMgr.GetPendingProfileIndex(), this, &dlg_profile_options::OnProfileCreateCB );
 
-                // change the dialog state to wait for the memcard operation
-                m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
+                // wait for the save data request
+                m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
             }
             else // Editing existing profile
             {
@@ -720,29 +698,8 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
 
                 if( PendingProfile.HasChanged() )
                 {
-                    {
-                        // changes have been made - prompt to save
-                        irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
-                        m_PopUpType = OPTIONS_POPUP_PROFILE_HAS_CHANGED;
-
-                        // set nav text
-                        xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
-                        navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                        m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
-                        m_State = DIALOG_STATE_POPUP;
-
-                        // configure message
-                        m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_PROFILE_EDIT" ),
-                            TRUE,
-                            TRUE,
-                            FALSE,
-                            g_StringTableMgr( "ui", "IDS_PROFILE_EDIT_MSG" ),
-                            navText,
-                            &m_PopUpResult );
-
-                        return; // Wait for popup response
-                    }
+                    OpenProfileChangedPopup();
+                    return;
                 }
                 else
                 {
@@ -760,27 +717,14 @@ void dlg_profile_options::OnPadSelect( ui_win* pWin )
 
 void dlg_profile_options::OnProfileCreateCB( void )
 {
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 );
-
-    // If the save was successful OR user continues WITHOUT saving
-    if( Condition.SuccessCode )
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
     {
-        // continue without saving?
-        if( !Condition.bCancelled )
-        {
-            // saved ok
-            g_StateMgr.SetProfileNotSaved( g_StateMgr.GetPendingProfileIndex(), FALSE );
-        }
-        else
-        {
-			// save unsuccessful - return to profile select screen
-            g_AudioMgr.Play( "Backup" );
-            m_State = DIALOG_STATE_BACK;
-            return;
-        }
+        s32 const ProfileIndex = g_StateMgr.GetPendingProfileIndex();
+        g_StateMgr.SetProfileNotSaved( ProfileIndex, FALSE );
 
         // update the changes in the profile
         g_StateMgr.ActivatePendingProfile();
+        g_StateMgr.InitPendingProfile( ProfileIndex );
         g_AudioMgr.Play( "Select_Norm" );
 
         // continue to campaign menu or next logical step
@@ -796,7 +740,33 @@ void dlg_profile_options::OnProfileCreateCB( void )
 
 //=========================================================================
 
-void dlg_profile_options::OnPadBack( ui_win* pWin )
+void dlg_profile_options::OpenProfileChangedPopup( void )
+{
+    irect const Bounds = g_UiMgr->GetUserBounds( g_UiUserID );
+    m_PopUp = static_cast<dlg_popup*>( g_UiMgr->OpenDialog( m_UserID,
+                                                            "popup",
+                                                            Bounds,
+                                                            NULL,
+                                                            ui_win::WF_VISIBLE | ui_win::WF_BORDER |
+                                                            ui_win::WF_DLG_CENTER | ui_win::WF_INPUTMODAL ) );
+    m_PopUpType = OPTIONS_POPUP_PROFILE_HAS_CHANGED;
+
+    xwstring PopupNavText( g_StringTableMgr( "ui", "IDS_NAV_YES" ) );
+    PopupNavText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
+    SetNavTextVisible( FALSE );
+    m_State = DIALOG_STATE_POPUP;
+    m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_PROFILE_EDIT" ),
+                        TRUE,
+                        TRUE,
+                        FALSE,
+                        g_StringTableMgr( "ui", "IDS_PROFILE_EDIT_MSG" ),
+                        PopupNavText,
+                        &m_PopUpResult );
+}
+
+//=========================================================================
+
+void dlg_profile_options::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -823,7 +793,7 @@ void dlg_profile_options::OnPadBack( ui_win* pWin )
             // update nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
 
             if( m_Type != PROFILE_OPTIONS_PAUSE )
                 m_pButtonAvatar     ->SetFlag(ui_win::WF_DISABLED, FALSE);
@@ -857,7 +827,7 @@ void dlg_profile_options::OnPadBack( ui_win* pWin )
             // update nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
 
             if( m_Type != PROFILE_OPTIONS_PAUSE )
                 m_pButtonAvatar     ->SetFlag(ui_win::WF_DISABLED, FALSE);
@@ -891,7 +861,7 @@ void dlg_profile_options::OnPadBack( ui_win* pWin )
             // update nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
 
             if( m_Type != PROFILE_OPTIONS_PAUSE )
                 m_pButtonAvatar     ->SetFlag(ui_win::WF_DISABLED, FALSE);
@@ -905,18 +875,18 @@ void dlg_profile_options::OnPadBack( ui_win* pWin )
         }
 
         // are we creating a new profile or editing an existing one?
-        if( m_bCreate )
+        if( m_bCreate && g_StateMgr.GetProfileNotSaved( g_StateMgr.GetPendingProfileIndex() ) )
         {
-            // confirm abandon create profile
+            // Confirm abandoning an unsaved profile.
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
             m_PopUpType = OPTIONS_POPUP_CANCEL_CREATE;
             m_State = DIALOG_STATE_POPUP;
 
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
 
             // configure message
             m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_PROFILE_CREATE" ), 
@@ -930,7 +900,13 @@ void dlg_profile_options::OnPadBack( ui_win* pWin )
             return;
         }
 
-        // cancel changes - exit to previous screen
+        if( g_StateMgr.GetPendingProfile().HasChanged() )
+        {
+            OpenProfileChangedPopup();
+            return;
+        }
+
+        // Cancel changes and exit to the previous screen.
         g_AudioMgr.Play("Backup");
         m_State = DIALOG_STATE_BACK;
     }
@@ -957,7 +933,6 @@ void dlg_profile_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pButtonOnlineStatus   ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pButtonAutosave       ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pButtonCreate         ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText              ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 
             s32 iControl = g_StateMgr.GetCurrentControl();
 
@@ -966,13 +941,11 @@ void dlg_profile_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 if( (iControl == -1) || (GotoControl(iControl)==NULL) )
                 {
                     GotoControl( (ui_control*)m_pButtonCreate );
-                    m_pButtonCreate->SetFlag(WF_HIGHLIGHT, TRUE);
                     g_UiMgr->SetScreenHighlight( m_pButtonCreate->GetPosition() );
                 }
                 else
                 {
                     ui_control* pControl = GotoControl( iControl );
-                    pControl->SetFlag(WF_HIGHLIGHT, TRUE);
                     g_UiMgr->SetScreenHighlight(pControl->GetPosition() );
                     m_CurrentControl = iControl;
                 }
@@ -982,7 +955,6 @@ void dlg_profile_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 if( (iControl == -1) || (GotoControl(iControl)==NULL) )
                 {
                     GotoControl( (ui_control*)m_pButtonControls );
-                    m_pButtonControls->SetFlag(WF_HIGHLIGHT, TRUE);
                     g_UiMgr->SetScreenHighlight( m_pButtonControls->GetPosition() );
                 }
                 else
@@ -995,7 +967,6 @@ void dlg_profile_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
                     ui_control* pControl = GotoControl( iControl );
                     ASSERT( pControl );
-                    pControl->SetFlag(WF_HIGHLIGHT, TRUE);
                     g_UiMgr->SetScreenHighlight(pControl->GetPosition() );
                     m_CurrentControl = iControl;
                 }
@@ -1039,14 +1010,20 @@ void dlg_profile_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     // save changes?
                     if ( m_PopUpResult == DLG_POPUP_YES )
                     {
-                        // check if this profile exists on disk already
-                        if( g_StateMgr.GetProfileNotSaved( g_StateMgr.GetPendingProfileIndex() ) )
+                        s32 const ProfileIndex = g_StateMgr.GetPendingProfileIndex();
+                        if( (ProfileIndex < 0) || (ProfileIndex >= SM_PROFILE_COUNT) )
                         {
-                            // Profile exists in memory but not saved to disk yet.
-                            // Attempt to create/save it for the first time.
-                            // MemCardMgr should handle platform specifics (Xbox HDD / PC location) using card index 0.
-                            g_UIMemCardMgr.CreateProfile( 0, g_StateMgr.GetPendingProfileIndex(), this, &dlg_profile_options::OnProfileCreateCB );
-                            m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
+                            g_StateMgr.GetPendingProfile() = m_OriginalProfile;
+                            g_AudioMgr.Play( "Backup" );
+                            m_State = DIALOG_STATE_BACK;
+                            break;
+                        }
+
+                        // check if this profile exists on disk already
+                        if( g_StateMgr.GetProfileNotSaved( ProfileIndex ) )
+                        {
+                            g_SaveDataMgr.CreateProfile( ProfileIndex, this, &dlg_profile_options::OnProfileCreateCB );
+                            m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
                         }
                         else
                         {
@@ -1055,17 +1032,16 @@ void dlg_profile_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
                             m_CurrentControl = IDC_PROFILE_OPTIONS_ACCEPT;
 
-                            // attempt to save the changes to the memcard/device
-                            profile_info* pProfileInfo = &g_UIMemCardMgr.GetProfileInfo( g_StateMgr.GetPendingProfileIndex() );
-                            m_iCard = pProfileInfo->CardID; // Get the correct card ID where the profile resides
-                            g_UIMemCardMgr.SaveProfile( *pProfileInfo, g_StateMgr.GetPendingProfileIndex(), this, &dlg_profile_options::OnSaveProfileCB );
+                            profile_info* pProfileInfo = &g_SaveDataMgr.GetProfileInfo( ProfileIndex );
+                            g_SaveDataMgr.SaveProfile( *pProfileInfo, ProfileIndex, this, &dlg_profile_options::OnSaveProfileCB );
 
-                            m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
+                            m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
                         }
                     }
                     else // User chose "No" to saving changes
                     {
-                        // abandon changes
+                        // Abandon changes.
+                        g_StateMgr.GetPendingProfile() = m_OriginalProfile;
                         g_AudioMgr.Play("Backup");
                         m_State = DIALOG_STATE_BACK;
                     }
@@ -1074,9 +1050,10 @@ void dlg_profile_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             }
             // clear popup
             m_PopUp = NULL;
+            m_PopUpResult = DLG_POPUP_IDLE;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
         }
     }
 
@@ -1084,32 +1061,32 @@ void dlg_profile_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     // update the glow bar
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
-    if( m_pButtonControls->GetFlags(WF_HIGHLIGHT) )
+    if( m_pButtonControls->IsFocused() )
     {
         highLight = 0;
         g_UiMgr->SetScreenHighlight( m_pButtonControls->GetPosition() );
     }
-    else if( m_pButtonAvatar->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonAvatar->IsFocused() )
     {
         highLight = 1;
         g_UiMgr->SetScreenHighlight( m_pButtonAvatar->GetPosition() );
     }
-    else if( m_pButtonDifficulty->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonDifficulty->IsFocused() )
     {
         highLight = 2;
         g_UiMgr->SetScreenHighlight( m_pButtonDifficulty->GetPosition() );
     }
-    else if( m_pButtonOnlineStatus->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonOnlineStatus->IsFocused() )
     {
         highLight = 3;
         g_UiMgr->SetScreenHighlight( m_pButtonOnlineStatus->GetPosition() );
     }
-    else if( m_pButtonAutosave->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonAutosave->IsFocused() )
     {
         highLight = 4;
         g_UiMgr->SetScreenHighlight( m_pButtonAutosave->GetPosition() );
     }
-    else if( m_pButtonCreate->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonCreate->IsFocused() )
     {
         // Assuming 'Create/Accept' button corresponds to highlight index 6
         // (Indices seem to skip based on control layout/disabling)

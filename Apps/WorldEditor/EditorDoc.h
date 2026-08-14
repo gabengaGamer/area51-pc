@@ -173,7 +173,7 @@ protected: // create from serialization only
     xbool           IsBaselineGridVisible(void) { return m_GridSettings.m_bShowBaselineGrid; }
 
     xcolor          GetBackgroundColor() { return m_GridSettings.m_xcBackground; }
-    xbitmap&        GetSchematic() { return m_GridSettings.m_xbmpImage; }
+    texture&        GetSchematic() { return m_GridSettings.m_SchematicTexture; }
     s32             GetSchematicScale() { return m_GridSettings.m_nImageScale; }
     s32             GetSchematicAlpha() { return m_GridSettings.m_nImageAlpha; }
     BOOL            DrawSchematic() { return m_GridSettings.m_bImageDraw; }

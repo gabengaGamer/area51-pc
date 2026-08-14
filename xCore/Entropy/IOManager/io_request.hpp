@@ -33,7 +33,6 @@ class io_request
 {
 
 friend void ProcessEndOfRequest         ( io_device* pDevice, s32 Status );
-friend void io_dispatcher               ( void );
 
 //------------------------------------------------------------------------------
 
@@ -93,7 +92,7 @@ private:
     volatile    status  m_Status;
     s32                 m_HardwareStatus;
     s32                 m_Sequence;
-    u32                 m_UserData;
+    uaddr               m_UserData;
     xbool               m_UseSema;
     xsema               m_Semaphore;
     u32                 m_Destination;      // Destination
@@ -113,7 +112,7 @@ public:
                                 priority          Priority,
                                 xbool             UseSema,
                                 u32               Destination,
-                                u32               UserData,
+                                uaddr             UserData,
                                 operation         Operation, 
                                 callback_fn*      pCallback = NULL );
                                                             
@@ -125,7 +124,7 @@ public:
     inline  priority            GetPriority     ( void )            { return m_Priority; }
     inline  callback_fn*        GetCallback     ( void )            { return m_pCallback; }
     inline  status              GetStatus       ( void )            { return m_Status; }
-    inline  u32                 GetUserData     ( void )            { return m_UserData; }
+    inline  uaddr               GetUserData     ( void )            { return m_UserData; }
     inline  s32                 GetSequence     ( void )            { return m_Sequence; }
     inline  xbool               GetUseSema      ( void )            { return m_UseSema; }
     inline  void                AcquireSemaphore( void )            { m_Semaphore.Acquire(); }

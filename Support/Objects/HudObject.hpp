@@ -13,17 +13,16 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "x_bitmap.hpp"
-#include "Objects\Player.hpp"
+#include "Objects/Player/Player.hpp"
 
 #include "hud_Player.hpp"
-#include "NetworkMgr\NetLimits.hpp"
+#include "NetworkMgr/NetLimits.hpp"
 #ifndef X_EDITOR
-#include "Ui\ui_manager.hpp"
-#include "Ui\ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_font.hpp"
 #endif
-
 #define MAX_BIN_TXT_RSC   3
 
 extern xcolor g_HudColor;
@@ -41,7 +40,7 @@ public:
     virtual                ~hud_object              ( void );
     virtual s32             GetMaterial             ( void ) const { return MAT_TYPE_NULL; }
     virtual void            OnRender                ( void );
-    virtual void            OnAdvanceLogic	        ( f32 DeltaTime );
+    virtual void            OnAdvanceSimulation	        ( f32 DeltaTime );
     virtual bbox            GetLocalBBox            ( void ) const;      
 
 	virtual	void	        OnEnumProp		        ( prop_enum&  list );
@@ -52,17 +51,21 @@ public:
 
             void            ResetFrameRateInfo      ( void );
             void            RenderFrameRateInfo     ( void );
-            void            RenderTimer             ( void );
+            void            RenderTimer             ( const rect& ViewDimensions );
             
             void            GetBinaryResourceName   ( xstring& String );
             void            SetElementPulseState    ( s32 ElementID, xbool DoPulse );
             void            InitHud                 ( void ); 
+            void            BeginIconSnapshot       ( void );
+            void            CommitIconSnapshot      ( void );
+            void            LayoutPlayerHud         ( player_hud& PlayerHud,
+                                                       const rect& ViewDimensions );
             player_hud&     GetPlayerHud            ( s32 LocalSlot );
 
             void            SetupLetterBox          ( xbool On, f32 ScrollTime = 0.0f );
             xbool           IsLetterBoxOn           ( void ) const;
             f32             GetLetterBoxAmount      ( void ) const;
-    static  void            RenderLetterBox         ( const rect& VP, f32 Percent );
+            static  void            RenderLetterBox         ( const rect& VP, f32 Percent );
 
             void            SetObjectiveText        ( s32 TableNameIndex, s32 TitleStringIndex );
             void            RenderObjectiveText     ( void );
@@ -71,14 +74,12 @@ public:
 
     player_hud m_PlayerHuds[ NET_MAX_PER_CLIENT ];
 
-    static  s32                         m_PulseAlpha;
+    static  f32                         m_PulseAlpha;
     static  f32                         m_PulseRate;
     xbool                               m_Initialized;
 
 protected:
             rhandle<char>               m_hBinaryTextRsc[ MAX_BIN_TXT_RSC ];
-
-            rect                        m_ViewDimensions;
 
             xbool                       m_LogicRunning;
 
@@ -87,7 +88,7 @@ protected:
             s32                         m_FPSCount15;
             s32                         m_FPSCount20;
             s32                         m_FPSCount30;
-            s32                         m_Below30ImageCount;
+            xbool                       m_ShowBelow30Image;
 
             xbool                       m_bLetterBoxOn;
             f32                         m_LetterBoxTotalTime;
@@ -108,7 +109,7 @@ protected:
 
             s32                        m_ObjectiveTableNameIndex;
             s32                        m_ObjectiveTitleStringIndex;
-            f32                         m_ObjectiveTime;
+            f32                        m_ObjectiveTime;
 };
 
 //=========================================================================

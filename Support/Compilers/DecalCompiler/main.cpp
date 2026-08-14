@@ -1,10 +1,20 @@
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+
+#include <ctype.h>
+#include <errno.h>
+#include <float.h>
 #include <io.h>
+#include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "x_files.hpp"
 #include "CommandLine.hpp"
-#include "Auxiliary\Bitmap\Aux_bitmap.hpp"
-#include "..\Support\Decals\DecalPackage.hpp"
-#include "..\Support\Compilers\GeomCompiler\BMPUtil.hpp"
+#include "Auxiliary/Bitmap/aux_Bitmap.hpp"
+#include "../Support/Decals/DecalPackage.hpp"
+#include "../Support/Decals/DecalPackageFile.hpp"
+#include "../Support/Compilers/GeomCompiler/BMPUtil.hpp"
+#include <windows.h>
 
 //=========================================================================
 // Types
@@ -24,6 +34,12 @@ enum format_flags
     BITMAP_FORMAT_INTENSITY = 0x2,
 };
 
+struct platform_output
+{
+    export_platform Platform;
+    xstring         FileName;
+};
+
 //=========================================================================
 // Statics
 //=========================================================================
@@ -38,14 +54,259 @@ static struct   _finddata_t s_DstBitmapData;
 // Implementation
 //=========================================================================
 
-void ForceDecalLoaderLink( void )
+xbool FloatBitsEqual( f32 A, f32 B )
 {
+    u32 ABits;
+    u32 BBits;
+    x_memcpy( &ABits, &A, sizeof(ABits) );
+    x_memcpy( &BBits, &B, sizeof(BBits) );
+    return( ABits == BBits );
+}
+
+//=========================================================================
+
+xbool EqualPackages( const decal_package& A, const decal_package& B )
+{
+    if( (A.GetNGroups() != B.GetNGroups()) ||
+        (A.GetNDecalDefs() != B.GetNDecalDefs()) )
+    {
+        return( FALSE );
+    }
+
+    for( s32 i = 0; i < A.GetNGroups(); i++ )
+    {
+        if( x_strcmp( A.GetGroupName( i ), B.GetGroupName( i ) ) ||
+            ((u32)A.GetGroupColor( i ) != (u32)B.GetGroupColor( i )) ||
+            (A.GetGroupDecalDefStart( i ) != B.GetGroupDecalDefStart( i )) ||
+            (A.GetNDecalDefs( i ) != B.GetNDecalDefs( i )) )
+        {
+            return( FALSE );
+        }
+    }
+
+    for( s32 i = 0; i < A.GetNDecalDefs(); i++ )
+    {
+        const decal_definition& DA = A.GetDecalDef( i );
+        const decal_definition& DB = B.GetDecalDef( i );
+        if( x_strcmp( DA.m_Name, DB.m_Name ) ||
+            !FloatBitsEqual( DA.m_MinSize.X, DB.m_MinSize.X ) ||
+            !FloatBitsEqual( DA.m_MinSize.Y, DB.m_MinSize.Y ) ||
+            !FloatBitsEqual( DA.m_MaxSize.X, DB.m_MaxSize.X ) ||
+            !FloatBitsEqual( DA.m_MaxSize.Y, DB.m_MaxSize.Y ) ||
+            !FloatBitsEqual( DA.m_MinRoll, DB.m_MinRoll ) ||
+            !FloatBitsEqual( DA.m_MaxRoll, DB.m_MaxRoll ) ||
+            ((u32)DA.m_Color != (u32)DB.m_Color) ||
+            x_strcmp( DA.m_BitmapName, DB.m_BitmapName ) ||
+            (DA.m_MaxVisible != DB.m_MaxVisible) ||
+            !FloatBitsEqual( DA.m_FadeTime, DB.m_FadeTime ) ||
+            (DA.m_Flags != DB.m_Flags) ||
+            (DA.m_BlendMode != DB.m_BlendMode) )
+        {
+            return( FALSE );
+        }
+    }
+
+    return( TRUE );
+}
+
+//=========================================================================
+
+xbool LoadDecalPackage( const char* pFileName,
+                        decal_package*& pPackage,
+                        xstring& Error )
+{
+    pPackage = NULL;
+
+    X_FILE* pFile = x_fopen( pFileName, "rb" );
+    if( !pFile )
+    {
+        Error = "Unable to open the decal package for verification.";
+        return( FALSE );
+    }
+
+    const xbool Result = decal_package_file::Load( pFile, pPackage, Error );
+    x_fclose( pFile );
+    return( Result );
+}
+
+//=========================================================================
+
+void SaveDecalPackage( const char* pFileName, const decal_package& Package )
+{
+    if( !pFileName || !pFileName[0] )
+    {
+        x_throw( "Decal package output filename is empty." );
+        return;
+    }
+
+    xstring TempFileName( pFileName );
+    TempFileName += ".bitsery.tmp";
+    if( GetFileAttributesA( TempFileName ) != INVALID_FILE_ATTRIBUTES )
+    {
+        x_throw( xfs( "Temporary decal package already exists: %s",
+                      (const char*)TempFileName ) );
+        return;
+    }
+
+    xstring Error;
+    if( !decal_package_file::Save( TempFileName, Package, Error ) )
+    {
+        DeleteFileA( TempFileName );
+        x_throw( (const char*)Error );
+        return;
+    }
+
+    decal_package* pVerification = NULL;
+    if( !LoadDecalPackage( TempFileName, pVerification, Error ) )
+    {
+        DeleteFileA( TempFileName );
+        x_throw( (const char*)Error );
+        return;
+    }
+
+    const xbool Matches = EqualPackages( Package, *pVerification );
+    delete pVerification;
+    if( !Matches )
+    {
+        DeleteFileA( TempFileName );
+        x_throw( "Bitsery decal package verification failed." );
+        return;
+    }
+
+    if( !MoveFileExA( TempFileName,
+                      pFileName,
+                      MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH ) )
+    {
+        const DWORD ErrorCode = GetLastError();
+        DeleteFileA( TempFileName );
+        x_throw( xfs( "Unable to install verified decal package (Win32 error %lu).",
+                      (unsigned long)ErrorCode ) );
+    }
+}
+
+//=========================================================================
+
+xbool IsTextEnd( const char* pText )
+{
+    while( pText && *pText && isspace( (unsigned char)*pText ) )
+    {
+        pText++;
+    }
+    return( pText && !*pText );
+}
+
+//=========================================================================
+
+s32 ParseS32( const xstring& Text,
+              s32            Minimum,
+              s32            Maximum,
+              const char*    pDescription )
+{
+    const char* pStart = Text;
+    char*       pEnd   = NULL;
+    errno = 0;
+    const long Value = strtol( pStart, &pEnd, 10 );
+    if( (errno == ERANGE) || (pEnd == pStart) || !IsTextEnd( pEnd ) ||
+        (Value < Minimum) || (Value > Maximum) )
+    {
+        x_throw( xfs( "Invalid %s: %s", pDescription, pStart ) );
+        return( Minimum );
+    }
+    return( (s32)Value );
+}
+
+//=========================================================================
+
+u32 ParseU32( const xstring& Text,
+              s32            Radix,
+              const char*    pDescription )
+{
+    const char* pStart = Text;
+    while( *pStart && isspace( (unsigned char)*pStart ) )
+    {
+        pStart++;
+    }
+    if( *pStart == '-' )
+    {
+        x_throw( xfs( "Invalid %s: %s", pDescription, (const char*)Text ) );
+        return( 0 );
+    }
+
+    char* pEnd = NULL;
+    errno = 0;
+    const unsigned long Value = strtoul( pStart, &pEnd, Radix );
+    if( (errno == ERANGE) || (pEnd == pStart) || !IsTextEnd( pEnd ) ||
+        (Value > UINT_MAX) )
+    {
+        x_throw( xfs( "Invalid %s: %s", pDescription, (const char*)Text ) );
+        return( 0 );
+    }
+    return( (u32)Value );
+}
+
+//=========================================================================
+
+f32 ParseF32( const xstring& Text, const char* pDescription )
+{
+    const char* pStart = Text;
+    char*       pEnd   = NULL;
+    errno = 0;
+    const double Value = strtod( pStart, &pEnd );
+    const f32    Result = (f32)Value;
+    if( (errno == ERANGE) || (pEnd == pStart) || !IsTextEnd( pEnd ) ||
+        (Value < -FLT_MAX) || (Value > FLT_MAX) || !x_isvalid( Result ) )
+    {
+        x_throw( xfs( "Invalid %s: %s", pDescription, pStart ) );
+        return( 0.0f );
+    }
+    return( Result );
+}
+
+//=========================================================================
+
+void RequireGroup( s32 CurrGroup, const char* pOption )
+{
+    if( CurrGroup < 0 )
+    {
+        x_throw( xfs( "-%s requires a preceding -GROUP option.", pOption ) );
+    }
+}
+
+//=========================================================================
+
+void RequireDecal( s32 CurrDecal, const char* pOption )
+{
+    if( CurrDecal < 0 )
+    {
+        x_throw( xfs( "-%s requires a preceding -DECAL option.", pOption ) );
+    }
+}
+
+//=========================================================================
+
+void RequireTextLength( const xstring& Text,
+                        s32            MaximumLength,
+                        const char*    pDescription )
+{
+    if( Text.GetLength() > MaximumLength )
+    {
+        x_throw( xfs( "%s is longer than %d characters.",
+                      pDescription,
+                      MaximumLength ) );
+    }
 }
 
 //=========================================================================
 
 const char* CompileBitmap( const char* pOutputPath, const char* pSourceBitmap, u32 FormatFlags )
 {
+    if( !pOutputPath || !pSourceBitmap ||
+        (x_strlen( pOutputPath ) >= X_MAX_PATH) ||
+        (x_strlen( pSourceBitmap ) >= X_MAX_PATH) )
+    {
+        x_throw( "Decal bitmap input or output path is invalid or too long." );
+    }
+
     // figure out what the name of the final bitmap should be
     char SrcDrive[X_MAX_DRIVE];
     char SrcDir[X_MAX_DIR];
@@ -60,6 +321,10 @@ const char* CompileBitmap( const char* pOutputPath, const char* pSourceBitmap, u
     FinalPath[0] = '\0';
     x_splitpath( pSourceBitmap, SrcDrive, SrcDir, SrcFName, SrcExt );
     x_splitpath( pOutputPath, DstDrive, DstDir, DstFName, DstExt );
+    if( x_strlen( SrcFName ) > (X_MAX_FNAME - 4) )
+    {
+        x_throw( "Decal bitmap filename is too long for a format suffix." );
+    }
     if ( FormatFlags & BITMAP_FORMAT_INTENSITY )
         x_strcat( SrcFName, "[I]" );
     else if ( FormatFlags & BITMAP_FORMAT_8BIT )
@@ -198,6 +463,10 @@ void CompileBitmaps( const char*      pOutputPath,
         decal_definition& DecalDef = DecalPkg.GetDecalDef(i);
 
         const char* pBitmapName = CompileBitmap( pOutputPath, SourceBitmapNames[i], PreferredBitmapFormats[i] );
+        if( x_strlen( pBitmapName ) >= 256 )
+        {
+            x_throw( "Compiled decal bitmap name is too long for the package." );
+        }
         x_strsavecpy( DecalDef.m_BitmapName, pBitmapName, 256 );
     }
 }
@@ -205,409 +474,383 @@ void CompileBitmaps( const char*      pOutputPath,
 //=========================================================================
 
 void ExecuteScript( command_line& CommandLine )
-{  
-    s32                     i, j;
+{
     decal_package           DecalPkg;
     xarray<xstring>         SourceBitmapNames;
     xarray<u32>             PreferredBitmapFormats;
-    xbool                   bPlatform = FALSE;
-    s32                     CurrGroup = -1;
-    s32                     CurrDecal = -1;
+    xarray<s32>             GroupStarts;
+    xarray<s32>             GroupCounts;
+    xarray<platform_output> Outputs;
+    xbool                   SawNumGroups = FALSE;
+    xbool                   SawNumDecals = FALSE;
+    s32                     CurrGroup    = -1;
+    s32                     CurrDecal    = -1;
 
-    x_try;
-
-    for( i=0; i<CommandLine.GetNumOptions(); i++ )
+    for( s32 i = 0; i < CommandLine.GetNumOptions(); i++ )
     {
-        // Get option name and string
-        xstring OptName = CommandLine.GetOptionName( i );
+        const xstring OptName = CommandLine.GetOptionName( i );
 
-        // should we be verbose?
-        if ( OptName == xstring( "LOG" ) )
+        if( OptName == xstring( "LOG" ) )
+        {
             s_Verbose = TRUE;
-
-        // number of groups
-        if ( OptName == xstring( "NUMGROUPS" ) )
-        {
-            xstring NumGroups = CommandLine.GetOptionString( i );
-            s32     nGroups = 0;
-            sscanf( NumGroups, "%d", &nGroups );
-            if ( nGroups )
-                DecalPkg.AllocGroups( nGroups );
-            CurrGroup = -1;
         }
-
-        // number of decals
-        if ( OptName == xstring( "NUMDECALS" ) )
+        else if( OptName == xstring( "NUMGROUPS" ) )
         {
-            xstring NumDecals = CommandLine.GetOptionString( i );
-            s32     nDecals = 0;
-            sscanf( NumDecals, "%d", &nDecals );
-            if ( nDecals )
-                DecalPkg.AllocDecals( nDecals );
-            CurrDecal = -1;
-
-            // all decal flags start off as zero until we OR in the
-            // option-specified ones (rather than just using defaults)
-            for ( j = 0; j < DecalPkg.GetNDecalDefs(); j++ )
+            if( SawNumGroups )
             {
-                decal_definition& DecalDef = DecalPkg.GetDecalDef(j);
-                DecalDef.m_Flags = 0;
+                x_throw( "-NUMGROUPS may only be specified once." );
             }
 
-
-            // allocate enough bitmap names and format info data
-            SourceBitmapNames.SetCount( nDecals );
-            PreferredBitmapFormats.SetCount( nDecals );
-            for ( j = 0; j < nDecals; j++ )
+            const s32 Count = ParseS32(
+                CommandLine.GetOptionString( i ),
+                0,
+                decal_package_file::MAX_GROUPS,
+                "decal group count" );
+            DecalPkg.AllocGroups( Count );
+            GroupStarts.SetCount( Count );
+            GroupCounts.SetCount( Count );
+            for( s32 j = 0; j < Count; j++ )
             {
+                GroupStarts[j] = 0;
+                GroupCounts[j] = 0;
+            }
+            CurrGroup    = -1;
+            SawNumGroups = TRUE;
+        }
+        else if( OptName == xstring( "NUMDECALS" ) )
+        {
+            if( SawNumDecals )
+            {
+                x_throw( "-NUMDECALS may only be specified once." );
+            }
+
+            const s32 Count = ParseS32(
+                CommandLine.GetOptionString( i ),
+                0,
+                decal_package_file::MAX_DEFINITIONS,
+                "decal definition count" );
+            DecalPkg.AllocDecals( Count );
+            SourceBitmapNames.SetCount( Count );
+            PreferredBitmapFormats.SetCount( Count );
+            for( s32 j = 0; j < Count; j++ )
+            {
+                decal_definition& DecalDef = DecalPkg.GetDecalDef( j );
+                DecalDef.m_Flags = 0;
                 SourceBitmapNames[j].Clear();
                 PreferredBitmapFormats[j] = 0;
             }
+            CurrDecal    = -1;
+            SawNumDecals = TRUE;
         }
-
-        // start of a new group
-        if( OptName == xstring( "GROUP" ) )
+        else if( OptName == xstring( "GROUP" ) )
         {
-            if ( !DecalPkg.GetNGroups() )
-                continue;
+            if( !SawNumGroups )
+            {
+                x_throw( "-GROUP requires -NUMGROUPS first." );
+            }
+            if( (CurrGroup + 1) >= DecalPkg.GetNGroups() )
+            {
+                x_throw( "More -GROUP options were supplied than declared." );
+            }
 
-            // set the current index to the next group
             CurrGroup++;
-            CurrGroup = MIN( CurrGroup, DecalPkg.GetNGroups()-1 );
-
-            // fill in the group name
-            DecalPkg.SetGroupName( CurrGroup, CommandLine.GetOptionString( i ) );
+            const xstring Name = CommandLine.GetOptionString( i );
+            RequireTextLength( Name, 31, "Decal group name" );
+            DecalPkg.SetGroupName( CurrGroup, Name );
+            DecalPkg.SetGroupColor( CurrGroup, XCOLOR_WHITE );
         }
-
-        // group color
-        if( OptName == xstring( "GROUPCOLOR" ) )
+        else if( OptName == xstring( "GROUPCOLOR" ) )
         {
-            if ( !DecalPkg.GetNGroups() )
-                continue;
-
-            xstring ColorString = CommandLine.GetOptionString( i );
-            u32     ColorValue = (u32)XCOLOR_WHITE;
-            sscanf( (const char*)ColorString, "%x", &ColorValue );
-            xcolor  Color( ColorValue );
-            DecalPkg.SetGroupColor( CurrGroup, Color );
+            RequireGroup( CurrGroup, "GROUPCOLOR" );
+            DecalPkg.SetGroupColor(
+                CurrGroup,
+                xcolor( ParseU32( CommandLine.GetOptionString( i ),
+                                  16,
+                                  "group color" ) ) );
         }
-
-        // group decal start offset
-        if( OptName == xstring( "DECALSTART" ) )
+        else if( OptName == xstring( "DECALSTART" ) )
         {
-            if ( !DecalPkg.GetNGroups() )
-                continue;
-
-            xstring DecalStart = CommandLine.GetOptionString( i );
-            s32     iDecal = 0;
-            sscanf( DecalStart, "%d", &iDecal );
-            DecalPkg.SetGroupDecalDefStart( CurrGroup, iDecal );
+            RequireGroup( CurrGroup, "DECALSTART" );
+            GroupStarts[CurrGroup] = ParseS32(
+                CommandLine.GetOptionString( i ),
+                0,
+                decal_package_file::MAX_DEFINITIONS,
+                "group decal start" );
         }
-
-        // group decal count
-        if( OptName == xstring( "DECALCOUNT" ) )
+        else if( OptName == xstring( "DECALCOUNT" ) )
         {
-            if ( !DecalPkg.GetNGroups() )
-                continue;
-
-            xstring DecalCount = CommandLine.GetOptionString( i );
-            s32     nDecals = 0;
-            sscanf( DecalCount, "%d", &nDecals );
-            DecalPkg.SetGroupDecalDefCount( CurrGroup, nDecals );
+            RequireGroup( CurrGroup, "DECALCOUNT" );
+            GroupCounts[CurrGroup] = ParseS32(
+                CommandLine.GetOptionString( i ),
+                0,
+                decal_package_file::MAX_DEFINITIONS,
+                "group decal count" );
         }
-
-        // start of a new decal
-        if( OptName == xstring( "DECAL" ) )
+        else if( OptName == xstring( "DECAL" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
+            if( !SawNumDecals )
+            {
+                x_throw( "-DECAL requires -NUMDECALS first." );
+            }
+            if( (CurrDecal + 1) >= DecalPkg.GetNDecalDefs() )
+            {
+                x_throw( "More -DECAL options were supplied than declared." );
+            }
 
-            // set the current index to the next decal
             CurrDecal++;
-            CurrDecal = MIN( CurrDecal, DecalPkg.GetNDecalDefs()-1 );
-
-            // fill in the decal name
             decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            x_strsavecpy( DecalDef.m_Name, CommandLine.GetOptionString( i ), 32 );
+            const xstring Name = CommandLine.GetOptionString( i );
+            RequireTextLength( Name, 31, "Decal definition name" );
+            x_strsavecpy( DecalDef.m_Name, Name, 32 );
         }
-
-        // min width
-        if ( OptName == xstring( "MINWIDTH" ) )
+        else if( OptName == xstring( "MINWIDTH" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            xstring           MinWidth = CommandLine.GetOptionString( i );
-            sscanf( MinWidth, "%f", &DecalDef.m_MinSize.X );
+            RequireDecal( CurrDecal, "MINWIDTH" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_MinSize.X = ParseF32(
+                CommandLine.GetOptionString( i ), "minimum decal width" );
         }
-
-        // min height
-        if ( OptName == xstring( "MINHEIGHT" ) )
+        else if( OptName == xstring( "MINHEIGHT" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef  = DecalPkg.GetDecalDef( CurrDecal );
-            xstring           MinHeight = CommandLine.GetOptionString( i );
-            sscanf( MinHeight, "%f", &DecalDef.m_MinSize.Y );
+            RequireDecal( CurrDecal, "MINHEIGHT" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_MinSize.Y = ParseF32(
+                CommandLine.GetOptionString( i ), "minimum decal height" );
         }
-
-        // max width
-        if ( OptName == xstring( "MAXWIDTH" ) )
+        else if( OptName == xstring( "MAXWIDTH" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            xstring           MaxWidth = CommandLine.GetOptionString( i );
-            sscanf( MaxWidth, "%f", &DecalDef.m_MaxSize.X );
+            RequireDecal( CurrDecal, "MAXWIDTH" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_MaxSize.X = ParseF32(
+                CommandLine.GetOptionString( i ), "maximum decal width" );
         }
-
-        // max height
-        if ( OptName == xstring( "MAXHEIGHT" ) )
+        else if( OptName == xstring( "MAXHEIGHT" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef  = DecalPkg.GetDecalDef( CurrDecal );
-            xstring           MaxHeight = CommandLine.GetOptionString( i );
-            sscanf( MaxHeight, "%f", &DecalDef.m_MaxSize.Y );
+            RequireDecal( CurrDecal, "MAXHEIGHT" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_MaxSize.Y = ParseF32(
+                CommandLine.GetOptionString( i ), "maximum decal height" );
         }
-
-        // min roll
-        if ( OptName == xstring( "MINROLL" ) )
+        else if( OptName == xstring( "MINROLL" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            xstring           MinRoll  = CommandLine.GetOptionString( i );
-            sscanf( MinRoll, "%f", &DecalDef.m_MinRoll );
+            RequireDecal( CurrDecal, "MINROLL" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_MinRoll = ParseF32(
+                CommandLine.GetOptionString( i ), "minimum decal roll" );
         }
-
-        // max roll
-        if ( OptName == xstring( "MAXROLL" ) )
+        else if( OptName == xstring( "MAXROLL" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            xstring           MaxRoll  = CommandLine.GetOptionString( i );
-            sscanf( MaxRoll, "%f", &DecalDef.m_MaxRoll );
+            RequireDecal( CurrDecal, "MAXROLL" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_MaxRoll = ParseF32(
+                CommandLine.GetOptionString( i ), "maximum decal roll" );
         }
-
-        // color
-        if ( OptName == xstring( "COLOR" ) )
+        else if( OptName == xstring( "COLOR" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            xstring           Color    = CommandLine.GetOptionString( i );
-            u32               ColorValue = (u32)DecalDef.m_Color;
-            sscanf( (const char*)Color, "%x", &ColorValue );
-            DecalDef.m_Color = ColorValue;
+            RequireDecal( CurrDecal, "COLOR" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_Color = ParseU32(
+                CommandLine.GetOptionString( i ), 16, "decal color" );
         }
-
-        // max vis
-        if ( OptName == xstring( "MAXVIS" ) )
+        else if( OptName == xstring( "MAXVIS" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            xstring           MaxVis   = CommandLine.GetOptionString( i );
-            sscanf( MaxVis, "%d", &DecalDef.m_MaxVisible );
+            RequireDecal( CurrDecal, "MAXVIS" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_MaxVisible = ParseU32(
+                CommandLine.GetOptionString( i ), 10, "maximum visible decals" );
         }
-
-        // bitmap
-        if ( OptName == xstring( "BITMAP" ) )
+        else if( OptName == xstring( "BITMAP" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            SourceBitmapNames[CurrDecal] = CommandLine.GetOptionString( i );
+            RequireDecal( CurrDecal, "BITMAP" );
+            const xstring BitmapName = CommandLine.GetOptionString( i );
+            RequireTextLength( BitmapName,
+                               X_MAX_PATH - 1,
+                               "Decal source bitmap path" );
+            SourceBitmapNames[CurrDecal] = BitmapName;
         }
-
-        // format
-        if ( OptName == xstring( "P8" ) )
+        else if( OptName == xstring( "P8" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
+            RequireDecal( CurrDecal, "P8" );
             PreferredBitmapFormats[CurrDecal] |= BITMAP_FORMAT_8BIT;
         }
-
-        if ( OptName == xstring( "P4" ) )
+        else if( OptName == xstring( "P4" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
+            RequireDecal( CurrDecal, "P4" );
             PreferredBitmapFormats[CurrDecal] &= ~BITMAP_FORMAT_8BIT;
         }
-
-        // flags
-        if ( OptName == xstring( "USE_TRI" ) )
+        else if( OptName == xstring( "USE_TRI" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            DecalDef.m_Flags |= decal_definition::DECAL_FLAG_USE_TRI;
+            RequireDecal( CurrDecal, "USE_TRI" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_Flags |=
+                decal_definition::DECAL_FLAG_USE_TRI;
         }
-
-        if ( OptName == xstring( "NO_CLIP" ) )
+        else if( OptName == xstring( "NO_CLIP" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            DecalDef.m_Flags |= decal_definition::DECAL_FLAG_NO_CLIP;
+            RequireDecal( CurrDecal, "NO_CLIP" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_Flags |=
+                decal_definition::DECAL_FLAG_NO_CLIP;
         }
-
-        if ( OptName == xstring( "USE_PROJECTION" ) )
+        else if( OptName == xstring( "USE_PROJECTION" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            DecalDef.m_Flags |= decal_definition::DECAL_FLAG_USE_PROJECTION;
+            RequireDecal( CurrDecal, "USE_PROJECTION" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_Flags |=
+                decal_definition::DECAL_FLAG_USE_PROJECTION;
         }
-
-        if ( OptName == xstring( "KEEP_SIZE_RATIO" ) )
+        else if( OptName == xstring( "KEEP_SIZE_RATIO" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            DecalDef.m_Flags |= decal_definition::DECAL_FLAG_KEEP_SIZE_RATIO;
+            RequireDecal( CurrDecal, "KEEP_SIZE_RATIO" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_Flags |=
+                decal_definition::DECAL_FLAG_KEEP_SIZE_RATIO;
         }
-
-        if ( OptName == xstring( "PERMANENT" ) )
+        else if( OptName == xstring( "PERMANENT" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            DecalDef.m_Flags |= decal_definition::DECAL_FLAG_PERMANENT;
+            RequireDecal( CurrDecal, "PERMANENT" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_Flags |=
+                decal_definition::DECAL_FLAG_PERMANENT;
         }
-
-        if ( OptName == xstring( "FADE_OUT" ) )
+        else if( OptName == xstring( "FADE_OUT" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
+            RequireDecal( CurrDecal, "FADE_OUT" );
             decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
             DecalDef.m_Flags |= decal_definition::DECAL_FLAG_FADE_OUT;
-
-            xstring FadeTime = CommandLine.GetOptionString( i );
-            sscanf( FadeTime, "%f", &DecalDef.m_FadeTime );
+            DecalDef.m_FadeTime = ParseF32(
+                CommandLine.GetOptionString( i ), "decal fade time" );
         }
-
-        if( OptName == xstring( "ADD_GLOW" ) )
+        else if( OptName == xstring( "ADD_GLOW" ) )
         {
-            if( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            DecalDef.m_Flags |= decal_definition::DECAL_FLAG_ADD_GLOW;
+            RequireDecal( CurrDecal, "ADD_GLOW" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_Flags |=
+                decal_definition::DECAL_FLAG_ADD_GLOW;
         }
-
-        if( OptName == xstring( "ENV_MAPPED" ) )
+        else if( OptName == xstring( "ENV_MAPPED" ) )
         {
-            if( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            DecalDef.m_Flags |= decal_definition::DECAL_FLAG_ENV_MAPPED;
+            RequireDecal( CurrDecal, "ENV_MAPPED" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_Flags |=
+                decal_definition::DECAL_FLAG_ENV_MAPPED;
         }
-
-        // blend mode
-        if ( OptName == xstring( "BLEND_NORMAL" ) )
+        else if( OptName == xstring( "BLEND_NORMAL" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            DecalDef.m_BlendMode = decal_definition::DECAL_BLEND_NORMAL;
+            RequireDecal( CurrDecal, "BLEND_NORMAL" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_BlendMode =
+                decal_definition::DECAL_BLEND_NORMAL;
+            PreferredBitmapFormats[CurrDecal] &= ~BITMAP_FORMAT_INTENSITY;
         }
-
-        if ( OptName == xstring( "BLEND_ADD" ) )
+        else if( OptName == xstring( "BLEND_ADD" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            DecalDef.m_BlendMode = decal_definition::DECAL_BLEND_ADD;
+            RequireDecal( CurrDecal, "BLEND_ADD" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_BlendMode =
+                decal_definition::DECAL_BLEND_ADD;
+            PreferredBitmapFormats[CurrDecal] &= ~BITMAP_FORMAT_INTENSITY;
         }
-
-        if ( OptName == xstring( "BLEND_SUBTRACT" ) )
+        else if( OptName == xstring( "BLEND_SUBTRACT" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            DecalDef.m_BlendMode = decal_definition::DECAL_BLEND_SUBTRACT;
+            RequireDecal( CurrDecal, "BLEND_SUBTRACT" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_BlendMode =
+                decal_definition::DECAL_BLEND_SUBTRACT;
+            PreferredBitmapFormats[CurrDecal] &= ~BITMAP_FORMAT_INTENSITY;
         }
-
-        if ( OptName == xstring( "BLEND_INTENSITY" ) )
+        else if( OptName == xstring( "BLEND_INTENSITY" ) )
         {
-            if ( !DecalPkg.GetNDecalDefs() )
-                continue;
-
-            decal_definition& DecalDef = DecalPkg.GetDecalDef( CurrDecal );
-            DecalDef.m_BlendMode = decal_definition::DECAL_BLEND_INTENSITY;
+            RequireDecal( CurrDecal, "BLEND_INTENSITY" );
+            DecalPkg.GetDecalDef( CurrDecal ).m_BlendMode =
+                decal_definition::DECAL_BLEND_INTENSITY;
             PreferredBitmapFormats[CurrDecal] |= BITMAP_FORMAT_INTENSITY;
         }
-
-        // handle xbox compilation
-        if( OptName == xstring( "XBOX" ) )
+        else if( (OptName == xstring( "PC" )) ||
+                 (OptName == xstring( "PS2" )) ||
+                 (OptName == xstring( "XBOX" )) )
         {
-            xstring OutputFile = CommandLine.GetOptionString( i );
-            s_Platform = EXPORT_XBOX;
-            CompileBitmaps( OutputFile, DecalPkg, SourceBitmapNames, PreferredBitmapFormats );
-            bPlatform = TRUE;
+            platform_output Output;
+            Output.FileName = CommandLine.GetOptionString( i );
+            if( Output.FileName.IsEmpty() )
+            {
+                x_throw( "Platform output filename is empty." );
+            }
+            RequireTextLength( Output.FileName,
+                               X_MAX_PATH - 1,
+                               "Decal package output path" );
 
-            fileio File;
-            File.Save( OutputFile, DecalPkg, FALSE );
-        }
+            Output.Platform = EXPORT_PC;
+            if( OptName == xstring( "PS2" ) )
+            {
+                Output.Platform = EXPORT_PS2;
+            }
+            else if( OptName == xstring( "XBOX" ) )
+            {
+                Output.Platform = EXPORT_XBOX;
+            }
 
-        // handle ps2 compilation
-        if ( OptName == xstring( "PS2" ) )
-        {
-            xstring OutputFile = CommandLine.GetOptionString( i );
-            s_Platform = EXPORT_PS2;
-            CompileBitmaps( OutputFile, DecalPkg, SourceBitmapNames, PreferredBitmapFormats );
-            bPlatform = TRUE;
-
-            fileio File;
-            File.Save( OutputFile, DecalPkg, FALSE );
-        }
-
-        // handle pc compilation
-        if ( OptName == xstring( "PC" ) )
-        {
-            xstring OutputFile = CommandLine.GetOptionString( i );
-            s_Platform = EXPORT_PC;
-            CompileBitmaps( OutputFile, DecalPkg, SourceBitmapNames, PreferredBitmapFormats );
-            bPlatform = TRUE;
-
-            fileio File;
-            File.Save( OutputFile, DecalPkg, FALSE );
+            for( s32 j = 0; j < Outputs.GetCount(); j++ )
+            {
+                if( !x_stricmp( Outputs[j].FileName, Output.FileName ) )
+                {
+                    x_throw( "A decal package output filename was specified more than once." );
+                }
+            }
+            Outputs.Append( Output );
         }
     }
-    
-    if( !bPlatform )
+
+    if( !SawNumGroups )
     {
-        x_throw( "No platform specified!" );
+        x_throw( "-NUMGROUPS was not specified." );
+    }
+    if( !SawNumDecals )
+    {
+        x_throw( "-NUMDECALS was not specified." );
+    }
+    if( (CurrGroup + 1) != DecalPkg.GetNGroups() )
+    {
+        x_throw( "The number of -GROUP options does not match -NUMGROUPS." );
+    }
+    if( (CurrDecal + 1) != DecalPkg.GetNDecalDefs() )
+    {
+        x_throw( "The number of -DECAL options does not match -NUMDECALS." );
+    }
+    if( Outputs.GetCount() == 0 )
+    {
+        x_throw( "No platform output was specified." );
     }
 
-    x_catch_begin;
-    #ifdef X_EXCEPTIONS
-        x_printf( "Error: %s\n", xExceptionGetErrorString() );
-    #endif
-    x_catch_end;
+    const s32 DefinitionCount = DecalPkg.GetNDecalDefs();
+    for( s32 i = 0; i < DecalPkg.GetNGroups(); i++ )
+    {
+        if( (GroupStarts[i] > DefinitionCount) ||
+            (GroupCounts[i] > (DefinitionCount - GroupStarts[i])) )
+        {
+            x_throw( xfs( "Decal group %d has an invalid definition range.", i ) );
+        }
+        DecalPkg.SetGroupDecalDefStart( i, GroupStarts[i] );
+        DecalPkg.SetGroupDecalDefCount( i, GroupCounts[i] );
+    }
+
+    for( s32 i = 0; i < DefinitionCount; i++ )
+    {
+        if( SourceBitmapNames[i].IsEmpty() )
+        {
+            x_throw( xfs( "Decal definition %d has no -BITMAP option.", i ) );
+        }
+    }
+
+    xstring Error;
+    if( !decal_package_file::Validate( DecalPkg, Error ) )
+    {
+        x_throw( (const char*)Error );
+    }
+
+    for( s32 i = 0; i < Outputs.GetCount(); i++ )
+    {
+        const platform_output& Output = Outputs[i];
+        s_Platform = Output.Platform;
+        CompileBitmaps( Output.FileName,
+                        DecalPkg,
+                        SourceBitmapNames,
+                        PreferredBitmapFormats );
+
+        if( !decal_package_file::Validate( DecalPkg, Error ) )
+        {
+            x_throw( (const char*)Error );
+        }
+        SaveDecalPackage( Output.FileName, DecalPkg );
+
+        if( s_Verbose )
+        {
+            x_printf( "Wrote verified Bitsery decal package: %s\n",
+                      (const char*)Output.FileName );
+        }
+    }
 }
 
 //=========================================================================
@@ -642,6 +885,9 @@ void PrintHelp( void )
     x_printf( "-USE_PROJECTION          Use projection mapping to stretch   \n" );
     x_printf( "-KEEP_SIZE_RATIO         Maintain width/height ratio         \n" );
     x_printf( "-PERMANENT               Decal never fades out or disappears \n" );
+    x_printf( "-FADE_OUT <float>        Fade decal out over this duration   \n" );
+    x_printf( "-ADD_GLOW                Add a bloom effect around decal     \n" );
+    x_printf( "-ENV_MAPPED              Environment-map the decal           \n" );
     x_printf( "-BLEND_NORMAL            Use normal blending                 \n" );
     x_printf( "-BLEND_ADD               Use additive blending               \n" );
     x_printf( "-BLEND_SUBTRACT          Use subtractive blending            \n" );
@@ -650,11 +896,13 @@ void PrintHelp( void )
 
 //=========================================================================
 
-void main( s32 argc, char* argv[] )
+int main( int argc, char* argv[] )
 {
-    x_try;
-    
+    xbool Success = FALSE;
+
     x_Init( argc,argv );
+
+    x_try;
 
     // save out the exe timestamp for doing dependancy checks
     xstring ExePath(argv[0]);
@@ -706,15 +954,21 @@ void main( s32 argc, char* argv[] )
     if( CommandLine.Parse( argc, argv ) )
     {
         PrintHelp();
-        return;
     }
-    
-    // Do the script
-    ExecuteScript( CommandLine );
+    else
+    {
+        // Do the script
+        ExecuteScript( CommandLine );
+        Success = TRUE;
+    }
     
     x_catch_begin;
     #ifdef X_EXCEPTIONS
         x_printf( "Error: %s\n", xExceptionGetErrorString() );
     #endif
+        Success = FALSE;
     x_catch_end;
+
+    x_Kill();
+    return( Success ? 0 : 1 );
 }

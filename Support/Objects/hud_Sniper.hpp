@@ -13,9 +13,9 @@
 // INCLUDES
 //==============================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "x_bitmap.hpp"
-#include "Objects\Player.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
+#include "Objects/Player/Player.hpp"
 
 #include "hud_Renderable.hpp"
 
@@ -30,7 +30,7 @@ public:
     virtual        ~hud_sniper      ( void ) {}
 
     virtual void    OnRender        ( player*       pPlayer );
-    virtual void    OnAdvanceLogic  ( player*       pPlayer, f32 DeltaTime );
+    virtual void    OnAdvanceSimulation  ( player*       pPlayer, f32 DeltaTime );
     virtual xbool   OnProperty      ( prop_query&   rPropQuery );
     virtual void    OnEnumProp      ( prop_enum&    List );
 
@@ -45,11 +45,11 @@ public:
     xwstring                    m_WeaponZoomLevel;
     xwstring                    m_WeaponZoomDistance;
 
-    static rhandle<xbitmap>     m_SniperHud;
-    static rhandle<xbitmap>     m_SniperStencilHud;
-    static rhandle<xbitmap>     m_SniperTrackerLine;
-    static rhandle<xbitmap>     m_SniperScanLine;
-    static rhandle<xbitmap>     m_SniperZoomPitchTracker;
+    static rhandle<texture>     m_SniperHud;
+    static rhandle<texture>     m_SniperStencilHud;
+    static rhandle<texture>     m_SniperTrackerLine;
+    static rhandle<texture>     m_SniperScanLine;
+    static rhandle<texture>     m_SniperZoomPitchTracker;
 };
 
 #endif

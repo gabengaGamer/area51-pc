@@ -553,7 +553,7 @@ prop_interface* CPropertyEditorDoc::GetInterface( void )
 
 void CPropertyEditorDoc::ClearInterface( void )
 {
-    CONTEXT( "CPropertyEditorDoc::ClearInterface" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "CPropertyEditorDoc::ClearInterface" );
 
     m_pProperties = NULL;
     Refresh();

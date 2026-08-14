@@ -6,18 +6,18 @@
 
 #include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_blankbox.hpp"
-#include "ui\ui_textbox.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_blankbox.hpp"
+#include "UI/ui_textbox.hpp"
 
 #include "dlg_LoreMenu.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "StringMgr\StringMgr.hpp"
-#include "StateMgr/mapList.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "StateMgr/MapList.hpp"
 #include "StateMgr/LoreList.hpp"
 #include "MoviePlayer/MoviePlayer.hpp"
 
@@ -38,9 +38,7 @@ enum controls
     IDC_LORE_TEXT_1,
     IDC_LORE_TEXT_2,
     IDC_LORE_TEXT_3,
-    IDC_LORE_BLACKOUT,
     IDC_LORE_TEXTBOX,
-    IDC_NAV_TEXT,
 };
 
 //-------------------------------------------------------------------------
@@ -49,25 +47,22 @@ ui_manager::control_tem LoreMenuControls[] =
 {
     // Frames.
 
-    { IDC_LORE_SELECT,      "IDS_NULL",    "combo",      108,  40, 280,  40, 0, 0, 5, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_LORE_SELECT,      "IDS_NULL",    "combo",      108,  40, 280,  40, 0, 0, 5, 1, ui_win::WF_VISIBLE },
 
-    { IDC_LORE_MAIN,        "IDS_NULL",    "blankbox",    40,  80, 416, 144, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_LORE_BUTTON_1,    "IDS_NULL",    "button",      56, 130,  64,  64, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_LORE_BUTTON_2,    "IDS_NULL",    "button",     136, 130,  64,  64, 1, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_LORE_BUTTON_3,    "IDS_NULL",    "button",     216, 130,  64,  64, 2, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_LORE_BUTTON_4,    "IDS_NULL",    "button",     296, 130,  64,  64, 3, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_LORE_BUTTON_5,    "IDS_NULL",    "button",     376, 130,  64,  64, 4, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_LORE_MAIN,        "IDS_NULL",    "blankbox",    40,  80, 416, 144, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_LORE_BUTTON_1,    "IDS_NULL",    "button",      56, 130,  64,  64, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_LORE_BUTTON_2,    "IDS_NULL",    "button",     136, 130,  64,  64, 1, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_LORE_BUTTON_3,    "IDS_NULL",    "button",     216, 130,  64,  64, 2, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_LORE_BUTTON_4,    "IDS_NULL",    "button",     296, 130,  64,  64, 3, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_LORE_BUTTON_5,    "IDS_NULL",    "button",     376, 130,  64,  64, 4, 1, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_LORE_DETAILS,     "IDS_NULL",    "blankbox",    40, 240, 416,  94, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_LORE_TEXT_1,      "IDS_NULL",    "text",        48, 262, 400,  94, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_LORE_TEXT_2,      "IDS_NULL",    "text",        48, 278,  90,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_LORE_TEXT_3,      "IDS_NULL",    "text",        48, 294,  90,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_LORE_DETAILS,     "IDS_NULL",    "blankbox",    40, 240, 416,  94, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_LORE_TEXT_1,      "IDS_NULL",    "text",        48, 262, 400,  94, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_LORE_TEXT_2,      "IDS_NULL",    "text",        48, 278,  90,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_LORE_TEXT_3,      "IDS_NULL",    "text",        48, 294,  90,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_LORE_BLACKOUT,    "IDS_NULL",    "blankbox",  -113, -40, 722, 480, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_USE_ABSOLUTE },
+    { IDC_LORE_TEXTBOX,     "IDS_NULL",    "textbox",     60, 240, 376,  93, 0, 2, 5, 1, ui_win::WF_VISIBLE },
 
-    { IDC_LORE_TEXTBOX,     "IDS_NULL",    "textbox",     60, 240, 376,  93, 0, 2, 5, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-
-    { IDC_NAV_TEXT,         "IDS_NULL",    "text",         0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -161,14 +156,9 @@ xbool dlg_lore_menu::Create( s32                        UserID,
     m_LoreIconID[LORE_TYPE_UNKNOWN] = g_UiMgr->LoadBitmap( "LoreNull",   "UI_LoreUnknown.xbmp" );
 
     // set up nav text 
-    m_pNavText = (ui_text*) FindChildByID( IDC_NAV_TEXT );
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_BACK" ));
     //navText += g_StringTableMgr( "ui", "IDS_NAV_CYCLE_VAULT" );
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);    
-
+    SetNavText( navText );
     // setup lore main box
     m_pLoreMain = (ui_blankbox*)FindChildByID( IDC_LORE_MAIN );
     m_pLoreMain->SetFlag(ui_win::WF_VISIBLE, FALSE);
@@ -188,12 +178,6 @@ xbool dlg_lore_menu::Create( s32                        UserID,
     m_pLoreDetails->SetLabel( g_StringTableMgr( "ui", "IDS_LORE_DETAILS" ) );
     m_pLoreDetails->SetLabelColor( xcolor(255,252,204,255) );
     m_pLoreDetails->SetTitleBarColor( xcolor(19,59,14,196) );
-
-    // setup blackout box
-    m_pBlackOut = (ui_blankbox*)FindChildByID( IDC_LORE_BLACKOUT );
-    m_pBlackOut->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pBlackOut->SetBackgroundColor( xcolor (0,0,0,0) );
-    m_pBlackOut->SetFlag(ui_win::WF_STATIC, TRUE);
 
     // set up textbox
     m_pTextBox = (ui_textbox*)FindChildByID( IDC_LORE_TEXTBOX );
@@ -309,6 +293,7 @@ xbool dlg_lore_menu::Create( s32                        UserID,
     m_TimeOut           = 0.0f;
     m_bCycleBitmap      = FALSE;
     m_bFullScreenMode   = FALSE;
+    m_CurrentType       = LORE_TYPE_UNKNOWN;
     
     // initialize screen scaling
     InitScreenScaling( Position );
@@ -385,30 +370,40 @@ void dlg_lore_menu::Render( s32 ox, s32 oy )
         y+=gap;
     }
 
+    xbool const IsTextBoxVisible = (m_pTextBox->GetFlags( ui_win::WF_VISIBLE ) != 0);
+    if( IsTextBoxVisible )
+    {
+        m_pTextBox->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    }
+
     // render the normal dialog stuff
     ui_dialog::Render( ox, oy );
 
+    if( IsTextBoxVisible )
+    {
+        m_pTextBox->SetFlag( ui_win::WF_VISIBLE, TRUE );
+    }
+
     // render the glow bar
     g_UiMgr->RenderGlowBar();
+
+    if( m_bScreenIsOn )
+    {
+        irect const UserBounds = g_UiMgr->GetUserBounds( m_UserID );
+        g_UiMgr->RenderRect( UserBounds, xcolor( 0, 0, 0, m_FadeLevel ), FALSE );
+    }
 
     // render full screen?
     if( m_bFullScreenMode )
     {
         irect r = g_UiMgr->GetUserBounds( g_UiUserID );
         m_pManager->RenderBitmap( m_StillBitmapID, r, XCOLOR_WHITE );
-        m_pNavText->Render();
         return;
     }
 
     // render the popup screen (if any)
     if( m_bScreenIsOn )
     {                    
-        // dim the background dialog
-        //s32 XRes, YRes;
-        //eng_GetRes(XRes, YRes);
-        //irect rb( 0, 0, XRes, YRes );
-        //g_UiMgr->RenderRect( rb, xcolor(0,0,0,m_FadeLevel), FALSE );
-
         // render border
         g_UiMgr->RenderRect( m_DrawPos, xcolor(255,252,204,255), FALSE );
 
@@ -429,12 +424,10 @@ void dlg_lore_menu::Render( s32 ox, s32 oy )
             {
                 case LORE_TYPE_VIDEO:
                 case LORE_TYPE_AUDIO:
-#if defined( TARGET_PC )
                     if( Movie.IsPlaying() )
                     {               
                         Movie.Render( TRUE );
                     }
-#endif
                     break;
 
                 default:
@@ -461,13 +454,18 @@ void dlg_lore_menu::Render( s32 ox, s32 oy )
                     m_pManager->RenderBitmap( m_StillBitmapID, r, XCOLOR_WHITE );
             }
         }
+
+        if( IsTextBoxVisible )
+        {
+            m_pTextBox->Render( m_Position.l + ox, m_Position.t + oy );
+        }
     }
 }
 
 
 //=========================================================================
 
-void dlg_lore_menu::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_lore_menu::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
     // only allow navigation if active
     if( m_State == DIALOG_STATE_ACTIVE )
@@ -476,13 +474,13 @@ void dlg_lore_menu::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repe
         {
             switch( Code )
             {
-                case ui_manager::NAV_LEFT:
-                case ui_manager::NAV_RIGHT:
+                case ui_navigation::Left:
+                case ui_navigation::Right:
                     PopulateLoreDetails( TRUE );
                     return;
             }
         }
-        ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+        ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
     }
     else if( m_State == DIALOG_STATE_ACTIVATE )
     {
@@ -493,12 +491,12 @@ void dlg_lore_menu::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repe
             {
                 switch( Code )
                 {
-                    case ui_manager::NAV_LEFT:
+                    case ui_navigation::Left:
                         if( --m_CurrItem < 0 )
                             m_CurrItem = m_NumItems-1;
                         break;
 
-                    case ui_manager::NAV_RIGHT:
+                    case ui_navigation::Right:
                         if( ++m_CurrItem == m_NumItems )
                             m_CurrItem = 0;
                         break;
@@ -516,14 +514,13 @@ void dlg_lore_menu::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repe
 
 //=========================================================================
 
-void dlg_lore_menu::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_lore_menu::OnNotify( ui_notification const& Event )
 {
-    (void)pWin;
-    (void)pData;
+    (void)Event.m_pText;
 
-    if( pSender == (ui_win*)m_pLoreSelect )
+    if( Event.m_pSender == (ui_win*)m_pLoreSelect )
     {
-        if( Command == WN_COMBO_SELCHANGE )
+        if( Event.m_Type == ui_notification_type::ComboSelectionChanged )
         {
             if( !s_Scaled && (m_State == DIALOG_STATE_ACTIVE) )
             {
@@ -535,7 +532,7 @@ void dlg_lore_menu::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void*
 
 //=========================================================================
 
-void dlg_lore_menu::OnPadSelect( ui_win* pWin )
+void dlg_lore_menu::OnAccept( ui_win* pWin )
 {
     if ( m_State == DIALOG_STATE_ACTIVATE )
     {
@@ -544,7 +541,7 @@ void dlg_lore_menu::OnPadSelect( ui_win* pWin )
             // go full screen
             m_bFullScreenMode = TRUE;
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_BACK" ));
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
             g_AudioMgr.Play("Select_Norm");
             return;
         }
@@ -635,7 +632,7 @@ void dlg_lore_menu::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_lore_menu::OnPadBack( ui_win* pWin )
+void dlg_lore_menu::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -663,7 +660,7 @@ void dlg_lore_menu::OnPadBack( ui_win* pWin )
                 m_bFullScreenMode = FALSE;
                 xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
                 navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-                m_pNavText->SetLabel( navText );
+                SetNavText( navText );
             }
             else
             {
@@ -679,7 +676,7 @@ void dlg_lore_menu::OnPadBack( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_lore_menu::OnLBDown( ui_win* pWin )
+void dlg_lore_menu::OnPointerDown( ui_win* pWin, s32 x, s32 y )
 {
     if( m_bFullScreenMode )
     {
@@ -687,7 +684,7 @@ void dlg_lore_menu::OnLBDown( ui_win* pWin )
         m_bFullScreenMode = FALSE;
         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
         navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-        m_pNavText->SetLabel( navText );
+        SetNavText( navText );
         g_AudioMgr.Play("Backup");
         return;
 		
@@ -695,12 +692,10 @@ void dlg_lore_menu::OnLBDown( ui_win* pWin )
 
     if( m_bScreenIsOn && !m_bFullScreenMode && (m_scaleCount == 0) )
     {
-        s32 cx, cy;
-        g_UiMgr->GetMousePos( m_UserID, cx, cy );
-        if( m_DrawPos.PointInRect( cx, cy ) )
+        if( m_DrawPos.PointInRect( x, y ) )
         {
             // Click on popup image - go full screen
-            OnPadSelect( pWin );
+            OnAccept( pWin );
         }
         else
         {
@@ -710,7 +705,7 @@ void dlg_lore_menu::OnLBDown( ui_win* pWin )
         }
         return;
     }
-    ui_dialog::OnLBDown( pWin );
+    ui_dialog::OnPointerDown( pWin, x, y );
 }
 
 //=========================================================================
@@ -747,7 +742,6 @@ void dlg_lore_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pLoreLine1    ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pLoreLine2    ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pLoreLine3    ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
         }
     }
     else
@@ -765,38 +759,38 @@ void dlg_lore_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     if( !s_Scaled && (m_State == DIALOG_STATE_ACTIVE) )
     {
         // update highlight
-        if( m_pLoreSelect->GetFlags(WF_HIGHLIGHT) )
+        if( m_pLoreSelect->IsFocused() )
         {
             highLight = 0;
             irect Pos = m_pLoreSelect->GetPosition();
             Pos.Translate( 0, -8 );
             g_UiMgr->SetScreenHighlight( Pos );
         }
-        else if( m_pLoreButton[0]->GetFlags(WF_HIGHLIGHT) )
+        else if( m_pLoreButton[0]->IsFocused() )
         {
             highLight = 1;
             g_UiMgr->SetScreenHighlight( m_pLoreMain->GetPosition() );
             m_pSelectedIcon = m_pLoreButton[0];
         }
-        else if( m_pLoreButton[1]->GetFlags(WF_HIGHLIGHT) )
+        else if( m_pLoreButton[1]->IsFocused() )
         {
             highLight = 2;
             g_UiMgr->SetScreenHighlight( m_pLoreMain->GetPosition() );
             m_pSelectedIcon = m_pLoreButton[1];
         }
-        else if( m_pLoreButton[2]->GetFlags(WF_HIGHLIGHT) )
+        else if( m_pLoreButton[2]->IsFocused() )
         {
             highLight = 3;
             g_UiMgr->SetScreenHighlight( m_pLoreMain->GetPosition() );
             m_pSelectedIcon = m_pLoreButton[2];
         }
-        else if( m_pLoreButton[3]->GetFlags(WF_HIGHLIGHT) )
+        else if( m_pLoreButton[3]->IsFocused() )
         {
             highLight = 4;
             g_UiMgr->SetScreenHighlight( m_pLoreMain->GetPosition() );
             m_pSelectedIcon = m_pLoreButton[3];
         }
-        else if( m_pLoreButton[4]->GetFlags(WF_HIGHLIGHT) )
+        else if( m_pLoreButton[4]->IsFocused() )
         {
             highLight = 5;
             g_UiMgr->SetScreenHighlight( m_pLoreMain->GetPosition() );
@@ -829,11 +823,26 @@ void dlg_lore_menu::InitIconScaling ( xbool ScaleDown )
     // scaling up or down
     m_bScaleDown  = ScaleDown;
 
+    const lore_entry* pSelectedEntry = NULL;
+    if( !m_bScaleDown )
+    {
+        pSelectedEntry = g_LoreList.Find( m_pSelectedIcon->GetData() );
+        ASSERT( pSelectedEntry );
+        if( !pSelectedEntry )
+        {
+            return;
+        }
+
+        // the opened item owns the playback state. Do not depend on a prior
+        // focus or hover update to establish its type
+        m_CurrentType = pSelectedEntry->LoreType;
+    }
+
     // store requested frame size
     if( m_bScaleDown )
     {
-        m_FadeLevel = 255;
-        m_RequestedPos.Set( 0, 0, (s32)(64*g_UiMgr->GetScaleX()), (s32)(64*g_UiMgr->GetScaleY()) );
+        m_FadeLevel = 205;
+        m_RequestedPos.Set( 0, 0, 64, 64 );
         m_pSelectedIcon->LocalToScreen( m_RequestedPos );
         
         m_StartPos = m_DrawPos;
@@ -841,15 +850,13 @@ void dlg_lore_menu::InitIconScaling ( xbool ScaleDown )
         m_TimeOut = 0.0f;
 
         // restart background movie
-#if defined( TARGET_PC )
         Movie.Close();
-#endif
         g_StateMgr.EnableBackgroundMovie();
 
         // turn off textbox (if any)
         m_pTextBox->SetFlag( ui_win::WF_VISIBLE, FALSE );
         m_pTextBox->SetFlag( ui_win::WF_DISABLED, TRUE );
-        m_pTextBox->SetFlag( ui_win::WF_SELECTED, FALSE );
+        m_pTextBox->SetActive( FALSE );
         
         g_UiMgr->EnableScreenHighlight();
 
@@ -879,14 +886,14 @@ void dlg_lore_menu::InitIconScaling ( xbool ScaleDown )
         const f32 virtHH = 107.0f;
         const f32 virtYO = 72.5f;
 
-        s32 cx = (s32)(g_UiMgr->GetScaleX() * 256);
-        s32 cy = (s32)(g_UiMgr->GetScaleY() * 224);
-        m_RequestedPos = irect( cx - (s32)(virtHW * g_UiMgr->GetScaleX()),
-                                cy - (s32)((virtHH + virtYO) * g_UiMgr->GetScaleY()),
-                                cx + (s32)(virtHW * g_UiMgr->GetScaleX()),
-                                cy + (s32)((virtHH - virtYO) * g_UiMgr->GetScaleY()) );
+        s32 const cx = 256;
+        s32 const cy = 224;
+        m_RequestedPos = irect( cx - (s32)virtHW,
+                                cy - (s32)(virtHH + virtYO),
+                                cx + (s32)virtHW,
+                                cy + (s32)(virtHH - virtYO) );
 
-        m_StartPos.Set( 0, 0, (s32)(64*g_UiMgr->GetScaleX()), (s32)(64*g_UiMgr->GetScaleY()) );
+        m_StartPos.Set( 0, 0, 64, 64 );
         m_pSelectedIcon->LocalToScreen( m_StartPos );
         m_DrawPos = m_StartPos;
         m_pSelectedIcon->SetFlag( ui_win::WF_VISIBLE, FALSE );
@@ -896,17 +903,19 @@ void dlg_lore_menu::InitIconScaling ( xbool ScaleDown )
             m_pLoreButton[i]->SetFlag( ui_win::WF_DISABLED, TRUE );
         }
 
+        // disable vault selector while file is expanded
+        m_pLoreSelect->SetFlag( ui_win::WF_DISABLED, TRUE );
+
         // disable the highlight
         g_UiMgr->DisableScreenHighlight();
 
         // set filename for still 
-        const lore_entry* PreEntry = g_LoreList.Find( m_pSelectedIcon->GetData() );
-        if( PreEntry && (PreEntry->LoreType == LORE_TYPE_STILL || PreEntry->LoreType == LORE_TYPE_TEXT) )
+        if( (m_CurrentType == LORE_TYPE_STILL) || (m_CurrentType == LORE_TYPE_TEXT) )
         {
             g_UiMgr->UnloadBitmap( "Still" );
-            m_NumItems = PreEntry->NumItems;
+            m_NumItems = pSelectedEntry->NumItems;
             m_CurrItem = 0;
-            x_strcpy( m_FileName, PreEntry->FileName );
+            x_strcpy( m_FileName, pSelectedEntry->FileName );
             if( m_NumItems > 1 )
                 m_StillBitmapID = g_UiMgr->LoadBitmap( "Still", xfs( "%s%d.xbmp", m_FileName, m_CurrItem+1 ) );
             else
@@ -928,8 +937,6 @@ void dlg_lore_menu::InitIconScaling ( xbool ScaleDown )
     
     // turn screen on
     m_bScreenIsOn = TRUE;
-    m_pBlackOut->SetFlag(ui_win::WF_VISIBLE, TRUE);
-    m_pBlackOut->SetBackgroundColor( xcolor (0,0,0,0) );
 
     // play scaling sound
     if( m_DiffPos.b > 0 )
@@ -962,14 +969,15 @@ xbool dlg_lore_menu::UpdateIconScaling( f32 DeltaTime )
             {
                 m_FadeLevel = 0;
                 m_bScreenIsOn = FALSE;
-                m_pBlackOut->SetFlag(ui_win::WF_VISIBLE, FALSE);
                 m_State = DIALOG_STATE_ACTIVE;
                 m_pSelectedIcon->SetFlag( ui_win::WF_VISIBLE, TRUE );
+
+                // re-enable vault selector
+                m_pLoreSelect->SetFlag( ui_win::WF_DISABLED, FALSE );
             }
             else
             {
                 m_FadeLevel = 205;
-                m_pBlackOut->SetBackgroundColor( xcolor (0,0,0,m_FadeLevel) );
 
                 // get the lore description
                 const lore_entry* Entry = g_LoreList.Find( m_pSelectedIcon->GetData() );
@@ -997,7 +1005,7 @@ xbool dlg_lore_menu::UpdateIconScaling( f32 DeltaTime )
                         // make text box visible and fill with text
                         m_pTextBox->SetFlag( ui_win::WF_VISIBLE, TRUE );
                         m_pTextBox->SetFlag( ui_win::WF_DISABLED, FALSE );
-                        m_pTextBox->SetFlag( ui_win::WF_SELECTED, TRUE );
+                        m_pTextBox->SetActive( TRUE );
                         x_strcpy( m_FullDesc, Entry->FullDesc );
                         if( Entry->NumItems > 1 )
                         {
@@ -1014,27 +1022,27 @@ xbool dlg_lore_menu::UpdateIconScaling( f32 DeltaTime )
         }
         else
         {
-            m_TotalMoved.t = m_DiffPos.t + (s32)( m_DiffPos.t * x_cos( DEG_TO_RAD( m_scaleAngle * m_scaleCount ) ) );
-            m_TotalMoved.l = m_DiffPos.l + (s32)( m_DiffPos.l * x_cos( DEG_TO_RAD( m_scaleAngle * m_scaleCount ) ) );
-            m_TotalMoved.r = m_DiffPos.r + (s32)( m_DiffPos.r * x_cos( DEG_TO_RAD( m_scaleAngle * m_scaleCount ) ) );
-            m_TotalMoved.b = m_DiffPos.b + (s32)( m_DiffPos.b * x_cos( DEG_TO_RAD( m_scaleAngle * m_scaleCount ) ) );
+            f32 const ScaleCurve = x_cos( DEG_TO_RAD( m_scaleAngle * m_scaleCount ) );
+
+            m_TotalMoved.t = m_DiffPos.t + (s32)( m_DiffPos.t * ScaleCurve );
+            m_TotalMoved.l = m_DiffPos.l + (s32)( m_DiffPos.l * ScaleCurve );
+            m_TotalMoved.r = m_DiffPos.r + (s32)( m_DiffPos.r * ScaleCurve );
+            m_TotalMoved.b = m_DiffPos.b + (s32)( m_DiffPos.b * ScaleCurve );
 
             m_DrawPos.t = m_StartPos.t + m_TotalMoved.t;
             m_DrawPos.l = m_StartPos.l + m_TotalMoved.l;
             m_DrawPos.r = m_StartPos.r + m_TotalMoved.r;
             m_DrawPos.b = m_StartPos.b + m_TotalMoved.b;
 
-            // update fade level
+            f32 const FadeProgress = 0.5f * (1.0f + ScaleCurve);
             if( m_bScaleDown)
             {
-                m_FadeLevel -= (u8)( 700.0f * DeltaTime );
+                m_FadeLevel = static_cast<u8>( 205.0f * (1.0f - FadeProgress) );
             }
             else
             {
-                m_FadeLevel += (u8)( 700.0f * DeltaTime );
+                m_FadeLevel = static_cast<u8>( 205.0f * FadeProgress );
             }
-
-            m_pBlackOut->SetBackgroundColor( xcolor (0,0,0,m_FadeLevel) );
 
             // still more to do!
             return TRUE;
@@ -1052,9 +1060,7 @@ xbool dlg_lore_menu::UpdateIconScaling( f32 DeltaTime )
                 // shut down background movie
                 g_StateMgr.DisableBackgoundMovie();
                 // open lore movie (or sound file, or text)
-#if defined( TARGET_PC )
                 Movie.Open(m_FileName, FALSE, TRUE);
-#endif
                 // reset timeout
                 m_TimeOut = 0;
             }
@@ -1104,7 +1110,7 @@ void dlg_lore_menu::PopulateLoreDetails( xbool bVaultDetails )
         //navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
         navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-        m_pNavText->SetLabel( navText );
+        SetNavText( navText );
     }
     else
     {
@@ -1138,11 +1144,9 @@ void dlg_lore_menu::PopulateLoreDetails( xbool bVaultDetails )
         m_pLoreLine2->SetLabel( g_StringTableMgr( "ui", "IDS_NULL" ) );
         m_pLoreLine3->SetLabel( g_StringTableMgr( "ui", "IDS_NULL" ) );
 
-        m_CurrentType = pLoreEntry->LoreType;
-
         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
         navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-        m_pNavText->SetLabel( navText );
+        SetNavText( navText );
     }
 }
 

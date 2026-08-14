@@ -5,23 +5,23 @@
 //==============================================================================
 // INCLUDES
 //==============================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "BaseProjectile.hpp"
-#include "Entropy\e_Draw.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "Objects\ParticleEmiter.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "..\Support\Tracers\TracerMgr.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Objects\ClothObject.hpp"
-#include "Objects\Flag.hpp"
-#include "Objects\Actor\Actor.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "Objects\PlaySurface.hpp"
-#include "Objects\ProxyPlaySurface.hpp"
-#include "Objects\ForceField.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "player.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "../Support/Tracers/TracerMgr.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Objects/ClothObject.hpp"
+#include "Objects/Flag.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "Objects/ProxyPlaySurface.hpp"
+#include "Objects/ForceField.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "Player/Player.hpp"
 
 xbool IsGameMultiplayer( void )
 {
@@ -209,13 +209,13 @@ s32 g_BulletVersion = 1;
 xcolor g_color(120,230,230);
 void base_projectile::OnRender( void )
 {
-    CONTEXT( "base_projectile::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "base_projectile::OnRender" );
 
 #ifdef X_EDITOR
     
     if( g_BulletVersion == 0 )
     {
-        draw_Sphere( GetBBox().GetCenter(),3, g_color );
+        render::debug::Sphere( GetBBox().GetCenter(),3, g_color );
     }
     else if ( g_BulletVersion == 1)
     {
@@ -226,11 +226,11 @@ void base_projectile::OnRender( void )
 
 //        m_LastPosition = GetBBox().GetCenter();
 
-//            draw_Line( GetBBox().GetCenter(),tempVec3,XCOLOR_GREEN );
+//            render::debug::Line( GetBBox().GetCenter(),tempVec3,XCOLOR_GREEN );
     }
     else
     {
-        draw_BBox( GetBBox() , XCOLOR_GREEN );
+        render::debug::Box( GetBBox() , XCOLOR_GREEN );
     }
 #endif // X_EDITOR
 }

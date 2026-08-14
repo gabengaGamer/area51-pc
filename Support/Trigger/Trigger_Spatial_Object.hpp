@@ -12,8 +12,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 
 //=========================================================================
 // SPATIAL_TRIGGER_OBJECT

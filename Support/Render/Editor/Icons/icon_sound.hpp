@@ -303,5 +303,4 @@ static s16 s_iicon_sound[] =
 };
 
 
-#define DRAW_ICON_SOUND() draw_icon( NUM_FACETS_ICON_SOUND, NUM_VERTICES_ICON_SOUND, s_vicon_sound, s_iicon_sound )
 

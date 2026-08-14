@@ -1,17 +1,35 @@
 //==============================================================================
 //
-//  post_fog.hlsl
+//  a51_post_fog.hlsl
 //
-//  Depth-based fog composite for the DX11 post pipeline.
+//  Depth-based fog composite shader.
 //
 //==============================================================================
 
-Texture2D LinearDepthSource : register(t1);
-Texture2D FogPalette  : register(t2);
+//==============================================================================
+//  INCLUDES
+//==============================================================================
 
-SamplerState samLinear : register(s0);
+#include "common/shader_bindings.hlsl"
+#include "common/fog_functions.hlsl"
 
-cbuffer FogParams : register(b4)
+//==============================================================================
+//  RESOURCES
+//==============================================================================
+
+A51_SAMPLED_TEXTURE_ATTR(0, 0) Texture2D NormalDepthSource A51_SAMPLED_TEXTURE_BIND(0, 0);
+A51_SAMPLED_TEXTURE_ATTR(2, 1) Texture2D FogPalette A51_SAMPLED_TEXTURE_BIND(2, 1);
+
+A51_SAMPLER_ATTR(0, 0) SamplerState samNormalDepthSource A51_SAMPLER_BIND(0, 0);
+#if defined(A51_SHADER_BINDING_SDL)
+    A51_SAMPLER_ATTR(2, 1) SamplerState samFogPalette A51_SAMPLER_BIND(2, 1);
+#else
+    #define samFogPalette samNormalDepthSource
+#endif
+
+//------------------------------------------------------------------------------
+
+A51_CBUFFER_ATTR(4, 0) cbuffer FogParams A51_CBUFFER_BIND(4, 0)
 {
     float4 FogColor;
     float4 FogCoeff;
@@ -19,35 +37,32 @@ cbuffer FogParams : register(b4)
 };
 
 //==============================================================================
+//  FUNCTIONS
+//==============================================================================
+
+float SampleLinearDepth( float2 UV )
+{
+    return saturate( NormalDepthSource.SampleLevel( samNormalDepthSource, UV, 0.0f ).a );
+}
+
+//==============================================================================
+//  SHADERS
+//==============================================================================
 
 float4 PSMain( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
 {
-    const int2   depthTexel   = int2( Pos.xy );
-    const float  linearDepth  = saturate( LinearDepthSource.Load( int3( depthTexel, 0 ) ).r );
-    const float  nearZ        = FogParams0.x;
-    const float  farZ         = FogParams0.y;
-    const float  viewZ        = nearZ + linearDepth * max( farZ - nearZ, 1e-5f );
-    
-    if( FogParams0.z > 0.5f )
-    {
-        const float fogStart = FogParams0.w;
-        const float q     = farZ / max( farZ - nearZ, 1e-5f );
-        const float xboxZ = viewZ * q - nearZ * q;
-        const float startZ2 = fogStart * fogStart;
-        const float startZ3 = startZ2 * fogStart;
-        const float startAlpha = FogCoeff.x + FogCoeff.y * fogStart + FogCoeff.z * startZ2 + FogCoeff.w * startZ3;
-
-        if( xboxZ <= fogStart )
-            return float4( FogColor.rgb, 0.0f );
-
-        const float z2    = xboxZ * xboxZ;
-        const float z3    = z2 * xboxZ;
-        const float rawAlpha = FogCoeff.x + FogCoeff.y * xboxZ + FogCoeff.z * z2 + FogCoeff.w * z3;
-        const float alpha = saturate( (rawAlpha - startAlpha) / max(1.0f - startAlpha, 1e-5f) );
-
-        return float4( FogColor.rgb, alpha );
-    }
-
-    const float4 fogSample = FogPalette.SampleLevel( samLinear, float2( linearDepth, 0.5f ), 0.0f );
+    const float  linearDepth = SampleLinearDepth( UV );
+    const float4 fogSample   = FogPalette.SampleLevel( samFogPalette, float2( linearDepth, 0.5f ), 0.0f );
     return float4( fogSample.rgb, saturate( fogSample.a ) );
+}
+
+//==============================================================================
+
+float4 PSPolynomial( float4 Pos : SV_POSITION, float2 UV : TEXCOORD0 ) : SV_Target
+{
+    const float  linearDepth  = SampleLinearDepth( UV );
+    const float  alpha        = A51ComputePolynomialFogAlpha( linearDepth, FogParams0.x, FogParams0.y,
+                                                               FogParams0.w, FogCoeff );
+
+    return float4( FogColor.rgb, alpha );
 }

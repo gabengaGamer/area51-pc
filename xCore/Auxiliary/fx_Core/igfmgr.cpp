@@ -307,8 +307,8 @@ igfmgr::field* igfmgr::FixupGroup( igfmgr::field* pGroup )
     u8* pData = (u8*)pGroup;
     field* pPrev = NULL;
 
-    while ( (pGroup->m_Type != igfmgr::GROUP_END) &&
-            (pGroup->m_Type != igfmgr::UNDEFINED) )
+    while ( (pGroup->m_type != igfmgr::GROUP_END) &&
+            (pGroup->m_type != igfmgr::UNDEFINED) )
     {
         // not owned...loaded, so don't try to delete it later
         pGroup->m_IsDataOwned = FALSE;
@@ -317,9 +317,9 @@ igfmgr::field* igfmgr::FixupGroup( igfmgr::field* pGroup )
         pData = ((u8*)pGroup) + sizeof(field);
         pPrev = pGroup;
 
-        if ( (pGroup->m_Type != igfmgr::STRING) &&
-             (pGroup->m_Type != igfmgr::BYTE_ARRAY) &&
-             (pGroup->m_Type != igfmgr::COMMENT) )
+        if ( (pGroup->m_type != igfmgr::STRING) &&
+             (pGroup->m_type != igfmgr::BYTE_ARRAY) &&
+             (pGroup->m_type != igfmgr::COMMENT) )
             pGroup->m_pData = (void*)pData;
         else
             pGroup->m_pData = (void*)FixupDataEntry( (u32)pGroup->m_pData );
@@ -329,7 +329,7 @@ igfmgr::field* igfmgr::FixupGroup( igfmgr::field* pGroup )
         pGroup->m_pComment = FixupDataEntry( (u32)pGroup->m_pComment );
         
         // figure out how far to skip ahead
-        igfmgr::atom Type = pGroup->m_Type;
+        igfmgr::atom Type = pGroup->m_type;
 
         switch( Type )
         {
@@ -773,7 +773,7 @@ void igfmgr::DeleteField( field* pField, u32 Data )
     // will get nuked as the group is entered.
     if ( (pField->m_IsDataOwned) && 
          (pField->m_pData) && 
-         (pField->m_Type != igfmgr::GROUP) )
+         (pField->m_type != igfmgr::GROUP) )
         delete pField->m_pData;
 
     delete pField;
@@ -790,7 +790,7 @@ void igfmgr::AddRefCt_NoComments( field* pField, u32 Data )
         return;
 
     // if it's a comment, just return
-    if ( pField->m_Type == igfmgr::COMMENT )
+    if ( pField->m_type == igfmgr::COMMENT )
         return;
 
     for ( u32 i = 0; i < m_DictionarySize; i++ )
@@ -853,7 +853,7 @@ void igfmgr::SaveFields_Binary( field* pField, u32 Data )
     if ( !pField )
     {
         field NewField;
-        NewField.m_Type = igfmgr::GROUP_END;
+        NewField.m_type = igfmgr::GROUP_END;
         NewField.m_IsDataOwned = FALSE;
         NewField.m_pNext = NULL;
         NewField.m_pPrev = NULL;
@@ -865,7 +865,7 @@ void igfmgr::SaveFields_Binary( field* pField, u32 Data )
     }
 
     // if it is a comment, but comment is NULL, don't write at all
-    if ( (pField->m_Type == igfmgr::COMMENT) &&
+    if ( (pField->m_type == igfmgr::COMMENT) &&
          (pField->m_pComment == NULL) )
          return;
 
@@ -886,8 +886,8 @@ void igfmgr::SaveFields_Binary( field* pField, u32 Data )
         ASSERT( pFix );
         NewField.m_pName = (data_entry*)pFix->m_Index;
     }
-    if ( (NewField.m_Type == igfmgr::BYTE_ARRAY) ||
-         (NewField.m_Type == igfmgr::STRING) )
+    if ( (NewField.m_type == igfmgr::BYTE_ARRAY) ||
+         (NewField.m_type == igfmgr::STRING) )
     {
         ASSERT( NewField.m_pData );
         fixup_map* pFix = FindFixupEntry( (data_entry*)NewField.m_pData );
@@ -899,7 +899,7 @@ void igfmgr::SaveFields_Binary( field* pField, u32 Data )
     x_fwrite( &NewField, sizeof(field), 1, fp );
 
     // Now append the actual data for that field immediately afterward
-    switch( pField->m_Type )
+    switch( pField->m_type )
     {
         case igfmgr::UNDEFINED:                                                                    break;
         case igfmgr::COMMENT:                                                                      break;
@@ -939,7 +939,7 @@ void igfmgr::SaveFields_Text_NoComments( field* pField, u32 Data )
 
         NewField.m_pComment = NULL;
 
-        if ( NewField.m_Type != igfmgr::COMMENT )
+        if ( NewField.m_type != igfmgr::COMMENT )
             SaveFields_Text_WithComments( &NewField, Data );
     }
     else
@@ -974,7 +974,7 @@ void igfmgr::SaveFields_Text_WithComments( field* pField, u32 Data )
     else
         pComment = "";
 
-    if ( pField->m_Type == igfmgr::STRING )
+    if ( pField->m_type == igfmgr::STRING )
     {
         if ( pField->m_pData )
             pString = (char*)((data_entry*)pField->m_pData)->m_pData;
@@ -984,14 +984,14 @@ void igfmgr::SaveFields_Text_WithComments( field* pField, u32 Data )
 
     // print item comments first (excluding actual comment type)
     // this is differentiated to allow comments to be specifically associated with fields
-    if ( pField->m_Type != igfmgr::COMMENT )
+    if ( pField->m_type != igfmgr::COMMENT )
     {
         if ( x_strlen(pComment) )
             x_fprintf( fp, "%*.s[ %s ]\n", s_IndentLevel, " ", pComment );
     }
 
     // write out data based on the atom type
-    switch ( pField->m_Type )
+    switch ( pField->m_type )
     {
         case igfmgr::UNDEFINED:  
             break;
@@ -1128,7 +1128,7 @@ void igfmgr::IterateFields( iterate_fn IterateFn, field* pField, u32 Data )
         // store off information in case pField gets nuked during callback
         field*         pFieldData = (field*)pField->m_pData;
         field*         pFieldNext = pField->m_pNext;
-        igfmgr::atom   Type       = pField->m_Type;
+        igfmgr::atom   Type       = pField->m_type;
 
         // call the callback first
         (this->*IterateFn)(pField, Data);
@@ -1227,7 +1227,7 @@ xbool igfmgr::SaveBinary( const char* pFileName, xbool StripComments )
     IterateFields( &igfmgr::SaveFields_Binary, m_pRoot, (u32)fp );
 
     // write a delimiter field
-    End.m_Type = igfmgr::UNDEFINED;
+    End.m_type = igfmgr::UNDEFINED;
     End.m_IsDataOwned = FALSE;
     End.m_pName = NULL;
     End.m_pData = NULL;
@@ -1310,97 +1310,97 @@ xbool igfmgr::Save( const char* pFileName, xbool IsBinary, xbool StripComments )
 igfmgr::atom igfmgr::GetType( void ) const
 {
     ASSERT( m_pCursor );
-    return m_pCursor->m_Type;
+    return m_pCursor->m_type;
 }
 
 //=============================================================================
 xbool igfmgr::GetBool( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::BOOL );
+    ASSERT( m_pCursor->m_type == igfmgr::BOOL );
     return *((xbool*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 u8 igfmgr::GetU8( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::U8 );
+    ASSERT( m_pCursor->m_type == igfmgr::U8 );
     return *((u8*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 s8 igfmgr::GetS8( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::S8 );
+    ASSERT( m_pCursor->m_type == igfmgr::S8 );
     return *((s8*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 u16 igfmgr::GetU16( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::U16 );
+    ASSERT( m_pCursor->m_type == igfmgr::U16 );
     return *((u16*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 s16 igfmgr::GetS16( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::S16 );
+    ASSERT( m_pCursor->m_type == igfmgr::S16 );
     return *((s16*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 u32 igfmgr::GetU32( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::U32 );
+    ASSERT( m_pCursor->m_type == igfmgr::U32 );
     return *((u32*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 s32 igfmgr::GetS32( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::S32 );
+    ASSERT( m_pCursor->m_type == igfmgr::S32 );
     return *((s32*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 u64 igfmgr::GetU64( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::U64 );
+    ASSERT( m_pCursor->m_type == igfmgr::U64 );
     return *((u64*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 s64 igfmgr::GetS64( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::S64 );
+    ASSERT( m_pCursor->m_type == igfmgr::S64 );
     return *((s64*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 f32 igfmgr::GetF32( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::F32 );
+    ASSERT( m_pCursor->m_type == igfmgr::F32 );
     return *((f32*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 f64 igfmgr::GetF64( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::F64 );
+    ASSERT( m_pCursor->m_type == igfmgr::F64 );
     return *((f64*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 const char* igfmgr::GetString( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::STRING );
+    ASSERT( m_pCursor->m_type == igfmgr::STRING );
     return (const char*)(((data_entry*)m_pCursor->m_pData)->m_pData);
 }
 
 //=============================================================================
 const char* igfmgr::GetByteArray( u32& ByteCount ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::BYTE_ARRAY );
+    ASSERT( m_pCursor->m_type == igfmgr::BYTE_ARRAY );
     ByteCount = ((data_entry*)m_pCursor->m_pData)->m_Length;
     return (const char*)(((data_entry*)m_pCursor->m_pData)->m_pData);
 }
@@ -1408,49 +1408,49 @@ const char* igfmgr::GetByteArray( u32& ByteCount ) const
 //=============================================================================
 const xcolor& igfmgr::GetColor( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::COLOR );
+    ASSERT( m_pCursor->m_type == igfmgr::COLOR );
     return *((xcolor*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 const vector2& igfmgr::GetV2( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::VECTOR2 );
+    ASSERT( m_pCursor->m_type == igfmgr::VECTOR2 );
     return *((vector2*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 const vector3& igfmgr::GetV3( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::VECTOR3 );
+    ASSERT( m_pCursor->m_type == igfmgr::VECTOR3 );
     return *((vector3*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 const radian3& igfmgr::GetRad( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::RADIAN3 );
+    ASSERT( m_pCursor->m_type == igfmgr::RADIAN3 );
     return *((radian3*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 const matrix4& igfmgr::GetM4( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::MATRIX4 );
+    ASSERT( m_pCursor->m_type == igfmgr::MATRIX4 );
     return *((matrix4*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 const quaternion& igfmgr::GetQuat( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::QUATERNION );
+    ASSERT( m_pCursor->m_type == igfmgr::QUATERNION );
     return *((quaternion*)m_pCursor->m_pData);
 }
 
 //=============================================================================
 hfield igfmgr::GetGroup ( void ) const
 {
-    ASSERT( m_pCursor->m_Type == igfmgr::GROUP );
+    ASSERT( m_pCursor->m_type == igfmgr::GROUP );
     return (hfield)((field*)m_pCursor);
 }
 
@@ -1713,7 +1713,7 @@ hfield igfmgr::AddBool( const char* pName, xbool Val, const char* pComment, hfie
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::BOOL;
+    pField->m_type = igfmgr::BOOL;
     pField->m_pData = new xbool;
     *((xbool*)pField->m_pData) = Val;
 
@@ -1731,7 +1731,7 @@ hfield igfmgr::AddU8( const char* pName, u8  Val, const char* pComment, hfield h
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::U8;
+    pField->m_type = igfmgr::U8;
     pField->m_pData = new u8;
     *((u8*)pField->m_pData) = Val;
 
@@ -1748,7 +1748,7 @@ hfield igfmgr::AddS8( const char* pName, s8  Val, const char* pComment, hfield h
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::S8;
+    pField->m_type = igfmgr::S8;
     pField->m_pData = new s8;
     *((s8*)pField->m_pData) = Val;
 
@@ -1765,7 +1765,7 @@ hfield igfmgr::AddU16( const char* pName, u16 Val, const char* pComment, hfield 
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::U16;
+    pField->m_type = igfmgr::U16;
     pField->m_pData = new u16;
     *((u16*)pField->m_pData) = Val;
 
@@ -1782,7 +1782,7 @@ hfield igfmgr::AddS16( const char* pName, s16 Val, const char* pComment, hfield 
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::S16;
+    pField->m_type = igfmgr::S16;
     pField->m_pData = new s16;
     *((s16*)pField->m_pData) = Val;
 
@@ -1799,7 +1799,7 @@ hfield igfmgr::AddU32( const char* pName, u32 Val, const char* pComment, hfield 
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::U32;
+    pField->m_type = igfmgr::U32;
     pField->m_pData = new u32;
     *((u32*)pField->m_pData) = Val;
 
@@ -1816,7 +1816,7 @@ hfield igfmgr::AddS32( const char* pName, s32 Val, const char* pComment, hfield 
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::S32;
+    pField->m_type = igfmgr::S32;
     pField->m_pData = new s32;
     *((s32*)pField->m_pData) = Val;
 
@@ -1833,7 +1833,7 @@ hfield igfmgr::AddU64( const char* pName, u64 Val, const char* pComment, hfield 
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::U64;
+    pField->m_type = igfmgr::U64;
     pField->m_pData = new u64;
     *((u64*)pField->m_pData) = Val;
 
@@ -1850,7 +1850,7 @@ hfield igfmgr::AddS64( const char* pName, s64 Val, const char* pComment, hfield 
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::S64;
+    pField->m_type = igfmgr::S64;
     pField->m_pData = new s64;
     *((s64*)pField->m_pData) = Val;
 
@@ -1867,7 +1867,7 @@ hfield igfmgr::AddF32( const char* pName, f32 Val, const char* pComment, hfield 
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::F32;
+    pField->m_type = igfmgr::F32;
     pField->m_pData = new f32;
     *((f32*)pField->m_pData) = Val;
 
@@ -1884,7 +1884,7 @@ hfield igfmgr::AddF64( const char* pName, f64 Val, const char* pComment, hfield 
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::F64;
+    pField->m_type = igfmgr::F64;
     pField->m_pData = new f64;
     *((f64*)pField->m_pData) = Val;
 
@@ -1901,7 +1901,7 @@ hfield igfmgr::AddColor( const char* pName, xcolor& Val, const char* pComment, h
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::COLOR;
+    pField->m_type = igfmgr::COLOR;
     pField->m_pData = new xcolor;
     *((xcolor*)pField->m_pData) = Val;
 
@@ -1918,7 +1918,7 @@ hfield igfmgr::AddString( const char* pName, const char* pStr, const char* pComm
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::STRING;
+    pField->m_type = igfmgr::STRING;
     pField->m_pData = AddDataEntry( pStr, x_strlen(pStr) + 1 );
 
     return (hfield)pField;
@@ -1934,7 +1934,7 @@ hfield igfmgr::AddByteArray( const char* pName, const u8* pBytes, u32 ByteCount,
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::BYTE_ARRAY;
+    pField->m_type = igfmgr::BYTE_ARRAY;
     pField->m_pData = AddDataEntry( pBytes, ByteCount );
 
     return (hfield)pField;
@@ -1950,7 +1950,7 @@ hfield igfmgr::AddComment( const char* pComment, hfield hField )
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::COMMENT;
+    pField->m_type = igfmgr::COMMENT;
     pField->m_pData = NULL;
 
     return (hfield)pField;
@@ -1966,7 +1966,7 @@ hfield igfmgr::AddV2( const char* pName, vector2& Val, const char* pComment, hfi
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::VECTOR2;
+    pField->m_type = igfmgr::VECTOR2;
     pField->m_pData = new vector2;
     *((vector2*)pField->m_pData) = Val;
 
@@ -1983,7 +1983,7 @@ hfield igfmgr::AddV3( const char* pName, vector3& Val, const char* pComment, hfi
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::VECTOR3;
+    pField->m_type = igfmgr::VECTOR3;
     pField->m_pData = new vector3;
     *((vector3*)pField->m_pData) = Val;
 
@@ -2000,7 +2000,7 @@ hfield igfmgr::AddR3( const char* pName, radian3& Val, const char* pComment, hfi
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::RADIAN3;
+    pField->m_type = igfmgr::RADIAN3;
     pField->m_pData = new radian3;
     *((radian3*)pField->m_pData) = Val;
 
@@ -2017,7 +2017,7 @@ hfield igfmgr::AddM4( const char* pName, matrix4& Val, const char* pComment, hfi
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::MATRIX4;
+    pField->m_type = igfmgr::MATRIX4;
     pField->m_pData = new matrix4;
     *((matrix4*)pField->m_pData) = Val;
 
@@ -2034,7 +2034,7 @@ hfield igfmgr::AddQuat( const char* pName, quaternion& Val,const char* pComment,
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::QUATERNION;
+    pField->m_type = igfmgr::QUATERNION;
     pField->m_pData = new quaternion;
     *((quaternion*)pField->m_pData) = Val;
 
@@ -2051,7 +2051,7 @@ hfield igfmgr::AddGroup( const char* pName, const char* pComment, hfield hField 
         return NULL;
 
     // fill out
-    pField->m_Type = igfmgr::GROUP;
+    pField->m_type = igfmgr::GROUP;
     pField->m_pData = NULL;
 
     return (hfield)pField;
@@ -2083,7 +2083,7 @@ xbool igfmgr::SetGroup( hfield Group )
     }
 
     // assert that this is a group
-    ASSERT( pField->m_Type == igfmgr::GROUP );
+    ASSERT( pField->m_type == igfmgr::GROUP );
 
     // set the new root
     m_ppHead = (field**)&pField->m_pData;

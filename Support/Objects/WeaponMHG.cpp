@@ -5,12 +5,12 @@
 //==============================================================================
 // INCLUDES
 //==============================================================================
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "ProjectileEnergy.hpp"
 #include "WeaponMHG.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "Objects\Projector.hpp"
-#include "render\LightMgr.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Objects/Projector.hpp"
+#include "Render/LightMgr.hpp"
 
 //=========================================================================
 // STATIC DEFINTIONS AND CONSTANTS
@@ -103,7 +103,7 @@ weapon_mhg::weapon_mhg( void )
     m_SecondaryFireBaseForce    = 10.0f;
     m_SecondaryFireMaxForce     = 20.0f;
 
-    m_InvType = inventory_item::INV_WPN_MHG;
+    m_Item = INVEN_WEAPON_MESON_CANNON;
 
     m_hMuzzleFXPrimary.SetName( "mhg_muzzleflash_000.fxo" );
     m_hMuzzleFXSecondary.SetName( "mhg_muzzleflash_000.fxo" );
@@ -127,10 +127,10 @@ void weapon_mhg::InitWeapon( const char* pSkinFileName,
     new_weapon::InitWeapon( pSkinFileName, pAnimFileName, rInitPos, rRenderState, rParentGuid );
 
     // Get the reload bone indices.
-    if( m_AnimGroup[m_CurrentRenderIndex][m_CurrentRenderState].GetPointer() )
+    if( m_AnimGroup[m_CurrentRenderState].GetPointer() )
     {
-        m_ReloadBoneIndex    = m_AnimPlayer[m_CurrentRenderIndex][m_CurrentRenderState].GetBoneIndex( "reload_right" );
-        m_AltReloadBoneIndex = m_AnimPlayer[m_CurrentRenderIndex][m_CurrentRenderState].GetBoneIndex( "reload_left" );
+        m_ReloadBoneIndex    = m_AnimPlayer[m_CurrentRenderState].GetBoneIndex( "reload_right" );
+        m_AltReloadBoneIndex = m_AnimPlayer[m_CurrentRenderState].GetBoneIndex( "reload_left" );
     }
 }
 
@@ -141,16 +141,16 @@ void weapon_mhg::InitWeapon( const vector3& rInitPos, render_state rRenderState,
     new_weapon::InitWeapon( rInitPos, rRenderState, OwnerGuid );
 
     // Get the reload bone indices.
-    if( m_AnimGroup[m_CurrentRenderIndex][m_CurrentRenderState].GetPointer() )
+    if( m_AnimGroup[m_CurrentRenderState].GetPointer() )
     {
-        m_ReloadBoneIndex    = m_AnimPlayer[m_CurrentRenderIndex][m_CurrentRenderState].GetBoneIndex( "reload_right" );
-        m_AltReloadBoneIndex = m_AnimPlayer[m_CurrentRenderIndex][m_CurrentRenderState].GetBoneIndex( "reload_left" );
+        m_ReloadBoneIndex    = m_AnimPlayer[m_CurrentRenderState].GetBoneIndex( "reload_right" );
+        m_AltReloadBoneIndex = m_AnimPlayer[m_CurrentRenderState].GetBoneIndex( "reload_left" );
     }
 }
 
 //=========================================================================
 
-void weapon_mhg::OnAdvanceLogic( f32 DeltaTime )
+void weapon_mhg::OnAdvanceSimulation( f32 DeltaTime )
 {
     if( m_bIdleMode )
     {
@@ -158,15 +158,19 @@ void weapon_mhg::OnAdvanceLogic( f32 DeltaTime )
         if( (m_CurrentWaitTime >= m_ReloadWaitTime) && 
             (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount < m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax) )
         {
-            s32 Ammo = (s32)((m_CurrentWaitTime-m_ReloadWaitTime)/2.0f);
+            static const f32 GainSeconds = 2.0f;
+            s32 Ammo = (s32)((m_CurrentWaitTime-m_ReloadWaitTime)/GainSeconds);
+            Ammo = MIN( Ammo,
+                        m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax -
+                        m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount );
 
             // Did the ammo count change.
-            if( m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount != (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount+Ammo) )
+            if( Ammo > 0 )
             {
-                // Update the ammo and set the time back.
+                // Update the ammo and retain the fractional recharge time.
                 m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount += Ammo;
                 m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip    = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount;
-                m_CurrentWaitTime = m_ReloadWaitTime;
+                m_CurrentWaitTime -= Ammo * GainSeconds;
             }
             
             InitReloadFx();
@@ -181,7 +185,7 @@ void weapon_mhg::OnAdvanceLogic( f32 DeltaTime )
         UpdateReloadFx();
     }
 
-    new_weapon::OnAdvanceLogic( DeltaTime );
+    new_weapon::OnAdvanceSimulation( DeltaTime );
 }
 
 //=========================================================================
@@ -219,10 +223,10 @@ xbool weapon_mhg::FireWeaponProtected( const vector3& InitPos , const vector3& B
 		m_fFiringTimer = m_fFiringDelay;
  
 #ifdef FIRE_FROM_GUN
-        vector3 InitPos = m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBonePosition( m_FiringPointBoneIndex[ iBonePoint ] );
+        vector3 InitPos = m_AnimPlayer[m_CurrentRenderState].GetBonePosition( m_FiringPointBoneIndex[ iBonePoint ] );
 #endif
         
-        matrix4 L2W = m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBoneL2W( m_FiringPointBoneIndex[ iBonePoint ] );
+        matrix4 L2W = m_AnimPlayer[m_CurrentRenderState].GetBoneL2W( m_FiringPointBoneIndex[ iBonePoint ] );
         radian3 Rot = L2W.GetRotation();
         (void)Rot;
 
@@ -278,7 +282,7 @@ xbool weapon_mhg::FireSecondaryProtected( const vector3& InitPos , const vector3
 		m_fFiringTimer = m_fFiringDelay;
  
 #ifdef FIRE_FROM_GUN
-        vector3 InitPos = m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBonePosition( m_AltFiringPointBoneIndex[ iBonePoint ] );
+        vector3 InitPos = m_AnimPlayer[m_CurrentRenderState].GetBonePosition( m_AltFiringPointBoneIndex[ iBonePoint ] );
 #endif
         
         f32 DeltaDamage = ((m_SecondaryFireMaxDamage-m_SecondaryFireBaseDamage)* ((GetAmmoCount()*0.5f) / (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax*0.5f)));
@@ -287,7 +291,7 @@ xbool weapon_mhg::FireSecondaryProtected( const vector3& InitPos , const vector3
         f32 DeltaForce  = ((m_SecondaryFireMaxForce-m_SecondaryFireBaseForce)* ((GetAmmoCount()*0.5f) / (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax*0.5f)));
         f32 Force       = m_SecondaryFireBaseForce + DeltaForce;
  
-        matrix4 L2W = m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBoneL2W( m_FiringPointBoneIndex[ iBonePoint ] );
+        matrix4 L2W = m_AnimPlayer[m_CurrentRenderState].GetBoneL2W( m_FiringPointBoneIndex[ iBonePoint ] );
         radian3 Rot = L2W.GetRotation();
         (void)Rot;
 
@@ -328,7 +332,7 @@ xbool weapon_mhg::FireNPCWeaponProtected ( const vector3& BaseVelocity , const v
     
     DegradeAim( TargetRot, R_1*fDegradeMultiplier, InitPos, Owner );
 
-    matrix4 L2W = m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBoneL2W( m_FiringPointBoneIndex[ FIRE_POINT ] );
+        matrix4 L2W = m_AnimPlayer[m_CurrentRenderState].GetBoneL2W( m_FiringPointBoneIndex[ FIRE_POINT_DEFAULT ] );
     radian3 Rot = L2W.GetRotation();
     (void)Rot;
 
@@ -370,86 +374,11 @@ xbool weapon_mhg::FireNPCSecondaryProtected( const vector3& BaseVelocity , const
     return FireNPCWeaponProtected( BaseVelocity, Target, Owner, fDegradeMultiplier, isHit );
 }
 
-//==============================================================================
-
-void  weapon_mhg::InitMuzzleFx ( void )
-{
-    switch ( m_CurrentRenderState )
-    {
-    case RENDER_STATE_PLAYER:
-        {
-            for( s32 iBone = 0; iBone < MAX_BONE_POINTS; iBone++ )
-            {
-                if( m_FiringPointBoneIndex[iBone] != -1 )
-                {
-                    if (m_MuzzleFXGuid[iBone]==NULL)
-                    {
-                        m_MuzzleFXGuid[iBone] = particle_emitter::CreatePersistantParticle( 
-                            particle_emitter::PLAYER_MUZZLE_FLASH_MHG );
-                    }
-                }
-                
-                if( m_AltFiringPointBoneIndex[iBone] != -1 )
-                {            
-                    if (m_MuzzleSecondaryFXGuid[iBone]==NULL)
-                    {
-                        m_MuzzleSecondaryFXGuid[iBone] = particle_emitter::CreatePersistantParticle( 
-                            particle_emitter::PLAYER_MUZZLE_FLASH_MHG );
-                    }
-                }
-            }
-        }
-        
-        break;
-        
-    case  RENDER_STATE_NPC:
-        {
-            if ( m_MuzzleFXGuid[ FIRE_POINT ] == NULL )
-            {
-                m_MuzzleFXGuid[ FIRE_POINT ] = particle_emitter::CreatePersistantParticle(  
-                    particle_emitter::PLAYER_MUZZLE_FLASH_MHG );
-            }
-        }
-        break;
-        
-    default:
-        ASSERT(0);
-        break;
-    }
-}
-
-//==============================================================================
-/*
-xbool weapon_mhg::CanIntereptPrimaryFire( s32 nFireAnimIndex )
-{
-    (void)nFireAnimIndex;
-
-    return TRUE;
-}
-*/
-//==============================================================================
-
 xbool weapon_mhg::CanReload( const ammo_priority& Priority )
 {
     (void)Priority;
     return FALSE;
 }
-
-//==============================================================================
-
-void weapon_mhg::SetCurrentRenderIndex( s32 nRenderIndex )
-{
-    // Get the reload bone indices.
-    if( m_AnimGroup[m_CurrentRenderIndex][m_CurrentRenderState].GetPointer() )
-    {
-        m_ReloadBoneIndex    = m_AnimPlayer[m_CurrentRenderIndex][m_CurrentRenderState].GetBoneIndex( "reload_right" );
-        m_AltReloadBoneIndex = m_AnimPlayer[m_CurrentRenderIndex][m_CurrentRenderState].GetBoneIndex( "reload_left" );
-    }
-
-    new_weapon::SetCurrentRenderIndex( nRenderIndex );
-}
-
-//==============================================================================
 
 void weapon_mhg::OnEnumProp( prop_enum& List )
 {
@@ -616,8 +545,8 @@ void weapon_mhg::InitReloadFx( void )
         // Update the effects position.
         if( m_ReloadFxGuid != NULL )
         {
-            matrix4 L2W = m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBoneL2W( m_ReloadBoneIndex );
-            L2W.PreTranslate( m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBindPosition( m_ReloadBoneIndex ) );
+            matrix4 L2W = m_AnimPlayer[m_CurrentRenderState].GetBoneL2W( m_ReloadBoneIndex );
+            L2W.PreTranslate( m_AnimPlayer[m_CurrentRenderState].GetBindPosition( m_ReloadBoneIndex ) );
         
             object* pObj = g_ObjMgr.GetObjectByGuid( m_ReloadFxGuid );
             pObj->OnTransform( L2W );
@@ -633,8 +562,8 @@ void weapon_mhg::InitReloadFx( void )
         // Update the effects position.
         if( m_AltReloadFxGuid != NULL )
         {
-            matrix4 L2W = m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBoneL2W( m_AltReloadBoneIndex );
-            L2W.PreTranslate( m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBindPosition( m_AltReloadBoneIndex ) );
+            matrix4 L2W = m_AnimPlayer[m_CurrentRenderState].GetBoneL2W( m_AltReloadBoneIndex );
+            L2W.PreTranslate( m_AnimPlayer[m_CurrentRenderState].GetBindPosition( m_AltReloadBoneIndex ) );
         
             object* pObj = g_ObjMgr.GetObjectByGuid( m_AltReloadFxGuid );
             pObj->OnTransform( L2W );
@@ -651,8 +580,8 @@ void weapon_mhg::UpdateReloadFx( void )
     // Update the reload FX's position.
     if( m_ReloadFxGuid != NULL )
     {
-        matrix4 L2W = m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBoneL2W( m_ReloadBoneIndex );
-        L2W.PreTranslate( m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBindPosition( m_ReloadBoneIndex ) );
+        matrix4 L2W = m_AnimPlayer[m_CurrentRenderState].GetBoneL2W( m_ReloadBoneIndex );
+        L2W.PreTranslate( m_AnimPlayer[m_CurrentRenderState].GetBindPosition( m_ReloadBoneIndex ) );
     
         object* pObj = g_ObjMgr.GetObjectByGuid( m_ReloadFxGuid );
         pObj->OnTransform( L2W );
@@ -660,8 +589,8 @@ void weapon_mhg::UpdateReloadFx( void )
 
     if( m_AltReloadFxGuid != NULL )
     {
-        matrix4 L2W = m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBoneL2W( m_AltReloadBoneIndex );
-        L2W.PreTranslate( m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBindPosition( m_AltReloadBoneIndex ) );
+        matrix4 L2W = m_AnimPlayer[m_CurrentRenderState].GetBoneL2W( m_AltReloadBoneIndex );
+        L2W.PreTranslate( m_AnimPlayer[m_CurrentRenderState].GetBindPosition( m_AltReloadBoneIndex ) );
     
         object* pObj = g_ObjMgr.GetObjectByGuid( m_AltReloadFxGuid );
         pObj->OnTransform( L2W );

@@ -6,14 +6,14 @@
 // Includes
 //=========================================================================
 #include "GameTextMgr.hpp"
-#include "StringMgr\StringMgr.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
-#include "Objects\HudObject.hpp"
-#include "Sound\SimpleSoundEmitter.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
+#include "Objects/HudObject.hpp"
+#include "Sound/SimpleSoundEmitter.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 #ifndef X_EDITOR
-#include "NetworkMgr\MsgMgr.hpp"
+#include "NetworkMgr/MsgMgr.hpp"
 #endif
 
 //=========================================================================

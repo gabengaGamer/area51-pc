@@ -9,7 +9,7 @@
 //=========================================================================
 
 #include "trigger_meta_breakpoint.hpp"
-#include "..\TriggerEx_Object.hpp"
+#include "../TriggerEx_Object.hpp"
 
 #ifdef X_EDITOR
 extern xbool g_EditorBreakpoint;

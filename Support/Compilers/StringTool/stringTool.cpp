@@ -9,7 +9,7 @@
 #include "x_files.hpp"
 #include "x_bytestream.hpp"
 #include "Auxiliary/CommandLine/CommandLine.hpp"
-#include "Parsing/textout.hpp"
+#include "Parsing/TextOut.hpp"
 #include "../../StringMgr/StringMgr.hpp"
 
 //==============================================================================

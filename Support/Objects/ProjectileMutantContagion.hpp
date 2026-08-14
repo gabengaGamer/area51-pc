@@ -11,7 +11,7 @@
 
 #include "BaseProjectile.hpp"
 #include "Objects/NetProjectile.hpp"
-#include "Auxiliary\fx_RunTime\Fx_Mgr.hpp"
+#include "FX/fx_Mgr.hpp"
 
 //=========================================================================
 
@@ -116,7 +116,7 @@ virtual         void            SetStart            ( const vector3& Position,
                 void            UpdateParticles     ( const vector3& Position );
 virtual	        bbox	        GetLocalBBox		( void ) const;
 
-virtual         void            OnAdvanceLogic      ( f32 DeltaTime );
+virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
 virtual         void            OnImpact            ( collision_mgr::collision& Coll, object* pTarget );
 
 virtual	        void	        OnMove				( const vector3& NewPosition );

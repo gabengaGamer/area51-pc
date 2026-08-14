@@ -6,8 +6,8 @@
 // INLCLUDES
 //=========================================================================
 
-#include "Auxiliary\MiscUtils\Property.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Auxiliary/MiscUtils/Property.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 
 #define NUM_STILL_FRAMES 15

@@ -16,8 +16,8 @@
 
 // Storage for the scientist ragdoll definition
 // (rules and geom bones are filled in at runtime)
-static dist_rule   LeaperDistRules[ragdoll::MAX_DIST_RULES] PS2_ALIGNMENT(64);
-static geom_bone   LeaperGeomBones[ragdoll::MAX_GEOM_BONES] PS2_ALIGNMENT(64);
+static dist_rule   LeaperDistRules[ragdoll::MAX_DIST_RULES];
+static geom_bone   LeaperGeomBones[ragdoll::MAX_GEOM_BONES];
 
 
 //==============================================================================
@@ -483,7 +483,7 @@ bone_match_def LeaperBoneMatchDefs[] =
 
 ragdoll_def LeaperRagdoll =
 {    
-    // m_bInitialized
+    // m_isInitialized
     FALSE,
 
     // Name

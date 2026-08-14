@@ -2,7 +2,7 @@
 #define MUSIC_STATE_MGR_HPP
 
 #include "x_types.hpp"
-#include "TriggerEX\Actions\action_music_intensity.hpp"
+#include "TriggerEx/Actions/action_music_intensity.hpp"
 
 class music_state_mgr
 {

@@ -11,9 +11,10 @@
 //==========================================================================
 // INCLUDE
 //==========================================================================
+#include "Render\PrimitiveDebug.hpp"
 #include "Obj_mgr\obj_mgr.hpp"
 #include "SuperDestructible.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
 #include "CollisionMgr\CollisionMgr.hpp"
 #include "CollisionMgr\PolyCache.hpp"
@@ -171,7 +172,6 @@ void BuildNamesList( const geom& Geom, namelist& List )
 
 super_destructible_obj::super_destructible_obj(void)
 {
-    InvalidateRenderState();
     m_Destroyed         = FALSE;
     m_DecalGroup        = 0;
     m_DestructionTime   = 0;
@@ -210,76 +210,21 @@ super_destructible_obj::~super_destructible_obj(void)
 
 //=========================================================================
 
-void super_destructible_obj::InvalidateRenderState( void )
-{
-    InitSimpleAnimInterpCache( m_RenderCache );
-}
+//=========================================================================
 
 //=========================================================================
 
-void super_destructible_obj::CaptureRenderInterpState( void )
-{
-    if( CaptureSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer ) == INTERP_CAPTURE_CHANGED )
-        RegisterRenderInterpUpdate();
-}
+//=========================================================================
 
 //=========================================================================
 
-void super_destructible_obj::UpdateRenderInterpState( f32 Alpha )
-{
-    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
-}
-
 //=========================================================================
-
-void super_destructible_obj::ClearRenderInterpState( void )
-{
-    ClearSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=========================================================================
-
-void super_destructible_obj::InvalidateRenderInterpState( void )
-{
-    play_surface::InvalidateRenderInterpState();
-    InvalidateSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=========================================================================
-
-void super_destructible_obj::SnapRenderInterpState( void )
-{
-    play_surface::SnapRenderInterpState();
-    SnapSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer );
-}
-
-//=========================================================================
-
-const matrix4& super_destructible_obj::GetRenderL2W( void ) const
-{
-    return GetSimpleAnimInterpCacheL2W( m_RenderCache, GetL2W() );
-}
-
-//=========================================================================
-
-xbool super_destructible_obj::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
-{
-    if( GetSimpleAnimInterpCacheBoneL2W( m_RenderCache, iBone, L2W ) )
-        return TRUE;
-
-    const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
-    if( !pBone )
-        return FALSE;
-
-    L2W = *pBone;
-    return TRUE;
-}
 
 //=========================================================================
 
 void super_destructible_obj::UpdateZoneTrack ( void )
 { 
-    g_ZoneMgr.UpdateZoneTracking( *this, m_ZoneTracker, GetPosition() );
+    g_ZoneMgr.AdvanceZoneTracking( *this, m_ZoneTracker, GetPosition() );
 }
 
 //==========================================================================
@@ -465,7 +410,8 @@ void super_destructible_obj::KillStage( const pain& Pain )
     //
     // Sound
     //
-    if( m_Stages[m_CurrentStage].m_SoundID != -1 )
+    if( (m_Stages[m_CurrentStage].GetGlassOnly() == FALSE) &&
+        (m_Stages[m_CurrentStage].m_SoundID != -1) )
     {
         g_AudioMgr.PlayVolumeClipped( g_StringMgr.GetString( m_Stages[m_CurrentStage].m_SoundID ), GetPosition(), GetZone1(), TRUE );
     }
@@ -623,7 +569,7 @@ void  super_destructible_obj::OnRender( void )
 {
     if( m_Stages.GetCount() > 0 )
     {
-        CONTEXT( "super_destructible_obj::OnRender" );
+        X_PROFILE_SCOPE_CATEGORY( "Context", "super_destructible_obj::OnRender" );
 
         rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
     
@@ -648,14 +594,14 @@ void  super_destructible_obj::OnRender( void )
         else
         {
 #ifdef X_EDITOR
-            draw_BBox( GetBBox() );
+            render::debug::Box( GetBBox() );
 #endif
         }
     }
     else
     {
 #ifdef X_EDITOR        
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif
     }
 }
@@ -682,7 +628,7 @@ void super_destructible_obj::OnMove( const vector3& NewPos )
     BBox += GetBBox() ;
 
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
-    if( pRigidGeom && pRigidGeom->m_Collision.nLowClusters > 0 )
+    if( pRigidGeom && pRigidGeom->m_collision.nLowClusters > 0 )
         g_PolyCache.InvalidateCells( BBox, GetGuid() );
 
     // Make sure to track the object across zones
@@ -700,7 +646,7 @@ void super_destructible_obj::OnTransform( const matrix4& L2W )
  
     BBox += GetBBox() ;
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
-    if( pRigidGeom && pRigidGeom->m_Collision.nLowClusters > 0 )
+    if( pRigidGeom && pRigidGeom->m_collision.nLowClusters > 0 )
         g_PolyCache.InvalidateCells( BBox, GetGuid() );
 
     // Make sure to track the object across zones
@@ -711,23 +657,14 @@ void super_destructible_obj::OnTransform( const matrix4& L2W )
 
 const matrix4* super_destructible_obj::GetBoneL2Ws( void )
 {
-    if( m_hAnimGroup.GetPointer() )
-    {
-        const matrix4* pMatrices = BuildSimpleAnimInterpCacheMatrices( m_RenderCache,
-                                                                       *m_hAnimGroup.GetPointer(),
-                                                                       m_hAnimGroup.GetPointer()->GetNBones() );
-        if( pMatrices )
-            return pMatrices;
-    }
-
     return m_AnimPlayer.GetBoneL2Ws() ;
 }
 
 //=============================================================================
 
-void super_destructible_obj::OnAdvanceLogic( f32 DeltaTime )
+void super_destructible_obj::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "super_destructible_obj::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "super_destructible_obj::OnAdvanceSimulation" );
 
     // SB.
     // Since the LOD mask for super destructibles is stored in each stage,
@@ -765,7 +702,7 @@ void super_destructible_obj::OnAdvanceLogic( f32 DeltaTime )
                 (m_AnimPlayer.GetCycle() != m_AnimPlayer.GetPrevCycle()) )
             {
                 rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
-                if( pRigidGeom && pRigidGeom->m_Collision.nLowClusters > 0 )
+                if( pRigidGeom && pRigidGeom->m_collision.nLowClusters > 0 )
                     g_PolyCache.InvalidateCells( GetBBox(), GetGuid() );
             }
         }
@@ -776,7 +713,7 @@ void super_destructible_obj::OnAdvanceLogic( f32 DeltaTime )
 
 void  super_destructible_obj::OnColCheck( void )
 {
-    CONTEXT("super_destructible_obj::OnColCheck");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "super_destructible_obj::OnColCheck");
     
     // Compute the bone matrices, then let the play_surface code handle it.
 
@@ -885,18 +822,17 @@ void  super_destructible_obj::OnDebugRender( void )
     if( m_Stages.GetCount() <= 0 )
         return;
 
-    draw_ClearL2W();
-    draw_Sphere( GetPosition(), m_Stages[m_CurrentStage].m_PainRadius, XCOLOR_RED );    
-    draw_Marker( GetPosition(), XCOLOR_BLUE );
-    draw_Point( GetPosition(), XCOLOR_BLUE );
+    render::debug::Sphere( GetPosition(), m_Stages[m_CurrentStage].m_PainRadius, XCOLOR_RED );    
+    render::debug::Marker( GetPosition(), XCOLOR_BLUE );
+    render::debug::Point( GetPosition(), XCOLOR_BLUE );
     
     s32 i;
     for (i=0;i<MAX_PAIN_RESPONSES;i++)
     {
         if (s_PainResponseInfo[i].AudioVoice != 0)
         {
-            draw_Point( s_PainResponseInfo[i].Pos );
-            draw_Label( s_PainResponseInfo[i].Pos, XCOLOR_RED, "Voice %d",s_PainResponseInfo[i].AudioVoice );
+            render::debug::Point( s_PainResponseInfo[i].Pos );
+            render::debug::Label( s_PainResponseInfo[i].Pos, XCOLOR_RED, "Voice %d",s_PainResponseInfo[i].AudioVoice );
         }        
     }
 
@@ -909,8 +845,7 @@ void  super_destructible_obj::OnDebugRender( void )
     bbox BBOX;
     BBOX.Set( vector3( LeftPos.GetX(), TopPos.GetY(), WorldStartPos.GetZ() ), vector3( RightPos.GetX(), BottomPos.GetY(), WorldStartPos.GetZ()+2.0f ) );
 
-    draw_SetL2W( GetL2W() );
-    draw_BBox( BBOX, XCOLOR_GREEN );
+    render::debug::Box( BBOX, GetL2W(), XCOLOR_GREEN );
 } 
 #endif // X_RETAIL
 
@@ -1258,7 +1193,12 @@ xbool super_destructible_obj::OnProperty( prop_query& I )
         // Initialize the zone tracker
         if( I.IsVar( "Base\\Position" )) 
         {
-            g_ZoneMgr.InitZoneTracking( *this, m_ZoneTracker );
+            g_ZoneMgr.RebaseZoneTracking( *this,
+                                          m_ZoneTracker,
+                                          GetPosition(),
+                                          GetZone1(),
+                                          GetZone2(),
+                                          zone_mgr::SeedSource::Object );
         }
 
         return( TRUE );
@@ -1533,7 +1473,8 @@ void super_destructible_obj::Regenerate( f32 DeltaTime, f32 TotalTime )
     s32 i;
     
     // Skip if no stages
-    if( m_Stages.GetCount() == 0 )
+    if( (m_Stages.GetCount() <= 1) || !x_isvalid( DeltaTime ) || (DeltaTime <= 0.0f) ||
+        !x_isvalid( TotalTime ) || (TotalTime <= 0.0f) )
         return;
         
     // Put to previous stage if destroyed
@@ -2036,6 +1977,3 @@ xbool super_destructible_obj::stage::OnProperty  ( prop_query& I,
     // Not found...
     return FALSE;
 }
-
-
-

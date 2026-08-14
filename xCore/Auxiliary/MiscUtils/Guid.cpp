@@ -9,7 +9,7 @@
 #include "x_debug.hpp"
 #include "x_plus.hpp"
 #include "x_stdio.hpp"
-#include "Auxiliary\MiscUtils\Guid.hpp"
+#include "Auxiliary/MiscUtils/Guid.hpp"
 
 #ifdef X_EDITOR
 #include <time.h>

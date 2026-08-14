@@ -1,7 +1,3 @@
-#ifdef TARGET_PC
-#include <crtdbg.h>
-#endif
-
 #include "RawMesh.hpp"
 #include "TextIn.hpp"
 #include "TextOut.hpp"
@@ -2875,5 +2871,4 @@ bbox rawmesh::GetSubmeshBBox( s32 iSubmesh )
 }
 
 //=========================================================================
-
 

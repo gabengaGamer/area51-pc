@@ -5,16 +5,15 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Objects\Render\SkinInst.hpp"
-#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
-#include "Characters\FloorProperties.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Render/SkinInst.hpp"
+#include "Characters/FloorProperties.hpp"
 
 //=========================================================================
 // FORWARD DECLARATIONS
 //=========================================================================
 class actor;
-struct coke_can_tweaks;
+struct coke_can_profile;
 
 
 //=========================================================================
@@ -32,20 +31,17 @@ private:
         // Members
         vector3 m_BindPos;     // Position of particle when binded to geometry
         vector3 m_Pos;         // Current world position of particle
-        vector3 m_LastPos;     // World position after last advance logic
+        vector3 m_Velocity;    // World velocity in centimeters per second
         vector3 m_LastCollPos; // Last collision free position
 
         // Initialization
         particle() :
             m_Pos(0,0,0),
-            m_LastPos(0,0,0),
+            m_Velocity(0,0,0),
             m_LastCollPos(0,0,0)
         {
         }
 
-        // Velocity functions
-        vector3 GetVelocity( void ) const { return m_Pos - m_LastPos; }
-        void    SetVelocity( const vector3& Vel ) { m_LastPos = m_Pos - Vel; }
     };
 
 //=========================================================================
@@ -74,7 +70,7 @@ public:
     virtual void        OnColRender             ( xbool bRenderHigh );
 #endif // X_RETAIL
 
-    virtual void        OnAdvanceLogic          ( f32 DeltaTime );  
+    virtual void        OnAdvanceSimulation          ( f32 DeltaTime );
     virtual void        OnPain                  ( const pain& Pain );    
     virtual void        OnColCheck              ( void );
     virtual void        OnMove                  ( const vector3& NewPos );        
@@ -91,24 +87,26 @@ public:
 protected:
 
             // Misc
-            const coke_can_tweaks& GetProfile( void );
+            const coke_can_profile& GetProfile( void ) const;
 
             // Physics functions
             void    InitPhysics                 ( void );
-            f32     GetEnergy                   ( void );
+            f32     GetSpeedSquaredSum          ( void ) const;
             void    UpdateL2W                   ( void );
             void    Integrate                   ( f32 DeltaTime );
             void    ApplyEqualDistConstraint    ( particle& ParticleA, particle& ParticleB, f32 EqualDist );
-            f32     ApplyMinDistConstraint      ( particle& ParticleA, particle& ParticleB, f32 MinDist, 
-                                                  f32 TotalInvMass, f32 InvMassA, f32 InvMassB );
+            f32     ApplyMinDistConstraint      ( particle& ParticleA, particle& ParticleB, f32 MinDist,
+                                                  f32 InvMassA, f32 InvMassB,
+                                                  f32 Elasticity, f32 Friction );
             void    ApplyDistConstraints        ( void );
-            xbool   ApplyCylinderConstraint     ( const vector3& Bottom, const vector3& Top, f32 Radius, vector3& CollNorm );
+            xbool   ApplyCylinderConstraint     ( const vector3& Bottom, const vector3& Top, f32 Radius,
+                                                  const vector3& CylinderVelocity, vector3& CollNorm );
             void    ApplyCollConstraints        ( void );
             void    ApplyCanConstraints         ( coke_can& CokeCan );
             void    ApplyCanConstraints         ( void );
             void    ApplyActorConstraints       ( void );
             void    ApplyConstraints            ( void );
-            void    ApplyDamping                ( void );
+            void    ApplyDamping                ( f32 DeltaTime );
 
 //=========================================================================
 // Public functions
@@ -144,17 +142,17 @@ public:
 protected:  
 
     // Flags
-    u32                 m_bInitialized : 1;         // TRUE if initialized
+    u32                 m_isInitialized : 1;         // TRUE if initialized
     u32                 m_bOnGround    : 1;         // TRUE if lying on the ground
 
     // Physics    
-    s32                 m_ActiveCount;              // Forces physics to update
+    f32                 m_ActiveSeconds;            // Keeps physics active after an impact
     particle            m_Particles[2];             // Particles
     f32                 m_ParticleRadius;           // Radius of particles
     f32                 m_ParticleDist;             // Constraint distance
     radian              m_Roll;                     // Roll of can
-    radian              m_RollSpeed;                // Roll speed of can
-    f32                 m_DeltaTime;                // Accumulated delta time
+    radian              m_RollRate;                 // Roll rate in radians per second
+    f32                 m_ImpactAudioCooldownSeconds;
     s32                 m_iMajorAxis;               // Longest axis of can
     vector3             m_MinInitVel;               // Min initial velocity
     vector3             m_MaxInitVel;               // Max initial velocity
@@ -164,13 +162,6 @@ protected:
     // Rendering
     skin_inst           m_SkinInst;                 // Skinned inst
     floor_properties    m_FloorProperties;          // Floor tracking class
-    simple_anim_interp_cache m_RenderCache;
-
-    virtual void        CaptureRenderInterpState      ( void );
-    virtual void        UpdateRenderInterpState       ( f32 Alpha );
-    virtual void        ClearRenderInterpState        ( void );
-    virtual void        InvalidateRenderInterpState   ( void );
-    virtual void        SnapRenderInterpState         ( void );
 };
 
 //=========================================================================

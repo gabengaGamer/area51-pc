@@ -8,25 +8,20 @@
 // Includes
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_manager.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_bitmap.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_bitmap.hpp"
 
 #include "dlg_PressStart.hpp"   
 #include "dlg_PopUp.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "memcardmgr\memcardmgr.hpp"
-#include "stateMgr/StateMgr.hpp"
-#include "MemCardMgr/MemCardMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "SaveData/SaveDataMgr.hpp"
 
 #include "MoviePlayer/MoviePlayer.hpp"
-
-#ifdef TARGET_PS2
-#include "ps2\ps2_misc.hpp"
-#endif
 
 extern xstring SelectBestClip( const char* pName );
 
@@ -50,10 +45,10 @@ enum controls
 
 ui_manager::control_tem Press_StartControls[] =
 {
-//  { IDC_A51_LOGO,    "IDS_NULL",             "bitmap",  40,  10, 400, 100, 0, 0, 0, 0, ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE  },
-    { IDC_A51_LOGO,    "IDS_NULL",             "bitmap", 280,  10, 200,  50, 0, 0, 0, 0, ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE  },
-    { IDC_START_BOX,   "IDS_NULL",             "bitmap",  90, 312, 300,  30, 0, 0, 0, 0, ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE  },
-    { IDC_PRESS_START, "IDS_PRESS_START_TEXT", "text",     0, 307, 480,  30, 0, 0, 1, 1, ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE  },
+//  { IDC_A51_LOGO,    "IDS_NULL",             "bitmap",  40,  10, 400, 100, 0, 0, 0, 0, 0 },
+    { IDC_A51_LOGO,    "IDS_NULL",             "bitmap", 280,  10, 200,  50, 0, 0, 0, 0, 0 },
+    { IDC_START_BOX,   "IDS_NULL",             "bitmap",  90, 312, 300,  30, 0, 0, 0, 0, 0 },
+    { IDC_PRESS_START, "IDS_PRESS_START_TEXT", "text",     0, 307, 480,  30, 0, 0, 1, 1, 0 },
 };
 
 ui_manager::dialog_tem Press_StartDialog =
@@ -159,7 +154,8 @@ xbool dlg_press_start::Create( s32                        UserID,
 
     // initialize logo bitmap
     m_pLogoBitmap->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_BitmapID = g_UiMgr->LoadBitmap( "logo",  "UI_A51_Logo.xbmp" );
+    m_BitmapID = g_UiMgr->FindBitmap( "a51_logo" );
+    ASSERT( m_BitmapID >= 0 );
     m_pLogoBitmap->SetBitmap( m_BitmapID );
 
     // initialize start button frame
@@ -205,9 +201,6 @@ void dlg_press_start::Destroy( void )
     ui_dialog::Destroy();
 
     g_AudioMgr.Release( s_PressStartVoiceID, 0.0f );
-
-    // unload logo bitmap
-    g_UiMgr->UnloadBitmap( "logo" );
 }
 
 //=========================================================================
@@ -222,7 +215,7 @@ void dlg_press_start::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_press_start::OnPadSelect( ui_win* pWin )
+void dlg_press_start::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -254,7 +247,7 @@ void dlg_press_start::OnPadSelect( ui_win* pWin )
 }
 
 //=========================================================================
-void dlg_press_start::OnPadHelp( ui_win* pWin )
+void dlg_press_start::OnHelp( ui_win* pWin )
 {
     (void)pWin;
 
@@ -307,7 +300,6 @@ void dlg_press_start::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         m_FadeAdjust = -m_FadeAdjust;
     }
 
-#if defined( TARGET_PC )
     if( m_bPlayDemo )
     {
         if( !Movie.IsPlaying() )
@@ -333,7 +325,6 @@ void dlg_press_start::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             g_StateMgr.PlayMovie( "attract", FALSE, FALSE );
         }
     }
-#endif
 }
 
 //=========================================================================

@@ -3,15 +3,11 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include "PostEffectMgr.hpp"
-#include "obj_mgr\obj_mgr.hpp"
-#include "Objects\LevelSettings.hpp"
-#include "Render\Render.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-
-#ifdef TARGET_PS2
-#include "ps2\ps2_misc.hpp"
-#endif
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/LevelSettings.hpp"
+#include "Render/Render.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 
 ///////////////////////////////////////////////////////////////////////////
 // data
@@ -21,6 +17,7 @@ post_effect_mgr     g_PostEffectMgr;
 
 static const f32    kNormalBlurOffset = 0.0f;
 static const xcolor kNormalBlurColor(128,128,128,16);
+static const s32    kDefaultFilmGrainStrength = 100;
 
 ///////////////////////////////////////////////////////////////////////////
 // Implementation
@@ -47,6 +44,8 @@ void post_effect_mgr::Init( void )
     m_FadeTimeElapsed = 0.0f;
     m_FadeTime        = 0.0f;
     m_bFadeAudio      = FALSE;
+    m_FilmGrainStrength = kDefaultFilmGrainStrength;
+    m_bBackgroundBlurEnabled = TRUE;
 
     s32 i;
     for( i = 0; i < MAX_LOCAL_PLAYERS; i++ )
@@ -137,7 +136,7 @@ void post_effect_mgr::OnUpdate( f32 DeltaTime )
 
 void post_effect_mgr::Render( void )
 {
-    CONTEXT( "post_effect_mgr::Render" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "post_effect_mgr::Render" );
 
     // don't do post-effects when we're in the pip
     if( g_RenderContext.m_bIsPipRender )
@@ -156,28 +155,29 @@ void post_effect_mgr::Render( void )
         render::ApplySelfIllumGlows( 0.0f, 255 );
     }
 
-    // KSS -- As per design, rip out screen warp on MSN projectiles.
-    // go through all of the meson projectiles and render a "warp" effect
-    slot_id SlotID = g_ObjMgr.GetFirst( object::TYPE_GRAV_CHARGE_PROJECTILE );
-    while( SlotID != SLOT_NULL )
-    {
-        object* pObj = g_ObjMgr.GetObjectBySlot( SlotID );
-        ASSERT( pObj );
-        render::AddScreenWarp( pObj->GetPosition(), 400.0f, 0.4f );
-        SlotID = g_ObjMgr.GetNext( SlotID );
-    }
+    // TODO: Rework this effect!
+    //slot_id SlotID = g_ObjMgr.GetFirst( object::TYPE_GRAV_CHARGE_PROJECTILE );
+    //while( SlotID != SLOT_NULL )
+    //{
+    //    object* pObj = g_ObjMgr.GetObjectBySlot( SlotID );
+    //    ASSERT( pObj );
+    //    render::AddScreenWarp( pObj->GetPosition(), 400.0f, 0.4f );
+    //    SlotID = g_ObjMgr.GetNext( SlotID );
+    //}
 
-    // handle normal pain/screen blurring
+    // handle pain screen blurring
     s32 LocalPlayerIndex = g_RenderContext.LocalPlayerIndex;
     if ( m_bDoPainBlur[LocalPlayerIndex] )
     {
         // do a pain blur
         render::MipFilter( 2, m_PainBlurOffset[LocalPlayerIndex], render::FALLOFF_CONSTANT, m_PainBlurColor[LocalPlayerIndex], 0.0f, 0.0f, LocalPlayerIndex );
     }
-    else
+
+    // handle normal screen blurring
+    if( m_bBackgroundBlurEnabled )
     {
         // do a very slight depth-of-field to remove some of the sparkles
-        //render::MipFilter( 2, 0.0f, render::FALLOFF_EXP, xcolor(128,128,128,128), 8.0f, 0.0f, LocalPlayerIndex );
+        render::MipFilter( 2, 0.0f, render::FALLOFF_EXP, xcolor(128,128,128,128), 1.5f, 0.0f, LocalPlayerIndex );
     }
 
     // do the "mutant" vision mode
@@ -191,12 +191,27 @@ void post_effect_mgr::Render( void )
         render::RadialBlur( Zoom, Angle, AlphaSub, AlphaScale );
     }
 
-    // do a very slight film grain effect
-    // GS: TODO: Make me customizable!!!	
-    render::NoiseFilter( xcolor(200, 185, 170, 100) );
+    if( m_FilmGrainStrength > 0 )
+    {
+        render::NoiseFilter( xcolor( 200, 185, 170, m_FilmGrainStrength ) );
+    }
 
     // done
     render::EndPostEffects();
+}
+
+//=========================================================================
+
+void post_effect_mgr::SetFilmGrainStrength( s32 Strength )
+{
+    m_FilmGrainStrength = x_clamp( Strength, 0, 255 );
+}
+
+//=========================================================================
+
+void post_effect_mgr::SetBackgroundBlurEnabled( xbool Enabled )
+{
+    m_bBackgroundBlurEnabled = Enabled;
 }
 
 //=========================================================================

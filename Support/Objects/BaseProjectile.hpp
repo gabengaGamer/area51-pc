@@ -9,10 +9,10 @@
 // INCLUDES
 //=========================================================================
 
-#include "Object.hpp"
-#include "Decals\DecalPackage.hpp"
-#include "Render\RigidInst.hpp"
-#include "PainMgr\Pain.hpp"
+#include "object.hpp"
+#include "Decals/DecalPackage.hpp"
+#include "Render/RigidInst.hpp"
+#include "PainMgr/Pain.hpp"
 
 struct pain_tweaks
 {

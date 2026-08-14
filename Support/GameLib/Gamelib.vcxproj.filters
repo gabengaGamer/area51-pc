@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0">
   <ItemGroup>
     <Filter Include="Animation">
       <UniqueIdentifier>{a53f2cb0-d1bc-47c7-9d5d-3c47e64a6deb}</UniqueIdentifier>
@@ -85,6 +85,9 @@
     <Filter Include="Objects">
       <UniqueIdentifier>{18995abf-b9d3-4321-9497-c0cbafe7b2d8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Objects\Player">
+      <UniqueIdentifier>{d15024e0-99a8-4375-a745-cb78af877c77}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Objects\Pickups">
       <UniqueIdentifier>{e2f2fcfe-fd0b-49a6-a83f-7b862b559c66}</UniqueIdentifier>
     </Filter>
@@ -114,9 +117,6 @@
     </Filter>
     <Filter Include="Obj_mgr\InputMgr">
       <UniqueIdentifier>{7906b102-abca-4b6b-b694-2c556e5561ff}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Obj_mgr\DeltaMgr">
-      <UniqueIdentifier>{c4acdb67-fb47-4530-a922-32dd25157e8d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Obj_mgr\ZoneMgr">
       <UniqueIdentifier>{11b9443c-ae55-4e93-9b97-a766dfd75dc8}</UniqueIdentifier>
@@ -161,9 +161,6 @@
     <Filter Include="Tracers">
       <UniqueIdentifier>{f54ac9d3-526c-493a-9f28-7083411e6956}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Cloth">
-      <UniqueIdentifier>{546a998b-1867-466f-9956-20769423443a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ragdoll">
       <UniqueIdentifier>{54982630-6af5-4ca7-ada2-303ca22bcc71}</UniqueIdentifier>
     </Filter>
@@ -194,7 +191,7 @@
     <Filter Include="DataVault">
       <UniqueIdentifier>{e2fbc7b5-ff28-455c-aec8-90ec5895273e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="MemCardMgr">
+    <Filter Include="SaveData">
       <UniqueIdentifier>{b35e7648-0c10-4049-b171-c6f019601ec9}</UniqueIdentifier>
     </Filter>
     <Filter Include="MoviePlayer">
@@ -325,12 +322,6 @@
     <ClCompile Include="..\Characters\CharacterState.cpp">
       <Filter>Actor\Characters\General\Base Character States</Filter>
     </ClCompile>
-    <ClCompile Include="..\Characters\Soldiers\Hazmat.cpp">
-      <Filter>Actor\Characters\Hazmat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Characters\Soldiers\HazmatLoco.cpp">
-      <Filter>Actor\Characters\Hazmat</Filter>
-    </ClCompile>
     <ClCompile Include="..\Characters\Gray\Gray.cpp">
       <Filter>Actor\Characters\Gray</Filter>
     </ClCompile>
@@ -376,15 +367,6 @@
     <ClCompile Include="..\Characters\Grunt\Leaper_Attack_State.cpp">
       <Filter>Actor\Characters\Grunt</Filter>
     </ClCompile>
-    <ClCompile Include="..\Characters\Soldiers\BlackOpps.cpp">
-      <Filter>Actor\Characters\BlackOpps</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Characters\Soldiers\BlackOpps_Attack_State.cpp">
-      <Filter>Actor\Characters\BlackOpps</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Characters\Soldiers\BlackOppsLoco.cpp">
-      <Filter>Actor\Characters\BlackOpps</Filter>
-    </ClCompile>
     <ClCompile Include="..\Characters\GenericNPC\GenericNPC.cpp">
       <Filter>Actor\Characters\GenericNPC</Filter>
     </ClCompile>
@@ -409,16 +391,7 @@
     <ClCompile Include="..\Objects\Ghost.cpp">
       <Filter>Actor\Player</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\Player.cpp">
-      <Filter>Actor\Player</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Menu\DebugMenu.cpp">
-      <Filter>DebugMenu</Filter>
-    </ClCompile>
     <ClCompile Include="..\Menu\DebugMenu2.cpp">
-      <Filter>DebugMenu</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Menu\DebugMenu_Main.cpp">
       <Filter>DebugMenu</Filter>
     </ClCompile>
     <ClCompile Include="..\Menu\DebugMenuAudio.cpp">
@@ -484,14 +457,14 @@
     <ClCompile Include="..\Decals\DecalPackage.cpp">
       <Filter>Decals</Filter>
     </ClCompile>
+    <ClCompile Include="..\Decals\DecalPackageFile.cpp">
+      <Filter>Decals</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Decals\StaticDecalFile.cpp">
+      <Filter>Decals</Filter>
+    </ClCompile>
     <ClCompile Include="..\Font\font.cpp">
       <Filter>Font</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Hud\Focus_Inst.cpp">
-      <Filter>HUd</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Hud\HUD.cpp">
-      <Filter>HUd</Filter>
     </ClCompile>
     <ClCompile Include="..\Objects\hud_Ammo.cpp">
       <Filter>HUd</Filter>
@@ -532,44 +505,8 @@
     <ClCompile Include="..\Objects\hud_Vote.cpp">
       <Filter>HUd</Filter>
     </ClCompile>
-    <ClCompile Include="..\Hud\RiftHUD.cpp">
-      <Filter>HUd</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Hud\SmartSprite.cpp">
-      <Filter>HUd</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Hud\HotkeyItemController.cpp">
-      <Filter>HUd\Controllers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Hud\HudControllerBase.cpp">
-      <Filter>HUd\Controllers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Hud\HudItemController.cpp">
-      <Filter>HUd\Controllers</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Inventory\Inventory.cpp">
-      <Filter>Inventory</Filter>
-    </ClCompile>
     <ClCompile Include="..\Inventory\Inventory2.cpp">
       <Filter>Inventory</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Inventory\InventoryBitmapResource.cpp">
-      <Filter>Inventory</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Inventory\InventoryItem.cpp">
-      <Filter>Inventory</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Inventory\CollectableAntiMutagen.cpp">
-      <Filter>Inventory\InventoryObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Inventory\CollectableHealthPack.cpp">
-      <Filter>Inventory\InventoryObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Inventory\CollectableKeyCard.cpp">
-      <Filter>Inventory\InventoryObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Inventory\GenericItem.cpp">
-      <Filter>Inventory\InventoryObjects</Filter>
     </ClCompile>
     <ClCompile Include="..\Locomotion\CharacterPhysics.cpp">
       <Filter>Loco</Filter>
@@ -614,9 +551,6 @@
       <Filter>Loco</Filter>
     </ClCompile>
     <ClCompile Include="..\Loco\LocoWheelController.cpp">
-      <Filter>Loco</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Locomotion\RiftyPhysics.cpp">
       <Filter>Loco</Filter>
     </ClCompile>
     <ClCompile Include="..\..\xCore\Auxiliary\MiscUtils\dictionary.cpp">
@@ -676,7 +610,13 @@
     <ClCompile Include="..\Objects\Cinema.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
+    <ClCompile Include="..\Objects\CinemaPlayback.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
     <ClCompile Include="..\Objects\Circuit.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Cloth.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
     <ClCompile Include="..\Objects\ClothObject.cpp">
@@ -698,9 +638,6 @@
       <Filter>Objects</Filter>
     </ClCompile>
     <ClCompile Include="..\Objects\DamageField.cpp">
-      <Filter>Objects</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Objects\DeadBody.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
     <ClCompile Include="..\Objects\DestructibleObj.cpp">
@@ -778,9 +715,6 @@
     <ClCompile Include="..\Objects\MP_Settings.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\MusicLogic.cpp">
-      <Filter>Objects</Filter>
-    </ClCompile>
     <ClCompile Include="..\Objects\MutagenReservoir.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
@@ -796,9 +730,6 @@
     <ClCompile Include="..\Objects\object.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\Pain.cpp">
-      <Filter>Objects</Filter>
-    </ClCompile>
     <ClCompile Include="..\Objects\ParticleEmiter.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
@@ -811,26 +742,92 @@
     <ClCompile Include="..\Objects\Pip.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\PlayerCombat.cpp">
-      <Filter>Objects</Filter>
+    <ClCompile Include="..\Objects\Player\PlayerAim.cpp">
+      <Filter>Objects\Player</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\PlayerInput.cpp">
-      <Filter>Objects</Filter>
+    <ClCompile Include="..\Objects\Player\PlayerAnimation.cpp">
+      <Filter>Objects\Player</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\PlayerLoco.cpp">
-      <Filter>Objects</Filter>
+    <ClCompile Include="..\Objects\Player\PlayerAudio.cpp">
+      <Filter>Objects\Player</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\PlayerObject.cpp">
-      <Filter>Objects</Filter>
+    <ClCompile Include="..\Objects\Player\PlayerCombat.cpp">
+      <Filter>Objects\Player</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\PlayerOnline.cpp">
-      <Filter>Objects</Filter>
+    <ClCompile Include="..\Objects\Player\PlayerCombatPolicy.cpp">
+      <Filter>Objects\Player</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\PlayerPhysics.cpp">
-      <Filter>Objects</Filter>
+    <ClCompile Include="..\Objects\Player\PlayerInput.cpp">
+      <Filter>Objects\Player</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\PlayerState.cpp">
-      <Filter>Objects</Filter>
+    <ClCompile Include="..\Objects\Player\PlayerInputAdapter.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerInputState.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerInventory.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerLoco.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerLook.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerLookPolicy.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerMovement.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerNet.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerObject.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerOnline.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerPhysics.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerRotation.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerProperties.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerRender.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerTraversal.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerStatus.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerView.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerViewPolicy.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerCinemaPolicy.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerDeathCamera.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerMutation.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerWeapon.cpp">
+      <Filter>Objects\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Player\PlayerState.cpp">
+      <Filter>Objects\Player</Filter>
     </ClCompile>
     <ClCompile Include="..\Objects\PlaySurface.cpp">
       <Filter>Objects</Filter>
@@ -892,9 +889,6 @@
     <ClCompile Include="..\Objects\Teleporter.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\ThirdPersonCamera.cpp">
-      <Filter>Objects</Filter>
-    </ClCompile>
     <ClCompile Include="..\Objects\Tracker.cpp">
       <Filter>Objects</Filter>
     </ClCompile>
@@ -906,15 +900,6 @@
     </ClCompile>
     <ClCompile Include="..\Objects\VolumetricLight.cpp">
       <Filter>Objects</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Objects\BoostPickup.cpp">
-      <Filter>Objects\Pickups</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Objects\DefencePickup.cpp">
-      <Filter>Objects\Pickups</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Objects\HealthPickup.cpp">
-      <Filter>Objects\Pickups</Filter>
     </ClCompile>
     <ClCompile Include="..\Objects\Pickup.cpp">
       <Filter>Objects\Pickups</Filter>
@@ -929,9 +914,6 @@
       <Filter>Objects\Debris</Filter>
     </ClCompile>
     <ClCompile Include="..\Debris\debris_frag_explosion.cpp">
-      <Filter>Objects\Debris</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Debris\debris_glass.cpp">
       <Filter>Objects\Debris</Filter>
     </ClCompile>
     <ClCompile Include="..\Debris\debris_glass_cluster.cpp">
@@ -988,12 +970,6 @@
     <ClCompile Include="..\InputMgr\GamePad.cpp">
       <Filter>Obj_mgr\InputMgr</Filter>
     </ClCompile>
-    <ClCompile Include="..\DeltaMgr\DeltaMgr.cpp">
-      <Filter>Obj_mgr\DeltaMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\DeltaMgr\InterpolationMgr.cpp">
-      <Filter>Obj_mgr\DeltaMgr</Filter>
-    </ClCompile>
     <ClCompile Include="..\ZoneMgr\ZoneMgr.cpp">
       <Filter>Obj_mgr\ZoneMgr</Filter>
     </ClCompile>
@@ -1027,16 +1003,13 @@
     <ClCompile Include="..\navigation\ng_node2.cpp">
       <Filter>Navigation</Filter>
     </ClCompile>
-    <ClCompile Include="..\Periodical\Periodical.cpp">
-      <Filter>Periodical</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Periodical\Periodical_mgr.cpp">
-      <Filter>Periodical</Filter>
-    </ClCompile>
     <ClCompile Include="..\Objects\Render\PostEffectMgr.cpp">
       <Filter>Render</Filter>
     </ClCompile>
     <ClCompile Include="..\Objects\Render\RenderInst.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Objects\Render\ClothInst.cpp">
       <Filter>Render</Filter>
     </ClCompile>
     <ClCompile Include="..\Objects\Render\RigidInst.cpp">
@@ -1231,9 +1204,6 @@
     <ClCompile Include="..\Tracers\TracerMgr.cpp">
       <Filter>Tracers</Filter>
     </ClCompile>
-    <ClCompile Include="..\Cloth\Cloth.cpp">
-      <Filter>Cloth</Filter>
-    </ClCompile>
     <ClCompile Include="..\Ragdoll\DistRule.cpp">
       <Filter>ragdoll</Filter>
     </ClCompile>
@@ -1247,12 +1217,6 @@
       <Filter>ragdoll</Filter>
     </ClCompile>
     <ClCompile Include="..\Ragdoll\HazmatRagdoll.cpp">
-      <Filter>ragdoll</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ragdoll\HumanRagdoll.cpp">
-      <Filter>ragdoll</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Ragdoll\Mutant3Ragdoll.cpp">
       <Filter>ragdoll</Filter>
     </ClCompile>
     <ClCompile Include="..\Ragdoll\MutantTankRagdoll.cpp">
@@ -1294,13 +1258,7 @@
     <ClCompile Include="..\Objects\WeaponDualSMP.cpp">
       <Filter>Weapons\Weapon Objects</Filter>
     </ClCompile>
-    <ClCompile Include="..\Objects\WeaponFragGrenade.cpp">
-      <Filter>Weapons\Weapon Objects</Filter>
-    </ClCompile>
     <ClCompile Include="..\Objects\WeaponGauss.cpp">
-      <Filter>Weapons\Weapon Objects</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Objects\WeaponGravCharge.cpp">
       <Filter>Weapons\Weapon Objects</Filter>
     </ClCompile>
     <ClCompile Include="..\Objects\WeaponMHG.cpp">
@@ -1354,12 +1312,6 @@
     <ClCompile Include="..\Dialogs\dlg_MainMenu.cpp">
       <Filter>Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="..\Dialogs\dlg_MainOptions.cpp">
-      <Filter>Dialogs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dialogs\dlg_MCMessage.cpp">
-      <Filter>Dialogs</Filter>
-    </ClCompile>
     <ClCompile Include="..\Dialogs\dlg_MultiOptions.cpp">
       <Filter>Dialogs</Filter>
     </ClCompile>
@@ -1397,6 +1349,12 @@
       <Filter>Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="..\Dialogs\dlg_ProfileControls.cpp">
+      <Filter>Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Dialogs\dlg_ProfileGamepadControls.cpp">
+      <Filter>Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Dialogs\dlg_ProfileMouseControls.cpp">
       <Filter>Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="..\Dialogs\dlg_ProfileName.cpp">
@@ -1441,50 +1399,14 @@
     <ClCompile Include="..\DataVault\DataVault.cpp">
       <Filter>DataVault</Filter>
     </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_BootCheck.cpp">
-      <Filter>MemCardMgr</Filter>
+    <ClCompile Include="..\SaveData\Backend\SaveDataBackend_Windows.cpp">
+      <Filter>SaveData</Filter>
     </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_CreateProfile.cpp">
-      <Filter>MemCardMgr</Filter>
+    <ClCompile Include="..\SaveData\SaveDataCodec.cpp">
+      <Filter>SaveData</Filter>
     </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_DeleteContent.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_DeleteProfile.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_Format.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_LoadContent.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_LoadProfile.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_LoadSettings.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_PollCards.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_PollContent.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_SaveContent.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_SaveProfile.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\Action_SaveSettings.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\MemCardMgr.cpp">
-      <Filter>MemCardMgr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\MemCardMgr\MemCardMgrDialog.cpp">
-      <Filter>MemCardMgr</Filter>
+    <ClCompile Include="..\SaveData\SaveDataMgr.cpp">
+      <Filter>SaveData</Filter>
     </ClCompile>
     <ClCompile Include="..\MoviePlayer\MoviePlayer.cpp">
       <Filter>MoviePlayer</Filter>
@@ -1728,8 +1650,8 @@
     <ClInclude Include="..\Objects\Ghost.hpp">
       <Filter>Actor\Player</Filter>
     </ClInclude>
-    <ClInclude Include="..\Objects\Player.hpp">
-      <Filter>Actor\Player</Filter>
+    <ClInclude Include="..\Objects\Player\Player.hpp">
+      <Filter>Objects\Player</Filter>
     </ClInclude>
     <ClInclude Include="..\Menu\DebugMenu.hpp">
       <Filter>DebugMenu</Filter>
@@ -1795,6 +1717,12 @@
       <Filter>Decals</Filter>
     </ClInclude>
     <ClInclude Include="..\Decals\DecalPackage.hpp">
+      <Filter>Decals</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Decals\DecalPackageFile.hpp">
+      <Filter>Decals</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Decals\StaticDecalFile.hpp">
       <Filter>Decals</Filter>
     </ClInclude>
     <ClInclude Include="..\Font\font.hpp">
@@ -2001,7 +1929,13 @@
     <ClInclude Include="..\Objects\Cinema.hpp">
       <Filter>Objects</Filter>
     </ClInclude>
+    <ClInclude Include="..\Objects\CinemaPlayback.hpp">
+      <Filter>Objects</Filter>
+    </ClInclude>
     <ClInclude Include="..\Objects\Circuit.hpp">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Cloth.hpp">
       <Filter>Objects</Filter>
     </ClInclude>
     <ClInclude Include="..\Objects\ClothObject.hpp">
@@ -2139,8 +2073,41 @@
     <ClInclude Include="..\Objects\Pip.hpp">
       <Filter>Objects</Filter>
     </ClInclude>
-    <ClInclude Include="..\Objects\PlayerLoco.hpp">
-      <Filter>Objects</Filter>
+    <ClInclude Include="..\Objects\Player\PlayerAnimation.hpp">
+      <Filter>Objects\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Player\PlayerCombat.hpp">
+      <Filter>Objects\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Player\PlayerDefines.hpp">
+      <Filter>Objects\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Player\PlayerInput.hpp">
+      <Filter>Objects\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Player\PlayerInventory.hpp">
+      <Filter>Objects\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Player\PlayerLoco.hpp">
+      <Filter>Objects\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Player\PlayerLook.hpp">
+      <Filter>Objects\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Player\PlayerMovement.hpp">
+      <Filter>Objects\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Player\PlayerStatus.hpp">
+      <Filter>Objects\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Player\PlayerView.hpp">
+      <Filter>Objects\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Player\PlayerCinema.hpp">
+      <Filter>Objects\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Player\PlayerDeathCamera.hpp">
+      <Filter>Objects\Player</Filter>
     </ClInclude>
     <ClInclude Include="..\Objects\PlaySurface.hpp">
       <Filter>Objects</Filter>
@@ -2200,9 +2167,6 @@
       <Filter>Objects</Filter>
     </ClInclude>
     <ClInclude Include="..\Objects\Teleporter.hpp">
-      <Filter>Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Objects\ThirdPersonCamera.hpp">
       <Filter>Objects</Filter>
     </ClInclude>
     <ClInclude Include="..\Objects\Tracker.hpp">
@@ -2301,12 +2265,6 @@
     <ClInclude Include="..\InputMgr\GamePad.hpp">
       <Filter>Obj_mgr\InputMgr</Filter>
     </ClInclude>
-    <ClInclude Include="..\DeltaMgr\DeltaMgr.hpp">
-      <Filter>Obj_mgr\DeltaMgr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DeltaMgr\InterpolationMgr.hpp">
-      <Filter>Obj_mgr\DeltaMgr</Filter>
-    </ClInclude>
     <ClInclude Include="..\ZoneMgr\ZoneMgr.hpp">
       <Filter>Obj_mgr\ZoneMgr</Filter>
     </ClInclude>
@@ -2350,6 +2308,9 @@
       <Filter>Render</Filter>
     </ClInclude>
     <ClInclude Include="..\Objects\Render\RenderInst.hpp">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Objects\Render\ClothInst.hpp">
       <Filter>Render</Filter>
     </ClInclude>
     <ClInclude Include="..\Objects\Render\RigidInst.hpp">
@@ -2544,9 +2505,6 @@
     <ClInclude Include="..\Tracers\TracerMgr.hpp">
       <Filter>Tracers</Filter>
     </ClInclude>
-    <ClInclude Include="..\Cloth\Cloth.hpp">
-      <Filter>Cloth</Filter>
-    </ClInclude>
     <ClInclude Include="..\Ragdoll\DistRule.hpp">
       <Filter>ragdoll</Filter>
     </ClInclude>
@@ -2670,9 +2628,6 @@
     <ClInclude Include="..\Dialogs\dlg_MainOptions.hpp">
       <Filter>Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="..\Dialogs\dlg_MCMessage.hpp">
-      <Filter>Dialogs</Filter>
-    </ClInclude>
     <ClInclude Include="..\Dialogs\dlg_MultiOptions.hpp">
       <Filter>Dialogs</Filter>
     </ClInclude>
@@ -2710,6 +2665,12 @@
       <Filter>Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\Dialogs\dlg_ProfileControls.hpp">
+      <Filter>Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dialogs\dlg_ProfileGamepadControls.hpp">
+      <Filter>Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dialogs\dlg_ProfileMouseControls.hpp">
       <Filter>Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\Dialogs\dlg_ProfileName.hpp">
@@ -2754,8 +2715,17 @@
     <ClInclude Include="..\DataVault\DataVault.hpp">
       <Filter>DataVault</Filter>
     </ClInclude>
-    <ClInclude Include="..\MemCardMgr\MemCardMgr.hpp">
-      <Filter>MemCardMgr</Filter>
+    <ClInclude Include="..\SaveData\Backend\SaveDataBackend.hpp">
+      <Filter>SaveData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SaveData\SaveDataCodec.hpp">
+      <Filter>SaveData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SaveData\SaveDataMgr.hpp">
+      <Filter>SaveData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SaveData\SaveDataTypes.hpp">
+      <Filter>SaveData</Filter>
     </ClInclude>
     <ClInclude Include="..\MoviePlayer\MoviePlayer.hpp">
       <Filter>MoviePlayer</Filter>

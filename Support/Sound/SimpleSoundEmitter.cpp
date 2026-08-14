@@ -1,16 +1,19 @@
 //==============================================================================
-// SOUND EMITTERS
+// 
+// SimpleSoundEmitter.cpp
+//
 //==============================================================================
 
 //==============================================================================
 // INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "SimpleSoundEmitter.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "gamelib\StatsMgr.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "Audio\audio_stream_controller.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "Audio/audio_stream_controller.hpp"
 
 //=========================================================================
 // GLOBALS
@@ -30,8 +33,8 @@ extern audio_stream_controller g_ConversationStreamControl;
 // OBJECT DESCRIPTION
 //=========================================================================
 
-//=========================================================================
-static struct simple_sound_emitter_desc : public object_desc
+static 
+struct simple_sound_emitter_desc : public object_desc
 {
     simple_sound_emitter_desc( void ) : object_desc( 
         object::TYPE_SIMPLE_SND_EMITTER, 
@@ -58,9 +61,9 @@ static struct simple_sound_emitter_desc : public object_desc
 
         if( (Object. GetAttrBits() & object::ATTR_EDITOR_SELECTED) || 
             (Object.GetAttrBits() & object::ATTR_EDITOR_PLACEMENT_OBJECT) )
-            EditorIcon_Draw(EDITOR_ICON_SPEAKER, Object.GetL2W(), TRUE, XCOLOR_BLUE );
+            DrawEditorIcon(EditorIcon::Speaker, Object.GetL2W(), TRUE, XCOLOR_BLUE );
         else
-            EditorIcon_Draw(EDITOR_ICON_SPEAKER, Object.GetL2W(), FALSE, XCOLOR_AQUA );
+            DrawEditorIcon(EditorIcon::Speaker, Object.GetL2W(), FALSE, XCOLOR_AQUA );
         
         Object.OnDebugRender();
 
@@ -87,8 +90,6 @@ const object_desc&  simple_sound_emitter::GetObjectType( void )
 
 //=========================================================================
 // FUNCTIONS
-//=========================================================================
-
 //=========================================================================
 
 simple_sound_emitter::simple_sound_emitter( void ) 
@@ -206,22 +207,22 @@ void simple_sound_emitter::OnDebugRender( void )
 {
     if( (GetAttrBits() & ATTR_EDITOR_SELECTED) || (GetAttrBits() & ATTR_EDITOR_PLACEMENT_OBJECT) )
     {
-        draw_BBox( GetBBox(), XCOLOR_RED );
+        render::debug::Box( GetBBox(), XCOLOR_RED );
     }
     else
     {
-        //draw_BBox( GetBBox(), XCOLOR_WHITE );
+        //render::debug::Box( GetBBox(), XCOLOR_WHITE );
     }
 }
 #endif // X_RETAIL
 
 //=========================================================================
 
-void simple_sound_emitter::OnAdvanceLogic ( f32 DeltaTime )
+void simple_sound_emitter::OnAdvanceSimulation ( f32 DeltaTime )
 {
     LOG_STAT(k_stats_Sound);
 	
-    CONTEXT( "sound_emitter::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "sound_emitter::OnAdvanceSimulation" );
     (void)DeltaTime;
     
     // Play synchronous.

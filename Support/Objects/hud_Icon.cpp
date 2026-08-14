@@ -12,13 +12,18 @@
 
 #include "hud_Icon.hpp"
 #include "HudObject.hpp"
-#include "Ui\ui_manager.hpp"
-#include "Ui\ui_font.hpp"
-#include "GameLib\RenderContext.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_renderer.hpp"
+#include "GameLib/RenderContext.hpp"
 
 #ifndef X_EDITOR
-#include "StateMgr\StateMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
 #endif
+
+static f32 const ICON_FADE_IN_RATE  = 1.4f;
+static f32 const ICON_FADE_OUT_RATE = 1.4f;
+static f32 const ENEMY_LOCK_TIME    = 0.33f;
 
 //==============================================================================
 // FUNCTIONS
@@ -34,14 +39,26 @@ hud_icon::hud_icon( void )
 void hud_icon::Init( void )
 {
     m_NumActiveIcons    = 0;
+    m_NumStagingIcons   = 0;
+    x_memset( m_PlayerIconVisible,    0, sizeof(m_PlayerIconVisible) );
+    x_memset( m_PlayerIconIsAlly,     0, sizeof(m_PlayerIconIsAlly) );
+    x_memset( m_PlayerIconOpacity,    0, sizeof(m_PlayerIconOpacity) );
+    x_memset( m_PlayerIconSightDelay, 0, sizeof(m_PlayerIconSightDelay) );
 }
 
 //==============================================================================
 
-void hud_icon::AddIcon(         icon_type       IconType, 
+void hud_icon::BeginSimulationSnapshot( void )
+{
+    m_NumStagingIcons = 0;
+    x_memset( m_PlayerIconVisible, 0, sizeof(m_PlayerIconVisible) );
+}
+
+//==============================================================================
+
+void hud_icon::SubmitIcon(      icon_type       IconType,
                         const   vector3&        FocusPosition,
                         const   vector3&        RenderPosition,
-                                xbool           bOccludes,
                                 xbool           bAlignToBottom,
                                 gutter_type     GutterType, 
                                 xcolor          Color,
@@ -50,10 +67,11 @@ void hud_icon::AddIcon(         icon_type       IconType,
                                 xbool           Distance, 
                                 f32             Opacity,
                                 f32             IconFadeDist,
-                                f32             TextFadeDist
+                                f32             TextFadeDist,
+                                s32             PlayerNum
                        )
 {
-    if( !IN_RANGE( 0, m_NumActiveIcons, NUM_ICONS - 1 ) )
+    if( !IN_RANGE( 0, m_NumStagingIcons, NUM_ICONS - 1 ) )
     {
         return;
     }
@@ -70,7 +88,6 @@ void hud_icon::AddIcon(         icon_type       IconType,
     TempIcon.IconType       = IconType;
     TempIcon.FocusPosition  = FocusPosition;
     TempIcon.RenderPosition = RenderPosition;
-    TempIcon.bOccludes      = bOccludes;
     TempIcon.bAlignToBottom = bAlignToBottom;
     TempIcon.GutterType     = GutterType;
     TempIcon.Color          = Color;
@@ -79,68 +96,118 @@ void hud_icon::AddIcon(         icon_type       IconType,
     TempIcon.IconFadeDist   = IconFadeDist;
     TempIcon.TextFadeDist   = TextFadeDist;
     TempIcon.Opacity        = Opacity;
+    TempIcon.PlayerNum      = PlayerNum;
 
     // Copy the label over.
     if( pCharName )     x_wstrcpy( TempIcon.Label, pCharName );
     else                TempIcon.Label[0] = '\0';
 
-    m_Icons[ m_NumActiveIcons ] = TempIcon;
-    m_NumActiveIcons++;
+    m_StagingIcons[m_NumStagingIcons] = TempIcon;
+    m_NumStagingIcons++;
 
-    ASSERTS( IN_RANGE( 0, m_NumActiveIcons, NUM_ICONS - 1 ), "Too many icons!" );
+    ASSERTS( m_NumStagingIcons <= NUM_ICONS, "Too many icons!" );
 }
 
 //==============================================================================
 
-void hud_icon::RenderIcon( player* pPlayer, icon_inf& Icon )
+void hud_icon::SetPlayerIconTarget( s32 PlayerNum, xbool Visible, xbool IsAlly )
 {
-    f32 Margin     = 0.85f;
-    f32 Hud_Width  = m_ViewDimensions.GetWidth()  / 2.0f;
-    f32 Hud_Height = m_ViewDimensions.GetHeight() / 2.0f;
+    if( !IN_RANGE( 0, PlayerNum, 31 ) )
+    {
+        return;
+    }
 
-    view& rView = pPlayer->GetInterpView();
-    rView.GetViewport( m_ViewDimensions );
+    m_PlayerIconVisible[PlayerNum] = Visible;
+    m_PlayerIconIsAlly[PlayerNum] = IsAlly;
+}
 
-    vector3 RenderWorldPos = Icon.RenderPosition;
-    vector3 EyesWorldPos   = pPlayer->GetEyesPosition();
-    vector3 TargetWorldPos = Icon.FocusPosition;
+//==============================================================================
+
+void hud_icon::CommitSimulationSnapshot( void )
+{
+    if( m_NumStagingIcons > 0 )
+    {
+        x_memcpy( m_Icons,
+                  m_StagingIcons,
+                  sizeof(icon_inf) * m_NumStagingIcons );
+    }
+    m_NumActiveIcons = m_NumStagingIcons;
+}
+
+//==============================================================================
+
+void hud_icon::RenderIcon( player* pPlayer, const icon_inf& Icon )
+{
+    const view& rView = pPlayer->GetRenderView();
+    rect ScreenViewDimensions;
+    rView.GetViewport( ScreenViewDimensions );
+
+    const irect ScreenViewport( (s32)ScreenViewDimensions.Min.X,
+                                (s32)ScreenViewDimensions.Min.Y,
+                                (s32)ScreenViewDimensions.Max.X,
+                                (s32)ScreenViewDimensions.Max.Y );
+    const rect ViewDimensions = g_UIRenderer.GetViewport().GetHudBounds( ScreenViewport );
+
+    const f32 Margin     = 0.85f;
+    const f32 Hud_Width  = ViewDimensions.GetWidth()  / 2.0f;
+    const f32 Hud_Height = ViewDimensions.GetHeight() / 2.0f;
+
+    const f32 IconOpacity = IN_RANGE( 0, Icon.PlayerNum, 31 )
+                          ? m_PlayerIconOpacity[Icon.PlayerNum]
+                          : Icon.Opacity;
+    if( IconOpacity <= 0.0f )
+    {
+        return;
+    }
+
+    const vector3 RenderWorldPos = Icon.RenderPosition;
+    const vector3 EyesWorldPos   = pPlayer->GetEyesPosition();
+    const vector3 TargetWorldPos = Icon.FocusPosition;
 
     vector3 WorldToTarget  = TargetWorldPos - EyesWorldPos;
     f32     WorldDist      = WorldToTarget.Length();
 
-    //
-    // If icon can be occluded, check for visibility.
-    //
-    if( Icon.bOccludes )
+    const vector3 FocusScreenPos  = rView.PointToScreen( TargetWorldPos );
+    const vector3 RenderScreenPos = rView.PointToScreen( RenderWorldPos );
+    const vector3 RenderViewPos   = rView.ConvertW2V( RenderWorldPos );
+    const vector2 FocusHudPosition = g_UIRenderer.GetViewport().ScreenToHud(
+        vector2( FocusScreenPos.GetX(), FocusScreenPos.GetY() ), ScreenViewport );
+    const vector2 RenderHudPosition = g_UIRenderer.GetViewport().ScreenToHud(
+        vector2( RenderScreenPos.GetX(), RenderScreenPos.GetY() ), ScreenViewport );
+    vector3 FocusHudPos( FocusHudPosition.X, FocusHudPosition.Y, FocusScreenPos.GetZ() );
+    vector3 RenderHudPos( RenderHudPosition.X, RenderHudPosition.Y, RenderScreenPos.GetZ() );
+
+    const vector3 HudCenterPos( ViewDimensions.GetCenter().X,
+                                ViewDimensions.GetCenter().Y,
+                                0.0f );
+    const f32 HalfWidth  = MAX( Hud_Width  * Margin, 1.0f );
+    const f32 HalfHeight = MAX( Hud_Height * Margin, 1.0f );
+    const xbool IsBehind = RenderViewPos.GetZ() <= 0.001f;
+
+    // PointToScreen projects with abs(Z) for points behind the camera, so its
+    // X/Y already identify the correct screen edge. Do not invert them again.
+    vector3 DirToIcon = RenderHudPos - HudCenterPos;
+    DirToIcon.GetZ() = 0.0f;
+
+    if( DirToIcon.LengthSquared() < 0.0001f )
     {
-        g_CollisionMgr.LineOfSightSetup( pPlayer->GetGuid(), EyesWorldPos, TargetWorldPos );
-        // Only need one collision to block LOS.
-        g_CollisionMgr.SetMaxCollisions(1);
-
-        // Perform collision
-        g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, 
-            object::ATTR_COLLIDABLE, 
-            (object::object_attr)(object::ATTR_COLLISION_PERMEABLE|object::ATTR_LIVING) );
-
-        if( g_CollisionMgr.m_nCollisions > 0 )
+        if( IsBehind )
         {
-            return;
+            // A target exactly on the rear camera axis has no left/right
+            // preference. Keep the indicator stable at the bottom edge.
+            DirToIcon.Set( 0.0f, 1.0f, 0.0f );
+        }
+        else
+        {
+            DirToIcon.Set( -RenderViewPos.GetX(), -RenderViewPos.GetY(), 0.0f );
+            if( DirToIcon.LengthSquared() < 0.0001f )
+            {
+                DirToIcon.Set( 0.0f, 1.0f, 0.0f );
+            }
         }
     }
 
-    vector3 FocusScreenPos  ( rView.PointToScreen( TargetWorldPos ) );
-    vector3 RenderScreenPos ( rView.PointToScreen( RenderWorldPos ) );
-
-    vector3 ScreenCenterPos ( m_XPos, m_YPos, 0.0f );
-
-
-
-    // Find the dir to the icon from the screen center.
-    vector3 DirToIcon = RenderScreenPos - ScreenCenterPos;
-    DirToIcon.GetZ() = 0.0f;
-    DirToIcon.Normalize();
-
-    xbool   InRegion  = FALSE;
+    xbool InRegion = FALSE;
 
     //
     // Figure out what the icon's position on the screen should be
@@ -149,151 +216,46 @@ void hud_icon::RenderIcon( player* pPlayer, icon_inf& Icon )
     switch( Icon.GutterType )
     {
     case GUTTER_ELLIPSE:
-        // Check to see if the point is inside of the ellipse, 
-        // we will scale the point and do point in sphere check. 
         {
-            vector3 EllipsePos( ((DirToIcon.GetX() * Hud_Width  * Margin) + m_XPos),
-                ((DirToIcon.GetY() * Hud_Height * Margin) + m_YPos),
-                0.0f );
-
-            // Which is the smallest axis?
-            if( Hud_Width > Hud_Height )
+            const f32 RelativeX = RenderHudPos.GetX() - HudCenterPos.GetX();
+            const f32 RelativeY = RenderHudPos.GetY() - HudCenterPos.GetY();
+            const f32 EllipseValue = (RelativeX * RelativeX) / (HalfWidth  * HalfWidth ) +
+                                     (RelativeY * RelativeY) / (HalfHeight * HalfHeight);
+            InRegion = !IsBehind && (EllipseValue <= 1.0f);
+            if( !InRegion )
             {
-                // Y Axis.
-                f32 Sx = Hud_Height/Hud_Width;
-                vector3 InterPoint( RenderScreenPos );
-
-                // Bring it in to normal coordinate system.
-                InterPoint.GetX() -= Hud_Width;
-                InterPoint.GetY() -= Hud_Height;
-                InterPoint.GetZ()  = 0.0f;
-                InterPoint.GetX() *= Sx;
-
-                f32 LenghtSqrd = InterPoint.LengthSquared();
-                if( LenghtSqrd <= (Hud_Height*Hud_Height*Margin*Margin) && 
-                    (RenderScreenPos.GetZ() > 0.0f) )
-                {
-                    InRegion = TRUE;
-                }
-                else
-                {
-                    RenderScreenPos = EllipsePos;
-                }
-            }
-            else
-            {
-                // X Axis.
-                f32 Sx = Hud_Width/Hud_Height;
-                vector3 InterPoint( RenderScreenPos );
-                InterPoint.GetZ() = 0.0f;
-
-                // Bring it in to normal coordinate system.
-                InterPoint.GetX() -= Hud_Width;
-                InterPoint.GetY() -= Hud_Width;
-                InterPoint.GetZ()  = 0.0f;
-                InterPoint.GetY() *= Sx;
-
-                f32 LengthSqrd = InterPoint.LengthSquared();
-                if( LengthSqrd <= (Hud_Width*Hud_Width*Margin*Margin) && 
-                    (RenderScreenPos.GetZ() > 0.0f) )
-                {
-                    InRegion = TRUE;
-                }
-                else
-                {
-                    RenderScreenPos = EllipsePos;
-                }
+                const f32 Denominator = x_sqrt(
+                    (DirToIcon.GetX() * DirToIcon.GetX()) / (HalfWidth  * HalfWidth ) +
+                    (DirToIcon.GetY() * DirToIcon.GetY()) / (HalfHeight * HalfHeight) );
+                const f32 RayScale = (Denominator > 0.0001f) ? (1.0f / Denominator) : 0.0f;
+                RenderHudPos = HudCenterPos + DirToIcon * RayScale;
             }
         }
         break;
 
     case GUTTER_RECTANGLE:
         {
-            // Is it outside of a box?
-
-            if( (x_abs( RenderScreenPos.GetX() - m_XPos) > (Hud_Width  * Margin))  ||
-                (x_abs( RenderScreenPos.GetY() - m_YPos) > (Hud_Height * Margin))  ||
-                (RenderScreenPos.GetZ() < 0.0f) )
+            const f32 RelativeX = RenderHudPos.GetX() - HudCenterPos.GetX();
+            const f32 RelativeY = RenderHudPos.GetY() - HudCenterPos.GetY();
+            InRegion = !IsBehind &&
+                       (x_abs( RelativeX ) <= HalfWidth) &&
+                       (x_abs( RelativeY ) <= HalfHeight);
+            if( !InRegion )
             {
-                vector3 ScreenPoints[4] = { vector3( (m_XPos - Hud_Width * Margin), (m_YPos - Hud_Height * Margin), 0.0f ),
-                    vector3( (m_XPos + Hud_Width * Margin), (m_YPos - Hud_Height * Margin), 0.0f ),
-                    vector3( (m_XPos + Hud_Width * Margin), (m_YPos + Hud_Height * Margin), 0.0f ),
-                    vector3( (m_XPos - Hud_Width * Margin), (m_YPos + Hud_Height * Margin), 0.0f ) };
-
-
-                vector3 IconPos = RenderScreenPos;
-
-                // Make sure that it's outside the box if it's behind us.
-                IconPos.GetZ() = 0.0f;
-
-                vector3 DirVec = IconPos - ScreenCenterPos;
-                IconPos = (((Hud_Width * 3.0f) / DirVec.Length()) * DirVec) + ScreenCenterPos;
-
-                /*
-                // Debug code.
-                draw_Begin( DRAW_LINES, DRAW_2D, DRAW_UI_RTARGET );
-                xcolor DrawColor = XCOLOR_GREEN;
-                draw_Color( DrawColor );
-
-                draw_Vertex( ScreenPoints[ 0 ] );
-                draw_Vertex( ScreenPoints[ 1 ] );
-
-                DrawColor = XCOLOR_YELLOW;
-                draw_Color( DrawColor );
-
-                draw_Vertex( ScreenPoints[ 1 ] );
-                draw_Vertex( ScreenPoints[ 2 ] );
-
-                DrawColor = XCOLOR_BLUE;
-                draw_Color( DrawColor );
-
-                draw_Vertex( ScreenPoints[ 2 ] );
-                draw_Vertex( ScreenPoints[ 3 ] );
-
-                DrawColor = XCOLOR_PURPLE;
-                draw_Color( DrawColor );
-
-                draw_Vertex( ScreenPoints[ 3 ] );
-                draw_Vertex( ScreenPoints[ 0 ] );
-
-                DrawColor = XCOLOR_RED;
-                draw_Color( DrawColor );
-
-                draw_Vertex( ScreenCenterPos );
-                draw_Vertex( IconPos );
-
-                draw_End();
-                */
-
-                for( s32 i = 0; i < 4; i++ )
-                {
-                    vector3 ClosestPoint1, ClosestPoint2;
-
-                    // Find the intersection point.
-                    x_ClosestPtsOnLineSegs( ScreenPoints[ i ], ScreenPoints[ (i + 1) % 4 ], 
-                        ScreenCenterPos, IconPos, 
-                        ClosestPoint1, ClosestPoint2 );
-
-                    // It should intersect at least one of the lines.
-                    if( (ClosestPoint1 - ClosestPoint2).LengthSquared() < 0.1f )
-                    {
-                        RenderScreenPos = ClosestPoint1;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                InRegion = TRUE;
+                const f32 ScaleX = (x_abs( DirToIcon.GetX() ) > 0.0001f)
+                                 ? HalfWidth / x_abs( DirToIcon.GetX() )
+                                 : F32_MAX;
+                const f32 ScaleY = (x_abs( DirToIcon.GetY() ) > 0.0001f)
+                                 ? HalfHeight / x_abs( DirToIcon.GetY() )
+                                 : F32_MAX;
+                RenderHudPos = HudCenterPos + DirToIcon * MIN( ScaleX, ScaleY );
             }
         }
         break;
 
     case GUTTER_NONE:
         InRegion = TRUE;
-
-        // So that it doesn't render behind the player.
-        if( RenderScreenPos.GetZ() < 0.0f )
+        if( IsBehind )
         {
             return;
         }
@@ -303,9 +265,9 @@ void hud_icon::RenderIcon( player* pPlayer, icon_inf& Icon )
         break;
     }
 
-    RenderScreenPos.GetZ() = 0.0f;
-    FocusScreenPos.GetZ() = 0.0f;
-    f32 ScreenDist = (FocusScreenPos - ScreenCenterPos).Length();
+    RenderHudPos.GetZ() = 0.0f;
+    FocusHudPos.GetZ() = 0.0f;
+    const f32 HudDistance = (FocusHudPos - HudCenterPos).Length();
 
     //
     // Draw the icon.
@@ -318,22 +280,18 @@ void hud_icon::RenderIcon( player* pPlayer, icon_inf& Icon )
 
         if( !InRegion )
         {
-            BitmapRotation = v3_AngleBetween( vector3( 0.0f,             1.0f,             0.0f ), 
-                vector3( DirToIcon.GetX(), DirToIcon.GetY(), 0.0f ) );
-
-            // Since angle between returns the smallest angle only, 
-            // we need to flip it on the left side of the screen.
-            if( DirToIcon.GetX() < 0.0f ) 
-                BitmapRotation *= -1.0f;
+            BitmapRotation = x_atan2( DirToIcon.GetX(), DirToIcon.GetY() );
         }
 
         m_ScreenEdgeBmp.SetName( PRELOAD_FILE("Hud_icon.xbmp") );
 
-        xbitmap* pBitmap = m_ScreenEdgeBmp.GetPointer();
-        if( pBitmap == NULL )
+        texture* pTexture = m_ScreenEdgeBmp.GetPointer();
+        if( pTexture == NULL )
         {
             return;
         }
+
+        const xbitmap& Bitmap = pTexture->m_bitmap;
 
         f32 IconMargin = 0.01f;
 
@@ -344,7 +302,7 @@ void hud_icon::RenderIcon( player* pPlayer, icon_inf& Icon )
         f32 x2 = x1 + 0.25f - (2.0f * IconMargin);
         f32 y2 = y1 + 0.25f - (2.0f * IconMargin);
                            
-        vector2 WH( (f32)pBitmap->GetWidth() / 4.0f, (f32)pBitmap->GetHeight() / 4.0f );
+        vector2 WH( (f32)Bitmap.GetWidth() / 4.0f, (f32)Bitmap.GetHeight() / 4.0f );
 
 
         if( (Icon.IconType == ICON_FLAG_INNER) || 
@@ -363,18 +321,26 @@ void hud_icon::RenderIcon( player* pPlayer, icon_inf& Icon )
         vector2 UV1(  x2, y2 );
 
         xcolor  Color            = Icon.Color;
-        Color.A                  = (s32)(GetOpacity( ScreenDist, Icon.Opacity, Icon.IconFadeDist ) * 255); 
+        Color.A                  = (s32)(GetOpacity( HudDistance, IconOpacity, Icon.IconFadeDist ) * 255);
 
         if( Icon.bAlignToBottom )
         {
-            RenderScreenPos.GetY() -= 8.0f;
+            RenderHudPos.GetY() -= 8.0f;
         }
 
-        // Draw the icon.
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZWRITE|DRAW_UV_CLAMP );                
-        draw_SetTexture( *pBitmap );
-        draw_SpriteUV( RenderScreenPos, WH, UV0, UV1, Color, BitmapRotation ); 
-        draw_End();
+        // The legacy rotated-sprite API treated Position as the sprite center.
+        // DrawImage uses the top-left corner, so preserve the original anchor.
+        const vector2 DrawPosition( RenderHudPos.GetX() - WH.X * 0.5f,
+                                    RenderHudPos.GetY() - WH.Y * 0.5f );
+        g_UIRenderer.DrawImage( *pTexture,
+                                DrawPosition,
+                                WH,
+                                UV0,
+                                UV1,
+                                Color,
+                                BitmapRotation,
+                                UI_BLEND_ALPHA,
+                                UI_SAMPLER_LINEAR_CLAMP );
     }
 
 #ifndef X_EDITOR
@@ -389,15 +355,15 @@ void hud_icon::RenderIcon( player* pPlayer, icon_inf& Icon )
             // Draw label to the left.
             xcolor LabelColor( XCOLOR_WHITE );
 
-            f32 FinalOpacity = GetOpacity( ScreenDist, Icon.Opacity, Icon.TextFadeDist ); 
+            f32 FinalOpacity = GetOpacity( HudDistance, IconOpacity, Icon.TextFadeDist );
 
             LabelColor.A = (u8)(FinalOpacity * 255); 
 
             irect LabelPos(
-                (s32)(RenderScreenPos.GetX() - 200),
-                (s32)(RenderScreenPos.GetY() -   8),
-                (s32)(RenderScreenPos.GetX() -  12),
-                (s32)(RenderScreenPos.GetY() + 200)
+                (s32)(RenderHudPos.GetX() - 200),
+                (s32)(RenderHudPos.GetY() -   8),
+                (s32)(RenderHudPos.GetX() -  12),
+                (s32)(RenderHudPos.GetY() + 200)
                 );
 
             xcolor TextColor = XCOLOR_WHITE;
@@ -410,15 +376,15 @@ void hud_icon::RenderIcon( player* pPlayer, icon_inf& Icon )
             // Draw the distance to the right.
             xcolor LabelColor( XCOLOR_WHITE );
 
-            f32 FinalOpacity = GetOpacity( ScreenDist, Icon.Opacity, Icon.TextFadeDist ); 
+            f32 FinalOpacity = GetOpacity( HudDistance, IconOpacity, Icon.TextFadeDist );
 
             LabelColor.A = (u8)(FinalOpacity * 255); 
 
             irect LabelPos(
-                (s32)(RenderScreenPos.GetX() + 12),
-                (s32)(RenderScreenPos.GetY() - 8),
-                (s32)(RenderScreenPos.GetX() + 200),
-                (s32)(RenderScreenPos.GetY() + 200)
+                (s32)(RenderHudPos.GetX() + 12),
+                (s32)(RenderHudPos.GetY() - 8),
+                (s32)(RenderHudPos.GetX() + 200),
+                (s32)(RenderHudPos.GetY() + 200)
                 );
 
             xwstring DistanceStr( xfs( "%.2fm", WorldDist / 100.0f ) );
@@ -473,14 +439,6 @@ void hud_icon::OnRender( player* pPlayer )
         RenderIcon( pPlayer, m_Icons[ iIcon ] );
         IconRendered[ iIcon ] = TRUE;
     }
-}
-
-//==============================================================================
-
-void hud_icon::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
-{
-    (void)pPlayer;
-    (void)DeltaTime;
 }
 
 //==============================================================================
@@ -571,3 +529,5 @@ void hud_icon::OnEnumProp( prop_enum&  List )
 }
 
 //==============================================================================
+
+

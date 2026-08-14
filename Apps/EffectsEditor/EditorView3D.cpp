@@ -213,19 +213,42 @@ void CEditorView3D::OnDraw(CDC* pDC)
 
     // Prepare the Entropy engine to render this viewport & start rendering
     PreRenderSetup();
+
+    if( !eng_BeginFrame() )
     {
-        eng_Begin( "EditorView3D" );
+        return;
+    }
+
+    rtarget_backbuffer_pass_desc PassDesc;
+    PassDesc.bUseDepth = FALSE;
+    if( !rtarget_BeginBackBufferPass( PassDesc ) )
+    {
+        eng_ResetAfterException();
+        return;
+    }
+    rtarget_EndPass();
+
+    {
+        if( eng_Begin( "EditorView3D" ) )
         {
+            VERIFY( render::BeginPrimitiveRender() );
             m_Grid.Render();
+            render::EndPrimitiveRender();
+            render::ExecuteForwardRender();
             eng_End();
         }
-        eng_PageFlip(); // Done rendering all 3D stuff
+
     }
 
     // Draw Transform Gizmos
     if( m_ShowTransformGizmos )
     {
         g_ManipulatorMgr.Render( m_View );
+    }
+
+    if( !eng_EndFrame() )
+    {
+        return;
     }
 
     // Draw Selection Marquee
@@ -243,7 +266,7 @@ void    CEditorView3D::PreRenderSetup( void )
 {
     ASSERT( !eng_InBeginEnd() );    // Make sure the engine's not already in the middle of rendering
 
-    d3deng_UpdateDisplayWindow  ( GetSafeHwnd() );
+    eng_UpdateDisplayWindow     ( GetSafeHwnd() );
     eng_MaximizeViewport        ( m_View );
     eng_SetView                 ( m_View );
     eng_SetBackColor            ( xcolor(0x0f, 0x0f, 0x0f, 0xff) );
@@ -264,9 +287,6 @@ void    CEditorView3D::DrawMarquee( CDC* pDC, CPoint pt1, CPoint pt2 )
 //-------------------------------------------------------------------------
 // Internal Utilities
 //-------------------------------------------------------------------------
-
-
-
 
 
 

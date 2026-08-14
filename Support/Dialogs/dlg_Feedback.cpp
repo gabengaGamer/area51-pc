@@ -4,22 +4,22 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_blankbox.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_blankbox.hpp"
 
 #include "dlg_PopUp.hpp" 
 #include "dlg_Feedback.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "MemCardMgr/MemCardMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "SaveData/SaveDataMgr.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
@@ -43,30 +43,28 @@ enum controls
     IDC_CHEATING,
     IDC_THREATS,
 
-    IDC_FEEDBACK_NAV_TEXT,
 };
 
 ui_manager::control_tem FeedbackControls[] = 
 {
     // Frames.
-    { IDC_PLAYER_DETAILS,       "IDS_NULL",                     "blankbox",    40,  40, 416,  44, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PLAYER_NAME_TEXT,     "IDS_NULL",                     "text",        48,  62, 200,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_SESSION_TIME_TEXT,    "IDS_NULL",                     "text",        308, 62, 140,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PLAYER_DETAILS,       "IDS_NULL",                     "blankbox",    40,  40, 416,  44, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PLAYER_NAME_TEXT,     "IDS_NULL",                     "text",        48,  62, 200,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_SESSION_TIME_TEXT,    "IDS_NULL",                     "text",        308, 62, 140,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_FEEDBACK_TEXT,        "IDS_FEEDBACK",                 "text",        40,  90, 220,  30, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_FEEDBACK_TEXT,        "IDS_FEEDBACK",                 "text",        40,  90, 220,  30, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_GREAT_SESSION,        "IDS_FEEDBACK_GREAT_SESSION",   "button",     200,  90, 120,  30, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_GOOD_ATTITUDE,        "IDS_FEEDBACK_GOOD_ATTITUDE",   "button",     200, 120, 120,  30, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_GREAT_SESSION,        "IDS_FEEDBACK_GREAT_SESSION",   "button",     200,  90, 120,  30, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_GOOD_ATTITUDE,        "IDS_FEEDBACK_GOOD_ATTITUDE",   "button",     200, 120, 120,  30, 0, 1, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_COMPLAINTS_TEXT,      "IDS_COMPLAINTS",               "text",        40, 165, 220,  30, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_BAD_NAME,             "IDS_BAD_NAME",                 "button",     200, 165, 120,  30, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CURSING,              "IDS_CURSING",                  "button",     200, 195, 120,  30, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_SCREAMING,            "IDS_SCREAMING",                "button",     200, 225, 120,  30, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CHEATING,             "IDS_CHEATING",                 "button",     200, 255, 120,  30, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_THREATS,              "IDS_THREATS",                  "button",     200, 285, 120,  30, 0, 6, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_OFFENSIVE_MESSAGE,    "IDS_OFFENSIVE",                "button",     200, 315, 120,  30, 0, 7, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_COMPLAINTS_TEXT,      "IDS_COMPLAINTS",               "text",        40, 165, 220,  30, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_BAD_NAME,             "IDS_BAD_NAME",                 "button",     200, 165, 120,  30, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CURSING,              "IDS_CURSING",                  "button",     200, 195, 120,  30, 0, 3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SCREAMING,            "IDS_SCREAMING",                "button",     200, 225, 120,  30, 0, 4, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CHEATING,             "IDS_CHEATING",                 "button",     200, 255, 120,  30, 0, 5, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_THREATS,              "IDS_THREATS",                  "button",     200, 285, 120,  30, 0, 6, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_OFFENSIVE_MESSAGE,    "IDS_OFFENSIVE",                "button",     200, 315, 120,  30, 0, 7, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_FEEDBACK_NAV_TEXT,    "IDS_NULL",                     "text",         0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 
@@ -150,15 +148,11 @@ xbool dlg_feedback::Create( s32                        UserID,
 	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
     
     // set up nav text
-    m_pNavText = (ui_text*) FindChildByID( IDC_FEEDBACK_NAV_TEXT );
     
     xwstring navText( g_StringTableMgr( "ui", "IDS_NAV_SELECT" ) );
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
 
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);    
+    SetNavText( navText );
 
     // get player details box
     m_pPlayerDetails = (ui_blankbox*)FindChildByID( IDC_PLAYER_DETAILS );
@@ -270,7 +264,7 @@ void dlg_feedback::ChangeConfig( u8 type )
 { 
     m_Type = type;
 
-    if( m_Type == NORMAL_FEEDBACK )  
+    if( m_Type == NORMAL_FEEDBACK )
     {
         m_pOffensiveMessage     ->SetFlag( ui_win::WF_DISABLED , TRUE  );
 
@@ -318,14 +312,7 @@ void dlg_feedback::Render( s32 ox, s32 oy )
     
     if( m_bRenderBlackout )
     {
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-        // Nasty hack to force PS2 to draw to rb.l = 0
-        rb.Set( -1, 0, XRes, YRes );
-#else
-        rb.Set( 0, 0, XRes, YRes );
-#endif
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
             xcolor(0,0,0,180),
             xcolor(0,0,0,180),
@@ -378,7 +365,7 @@ void dlg_feedback::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_feedback::OnPadSelect( ui_win* pWin )
+void dlg_feedback::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -434,19 +421,14 @@ void dlg_feedback::OnPadSelect( ui_win* pWin )
     {
         // display confirmation popup
         irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
         // set nav text
         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
         navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-        m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
-
-#ifdef TARGET_XBOX
-        irect Position( 0, 0, 320, 270 );
-#else
+        SetNavTextVisible( FALSE );
+		
         irect Position( 0, 0, 280, 240 );
-#endif
-
         m_PopUp->Configure( 
             Position,
             g_StringTableMgr( "ui", "IDS_SEND_FEEDBACK_POPUP" ), 
@@ -474,7 +456,7 @@ void dlg_feedback::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_feedback::OnPadBack( ui_win* pWin )
+void dlg_feedback::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -506,7 +488,6 @@ void dlg_feedback::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pSessionDate      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pFeedback         ->SetFlag(ui_win::WF_VISIBLE, TRUE); 
             m_pComplaints       ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText          ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 
             // activate buttons
             m_pButtonGreatSession   ->SetFlag( ui_win::WF_VISIBLE, TRUE );
@@ -556,48 +537,48 @@ void dlg_feedback::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         m_PopUp = NULL;
 
         // turn on nav text
-        m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+        SetNavTextVisible( TRUE );
     }
 
     // update the glow bar
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
-    if( m_pButtonGreatSession->GetFlags(WF_HIGHLIGHT) )
+    if( m_pButtonGreatSession->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonGreatSession->GetPosition() );
         highLight = 0;
     }
-    else if( m_pButtonGoodAttitude->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonGoodAttitude->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonGoodAttitude->GetPosition() );
         highLight = 1;
     }
-    else if( m_pButtonBadName->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonBadName->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonBadName->GetPosition() );
         highLight = 2;
     }
-    else if( m_pButtonCursing->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonCursing->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonCursing->GetPosition() );
         highLight = 3;
     }
-    else if( m_pButtonScreaming->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonScreaming->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonScreaming->GetPosition() );
         highLight = 4;
     }
-    else if( m_pButtonCheating->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonCheating->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonCheating->GetPosition() );
         highLight = 5;
     }
-    else if( m_pButtonThreats->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonThreats->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonThreats->GetPosition() );
         highLight = 6;
     }
-    else if( m_pOffensiveMessage->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pOffensiveMessage->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pOffensiveMessage->GetPosition() );
         highLight = 7;

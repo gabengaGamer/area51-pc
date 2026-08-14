@@ -10,11 +10,11 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Objects\AnimSurface.hpp"
-#include "Animation\AnimPlayer.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "Objects\Event.hpp"
+#include "Objects/AnimSurface.hpp"
+#include "Animation/AnimPlayer.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Objects/Event.hpp"
 
 //==============================================================================
 //  NOTES
@@ -32,7 +32,7 @@ public:
     virtual void                OnEnumProp      ( prop_enum&    List );
     virtual xbool               OnProperty      ( prop_query&   I    );
 
-    virtual void                OnAdvanceLogic  ( f32 DeltaTime );
+    virtual void                OnAdvanceSimulation  ( f32 DeltaTime );
 
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );

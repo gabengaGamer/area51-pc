@@ -230,5 +230,4 @@ static s16 s_iicon_music_logic[] =
 };
 
 
-#define DRAW_ICON_MUSIC_LOGIC() draw_icon( NUM_FACETS_ICON_MUSIC_LOGIC, NUM_VERTICES_ICON_MUSIC_LOGIC, s_vicon_music_logic, s_iicon_music_logic )
 

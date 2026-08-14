@@ -9,11 +9,11 @@
 //=============================================================================
 
 #include "GlassSurface.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "Render\Render.hpp"
-#include "Debris\Debris_mgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Render/Render.hpp"
+#include "Debris/debris_mgr.hpp"
 
 
 //=============================================================================

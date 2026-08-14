@@ -16,7 +16,7 @@
 
 #include "x_files.hpp"
 #include "e_Network.hpp"
-#include "Network/netstream.hpp"
+#include "Network/NetStream.hpp"
 #include "GameState.hpp"
 #include "Configuration/GameConfig.hpp"
 
@@ -94,6 +94,7 @@ const   f32                 MIN_SHIP_INTERVAL       = (1.0f / 10.0f);
 const   f32                 DEFAULT_SHIP_INTERVAL   = MIN_SHIP_INTERVAL;
 const   f32                 HEARTBEAT_INTERVAL      = 0.5f;                            
 const   f32                 SHIP_INTERVAL_INCREMENT = (1.0f / 100.0f);
+const   f32                 SHIP_INTERVAL_ADJUSTMENT_RATE = SHIP_INTERVAL_INCREMENT * 10.0f;
 // Threshold at which ship intervals will be modified
 const   f32                 LOW_PING_THRESHOLD      = (290.0f);
 const   f32                 HIGH_PING_THRESHOLD     = (310.0f);
@@ -313,7 +314,7 @@ private:
         void                ProcessHeartbeatRequest     ( netstream& BitStream );
         void                ProcessHeartbeatResponse    ( netstream& BitStream );
 
-        void                UpdateShipInterval          ( void );
+        void                UpdateShipInterval          ( f32 DeltaTime );
         xbool               m_bEnableEncryption;
         u32                 m_EncryptionKey[4];
 };

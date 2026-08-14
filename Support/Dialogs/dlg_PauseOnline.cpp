@@ -4,19 +4,19 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_PauseOnline.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "Objects\Player.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "Objects/Player/Player.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
@@ -27,19 +27,18 @@ static const s32 IcY = FrY + 3; // Friends Invite Icons Y
 ui_manager::control_tem PauseOnlineControls[] = 
 {
     // Frames.
-    { IDC_PAUSE_ONLINE_SUICIDE,	    "IDS_ONLINE_PAUSE_SUICIDE",         "button",  110,  40, 120, 30, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_ONLINE_SWITCH_TEAM,	"IDS_ONLINE_PAUSE_SWITCH_TEAM",     "button",  110,  70, 120, 30, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_ONLINE_VOTE_MAP,	"IDS_ONLINE_PAUSE_VOTE_MAP",        "button",  110, 100, 120, 30, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_ONLINE_VOTE_KICK,   "IDS_ONLINE_PAUSE_VOTE_KICK",       "button",  110, 130, 120, 30, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_ONLINE_FRIENDS,     "IDS_ONLINE_PAUSE_FRIENDS",         "button",  110, FrY, 120, 30, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_ONLINE_PLAYERS,     "IDS_ONLINE_PAUSE_PLAYERS",         "button",  110, 190, 120, 30, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_ONLINE_OPTIONS,	    "IDS_ONLINE_PAUSE_OPTIONS",         "button",  110, 220, 120, 30, 0, 6, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_ONLINE_SETTINGS,    "IDS_ONLINE_PAUSE_SETTINGS",        "button",  110, 250, 120, 30, 0, 7, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_ONLINE_CONFIG,      "IDS_ONLINE_PAUSE_SERVER_CONFIG",   "button",  110, 280, 120, 30, 0, 8, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-	{ IDC_PAUSE_ONLINE_NAV_TEXT,    "IDS_NULL",                         "text",      0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PAUSE_ONLINE_SUICIDE,	    "IDS_ONLINE_PAUSE_SUICIDE",         "button",  110,  40, 120, 30, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_SWITCH_TEAM,	"IDS_ONLINE_PAUSE_SWITCH_TEAM",     "button",  110,  70, 120, 30, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_VOTE_MAP,	"IDS_ONLINE_PAUSE_VOTE_MAP",        "button",  110, 100, 120, 30, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_VOTE_KICK,   "IDS_ONLINE_PAUSE_VOTE_KICK",       "button",  110, 130, 120, 30, 0, 3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_FRIENDS,     "IDS_ONLINE_PAUSE_FRIENDS",         "button",  110, FrY, 120, 30, 0, 4, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_PLAYERS,     "IDS_ONLINE_PAUSE_PLAYERS",         "button",  110, 190, 120, 30, 0, 5, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_OPTIONS,	    "IDS_ONLINE_PAUSE_OPTIONS",         "button",  110, 220, 120, 30, 0, 6, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_SETTINGS,    "IDS_ONLINE_PAUSE_SETTINGS",        "button",  110, 250, 120, 30, 0, 7, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_CONFIG,      "IDS_ONLINE_PAUSE_SERVER_CONFIG",   "button",  110, 280, 120, 30, 0, 8, 1, 1, ui_win::WF_VISIBLE },
 #if defined( TARGET_XBOX )
-    { IDC_PAUSE_ONLINE_FRIEND_INV,  "IDS_NULL",                         "bitmap",   30, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_ONLINE_GAME_INV,    "IDS_NULL",                         "bitmap",  204, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PAUSE_ONLINE_FRIEND_INV,  "IDS_NULL",                         "bitmap",   30, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_GAME_INV,    "IDS_NULL",                         "bitmap",  204, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 #endif
 };
 
@@ -138,7 +137,6 @@ xbool dlg_pause_online::Create( s32                        UserID,
 	m_pButtonOptions    = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_OPTIONS     ); 	
     m_pButtonSettings   = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_SETTINGS    );
 	m_pButtonConfig     = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_CONFIG      ); 	
-    m_pNavText 	        = (ui_text*)    FindChildByID( IDC_PAUSE_ONLINE_NAV_TEXT    );
 #if defined( TARGET_XBOX )
     m_pFriendInvite     = (ui_bitmap*)  FindChildByID( IDC_PAUSE_ONLINE_FRIEND_INV  );
     m_pGameInvite       = (ui_bitmap*)  FindChildByID( IDC_PAUSE_ONLINE_GAME_INV    );
@@ -172,7 +170,6 @@ xbool dlg_pause_online::Create( s32                        UserID,
     m_pButtonOptions    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pButtonSettings   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pButtonConfig     ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText          ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 #if defined( TARGET_XBOX )
     m_pFriendInvite     ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pGameInvite       ->SetFlag(ui_win::WF_VISIBLE, FALSE);
@@ -182,9 +179,7 @@ xbool dlg_pause_online::Create( s32                        UserID,
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_QUIT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_SELECT" );   
     navText += g_StringTableMgr( "ui", "IDS_NAV_UNPAUSE" );   
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
 #if defined( TARGET_XBOX )
     // set up icons
@@ -248,14 +243,7 @@ void dlg_pause_online::Render( s32 ox, s32 oy )
 
 
     // render background filter
-	s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+	rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
@@ -311,7 +299,7 @@ void dlg_pause_online::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_pause_online::OnPadSelect( ui_win* pWin )
+void dlg_pause_online::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -324,12 +312,12 @@ void dlg_pause_online::OnPadSelect( ui_win* pWin )
 
             // open confirmation dialog
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
             
 
             m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_GAMEMGR_POPUP" ), 
@@ -347,12 +335,12 @@ void dlg_pause_online::OnPadSelect( ui_win* pWin )
 
             // open confirmation dialog
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
             
 
             m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_GAMEMGR_POPUP" ), 
@@ -411,14 +399,14 @@ void dlg_pause_online::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_pause_online::OnPadBack( ui_win* pWin )
+void dlg_pause_online::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 }
 
 //=========================================================================
 
-void dlg_pause_online::OnPadDelete( ui_win* pWin )
+void dlg_pause_online::OnDelete( ui_win* pWin )
 {
     (void)pWin;
 
@@ -430,7 +418,7 @@ void dlg_pause_online::OnPadDelete( ui_win* pWin )
 
             // Open a dialog to confirm quitting the online game component
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
             // get message text
             xwstring Message;
@@ -446,7 +434,7 @@ void dlg_pause_online::OnPadDelete( ui_win* pWin )
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
 
             m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_QUIT_POPUP" ), TRUE, TRUE, FALSE, Message, navText, &m_PopUpResult );
 
@@ -507,7 +495,6 @@ void dlg_pause_online::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pButtonPlayers    ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pButtonOptions    ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pButtonSettings   ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText          ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 
 #if defined( TARGET_XBOX )
             m_pFriendInvite     ->SetFlag(ui_win::WF_VISIBLE, HaveFriendRequest     );
@@ -527,14 +514,12 @@ void dlg_pause_online::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             if( (iControl == -1) || (GotoControl(iControl)==NULL) )
             {
                 GotoControl( (ui_control*)m_pButtonSuicide );
-                m_pButtonSuicide->SetFlag(WF_HIGHLIGHT, TRUE);        
                 g_UiMgr->SetScreenHighlight( m_pButtonSuicide->GetPosition() );
                 m_CurrentControl = IDC_PAUSE_ONLINE_SUICIDE;
             }
             else
             {
                 ui_control* pControl = GotoControl( iControl );
-                pControl->SetFlag(WF_HIGHLIGHT, TRUE);
                 g_UiMgr->SetScreenHighlight(pControl->GetPosition() );
                 m_CurrentControl = iControl;
             }
@@ -600,7 +585,7 @@ void dlg_pause_online::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp = NULL;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
         }
     }
 
@@ -617,14 +602,14 @@ void dlg_pause_online::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         m_pButtonVoteMap ->SetFlag( ui_win::WF_DISABLED, !CanStartMap  );
         m_pButtonVoteKick->SetFlag( ui_win::WF_DISABLED, !CanStartKick );
 
-        if( (!CanStartMap) && (m_pButtonVoteMap->GetFlags(WF_HIGHLIGHT)) )
+        if( (!CanStartMap) && (m_pButtonVoteMap->IsFocused()) )
         {
-            OnPadNavigate( this, ui_manager::NAV_UP, 1, 0 );
+            OnNavigate( this, ui_navigation::Up, 1, 0 );
         }
 
-        if( (!CanStartKick) && (m_pButtonVoteKick->GetFlags(WF_HIGHLIGHT)) )
+        if( (!CanStartKick) && (m_pButtonVoteKick->IsFocused()) )
         {
-            OnPadNavigate( this, ui_manager::NAV_DOWN, 1, 0 );
+            OnNavigate( this, ui_navigation::Down, 1, 0 );
         }
     }
 #endif
@@ -632,47 +617,47 @@ void dlg_pause_online::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     // update the glow bar
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
-    if( m_pButtonSuicide->GetFlags(WF_HIGHLIGHT) )
+    if( m_pButtonSuicide->IsFocused() )
     {
         highLight = 0;
         g_UiMgr->SetScreenHighlight( m_pButtonSuicide->GetPosition() );
     }
-    else if( m_pButtonSwitchTeam->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonSwitchTeam->IsFocused() )
     {
         highLight = 1;
         g_UiMgr->SetScreenHighlight( m_pButtonSwitchTeam->GetPosition() );
     }
-    else if( m_pButtonVoteMap->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonVoteMap->IsFocused() )
     {
         highLight = 2;
         g_UiMgr->SetScreenHighlight( m_pButtonVoteMap->GetPosition() );
     }
-    else if( m_pButtonVoteKick->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonVoteKick->IsFocused() )
     {
         highLight = 3;
         g_UiMgr->SetScreenHighlight( m_pButtonVoteKick->GetPosition() );
     }
-    else if( m_pButtonOptions->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonOptions->IsFocused() )
     {
         highLight = 4;
         g_UiMgr->SetScreenHighlight( m_pButtonOptions->GetPosition() );
     }
-    else if( m_pButtonFriends->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonFriends->IsFocused() )
     {
         highLight = 5;
         g_UiMgr->SetScreenHighlight( m_pButtonFriends->GetPosition() );
     }
-    else if( m_pButtonPlayers->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonPlayers->IsFocused() )
     {
         highLight = 6;
         g_UiMgr->SetScreenHighlight( m_pButtonPlayers->GetPosition() );
     }
-    else if( m_pButtonSettings->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonSettings->IsFocused() )
     {
         highLight = 7;
         g_UiMgr->SetScreenHighlight( m_pButtonSettings->GetPosition() );
     }
-    else if( m_pButtonConfig->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonConfig->IsFocused() )
     {
         highLight = 8;
         g_UiMgr->SetScreenHighlight( m_pButtonConfig->GetPosition() );

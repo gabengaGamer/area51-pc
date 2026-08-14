@@ -2,10 +2,11 @@
 // INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Entropy.hpp"
 #include "Path.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 
 #ifdef X_EDITOR
@@ -63,11 +64,11 @@ static struct path_desc : public object_desc
         // Is this a path with no keys?
         object_ptr<path> pPath(Object.GetGuid()) ;
         if ((pPath) && (pPath->GetKeyCount() == 0))
-            Icon = EDITOR_ICON_PATH; 
+            Icon = EditorIcon::Path; 
 
         // Selected or placing?
         if ( Object.GetAttrBits() & (object::ATTR_EDITOR_SELECTED | object::ATTR_EDITOR_PLACEMENT_OBJECT))
-            Icon = EDITOR_ICON_PATH; 
+            Icon = EditorIcon::Path; 
 
         // No icon for populated unselected paths
         if (pPath)
@@ -728,10 +729,10 @@ void path::key::OnRender( path& Path, s32 iKey )
         xcolor Color = (m_Flags & key::FLAG_SELECTED) ? XCOLOR_YELLOW : XCOLOR_RED ;
 
         // Draw sphere
-        draw_Sphere(m_Position, KEY_RADIUS, Color) ;
+        render::debug::Sphere(m_Position, KEY_RADIUS, Color) ;
 
         // Draw label
-        draw_Label(m_Position - vector3(0, PATH_RADIUS * 1.25f, 0), Color, "Key:%d", iKey) ;
+        render::debug::Label(m_Position - vector3(0, PATH_RADIUS * 1.25f, 0), Color, "Key:%d", iKey) ;
 
         // Render rotation axis?
         if (Path.GetFlags() & path::FLAG_KEY_ROTATION)
@@ -743,28 +744,26 @@ void path::key::OnRender( path& Path, s32 iKey )
             L2W.SetTranslation(m_Position) ;
 
             // Draw axis
-            draw_SetL2W(L2W) ;
-            draw_Axis(KEY_RADIUS*5.0f) ;
-            draw_ClearL2W() ;
+            render::debug::Axis( L2W, KEY_RADIUS * 5.0f );
         }
 
         // Draw event(s)?
         if ( (m_Flags & key::FLAG_SELECTED) && (EventLabel.GetLength()) )
         {
-            draw_Line (EventStart, EventEnd, XCOLOR_AQUA) ;
-            draw_Label(EventPos, XCOLOR_AQUA, EventLabel) ;
+            render::debug::Line (EventStart, EventEnd, XCOLOR_AQUA) ;
+            render::debug::Label(EventPos, XCOLOR_AQUA, EventLabel) ;
         }
     }
     else
     {
         // Draw sphere
-        draw_Sphere(m_Position, KEY_RADIUS, XCOLOR_GREEN) ;
+        render::debug::Sphere(m_Position, KEY_RADIUS, XCOLOR_GREEN) ;
 
         // Draw event?
         if ( (m_Flags & key::FLAG_RENDER_OBJECT_EVENT) && (EventLabel.GetLength()) )
         {
-            draw_Line (EventStart, EventEnd, XCOLOR_AQUA) ;
-            draw_Label(EventPos, XCOLOR_AQUA, EventLabel) ;
+            render::debug::Line (EventStart, EventEnd, XCOLOR_AQUA) ;
+            render::debug::Label(EventPos, XCOLOR_AQUA, EventLabel) ;
 
             // Clear
             m_Flags &= ~key::FLAG_RENDER_OBJECT_EVENT ;
@@ -1427,9 +1426,9 @@ void path::RenderSegments( f32    StartTime,
     {
         // Render line between segments?
         if (bLines)
-            draw_Line(KeyA.m_Position, KeyB.m_Position, Color) ;
+            render::debug::Line(KeyA.m_Position, KeyB.m_Position, Color) ;
         else
-            draw_Point(KeyA.m_Position, Color, 1) ;
+            render::debug::Point(KeyA.m_Position, Color, 1) ;
 
         // Next segment
         KeyA = KeyB ;
@@ -1451,7 +1450,7 @@ void path::OnRender  ( void )
 void path::RenderPath( void )
 {
 #ifdef X_EDITOR
-    CONTEXT("path::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "path::OnRender" );
 
     s32     i ;
     f32     TimeA, TimeB ;

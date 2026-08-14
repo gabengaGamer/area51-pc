@@ -16,6 +16,7 @@
 #include "MiscUtils/Property.hpp"
 #include "PainMgr/Pain.hpp"
 #include "Characters/Character.hpp"
+#include "Objects/Player/Player.hpp"
 #include "Navigation/Nav_Map.hpp"
 #include "../../../MiscUtils/SimpleUtils.hpp"
 
@@ -119,7 +120,21 @@ s32 bind_obj_setpos( script_context& ctx )
     if( pObj )
     {
         vector3 NewPos( ctx.ArgFloat(1), ctx.ArgFloat(2), ctx.ArgFloat(3) );
-        pObj->OnMove( NewPos );
+        if( pObj->GetType() == object::TYPE_PLAYER )
+        {
+            player* pPlayer = static_cast<player*>( pObj );
+            pPlayer->Teleport(
+                NewPos,
+                static_cast<zone_mgr::zone_id>( pObj->GetZone1() ),
+                static_cast<zone_mgr::zone_id>( pObj->GetZone2() ),
+                PlayerTeleportVelocityPolicy::Clear,
+                FALSE,
+                FALSE );
+        }
+        else
+        {
+            pObj->OnMove( NewPos );
+        }
     }
     return 0;
 }
@@ -411,6 +426,11 @@ s32 bind_obj_setzones( script_context& ctx )
     {
         pObj->SetZone1( (u16)ctx.ArgInt( 1 ) );
         pObj->SetZone2( (u16)ctx.ArgInt( 2 ) );
+
+        if( pObj->IsKindOf( actor::GetRTTI() ) )
+        {
+            static_cast<actor*>( pObj )->InitZoneTracking();
+        }
     }
     return 0;
 }

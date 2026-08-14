@@ -7,14 +7,10 @@
 //==============================================================================
 
 //==============================================================================
-//  PLATFORM CHECK
+//  BASE INCLUDES
 //==============================================================================
 
 #include "x_types.hpp"
-
-#if !defined(TARGET_PC)
-#error "This is only for the PC target platform. Please check build exclusion rules"
-#endif
 
 //==============================================================================
 //  INCLUDES
@@ -24,259 +20,242 @@
 #include "../../LeastSquares/LeastSquares.hpp"
 
 //==============================================================================
-//  EXTERNAL VARIABLES
-//==============================================================================
-
-extern ID3D11Device*           g_pd3dDevice;
-extern ID3D11DeviceContext*    g_pd3dContext;
-
-//==============================================================================
 //  FILE-LOCAL TYPES AND HELPERS
 //==============================================================================
 
 namespace
 {
-    // Constants
-    static const s32 kFogSourcePaletteCount = 64;
-    static const s32 kFogPaletteCount = 256;
-    static const s32 kFogGeneratedPaletteIndex = 2;
-    static const f32 kPS2ZScale = (f32)(1 << ZBUFFER_BITS);
-    static const f32 kPS2ZConst = 0.5f * kPS2ZScale;
+// Constants
+static s32 const kFogSourcePaletteCount = 64;
+static s32 const kFogPaletteCount = 256;
+static s32 const kFogGeneratedPaletteIndex = 2;
+static f32 const kPS2ZScale = static_cast<f32>( 1 << ZBUFFER_BITS );
+static f32 const kPS2ZConst = 0.5f * kPS2ZScale;
 
-    // Constant buffer layout
-    struct cb_post_fog
-    {
-        vector4 FogColor;
-        vector4 FogCoeff;
-        vector4 FogParams;
-    };
+// Constant buffer layout
+struct PostFogConstants
+{
+    vector4 FogColor;
+    vector4 FogCoeff;
+    vector4 FogParams;
+};
 
-    // Helper functions
-    static
-    void ReleaseFogTexture( ID3D11Texture2D*& pTexture, ID3D11ShaderResourceView*& pSRV )
-    {
-        if( pSRV )
-        {
-            pSRV->Release();
-            pSRV = NULL;
-        }
+void WritePaletteColor( u8* pPalette, s32 index, xcolor color )
+{
+    ASSERT( index >= 0 );
+    ASSERT( index < kFogPaletteCount );
 
-        if( pTexture )
-        {
-            pTexture->Release();
-            pTexture = NULL;
-        }
-    }
-
-    static
-    void WritePaletteColor( u8* pPalette, s32 Index, xcolor Color )
-    {
-        ASSERT( Index >= 0 );
-        ASSERT( Index < kFogPaletteCount );
-
-        pPalette[Index * 4 + 0] = Color.R;
-        pPalette[Index * 4 + 1] = Color.G;
-        pPalette[Index * 4 + 2] = Color.B;
-        pPalette[Index * 4 + 3] = Color.A;
-    }
-
-    static
-    xcolor ReadPaletteColor( const u8* pPalette, s32 Index )
-    {
-        ASSERT( pPalette );
-        ASSERT( Index >= 0 );
-
-        return xcolor( pPalette[Index * 4 + 0],
-                       pPalette[Index * 4 + 1],
-                       pPalette[Index * 4 + 2],
-                       pPalette[Index * 4 + 3] );
-    }
-
-    static
-    f32 ComputeFogFalloff( render::post_falloff_fn Fn, f32 ViewZ, f32 NearZ, f32 FarZ, f32 Param1, f32 Param2 )
-    {
-        const f32 FarMinusNear = MAX( FarZ - NearZ, 0.001f );
-
-        switch( Fn )
-        {
-            case render::FALLOFF_LINEAR:
-            {
-                ASSERT( Param2 > Param1 );
-                const f32 ClampedZ = MINMAX( Param1, ViewZ, Param2 );
-                return (Param2 - ClampedZ) / MAX( Param2 - Param1, 0.001f );
-            }
-
-            case render::FALLOFF_EXP:
-            {
-                const f32 D = (ViewZ - NearZ) / FarMinusNear;
-                return 1.0f / x_exp( D * Param1 );
-            }
-
-            case render::FALLOFF_EXP2:
-            {
-                f32 D = (ViewZ - NearZ) / FarMinusNear;
-                D *= Param1;
-                return 1.0f / x_exp( D * D );
-            }
-
-            default:
-                break;
-        }
-
-        return 1.0f;
-    }
-
-    static
-    s32 GetPaletteIndexFromDepth( f32 LinearDepth )
-    {
-        const f32 ClampedDepth = MINMAX( 0.0f, LinearDepth, 1.0f );
-        return (s32)(ClampedDepth * (f32)(kFogPaletteCount - 1) + 0.5f);
-    }
-
-    static
-    void ExpandCustomFogPalette( const u8* pSourcePalette, u8* pExpandedPalette, f32 NearZ, f32 FarZ )
-    {
-        ASSERT( pSourcePalette );
-        ASSERT( pExpandedPalette );
-
-        const f32 Range = MAX( FarZ - NearZ, 0.001f );
-        for( s32 i = 0; i < kFogPaletteCount; ++i )
-        {
-            const f32 LinearDepth = (f32)i / (f32)(kFogPaletteCount - 1);
-            const f32 ViewZ       = NearZ + LinearDepth * Range;
-
-            f32 PS2ScreenZ = (ViewZ * (FarZ + NearZ) / Range);
-            PS2ScreenZ    -= ((2.0f * FarZ * NearZ) / Range);
-            PS2ScreenZ    /= ViewZ;
-            PS2ScreenZ    *= -kPS2ZConst;
-            PS2ScreenZ    +=  kPS2ZConst;
-
-            u32 UPS2SZ = (u32)(PS2ScreenZ * 16.0f + 0.5f);
-            s32 ClutIX = 0;
-            if( UPS2SZ <= 0xFFFF )
-                ClutIX = ((UPS2SZ >> 8) & 0xFF) / 4;
-
-            ClutIX = MINMAX( 0, ClutIX, kFogSourcePaletteCount - 1 );
-            WritePaletteColor( pExpandedPalette, i, ReadPaletteColor( pSourcePalette, ClutIX ) );
-        }
-
-        pExpandedPalette[3] = 0;
-    }
+    pPalette[index * 4 + 0] = color.R;
+    pPalette[index * 4 + 1] = color.G;
+    pPalette[index * 4 + 2] = color.B;
+    pPalette[index * 4 + 3] = color.A;
 }
+
+static xcolor ReadPaletteColor( u8 const* pPalette, s32 index )
+{
+    ASSERT( pPalette );
+    ASSERT( index >= 0 );
+
+    return xcolor( pPalette[index * 4 + 0], pPalette[index * 4 + 1], pPalette[index * 4 + 2], pPalette[index * 4 + 3] );
+}
+
+static f32 ComputeFogFalloff( render::post_falloff_fn fn, f32 viewZ, f32 nearZ, f32 farZ, f32 param1, f32 param2 )
+{
+    f32 const farMinusNear = MAX( farZ - nearZ, 0.001f );
+
+    switch ( fn )
+    {
+        case render::FALLOFF_LINEAR:
+            {
+                ASSERT( param2 > param1 );
+                f32 const clampedZ = MINMAX( param1, viewZ, param2 );
+                return ( param2 - clampedZ ) / MAX( param2 - param1, 0.001f );
+            }
+
+        case render::FALLOFF_EXP:
+            {
+                f32 const d = ( viewZ - nearZ ) / farMinusNear;
+                return 1.0f / x_exp( d * param1 );
+            }
+
+        case render::FALLOFF_EXP2:
+            {
+                f32 d = ( viewZ - nearZ ) / farMinusNear;
+                d *= param1;
+                return 1.0f / x_exp( d * d );
+            }
+
+        default:
+            {
+                break;
+            }
+    }
+
+    return 1.0f;
+}
+
+static s32 GetPaletteIndexFromDepth( f32 linearDepth )
+{
+    f32 const clampedDepth = MINMAX( 0.0f, linearDepth, 1.0f );
+    return static_cast<s32>( clampedDepth * static_cast<f32>( kFogPaletteCount - 1 ) + 0.5f );
+}
+
+static void ExpandCustomFogPalette( u8 const* pSourcePalette, u8* pExpandedPalette, f32 nearZ, f32 farZ )
+{
+    ASSERT( pSourcePalette );
+    ASSERT( pExpandedPalette );
+
+    f32 const range = MAX( farZ - nearZ, 0.001f );
+    for ( s32 i = 0; i < kFogPaletteCount; ++i )
+    {
+        f32 const linearDepth = static_cast<f32>( i ) / static_cast<f32>( kFogPaletteCount - 1 );
+        f32 const viewZ = nearZ + linearDepth * range;
+
+        f32 pS2ScreenZ = ( viewZ * ( farZ + nearZ ) / range );
+        pS2ScreenZ -= ( ( 2.0f * farZ * nearZ ) / range );
+        pS2ScreenZ /= viewZ;
+        pS2ScreenZ *= -kPS2ZConst;
+        pS2ScreenZ += kPS2ZConst;
+
+        u32 upS2Sz = static_cast<u32>( pS2ScreenZ * 16.0f + 0.5f );
+        s32 clutIx = 0;
+        if ( upS2Sz <= 0xFFFF )
+        {
+            clutIx = ( ( upS2Sz >> 8 ) & 0xFF ) / 4;
+        }
+
+        clutIx = MINMAX( 0, clutIx, kFogSourcePaletteCount - 1 );
+        WritePaletteColor( pExpandedPalette, i, ReadPaletteColor( pSourcePalette, clutIx ) );
+    }
+
+    pExpandedPalette[3] = 0;
+}
+} // namespace
 
 //==============================================================================
 //  FOG RESOURCE MANAGEMENT
 //==============================================================================
 
-post_mgr::fog_resources::fog_resources()
+PostMgr::FogResources::FogResources()
 {
-    pPaletteTexture = NULL;
-    pPaletteSRV     = NULL;
-    pCompositePS    = NULL;
-    pConstantBuffer = NULL;
+    PaletteTexture = vram_texture();
+    CompositePS = shader();
+    PolynomialPS = shader();
+    PaletteSampler = rstate_sampler();
+    ConstantFogColor.Set( 0.0f, 0.0f, 0.0f, 0.0f );
+    ConstantFogCoeff.Set( 0.0f, 0.0f, 0.0f, 0.0f );
+    ConstantFogParams.Set( 0.0f, 0.0f, 0.0f, 0.0f );
 }
 
 //==============================================================================
 
-void post_mgr::fog_resources::Initialize( void )
+void PostMgr::FogResources::Initialize( void )
 {
     Shutdown();
 
-    if( !g_pd3dDevice )
-        return;
+    shader_LoadFromEcs( CompositePS, "post_fog_ps.ps.ecs" );
+    shader_LoadFromEcs( PolynomialPS, "post_fog_polynomial_ps.ps.ecs" );
+    rstate_CreateSampler( PaletteSampler, RSTATE_SAMPLER_PRESET_LINEAR_CLAMP, "PostFogPalette" );
 
-    char shaderPath[256];
-    x_sprintf( shaderPath, "a51_post_fog.hlsl" );
-
-    char* pSource = shader_LoadSourceFromFile( shaderPath );
-    if( !pSource )
-        return;
-
-    pCompositePS = shader_CompilePixel( pSource, "PSMain", "ps_5_0", shaderPath );
-    pConstantBuffer = shader_CreateConstantBuffer( sizeof(cb_post_fog), CB_TYPE_DYNAMIC );
-    x_free( pSource );
-}
-
-//==============================================================================
-
-void post_mgr::fog_resources::Shutdown( void )
-{
-    ReleaseFogTexture( pPaletteTexture, pPaletteSRV );
-
-    if( pCompositePS )
+    if ( !CompositePS || !PolynomialPS || !PaletteSampler )
     {
-        pCompositePS->Release();
-        pCompositePS = NULL;
-    }
-
-    if( pConstantBuffer )
-    {
-        pConstantBuffer->Release();
-        pConstantBuffer = NULL;
+        x_DebugMsg( "PostMgr: WARNING - Failed to initialize fog resources\n" );
     }
 }
 
 //==============================================================================
 
-void post_mgr::fog_resources::UpdateConstants( const vector4& FogColor, const vector4& FogCoeff, f32 FogStart, f32 NearZ, f32 FarZ, xbool bUsePolynomial )
+void PostMgr::FogResources::Shutdown( void )
 {
-    if( !pConstantBuffer || !g_pd3dContext )
-        return;
-
-    cb_post_fog cbData;
-    cbData.FogColor  = FogColor;
-    cbData.FogCoeff  = FogCoeff;
-    cbData.FogParams.Set( NearZ, FarZ, bUsePolynomial ? 1.0f : 0.0f, FogStart );
-
-    shader_UpdateConstantBuffer( pConstantBuffer, &cbData, sizeof(cb_post_fog) );
-    g_pd3dContext->PSSetConstantBuffers( 4, 1, &pConstantBuffer );
+    vram_DestroyTexture( PaletteTexture );
+    rstate_DestroySampler( PaletteSampler );
+    shader_Destroy( PolynomialPS );
+    shader_Destroy( CompositePS );
 }
 
 //==============================================================================
 
-xbool post_mgr::fog_resources::UpdatePaletteTexture( const u8* pPalette )
+void PostMgr::FogResources::UpdateConstants( vector4 const& fogColor, vector4 const& fogCoeff, f32 fogStart, f32 nearZ,
+                                             f32 farZ, xbool bUsePolynomial )
 {
-    if( !g_pd3dDevice || !g_pd3dContext || !pPalette )
+    ConstantFogColor = fogColor;
+    ConstantFogCoeff = fogCoeff;
+    ConstantFogParams.Set( nearZ, farZ, bUsePolynomial ? 1.0f : 0.0f, fogStart );
+}
+
+//==============================================================================
+
+xbool PostMgr::FogResources::UpdatePaletteTexture( u8 const* pPalette )
+{
+    if ( !pPalette )
+    {
         return FALSE;
+    }
 
-    if( !pPaletteTexture || !pPaletteSRV )
+    if ( !vram_IsValid( PaletteTexture ) )
     {
-        ReleaseFogTexture( pPaletteTexture, pPaletteSRV );
+        vram_texture_desc desc;
+        desc.Width = kFogPaletteCount;
+        desc.Height = 1;
+        desc.Format = VRAM_TEXTURE_FORMAT_RGBA8;
+        desc.UsageFlags = VRAM_TEXTURE_USAGE_SAMPLED;
+        desc.pDebugName = "PostFogPalette";
 
-        D3D11_TEXTURE2D_DESC desc;
-        x_memset( &desc, 0, sizeof(desc) );
-        desc.Width              = kFogPaletteCount;
-        desc.Height             = 1;
-        desc.MipLevels          = 1;
-        desc.ArraySize          = 1;
-        desc.Format             = DXGI_FORMAT_R8G8B8A8_UNORM;
-        desc.SampleDesc.Count   = 1;
-        desc.Usage              = D3D11_USAGE_DEFAULT;
-        desc.BindFlags          = D3D11_BIND_SHADER_RESOURCE;
-
-        HRESULT hr = g_pd3dDevice->CreateTexture2D( &desc, NULL, &pPaletteTexture );
-        if( FAILED(hr) || !pPaletteTexture )
+        if ( !vram_CreateTexture( PaletteTexture, desc ) )
         {
-            ReleaseFogTexture( pPaletteTexture, pPaletteSRV );
-            return FALSE;
-        }
-
-        D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-        x_memset( &srvDesc, 0, sizeof(srvDesc) );
-        srvDesc.Format                    = desc.Format;
-        srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
-        srvDesc.Texture2D.MipLevels       = 1;
-        srvDesc.Texture2D.MostDetailedMip = 0;
-
-        hr = g_pd3dDevice->CreateShaderResourceView( pPaletteTexture, &srvDesc, &pPaletteSRV );
-        if( FAILED(hr) || !pPaletteSRV )
-        {
-            ReleaseFogTexture( pPaletteTexture, pPaletteSRV );
             return FALSE;
         }
     }
 
-    g_pd3dContext->UpdateSubresource( pPaletteTexture, 0, NULL, pPalette, kFogPaletteCount * 4, 0 );
+    vram_texture_upload_desc upload;
+    upload.Region.Width = kFogPaletteCount;
+    upload.Region.Height = 1;
+    upload.Region.Depth = 1;
+    upload.pData = pPalette;
+    upload.Size = kFogPaletteCount * 4;
+    upload.RowPitch = kFogPaletteCount * 4;
+    upload.SlicePitch = kFogPaletteCount * 4;
+    upload.bCycle = TRUE;
+
+    return vram_UploadTexture( PaletteTexture, upload );
+}
+
+//==============================================================================
+
+xbool PostMgr::FogResources::BindForComposite( shader const& pixelShader, xbool bBindPalette ) const
+{
+    PostFogConstants constants;
+    constants.FogColor = ConstantFogColor;
+    constants.FogCoeff = ConstantFogCoeff;
+    constants.FogParams = ConstantFogParams;
+
+    u32 fogParamsSlot = 0;
+    if ( shader_FindUniformSlot( pixelShader, "FogParams", fogParamsSlot ) )
+    {
+        if ( !shader_PushUniformData( SHADER_STAGE_PIXEL, fogParamsSlot, &constants, sizeof( constants ) ) )
+        {
+            return FALSE;
+        }
+    }
+    else if ( !bBindPalette )
+    {
+        return FALSE;
+    }
+
+    if ( bBindPalette )
+    {
+        if ( !vram_IsValid( PaletteTexture ) || !PaletteSampler )
+        {
+            return FALSE;
+        }
+
+        if ( !shader_BindSampler( pixelShader, SHADER_STAGE_PIXEL, "FogPalette",
+                                  vram_GetShaderResource( PaletteTexture ), &PaletteSampler ) )
+        {
+            return FALSE;
+        }
+    }
+
     return TRUE;
 }
 
@@ -284,255 +263,294 @@ xbool post_mgr::fog_resources::UpdatePaletteTexture( const u8* pPalette )
 //  FOG PROCESSING
 //==============================================================================
 
-void post_mgr::SetCustomFogPalette( const texture::handle& Texture, xbool ImmediateSwitch, s32 PaletteIndex )
+void PostMgr::SetCustomFogPalette( texture::handle const& textureHandle, xbool immediateSwitch, s32 paletteIndex )
 {
-    ASSERT( PaletteIndex >= 0 );
-    ASSERT( PaletteIndex < 5 );
+    ASSERT( paletteIndex >= 0 );
+    ASSERT( paletteIndex < 5 );
 
-    u8 TargetPalette[kFogSourcePaletteCount * 4];
-    x_memset( TargetPalette, 0, sizeof(TargetPalette) );
+    u8 targetPalette[kFogSourcePaletteCount * 4];
+    x_memset( targetPalette, 0, sizeof( targetPalette ) );
 
-    texture* pTexture = Texture.GetPointer();
-    if( pTexture )
+    texture* pTexture = textureHandle.GetPointer();
+    if ( pTexture )
     {
-        const xbitmap& Bitmap = pTexture->m_Bitmap;
-        const s32 Width  = Bitmap.GetWidth();
-        const s32 Height = Bitmap.GetHeight();
-        const s32 Count  = Width * Height;
+        xbitmap const& bitmap = pTexture->m_bitmap;
+        s32 const      width = bitmap.GetWidth();
+        s32 const      height = bitmap.GetHeight();
+        s32 const      count = width * height;
 
-        if( Count > 0 )
+        if ( count > 0 )
         {
-            for( s32 i = 0; i < kFogSourcePaletteCount; ++i )
+            for ( s32 i = 0; i < kFogSourcePaletteCount; ++i )
             {
-                const f32 SampleT    = (kFogSourcePaletteCount > 1) ? ((f32)i / (f32)(kFogSourcePaletteCount - 1)) : 0.0f;
-                const s32 SourceIX   = MIN( (s32)(SampleT * (f32)(Count - 1) + 0.5f), Count - 1 );
-                const s32 SourceX    = SourceIX % Width;
-                const s32 SourceY    = SourceIX / Width;
-                const xcolor Color   = Bitmap.GetPixelColor( SourceX, SourceY );
+                f32 const sampleT = ( kFogSourcePaletteCount > 1 )
+                                        ? ( static_cast<f32>( i ) / static_cast<f32>( kFogSourcePaletteCount - 1 ) )
+                                        : 0.0f;
+                s32 const sourceIx =
+                    MIN( static_cast<s32>( sampleT * static_cast<f32>( count - 1 ) + 0.5f ), count - 1 );
+                s32 const    sourceX = sourceIx % width;
+                s32 const    sourceY = sourceIx / width;
+                xcolor const color = bitmap.GetPixelColor( sourceX, sourceY );
 
-                WritePaletteColor( TargetPalette, i, Color );
+                WritePaletteColor( targetPalette, i, color );
             }
         }
     }
 
-    u8* pCurrentPalette = m_FogSourcePalette[PaletteIndex];
-    for( s32 i = 0; i < (kFogSourcePaletteCount * 4); ++i )
+    u8* pCurrentPalette = m_fogSourcePalette[paletteIndex];
+    for ( s32 i = 0; i < ( kFogSourcePaletteCount * 4 ); ++i )
     {
-        if( ImmediateSwitch )
+        if ( immediateSwitch )
         {
-            pCurrentPalette[i] = TargetPalette[i];
+            pCurrentPalette[i] = targetPalette[i];
         }
-        else if( pCurrentPalette[i] < TargetPalette[i] )
+        else if ( pCurrentPalette[i] < targetPalette[i] )
         {
             pCurrentPalette[i]++;
         }
-        else if( pCurrentPalette[i] > TargetPalette[i] )
+        else if ( pCurrentPalette[i] > targetPalette[i] )
         {
             pCurrentPalette[i]--;
         }
     }
 
-    const view* pView = eng_GetView();
-    if( pView )
+    view const* pView = eng_GetView();
+    if ( pView )
     {
-        f32 NearZ, FarZ;
-        pView->GetZLimits( NearZ, FarZ );
-        ExpandCustomFogPalette( m_FogSourcePalette[PaletteIndex], m_FogPalette[PaletteIndex], NearZ, FarZ );
+        f32 nearZ, farZ;
+        pView->GetZLimits( nearZ, farZ );
+        ExpandCustomFogPalette( m_fogSourcePalette[paletteIndex], m_fogPalette[paletteIndex], nearZ, farZ );
 
-        u32 ColorTotal[4] = { 0, 0, 0, 0 };
-        for( s32 i = 0; i < kFogSourcePaletteCount * 4; i += 4 )
+        u32 colorTotal[4] = { 0, 0, 0, 0 };
+        for ( s32 i = 0; i < kFogSourcePaletteCount * 4; i += 4 )
         {
-            ColorTotal[0] += m_FogSourcePalette[PaletteIndex][i + 0];
-            ColorTotal[1] += m_FogSourcePalette[PaletteIndex][i + 1];
-            ColorTotal[2] += m_FogSourcePalette[PaletteIndex][i + 2];
-            ColorTotal[3] += m_FogSourcePalette[PaletteIndex][i + 3];
+            colorTotal[0] += m_fogSourcePalette[paletteIndex][i + 0];
+            colorTotal[1] += m_fogSourcePalette[paletteIndex][i + 1];
+            colorTotal[2] += m_fogSourcePalette[paletteIndex][i + 2];
+            colorTotal[3] += m_fogSourcePalette[paletteIndex][i + 3];
         }
 
-        ColorTotal[0] /= kFogSourcePaletteCount;
-        ColorTotal[1] /= kFogSourcePaletteCount;
-        ColorTotal[2] /= kFogSourcePaletteCount;
-        ColorTotal[3] /= kFogSourcePaletteCount;
+        colorTotal[0] /= kFogSourcePaletteCount;
+        colorTotal[1] /= kFogSourcePaletteCount;
+        colorTotal[2] /= kFogSourcePaletteCount;
+        colorTotal[3] /= kFogSourcePaletteCount;
 
-        m_FogColor[PaletteIndex].Set(
-            (f32)ColorTotal[0] / 255.0f,
-            (f32)ColorTotal[1] / 255.0f,
-            (f32)ColorTotal[2] / 255.0f,
-            (f32)ColorTotal[3] / 255.0f );
+        m_fogColor[paletteIndex].Set(
+            static_cast<f32>( colorTotal[0] ) / 255.0f, static_cast<f32>( colorTotal[1] ) / 255.0f,
+            static_cast<f32>( colorTotal[2] ) / 255.0f, static_cast<f32>( colorTotal[3] ) / 255.0f );
 
-        const f32 Numer        = (2.0f * kPS2ZConst * NearZ * FarZ) / (FarZ - NearZ);
-        const f32 DenomOffset  = -kPS2ZConst + (kPS2ZConst * (FarZ + NearZ)) / (FarZ - NearZ);
-        const f32 DepthScaleQ  = FarZ / (FarZ - NearZ);
-        static const f32 Scale = 1 / 16.0f;
+        f32 const        numer = ( 2.0f * kPS2ZConst * nearZ * farZ ) / ( farZ - nearZ );
+        f32 const        denomOffset = -kPS2ZConst + ( kPS2ZConst * ( farZ + nearZ ) ) / ( farZ - nearZ );
+        f32 const        depthScaleQ = farZ / ( farZ - nearZ );
+        static f32 const scale = 1 / 16.0f;
 
-        const f32 PS2ZValue      = (f32)(0xffff) * Scale;
-        const f32 Denom          = PS2ZValue + DenomOffset;
-        ASSERT( x_abs( Denom ) > 0.001f );
-        const f32 ViewZValue     = Numer / Denom;
-        const f32 ProjectedZValue = ViewZValue * DepthScaleQ - NearZ * DepthScaleQ;
-        ASSERT( ViewZValue > 0.001f );
-        m_FogStart[PaletteIndex] = ProjectedZValue;
+        f32 const pS2ZValue = static_cast<f32>( 0xffff ) * scale;
+        f32 const denom = pS2ZValue + denomOffset;
+        ASSERT( x_abs( denom ) > 0.001f );
+        f32 const viewZValue = numer / denom;
+        f32 const projectedZValue = viewZValue * depthScaleQ - nearZ * depthScaleQ;
+        ASSERT( viewZValue > 0.001f );
+        m_fogStart[paletteIndex] = projectedZValue;
 
-        least_squares AlphaApprox;
-        AlphaApprox.Setup(3);
+        LeastSquares alphaApprox;
+        alphaApprox.Setup( 3 );
 
-        static const f32 NSamples = 512.0f;
-        const f32 StepSize = (FarZ - NearZ) / NSamples;
-        for( f32 ViewZ = NearZ; ViewZ <= FarZ; ViewZ += StepSize )
+        static f32 const nSamples = 512.0f;
+        f32 const        stepSize = ( farZ - nearZ ) / nSamples;
+        for ( f32 viewZ = nearZ; viewZ <= farZ; viewZ += stepSize )
         {
-            f32 PS2ScreenZ = (ViewZ * (FarZ + NearZ) / (FarZ - NearZ));
-            PS2ScreenZ    -= ((2.0f * FarZ * NearZ) / (FarZ - NearZ));
-            PS2ScreenZ    /= ViewZ;
-            PS2ScreenZ    *= -kPS2ZConst;
-            PS2ScreenZ    +=  kPS2ZConst;
+            f32 pS2ScreenZ = ( viewZ * ( farZ + nearZ ) / ( farZ - nearZ ) );
+            pS2ScreenZ -= ( ( 2.0f * farZ * nearZ ) / ( farZ - nearZ ) );
+            pS2ScreenZ /= viewZ;
+            pS2ScreenZ *= -kPS2ZConst;
+            pS2ScreenZ += kPS2ZConst;
 
-            const f32 ProjectedScreenZ = (ViewZ * DepthScaleQ) - (NearZ * DepthScaleQ);
+            f32 const projectedScreenZ = ( viewZ * depthScaleQ ) - ( nearZ * depthScaleQ );
 
-            f32 A = 0.0f;
-            const u32 UPS2SZ = (u32)(PS2ScreenZ * 16.0f + 0.5f);
-            if( UPS2SZ <= 0xFFFF )
+            f32       a = 0.0f;
+            u32 const upS2Sz = static_cast<u32>( pS2ScreenZ * 16.0f + 0.5f );
+            if ( upS2Sz <= 0xFFFF )
             {
-                const s32 ClutIX = MINMAX( 0, (s32)(((UPS2SZ >> 8) & 0xFF) / 4), kFogSourcePaletteCount - 1 );
-                A = (f32)m_FogSourcePalette[PaletteIndex][ClutIX * 4 + 3] / 255.0f;
+                s32 const clutIx =
+                    MINMAX( 0, static_cast<s32>( ( ( upS2Sz >> 8 ) & 0xFF ) / 4 ), kFogSourcePaletteCount - 1 );
+                a = static_cast<f32>( m_fogSourcePalette[paletteIndex][clutIx * 4 + 3] ) / 255.0f;
             }
 
-            AlphaApprox.AddSample( ProjectedScreenZ, A );
+            alphaApprox.AddSample( projectedScreenZ, a );
         }
 
-        if( !AlphaApprox.Solve() )
+        if ( !alphaApprox.Solve() )
         {
-            AlphaApprox.SetCoeff( 0, (f32)m_FogSourcePalette[PaletteIndex][3] / 255.0f );
-            AlphaApprox.SetCoeff( 1, 0.0f );
-            AlphaApprox.SetCoeff( 2, 0.0f );
-            AlphaApprox.SetCoeff( 3, 0.0f );
+            alphaApprox.SetCoeff( 0, static_cast<f32>( m_fogSourcePalette[paletteIndex][3] ) / 255.0f );
+            alphaApprox.SetCoeff( 1, 0.0f );
+            alphaApprox.SetCoeff( 2, 0.0f );
+            alphaApprox.SetCoeff( 3, 0.0f );
         }
 
-        m_FogConst[PaletteIndex].Set( AlphaApprox.GetCoeff(0),
-                                      AlphaApprox.GetCoeff(1),
-                                      AlphaApprox.GetCoeff(2),
-                                      AlphaApprox.GetCoeff(3) );
+        m_fogConst[paletteIndex].Set( alphaApprox.GetCoeff( 0 ), alphaApprox.GetCoeff( 1 ), alphaApprox.GetCoeff( 2 ),
+                                      alphaApprox.GetCoeff( 3 ) );
     }
 
-    m_bFogValid[PaletteIndex] = TRUE;
+    m_isFogValid[paletteIndex] = TRUE;
 }
 
 //==============================================================================
 
-void post_mgr::BuildFogPalette( render::post_falloff_fn Fn, xcolor Color, f32 Param1, f32 Param2 )
+void PostMgr::BuildFogPalette( render::post_falloff_fn fn, xcolor color, f32 param1, f32 param2 )
 {
-    m_FogFilter.PaletteIndex = kFogGeneratedPaletteIndex;
+    m_fogFilter.PaletteIndex = kFogGeneratedPaletteIndex;
 
-    m_FogFilter.Fn[m_FogFilter.PaletteIndex] = Fn;
+    m_fogFilter.Fn[m_fogFilter.PaletteIndex] = fn;
 
-    const f32 NearZ = m_PostNearZ;
-    const f32 FarZ  = m_PostFarZ;
-    const f32 Range = MAX( FarZ - NearZ, 0.001f );
+    f32 const nearZ = m_postNearZ;
+    f32 const farZ = m_postFarZ;
+    f32 const range = MAX( farZ - nearZ, 0.001f );
 
-    for( s32 i = 0; i < kFogPaletteCount; ++i )
+    for ( s32 i = 0; i < kFogPaletteCount; ++i )
     {
-        xcolor EntryColor( Color.R, Color.G, Color.B, Color.A );
+        xcolor entryColor( color.R, color.G, color.B, color.A );
 
-        if( Fn == render::FALLOFF_CONSTANT )
+        if ( fn == render::FALLOFF_CONSTANT )
         {
-            EntryColor.A = Color.A;
+            entryColor.A = color.A;
         }
         else
         {
-            const f32 LinearDepth = (f32)i / (f32)(kFogPaletteCount - 1);
-            const f32 ViewZ       = NearZ + LinearDepth * Range;
-            const f32 F           = MINMAX( 0.0f, ComputeFogFalloff( Fn, ViewZ, NearZ, FarZ, Param1, Param2 ), 1.0f );
-            EntryColor.A          = (u8)MINMAX( 0.0f, 128.0f - (F * 128.0f), 255.0f );
+            f32 const linearDepth = static_cast<f32>( i ) / static_cast<f32>( kFogPaletteCount - 1 );
+            f32 const viewZ = nearZ + linearDepth * range;
+            f32 const f = MINMAX( 0.0f, ComputeFogFalloff( fn, viewZ, nearZ, farZ, param1, param2 ), 1.0f );
+            entryColor.A = static_cast<u8>( MINMAX( 0.0f, 128.0f - ( f * 128.0f ), 255.0f ) );
 
-            if( i == 0 )
-                EntryColor.A = 0;
+            if ( i == 0 )
+            {
+                entryColor.A = 0;
+            }
         }
 
-        WritePaletteColor( m_FogPalette[m_FogFilter.PaletteIndex], i, EntryColor );
+        WritePaletteColor( m_fogPalette[m_fogFilter.PaletteIndex], i, entryColor );
     }
 
-    m_bFogValid[m_FogFilter.PaletteIndex] = TRUE;
+    m_isFogValid[m_fogFilter.PaletteIndex] = TRUE;
 }
 
 //==============================================================================
 
-void post_mgr::ExecuteZFogFilter( void )
+void PostMgr::ExecuteZFogFilter( void )
 {
-    if( !g_pd3dContext || !m_FogResources.pCompositePS )
-        return;
-
-    const s32 PaletteIndex = m_FogFilter.PaletteIndex;
-    if( (PaletteIndex < 0) || (PaletteIndex >= 5) || !m_bFogValid[PaletteIndex] )
-        return;
-
-    const rtarget* pLinearDepthTarget = g_GBufferMgr.GetGBufferTarget( GBUFFER_LINEAR_DEPTH );
-    if( !pLinearDepthTarget || !pLinearDepthTarget->pShaderResourceView )
-        return;
-
-    const xbool bUsePolynomial = (m_FogFilter.Fn[PaletteIndex] == render::FALLOFF_CUSTOM);
-    if( !bUsePolynomial )
+    s32 const paletteIndex = m_fogFilter.PaletteIndex;
+    if ( ( paletteIndex < 0 ) || ( paletteIndex >= 5 ) || !m_isFogValid[paletteIndex] )
     {
-        if( !m_FogResources.UpdatePaletteTexture( m_FogPalette[PaletteIndex] ) )
+        return;
+    }
+
+    rtarget const* pNormalDepthTarget = g_GBufferMgr.GetGBufferTarget( GBufferTarget::NormalDepth );
+    if ( !pNormalDepthTarget || !rtarget_HasShaderResource( *pNormalDepthTarget ) )
+    {
+        return;
+    }
+
+    xbool const   bUsePolynomial = ( m_fogFilter.Fn[paletteIndex] == render::FALLOFF_CUSTOM );
+    shader const& pixelShader = bUsePolynomial ? m_fogResources.PolynomialPS : m_fogResources.CompositePS;
+    if ( !pixelShader )
+    {
+        return;
+    }
+
+    if ( !bUsePolynomial )
+    {
+        if ( !m_fogResources.UpdatePaletteTexture( m_fogPalette[paletteIndex] ) )
+        {
             return;
+        }
     }
 
-    PrepareFullscreenQuad();
-    m_FogResources.UpdateConstants( m_FogColor[PaletteIndex], m_FogConst[PaletteIndex], m_FogStart[PaletteIndex], m_PostNearZ, m_PostFarZ, bUsePolynomial );
+    m_fogResources.UpdateConstants( m_fogColor[paletteIndex], m_fogConst[paletteIndex], m_fogStart[paletteIndex],
+                                    m_postNearZ, m_postFarZ, bUsePolynomial );
 
-    ID3D11ShaderResourceView* pResources[2] = { NULL, NULL };
-    pResources[0] = pLinearDepthTarget->pShaderResourceView;
-    if( !bUsePolynomial )
-        pResources[1] = m_FogResources.pPaletteSRV;
-    g_pd3dContext->PSSetShaderResources( 1, 2, pResources );
+    if ( !m_fogResources.BindForComposite( pixelShader, !bUsePolynomial ) )
+    {
+        return;
+    }
 
-    composite_Blit( *pLinearDepthTarget, COMPOSITE_BLEND_ALPHA, 1.0f, m_FogResources.pCompositePS, STATE_SAMPLER_LINEAR_CLAMP );
-
-    ID3D11ShaderResourceView* pNullResources[2] = { NULL, NULL };
-    g_pd3dContext->PSSetShaderResources( 1, 2, pNullResources );
+    composite_Blit( *pNormalDepthTarget, COMPOSITE_BLEND_ALPHA, 1.0f, &pixelShader, RSTATE_SAMPLER_PRESET_POINT_CLAMP,
+                    "NormalDepthSource" );
 }
 
 //==============================================================================
 
-xcolor post_mgr::GetFogValue( const vector3& WorldPos, s32 PaletteIndex )
+void PostMgr::GetGeometryFogConstants( vector4& color, vector4& coeff, vector4& params ) const
 {
-    if( (PaletteIndex < 0) || (PaletteIndex >= 5) || !m_bFogValid[PaletteIndex] )
-        return xcolor(255, 255, 255, 0);
+    color.Set( 0.0f, 0.0f, 0.0f, 0.0f );
+    coeff.Set( 0.0f, 0.0f, 0.0f, 0.0f );
+    params.Set( 0.0f, 0.0f, 0.0f, 0.0f );
 
-    const view* pView = eng_GetView();
-    if( !pView )
-        return xcolor(255, 255, 255, 0);
-
-    if( m_FogFilter.Fn[PaletteIndex] == render::FALLOFF_CUSTOM )
+    if ( m_Flags.Override || !m_Flags.DoZFogCustom )
     {
-        vector4 ScreenPos( WorldPos );
-        ScreenPos.GetW() = 1.0f;
-        ScreenPos = pView->GetW2C() * ScreenPos;
-        if( x_abs( ScreenPos.GetW() ) < 0.001f )
-            return xcolor(255,255,255,0);
-
-        const f32 Z  = ScreenPos.GetZ();
-        const f32 Z2 = Z * Z;
-        const f32 Z3 = Z2 * Z;
-        f32 FogIntensity = m_FogConst[PaletteIndex].GetX() +
-                           m_FogConst[PaletteIndex].GetY() * Z +
-                           m_FogConst[PaletteIndex].GetZ() * Z2 +
-                           m_FogConst[PaletteIndex].GetW() * Z3;
-
-        FogIntensity = MINMAX( 0.0f, FogIntensity, 1.0f );
-        return xcolor( 255, 255, 255, (u8)(FogIntensity * 255.0f) );
+        return;
     }
 
-    f32 NearZ, FarZ;
-    pView->GetZLimits( NearZ, FarZ );
+    s32 const paletteIndex = m_fogFilter.PaletteIndex;
+    if ( ( paletteIndex < 0 ) || ( paletteIndex >= 5 ) || !m_isFogValid[paletteIndex] ||
+         ( m_fogFilter.Fn[paletteIndex] != render::FALLOFF_CUSTOM ) )
+    {
+        return;
+    }
 
-    vector4 ViewPos( WorldPos );
-    ViewPos.GetW() = 1.0f;
-    ViewPos = pView->GetW2V() * ViewPos;
+    color = m_fogColor[paletteIndex];
+    coeff = m_fogConst[paletteIndex];
+    params.Set( m_postNearZ, m_postFarZ, m_fogStart[paletteIndex], 1.0f );
+}
 
-    if( ViewPos.GetZ() <= NearZ )
-        return xcolor(255, 255, 255, m_FogPalette[PaletteIndex][3] );
+//==============================================================================
 
-    const f32 LinearDepth = (ViewPos.GetZ() - NearZ) / MAX( FarZ - NearZ, 0.001f );
-    const s32 PaletteIX   = GetPaletteIndexFromDepth( LinearDepth );
-    const u8  Alpha       = m_FogPalette[PaletteIndex][PaletteIX * 4 + 3];
+xcolor PostMgr::GetFogValue( vector3 const& worldPos, s32 paletteIndex )
+{
+    if ( ( paletteIndex < 0 ) || ( paletteIndex >= 5 ) || !m_isFogValid[paletteIndex] )
+    {
+        return xcolor( 255, 255, 255, 0 );
+    }
 
-    return xcolor( 255, 255, 255, Alpha );
+    view const* pView = eng_GetView();
+    if ( !pView )
+    {
+        return xcolor( 255, 255, 255, 0 );
+    }
+
+    if ( m_fogFilter.Fn[paletteIndex] == render::FALLOFF_CUSTOM )
+    {
+        vector4 screenPos( worldPos );
+        screenPos.GetW() = 1.0f;
+        screenPos = pView->GetW2C() * screenPos;
+        if ( x_abs( screenPos.GetW() ) < 0.001f )
+        {
+            return xcolor( 255, 255, 255, 0 );
+        }
+
+        f32 const z = screenPos.GetZ();
+        f32 const z2 = z * z;
+        f32 const z3 = z2 * z;
+        f32       fogIntensity = m_fogConst[paletteIndex].GetX() + m_fogConst[paletteIndex].GetY() * z +
+                           m_fogConst[paletteIndex].GetZ() * z2 + m_fogConst[paletteIndex].GetW() * z3;
+
+        fogIntensity = MINMAX( 0.0f, fogIntensity, 1.0f );
+        return xcolor( 255, 255, 255, static_cast<u8>( fogIntensity * 255.0f ) );
+    }
+
+    f32 nearZ, farZ;
+    pView->GetZLimits( nearZ, farZ );
+
+    vector4 viewPos( worldPos );
+    viewPos.GetW() = 1.0f;
+    viewPos = pView->GetW2V() * viewPos;
+
+    if ( viewPos.GetZ() <= nearZ )
+    {
+        return xcolor( 255, 255, 255, m_fogPalette[paletteIndex][3] );
+    }
+
+    f32 const linearDepth = ( viewPos.GetZ() - nearZ ) / MAX( farZ - nearZ, 0.001f );
+    s32 const paletteIx = GetPaletteIndexFromDepth( linearDepth );
+    u8 const  alpha = m_fogPalette[paletteIndex][paletteIx * 4 + 3];
+
+    return xcolor( 255, 255, 255, alpha );
 }

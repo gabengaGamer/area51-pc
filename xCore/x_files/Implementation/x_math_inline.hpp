@@ -388,21 +388,21 @@ inline f32 x_sqr ( f32 a )  { return( a * a ); }
 
 #include <math.h>
 
-#ifdef TARGET_PC
-__forceinline f32 x_sqrt    ( f32 a )        { return(                (f32)(sqrtf ( a ) ) ); }
-__forceinline f32 x_1sqrt   ( f32 a )        { return(         1.0f / (f32)(sqrtf ( a ) ) ); }
-__forceinline f32 x_log     ( f32 a )        { return(                (f32)(logf  ( a ) ) ); }
-__forceinline f32 x_log2    ( f32 a )        { return( 1.442695041f * (f32)(logf  ( a ) ) ); }
-__forceinline f32 x_log10   ( f32 a )        { return(                (f32)(log10f( a ) ) ); }
-__forceinline f32 x_exp     ( f32 a )        { return(                (f32)(expf  ( a ) ) ); }
-__forceinline f32 x_pow     ( f32 a, f32 b ) { return(                (f32)(powf  ( a, b ) ) ); }
-__forceinline f32 x_tan     ( f32 a )        { return(                (f32)(tanf  ( a ) ) ); }
-__forceinline f32 x_atan    ( f32 a )        { return(                (f32)(atanf ( a ) ) ); }
-__forceinline f32 x_asin    ( f32 a )        { return(                (f32)(asinf ( a ) ) ); }
-__forceinline f32 x_acos    ( f32 a )        { return(                (f32)(acosf ( a ) ) ); }
-__forceinline radian x_atan2( f32 y, f32 x ) { return                 (radian)atan2f( y,x ); }
-__forceinline f32 x_sin     ( radian a )     { return                 (f32)sinf( a ); }
-__forceinline f32 x_cos     ( radian a )     { return                 (f32)cosf( a ); }
+#ifdef TARGET_DESKTOP
+inline f32 x_sqrt    ( f32 a )        { return(                (f32)(sqrtf ( a ) ) ); }
+inline f32 x_1sqrt   ( f32 a )        { return(         1.0f / (f32)(sqrtf ( a ) ) ); }
+inline f32 x_log     ( f32 a )        { return(                (f32)(logf  ( a ) ) ); }
+inline f32 x_log2    ( f32 a )        { return( 1.442695041f * (f32)(logf  ( a ) ) ); }
+inline f32 x_log10   ( f32 a )        { return(                (f32)(log10f( a ) ) ); }
+inline f32 x_exp     ( f32 a )        { return(                (f32)(expf  ( a ) ) ); }
+inline f32 x_pow     ( f32 a, f32 b ) { return(                (f32)(powf  ( a, b ) ) ); }
+inline f32 x_tan     ( f32 a )        { return(                (f32)(tanf  ( a ) ) ); }
+inline f32 x_atan    ( f32 a )        { return(                (f32)(atanf ( a ) ) ); }
+inline f32 x_asin    ( f32 a )        { return(                (f32)(asinf ( a ) ) ); }
+inline f32 x_acos    ( f32 a )        { return(                (f32)(acosf ( a ) ) ); }
+inline radian x_atan2( f32 y, f32 x ) { return                 (radian)atan2f( y,x ); }
+inline f32 x_sin     ( radian a )     { return                 (f32)sinf( a ); }
+inline f32 x_cos     ( radian a )     { return                 (f32)cosf( a ); }
 #endif
 
 //==============================================================================

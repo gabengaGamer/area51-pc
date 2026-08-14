@@ -13,11 +13,11 @@
 // INCLUDES
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 #ifdef X_EDITOR
-#include "Objects\Render\SkinInst.hpp"
-#include "Loco\LocoCharAnimPlayer.hpp"
+#include "Objects/Render/SkinInst.hpp"
+#include "Loco/LocoCharAnimPlayer.hpp"
 #endif
 
 
@@ -65,6 +65,8 @@ protected:
     s32                     m_AnimName;         // Name of animation to play
     s32                     m_AnimFrame;        // Frame of animation to display
     xbool                   m_bAnimate;         // Animate or show static frame
+    f32                     m_AnimDeltaTime;    // Animation time accumulated between renders
+    xtimer                  m_AnimTimer;        // Time since the previous render
 #endif
 
 };

@@ -8,6 +8,7 @@
 // INCLUDES
 //=========================================================================
 #include "NewWeapon.hpp"
+#include "Render/Texture.hpp"
 
 enum eScanState
 {
@@ -47,7 +48,7 @@ public:
     virtual ammo_priority       GetPrimaryAmmoPriority  ( void ){ return AMMO_PRIMARY; }
     virtual ammo_priority       GetSecondaryAmmoPriority( void ){ return AMMO_PRIMARY; }
 
-    virtual void                OnAdvanceLogic          ( f32 DeltaTime );      
+    virtual void                OnAdvanceSimulation          ( f32 DeltaTime );      
 
     virtual	void	            OnEnumProp		        ( prop_enum& list );
 	virtual	xbool	            OnProperty		        ( prop_query& rPropQuery );
@@ -108,8 +109,8 @@ protected:
 
     s32                         m_LaserOnLoopId;
 
-    rhandle<xbitmap>            m_LaserBitmap;
-    rhandle<xbitmap>            m_LaserFixupBitmap;
+    rhandle<texture>            m_LaserTexture;
+    rhandle<texture>            m_LaserFixupTexture;
     rhandle<char>               m_FXScannerBox;
 
     vector3                     m_BBoxVerts[8];

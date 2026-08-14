@@ -7,8 +7,8 @@
 //=========================================================================
 // INCLUDE
 //=========================================================================
-#include "Loco\Loco.hpp"
-#include "Loco\LocoWheelController.hpp"
+#include "Loco/Loco.hpp"
+#include "Loco/LocoWheelController.hpp"
 
 /////////////////////////////////////////////////////////////////////////////
 // friendly_scientist_loco class

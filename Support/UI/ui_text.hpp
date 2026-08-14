@@ -37,12 +37,11 @@ public:
                                           s32           Flags );
 
     virtual void    Render              ( s32 ox=0, s32 oy=0 );
-    virtual void    OnUpdate            ( f32 DeltaTime );
 
-    void            UseSmallText        ( const xbool useSmall )    { m_useSmallText = useSmall; };
+    void            UseSmallText        ( xbool UseSmall ) { m_UseSmallText = UseSmall; }
 
 protected:
-    xbool   m_useSmallText;
+    xbool           m_UseSmallText;
 };
 
 //==============================================================================

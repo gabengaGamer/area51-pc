@@ -11,14 +11,14 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_playerlist.hpp"
-#include "ui\ui_blankbox.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_playerlist.hpp"
+#include "UI/ui_blankbox.hpp"
 
 #include "dlg_PopUp.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 
 //==============================================================================
 //  dlg_team_change
@@ -46,9 +46,9 @@ public:
 
     virtual void        Render                  ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnNotify                ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData );
-    virtual void        OnPadNavigate           ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void        OnPadBack               ( ui_win* pWin );
+    virtual void        OnNotify( ui_notification const& Event );
+    virtual void        OnNavigate           ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void        OnCancel               ( ui_win* pWin );
     virtual void        OnUpdate                ( ui_win* pWin, f32 DeltaTime );
     
     void                FillTeamLists           ( void );
@@ -67,7 +67,6 @@ protected:
     ui_playerlist*      m_pAlphaTeamList;
     ui_playerlist*      m_pOmegaTeamList;
 
-    ui_text*            m_pNavText;
 
     dlg_popup*          m_PopUp;
     s32                 m_PopUpResult;

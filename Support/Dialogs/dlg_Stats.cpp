@@ -4,19 +4,19 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
 
 #include "dlg_Stats.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 
 
 
@@ -50,39 +50,37 @@ enum controls
     IDC_STATS_KICKS_TEXT,
     IDC_STATS_VOTES_TEXT,
 #endif
-    IDC_STATS_NAV_TEXT,
 };
 
 ui_manager::control_tem StatsControls[] = 
 {
     // Frames.
-    { IDC_STATS_TIME_TEXT,      "IDS_NULL",                 "text",  40,  60, 180,  25, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_KILLS_TEXT,     "IDS_NULL",                 "text",  40,  85, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_DEATHS_TEXT,    "IDS_NULL",                 "text",  40, 110, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_GAMES_TEXT,     "IDS_NULL",                 "text",  40, 135, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_WINS_TEXT,      "IDS_NULL",                 "text",  40, 160, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_GOLDS_TEXT,     "IDS_NULL",                 "text",  40, 185, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_SILVERS_TEXT,   "IDS_NULL",                 "text",  40, 210, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_BRONZES_TEXT,   "IDS_NULL",                 "text",  40, 235, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_STATS_TIME_TEXT,      "IDS_NULL",                 "text",  40,  60, 180,  25, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_STATS_KILLS_TEXT,     "IDS_NULL",                 "text",  40,  85, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_DEATHS_TEXT,    "IDS_NULL",                 "text",  40, 110, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_GAMES_TEXT,     "IDS_NULL",                 "text",  40, 135, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_WINS_TEXT,      "IDS_NULL",                 "text",  40, 160, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_GOLDS_TEXT,     "IDS_NULL",                 "text",  40, 185, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_SILVERS_TEXT,   "IDS_NULL",                 "text",  40, 210, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_BRONZES_TEXT,   "IDS_NULL",                 "text",  40, 235, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 #ifndef TARGET_XBOX
-    { IDC_STATS_KICKS_TEXT,     "IDS_NULL",                 "text",  40, 260, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_VOTES_TEXT,     "IDS_NULL",                 "text",  40, 285, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_STATS_KICKS_TEXT,     "IDS_NULL",                 "text",  40, 260, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_VOTES_TEXT,     "IDS_NULL",                 "text",  40, 285, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 #endif
 
-    { IDC_STATS_TIME,           "IDS_ONLINE_STATS_TIME",    "text", 240,  60, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_KILLS,          "IDS_ONLINE_STATS_KILLS",   "text", 240,  85, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_DEATHS,         "IDS_ONLINE_STATS_DEATHS",  "text", 240, 110, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_GAMES,          "IDS_ONLINE_STATS_GAMES",   "text", 240, 135, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_WINS,           "IDS_ONLINE_STATS_WINS",    "text", 240, 160, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_GOLDS,          "IDS_ONLINE_STATS_GOLD",    "text", 240, 185, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_SILVERS,        "IDS_ONLINE_STATS_SILVER",  "text", 240, 210, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_BRONZES,        "IDS_ONLINE_STATS_BRONZE",  "text", 240, 235, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_STATS_TIME,           "IDS_ONLINE_STATS_TIME",    "text", 240,  60, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_KILLS,          "IDS_ONLINE_STATS_KILLS",   "text", 240,  85, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_DEATHS,         "IDS_ONLINE_STATS_DEATHS",  "text", 240, 110, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_GAMES,          "IDS_ONLINE_STATS_GAMES",   "text", 240, 135, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_WINS,           "IDS_ONLINE_STATS_WINS",    "text", 240, 160, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_GOLDS,          "IDS_ONLINE_STATS_GOLD",    "text", 240, 185, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_SILVERS,        "IDS_ONLINE_STATS_SILVER",  "text", 240, 210, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_BRONZES,        "IDS_ONLINE_STATS_BRONZE",  "text", 240, 235, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 #ifndef TARGET_XBOX
-    { IDC_STATS_KICKS,          "IDS_ONLINE_STATS_KICKS",   "text", 240, 260, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATS_VOTES,          "IDS_ONLINE_STATS_VOTES",   "text", 240, 285, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_STATS_KICKS,          "IDS_ONLINE_STATS_KICKS",   "text", 240, 260, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATS_VOTES,          "IDS_ONLINE_STATS_VOTES",   "text", 240, 285, 180,  25, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 #endif
   
-    { IDC_STATS_NAV_TEXT,     "IDS_NULL",         "text",      0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 ui_manager::dialog_tem StatsDialog =
@@ -188,7 +186,6 @@ xbool dlg_stats::Create( s32                        UserID,
     m_pTextVotes    = (ui_text*)  FindChildByID( IDC_STATS_VOTES_TEXT   );
 #endif
 
-    m_pNavText      = (ui_text*)    FindChildByID( IDC_STATS_NAV_TEXT );
 
     // hide them
     m_pLabelTime    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
@@ -216,7 +213,6 @@ xbool dlg_stats::Create( s32                        UserID,
     m_pTextKicks    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pTextVotes    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 #endif
-    m_pNavText      ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set up text labels
     m_pLabelTime    ->UseSmallText( TRUE );
@@ -299,9 +295,7 @@ xbool dlg_stats::Create( s32                        UserID,
 
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_BACK" ));  
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // Get stats data for player here!
     player_stats MyStats = g_MatchMgr.GetAllCareerStats();
@@ -359,14 +353,7 @@ void dlg_stats::Render( s32 ox, s32 oy )
     // render background filter
     if( m_bRenderBlackout )
     {
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-#ifdef TARGET_PS2
-        // Nasty hack to force PS2 to draw to rb.l = 0
-        rb.Set( -1, 0, XRes, YRes );
-#else
-        rb.Set( 0, 0, XRes, YRes );
-#endif
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect( rb,
                                     xcolor( 0, 0, 0, 180 ),
                                     xcolor( 0, 0, 0, 180 ),
@@ -428,7 +415,7 @@ void dlg_stats::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_stats::OnPadBack( ui_win* pWin )
+void dlg_stats::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -479,7 +466,6 @@ void dlg_stats::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pTextVotes    ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 #endif
 
-            m_pNavText      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
         }
     }
 

@@ -9,54 +9,55 @@
 #ifndef GEOM_LOCAL_SHADOW_MAPS_HLSL
 #define GEOM_LOCAL_SHADOW_MAPS_HLSL
 
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "common/geom_shadow_common.hlsl"
 #include "common/geom_shadow_spot.hlsl"
 #include "common/geom_shadow_point.hlsl"
-#include "common/geom_shadow_match.hlsl"
 
 //==============================================================================
+//  FUNCTIONS
+//==============================================================================
 
-float GeomComputeLocalLightShadowVisibility( GEOM_PIXEL_INPUT input, uint lightIndex )
+float GeomComputeLocalLightShadowVisibility( GEOM_PIXEL_INPUT input,
+                                             uint lightIndex,
+                                             float3 geometricNormal )
 {
+    if( ( GeomGetMaterialFlags( input ) & INSTANCE_FLAG_RECEIVE_LOCAL_SHADOW ) == 0u )
+    {
+        return 1.0f;
+    }
+
     const float4 lightDir = GeomGetLightDir( input, lightIndex );
     if( GeomIsCharFillLight( lightDir ) )
+    {
         return 1.0f;
+    }
 
-    if( ( FaceShadowCount == 0u ) && ( PointShadowLightCount == 0u ) )
+    const uint shadowIndex = GeomGetLightShadowIndex( input, lightIndex );
+    if( shadowIndex == 0xFFFFFFFFu )
+    {
         return 1.0f;
+    }
 
     if( lightDir.w >= 0.5f )
     {
-        [fastopt]
-        [loop]
-        for( uint i = 0; i < MAX_SHADOW_SOURCES; i++ )
+        if( ( shadowIndex >= GetFaceShadowCount() ) || FaceShadowIsPointFace( shadowIndex ) )
         {
-            if( i >= FaceShadowCount )
-                break;
-
-            if( !ShadowLightMatchesSpot( input, lightIndex, i ) )
-                continue;
-
-            return SampleFaceShadowSource( i, input.WorldPos, input.Normal );
+            return 1.0f;
         }
 
+        return SampleFaceShadowSource( shadowIndex, input.WorldPos, input.Normal, geometricNormal );
+    }
+
+    if( shadowIndex >= GetPointShadowLightCount() )
+    {
         return 1.0f;
     }
 
-    [fastopt]
-    [loop]
-    for( uint i = 0; i < MAX_SHADOW_LIGHTS; i++ )
-    {
-        if( i >= PointShadowLightCount )
-            break;
-
-        if( !ShadowLightMatchesPoint( input, lightIndex, i ) )
-            continue;
-
-        return SamplePointShadowLight( i, input.WorldPos, input.Normal );
-    }
-
-    return 1.0f;
+    return SamplePointShadowLight( shadowIndex, input.WorldPos, input.Normal, geometricNormal );
 }
 
 //==============================================================================

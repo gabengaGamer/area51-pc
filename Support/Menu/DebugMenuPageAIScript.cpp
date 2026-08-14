@@ -7,16 +7,18 @@
 //  
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "DebugMenu2.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "characters\character.hpp"
-#include "TriggerEx\TriggerEx_Manager.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "Characters/Character.hpp"
+#include "TriggerEx/TriggerEx_Manager.hpp"
 #include "Configuration/GameConfig.hpp"
 #include "Navigation/Nav_Map.hpp"
 #include "Objects/Actor/Actor.hpp"
-#include "Ui\ui_font.hpp"
-#include "Objects\DamageField.hpp"
-#include "TriggerEx\TriggerEx_Object.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_renderer.hpp"
+#include "Objects/DamageField.hpp"
+#include "TriggerEx/TriggerEx_Object.hpp"
 
 //==============================================================================
 
@@ -114,7 +116,7 @@ void debug_menu_page_aiscript::OnPreRender( void )
         // render a black background for the text
         irect Rect;
         Rect.Set( kNameLeft, kTextTop, XRes-kNameLeft, kTextTop + LineHeight * NumLines );
-        draw_Rect( Rect, xcolor(0,0,0,128), FALSE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( Rect, xcolor(0,0,0,128) );
 
         // render informative text for each of the actors...
         // NOTE: We are rendering the text visually from bottom to top. This will put
@@ -178,8 +180,7 @@ void debug_menu_page_aiscript::OnPreRender( void )
             object* pObject = g_ObjMgr.GetObjectBySlot( SlotID );
             if( pObject != NULL )
             {
-                draw_ClearL2W();
-                draw_Volume( pObject->GetBBox(), xcolor(0,255,0,64) );
+                render::debug::Volume( pObject->GetBBox(), xcolor(0,255,0,64) );
             }
 
             SlotID = g_ObjMgr.GetNext( SlotID );
@@ -199,16 +200,14 @@ void debug_menu_page_aiscript::OnPreRender( void )
                 {
                     FieldColor = xcolor(255,128,128,64);
                 }
-
-                draw_ClearL2W();
                 if (DamageField.GetSpatialType() == damage_field::SPATIAL_TYPE_AXIS_CUBE)
                 {
-                    draw_Volume( DamageField.GetBBox(), FieldColor );
-                    draw_BBox( DamageField.GetBBox(), FieldColor );
+                    render::debug::Volume( DamageField.GetBBox(), FieldColor );
+                    render::debug::Box( DamageField.GetBBox(), FieldColor );
                 }
                 else if (DamageField.GetSpatialType() == damage_field::SPATIAL_TYPE_SPHERICAL)
                 {
-                    draw_Sphere( DamageField.GetPosition(), DamageField.GetDimension(0) , FieldColor );
+                    render::debug::Sphere( DamageField.GetPosition(), DamageField.GetDimension(0) , FieldColor );
                 }
             }
 
@@ -231,16 +230,14 @@ void debug_menu_page_aiscript::OnPreRender( void )
                     {
                         FieldColor = xcolor(128,128,255,64);
                     }
-
-                    draw_ClearL2W();                
                     if (TriggerObject.GetSpatialType() == trigger_ex_object::SPATIAL_TYPE_AXIS_CUBE)
                     {
-                        draw_Volume( TriggerObject.GetBBox(), FieldColor );
-                        draw_BBox( TriggerObject.GetBBox(), FieldColor );
+                        render::debug::Volume( TriggerObject.GetBBox(), FieldColor );
+                        render::debug::Box( TriggerObject.GetBBox(), FieldColor );
                     }
                     else if (TriggerObject.GetSpatialType() == trigger_ex_object::SPATIAL_TYPE_SPHERICAL)
                     {
-                        draw_Sphere( TriggerObject.GetPosition(), TriggerObject.GetDimension(0) , FieldColor );
+                        render::debug::Sphere( TriggerObject.GetPosition(), TriggerObject.GetDimension(0) , FieldColor );
                     }
                 }
                 else if (TriggerObject.GetTriggerType() == trigger_ex_object::TRIGGER_TYPE_VIEWABLE) 
@@ -250,17 +247,15 @@ void debug_menu_page_aiscript::OnPreRender( void )
                     {
                         FieldColor = xcolor(255,128,255,64);
                     }
-
-                    draw_ClearL2W();                
                     if (TriggerObject.GetSpatialType() == trigger_ex_object::SPATIAL_TYPE_AXIS_CUBE)
                     {
-                        draw_Volume( TriggerObject.GetBBox(), FieldColor );
-                        draw_BBox( TriggerObject.GetBBox(), FieldColor );
+                        render::debug::Volume( TriggerObject.GetBBox(), FieldColor );
+                        render::debug::Box( TriggerObject.GetBBox(), FieldColor );
 
                     }
                     else if (TriggerObject.GetSpatialType() == trigger_ex_object::SPATIAL_TYPE_SPHERICAL)
                     {
-                        draw_Sphere( TriggerObject.GetPosition(), TriggerObject.GetDimension(0) , FieldColor );
+                        render::debug::Sphere( TriggerObject.GetPosition(), TriggerObject.GetDimension(0) , FieldColor );
                     }
                 }
 

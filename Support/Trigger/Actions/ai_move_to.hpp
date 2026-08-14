@@ -12,7 +12,7 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Trigger_Actions.hpp"
+#include "../Support/Trigger/Trigger_Actions.hpp"
 
 //=========================================================================
 // AI_MOVE_TO : moves an AI character to a spot with pre and post states as defined

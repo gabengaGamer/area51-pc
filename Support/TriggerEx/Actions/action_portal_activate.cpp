@@ -8,12 +8,13 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_portal_activate.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "..\Support\Zonemgr\ZoneMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/ZoneMgr/ZoneMgr.hpp"
 
 static const xcolor s_ActivateColor          (0,255,0);
 static const xcolor s_DeactivateColor        (255,0,0);
@@ -76,16 +77,16 @@ void action_portal_activate::OnDebugRender ( s32 Index )
             break;
         }
 
-        draw_Line( GetPositionOwner(), pObject->GetPosition(), Color );
-        draw_BBox( pObject->GetBBox(), Color );
+        render::debug::Line( GetPositionOwner(), pObject->GetPosition(), Color );
+        render::debug::Box( pObject->GetBBox(), Color );
 
         if (!GetElse())
         {
-            draw_Label( pObject->GetPosition(), Color, xfs("[%d]%s", Index, Info.Get()) );
+            render::debug::Label( pObject->GetPosition(), Color, xfs("[%d]%s", Index, Info.Get()) );
         }
         else
         {
-            draw_Label( pObject->GetPosition(), Color, xfs("[Else %d]%s", Index, Info.Get()) );
+            render::debug::Label( pObject->GetPosition(), Color, xfs("[Else %d]%s", Index, Info.Get()) );
         }
     }
 #endif // X_EDITOR

@@ -6,15 +6,10 @@
 
 
 #include "GruntLoco.hpp"
-#include "characters\Grunt\Grunt.hpp"
+#include "Characters/Grunt/Grunt.hpp"
 
 
 //==============================================================================
-
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( push )
-    #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
-#endif
 
 grunt_loco::grunt_loco( void ) :
     loco(),
@@ -24,10 +19,6 @@ grunt_loco::grunt_loco( void ) :
     m_bRunGunAim(FALSE)
 {
 }
-
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( pop )
-#endif
 
 //==============================================================================
 

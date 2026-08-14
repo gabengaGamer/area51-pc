@@ -25,7 +25,7 @@ public:
     virtual const object_desc&  GetTypeDesc             ( void ) const;
     static  const object_desc&  GetObjectType           ( void );
     
-    virtual void                OnAdvanceLogic          ( f32 DeltaTime );      
+    virtual void                OnAdvanceSimulation          ( f32 DeltaTime );      
     virtual void                InitWeapon              ( const vector3& rInitPos, render_state rRenderState, 
                                                           guid OwnerGuid );
 
@@ -44,7 +44,6 @@ public:
     
     //virtual xbool               CanIntereptPrimaryFire  ( s32 nFireAnimIndex );
     virtual xbool				CanReload			    ( const ammo_priority& Priority );
-    virtual void                SetCurrentRenderIndex   ( s32 nRenderIndex );
     
 
     virtual	void	            OnEnumProp		        ( prop_enum& List );
@@ -59,8 +58,6 @@ protected:
     virtual	xbool				FireSecondaryProtected	    ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint );
     virtual	xbool				FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
     virtual	xbool				FireNPCSecondaryProtected	( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
-    virtual void                InitMuzzleFx                ( void );  
-
             void                InitReloadFx                ( void );
             void                UpdateReloadFx              ( void );
             void                DestoryReloadFx             ( void );

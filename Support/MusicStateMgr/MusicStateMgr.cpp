@@ -1,6 +1,6 @@
 #include "MusicStateMgr.hpp"
-#include "Characters\character.hpp"
-#include "Music_Mgr\music_mgr.hpp"
+#include "Characters/Character.hpp"
+#include "Music_mgr/music_mgr.hpp"
 
 music_state_mgr g_MusicStateMgr;
 

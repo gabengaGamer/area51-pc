@@ -1,10 +1,10 @@
 #include "Character_Turret_State.hpp"
 #include "Character_Cover_State.hpp"
-#include "..\Character.hpp"
-#include "Navigation\ng_node2.hpp"
-#include "navigation\coverNode.hpp"
-#include "objects\turret.hpp"
-#include "objects\coupler.hpp"
+#include "../Character.hpp"
+#include "Navigation/ng_node2.hpp"
+#include "Navigation/CoverNode.hpp"
+#include "Objects/Turret.hpp"
+#include "Objects/Coupler.hpp"
 
 //=========================================================================
 // GRAY TURRET STATE

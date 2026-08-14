@@ -1,10 +1,11 @@
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Group.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "Objects\Actor\Actor.hpp"
-#include "TriggerEx\TriggerEx_Object.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "TriggerEx/TriggerEx_Object.hpp"
 
 //=============================================================================
 // CONSTANTS
@@ -41,7 +42,7 @@ static struct group_desc : public object_desc
         { 
             // Call default render
             object_desc::OnEditorRender( Object );        
-            return EDITOR_ICON_GROUP; 
+            return static_cast<s32>( EditorIcon::Group ); 
         }
 
 #endif // X_EDITOR
@@ -91,7 +92,7 @@ void group::OnEnumProp      ( prop_enum&    List )
     List.PropEnumButton   ( "Group\\Refresh", "Refresh the child list", PROP_TYPE_DONT_SHOW |
                                                                    PROP_TYPE_DONT_SAVE | 
                                                                    PROP_TYPE_DONT_EXPORT |
-                                                                   PROP_TYPE_DONT_SAVE_MEMCARD );
+                                                                   PROP_TYPE_DONT_SAVE_GAME );
 
     List.PropEnumButton   ( "Group\\Add Child", 
                        "Press the button to add a new target.",
@@ -100,7 +101,7 @@ void group::OnEnumProp      ( prop_enum&    List )
     u32 ScriptingProperties =   PROP_TYPE_MUST_ENUM | 
                                 PROP_TYPE_DONT_SHOW | 
                                 PROP_TYPE_DONT_SAVE |
-                                PROP_TYPE_DONT_SAVE_MEMCARD |
+                                PROP_TYPE_DONT_SAVE_GAME |
                                 PROP_TYPE_DONT_EXPORT |
                                 PROP_TYPE_EXPOSE
                                 ;
@@ -398,9 +399,9 @@ void group::OnDebugRender( void )
         bbox Box = pObj->GetBBox();
         vector3 Pos = pObj->GetL2W().GetTranslation();
 
-        draw_Line( MyPos, Pos, XCOLOR_YELLOW );
-        draw_BBox( Box, XCOLOR_YELLOW );
-        draw_Label( Pos, XCOLOR_RED, "[ %d ] - %s",i,g_ObjMgr.GetNameFromType( pObj->GetType() ) );
+        render::debug::Line( MyPos, Pos, XCOLOR_YELLOW );
+        render::debug::Box( Box, XCOLOR_YELLOW );
+        render::debug::Label( Pos, XCOLOR_RED, "[ %d ] - %s",i,g_ObjMgr.GetNameFromType( pObj->GetType() ) );
     }
 }
 #endif // X_RETAIL

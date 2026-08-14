@@ -2,7 +2,7 @@
 //
 // CokeCan.cpp
 //
-// A cheap verlet particle modelled coke can - very similar to ragdoll -
+// Two-particle cylinder physics
 //
 // The can is modelled with 2 spheres connected by an equal distance constraint.
 // Rolling is faked - the correct roll speed is computed when in contact
@@ -20,124 +20,92 @@
 //
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "CokeCan.hpp"
-#include "Entropy\Entropy.hpp"
-#include "Objects\BaseProjectile.hpp"
-#include "Ragdoll\VerletCollision.hpp"
-#include "Objects\Player.hpp"
+#include "Entropy/Entropy.hpp"
+#include "Objects/BaseProjectile.hpp"
+#include "Ragdoll/VerletCollision.hpp"
+#include "Objects/Player/Player.hpp"
 
 #ifdef X_EDITOR
-#include "CollisionMgr\PolyCache.hpp"
-#include "..\..\Apps\WorldEditor\WorldEditor.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "../../Apps/WorldEditor/WorldEditor.hpp"
 #endif
 
 //==============================================================================
 // DEFINES
 //==============================================================================
 
-struct coke_can_tweaks
+struct coke_can_profile
 {
-    f32         INVERSE_MASS               ;
-    f32         ACTOR_COLL_VEL_PERP_SCALE  ;
-    f32         ACTOR_COLL_VEL_PARA_SCALE  ;
-    f32         GRAVITY                    ;
-    f32         FRICTION                   ;
-    f32         MIN_FRICTION               ;
-    f32         MAX_FRICTION               ;
-    f32         MAJOR_AXIS_FRICTION        ;
-    f32         BOUNCY                     ;
-    f32         TIME_STEP                  ;
-    f32         COLLISION_BACKOFF          ;
-    f32         MIN_COLL_DIST              ;
-    f32         COLL_BBOX_INFLATE          ;
-    f32         AIR_LINEAR_DAMPEN          ;
-    f32         AIR_ANGULAR_DAMPEN         ;
-    f32         GROUND_LINEAR_DAMPEN       ;
-    f32         GROUND_ANGULAR_DAMPEN      ;
-    f32         MAX_SPEED                  ;
-    f32         ACTIVE_ENERGY              ;
-    f32         PAIN_BULLET_FORCE_SCALE    ;
-    f32         PAIN_EXPLOSION_FORCE_SCALE ;
-    s32         ACTIVE_FRAMES              ;
-    f32         AUDIO_IMPACT_SPEED         ;
-    f32         AUDIO_MAX_ROLLING_SPEED    ;
-    f32         AUDIO_MIN_ROLLING_SPEED    ;
-    f32         AUDIO_COLLIDE_SPEED        ;
-    const char* SFX_BULLET_IMPACT          ;
-    const char* SFX_ROLLING                ;
-    const char* SFX_IMPACT_WORLD           ;
-    const char* SFX_IMPACT_CAN             ;
+    f32         m_InvMass;
+    f32         m_ActorNormalVelocityScale;
+    f32         m_ActorTangentVelocityScale;
+    f32         m_ActorPushVelocityScale;
+    f32         m_GravityCmPerSecondSquared;
+    f32         m_SurfaceFriction;
+    f32         m_MajorAxisFriction;
+    f32         m_Elasticity;
+    f32         m_CollisionBackoffCm;
+    f32         m_MinCollisionTravelCm;
+    f32         m_CollisionBBoxInflateCm;
+    f32         m_AirLinearDecayPerSecond;
+    f32         m_AirAngularDecayPerSecond;
+    f32         m_GroundLinearDecayPerSecond;
+    f32         m_GroundAngularDecayPerSecond;
+    f32         m_MaxSpeedCmPerSecond;
+    f32         m_SleepSpeedSquaredSum;
+    f32         m_PainBulletVelocityScale;
+    f32         m_PainExplosionVelocityScale;
+    f32         m_ActiveHoldSeconds;
+    f32         m_AudioImpactSpeedCmPerSecond;
+    f32         m_AudioMaxRollingRate;
+    f32         m_AudioMinRollingRate;
+    f32         m_AudioCollisionSpeedCmPerSecond;
+    f32         m_ImpactAudioCooldownSeconds;
+    const char* m_pBulletImpactSound;
+    const char* m_pRollingSound;
+    const char* m_pWorldImpactSound;
+    const char* m_pCanImpactSound;
 };
 
-static coke_can_tweaks k_CokeCanTweak[ coke_can::PROFILE_COUNT ] = {
+static const f32 k_MaxSubstepSeconds = 1.0f / 30.0f;
 
-    // SMALL CAN
+static const coke_can_profile k_CokeCanProfiles[ coke_can::PROFILE_COUNT ] =
+{
+    // Small can
+    { 1.0f,
+      1.0f, 1.0f, 1.0f,
+      -1960.0f,
+      0.10f, 0.10f, 0.20f,
+      0.1f, 0.1f, 20.0f,
+      0.030015f, 0.030015f,
+      0.301510f, 3.160815f,
+      3000.0f, 3600.0f,
+      625.0f, 1000.0f,
+      4.0f / 30.0f,
+      120.0f, 60.0f, 1.5f, 120.0f, 0.10f,
+      "BulletImpactMetal",
+      "Can_Roll_Loop",
+      "Can_Impact_World",
+      "Can_Impact_Can" },
 
-   {  1.0f / 1.0f,                  // m_InverseMass
-      1.0f,                         // ACTOR_COLL_VEL_PERP_SCALE
-      1.0f,                         // ACTOR_COLL_VEL_PARA_SCALE
-      -9.8f * 100 * 2.0f,           // GRAVITY                      
-      0.1f,                         // FRICTION                     
-      0.010f,                       // MIN_FRICTION                 
-      0.030f,                       // MAX_FRICTION                 
-      0.1f,                         // MAJOR_AXIS_FRICTION          
-      0.8f,                         // BOUNCY                       
-      1.0f / 60.0f,                 // TIME_STEP                    
-      0.1f,                         // COLLISION_BACKOFF            
-      0.1f,                         // MIN_COLL_DIST                
-      20.0f,                        // COLL_BBOX_INFLATE            
-      0.001f,                       // AIR_LINEAR_DAMPEN                
-      0.001f,                       // AIR_ANGULAR_DAMPEN               
-      0.01f,                        // GROUND_LINEAR_DAMPEN                
-      0.1f,                         // GROUND_ANGULAR_DAMPEN               
-      100.0f,                       // MAX_SPEED                    
-      4.0f,                         // ACTIVE_ENERGY                
-      625.0f,                       // PAIN_BULLET_FORCE_SCALE             
-      1000.0f,                      // PAIN_EXPLOSION_FORCE_SCALE
-      512,                          // ACTIVE_FRAMES                
-      3.0f,                         // AUDIO_IMPACT_SPEED           
-      2.0f,                         // AUDIO_MAX_ROLLING_SPEED      
-      0.05f,                        // AUDIO_MIN_ROLLING_SPEED      
-      3.0f,                         // AUDIO_COLLIDE_SPEED 
-      "BulletImpactMetal",          // SFX_BULLET_IMPACT
-      "Can_Roll_Loop",              // SFX_ROLLING
-      "Can_Impact_World",           // SFX_IMPACT_WORLD
-      "Can_Impact_Can",             // SFX_IMPACT_CAN
-    },
-
-    // BARREL SIZED CAN
-
-   {  1.0f / 20.0f,                 // m_InverseMass
-    0.1f,                           // ACTOR_COLL_VEL_PERP_SCALE
-    0.5f,                           // ACTOR_COLL_VEL_PARA_SCALE
-   -9.8f * 100 * 2.0f,              // GRAVITY                      
-    0.2f,                           // FRICTION                     
-    0.010f,                         // MIN_FRICTION                 
-    0.040f,                         // MAX_FRICTION                 
-    0.1f,                           // MAJOR_AXIS_FRICTION
-    0.8f,                           // BOUNCY                       
-    1.0f / 60.0f,                   // TIME_STEP                    
-    0.1f,                           // COLLISION_BACKOFF            
-    0.1f,                           // MIN_COLL_DIST                
-    20.0f,                          // COLL_BBOX_INFLATE            
-    0.001f,                         // AIR_LINEAR_DAMPEN                
-    0.0015f,                        // AIR_ANGULAR_DAMPEN               
-    0.04f,                          // GROUND_LINEAR_DAMPEN                
-    0.5f,                           // GROUND_ANGULAR_DAMPEN               
-    75.0f,                          // MAX_SPEED
-    4.0f,                           // ACTIVE_ENERGY                
-    50.0f,                          // PAIN_BULLET_FORCE_SCALE             
-    300.0f,                         // PAIN_EXPLOSION_FORCE_SCALE
-    512,                            // ACTIVE_FRAMES                
-    3.0f,                           // AUDIO_IMPACT_SPEED           
-    2.0f,                           // AUDIO_MAX_ROLLING_SPEED      
-    0.05f,                          // AUDIO_MIN_ROLLING_SPEED      
-    3.0f,                           // AUDIO_COLLIDE_SPEED 
-    "BulletImpactRubber",           // SFX_BULLET_IMPACT
-    "Barrel_Roll_Loop",             // SFX_ROLLING
-    "Barrel_Impact_World",          // SFX_IMPACT_WORLD
-    "Barrel_Impact_Barrel",         // SFX_IMPACT_CAN
-    }
+    // Barrel
+    { 1.0f / 20.0f,
+      0.1f, 0.5f, 0.35f,
+      -1960.0f,
+      0.20f, 0.10f, 0.05f,
+      0.1f, 0.1f, 20.0f,
+      0.030015f, 0.045034f,
+      1.224660f, 20.794415f,
+      2250.0f, 3600.0f,
+      100.0f, 300.0f,
+      4.0f / 30.0f,
+      150.0f, 60.0f, 1.5f, 150.0f, 0.15f,
+      "BulletImpactRubber",
+      "Barrel_Roll_Loop",
+      "Barrel_Impact_World",
+      "Barrel_Impact_Barrel" }
 };
 
 
@@ -370,14 +338,14 @@ const object_desc& coke_can::GetObjectType( void )
 //=========================================================================
 
 coke_can::coke_can( void ) :
-    m_bInitialized      ( FALSE ),  // TRUE if initialized
+    m_isInitialized      ( FALSE ),  // TRUE if initialized
     m_bOnGround         ( TRUE ),   // TRUE if lying on the ground
-    m_ActiveCount       ( 0 ),      // Forces physics to update
+    m_ActiveSeconds     ( 0 ),      // Keeps physics active after an impact
     m_ParticleRadius    ( 0 ),      // Radius of particles
     m_ParticleDist      ( 0 ),      // Constraint distance
     m_Roll              ( 0 ),      // Roll of can
-    m_RollSpeed         ( 0 ),      // Roll speed of can
-    m_DeltaTime         ( 0 ),      // Accumulated delta time
+    m_RollRate          ( 0 ),      // Roll rate of can
+    m_ImpactAudioCooldownSeconds( 0 ),
     m_iMajorAxis        ( 0 ),      // Longest axis of can
     m_MinInitVel        ( 0,0,0 ),  // Min initial velocity
     m_MaxInitVel        ( 0,0,0 ),  // Max initial velocity
@@ -385,65 +353,12 @@ coke_can::coke_can( void ) :
     m_iProfile          ( PROFILE_CAN )
 {
     m_FloorProperties.Init( 100.0f, 0.128f );
-
-    InitSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=========================================================================
 
 coke_can::~coke_can()
 {
-}
-
-//=========================================================================
-
-void coke_can::CaptureRenderInterpState( void )
-{
-    simple_anim_interp_state& Snapshot = BeginCaptureInterpCache( m_RenderCache );
-    InitSimpleAnimInterpState( Snapshot );
-    Snapshot.Valid    = TRUE;
-    Snapshot.NBones   = 1;
-    Snapshot.L2W      = GetL2W();
-    Snapshot.Bones[0] = Snapshot.L2W;
-    if( FinishCaptureInterpCache( m_RenderCache, ShouldSnapSimpleAnimInterpState ) == INTERP_CAPTURE_CHANGED )
-        RegisterRenderInterpUpdate();
-}
-
-//=========================================================================
-
-void coke_can::UpdateRenderInterpState( f32 Alpha )
-{
-    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
-}
-
-//=========================================================================
-
-void coke_can::ClearRenderInterpState( void )
-{
-    ClearSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=========================================================================
-
-void coke_can::InvalidateRenderInterpState( void )
-{
-    object::InvalidateRenderInterpState();
-    InvalidateSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=========================================================================
-
-void coke_can::SnapRenderInterpState( void )
-{
-    object::SnapRenderInterpState();
-
-    simple_anim_interp_state Snapshot;
-    InitSimpleAnimInterpState( Snapshot );
-    Snapshot.Valid    = TRUE;
-    Snapshot.NBones   = 1;
-    Snapshot.L2W      = GetL2W();
-    Snapshot.Bones[0] = Snapshot.L2W;
-    SnapInterpCache( m_RenderCache, Snapshot );
 }
 
 //=========================================================================
@@ -516,11 +431,8 @@ void coke_can::OnRender( void )
     // Can only support 1 boned cans!
     ASSERTS( pSkinGeom->m_nBones == 1, "Coke cans can only have 1 bone!!" );        
 
-    const xbool bUseRenderCache = HasSimpleAnimInterpCache( m_RenderCache );
-    const matrix4& RenderL2W = bUseRenderCache ? m_RenderCache.Interp.L2W : GetL2W();
-
     // Compute LOD mask
-    u64 LODMask = m_SkinInst.GetLODMask( RenderL2W );
+    u64 LODMask = m_SkinInst.GetLODMask( GetL2W() );
     if( LODMask == 0 )
         return;
 
@@ -541,19 +453,18 @@ void coke_can::OnRender( void )
     }
 #endif
 
-    const matrix4* pRenderBone = bUseRenderCache ? m_RenderCache.Interp.Bones : &RenderL2W;
-    m_SkinInst.Render( &RenderL2W,
-                       pRenderBone,
+    m_SkinInst.Render( &GetL2W(),
+                       &GetL2W(),
                        1, Flags | GetRenderMode(),
                        LODMask, 
                        Ambient );
 
 #ifndef X_RETAIL
     // Lookup profile
-    const coke_can_tweaks& Profile = GetProfile();
+    const coke_can_profile& Profile = GetProfile();
 
     // Use this to show when cans are active
-    if( ( DEBUG_COKE_CAN ) && ( GetEnergy() > Profile.ACTIVE_ENERGY ) )
+    if( ( DEBUG_COKE_CAN ) && ( GetSpeedSquaredSum() > Profile.m_SleepSpeedSquaredSum ) )
         OnColRender( FALSE );
 #endif
 }
@@ -570,24 +481,20 @@ void coke_can::OnRenderShadowCast( u64 ProjMask )
     // Coke cans can only support a single bone.
     ASSERTS( pSkinGeom->m_nBones == 1, "Coke cans can only have 1 bone!!" );
 
-    // Compute LOD mask for the shadow render (by forcing 0 for the screen size
-    // we are sure to get the lowest LOD)
-    u64 ShadLODMask = m_SkinInst.GetLODMask( 0 );
-    if( ShadLODMask == 0 )
+    // Setup render geometry
+    u64 LODMask = m_SkinInst.GetLODMask( GetL2W() );
+    if( LODMask == 0 )
         return;
 
     // Setup render flags
     u32 Flags = ( GetFlagBits() & object::FLAG_CHECK_PLANES ) ? render::CLIPPED : 0;
 
     // Render
-    const xbool bUseRenderCache = HasSimpleAnimInterpCache( m_RenderCache );
-    const matrix4& RenderL2W = bUseRenderCache ? m_RenderCache.Interp.L2W : GetL2W();
-    const matrix4* pRenderBone = bUseRenderCache ? m_RenderCache.Interp.Bones : &RenderL2W;
-    m_SkinInst.RenderShadowCast( &RenderL2W,
-                                 pRenderBone,
+    m_SkinInst.RenderShadowCast( &GetL2W(),
+                                 &GetL2W(),
                                  1,
                                  Flags,
-                                 ShadLODMask,
+                                 LODMask,
                                  ProjMask );
 }
 
@@ -599,84 +506,85 @@ void coke_can::OnColRender( xbool bRenderHigh )
     ( void )bRenderHigh;
 
     // Render world bbox
-    draw_SetL2W( GetL2W() );
-    draw_BBox( GetGeomBBox(), XCOLOR_YELLOW );
+    render::debug::Box( GetGeomBBox(), GetL2W(), XCOLOR_YELLOW );
 
     // Render the particles
-    draw_ClearL2W();
-    draw_Sphere( m_Particles[0].m_Pos, m_ParticleRadius, XCOLOR_GREEN );
-    draw_Sphere( m_Particles[1].m_Pos, m_ParticleRadius, XCOLOR_GREEN );
+    render::debug::Sphere( m_Particles[0].m_Pos, m_ParticleRadius, XCOLOR_GREEN );
+    render::debug::Sphere( m_Particles[1].m_Pos, m_ParticleRadius, XCOLOR_GREEN );
 
     // Render constraint
-    draw_Line( m_Particles[0].m_Pos, m_Particles[1].m_Pos, XCOLOR_RED );
+    render::debug::Line( m_Particles[0].m_Pos, m_Particles[1].m_Pos, XCOLOR_RED );
 
     // Show energy
-    //draw_Label( GetPosition(), XCOLOR_BLUE, "Energy:%f", GetEnergy() );
+    //render::debug::Label( GetPosition(), XCOLOR_BLUE, "SpeedSquaredSum:%f", GetSpeedSquaredSum() );
 
     // Show 1 of the particle speed
-    //draw_Label( m_Particles[0].m_Pos, XCOLOR_RED, "Speed:%f", m_Particles[0].GetVelocity().Length() );
-    draw_Label( GetPosition(), XCOLOR_BLUE, "RollSpeed:%f", x_abs( m_RollSpeed ) );
+    //render::debug::Label( m_Particles[0].m_Pos, XCOLOR_RED, "Speed:%f", m_Particles[0].m_Velocity.Length() );
+    render::debug::Label( GetPosition(), XCOLOR_BLUE, "RollRate:%f", x_abs( m_RollRate ) );
 }
 #endif // X_RETAIL
 
 //===============================================================================
 
-void coke_can::OnAdvanceLogic( f32 DeltaTime )
+void coke_can::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "coke_can::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "coke_can::OnAdvanceSimulation" );
 
     // This fixes blue-printed cans from not working properly
     // Initialized physics?
-    if( !m_bInitialized )
+    if( !m_isInitialized )
     {
-        m_bInitialized = TRUE;
+        m_isInitialized = TRUE;
         InitPhysics();
     }
 
     // Lookup profile
-    const coke_can_tweaks& Profile = k_CokeCanTweak[ m_iProfile ];
+    const coke_can_profile& Profile = GetProfile();
+
+    if( x_isvalid( DeltaTime ) && (DeltaTime > 0.0f) )
+        m_ImpactAudioCooldownSeconds = MAX( 0.0f, m_ImpactAudioCooldownSeconds - DeltaTime );
     
     // Only update physics if can is active or moving
-    if( ( m_ActiveCount > 0 ) || ( GetEnergy() > Profile.ACTIVE_ENERGY ) )
+    if( ( m_ActiveSeconds > 0.0f ) || ( GetSpeedSquaredSum() > Profile.m_SleepSpeedSquaredSum ) )
     {
-        // Update physics?
-        m_DeltaTime += DeltaTime;
-        while( m_DeltaTime >= Profile.TIME_STEP )
+        ASSERTS( x_isvalid( DeltaTime ), "CokeCan received an invalid frame delta" );
+        if( x_isvalid( DeltaTime ) && (DeltaTime > 0.0f) )
         {
-            // Update time
-            m_DeltaTime -= Profile.TIME_STEP;
+            const s32 nSubsteps = x_max( 1, (s32)x_ceil( DeltaTime / k_MaxSubstepSeconds ) );
+            const f32 SubstepSeconds = DeltaTime / (f32)nSubsteps;
 
-            // Update active count
-            if( m_ActiveCount > 0 )
-                m_ActiveCount--;
-
-            // Update?
-            ApplyDamping();
-            Integrate( Profile.TIME_STEP );
-            ApplyConstraints();
-            UpdateL2W();
-
-            // Update roll
-            m_Roll      += m_RollSpeed;
-            m_RollSpeed -= m_RollSpeed * 0.5f; // Dampen ( this slows down spinning in air ) 
-
-            // Keep active?
-            if( GetEnergy() > Profile.ACTIVE_ENERGY )
-                m_ActiveCount = Profile.ACTIVE_FRAMES;
-            else
+            for( s32 i = 0; i < nSubsteps; i++ )
             {
-                // Turn off roll audio?
-                if( ( m_ActiveCount == 0 ) && m_RollAudioID )
+                Integrate( SubstepSeconds );
+                ApplyConstraints();
+                ApplyDamping( SubstepSeconds );
+
+                m_Roll += m_RollRate * SubstepSeconds;
+                UpdateL2W();
+
+                if( GetSpeedSquaredSum() > Profile.m_SleepSpeedSquaredSum )
                 {
-                    g_AudioMgr.Release( m_RollAudioID, 0.5f );
-                    m_RollAudioID = 0;
+                    m_ActiveSeconds = Profile.m_ActiveHoldSeconds;
+                }
+                else
+                {
+                    m_ActiveSeconds = MAX( 0.0f, m_ActiveSeconds - SubstepSeconds );
+                    if( m_ActiveSeconds == 0.0f )
+                    {
+                        m_Particles[0].m_Velocity.Zero();
+                        m_Particles[1].m_Velocity.Zero();
+                        m_RollRate = 0.0f;
+
+                        if( m_RollAudioID )
+                        {
+                            g_AudioMgr.Release( m_RollAudioID, 0.5f );
+                            m_RollAudioID = 0;
+                        }
+                        break;
+                    }
                 }
             }
         }
-
-        // Keep position up to date
-        vector3 NewPos = ( m_Particles[0].m_Pos + m_Particles[1].m_Pos ) * 0.5f;
-        OnMove( NewPos );
     }
 
     // Update floor tracking
@@ -688,7 +596,7 @@ void coke_can::OnAdvanceLogic( f32 DeltaTime )
 void coke_can::OnPain( const pain& Pain )
 {
     // Lookup profile
-    const coke_can_tweaks& Profile = GetProfile();
+    const coke_can_profile& Profile = GetProfile();
 
     // Prepare pain
     Pain.ComputeDamageAndForce( GetLogicalName(), GetGuid(), GetBBox().GetCenter() );
@@ -696,7 +604,7 @@ void coke_can::OnPain( const pain& Pain )
     // Lookup pain info
     const vector3& Pos   = Pain.GetPosition();
           vector3  Dir   = Pain.GetDirection();
-          f32      Force = Pain.GetForce() * Profile.TIME_STEP;
+          f32      DeltaSpeed = Pain.GetForce();
 
     // Compute main axis between 2 spheres
     f32     T    = 0.5f;
@@ -715,19 +623,19 @@ void coke_can::OnPain( const pain& Pain )
     if( Pain.IsDirectHit() )
     {
         // Scale force
-        Force *= Profile.PAIN_BULLET_FORCE_SCALE;
+        DeltaSpeed *= Profile.m_PainBulletVelocityScale;
     
         // Compute impulse based 100% pain direction
-        vector3 Impulse = Force * Dir;
+        vector3 DeltaVelocity = DeltaSpeed * Dir;
         
         // Apply to particles
-        m_Particles[0].m_LastPos -= Impulse * ( 1.0f - T );
-        m_Particles[1].m_LastPos -= Impulse * T;
+        m_Particles[0].m_Velocity += DeltaVelocity * ( 1.0f - T );
+        m_Particles[1].m_Velocity += DeltaVelocity * T;
     }
     else    
     {
         // Scale force
-        Force *= Profile.PAIN_EXPLOSION_FORCE_SCALE;
+        DeltaSpeed *= Profile.m_PainExplosionVelocityScale;
     
         // Compute direction from explosion
         Dir = GetPosition() - Pos;
@@ -735,24 +643,24 @@ void coke_can::OnPain( const pain& Pain )
             Dir.Set( 0.0f, 1.0f, 0.0f );
 
         // Apply directional + upwards blast to particles
-        vector3 Impulse = Force * ( ( 0.25f * Dir ) + ( vector3( 0.0f, 0.75f, 0.0f ) ) );
-        m_Particles[0].m_LastPos -= Impulse;
-        m_Particles[1].m_LastPos -= Impulse;
+        vector3 DeltaVelocity = DeltaSpeed * ( ( 0.25f * Dir ) + ( vector3( 0.0f, 0.75f, 0.0f ) ) );
+        m_Particles[0].m_Velocity += DeltaVelocity;
+        m_Particles[1].m_Velocity += DeltaVelocity;
 
         // Apply spinning blast to particles
-        Impulse = Force * 0.125f * ( Dir + vector3( 0.0f, 1.0f, 0.0f ) );
-        m_Particles[0].m_LastPos -= Impulse * ( 1.0f - T );
-        m_Particles[1].m_LastPos -= Impulse * T;
+        DeltaVelocity = DeltaSpeed * 0.125f * ( Dir + vector3( 0.0f, 1.0f, 0.0f ) );
+        m_Particles[0].m_Velocity += DeltaVelocity * ( 1.0f - T );
+        m_Particles[1].m_Velocity += DeltaVelocity * T;
         
         // Flag as in air so damping doesn't happen until it lands again
         m_bOnGround = FALSE;
     }
     
     // Activate physics
-    m_ActiveCount = Profile.ACTIVE_FRAMES;    
+    m_ActiveSeconds = Profile.m_ActiveHoldSeconds;
 
     // Audio
-    voice_id VoiceID = g_AudioMgr.Play( Profile.SFX_BULLET_IMPACT, Pos, GetZone1(), TRUE );
+    voice_id VoiceID = g_AudioMgr.Play( Profile.m_pBulletImpactSound, Pos, GetZone1(), TRUE );
     g_AudioManager.NewAudioAlert( VoiceID, audio_manager::BULLET_IMPACTS, GetPosition(), GetZone1(), GetGuid() ); 
     
 }
@@ -913,7 +821,7 @@ xbool coke_can::OnProperty( prop_query&   I )
                     && ( GetAttrBits() & object::ATTR_EDITOR_SELECTED ) )
             {
                 // Clear collision results
-                f32     CollisionBackOff = GetProfile().COLLISION_BACKOFF;
+                f32     CollisionBackOff = GetProfile().m_CollisionBackoffCm;
                 f32     Depth      = F32_MAX;
                 vector3 Normal( 0.0f, 0.0f, 0.0f );
                 vector3 DeltaPos( 0.0f, 0.0f, 0.0f );
@@ -966,12 +874,12 @@ xbool coke_can::OnProperty( prop_query&   I )
 //===============================================================================
 
 // Misc
-const coke_can_tweaks& coke_can::GetProfile( void )
+const coke_can_profile& coke_can::GetProfile( void ) const
 {
     // Lookup profile
     ASSERT( m_iProfile >= 0 );
     ASSERT( m_iProfile < PROFILE_COUNT );
-    return k_CokeCanTweak[ m_iProfile ];
+    return k_CokeCanProfiles[ m_iProfile ];
 }
 
 //===============================================================================
@@ -1010,8 +918,6 @@ void coke_can::InitPhysics( void )
         return;
 
     // Lookup profile
-    const coke_can_tweaks& Profile = GetProfile();
-
     // Lookup geometry info
     bbox& BBox = pGeom->m_BBox;
 
@@ -1058,33 +964,33 @@ void coke_can::InitPhysics( void )
 
     // Init particles
     m_Particles[0].m_BindPos = LocalTop;
-    m_Particles[0].m_Pos = 
-    m_Particles[0].m_LastPos = 
+    m_Particles[0].m_Pos =
     m_Particles[0].m_LastCollPos = WorldTop;
+    m_Particles[0].m_Velocity.Zero();
 
     m_Particles[1].m_BindPos = LocalBot;
-    m_Particles[1].m_Pos = 
-    m_Particles[1].m_LastPos = 
+    m_Particles[1].m_Pos =
     m_Particles[1].m_LastCollPos = WorldBot;
+    m_Particles[1].m_Velocity.Zero();
 
     // Compute local space random init vel
     vector3 InitLocalVel( x_frand( m_MinInitVel.GetX(), m_MaxInitVel.GetX() ),
                           x_frand( m_MinInitVel.GetY(), m_MaxInitVel.GetY() ),
                           x_frand( m_MinInitVel.GetZ(), m_MaxInitVel.GetZ() ) );
 
-    // Compute world space velocity and take time step into account to match integration
-    vector3 InitWorldVel = L2W.RotateVector( InitLocalVel ) * Profile.TIME_STEP;
+    // Compute world velocity
+    vector3 InitWorldVel = L2W.RotateVector( InitLocalVel );
 
     // Setup init velocity
-    m_Particles[0].SetVelocity( InitWorldVel );
-    m_Particles[1].SetVelocity( InitWorldVel );
+    m_Particles[0].m_Velocity = InitWorldVel;
+    m_Particles[1].m_Velocity = InitWorldVel;
 
     // Keep major axis
     m_iMajorAxis = iAxis2;
 
     // Clear roll
     m_Roll      = 0.0f;
-    m_RollSpeed = 0.0f;
+    m_RollRate = 0.0f;
 
     // Force local bbox to recompute
     SetFlagBits( GetFlagBits() | object::FLAG_DIRTY_TRANSFORM );
@@ -1092,12 +998,12 @@ void coke_can::InitPhysics( void )
 
 //===============================================================================
 
-f32 coke_can::GetEnergy( void )
+f32 coke_can::GetSpeedSquaredSum( void ) const
 {
     // Accumulate velocities squared
     f32 E;
-    E  = m_Particles[0].GetVelocity().LengthSquared();
-    E += m_Particles[1].GetVelocity().LengthSquared();
+    E  = m_Particles[0].m_Velocity.LengthSquared();
+    E += m_Particles[1].m_Velocity.LengthSquared();
     
     return E;
 }
@@ -1138,35 +1044,26 @@ void coke_can::UpdateL2W( void )
 
 void coke_can::Integrate( f32 DeltaTime )
 {
-    CONTEXT( "coke_can::Integrate" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "coke_can::Integrate" );
 
     // Nothing to do?
     if( DeltaTime == 0 )
         return;
 
     // Lookup profile
-    const coke_can_tweaks& Profile = GetProfile();
+    const coke_can_profile& Profile = GetProfile();
 
     // Setup constants
-    vector3 Gravity( 0,Profile.GRAVITY,0 );
-    f32     DeltaTimeSquared = x_sqr( DeltaTime );
+    vector3 Gravity( 0, Profile.m_GravityCmPerSecondSquared, 0 );
 
-    // Apply verlet integration to all particles
+    // Integrate particles
     for ( s32 i = 0; i < 2; i++ )
     {
         // Lookup particle
         particle& Particle = m_Particles[i];
 
-        // Compute movement
-        vector3 Pos   = Particle.m_Pos;
-        vector3 Vel   = Particle.m_Pos - Particle.m_LastPos;
-        vector3 Accel = ( Gravity * DeltaTimeSquared );
-
-        // Move
-        Particle.m_Pos += Vel + Accel;
-
-        // Update last position
-        Particle.m_LastPos = Pos;
+        Particle.m_Velocity += Gravity * DeltaTime;
+        Particle.m_Pos      += Particle.m_Velocity * DeltaTime;
     }
 }
 
@@ -1190,15 +1087,26 @@ void coke_can::ApplyEqualDistConstraint( particle& ParticleA, particle& Particle
     // Apply deltas
     ParticleA.m_Pos += Delta;
     ParticleB.m_Pos -= Delta;
+
+    // Remove velocity along the constrained axis
+    vector3 Axis = ParticleB.m_Pos - ParticleA.m_Pos;
+    if( Axis.SafeNormalize() )
+    {
+        const f32 RelativeAxisSpeed = ( ParticleB.m_Velocity - ParticleA.m_Velocity ).Dot( Axis );
+        const vector3 Correction = 0.5f * RelativeAxisSpeed * Axis;
+        ParticleA.m_Velocity += Correction;
+        ParticleB.m_Velocity -= Correction;
+    }
 }
 
 //===============================================================================
 
-f32 coke_can::ApplyMinDistConstraint( particle& ParticleA, particle& ParticleB, f32 MinDist, 
-                                      f32 TotalInvMass, f32 InvMassA, f32 InvMassB )
+f32 coke_can::ApplyMinDistConstraint( particle& ParticleA, particle& ParticleB, f32 MinDist,
+                                      f32 InvMassA, f32 InvMassB,
+                                      f32 Elasticity, f32 Friction )
 {
-    // Make sure mass is setup correctly
-    ASSERT( TotalInvMass != 0.0f );
+    const f32 TotalInvMass = InvMassA + InvMassB;
+    ASSERT( TotalInvMass > 0.0f );
     
     // Get distance between particles
     vector3 Delta   = ParticleB.m_Pos - ParticleA.m_Pos;
@@ -1222,11 +1130,35 @@ f32 coke_can::ApplyMinDistConstraint( particle& ParticleA, particle& ParticleB, 
         ParticleA.m_Pos += InvMassA * Delta;
         ParticleB.m_Pos -= InvMassB * Delta;
 
-        // Compute relative impact velocity
-        vector3 Vel = ParticleA.GetVelocity() - ParticleB.GetVelocity();
+        vector3 Normal = ParticleB.m_Pos - ParticleA.m_Pos;
+        if( !Normal.SafeNormalize() )
+            return 0.0f;
 
-        // Return speed squared
-        return Vel.LengthSquared();
+        vector3 RelativeVelocity = ParticleB.m_Velocity - ParticleA.m_Velocity;
+        const f32 NormalSpeed = RelativeVelocity.Dot( Normal );
+        const f32 ImpactSpeedSqr = x_sqr( x_min( NormalSpeed, 0.0f ) );
+
+        if( NormalSpeed < 0.0f )
+        {
+            const f32 NormalImpulse = -( 1.0f + Elasticity ) * NormalSpeed / TotalInvMass;
+            const vector3 NormalDeltaVelocity = NormalImpulse * Normal;
+            ParticleA.m_Velocity -= InvMassA * NormalDeltaVelocity;
+            ParticleB.m_Velocity += InvMassB * NormalDeltaVelocity;
+
+            RelativeVelocity = ParticleB.m_Velocity - ParticleA.m_Velocity;
+            vector3 TangentVelocity = RelativeVelocity - Normal * RelativeVelocity.Dot( Normal );
+            const f32 TangentSpeed = TangentVelocity.Length();
+            if( TangentSpeed > 0.0001f )
+            {
+                const f32 MaxFrictionImpulse = Friction * NormalImpulse;
+                const f32 TangentImpulse = x_min( TangentSpeed / TotalInvMass, MaxFrictionImpulse );
+                TangentVelocity *= TangentImpulse / TangentSpeed;
+                ParticleA.m_Velocity += InvMassA * TangentVelocity;
+                ParticleB.m_Velocity -= InvMassB * TangentVelocity;
+            }
+        }
+
+        return ImpactSpeedSqr;
     }
 
     // No collision
@@ -1243,8 +1175,11 @@ void coke_can::ApplyDistConstraints( void )
 
 //==============================================================================
 
-xbool coke_can::ApplyCylinderConstraint ( const vector3& Bottom, const vector3& Top, f32 Radius, vector3& CollNorm )
+xbool coke_can::ApplyCylinderConstraint( const vector3& Bottom, const vector3& Top, f32 Radius,
+                                         const vector3& CylinderVelocity, vector3& CollNorm )
 {
+    const coke_can_profile& Profile = GetProfile();
+
     // Compute radius info taking particle radius into account
     Radius += m_ParticleRadius;
     f32 RadiusSqr = Radius * Radius;
@@ -1273,12 +1208,20 @@ xbool coke_can::ApplyCylinderConstraint ( const vector3& Bottom, const vector3& 
             bCollision = TRUE;
             CollNorm   = Delta * InvDist;
 
-            // Scale and dampen
+            // Compute the positional correction.
             f32 Diff = ( Dist - Radius ) * InvDist;
             Delta *= Diff;
 
-            // Project particle out of cylinder
+            // Project particle out
             Particle.m_Pos += Delta;
+
+            // Apply actor velocity
+            const vector3 PushNormal = -CollNorm;
+            const f32 ActorPushSpeed = x_max( 0.0f, CylinderVelocity.Dot( PushNormal ) ) *
+                                       Profile.m_ActorPushVelocityScale;
+            const f32 ParticlePushSpeed = Particle.m_Velocity.Dot( PushNormal );
+            if( ActorPushSpeed > ParticlePushSpeed )
+                Particle.m_Velocity += ( ActorPushSpeed - ParticlePushSpeed ) * PushNormal;
         }
     }
     
@@ -1289,12 +1232,12 @@ xbool coke_can::ApplyCylinderConstraint ( const vector3& Bottom, const vector3& 
 
 void coke_can::ApplyCollConstraints( void )
 {
-    CONTEXT( "coke_can::ApplyCollConstraints" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "coke_can::ApplyCollConstraints" );
 
     s32   i;
 
     // Lookup profile
-    const coke_can_tweaks& Profile = GetProfile();
+    const coke_can_profile& Profile = GetProfile();
 
     // Compute world bbox taking particle velocities into account
     bbox WorldBBox;
@@ -1318,14 +1261,16 @@ void coke_can::ApplyCollConstraints( void )
         WorldBBox += ParticleBBox;
     }
     
+    const xbool bWasOnGround = m_bOnGround;
+
     // Clear on ground flag
     m_bOnGround = FALSE;
 
     // Inflate to take particle radius into account and for a bit of safety
-    f32 InflateAmt = m_ParticleRadius + Profile.COLL_BBOX_INFLATE + Profile.MIN_COLL_DIST;
+    f32 InflateAmt = m_ParticleRadius + Profile.m_CollisionBBoxInflateCm + Profile.m_MinCollisionTravelCm;
     WorldBBox.Inflate( InflateAmt,InflateAmt,InflateAmt ); 
 
-    // Prepare verlet collision by collecting possible collision objects
+    // Collect possible world collision objects.
     VerletCollision_CollectObjects( WorldBBox );
 
     // Compute world space major axis and roll axis
@@ -1336,7 +1281,7 @@ void coke_can::ApplyCollConstraints( void )
     vector3 RollAxis   = v3_Cross( vector3( 0, -1, 0 ), MajorAxis );
     
     // Clear max values
-    f32     MaxRollSpeed      = 0.0f;
+    f32     MaxRollRate       = 0.0f;
     f32     MaxImpactSpeedSqr = 0.0f;
 
     // Apply collision constraints
@@ -1350,7 +1295,7 @@ void coke_can::ApplyCollConstraints( void )
         vector3 E = Particle.m_Pos;
         vector3 Delta = E-S;
         f32     DistSq = Delta.LengthSquared();
-        if( DistSq < x_sqr( Profile.MIN_COLL_DIST ) )
+        if( DistSq < x_sqr( Profile.m_MinCollisionTravelCm ) )
             continue;
 
         sphere_cast Cast;
@@ -1361,7 +1306,7 @@ void coke_can::ApplyCollConstraints( void )
             // Pull back from collision a tad
             f32     T     = Cast.m_CollT;
             f32     Dist  = x_sqrt( DistSq );
-            T -= Profile.COLLISION_BACKOFF / Dist;
+            T -= Profile.m_CollisionBackoffCm / Dist;
             if( T < 0 )
                 T = 0;
 
@@ -1375,46 +1320,56 @@ void coke_can::ApplyCollConstraints( void )
             // Get penetration depth of the end point we wanted to reach
             Dist = Cast.m_CollPlane.Distance( E ) - m_ParticleRadius;
 
-            // Friction is proportional to the penetration distance and mass
-            f32 Friction = -Dist * Profile.FRICTION;
-            if( Friction < Profile.MIN_FRICTION )
-                Friction = Profile.MIN_FRICTION;
-            else                
-            if( Friction > Profile.MAX_FRICTION )
-                Friction = Profile.MAX_FRICTION;
-
             // Split vel into components
-            vector3 Vel = Particle.GetVelocity();
+            vector3 Vel = Particle.m_Velocity;
             vector3 Perp, Para;
             Cast.m_CollPlane.GetComponents( Vel, Para, Perp );
 
+            const f32 NormalSpeed = Perp.Dot( Cast.m_CollPlane.Normal );
+            const f32 IncomingSpeed = x_max( 0.0f, -NormalSpeed );
+
             // Compute impact speed squared into plane and update max
-            f32 ImpactSpeedSqr = Perp.LengthSquared();
+            f32 ImpactSpeedSqr = x_sqr( IncomingSpeed );
             MaxImpactSpeedSqr = x_max( MaxImpactSpeedSqr, ImpactSpeedSqr );
 
-            // Get components along major axis
-            vector3 MajorPerp, MajorPara;
-            MajorAxisPlane.GetComponents( Para, MajorPara, MajorPerp );
+            if( IncomingSpeed > 0.0f )
+            {
+                const f32 NormalDeltaSpeed = ( 1.0f + Profile.m_Elasticity ) * IncomingSpeed;
 
-            // Apply friction along major axis
-            Para = MajorPara + ( ( 1.0f - Profile.MAJOR_AXIS_FRICTION ) * MajorPerp );
+                // Apply surface friction
+                const f32 TangentSpeed = Para.Length();
+                if( TangentSpeed > 0.0001f )
+                {
+                    const f32 FrictionDeltaSpeed = x_min( TangentSpeed,
+                                                          Profile.m_SurfaceFriction * NormalDeltaSpeed );
+                    Para *= ( TangentSpeed - FrictionDeltaSpeed ) / TangentSpeed;
+                }
 
-            // Apply friction along roll axis
-            Para -= Para * Friction;
+                // Apply axial friction
+                vector3 MajorParallel, MajorAxisVelocity;
+                MajorAxisPlane.GetComponents( Para, MajorParallel, MajorAxisVelocity );
+                const f32 MajorAxisSpeed = MajorAxisVelocity.Length();
+                if( MajorAxisSpeed > 0.0001f )
+                {
+                    const f32 AxisFrictionDeltaSpeed = x_min( MajorAxisSpeed,
+                                                              Profile.m_MajorAxisFriction * NormalDeltaSpeed );
+                    MajorAxisVelocity *= ( MajorAxisSpeed - AxisFrictionDeltaSpeed ) / MajorAxisSpeed;
+                    Para = MajorParallel + MajorAxisVelocity;
+                }
 
-            // Bounce
-            Perp -= Perp * Profile.BOUNCY;
+                Perp = Profile.m_Elasticity * IncomingSpeed * Cast.m_CollPlane.Normal;
+            }
 
             // Compute new vel
             Vel = Perp + Para;
 
             // Compute roll speed
-            f32 RollSpeed = R_360 * v3_Dot( Para, RollAxis ) / ( 2.0f * PI * m_ParticleRadius );
-            if( x_abs( RollSpeed ) > x_abs( MaxRollSpeed ) )
-                MaxRollSpeed = RollSpeed;
+            f32 RollRate = v3_Dot( Para, RollAxis ) / m_ParticleRadius;
+            if( x_abs( RollRate ) > x_abs( MaxRollRate ) )
+                MaxRollRate = RollRate;
 
             // Project end point out of plane that was collided with
-            E += Cast.m_CollPlane.Normal * ( -Dist + Profile.COLLISION_BACKOFF );
+            E += Cast.m_CollPlane.Normal * ( -Dist + Profile.m_CollisionBackoffCm );
 
             // Now see how close we can get to the final projected pos
             if( VerletCollision_SphereCast( S, E, m_ParticleRadius, Cast ) )
@@ -1423,7 +1378,8 @@ void coke_can::ApplyCollConstraints( void )
                 T     = Cast.m_CollT;
                 Delta = E - S;
                 Dist  = Delta.Length();
-                T -= Profile.COLLISION_BACKOFF / Dist;
+                if( Dist > 0.0f )
+                    T -= Profile.m_CollisionBackoffCm / Dist;
                 if( T < 0 )
                     T = 0;
 
@@ -1432,7 +1388,7 @@ void coke_can::ApplyCollConstraints( void )
             }
 
             // Set new velocity
-            Particle.SetVelocity( Vel );
+            Particle.m_Velocity = Vel;
 
             // Set new position
             Particle.m_Pos = E;
@@ -1443,25 +1399,25 @@ void coke_can::ApplyCollConstraints( void )
     }
 
     // Update roll speed?
-    if( MaxRollSpeed != 0.0f )
+    if( MaxRollRate != 0.0f )
     {
-        m_RollSpeed = MaxRollSpeed;
+        m_RollRate = MaxRollRate;
     }
     
     // Audio for roll
-    f32 RollMagnitude = x_abs( MaxRollSpeed );
-    if( RollMagnitude > Profile.AUDIO_MIN_ROLLING_SPEED )
+    f32 RollMagnitude = x_abs( MaxRollRate );
+    if( RollMagnitude > Profile.m_AudioMinRollingRate )
     {
         // Is sound not playing?
         if( m_RollAudioID == 0 )
         {
             // Play the roll!
-            m_RollAudioID = g_AudioMgr.PlayVolumeClipped( Profile.SFX_ROLLING, GetPosition(), GetZone1(), TRUE );
+            m_RollAudioID = g_AudioMgr.PlayVolumeClipped( Profile.m_pRollingSound, GetPosition(), GetZone1(), TRUE );
         }
 
         // Now adjust volume and pitch based on the velocity.
-        f32 Velocity = x_min( RollMagnitude, Profile.AUDIO_MAX_ROLLING_SPEED ) - Profile.AUDIO_MIN_ROLLING_SPEED;
-        f32 Range    = Profile.AUDIO_MAX_ROLLING_SPEED - Profile.AUDIO_MIN_ROLLING_SPEED;
+        f32 Velocity = x_min( RollMagnitude, Profile.m_AudioMaxRollingRate ) - Profile.m_AudioMinRollingRate;
+        f32 Range    = Profile.m_AudioMaxRollingRate - Profile.m_AudioMinRollingRate;
         f32 Scale    = Velocity / Range;
         f32 Volume   = 0.1f  + Scale * 0.9f;  // volume range is [0.10..1.0]
         f32 Pitch    = 0.94f + Scale * 0.06f; // pitch range is  [0.94..1.0]
@@ -1478,14 +1434,18 @@ void coke_can::ApplyCollConstraints( void )
     }
 
     // Play audio impact?
-    if( MaxImpactSpeedSqr > x_sqr( Profile.AUDIO_IMPACT_SPEED ) )
+    const f32 HardGroundImpactSpeed = 2.0f * Profile.m_AudioImpactSpeedCmPerSecond;
+    if( (m_ImpactAudioCooldownSeconds == 0.0f) &&
+        (MaxImpactSpeedSqr > x_sqr( Profile.m_AudioImpactSpeedCmPerSecond )) &&
+        (!bWasOnGround || (MaxImpactSpeedSqr > x_sqr( HardGroundImpactSpeed ))) )
     {
         // Rob - hookup volume control here if you want to...
         //f32 ImpactSpeed = x_sqrt( ImpactSpeedSqr );
         //f32 Volume = x_min( 1.0f, ImpactSpeed * ?? );
 
         // Play audio
-        g_AudioMgr.PlayVolumeClipped( Profile.SFX_IMPACT_WORLD, GetPosition(), GetZone1(), TRUE );
+        g_AudioMgr.PlayVolumeClipped( Profile.m_pWorldImpactSound, GetPosition(), GetZone1(), TRUE );
+        m_ImpactAudioCooldownSeconds = Profile.m_ImpactAudioCooldownSeconds;
     }
 }
 
@@ -1494,40 +1454,44 @@ void coke_can::ApplyCollConstraints( void )
 void coke_can::ApplyCanConstraints( coke_can& CokeCan )
 {
     // Lookup profile
-    const coke_can_tweaks& Profile = GetProfile();
+    const coke_can_profile& Profile = GetProfile();
+    const coke_can_profile& OtherProfile = CokeCan.GetProfile();
 
     // Compute dist to keep particles away
     f32 MinDist = m_ParticleRadius + CokeCan.m_ParticleRadius;
 
     // Make sure masses are valid
-    ASSERT( Profile.INVERSE_MASS != 0.0f );
-    ASSERT( CokeCan.GetProfile().INVERSE_MASS != 0.0f );
+    ASSERT( Profile.m_InvMass > 0.0f );
+    ASSERT( OtherProfile.m_InvMass > 0.0f );
     
     // Compute mass info
-    f32 InvMassA = Profile.INVERSE_MASS;
-    f32 InvMassB = CokeCan.GetProfile().INVERSE_MASS;
-    f32 TotalInvMass = InvMassA + InvMassB;
+    f32 InvMassA = Profile.m_InvMass;
+    f32 InvMassB = OtherProfile.m_InvMass;
+    f32 Elasticity = x_min( Profile.m_Elasticity, OtherProfile.m_Elasticity );
+    f32 Friction = x_sqrt( Profile.m_SurfaceFriction * OtherProfile.m_SurfaceFriction );
     
     // Keep particles a set distance from each other
     f32 MaxImpactSpeedSqr = 0.0f;
     
     MaxImpactSpeedSqr = x_max( MaxImpactSpeedSqr, ApplyMinDistConstraint( m_Particles[0], CokeCan.m_Particles[0], MinDist,
-                                                                          TotalInvMass, InvMassA, InvMassB ) );
+                                                                          InvMassA, InvMassB, Elasticity, Friction ) );
     
     MaxImpactSpeedSqr = x_max( MaxImpactSpeedSqr, ApplyMinDistConstraint( m_Particles[0], CokeCan.m_Particles[1], MinDist,
-                                                                          TotalInvMass, InvMassA, InvMassB ) );
+                                                                          InvMassA, InvMassB, Elasticity, Friction ) );
     
     MaxImpactSpeedSqr = x_max( MaxImpactSpeedSqr, ApplyMinDistConstraint( m_Particles[1], CokeCan.m_Particles[0], MinDist,
-                                                                          TotalInvMass, InvMassA, InvMassB ) );
+                                                                          InvMassA, InvMassB, Elasticity, Friction ) );
     
     MaxImpactSpeedSqr = x_max( MaxImpactSpeedSqr, ApplyMinDistConstraint( m_Particles[1], CokeCan.m_Particles[1], MinDist,
-                                                                          TotalInvMass, InvMassA, InvMassB ) );
+                                                                          InvMassA, InvMassB, Elasticity, Friction ) );
 
     // Play audio?
-    if( MaxImpactSpeedSqr > x_sqr( Profile.AUDIO_COLLIDE_SPEED ) )
+    if( (m_ImpactAudioCooldownSeconds == 0.0f) &&
+        (MaxImpactSpeedSqr > x_sqr( Profile.m_AudioCollisionSpeedCmPerSecond )) )
     {
         // Play some coke can on coke can collision audio!
-        g_AudioMgr.PlayVolumeClipped( Profile.SFX_IMPACT_CAN, GetPosition(), GetZone1(), TRUE );
+        g_AudioMgr.PlayVolumeClipped( Profile.m_pCanImpactSound, GetPosition(), GetZone1(), TRUE );
+        m_ImpactAudioCooldownSeconds = Profile.m_ImpactAudioCooldownSeconds;
     }
 }
 
@@ -1536,10 +1500,10 @@ void coke_can::ApplyCanConstraints( coke_can& CokeCan )
 void coke_can::ApplyCanConstraints( void )
 {
     // Lookup profile
-    const coke_can_tweaks& Profile = GetProfile();
+    const coke_can_profile& Profile = GetProfile();
 
     // Are we still active?
-    xbool bActive = ( GetEnergy() > Profile.ACTIVE_ENERGY );
+    xbool bActive = ( GetSpeedSquaredSum() > Profile.m_SleepSpeedSquaredSum );
 
     // Find all cans
     g_ObjMgr.SelectBBox( object::ATTR_COLLIDABLE, GetBBox(), object::TYPE_COKE_CAN );
@@ -1555,7 +1519,7 @@ void coke_can::ApplyCanConstraints( void )
         {
             // Make the other can active ( could be stacked on top )?
             if( bActive ) 
-                pCokeCan->m_ActiveCount = Profile.ACTIVE_FRAMES;
+                pCokeCan->m_ActiveSeconds = pCokeCan->GetProfile().m_ActiveHoldSeconds;
 
             // Do collision
             ApplyCanConstraints( *pCokeCan );
@@ -1587,15 +1551,17 @@ void coke_can::ApplyActorConstraints( actor& Actor )
 
     // Collide with can?
     vector3 CollNorm;
-    if( ApplyCylinderConstraint( Bottom, Top, Radius, CollNorm ) )
+    if( ApplyCylinderConstraint( Bottom, Top, Radius, Actor.GetVelocity(), CollNorm ) )
     {
         // Lookup profile
-        const coke_can_tweaks& Profile = GetProfile();
+        const coke_can_profile& Profile = GetProfile();
     
         // Apply a fake impact response by slowing down the player
         Actor.ScaleVelocity( CollNorm, 
-                             Profile.ACTOR_COLL_VEL_PERP_SCALE, 
-                             Profile.ACTOR_COLL_VEL_PARA_SCALE );
+                             Profile.m_ActorNormalVelocityScale,
+                             Profile.m_ActorTangentVelocityScale );
+
+        m_ActiveSeconds = Profile.m_ActiveHoldSeconds;
     }
 }
 
@@ -1625,24 +1591,27 @@ void coke_can::ApplyActorConstraints( void )
 
 void coke_can::ApplyConstraints( void )
 {
+    // Restore rigid shape
+    ApplyDistConstraints();
+
     // Collide with other cans
     ApplyCanConstraints();
 
-    // Apply collision
-    ApplyCollConstraints();
-
-    // Apply distance contraint
+    // Restore rigid shape after can contacts
     ApplyDistConstraints();
+
+    // Finish with world collision
+    ApplyCollConstraints();
 }
 
 //==============================================================================
 
-void coke_can::ApplyDamping( void )
+void coke_can::ApplyDamping( f32 DeltaTime )
 {
     s32 i;
 
     // Lookup profile
-    const coke_can_tweaks& Profile = GetProfile();
+    const coke_can_profile& Profile = GetProfile();
 
     // Clamp speed
     for ( i = 0; i < 2; i++ )
@@ -1651,26 +1620,26 @@ void coke_can::ApplyDamping( void )
         particle& Particle = m_Particles[i];
 
         // Compute vel and speed
-        vector3 Vel      = Particle.GetVelocity();
+        vector3 Vel      = Particle.m_Velocity;
         f32     SpeedSqr = Vel.LengthSquared();
         
         // Clamp speed?
-        if( SpeedSqr > x_sqr( Profile.MAX_SPEED ) )
+        if( SpeedSqr > x_sqr( Profile.m_MaxSpeedCmPerSecond ) )
         {
             // Scale down speed
             f32 Speed = x_sqrt( SpeedSqr );
-            f32 Scale = Profile.MAX_SPEED / Speed;
+            f32 Scale = Profile.m_MaxSpeedCmPerSecond / Speed;
             Vel *= Scale;
 
             // Set new vel
-            Particle.SetVelocity( Vel );
+            Particle.m_Velocity = Vel;
         }
     }
 
     // Compute center of mass velocity
     vector3 CenterVel( 0,0,0 );
     for ( i = 0; i < 2; i++ )
-        CenterVel += m_Particles[i].GetVelocity();
+        CenterVel += m_Particles[i].m_Velocity;
     CenterVel *= 0.5f;
 
     // Apply damping
@@ -1680,28 +1649,32 @@ void coke_can::ApplyDamping( void )
         particle& Particle = m_Particles[i];
 
         // Compute angular and linear velocity
-        vector3 Vel        = Particle.GetVelocity();
+        vector3 Vel        = Particle.m_Velocity;
         vector3 AngularVel = Vel - CenterVel;
         vector3 LinearVel  = Vel - AngularVel;
             
         // Dampen
         if( m_bOnGround )
         {
-            LinearVel  -= LinearVel  * Profile.GROUND_LINEAR_DAMPEN;
-            AngularVel -= AngularVel * Profile.GROUND_ANGULAR_DAMPEN;
+            LinearVel  *= x_exp( -Profile.m_GroundLinearDecayPerSecond  * DeltaTime );
+            AngularVel *= x_exp( -Profile.m_GroundAngularDecayPerSecond * DeltaTime );
         }
         else
         {
-            LinearVel  -= LinearVel  * Profile.AIR_LINEAR_DAMPEN;
-            AngularVel -= AngularVel * Profile.AIR_ANGULAR_DAMPEN;
+            LinearVel  *= x_exp( -Profile.m_AirLinearDecayPerSecond  * DeltaTime );
+            AngularVel *= x_exp( -Profile.m_AirAngularDecayPerSecond * DeltaTime );
         }
         
         // Compute new vel
         Vel = LinearVel + AngularVel;
         
         // Set new vel
-        Particle.SetVelocity( Vel );
+        Particle.m_Velocity = Vel;
     }
+
+    const f32 RollDecay = m_bOnGround ? Profile.m_GroundAngularDecayPerSecond
+                                      : Profile.m_AirAngularDecayPerSecond;
+    m_RollRate *= x_exp( -RollDecay * DeltaTime );
 }
 
 //==============================================================================
@@ -1728,7 +1701,7 @@ s32 coke_can::OnValidateProperties( xstring& ErrorMsg )
     // Does coke can intersect world?
     f32     Depth;
     vector3 Normal;
-    f32     CollisionBackOff = GetProfile().COLLISION_BACKOFF;
+    f32     CollisionBackOff = GetProfile().m_CollisionBackoffCm;
     if( CokeCanIntersectsWorld( m_Particles[0].m_Pos,   // ParticlePos0
                                 m_Particles[1].m_Pos,   // ParticlePos1
                                 m_ParticleRadius,       // ParticleRadius

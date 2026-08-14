@@ -794,5 +794,4 @@ static s16 s_iicon_ai_nav_con[] =
 };
 
 
-#define DRAW_ICON_AI_NAV_CON() draw_icon( NUM_FACETS_ICON_AI_NAV_CON, NUM_VERTICES_ICON_AI_NAV_CON, s_vicon_ai_nav_con, s_iicon_ai_nav_con )
 

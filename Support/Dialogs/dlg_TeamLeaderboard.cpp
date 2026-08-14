@@ -4,19 +4,19 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_TeamLeaderboard.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "NetworkMgr\Voice\VoiceMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "NetworkMgr/Voice/VoiceMgr.hpp"
 
 //
 // Test data - remove when complete
@@ -30,16 +30,15 @@
 
 ui_manager::control_tem TeamLeaderboardControls[] = 
 {
-    { IDC_TEAM_LEADERBOARD_DETAILS,         "IDS_NULL",        "blankbox",  159,  16, 334, 322, 0, 0, 1, 1, ui_win::WF_VISIBLE|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_TEAM_LEADERBOARD_FRAME_MAIN,      "IDS_NULL",        "frame",       8,   2, 496, 350, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_TEAM_LEADERBOARD_FRAME,           "IDS_NULL",        "frame",     157,  14, 336, 328, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_TEAM_LEADERBOARD_FRAME_HEADER1,   "IDS_NULL",        "frame",      22,  36, 137,  30, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_TEAM_LEADERBOARD_FRAME_HEADER2,   "IDS_NULL",        "frame",      22, 188, 137,  30, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_TEAM_LEADERBOARD_FRAME_TEAM1,     "IDS_NULL",        "frame",     157,  36, 336, 153, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_TEAM_LEADERBOARD_FRAME_TEAM2,     "IDS_NULL",        "frame",     157, 188, 336, 153, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_TEAM_LEADERBOARD_LOADING_TEXT,    "IDS_NULL",        "text",      235, 395, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_TEAM_LEADERBOARD_LOADING_PIPS,    "IDS_NULL",        "text",      465, 395,  50,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_TEAM_LEADERBOARD_NAV_TEXT,        "IDS_NULL",        "text",       25, 395, 200,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
+    { IDC_TEAM_LEADERBOARD_DETAILS,         "IDS_NULL",        "blankbox",  159,  16, 334, 322, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_TEAM_LEADERBOARD_FRAME_MAIN,      "IDS_NULL",        "frame",       8,   2, 496, 350, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_TEAM_LEADERBOARD_FRAME,           "IDS_NULL",        "frame",     157,  14, 336, 328, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_TEAM_LEADERBOARD_FRAME_HEADER1,   "IDS_NULL",        "frame",      22,  36, 137,  30, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_TEAM_LEADERBOARD_FRAME_HEADER2,   "IDS_NULL",        "frame",      22, 188, 137,  30, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_TEAM_LEADERBOARD_FRAME_TEAM1,     "IDS_NULL",        "frame",     157,  36, 336, 153, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_TEAM_LEADERBOARD_FRAME_TEAM2,     "IDS_NULL",        "frame",     157, 188, 336, 153, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_TEAM_LEADERBOARD_LOADING_TEXT,    "IDS_NULL",        "text",      235, 395, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_TEAM_LEADERBOARD_LOADING_PIPS,    "IDS_NULL",        "text",      465, 395,  50,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
 };
 
 
@@ -93,17 +92,6 @@ ui_win* dlg_team_leaderboard_factory( s32 UserID, ui_manager* pManager, ui_manag
 
 dlg_team_leaderboard::dlg_team_leaderboard( void )
 {
-#ifdef TARGET_PS2
-    if( x_GetTerritory() != XL_TERRITORY_AMERICA )
-    {
-        s_LineSpacing = 19;
-    }
-#endif
-
-#ifdef TARGET_XBOX
-    m_XBOXNotificationOffsetX = -20;
-    m_XBOXNotificationOffsetY = -12;
-#endif
 }
 
 //=========================================================================
@@ -141,7 +129,6 @@ xbool dlg_team_leaderboard::Create( s32                        UserID,
     m_pFrameHeaderTwo   = (ui_frame*)       FindChildByID( IDC_TEAM_LEADERBOARD_FRAME_HEADER2 );
     m_pLoadingText      = (ui_text*)        FindChildByID( IDC_TEAM_LEADERBOARD_LOADING_TEXT  );
     m_pLoadingPips      = (ui_text*)        FindChildByID( IDC_TEAM_LEADERBOARD_LOADING_PIPS  );
-    m_pNavText          = (ui_text*)        FindChildByID( IDC_TEAM_LEADERBOARD_NAV_TEXT      );
 
     // intialize frames
     m_pFrame->SetBackgroundColor( xcolor(0,0,0,0) );
@@ -206,10 +193,8 @@ xbool dlg_team_leaderboard::Create( s32                        UserID,
     m_pStrIconFlags  = g_StringTableMgr( "ui", "IDS_ICON_FLAGS"      );
     m_pStrIconVotes  = g_StringTableMgr( "ui", "IDS_ICON_VOTES"      );
 
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, TRUE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
+    SetNavTextVisible( TRUE );
 
     // disable the highlight
     g_UiMgr->DisableScreenHighlight();
@@ -277,14 +262,7 @@ void dlg_team_leaderboard::Render( s32 ox, s32 oy )
 
     irect rb;
 
-	s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+	rb = g_UiMgr->GetUserBounds( m_UserID );
     // render background filter
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
@@ -301,7 +279,7 @@ void dlg_team_leaderboard::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_team_leaderboard::OnPadDelete( ui_win* pWin )
+void dlg_team_leaderboard::OnDelete( ui_win* pWin )
 {
     (void)pWin;      
     
@@ -315,7 +293,7 @@ void dlg_team_leaderboard::OnPadDelete( ui_win* pWin )
 
             // Open a dialog to confirm quitting the online game component
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_pPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_pPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
             // get message text
             xwstring Message;
@@ -331,7 +309,7 @@ void dlg_team_leaderboard::OnPadDelete( ui_win* pWin )
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
 
             m_pPopUp->Configure( g_StringTableMgr( "ui", "IDS_QUIT_POPUP" ), TRUE, TRUE, FALSE, Message, navText, &m_PopUpResult );
         }
@@ -340,9 +318,15 @@ void dlg_team_leaderboard::OnPadDelete( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_team_leaderboard::OnPadSelect( ui_win* pWin )
+void dlg_team_leaderboard::OnAccept( ui_win* pWin )
 {
     (void)pWin;
+
+    if( m_Mode == LEADERBOARD_OVERLAY )
+    {
+        return;
+    }
+
     if( m_State == DIALOG_STATE_ACTIVE )
     {
         // goto the pause menu
@@ -360,7 +344,6 @@ void dlg_team_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     // update list box
     FillScoreList();
 
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
     xwstring NavText;
 
     switch( m_Mode )
@@ -376,9 +359,12 @@ void dlg_team_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         NavText += g_StringTableMgr( "ui", "IDS_NAV_ONLINE_MENU");
         break;
 
+    case LEADERBOARD_OVERLAY:
+        SetNavTextVisible( FALSE );
+        break;
+
     case LEADERBOARD_INTERLEVEL:
         {
-            m_pNavText->SetLabelFlags( ui_font::h_left|ui_font::v_top );
             NavText = m_pStrLevelDesc;
 
             xwstring LoadText("");
@@ -399,7 +385,7 @@ void dlg_team_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         ASSERT( FALSE );
     }
 
-    m_pNavText->SetLabel( NavText );
+    SetNavText( NavText );
 
     if( m_pPopUp )
     {
@@ -414,7 +400,7 @@ void dlg_team_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             else
             {
                 // return to dialog
-                m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+                SetNavTextVisible( TRUE );
                 m_pPopUp = NULL;
             }
         }
@@ -601,12 +587,6 @@ void dlg_team_leaderboard::FillScoreList( void )
     // resize team data boxes
     irect currPos = m_pFrameTeamOne->GetPosition();
     currPos.b = 16 + 22 + 22 + (s_LineSpacing * m_DrawCount[0]);
-#ifdef TARGET_PS2
-    if( x_GetTerritory() != XL_TERRITORY_AMERICA )
-    {
-        currPos.t = 38;
-    }
-#endif
     m_pFrameTeamOne->SetPosition( currPos );
 
     currPos = m_pFrameTeamTwo->GetPosition();
@@ -639,37 +619,13 @@ void dlg_team_leaderboard::FillScoreList( void )
     r.b = r.t + 30;
     
     currPos = m_pFrameHeaderOne->GetPosition();
-#ifdef TARGET_XBOX
-    extern xbool g_b480P;
-    if( g_b480P )
-        currPos.t = r.t - 18;
-    else
-        currPos.t = r.t - 28;
-#else
     currPos.t = r.t - 18;
-#endif
     SetTeamRenderType( 0, currPos );
     m_pFrameHeaderOne->SetPosition( currPos );
 
     r.t += (s_LineSpacing * m_DrawCount[0]) + 24;
     currPos = m_pFrameHeaderTwo->GetPosition();
-#ifdef TARGET_XBOX
-    if( g_b480P )
-        currPos.t = r.t - 19;
-    else
-        currPos.t = r.t - 29;
-#elif defined TARGET_PS2
-    if( x_GetTerritory() != XL_TERRITORY_AMERICA )
-    {
-        currPos.t = r.t - 20;
-    }
-    else
-    {
-        currPos.t = r.t - 19;
-    }
-#else
     currPos.t = r.t - 19;
-#endif
     SetTeamRenderType( 1, currPos );
     m_pFrameHeaderTwo->SetPosition( currPos );
 }
@@ -764,14 +720,6 @@ void dlg_team_leaderboard::RenderScoreList( s32 ox, s32 oy )
     // leave space for speaker icon   
     r.l += 16;
 
-#ifdef TARGET_PS2
-    if( x_GetTerritory() != XL_TERRITORY_AMERICA )
-    {
-        r.t += 2;
-        r.b += 2;
-    }
-#endif
-
     m_pManager->RenderText( m_Font, r, ui_font::h_left|ui_font::v_center, ch, m_pStrPlayer );
     
     r.l += PlayerSize + 5;
@@ -841,16 +789,7 @@ void dlg_team_leaderboard::RenderScoreList( s32 ox, s32 oy )
     r = GetPosition();
     r.l += 159 + 5;
     r.r = r.l + 16;
-#ifdef TARGET_PS2
-    if( x_GetTerritory() != XL_TERRITORY_AMERICA )
-    {
-        r.t += 16 + 23;
-    }
-    else
-#endif
-    {
-        r.t += 16 + 21;
-    }
+    r.t += 16 + 21;
     r.b = r.t + 16;
 
     s32 StartL = r.l;
@@ -1199,9 +1138,7 @@ void dlg_team_leaderboard::RenderScoreList( s32 ox, s32 oy )
     r.l += 22 + 5;
     r.r = r.l + 122;
     r.t += 16 + 22;
-#ifdef TARGET_XBOX
-    r.t += 4;
-#endif
+
     irect TextRect;
     xwstring ScoreString( xfs("%d", ScoreData.Team[0].Score) );
 
@@ -1244,9 +1181,7 @@ void dlg_team_leaderboard::RenderScoreList( s32 ox, s32 oy )
     r.l += 22 + 5;
     r.r = r.l + 122;
     r.t += 16 + 22 + (s_LineSpacing * Count1) + 24;
-#ifdef TARGET_XBOX
-    r.t += 4;
-#endif
+
     xwstring ScoreString2( xfs("%d", ScoreData.Team[1].Score) );
 
     switch( m_TeamRenderType[1] )

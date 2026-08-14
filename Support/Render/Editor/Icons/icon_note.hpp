@@ -96,5 +96,4 @@ static s16 s_iicon_note[] =
 };
 
 
-#define DRAW_ICON_NOTE() draw_icon( NUM_FACETS_ICON_NOTE, NUM_VERTICES_ICON_NOTE, s_vicon_note, s_iicon_note )
 

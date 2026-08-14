@@ -9,8 +9,8 @@
 //=========================================================================
 
 #include "action_ai_play_anim.hpp"
-#include "Characters\Character.hpp"
-#include "Loco\LocoUtil.hpp"
+#include "Characters/Character.hpp"
+#include "Loco/LocoUtil.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS

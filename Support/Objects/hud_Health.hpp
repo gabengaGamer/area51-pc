@@ -13,9 +13,9 @@
 // INCLUDES
 //==============================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "x_bitmap.hpp"
-#include "Objects\Player.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
+#include "Objects/Player/Player.hpp"
 
 #include "hud_Renderable.hpp"
 
@@ -62,7 +62,7 @@ public:
             void    Kill            ( void );
 
     virtual void    OnRender        ( player* pPlayer );
-    virtual void    OnAdvanceLogic  ( player* pPlayer, f32 DeltaTime );
+    virtual void    OnAdvanceSimulation  ( player* pPlayer, f32 DeltaTime );
     virtual xbool   OnProperty      ( prop_query& rPropQuery );
     virtual void    OnEnumProp      ( prop_enum&  List );
 
@@ -85,16 +85,14 @@ public:
 //------------------------------------------------------------------------------
 // Public Storage
 public:
-    static rhandle<xbitmap>     m_OuterBmp;
-    static rhandle<xbitmap>     m_MutationBmp;
-    static rhandle<xbitmap>     m_InnerBmp;
+    static rhandle<texture>     m_OuterBmp;
+    static rhandle<texture>     m_MutationBmp;
     static s32                  m_Instances;
 
-    rhandle<xbitmap>            m_FlashLightBmp;
-    rhandle<xbitmap>            m_StaticBmp1;
-    rhandle<xbitmap>            m_StaticBmp2;
-    rhandle<xbitmap>            m_StaticBmp3;
-    rhandle<xbitmap>            m_VolScanBmp;
+    rhandle<texture>            m_StaticBmp1;
+    rhandle<texture>            m_StaticBmp2;
+    rhandle<texture>            m_StaticBmp3;
+    rhandle<texture>            m_VolScanBmp;
 
     // MultiPlayer?
     xbool                       m_MultiPlayerHud;
@@ -113,6 +111,7 @@ public:
 
     xbool                       m_FlashLightActive;
     s32                         m_staticFrame;
+    f32                         m_StaticFrameTime;
 
     f32                         m_EQBarUpdate;
     s32                         m_EQBarPeaks[3];
@@ -154,9 +153,9 @@ public:
 
     xbool                       m_bPlayHudMutation;
     s32                         m_MutationState;
-    s32                         m_MutationBarAlpha;
-    s32                         m_MutationFadeInStep;
-    s32                         m_MutationFadeResetChance;
+    f32                         m_MutationBarAlpha;
+    f32                         m_MutationFadeInRate;
+    f32                         m_MutationFadeResetChance;
     f32                         m_MutationDisplayTime;
 
     typedef struct _Cell
@@ -170,3 +169,5 @@ public:
 };
 
 #endif
+
+

@@ -5,8 +5,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "x_bitmap.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
 
 enum view_type 
 {
@@ -53,7 +53,7 @@ public:
     static  const object_desc&  GetObjectType                   ( void );
             
     virtual void            OnActivate                          ( xbool Flag );
-    void                    OnAdvanceLogic                      ( f32 DeltaTime );
+    void                    OnAdvanceSimulation                      ( f32 DeltaTime );
 
     xbool                   HasFocus                            ( void );
 
@@ -63,7 +63,6 @@ public:
 #ifdef X_EDITOR
     virtual s32             OnValidateProperties                ( xstring& ErrorMsg );
 #endif
-
 
     struct state_vals
     {
@@ -109,7 +108,6 @@ protected:
     f32         m_AnimState;
     f32         m_TextAlphaState;
     xbool       m_bLookingAt;
-    xbool       m_bRendered;
 
     xbool       m_bHasLOS;
     xbool       m_bInViewRange;
@@ -122,25 +120,22 @@ protected:
 
     // this is to fix the same frame activation bug
     xbool       m_bActivationChanged;
-    u8          m_ActivationFrameDelay;
+    u8          m_ActivationTickDelay;
 
     typedef struct _circleFocus
     {
-        vector3 Position;
-        rhandle<xbitmap> BMP;
+        rhandle<texture> BMP;
         f32     Rotation;
     }circleFocus;
 
-    static rhandle<xbitmap>     m_Bracket;
+    static rhandle<texture>     m_Bracket;
     circleFocus                 m_CircleFocusObj[3];
     xbool                       m_bLocked;
-    f32                         m_FocusRotate;
-    vector3                     m_PrevCircleFocusObjPos;
+    f32                         m_CircleFocusColorAlpha;
     xbool                       m_CircleFocusFadeIN;
     xbool                       m_CircleFocusFadeOUT;
     f32                         m_CircleFocusFadeStep;
     s32                         m_CircleFocusFadeStepIndex;
-    s32                         m_CircleFocusColorAlpha;
 
 //=========================================================================
 };

@@ -25,14 +25,15 @@
 class ui_control : public ui_win
 {
 public:
-    enum state
+    enum visual_state
     {
-        CS_DISABLED = 0,
-        CS_ACTIVE   = 1,
-        CS_PASSIVE  = 2,
+        CS_NORMAL = 0,
+        CS_HIGHLIGHTED,
+        CS_ACTIVE,
+        CS_HIGHLIGHTED_ACTIVE,
+        CS_DISABLED,
     };
 
-public:
                     ui_control          ( void );
     virtual        ~ui_control          ( void );
 
@@ -43,11 +44,15 @@ public:
                                           s32           Flags );
 
     virtual void    Render              ( s32 ox=0, s32 oy=0 );
+    virtual void    OnPointerDown       ( ui_win* pWin, s32 x, s32 y );
 
-    const irect&    GetNavPos           ( void );
+    const irect&    GetNavPos           ( void ) const;
     void            SetNavPos           ( const irect& r );
 
 protected:
+    xbool              ShouldRenderHighlight( void ) const;
+    visual_state        GetVisualState      ( xbool Active ) const;
+
     irect               m_NavPos;
 };
 

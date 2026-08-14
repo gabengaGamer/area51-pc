@@ -1,6 +1,6 @@
 
 #include "RawAnim.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 
 //=========================================================================
 // FUNCTIONS
@@ -1474,4 +1474,3 @@ void rawanim::Resample( s32 NewNFrames )
 }
 
 //=========================================================================
-

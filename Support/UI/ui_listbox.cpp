@@ -4,19 +4,13 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
-#include "..\AudioMgr\audioMgr.hpp"
+#include "Entropy.hpp"
+#include "../AudioMgr/AudioMgr.hpp"
 
 #include "ui_listbox.hpp"
 #include "ui_manager.hpp"
 #include "ui_font.hpp"
-//#include "ui_dlg_combolist.hpp"
-
 #include "StateMgr/StateMgr.hpp"
-
-#if defined(TARGET_PS2)
-#include "Entropy\PS2\ps2_misc.hpp"
-#endif
 
 //=========================================================================
 //  Defines
@@ -60,7 +54,6 @@ ui_listbox::ui_listbox( void )
 
 ui_listbox::~ui_listbox( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -78,16 +71,9 @@ xbool ui_listbox::Create( s32 UserID, ui_manager* pManager, const irect& Positio
     m_HeaderColor     = XCOLOR_WHITE;
 
     // Initialize data
-    m_iElementFrame         = m_pManager->FindElement( "sb_frame" );
-    m_iElement_sb_arrowdown = m_pManager->FindElement( "sb_arrowdown" );
-    m_iElement_sb_arrowup   = m_pManager->FindElement( "sb_arrowup" );
-    m_iElement_sb_container = m_pManager->FindElement( "sb_container" );
-    m_iElement_sb_thumb     = m_pManager->FindElement( "sb_thumb" );
+    m_iElementFrame = m_pManager->FindElement( "sb_frame" );
     ASSERT( m_iElementFrame != -1 );
-    ASSERT( m_iElement_sb_arrowdown != -1 );
-    ASSERT( m_iElement_sb_arrowup   != -1 );
-    ASSERT( m_iElement_sb_container != -1 );
-    ASSERT( m_iElement_sb_thumb     != -1 );
+    Success &= m_ScrollBar.Create( m_pManager );
 
     m_LineHeight            = LINE_HEIGHT;
     m_ExitOnSelect          = TRUE;
@@ -100,14 +86,9 @@ xbool ui_listbox::Create( s32 UserID, ui_manager* pManager, const irect& Positio
     m_ShowHeaderBar         = FALSE;
     m_AllowParentNavigate   = FALSE;
     m_DisableCursor         = FALSE;
-    m_nVisibleItems         = (m_Position.GetHeight()-SPACE_TOP-SPACE_BOTTOM) / m_LineHeight;
-    m_Font                  = g_UiMgr->FindFont("small");
-
-#ifdef TARGET_PC
-    m_MouseDown             = FALSE;
-    m_ScrollDown            = FALSE;
-    m_ScrollTime            = 0.0f;
-#endif
+    UpdateVisibleItemCount();
+    m_Font                  = m_pManager->FindFont("small");
+    m_HoveredItem           = -1;
 
     return Success;
 }
@@ -121,85 +102,18 @@ void ui_listbox::Render( s32 ox, s32 oy )
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
-        xcolor  TextColor1  = XCOLOR_WHITE;
         xcolor  TextColor2  = XCOLOR_BLACK;
-        s32     State       = ui_manager::CS_NORMAL;
-
         // Calculate rectangle
-        irect   br;
         irect   r;
-        irect   r2;
-        br.Set( (m_Position.l+ox), (m_Position.t+oy), (m_Position.r+ox), (m_Position.b+oy) );
-        r = br;
-        r2 = r;
+        r.Set( (m_Position.l+ox), (m_Position.t+oy), (m_Position.r+ox), (m_Position.b+oy) );
         r.r -= 14;
-        r2.l = r.r;
 
-        // Render appropriate state
         if( m_Flags & WF_DISABLED )
         {
-            State = ui_manager::CS_DISABLED;
-            TextColor1  = XCOLOR_GREY;
             TextColor2  = xcolor(0,0,0,0);
         }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_HIGHLIGHT )
-        {
-            State = ui_manager::CS_HIGHLIGHT;
-            TextColor1  = XCOLOR_WHITE;
-            TextColor2  = XCOLOR_BLACK;
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_SELECTED )
-        {
-            State = ui_manager::CS_SELECTED;
-            TextColor1  = XCOLOR_WHITE;
-            TextColor2  = XCOLOR_BLACK;
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == (WF_HIGHLIGHT|WF_SELECTED) )
-        {
-            State = ui_manager::CS_HIGHLIGHT_SELECTED;
-            TextColor1  = XCOLOR_WHITE;
-            TextColor2  = XCOLOR_BLACK;
-        }
-        else
-        {
-            State = ui_manager::CS_NORMAL;
-            TextColor1  = XCOLOR_WHITE;
-            TextColor2  = XCOLOR_BLACK;
-        }
 
-        // Add Highlight to list
-        if( m_Flags & WF_HIGHLIGHT )
-            m_pManager->AddHighlight( m_UserID, br, !(m_Flags & WF_SELECTED) );
-
-        if (g_UiMgr->IsWipeActive())
-        {
-            irect wipePos;
-            g_UiMgr->GetWipePos(wipePos);
-
-            if ( wipePos.b > r.t )
-            {
-                if ( wipePos.b > r.b )
-                {
-#ifdef TARGET_PS2
-                    gsreg_Begin( 1 );
-                    gsreg_SetScissor( r.l, r.t, r.r, r.b );
-                    gsreg_End();
-#endif
-                }
-                else
-                {
-#ifdef TARGET_PS2
-                    gsreg_Begin( 1 );
-                    gsreg_SetScissor( r.l, r.t, r.r, wipePos.b );
-                    gsreg_End();
-#endif
-                }
-            }
-        }
-        else
-        {
-            m_pManager->PushClipWindow( r );
-        }
+        m_pManager->PushClipWindow( r );
 
         irect   rb = r;
         
@@ -213,16 +127,10 @@ void ui_listbox::Render( s32 ox, s32 oy )
             hb.SetHeight( HEADER_HEIGHT );          
 
             m_pManager->RenderRect( hb, m_HeaderBarColor, FALSE );
-
-            // render header text
-            hb.l += 2;
-            m_pManager->RenderText( m_Font, hb, ui_font::h_center|ui_font::v_center, XCOLOR_BLACK, m_Label );
-            hb.Translate( -1, -1 );
-            m_pManager->RenderText( m_Font, hb, ui_font::h_center|ui_font::v_center, m_HeaderColor, m_Label );
+            RenderHeader( hb );
 
 
             rb.t += 22;
-            r2.t += 22;
         }
 
         // Render background color
@@ -238,14 +146,11 @@ void ui_listbox::Render( s32 ox, s32 oy )
         // check for empty list
         if ( m_Items.GetCount() == 0 )
         {
-            if( m_Flags & (WF_SELECTED) )
+            if( IsActive() )
             {
                 // render cursor bar
-                s32 alpha = 128 + (g_UiMgr->GetHighlightAlpha(8) * 8); // 64<->192
+                s32 alpha = 128 + (m_pManager->GetHighlightAlpha(8) * 8); // 64<->192
                 m_pManager->RenderRect( rl, xcolor(79,214,60,alpha), FALSE );
-
-                if( m_Flags & WF_HIGHLIGHT )
-                    m_pManager->AddHighlight( m_UserID, rl );
             }
         }
         else
@@ -257,28 +162,25 @@ void ui_listbox::Render( s32 ox, s32 oy )
                 if( (iItem >= 0) && (iItem < m_Items.GetCount()) )
                 {
                     // Render Selection Rectangle
-                    if( (iItem == m_iSelection)  && ( m_ShowBorders ) && ( m_DisableCursor == FALSE ) )
+                    if( (iItem == m_iSelection)  &&
+                        (m_ShowBorders)          &&
+                        (m_DisableCursor == FALSE) )
                     {
-                        if( m_Flags & (WF_SELECTED) )
+                        if( IsActive() )
                         {
-                            //m_pManager->RenderRect( rl, xcolor(0,100,160,192), FALSE );
-                            s32 alpha = 128 + (g_UiMgr->GetHighlightAlpha(8) * 8); // 64<->192
+                            s32 alpha = 128 + (m_pManager->GetHighlightAlpha(8) * 8); // 64<->192
                             m_pManager->RenderRect( rl, xcolor(79,214,60,alpha), FALSE );
-
-                            if( m_Flags & WF_HIGHLIGHT )
-                                m_pManager->AddHighlight( m_UserID, rl );
                         }
-                        //else
-                        //    //m_pManager->RenderRect( rl, xcolor(0,60,100,192), FALSE );
-                        //    m_pManager->RenderRect( rl, xcolor(66,158,11,192), FALSE );
+                        else
+                        {
+                            m_pManager->RenderRect( rl, xcolor(66,158,11,128), FALSE );
+                        }
                     }
-    #ifdef TARGET_PC
-                    // Let the hight light track the mouse cursor.
-                    if( iItem == m_TrackHighLight )
+                    // Pointer hover is independent from the persistent selection.
+                    if( (iItem == m_HoveredItem) && m_Items[iItem].Enabled )
                     {
-                        m_pManager->AddHighlight( m_UserID, rl );
+                        m_pManager->RenderRect( rl, xcolor( 79, 214, 60, 48 ), FALSE );
                     }
-    #endif
 
                     // Render Text
                     xcolor c1 = m_Items[iItem].Color;
@@ -288,131 +190,39 @@ void ui_listbox::Render( s32 ox, s32 oy )
                         c1 = XCOLOR_GREY;
                         c2 = xcolor(0,0,0,0);
                     }
-                    else if ( (iItem == m_iSelection) && (m_DisableCursor == FALSE) )
+                    else if( (iItem == m_iSelection)     &&
+                             (m_DisableCursor == FALSE) )
                     {
-                        if ( m_Flags & WF_SELECTED )
+                        if( IsActive() )
                         {
                             c1 = xcolor(0,0,0,255);
                             c2 = xcolor(0,0,0,0);
                         }
-                        //else
-                        //{
-                        //    c1 = xcolor(126,220,60,255);
-                        //}
-                        //c2 = xcolor(0,0,0,0);
+                        else
+                        {
+                            c1 = xcolor(126,220,60,255);
+                        }
                     }
                     irect rl2 = rl;
 
-    /*
-                    // Darken text if listbox not selected
-                    if( !(m_Flags & WF_SELECTED) )
-                    {
-                        c1.R = (u8)(c1.R * 0.85f);
-                        c1.G = (u8)(c1.G * 0.85f);
-                        c1.B = (u8)(c1.B * 0.85f);
-                        c1.A = (u8)(c1.A * 0.85f);
-                        c2.R = (u8)(c2.R * 0.85f);
-                        c2.G = (u8)(c2.G * 0.85f);
-                        c2.B = (u8)(c2.B * 0.85f);
-                        c2.A = (u8)(c2.A * 0.85f);
-                    }
-    */
-
-    //				m_pManager->PushClipWindow( rl2 );
-
                     RenderItem( rl2, m_Items[iItem], c1, c2 );
-
-				    // Clear the clip window
-    //				m_pManager->PopClipWindow();
-
                 }
                 rl.Translate( 0, m_LineHeight );
             }
         }
 
-        if (g_UiMgr->IsWipeActive())
-        {
-#ifdef TARGET_PS2
-            // restore correct scissor
-            irect wipePos;
-            g_UiMgr->GetWipePos(wipePos);
-
-            irect screen;
-            g_UiMgr->GetScreenSize(screen);
-            
-            gsreg_Begin( 1 );
-            gsreg_SetScissor( screen.l, screen.t, screen.r, wipePos.b );
-            gsreg_End();
-#endif
-        }
-        else
-        {
-            m_pManager->PopClipWindow();
-        }
+        m_pManager->PopClipWindow();
 
         if (m_ShowBorders)
         {
             // Render Frame
             if (m_ShowFrame)
-                m_pManager->RenderElement( m_iElementFrame, r, 0 );
-
-            irect r3 = r2;
-            irect r4 = r2;
-            r3.b = r3.t + 16;
-            r4.t = r4.b - 16;
-            r2.t = r3.b;
-            r2.b = r4.t;
-
-#ifdef TARGET_PC
-            m_UpArrow = r3;
-            m_DownArrow = r4;
-#endif
-            m_pManager->RenderElement( m_iElement_sb_container, r2, State );
-            m_pManager->RenderElement( m_iElement_sb_arrowup,   r3, State );
-            m_pManager->RenderElement( m_iElement_sb_arrowdown, r4, State );
-
-            // Render thumb background
-            r2.Deflate( 1, 1 );
-            r2.l += 1;
-            m_pManager->RenderRect( r2, xcolor(20,80,13,128), FALSE );
-
-
-            // Render Thumb
-            r2.Deflate( 1, 1 );
-            r2.l += 1;
-         
-			s32 itemcount;
-
-			itemcount = m_Items.GetCount(); //0;
-			//for (s32 i=0;i<m_Items.GetCount();i++)
-			//{
-			//	if (m_Items[i].Enabled)
-			//		itemcount++;
-			//}
-
-            if( itemcount > m_nVisibleItems )
             {
-#if 1 //CJG - New Thumb Code
-                s32 ThumbSize = (s32)(r2.GetHeight() * ((f32)m_nVisibleItems / itemcount));
-                if( ThumbSize < 16 )
-                    ThumbSize = 16;
-
-                s32 ThumbPos  = (s32)((r2.GetHeight()-ThumbSize) * ((f32)m_iFirstVisibleItem / (itemcount - m_nVisibleItems)));
-
-                r2.Set( r2.l, r2.t + ThumbPos, r2.r, r2.t + ThumbPos + ThumbSize );
-#else
-                f32 t = (f32)m_iFirstVisibleItem / itemcount;
-                f32 b = (f32)(m_iFirstVisibleItem + m_nVisibleItems) / itemcount;
-                if( t < 0.0f ) t = 0.0f;
-                if( b > 1.0f ) b = 1.0f;
-                r2.Set( r2.l, r2.t + (s32)(r2.GetHeight() * t), r2.r, r2.t + (s32)(r2.GetHeight() * b) );
-#endif
+                m_pManager->RenderElement( m_iElementFrame, r, 0 );
             }
-//            if( r2.GetHeight() > 16 )
-                m_pManager->RenderElement( m_iElement_sb_thumb,     r2, State );
-#ifdef TARGET_PC
-            m_ScrollBar = r2;
-#endif
+
+            UpdateScrollBar();
+            m_ScrollBar.Render( (m_Flags & WF_DISABLED) == 0 );
         }
 
         // Render children
@@ -425,40 +235,38 @@ void ui_listbox::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
+void ui_listbox::RenderHeader( irect r )
+{
+    r.l += 2;
+    m_pManager->RenderText( m_Font, r, ui_font::h_center | ui_font::v_center, XCOLOR_BLACK, m_Label );
+    r.Translate( -1, -1 );
+    m_pManager->RenderText( m_Font, r, ui_font::h_center | ui_font::v_center, m_HeaderColor, m_Label );
+}
+
+//=========================================================================
+
 void ui_listbox::RenderItem( irect r, const item& Item, const xcolor& c1, const xcolor& c2 )
 {
-    (void)c1;
-    (void)c2;
     r.Deflate( 4, 0 );
     r.Translate( 1, -2 );
     m_pManager->RenderText( m_Font, r, m_LabelFlags, c2, Item.Label );
     r.Translate( -1, -1 );
     m_pManager->RenderText( m_Font, r, m_LabelFlags, c1, Item.Label );
-    //m_pManager->RenderText( m_Font, r, m_LabelFlags, c1, Item.Label );
 }
 
 //=========================================================================
 
 void ui_listbox::SetPosition( const irect& Position )
 {
-    m_Position      = Position;
-
-    if( m_ShowHeaderBar )
-    {
-        m_nVisibleItems = (m_Position.GetHeight()-SPACE_TOP-SPACE_BOTTOM-HEADER_HEIGHT) / m_LineHeight;
-    }
-    else
-    {
-        m_nVisibleItems = (m_Position.GetHeight()-SPACE_TOP-SPACE_BOTTOM) / m_LineHeight;
-    }
+    m_Position = Position;
+    UpdateVisibleItemCount();
 }
 
 //=========================================================================
 
-void ui_listbox::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void ui_listbox::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    xbool       Processed = FALSE;
-    s32         dy = 0;
+    s32 Direction = 0;
 
     // check for cursor enabled
     if ( m_DisableCursor )
@@ -470,242 +278,145 @@ void ui_listbox::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats
     // Determine movement required
     switch( Code )
     {
-    case ui_manager::NAV_UP:
-        dy = -1;
-        break;
-    case ui_manager::NAV_DOWN:
-        dy =  1;
+        case ui_navigation::Up:
+            Direction = -1;
+            break;
+
+        case ui_navigation::Down:
+            Direction = 1;
+            break;
+
+        default:
+            break;
     }
 
-    // Apply movement
-    if( m_Flags & WF_SELECTED )
+    if( IsActive() && (Direction != 0) )
     {
-        if( dy != 0 )
+        s32 const NextItem = FindEnabledItem( m_iSelection + Direction, Direction );
+        if( NextItem != -1 )
         {
-            s32 OldSelection = m_iSelection;
+            SelectUserItem( NextItem );
+            g_AudioMgr.Play( "Cusor_Norm" );
+            return;
+        }
 
-            s32 iItem = m_iSelection + dy;
-            while( (iItem >= 0) && (iItem < m_Items.GetCount()) && (!m_Items[iItem].Enabled) )
+        if( Presses > 0 )
+        {
+            if( m_AllowParentNavigate && m_pParent )
             {
-                iItem += dy;
+                m_pParent->OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
             }
-            if( iItem <= -1 )
-                iItem = -1;
-            if( iItem >= m_Items.GetCount() )
-                iItem = -1;
-
-            if( iItem != -1 )
-                m_iSelection = iItem;
             else
             {
-                if( Presses > 0 )
-				{
-                    if( m_AllowParentNavigate && m_pParent )
-                    {
-                        m_pParent->OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
-                        return;
-                    }
-                    else
-                    {
-                        g_AudioMgr.Play( "InvalidEntry" );
-                    }
-				}
+                g_AudioMgr.Play( "InvalidEntry" );
             }
-            
-            EnsureVisible( m_iSelection );
-
-            if( (m_iSelection != OldSelection) && m_pParent )
-            {
-                m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
-                g_AudioMgr.Play( "Cusor_Norm" );
-            }
-
-            Processed = TRUE;
         }
+        return;
     }
 
-    // Pass up chain if not processed
-    if( !Processed )
-    {
-        if( m_pParent )
-            m_pParent->OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
-    }
+    ui_win::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 }
 
-void ui_listbox::OnPadShoulder( ui_win* pWin, s32 Direction )
+void ui_listbox::OnPage( ui_win* pWin, s32 Direction )
 {
     (void)pWin;
 
-    g_AudioMgr.Play( "Cusor_Norm" );
-
-    if( Direction != 0 )
+    if( (Direction == 0) || (m_iSelection == -1) )
     {
-        if( m_iSelection != -1 )
-        {
-            m_iSelection += (m_nVisibleItems-1) * Direction;
-            if( m_iSelection > (m_Items.GetCount()-1) )
-                m_iSelection = (m_Items.GetCount()-1);
-            if( m_iSelection < 0 )
-                m_iSelection = 0;
+        return;
+    }
 
-            // make sure we're not on a disabled option
-            while( (m_iSelection >= 0) && (!m_Items[m_iSelection].Enabled) )
-            {
-                m_iSelection -= 1;
-            }
+    s32 const LastItem = m_Items.GetCount() - 1;
+    s32 const PageStep = MAX( 1, m_nVisibleItems - 1 );
+    s32 const DesiredItem = x_clamp( m_iSelection + PageStep * Direction, 0, LastItem );
+    s32 NextItem = FindEnabledItem( DesiredItem, Direction );
+    if( NextItem == -1 )
+    {
+        NextItem = FindEnabledItem( DesiredItem, -Direction );
+    }
 
-            EnsureVisible( m_iSelection );
-        }
-/*
-        s32 iFirstVisible = m_iFirstVisibleItem;
-        s32 iSelection    = m_iSelection;
-        s32 iSelOffset    = iSelection - iFirstVisible;
-
-        iFirstVisible += m_nVisibleItems * Direction;
-
-        if( iFirstVisible > (m_Items.GetCount()-m_nVisibleItems) )
-            iFirstVisible = (m_Items.GetCount()-m_nVisibleItems);
-        if( iFirstVisible < 0 )
-            iFirstVisible = 0;
-
-        iSelection = iFirstVisible + iSelOffset;
-
-        if( iSelection > (m_Items.GetCount()-1) )
-            iSelection = (m_Items.GetCount()-1);
-        if( iSelection < 0 )
-            iSelection = 0;
-
-        m_iFirstVisibleItem = iFirstVisible;
-        if( m_iSelection != -1 )
-            m_iSelection = iSelection;
-*/
+    if( SelectUserItem( NextItem ) )
+    {
+        g_AudioMgr.Play( "Cusor_Norm" );
     }
 }
 
-void ui_listbox::OnPadShoulder2( ui_win* pWin, s32 Direction )
+void ui_listbox::OnJump( ui_win* pWin, s32 Direction )
 {
     (void)pWin;
 
-    g_AudioMgr.Play( "Cusor_Norm" );
-
-    if( Direction != 0 )
+    if( (Direction == 0) || (m_Items.GetCount() == 0) )
     {
-        if( m_iSelection != -1 )
-        {
-            s32 iDesired = m_iSelection + (m_Items.GetCount()-1) * Direction;
-            if( iDesired > (m_Items.GetCount()-1) )
-                iDesired = (m_Items.GetCount()-1);
-            if( iDesired < 0 )
-                iDesired = 0;
-                        
-            s32 iCur = m_iSelection;            
+        return;
+    }
 
-            while ((iCur-Direction) != iDesired)
-            {
-                if (m_Items[ iCur ].Enabled)
-                    m_iSelection = iCur;
-
-                iCur+=Direction;
-            }            
-            
-            EnsureVisible( m_iSelection );
-        }
-/*
-        s32 iFirstVisible = m_iFirstVisibleItem;
-        s32 iSelection    = m_iSelection;
-
-        iFirstVisible += m_Items.GetCount() * Direction;
-
-        if( iFirstVisible > (m_Items.GetCount()-m_nVisibleItems) )
-            iFirstVisible = (m_Items.GetCount()-m_nVisibleItems);
-        if( iFirstVisible < 0 )
-            iFirstVisible = 0;
-
-        iSelection += m_Items.GetCount() * Direction;
-
-        if( iSelection > (m_Items.GetCount()-1) )
-            iSelection = (m_Items.GetCount()-1);
-        if( iSelection < 0 )
-            iSelection = 0;
-
-        m_iFirstVisibleItem = iFirstVisible;
-        if( m_iSelection != -1 )
-            m_iSelection = iSelection;
-*/
+    s32 const Start = (Direction < 0) ? 0 : m_Items.GetCount() - 1;
+    if( SelectUserItem( FindEnabledItem( Start, Direction ) ) )
+    {
+        g_AudioMgr.Play( "Cusor_Norm" );
     }
 }
 
 //=========================================================================
 
-void ui_listbox::OnPadSelect( ui_win* pWin )
+void ui_listbox::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
     // Check if Exit on Select is disabled
-    if( !m_ExitOnSelect && (m_Flags & WF_SELECTED) )
+    if( !m_ExitOnSelect && (IsActive()) )
     {
         if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)(uaddr)m_iSelection );
+            Notify( ui_notification_type::ListAccepted, static_cast<s32>( m_iSelection  ) );
     }
     else
     {
-        if( (m_Flags & WF_SELECTED) || (GetNumEnabledItems() > 0) )
+        if( (IsActive()) || (GetNumEnabledItems() > 0) )
         {
             // Toggle Selected
-            m_Flags ^= WF_SELECTED;
+            SetActive( !IsActive() );
 
-            if( m_Flags & WF_SELECTED )
+            if( IsActive() )
             {
-//                audio_Play( SFX_FRONTEND_SELECT_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
                 m_iSelectionBackup = m_iSelection;
-//                if( m_pParent )
-//                    m_pParent->OnNotify( m_pParent, this, WN_LIST_CANCELLED, (void*)(uaddr)m_iSelection );
             }
             else
             {
-//                audio_Play( SFX_FRONTEND_CANCEL_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
                 if( m_pParent )
-                    m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)(uaddr)m_iSelection );
+                    Notify( ui_notification_type::ListAccepted, static_cast<s32>( m_iSelection  ) );
             }
-        }
-        else
-        {
-//            audio_Play( SFX_FRONTEND_ERROR,AUDFLAG_CHANNELSAVER );	//-- Jhowa
         }
     }
 
     if ( m_pParent )
-        m_pParent->OnPadSelect( pWin );
+        m_pParent->OnAccept( pWin );
 }
 
 //=========================================================================
 
-void ui_listbox::OnPadBack( ui_win* pWin )
+void ui_listbox::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
-    if( ( m_Flags & WF_SELECTED ) && ( !m_ExitOnBack ) )
+    if( ( IsActive() ) && ( !m_ExitOnBack ) )
     {
         // Clear selected
-        m_Flags &= ~WF_SELECTED;
-//        audio_Play( SFX_FRONTEND_CANCEL_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
+        SetActive( FALSE );
 
-        // BW 3/28 - I was getting an assert if all the entries within a listbox disappeared
-        // between being in the listbox and then hitting back. This was happening because
-        // m_iSelectionBackup exceeded the range for this listbox.
-        if (m_iSelectionBackup > GetItemCount() )
+        // Clamp the saved selection when items disappeared while the list was active.
+        if( m_iSelectionBackup >= GetItemCount() )
         {
             m_iSelectionBackup = GetItemCount()-1;
         }
         SetSelection( m_iSelectionBackup );
 
         if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_LIST_CANCELLED, (void*)(uaddr)m_iSelection );
+            Notify( ui_notification_type::ListCancelled, static_cast<s32>( m_iSelection  ) );
     }
     else
     {
         if( m_pParent )
-            m_pParent->OnPadBack( pWin );
+            m_pParent->OnCancel( pWin );
     }
 }
 
@@ -713,16 +424,9 @@ void ui_listbox::OnPadBack( ui_win* pWin )
 
 void ui_listbox::SetLineHeight( s32 Height )
 {
-    m_LineHeight    = Height;
-
-    if( m_ShowHeaderBar )
-    {
-        m_nVisibleItems = (m_Position.GetHeight()-SPACE_TOP-SPACE_BOTTOM-HEADER_HEIGHT) / m_LineHeight;
-    }
-    else
-    {
-        m_nVisibleItems = (m_Position.GetHeight()-SPACE_TOP-SPACE_BOTTOM) / m_LineHeight;
-    }
+    ASSERT( Height > 0 );
+    m_LineHeight = MAX( 1, Height );
+    UpdateVisibleItemCount();
 }
 
 //=========================================================================
@@ -740,7 +444,7 @@ s32 ui_listbox::AddItem( const xwstring& Label, uaddr Data, uaddr Data2, xbool S
     Item.Label   = Label;
     Item.Data[0] = Data;
     Item.Data[1] = Data2;
-    Item.Color   = xcolor(255,252,204,255); //XCOLOR_WHITE;
+    Item.Color   = xcolor(255,252,204,255);
     Item.Flags   = Flags;
     return m_Items.GetCount()-1;
 }
@@ -754,7 +458,7 @@ s32 ui_listbox::AddItem( const xwchar* Label, uaddr Data, uaddr Data2, xbool Sta
     Item.Label   = Label;
     Item.Data[0] = Data;
     Item.Data[1] = Data2;
-    Item.Color   = xcolor(255,252,204,255); //XCOLOR_WHITE
+    Item.Color   = xcolor(255,252,204,255);
     Item.Flags   = Flags;
     return m_Items.GetCount()-1;
 }
@@ -763,13 +467,14 @@ s32 ui_listbox::AddItem( const xwchar* Label, uaddr Data, uaddr Data2, xbool Sta
 
 void ui_listbox::DeleteAllItems( void )
 {
+    s32 const OldSelection = m_iSelection;
     m_iSelection        = -1;
     m_iFirstVisibleItem = 0;
 
     m_Items.Delete( 0, m_Items.GetCount() );
 
-    if( m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
+    if( OldSelection != m_iSelection )
+        Notify( ui_notification_type::ListSelectionChanged, m_iSelection );
 }
 
 //=========================================================================
@@ -778,19 +483,27 @@ void ui_listbox::DeleteItem( s32 iItem )
 {
     ASSERT( (iItem >= 0) && (iItem < m_Items.GetCount()) );
 
-    s32 OldSelection = m_iSelection;
+    s32 const OldSelection = m_iSelection;
+    xbool const DeletedSelection = (iItem == OldSelection);
 
     m_Items.Delete( iItem );
 
-    if( iItem < m_iSelection ) m_iSelection--;
-    if( m_iSelection < 0 ) m_iSelection = 0;
-    if( m_iSelection >= m_Items.GetCount() ) m_iSelection = m_Items.GetCount() - 1;
-    if( m_Items.GetCount() == 0 ) m_iSelection = -1;
+    if( m_Items.GetCount() == 0 )
+        m_iSelection = -1;
+    else if( iItem < OldSelection )
+        m_iSelection = OldSelection - 1;
+    else if( DeletedSelection )
+    {
+        s32 const Candidate = MIN( iItem, m_Items.GetCount() - 1 );
+        m_iSelection = FindEnabledItem( Candidate, 1 );
+        if( m_iSelection == -1 )
+            m_iSelection = FindEnabledItem( Candidate, -1 );
+    }
 
     EnsureVisible( m_iSelection );
 
-    if( (m_iSelection != OldSelection) && m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
+    if( (m_iSelection != OldSelection) || DeletedSelection )
+        Notify( ui_notification_type::ListSelectionChanged, m_iSelection );
 }
 
 //=========================================================================
@@ -801,21 +514,13 @@ void ui_listbox::DeleteSelectedItem( void )
     if ( m_iSelection < 0 )
         return;
 
-    m_Items.Delete( m_iSelection );
-
-    if( m_iSelection >= m_Items.GetCount() ) m_iSelection = m_Items.GetCount() - 1;
-    if( m_Items.GetCount() == 0 ) m_iSelection = -1;
-
-    EnsureVisible( m_iSelection );
-
-    if( m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
+    DeleteItem( m_iSelection );
 }
 
 
 //=========================================================================
 
-u32 ui_listbox::GetItemFlags( s32 iItem )
+u32 ui_listbox::GetItemFlags( s32 iItem ) const
 {
     ASSERT( (iItem >= 0) && (iItem < m_Items.GetCount()) );
     return m_Items[iItem].Flags;
@@ -833,36 +538,15 @@ void ui_listbox::EnableItem( s32 iItem, xbool State )
     // If the selected item was just disabled then search for new item to select
     if( (iItem == m_iSelection) && !State )
     {
-        s32 iFound  = -1;
-        s32 i1      = iItem-1;
-        s32 i2      = iItem+1;
+        s32 iFound = FindEnabledItem( iItem - 1, -1 );
+        if( iFound == -1 )
+            iFound = FindEnabledItem( iItem + 1, 1 );
 
-        while( (i1 >= 0) && (i2 < m_Items.GetCount()) )
-        {
-            if( i1 >= 0 )
-            {
-                if( m_Items[i1].Enabled )
-                {
-                    iFound = i1;
-                    break;
-                }
-                i1--;
-            }
-            if( i2 < m_Items.GetCount() )
-            {
-                if( m_Items[i2].Enabled )
-                {
-                    iFound = i2;
-                    break;
-                }
-                i2++;
-            }
-        }
         m_iSelection = iFound;
         EnsureVisible( m_iSelection );
 
-        if( (m_iSelection != OldSelection) && m_pParent )
-        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
+        if( m_iSelection != OldSelection )
+            Notify( ui_notification_type::ListSelectionChanged, m_iSelection );
     }
 }
 
@@ -870,16 +554,16 @@ void ui_listbox::EnableItem( s32 iItem, xbool State )
     
 void ui_listbox::EnableHeaderBar( void )
 { 
-    m_ShowHeaderBar = TRUE; 
-    m_nVisibleItems = (m_Position.GetHeight()-SPACE_TOP-SPACE_BOTTOM-HEADER_HEIGHT) / m_LineHeight;
+    m_ShowHeaderBar = TRUE;
+    UpdateVisibleItemCount();
 }
 
 //=========================================================================
 
 void ui_listbox::DisableHeaderBar( void )
 { 
-    m_ShowHeaderBar = FALSE; 
-    m_nVisibleItems = (m_Position.GetHeight()-SPACE_TOP-SPACE_BOTTOM) / m_LineHeight;
+    m_ShowHeaderBar = FALSE;
+    UpdateVisibleItemCount();
 }
 
 //=========================================================================
@@ -912,7 +596,7 @@ void ui_listbox::SetItemLabel( s32 iItem, const xwstring& Label )
 uaddr ui_listbox::GetItemData( s32 iItem, s32 Index ) const
 {
     ASSERT( (iItem >= 0) && (iItem < m_Items.GetCount()) );
-    ASSERT( Index < LISTBOX_DATA_FIELDS );
+    ASSERT( (Index >= 0) && (Index < LISTBOX_DATA_FIELDS) );
 
     return m_Items[iItem].Data[Index];
 }
@@ -931,7 +615,7 @@ const xwstring& ui_listbox::GetSelectedItemLabel( void ) const
 uaddr ui_listbox::GetSelectedItemData( s32 Index ) const
 {
     ASSERT( (m_iSelection >= 0) && (m_iSelection < m_Items.GetCount()) );
-    ASSERT( Index < LISTBOX_DATA_FIELDS );
+    ASSERT( (Index >= 0) && (Index < LISTBOX_DATA_FIELDS) );
 
     return m_Items[m_iSelection].Data[Index];
 }
@@ -956,7 +640,7 @@ xcolor ui_listbox::GetItemColor( s32 iItem ) const
 
 //=========================================================================
 
-s32 ui_listbox::FindItemByLabel( const xwstring& Label )
+s32 ui_listbox::FindItemByLabel( const xwstring& Label ) const
 {
     s32     i;
     s32     iFound = -1;
@@ -975,9 +659,9 @@ s32 ui_listbox::FindItemByLabel( const xwstring& Label )
 
 //=========================================================================
 
-s32 ui_listbox::FindItemByData( uaddr Data, s32 Index )
+s32 ui_listbox::FindItemByData( uaddr Data, s32 Index ) const
 {
-    ASSERT( Index < LISTBOX_DATA_FIELDS );
+    ASSERT( (Index >= 0) && (Index < LISTBOX_DATA_FIELDS) );
 
     s32     i;
     s32     iFound = -1;
@@ -1014,11 +698,12 @@ void ui_listbox::SetSelection( s32 iSelection )
 
     if( (iSelection == -1) || m_Items[iSelection].Enabled )
     {
+        if( iSelection == m_iSelection )
+            return;
+
         m_iSelection = iSelection;
         EnsureVisible( m_iSelection );
-
-        if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
+        Notify( ui_notification_type::ListSelectionChanged, m_iSelection );
     }
 }
 
@@ -1026,7 +711,7 @@ void ui_listbox::SetSelection( s32 iSelection )
 
 void ui_listbox::ClearSelection( void )
 {
-    m_iSelection = -1;
+    SetSelection( -1 );
 }
 
 //=========================================================================
@@ -1039,18 +724,18 @@ void ui_listbox::EnsureVisible( s32 iItem )
     {
         if( iItem < m_iFirstVisibleItem )
         {
-            m_iFirstVisibleItem = iItem;
+            SetFirstVisibleItem( iItem );
         }
         if( iItem >= (m_iFirstVisibleItem+m_nVisibleItems) )
         {
-            m_iFirstVisibleItem = iItem - (m_nVisibleItems-1);
+            SetFirstVisibleItem( iItem - (m_nVisibleItems-1) );
         }
     }
 }
 
 //=========================================================================
 
-s32 ui_listbox::GetNumEnabledItems( void )
+s32 ui_listbox::GetNumEnabledItems( void ) const
 {
     s32 i;
     s32 Count = 0;
@@ -1064,7 +749,7 @@ s32 ui_listbox::GetNumEnabledItems( void )
 
 //=========================================================================
 
-s32 ui_listbox::GetCursorOffset( void )
+s32 ui_listbox::GetCursorOffset( void ) const
 {
     s32 Offset;
 
@@ -1085,21 +770,17 @@ void ui_listbox::SetSelectionWithOffset( s32 iSelection, s32 Offset )
 
     if( (iSelection == -1) || m_Items[iSelection].Enabled )
     {
+        s32 const OldSelection = m_iSelection;
         m_iSelection = iSelection;
 
         if( m_iSelection != -1 )
         {
-            m_iFirstVisibleItem = m_iSelection - Offset;
-
-            if( m_iFirstVisibleItem >= (m_Items.GetCount() - m_nVisibleItems) )
-                m_iFirstVisibleItem = m_Items.GetCount() - (m_nVisibleItems);
-
-            if( m_iFirstVisibleItem < 0 )
-                m_iFirstVisibleItem = 0;
+            Offset = x_clamp( Offset, 0, MAX( 0, m_nVisibleItems - 1 ) );
+            SetFirstVisibleItem( m_iSelection - Offset );
         }
 
-        if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
+        if( m_iSelection != OldSelection )
+            Notify( ui_notification_type::ListSelectionChanged, m_iSelection );
     }
 }
 
@@ -1132,366 +813,285 @@ public:
 //=========================================================================
 void ui_listbox::AlphaSortList( void )
 {
+    if( m_Items.GetCount() < 2 )
+    {
+        return;
+    }
+
+    s32 const OldSelection = m_iSelection;
+    item SelectedItem;
+    xbool const HasSelection = (m_iSelection >= 0) && (m_iSelection < m_Items.GetCount());
+    if( HasSelection )
+    {
+        SelectedItem = m_Items[m_iSelection];
+    }
+
     x_qsort( &m_Items[0], m_Items.GetCount(), listbox_sort_compare() );
+
+    if( HasSelection )
+    {
+        m_iSelection = -1;
+        for( s32 iItem = 0; iItem < m_Items.GetCount(); iItem++ )
+        {
+            item const& Item = m_Items[iItem];
+            if( (Item.Label == SelectedItem.Label) &&
+                (Item.Data[0] == SelectedItem.Data[0]) &&
+                (Item.Data[1] == SelectedItem.Data[1]) )
+            {
+                m_iSelection = iItem;
+                break;
+            }
+        }
+
+        EnsureVisible( m_iSelection );
+        if( m_iSelection != OldSelection )
+        {
+            Notify( ui_notification_type::ListSelectionChanged, m_iSelection );
+        }
+    }
 }
 
 //=========================================================================
 
-void ui_listbox::OnMouseMove( ui_win* pWin, s32 x, s32 y )
-{   
+s32 ui_listbox::GetMaxFirstVisibleItem( void ) const
+{
+    return MAX( 0, m_Items.GetCount() - m_nVisibleItems );
+}
+
+//=========================================================================
+
+xbool ui_listbox::SetFirstVisibleItem( s32 FirstVisibleItem )
+{
+    FirstVisibleItem = x_clamp( FirstVisibleItem, 0, GetMaxFirstVisibleItem() );
+    if( FirstVisibleItem == m_iFirstVisibleItem )
+    {
+        return FALSE;
+    }
+
+    m_iFirstVisibleItem = FirstVisibleItem;
+    m_HoveredItem = -1;
+    return TRUE;
+}
+
+//=========================================================================
+
+xbool ui_listbox::ScrollItems( s32 ItemDelta )
+{
+    return SetFirstVisibleItem( m_iFirstVisibleItem + ItemDelta );
+}
+
+//=========================================================================
+
+s32 ui_listbox::GetItemAt( s32 x, s32 y ) const
+{
+    ScreenToLocal( x, y );
+
+    s32 const ContentTop = SPACE_TOP + (m_ShowHeaderBar ? HEADER_HEIGHT : 0);
+    s32 const RelativeY = y - ContentTop;
+    if( (RelativeY < 0) || (RelativeY >= m_nVisibleItems * m_LineHeight) )
+    {
+        return -1;
+    }
+
+    s32 const iItem = m_iFirstVisibleItem + (RelativeY / m_LineHeight);
+    return ((iItem >= 0) && (iItem < m_Items.GetCount())) ? iItem : -1;
+}
+
+//=========================================================================
+
+s32 ui_listbox::FindEnabledItem( s32 Start, s32 Direction ) const
+{
+    if( Direction == 0 )
+    {
+        return -1;
+    }
+
+    for( s32 iItem = Start;
+         (iItem >= 0) && (iItem < m_Items.GetCount());
+         iItem += Direction )
+    {
+        if( m_Items[iItem].Enabled )
+        {
+            return iItem;
+        }
+    }
+
+    return -1;
+}
+
+//=========================================================================
+
+xbool ui_listbox::SelectUserItem( s32 iItem )
+{
+    if( (iItem < 0) ||
+        (iItem >= m_Items.GetCount()) ||
+        !m_Items[iItem].Enabled ||
+        (iItem == m_iSelection) )
+    {
+        return FALSE;
+    }
+
+    m_iSelection = iItem;
+    EnsureVisible( m_iSelection );
+    Notify( ui_notification_type::ListSelectionChanged, m_iSelection );
+    return TRUE;
+}
+
+//=========================================================================
+
+void ui_listbox::UpdateScrollBar( void )
+{
+    irect Bounds( GetWidth() - 14,
+                  m_ShowHeaderBar ? HEADER_HEIGHT : 0,
+                  GetWidth(),
+                  GetHeight() );
+    LocalToScreen( Bounds );
+    m_ScrollBar.SetBounds( Bounds );
+    m_ScrollBar.SetRange( m_Items.GetCount(), m_nVisibleItems, m_iFirstVisibleItem );
+}
+
+//=========================================================================
+
+void ui_listbox::UpdateVisibleItemCount( void )
+{
+    s32 const HeaderHeight = m_ShowHeaderBar ? HEADER_HEIGHT : 0;
+    s32 const ContentHeight = m_Position.GetHeight()
+                            - SPACE_TOP
+                            - SPACE_BOTTOM
+                            - HeaderHeight;
+    m_nVisibleItems = MAX( 1, ContentHeight / MAX( 1, m_LineHeight ) );
+    SetFirstVisibleItem( m_iFirstVisibleItem );
+}
+
+//=========================================================================
+
+void ui_listbox::OnPointerMove( ui_win* pWin, s32 x, s32 y )
+{
+    (void)pWin;
+    UpdateScrollBar();
+    if( m_ShowBorders && m_ScrollBar.OnPointerMove( x, y ) )
+    {
+        SetFirstVisibleItem( m_ScrollBar.GetPosition() );
+    }
+    else if( !m_ShowBorders )
+    {
+        m_ScrollBar.OnPointerLeave();
+    }
+
+    if( m_ShowBorders &&
+        (m_ScrollBar.IsHovered() || m_ScrollBar.IsInteracting()) )
+    {
+        m_HoveredItem = -1;
+        return;
+    }
+
+    m_HoveredItem = GetItemAt( x, y );
+}
+
+//=========================================================================
+
+void ui_listbox::OnPointerLeave( ui_win* pWin )
+{
+    (void)pWin;
+    m_ScrollBar.OnPointerLeave();
+    m_HoveredItem = -1;
+}
+
+//=========================================================================
+
+void ui_listbox::OnPointerWheel( ui_win* pWin, s32 Delta )
+{
+    UpdateScrollBar();
+    if( m_ScrollBar.OnWheel( Delta ) )
+    {
+        SetFirstVisibleItem( m_ScrollBar.GetPosition() );
+        return;
+    }
+
+    ui_win::OnPointerWheel( pWin, Delta );
+}
+
+//=========================================================================
+
+void ui_listbox::OnPointerDown( ui_win* pWin, s32 x, s32 y )
+{
+    UpdateScrollBar();
+    if( m_ShowBorders && m_ScrollBar.OnPointerDown( x, y ) )
+    {
+        m_HoveredItem = -1;
+        SetFirstVisibleItem( m_ScrollBar.GetPosition() );
+        if( m_ScrollBar.IsInteracting() )
+        {
+            m_pManager->SetCapture( m_UserID, this );
+        }
+        return;
+    }
+
+    s32 const iItem = GetItemAt( x, y );
+    if( iItem == -1 )
+    {
+        return;
+    }
+
+    if( !m_Items[iItem].Enabled )
+    {
+        g_AudioMgr.Play( "InvalidEntry" );
+        return;
+    }
+
+    SelectUserItem( iItem );
+    OnAccept( pWin );
+}
+
+//=========================================================================
+
+void ui_listbox::OnPointerUp( ui_win* pWin, s32 x, s32 y )
+{
     (void)pWin;
     (void)x;
     (void)y;
 
-#ifndef TARGET_PC
-    return;
-#else
-    
-    if( m_ScrollDown )
-    {    
-        if( m_ScrollBar.PointInRect( m_MouseX, m_MouseY ) )
-        {
-            s32 FirstVisible = m_iFirstVisibleItem;
-            s32 diff = (y - m_MouseY);
-
-            if( diff > 0 )
-            {
-                diff = (s32)((f32)diff/4);
-                FirstVisible += diff;
-    
-                if( FirstVisible > (m_Items.GetCount()-m_nVisibleItems) )
-                    FirstVisible = (m_Items.GetCount()-m_nVisibleItems);
-
-                // Set new position back into first visible
-                if( (FirstVisible != m_iFirstVisibleItem) && m_pParent )
-                {
-                    if( m_iSelection < FirstVisible )
-                        m_iSelection = FirstVisible;
-
-//                    audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-                    m_iFirstVisibleItem = FirstVisible;
-                    m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
-                }
-            }
-            else if( diff < 0 )
-            {
-                diff = (s32)((f32)diff/4);
-                FirstVisible += diff;
-
-                if( FirstVisible < 0 )
-                    FirstVisible = 0;
-
-                // Set new position back into last visible
-                if( (FirstVisible != m_iFirstVisibleItem) && m_pParent )
-                {
-                    if( m_iSelection > (FirstVisible + m_nVisibleItems)-1 )
-                        m_iSelection = (FirstVisible + m_nVisibleItems)-1;
-
-//                    audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-                    m_iFirstVisibleItem = FirstVisible;
-                    m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
-                }
-            }
-        }
-    }
-
-    xbool Processed = FALSE;
-    s32 dy = 0;
-    m_MouseX = x;
-    m_MouseY = y;
-    ScreenToLocal( x, y );
-    irect scroll( m_UpArrow.l, m_UpArrow.t, m_DownArrow.r, m_DownArrow.b );
-    ScreenToLocal( scroll );
-
-    // If the cursor is in the scroll bar then don't do anything.
-    if( scroll.PointInRect( x, y ) )
+    xbool const HadScrollCapture = m_ScrollBar.OnPointerUp();
+    if( HadScrollCapture )
     {
-
-        if( m_MouseDown )
-        {
-            // Just move the selected item down one.
-            if( m_DownArrow.PointInRect( m_MouseX, m_MouseY ) )
-            {
-                m_MouseDown = TRUE;
-            }
-            // Just move the selected item up one.
-            else if( m_UpArrow.PointInRect( m_MouseX, m_MouseY ) )
-            {
-                m_MouseDown = TRUE;
-            }    
-            else
-            {
-                m_MouseDown = FALSE;
-            }        
-        }
-
-        if( m_pParent )
-            m_pParent->OnMouseMove( pWin, x, y );
-        return;
+        m_pManager->ReleaseCapture( m_UserID );
     }
-
-    // Find out which item is the cursor on.
-    s32 yOffset = SPACE_TOP;
-    if( m_ShowHeaderBar )
-        yOffset += HEADER_HEIGHT;
-
-    dy = y - yOffset;
-    dy = dy/m_LineHeight;
-    dy += m_iFirstVisibleItem;
-
-    if( dy <= -1 )
-        dy = -1;
-    else if( dy >= m_Items.GetCount() )
-        dy = -1;
-    
-    // Apply movement
-    if( m_Flags & WF_SELECTED )
-    {
-        // Chech if we moved.
-        s32 OldSelection = m_iSelection;
-        s32 iItem = dy;
-        
-        // The new item to move to.
-        if( iItem != -1 )
-        {
-            m_iSelection = iItem;
-            m_TrackHighLight = iItem;
-
-            EnsureVisible( m_iSelection );
-
-            if( (m_iSelection != OldSelection) && m_pParent )
-            {
-                m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
-//                audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-            }
-        }
-            
-            
-        Processed = TRUE;
-    }
-    // Track the mouse cursor.
-    else
-    {
-        if( dy != -1 )
-            m_TrackHighLight = dy;
-    }
-
-
-    // Pass up the chain, if not processed.
-    if( !Processed )
-    {
-        if( m_pParent )
-            m_pParent->OnMouseMove( pWin, x, y );
-    }   
-#endif
 }
 
 //=========================================================================
 
-void ui_listbox::OnLBDown( ui_win* pWin )
+void ui_listbox::OnUpdate( ui_win* pWin, f32 DeltaTime )
 {
     (void)pWin;
 
-#ifdef TARGET_PC
-    // Check if Exit on Select is disabled
-    if( !m_ExitOnSelect && (m_Flags & WF_SELECTED) )
+    UpdateScrollBar();
+    if( m_ScrollBar.OnUpdate( DeltaTime ) )
     {
-        if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)(uaddr)m_iSelection );
+        SetFirstVisibleItem( m_ScrollBar.GetPosition() );
     }
-    else
-    {
-        irect scroll( m_UpArrow.l, m_UpArrow.t, m_DownArrow.r, m_DownArrow.b );
-        if( (m_Flags & WF_SELECTED) || (GetNumEnabledItems() > 0) )
-        {
-
-            // Don't select the listbox if the cursor is on the scroll bar portion.
-            if( scroll.PointInRect( m_MouseX, m_MouseY ) )
-            {
-                
-                s32 OldSelection = m_iSelection;
-                // Just move the selected item down one.
-                if( m_DownArrow.PointInRect( m_MouseX, m_MouseY ) )
-                {
-                    m_iSelection++;
-                    if( m_iSelection >= m_Items.GetCount() )
-                        m_iSelection = m_Items.GetCount()-1;
-
-                    // Track the highlight.
-                    m_TrackHighLight = m_iSelection;
-                    m_MouseDown = TRUE;
-                }
-
-                // Just move the selected item up one.
-                if( m_UpArrow.PointInRect( m_MouseX, m_MouseY ) )
-                {
-                    m_iSelection--;
-                    if( m_iSelection < 0 )
-                        m_iSelection = 0;
-
-                    // Track the highlight.
-                    m_TrackHighLight = m_iSelection;
-                    m_MouseDown = TRUE;
-                }            
-                // Did the mouse click on the scroll bar.    
-                else if( m_ScrollBar.PointInRect( m_MouseX, m_MouseY ) )
-                    m_ScrollDown = TRUE;
-            
-                EnsureVisible( m_iSelection );
-
-                if( m_MouseDown )
-                {
-                    if( (m_iSelection != OldSelection) && m_pParent )
-                    {
-                        m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
-//                        audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-                    }
-                }
-
-                return;
-            }
-
-            // Toggle Selected
-            m_Flags ^= WF_SELECTED;
-            m_iSelection = m_TrackHighLight;            
-
-            if( m_Flags & WF_SELECTED )
-            {
-//                audio_Play( SFX_FRONTEND_SELECT_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-                m_iSelectionBackup = m_iSelection;
-//                if( m_pParent )
-//                    m_pParent->OnNotify( m_pParent, this, WN_LIST_CANCELLED, (void*)(uaddr)m_iSelection );
-            }
-            else
-            {
-//                audio_Play( SFX_FRONTEND_CANCEL_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-                if( m_pParent )
-                    m_pParent->OnNotify( m_pParent, this, WN_LIST_ACCEPTED, (void*)(uaddr)m_iSelection );
-            }
-        }
-        else
-        {
-//            audio_Play( SFX_FRONTEND_ERROR,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-        }
-    }
-
-    if ( m_pParent )
-        m_pParent->OnLBDown( pWin );
-#endif
-
 }
 
 //=========================================================================
 
-void ui_listbox::OnUpdate ( ui_win* pWin, f32 DeltaTime )
+void ui_listbox::OnFocusGained( ui_win* pWin )
 {
-    (void)pWin;
-    (void)DeltaTime;
-    
-#ifdef TARGET_PC
-    return;
-    xbool Processed = FALSE;
-    m_ScrollTime += DeltaTime;
-    
-    // Set a delay to scroll.
-    if( m_ScrollTime < 0.3f )
-        return;
-    else
-        m_ScrollTime = 0.0f;
-    
-    if( m_MouseDown )
-    {
-        s32 OldSelection = m_iSelection;
-
-        // Just move the selected item down one.
-        if( m_DownArrow.PointInRect( m_MouseX, m_MouseY ) )
-        {
-            m_iSelection++;
-            
-            // Don't go over the number of items.
-            if( m_iSelection >= m_Items.GetCount() )
-                m_iSelection = m_Items.GetCount()-1;
-            
-            // Track the highlight.
-            m_TrackHighLight = m_iSelection;
-            Processed = TRUE;
-        }
-
-        // Just move the selected item up one.
-        if( m_UpArrow.PointInRect( m_MouseX, m_MouseY ) )
-        {
-            m_iSelection--;
-            if( m_iSelection < 0 )
-                m_iSelection = 0;
-            
-            // Track the highlight.
-            m_TrackHighLight = m_iSelection;
-            Processed = TRUE;
-        }
-        
-        EnsureVisible( m_iSelection );
-
-        if( Processed )
-        {
-            if( (m_iSelection != OldSelection) && m_pParent )
-            {
-                m_pParent->OnNotify( m_pParent, this, WN_LIST_SELCHANGE, (void*)(uaddr)m_iSelection );
-//                audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-            }
-        }
-    }
-    
-    if( !Processed )
-    {    
-        if( m_pParent )
-            m_pParent->OnUpdate( pWin, DeltaTime );
-
-    }
-#endif
-}
-
-//=========================================================================
-
-void ui_listbox::OnLBUp ( ui_win* pWin )
-{
-    (void)pWin;
-
-#ifdef TARGET_PC
-    m_MouseDown = FALSE;
-    m_ScrollDown = FALSE;
-#endif
-}
-
-//=========================================================================
-
-void ui_listbox::OnFocusGained ( ui_win* pWin )
-{
-    (void) pWin;
-
-    // Turn on the highlight.
+    SetActive( TRUE );
     ui_win::OnFocusGained( pWin );
-
-    // select
-    SetFlag(WF_SELECTED, TRUE);
-
-    if( m_pParent )
-        m_pParent->OnFocusGained( pWin );
 }
 
 //=========================================================================
 
 void ui_listbox::OnFocusLost ( ui_win* pWin )
 {
-    (void) pWin;
+    xbool const HadScrollCapture = m_ScrollBar.IsInteracting();
+    m_ScrollBar.CancelInteraction();
+    SetActive( FALSE );
+    if( HadScrollCapture )
+    {
+        m_pManager->ReleaseCapture( m_UserID );
+    }
 
-    // Turn off the highlight.
     ui_win::OnFocusLost( pWin );
-
-    // unselect
-    SetFlag(WF_SELECTED, FALSE);
-
-    if( m_pParent )
-        m_pParent->OnFocusLost( pWin );
 }
 
 //=========================================================================

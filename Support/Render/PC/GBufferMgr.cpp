@@ -2,136 +2,172 @@
 //
 //  GBufferMgr.cpp
 //
-//  Mini G-Buffer Manager for Forward Renderer
-//
 //==============================================================================
 
 #include "x_types.hpp"
-
-#if !defined(TARGET_PC)
-#error "This is only for the PC target platform. Please check build exclusion rules"
-#endif
 
 //==============================================================================
 //  INCLUDES
 //==============================================================================
 
 #include "GBufferMgr.hpp"
-#include "Entropy/D3DEngine/d3deng_composite.hpp"
-
-//==============================================================================
-//  EXTERNAL VARIABLES
-//==============================================================================
-
-extern ID3D11Device*        g_pd3dDevice;
-extern ID3D11DeviceContext* g_pd3dContext;
+#include "e_Engine.hpp"
 
 //==============================================================================
 //  INTERNAL CONSTANTS
 //==============================================================================
 
-#define GBUFFER_FORMAT_FINAL_COLOR   RTARGET_FORMAT_RGBA8
-#define GBUFFER_FORMAT_ALBEDO        RTARGET_FORMAT_RGBA8
-#define GBUFFER_FORMAT_NORMAL        RTARGET_FORMAT_RGBA16F
-#define GBUFFER_FORMAT_LINEAR_DEPTH  RTARGET_FORMAT_RGBA16F
-#define GBUFFER_FORMAT_GLOW          RTARGET_FORMAT_RGBA16F
-#define GBUFFER_FORMAT_DEPTH         RTARGET_FORMAT_DEPTH24_STENCIL8
+#define GBUFFER_FORMAT_FINAL_COLOR RTARGET_FORMAT_RGBA8
+#define GBUFFER_FORMAT_NORMAL_DEPTH RTARGET_FORMAT_RGBA16F
+#define GBUFFER_FORMAT_GLOW RTARGET_FORMAT_RGBA16F
+#define GBUFFER_FORMAT_DEPTH RTARGET_FORMAT_DEPTH24_STENCIL8
 
 //------------------------------------------------------------------------------
 
 enum
 {
-    MRT_ALBEDO        = 0,
-    MRT_NORMAL        = 1,
-    MRT_LINEAR_DEPTH  = 2,
-    MRT_GLOW          = 3
+    MRT_NORMAL_DEPTH = 0,
+    MRT_GLOW = 1
 };
 
 //------------------------------------------------------------------------------
 
 enum
 {
-    BIND_SLOT_FINAL_COLOR   = 0,
-    BIND_SLOT_ALBEDO        = 1,
-    BIND_SLOT_NORMAL        = 2,
-    BIND_SLOT_LINEAR_DEPTH  = 3,
-    BIND_SLOT_GLOW          = 4,
+    BIND_SLOT_FINAL_COLOR = 0,
+    BIND_SLOT_NORMAL_DEPTH = 1,
+    BIND_SLOT_GLOW = 2,
     BIND_SLOT_COUNT
 };
+
+//------------------------------------------------------------------------------
+
+static f32 const s_ClearColorZero[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+static f32 const s_ClearColorNormalDepth[4] = { 0.5f, 0.5f, 1.0f, 1.0f };
+
+//------------------------------------------------------------------------------
+
+static void gbuffer_SetClearColor( f32 pDst[4], f32 const pSrc[4] )
+{
+    pDst[0] = pSrc[0];
+    pDst[1] = pSrc[1];
+    pDst[2] = pSrc[2];
+    pDst[3] = pSrc[3];
+}
+
+//------------------------------------------------------------------------------
+
+static rtarget_color_attachment_desc gbuffer_ColorAttachment( rtarget const* pTarget, rtarget_load_op loadOp,
+                                                              f32 const* pClearColor )
+{
+    rtarget_color_attachment_desc desc;
+    desc.pTarget = pTarget;
+    desc.LoadOp = loadOp;
+    desc.StoreOp = RTARGET_STORE_STORE;
+
+    if ( pClearColor )
+    {
+        gbuffer_SetClearColor( desc.ClearColor, pClearColor );
+    }
+
+    return desc;
+}
+
+//------------------------------------------------------------------------------
+
+static rtarget_depth_attachment_desc gbuffer_DepthAttachment( rtarget const* pTarget, rtarget_load_op loadOp )
+{
+    rtarget_depth_attachment_desc desc;
+    desc.pTarget = pTarget;
+    desc.DepthLoadOp = loadOp;
+    desc.DepthStoreOp = RTARGET_STORE_STORE;
+    desc.StencilLoadOp = loadOp;
+    desc.StencilStoreOp = RTARGET_STORE_STORE;
+    desc.ClearDepth = 1.0f;
+    desc.ClearStencil = 0;
+    return desc;
+}
 
 //==============================================================================
 //  GLOBAL INSTANCE
 //==============================================================================
 
-gbuffer_mgr g_GBufferMgr;
+GBufferMgr g_GBufferMgr;
 
 //==============================================================================
 //  CONSTRUCTION / DESTRUCTION
 //==============================================================================
 
-gbuffer_mgr::gbuffer_mgr( void ) :
-    m_bInitialized                 ( FALSE ),
-    m_bGBufferValid                ( FALSE ),
-    m_bGBufferTargetsActive        ( FALSE ),
-    m_bSceneColorRenderedThisFrame ( FALSE ),
-    m_GBufferWidth                 ( 0 ),
-    m_GBufferHeight                ( 0 ),
-    m_pOverrideColor               ( NULL ),
-    m_pOverrideDepth               ( NULL )
+GBufferMgr::GBufferMgr( void )
+    : m_isInitialized( FALSE ), m_isGBufferValid( FALSE ), m_areGBufferTargetsActive( FALSE ),
+      m_isSceneColorRenderedThisFrame( FALSE ), m_clearGBufferOnBind( FALSE ), m_gBufferWidth( 0 ),
+      m_gBufferHeight( 0 ), m_pOverrideColor( NULL ), m_pOverrideDepth( NULL )
 {
 }
 
 //==============================================================================
 
-gbuffer_mgr::~gbuffer_mgr( void )
+GBufferMgr::~GBufferMgr( void )
 {
 }
 
 //==============================================================================
 
-void gbuffer_mgr::Init( void )
+void GBufferMgr::Init( void )
 {
-    if( m_bInitialized )
+    if ( m_isInitialized )
+    {
         return;
+    }
 
-    m_bInitialized = TRUE;
+    m_isInitialized = TRUE;
 }
 
 //==============================================================================
 
-void gbuffer_mgr::Kill( void )
+void GBufferMgr::Kill( void )
 {
-    if( !m_bInitialized )
+    if ( !m_isInitialized )
+    {
         return;
+    }
 
     DestroyGBuffer();
-    m_bInitialized = FALSE;
+    m_isInitialized = FALSE;
 }
 
 //==============================================================================
 
-void gbuffer_mgr::BeginFrame( void )
+void GBufferMgr::BeginFrame( void )
 {
-    m_bSceneColorRenderedThisFrame = FALSE;
+    m_isSceneColorRenderedThisFrame = FALSE;
+    m_clearGBufferOnBind = TRUE;
 }
 
 //==============================================================================
 //  G-BUFFER LIFETIME
 //==============================================================================
 
-xbool gbuffer_mgr::CreateTarget( rtarget& Target, rtarget_format Format, const char* pErrorMsg )
+xbool GBufferMgr::CreateTarget( rtarget& target, rtarget_format format, f32 const* pClearColor, char const* pErrorMsg )
 {
-    rtarget_registration reg;
-    reg.Policy         = RTARGET_SIZE_RELATIVE_TO_VIEW;
-    reg.ScaleX         = 1.0f;
-    reg.ScaleY         = 1.0f;
-    reg.Format         = Format;
-    reg.SampleCount    = 1;
-    reg.SampleQuality  = 0;
-    reg.bBindAsTexture = TRUE;
+    rtarget_desc desc;
+    desc.Width          = m_gBufferWidth;
+    desc.Height         = m_gBufferHeight;
+    desc.Format         = format;
+    desc.SampleCount    = 1;
+    desc.SampleQuality  = 0;
+    desc.bBindAsTexture = TRUE;
+    desc.pDebugName     = pErrorMsg;
 
-    if( rtarget_GetOrCreate( Target, reg ) )
+    if ( pClearColor )
+    {
+        gbuffer_SetClearColor( desc.ClearColor, pClearColor );
+    }
+
+    if ( rtarget_Create( target, desc ) )
+    {
         return TRUE;
+    }
 
     DestroyGBuffer();
     x_throw( pErrorMsg );
@@ -140,208 +176,284 @@ xbool gbuffer_mgr::CreateTarget( rtarget& Target, rtarget_format Format, const c
 
 //==============================================================================
 
-xbool gbuffer_mgr::InitGBuffer( u32 Width, u32 Height )
+xbool GBufferMgr::InitGBuffer( u32 width, u32 height )
 {
-    if( !g_pd3dDevice )
+    if ( !rtarget_GetBackBuffer() )
+    {
         return FALSE;
+    }
 
-    m_GBufferWidth  = Width;
-    m_GBufferHeight = Height;
+    if ( m_isGBufferValid && ( m_gBufferWidth == width ) && ( m_gBufferHeight == height ) )
+    {
+        return TRUE;
+    }
 
-    if( !CreateTarget( m_SceneColorTarget,                   GBUFFER_FORMAT_FINAL_COLOR,
-                       "Failed to create GBuffer Scene Color target" ) )      return FALSE;
+    DestroyGBuffer();
 
-    if( !CreateTarget( m_GBufferTarget[ MRT_ALBEDO ],        GBUFFER_FORMAT_ALBEDO,
-                       "Failed to create GBuffer Albedo target" ) )           return FALSE;
+    m_gBufferWidth = width;
+    m_gBufferHeight = height;
 
-    if( !CreateTarget( m_GBufferTarget[ MRT_NORMAL ],        GBUFFER_FORMAT_NORMAL,
-                       "Failed to create GBuffer Normal target" ) )           return FALSE;
+    if ( !CreateTarget( m_sceneColorTarget, GBUFFER_FORMAT_FINAL_COLOR, s_ClearColorZero,
+                        "Failed to create GBuffer Scene Color target" ) )
+    {
+        return FALSE;
+    }
 
-    if( !CreateTarget( m_GBufferTarget[ MRT_LINEAR_DEPTH ],  GBUFFER_FORMAT_LINEAR_DEPTH,
-                       "Failed to create GBuffer Linear Depth target" ) )     return FALSE;
+    if ( !CreateTarget( m_gBufferTarget[MRT_NORMAL_DEPTH], GBUFFER_FORMAT_NORMAL_DEPTH, s_ClearColorNormalDepth,
+                        "Failed to create GBuffer Normal-Depth target" ) )
+    {
+        return FALSE;
+    }
 
-    if( !CreateTarget( m_GBufferTarget[ MRT_GLOW ],          GBUFFER_FORMAT_GLOW,
-                       "Failed to create GBuffer Glow target" ) )             return FALSE;
+    if ( !CreateTarget( m_gBufferTarget[MRT_GLOW], GBUFFER_FORMAT_GLOW, s_ClearColorZero,
+                        "Failed to create GBuffer Glow target" ) )
+    {
+        return FALSE;
+    }
 
-    if( !CreateTarget( m_GBufferDepth,                       GBUFFER_FORMAT_DEPTH,
-                       "Failed to create GBuffer Depth-Stencil" ) )           return FALSE;
+    if ( !CreateTarget( m_gBufferDepth, GBUFFER_FORMAT_DEPTH, NULL, "Failed to create GBuffer Depth-Stencil" ) )
+    {
+        return FALSE;
+    }
 
-    m_bGBufferValid = TRUE;
+    m_isGBufferValid = TRUE;
+    m_clearGBufferOnBind = TRUE;
     return TRUE;
 }
 
 //==============================================================================
 
-void gbuffer_mgr::DestroyGBuffer( void )
+void GBufferMgr::DestroyGBuffer( void )
 {
-    if( m_bGBufferTargetsActive )
+    if ( m_areGBufferTargetsActive )
     {
-        rtarget_SetBackBuffer();
-        m_bGBufferTargetsActive = FALSE;
+        rtarget_EndPass();
+        m_areGBufferTargetsActive = FALSE;
     }
 
-    rtarget_Unregister( m_SceneColorTarget );
-    rtarget_Destroy   ( m_SceneColorTarget );
+    rtarget_Destroy( m_sceneColorTarget );
 
-    for( u32 i = 0; i < GBUFFER_MRT_COUNT; ++i )
+    for ( u32 i = 0; i < g_gBufferMrtCount; ++i )
     {
-        rtarget_Unregister( m_GBufferTarget[i] );
-        rtarget_Destroy   ( m_GBufferTarget[i] );
+        rtarget_Destroy( m_gBufferTarget[i] );
     }
 
-    rtarget_Unregister( m_GBufferDepth );
-    rtarget_Destroy   ( m_GBufferDepth );
+    rtarget_Destroy( m_gBufferDepth );
 
-    m_bGBufferValid = FALSE;
-    m_bSceneColorRenderedThisFrame = FALSE;
-    m_GBufferWidth  = 0;
-    m_GBufferHeight = 0;
+    m_isGBufferValid = FALSE;
+    m_isSceneColorRenderedThisFrame = FALSE;
+    m_clearGBufferOnBind = FALSE;
+    m_gBufferWidth = 0;
+    m_gBufferHeight = 0;
 }
 
 //==============================================================================
 
-xbool gbuffer_mgr::ResizeGBuffer( u32 Width, u32 Height )
+xbool GBufferMgr::ResizeGBuffer( u32 width, u32 height )
 {
-    return InitGBuffer( Width, Height );
+    return InitGBuffer( width, height );
 }
 
 //==============================================================================
 
-xbool gbuffer_mgr::SetGBufferTargets( void )
+xbool GBufferMgr::SetGBufferTargets( void )
 {
-    if( !m_bGBufferValid )
+    if ( !m_isGBufferValid )
     {
         x_throw( "SetGBufferTargets called before a valid G-Buffer was created" );
         return FALSE;
     }
 
-    if( !g_pd3dContext )
-        return FALSE;
-
-    if( m_bGBufferTargetsActive )
+    if ( m_areGBufferTargetsActive && !m_clearGBufferOnBind )
     {
-        if( !m_pOverrideColor )
-            m_bSceneColorRenderedThisFrame = TRUE;
+        if ( !m_pOverrideColor )
+        {
+            m_isSceneColorRenderedThisFrame = TRUE;
+        }
         return TRUE;
     }
 
-    if( !rtarget_GetBackBuffer() )
+    if ( !rtarget_GetBackBuffer() )
     {
         x_throw( "Back buffer is not available" );
         return FALSE;
     }
 
-    const rtarget* pSceneColor  = GetActiveSceneColor();
-    const rtarget* pDepthTarget = GetActiveDepthTarget();
-    if( !pSceneColor || !pDepthTarget )
+    rtarget const* pSceneColor = GetActiveSceneColor();
+    rtarget const* pDepthTarget = GetActiveDepthTarget();
+    if ( !pSceneColor || !pDepthTarget )
+    {
         return FALSE;
+    }
 
-    rtarget BoundTargets[ BIND_SLOT_COUNT ];
-    BoundTargets[ BIND_SLOT_FINAL_COLOR  ] = *pSceneColor;
-    BoundTargets[ BIND_SLOT_ALBEDO       ] = m_GBufferTarget[ MRT_ALBEDO       ];
-    BoundTargets[ BIND_SLOT_NORMAL       ] = m_GBufferTarget[ MRT_NORMAL       ];
-    BoundTargets[ BIND_SLOT_LINEAR_DEPTH ] = m_GBufferTarget[ MRT_LINEAR_DEPTH ];
-    BoundTargets[ BIND_SLOT_GLOW         ] = m_GBufferTarget[ MRT_GLOW         ];
-
-    if( !rtarget_SetTargets( BoundTargets, BIND_SLOT_COUNT, pDepthTarget ) )
+    if ( !rtarget_HasRenderTarget( *pSceneColor ) || !rtarget_HasRenderTarget( m_gBufferTarget[MRT_NORMAL_DEPTH] ) ||
+         !rtarget_HasRenderTarget( m_gBufferTarget[MRT_GLOW] ) || !rtarget_HasDepthStencil( *pDepthTarget ) )
+    {
         return FALSE;
+    }
 
-    m_bGBufferTargetsActive = TRUE;
-    if( !m_pOverrideColor )
-        m_bSceneColorRenderedThisFrame = TRUE;
+    rtarget_load_op const loadOp = m_clearGBufferOnBind ? RTARGET_LOAD_CLEAR : RTARGET_LOAD_LOAD;
+
+    rtarget_color_attachment_desc boundTargets[BIND_SLOT_COUNT];
+    boundTargets[BIND_SLOT_FINAL_COLOR] = gbuffer_ColorAttachment( pSceneColor, loadOp, s_ClearColorZero );
+    boundTargets[BIND_SLOT_NORMAL_DEPTH] =
+        gbuffer_ColorAttachment( &m_gBufferTarget[MRT_NORMAL_DEPTH], loadOp, s_ClearColorNormalDepth );
+    boundTargets[BIND_SLOT_GLOW] = gbuffer_ColorAttachment( &m_gBufferTarget[MRT_GLOW], loadOp, s_ClearColorZero );
+
+    rtarget_depth_attachment_desc depth = gbuffer_DepthAttachment( pDepthTarget, loadOp );
+
+    rtarget_EndPass();
+    m_areGBufferTargetsActive = FALSE;
+    if ( !rtarget_BeginPass( boundTargets, BIND_SLOT_COUNT, &depth ) )
+    {
+        return FALSE;
+    }
+
+    view const* pView = eng_GetView();
+    if ( pView )
+    {
+        eng_SetViewport( *pView );
+    }
+
+    m_areGBufferTargetsActive = TRUE;
+    m_clearGBufferOnBind = FALSE;
+    if ( !m_pOverrideColor )
+    {
+        m_isSceneColorRenderedThisFrame = TRUE;
+    }
     return TRUE;
 }
 
 //==============================================================================
 
-void gbuffer_mgr::SetFinalColorTarget( void )
+void GBufferMgr::EndPass( void )
 {
-    if( !m_bGBufferValid )
-        return;
-
-    const rtarget* pSceneColor  = GetActiveSceneColor();
-    const rtarget* pDepthTarget = GetActiveDepthTarget();
-    if( !pSceneColor || !pDepthTarget )
-        return;
-
-    rtarget_SetTargets( pSceneColor, 1, pDepthTarget );
-    m_bGBufferTargetsActive = FALSE;
+    rtarget_EndPass();
+    m_areGBufferTargetsActive = FALSE;
 }
 
 //==============================================================================
 
-void gbuffer_mgr::PresentFinalColor( void )
+void GBufferMgr::SetFinalColorTarget( void )
 {
-    if( !m_bGBufferValid || !m_bSceneColorRenderedThisFrame || !m_SceneColorTarget.pShaderResourceView )
-        return;
-
-    if( m_pOverrideColor )
-        return;
-
-    if( !rtarget_SetBackBuffer() )
-        return;
-
-    composite_Blit( m_SceneColorTarget,
-                    COMPOSITE_BLEND_COPY,
-                    1.0f,
-                    NULL,
-                    STATE_SAMPLER_POINT_CLAMP );
-}
-
-//==============================================================================
-
-void gbuffer_mgr::ClearGBuffer( void )
-{
-    if( !m_bGBufferValid || !m_bGBufferTargetsActive || !g_pd3dContext )
-        return;
-
-    static const f32 Zero    [4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    static const f32 NeutralN[4] = { 0.5f, 0.5f, 1.0f, 0.0f }; // unit +Z encoded as RGBA
-    static const f32 FarDepth[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-    rtarget_ClearColor( m_SceneColorTarget,                 Zero     );
-    rtarget_ClearColor( m_GBufferTarget[ MRT_ALBEDO ],      Zero     );
-    rtarget_ClearColor( m_GBufferTarget[ MRT_NORMAL ],      NeutralN );
-    rtarget_ClearColor( m_GBufferTarget[ MRT_LINEAR_DEPTH], FarDepth );
-    rtarget_ClearColor( m_GBufferTarget[ MRT_GLOW ],        Zero     );
-
-    rtarget_ClearDepthStencil( m_GBufferDepth,
-                               RTARGET_CLEAR_DEPTH | RTARGET_CLEAR_STENCIL,
-                               1.0f, 0 );
-}
-
-//==============================================================================
-
-const rtarget* gbuffer_mgr::GetGBufferTarget( gbuffer_target Target ) const
-{
-    if( !m_bGBufferValid )
-        return NULL;
-
-    switch( Target )
+    if ( !m_isGBufferValid )
     {
-    case GBUFFER_FINAL_COLOR:  return GetActiveSceneColor();
-    case GBUFFER_DEPTH:        return &m_GBufferDepth;
-    case GBUFFER_ALBEDO:       return &m_GBufferTarget[ MRT_ALBEDO ];
-    case GBUFFER_NORMAL:       return &m_GBufferTarget[ MRT_NORMAL ];
-    case GBUFFER_LINEAR_DEPTH: return &m_GBufferTarget[ MRT_LINEAR_DEPTH ];
-    case GBUFFER_GLOW:         return &m_GBufferTarget[ MRT_GLOW ];
-    default:                   return NULL;
+        return;
+    }
+
+    rtarget const* pSceneColor = GetActiveSceneColor();
+    rtarget const* pDepthTarget = GetActiveDepthTarget();
+    if ( !pSceneColor || !pDepthTarget )
+    {
+        return;
+    }
+
+    if ( !rtarget_HasRenderTarget( *pSceneColor ) || !rtarget_HasDepthStencil( *pDepthTarget ) )
+    {
+        return;
+    }
+
+    rtarget_color_attachment_desc color = gbuffer_ColorAttachment( pSceneColor, RTARGET_LOAD_LOAD, NULL );
+    rtarget_depth_attachment_desc depth = gbuffer_DepthAttachment( pDepthTarget, RTARGET_LOAD_LOAD );
+
+    rtarget_EndPass();
+    m_areGBufferTargetsActive = FALSE;
+    rtarget_BeginPass( &color, 1, &depth );
+    m_areGBufferTargetsActive = FALSE;
+}
+
+//==============================================================================
+
+void GBufferMgr::PresentFinalColor( void )
+{
+    if ( !m_isGBufferValid || !m_isSceneColorRenderedThisFrame || !rtarget_HasShaderResource( m_sceneColorTarget ) )
+    {
+        return;
+    }
+
+    if ( m_pOverrideColor )
+    {
+        return;
+    }
+
+    rtarget_EndPass();
+    m_areGBufferTargetsActive = FALSE;
+
+    rtarget_backbuffer_pass_desc passDesc;
+    passDesc.ColorLoadOp = RTARGET_LOAD_DONT_CARE;
+    passDesc.bUseDepth = FALSE;
+    if ( !rtarget_BeginBackBufferPass( passDesc ) )
+    {
+        return;
+    }
+
+    composite_Blit( m_sceneColorTarget, COMPOSITE_BLEND_COPY, 1.0f, NULL, RSTATE_SAMPLER_PRESET_POINT_CLAMP );
+}
+
+//==============================================================================
+
+void GBufferMgr::ClearGBuffer( void )
+{
+    if ( !m_isGBufferValid )
+    {
+        return;
+    }
+
+    if ( m_areGBufferTargetsActive )
+    {
+        return;
+    }
+
+    m_clearGBufferOnBind = TRUE;
+}
+
+//==============================================================================
+
+rtarget const* GBufferMgr::GetGBufferTarget( GBufferTarget target ) const
+{
+    if ( !m_isGBufferValid )
+    {
+        return NULL;
+    }
+
+    switch ( target )
+    {
+        case GBufferTarget::FinalColor:
+        {
+            return GetActiveSceneColor();
+        }
+        case GBufferTarget::Depth:
+        {
+            return GetActiveDepthTarget();
+        }
+        case GBufferTarget::NormalDepth:
+        {
+            return &m_gBufferTarget[MRT_NORMAL_DEPTH];
+        }
+        case GBufferTarget::Glow:
+        {
+            return &m_gBufferTarget[MRT_GLOW];
+        }
+        default:
+        {
+            return NULL;
+        }
     }
 }
 
 //==============================================================================
 
-void gbuffer_mgr::GetGBufferSize( u32& Width, u32& Height ) const
+void GBufferMgr::GetGBufferSize( u32& width, u32& height ) const
 {
-    Width  = m_GBufferWidth;
-    Height = m_GBufferHeight;
+    width = m_gBufferWidth;
+    height = m_gBufferHeight;
 }
 
 //==============================================================================
 //  TARGET OVERRIDE
 //==============================================================================
 
-void gbuffer_mgr::SetTargetOverride( const rtarget* pColor, const rtarget* pDepth )
+void GBufferMgr::SetTargetOverride( rtarget const* pColor, rtarget const* pDepth )
 {
     m_pOverrideColor = pColor;
     m_pOverrideDepth = pDepth;
@@ -349,14 +461,59 @@ void gbuffer_mgr::SetTargetOverride( const rtarget* pColor, const rtarget* pDept
 
 //==============================================================================
 
-const rtarget* gbuffer_mgr::GetActiveSceneColor( void ) const
+xbool GBufferMgr::GetFrameTargets( frame_render_targets& targets ) const
 {
-    return m_pOverrideColor ? m_pOverrideColor : &m_SceneColorTarget;
+    targets = frame_render_targets();
+
+    if ( !m_isGBufferValid )
+    {
+        return FALSE;
+    }
+
+    targets.IsTargetOverride = m_pOverrideColor != NULL;
+    targets.pSceneColor = GetActiveSceneColor();
+    targets.pSceneDepth = GetActiveDepthTarget();
+    targets.pGlow = targets.IsTargetOverride ? NULL : &m_gBufferTarget[MRT_GLOW];
+
+    if ( !targets.pSceneColor || !rtarget_HasRenderTarget( *targets.pSceneColor ) )
+    {
+        return FALSE;
+    }
+
+    if ( targets.pSceneDepth && !rtarget_HasDepthStencil( *targets.pSceneDepth ) )
+    {
+        return FALSE;
+    }
+
+    if ( targets.pSceneDepth && ( ( targets.pSceneDepth->Desc.Width != targets.pSceneColor->Desc.Width ) ||
+                                  ( targets.pSceneDepth->Desc.Height != targets.pSceneColor->Desc.Height ) ||
+                                  ( targets.pSceneDepth->Desc.SampleCount != targets.pSceneColor->Desc.SampleCount ) ) )
+    {
+        return FALSE;
+    }
+
+    if ( targets.pGlow &&
+         ( !rtarget_HasRenderTarget( *targets.pGlow ) ||
+           ( targets.pGlow->Desc.Width != targets.pSceneColor->Desc.Width ) ||
+           ( targets.pGlow->Desc.Height != targets.pSceneColor->Desc.Height ) ||
+           ( targets.pGlow->Desc.SampleCount != targets.pSceneColor->Desc.SampleCount ) ) )
+    {
+        targets.pGlow = NULL;
+    }
+
+    return TRUE;
 }
 
 //==============================================================================
 
-const rtarget* gbuffer_mgr::GetActiveDepthTarget( void ) const
+rtarget const* GBufferMgr::GetActiveSceneColor( void ) const
 {
-    return m_pOverrideDepth ? m_pOverrideDepth : &m_GBufferDepth;
+    return m_pOverrideColor ? m_pOverrideColor : &m_sceneColorTarget;
+}
+
+//==============================================================================
+
+rtarget const* GBufferMgr::GetActiveDepthTarget( void ) const
+{
+    return m_pOverrideColor ? m_pOverrideDepth : &m_gBufferDepth;
 }

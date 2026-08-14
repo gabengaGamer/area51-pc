@@ -26,7 +26,7 @@ public:
 //=========================================================================
 //
 // GetMaterial		-   Legacy.  Needed for now.
-// OnAdvanceLogic	-   Updates every frame
+// OnAdvanceSimulation	-   Updates every frame
 // OnMove			-   Handles the motion of the spike
 // Initialize		-	Sets the initial position of the object.  Needs an initial
 //						velocity, an initial position, and either a radian3 or matrix4 for
@@ -37,7 +37,7 @@ public:
     virtual s32		GetMaterial         ( void ) const { return 0; }
 	virtual	bbox	GetLocalBBox		( void ) const;
 	
-    virtual void    OnAdvanceLogic      ( f32 DeltaTime );      
+    virtual void    OnAdvanceSimulation      ( f32 DeltaTime );      
 	virtual	void	OnMove				( const vector3& rNewPos );
 
     virtual void    StartFlyby          ( void );

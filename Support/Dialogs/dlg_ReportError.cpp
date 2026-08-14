@@ -4,42 +4,30 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_text.hpp"
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_listbox.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_listbox.hpp"
 
 #include "dlg_ReportError.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\MatchMgr.hpp"
-#include "AudioMgr\AudioMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/MatchMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
 //=========================================================================
-enum report_error_controls
-{
-    IDC_REPORT_ERROR_LISTBOX,
-    IDC_REPORT_ERROR_NAV_TEXT,
-};
-
-ui_manager::control_tem ReportErrorControls[] = 
-{
-    { IDC_REPORT_ERROR_NAV_TEXT,  "IDS_NULL",             "text",      0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-};
-
-
 ui_manager::dialog_tem ReportErrorDialog =
 {
     "IDS_NULL",
     1, 9,
-    sizeof(ReportErrorControls)/sizeof(ui_manager::control_tem),
-    &ReportErrorControls[0],
+    0,
+    NULL,
     0
 };
 
@@ -111,17 +99,13 @@ xbool dlg_report_error::Create( s32                        UserID,
 	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // find controls
-    m_pNavText      = (ui_text*)    FindChildByID( IDC_REPORT_ERROR_NAV_TEXT );
 
     // hide them
-    m_pNavText   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_OK" ));
    
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // set initial focus
     m_PopUp = NULL;
@@ -160,16 +144,7 @@ void dlg_report_error::Render( s32 ox, s32 oy )
     static s32 width    =  4;
 
 	irect   rb;
-	s32     XRes;
-    s32     YRes;
-
-    eng_GetRes( XRes, YRes );
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+	rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect( rb, xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
@@ -222,10 +197,9 @@ void dlg_report_error::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_report_error::OnPadSelect( ui_win* pWin )
+void dlg_report_error::OnAccept( ui_win* pWin )
 {
     (void)pWin;
-    g_NetworkMgr.SetOnline( FALSE );
     if( m_State == DIALOG_STATE_ACTIVE )
     {
         //g_AudioMgr.Play( "OptionBack" );
@@ -235,7 +209,7 @@ void dlg_report_error::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_report_error::OnPadBack( ui_win* pWin )
+void dlg_report_error::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -258,11 +232,13 @@ void dlg_report_error::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
 
             m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+                ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
             r.Set( 0, 0, 300, 200 );
 
+            const char* pTitle = "IDS_NETWORK_POPUP";
             const char* pLabel = NULL;
+            xbool ShowCancelAction = TRUE;
             m_CanTroubleshoot = FALSE;
 
             switch( g_ActiveConfig.GetExitReason() )
@@ -273,11 +249,7 @@ void dlg_report_error::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 net_GetInterfaceInfo( -1, Info );
                 if( Info.IsAvailable )
                 {
-#ifdef TARGET_XBOX
-                    pLabel = "IDS_ONLINE_CHECK_CABLE_XBOX";
-#else
                     pLabel = "IDS_ONLINE_NETWORK_DOWN";
-#endif
                 }
                 else
                 {
@@ -292,6 +264,13 @@ void dlg_report_error::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             case GAME_EXIT_SERVER_BUSY:         pLabel = "IDS_ONLINE_DROPPED";                  break;
             case GAME_EXIT_CONNECTION_LOST:     pLabel = "IDS_ONLINE_CONNECTION_LOST";          break;
             case GAME_EXIT_INVALID_MISSION:     pLabel = "IDS_ONLINE_INVALID_MISSION";          break;
+            case GAME_EXIT_INVALID_CAMPAIGN_MISSION:
+            {
+                pTitle = "IDS_LOAD_CAMPAIGN_MENU";
+                pLabel = "IDS_CAMPAIGN_INVALID_MISSION";
+                ShowCancelAction = FALSE;
+            }
+            break;
             case GAME_EXIT_SERVER_FULL:         pLabel = "IDS_ONLINE_LOGIN_SERVER_FULL";        break;
             case GAME_EXIT_BAD_PASSWORD:        pLabel = "IDS_ONLINE_LOGIN_BAD_PASSWORD";       break;
             case GAME_EXIT_CANNOT_CONNECT:      pLabel = "IDS_ONLINE_LOGIN_CANNOT_CONNECT";     break;
@@ -300,19 +279,13 @@ void dlg_report_error::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             case GAME_EXIT_SESSION_ENDED:       pLabel = "IDS_ONLINE_SESSION_ENDED";            break;
             default:                            ASSERT( FALSE );                                break;
             }
-#if defined(TARGET_XBOX)
-            if( g_ActiveConfig.GetExitReason() == GAME_EXIT_NETWORK_DOWN )
-            {
-                m_CanTroubleshoot = TRUE;
-            }
-#endif
             if( m_CanTroubleshoot )
             {
                 xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_NETWORK_TROUBLESHOOTER" ));
                 navText += g_StringTableMgr( "ui", "IDS_NAV_CANCEL" );
 
                 m_PopUp->Configure( r,
-                    g_StringTableMgr( "ui", "IDS_NETWORK_POPUP" ), 
+                    g_StringTableMgr( "ui", pTitle ),
                     TRUE, 
                     TRUE, 
                     FALSE, 
@@ -323,16 +296,12 @@ void dlg_report_error::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             else
             {
                 m_PopUp->Configure( r,
-                    g_StringTableMgr( "ui", "IDS_NETWORK_POPUP" ), 
+                    g_StringTableMgr( "ui", pTitle ),
                     TRUE, 
-                    TRUE, 
+                    ShowCancelAction,
                     FALSE, 
                     g_StringTableMgr( "ui", pLabel ),
-#if defined(TARGET_XBOX)
-                    g_StringTableMgr( "ui", "IDS_NAV_NETWORK_CONTINUE" ),
-#else
                     g_StringTableMgr( "ui", "IDS_NAV_OK" ),
-#endif
                     &m_PopUpResult );
             }
             g_UiMgr->SetScreenOn(TRUE);
@@ -361,19 +330,3 @@ void dlg_report_error::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     ui_dialog::OnUpdate( pWin, DeltaTime );
 
 }
-
-/*
-//=========================================================================
-// Will give option of managing or dropping back to main menu
-void dlg_report_error::Failed( const char* pFailureReason, s32 ErrorCode )
-{
-    (void)ErrorCode;
-#if defined(TARGET_PS2)
-    net_ActivateConfig( FALSE );
-#endif
-    g_NetworkMgr.SetOnline( FALSE );
-    x_strcpy( m_LabelText, pFailureReason);
-    m_LastErrorCode = ErrorCode;
-    m_ConnectState = CONNECT_FAILED;
-}
-*/

@@ -4,7 +4,7 @@
 
 #include "x_files.hpp"
 #include "Inventory2.hpp"
-#include "StringMgr\StringMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
 
 //=========================================================================
 

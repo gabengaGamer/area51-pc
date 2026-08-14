@@ -310,5 +310,4 @@ static s16 s_iicon_open_door[] =
 };
 
 
-#define DRAW_ICON_OPEN_DOOR() draw_icon( NUM_FACETS_ICON_OPEN_DOOR, NUM_VERTICES_ICON_OPEN_DOOR, s_vicon_open_door, s_iicon_open_door )
 

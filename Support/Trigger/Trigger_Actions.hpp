@@ -13,10 +13,10 @@
 //=========================================================================
 
 #include "x_types.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "..\Support\Globals\Global_Variables_Manager.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/Globals/Global_Variables_Manager.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
 
 class trigger_object;
 
@@ -179,7 +179,7 @@ example_class::example_class ( guid ParentGuid ) : actions_base( ParentGuid )
 
 void                example_class::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * ai_modify_behavior_targeted::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * ai_modify_behavior_targeted::Execute" );
 }
 
 //=========================================================================

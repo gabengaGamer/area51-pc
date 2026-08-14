@@ -5,10 +5,10 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\Obj_mgr.hpp"
-#include "miscutils\PropertyEnum.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "MiscUtils/PropertyEnum.hpp"
 #include "Nav_Map.hpp"
-#include "inventory\inventory2.hpp"
+#include "Inventory/Inventory2.hpp"
 
 //=========================================================================
 // Cover Node
@@ -57,7 +57,7 @@ public:
 
     virtual void                OnMove          ( const vector3& NewPos );      
     virtual void                OnTransform     ( const matrix4& L2W    ); 
-    virtual void                OnAdvanceLogic  ( f32 DeltaTime         ); 
+    virtual void                OnAdvanceSimulation  ( f32 DeltaTime         ); 
 
     virtual	void	            OnEnumProp	    ( prop_enum& rList );
     virtual	xbool	            OnProperty	    ( prop_query& rPropQuery );

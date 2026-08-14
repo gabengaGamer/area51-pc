@@ -8,7 +8,7 @@
 //INCLUDES
 //=========================================================================
 
-#include "objects\ParticleEmiter.hpp"
+#include "Objects/ParticleEmiter.hpp"
 #include "NetProjectile.hpp"
 #include "Decals/DecalPackage.hpp"
 
@@ -33,7 +33,7 @@ public:
 //=========================================================================
 //
 // GetMaterial		-   Legacy.  Needed for now.
-// OnAdvanceLogic	-   Updates every frame
+// OnAdvanceSimulation	-   Updates every frame
 // OnMove			-   Handles the motion of the spike
 // Initialize		-	Sets the initial position of the object.  Needs an initial
 //						velocity, an initial position, and either a radian3 or matrix4 for
@@ -65,7 +65,7 @@ virtual	        bbox	        GetLocalBBox		( void ) const;
 	
                 void            DestroyParticles    ( void );
                 void            UpdateParticles     ( const vector3& NewPosition );
-virtual         void            OnAdvanceLogic      ( f32 DeltaTime );
+virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
 
 virtual         void            OnImpact            ( collision_mgr::collision& Coll, object* pTarget );
                 void            DoImpactPain        ( guid HitGuid, collision_mgr::collision& Coll );

@@ -14,7 +14,6 @@
 //==============================================================================
 
 #include "x_types.hpp"
-#include "x_threads.hpp"
 #include "io_device.hpp"
 
 //==============================================================================
@@ -39,7 +38,7 @@ class io_mgr
 {
 
     friend  void            ProcessEndOfRequest     ( io_device* pDevice, s32 Status );
-    friend  void            io_dispatcher           ( void );
+    friend  void            io_dispatch_job         ( void* pData );
     friend  class           io_device;
     friend  class           io_cache;
     friend  class           io_request;
@@ -48,9 +47,21 @@ class io_mgr
 public:
 private:
 
-    xthread*                    m_pThread;
+    enum                        { DISPATCHER_QUEUE_SIZE = 16 };
+
     io_device*                  m_Devices[ NUM_IO_DEVICES ];
-    xmesgq                      m_DispatcherMQ;
+    io_request*                 m_DispatcherRequests[ DISPATCHER_QUEUE_SIZE ];
+    volatile s32                m_DispatcherRead;
+    volatile s32                m_DispatcherWrite;
+    volatile s32                m_DispatcherCount;
+    volatile xbool              m_DispatcherJobActive;
+    volatile xbool              m_DispatcherKilling;
+
+    xbool           QueueDispatcherRequest  ( io_request* pRequest, xbool IsCompletion );
+    xbool           PopDispatcherRequest    ( io_request*& pRequest );
+    xbool           StartDispatcher         ( void );
+    void            DispatchRequests        ( void );
+    void            DispatchRequest         ( io_request* pRequest );
 
 public:
 

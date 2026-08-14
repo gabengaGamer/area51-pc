@@ -1,12 +1,8 @@
-#ifdef TARGET_PC
-#include <crtdbg.h>
-#endif
-
 #include "RawMaterial2.hpp"
 #include "RawMaterial.hpp"
 #include "TextIn.hpp"
 #include "TextOut.hpp"
-#include "rawmesh.hpp"
+#include "RawMesh.hpp"
 
 //=========================================================================
 // FUNCTIONS
@@ -541,4 +537,3 @@ void rawmaterial2::BuildFromRM( rawmaterial& RM )
 }
 
 //=========================================================================
-

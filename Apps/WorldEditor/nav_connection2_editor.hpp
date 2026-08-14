@@ -92,14 +92,14 @@ public:
     virtual f32             GetLength           ( void );
     virtual radian          GetYaw              ( void );
     
-    virtual u32             GetFlags            ( void )         { return m_Flags;    }
-    virtual void            SetFlags            ( u32 flags)     { m_Flags = flags;   }
+    virtual u32             GetFlags            ( void )         { return m_flags;    }
+    virtual void            SetFlags            ( u32 flags)     { m_flags = flags;   }
 
-    xbool                   IsDying             ( void )        { return m_Flags & FLAG_DYING; }
-    xbool                   IsMoving            ( void )        { return m_Flags & FLAG_MOVING; }
+    xbool                   IsDying             ( void )        { return m_flags & FLAG_DYING; }
+    xbool                   IsMoving            ( void )        { return m_flags & FLAG_MOVING; }
 
-    void                    SetAnchorsDirty     ( void )        { m_Flags |= (FLAG_ANCHORS_DIRTY | FLAG_CORNERS_DIRTY); }
-    void                    SetCornersDirty     ( void )        { m_Flags |= (FLAG_ANCHORS_DIRTY | FLAG_CORNERS_DIRTY); }
+    void                    SetAnchorsDirty     ( void )        { m_flags |= (FLAG_ANCHORS_DIRTY | FLAG_CORNERS_DIRTY); }
+    void                    SetCornersDirty     ( void )        { m_flags |= (FLAG_ANCHORS_DIRTY | FLAG_CORNERS_DIRTY); }
     
     virtual vector3*        GetRenderCorners    ( xbool bForceUpdate = TRUE );
 
@@ -164,7 +164,7 @@ protected:
 
     f32             m_Width;
     guid            m_Anchor[2];
-    u32             m_Flags;
+    u32             m_flags;
 
     vector3         m_CollisionCorners[8];
     vector3         m_RenderCorners[8];

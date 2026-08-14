@@ -11,9 +11,10 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render\PrimitiveDebug.hpp"
 #include "Turret.hpp"
 #include "Objects\AlienOrb.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
 #include "CollisionMgr\CollisionMgr.hpp"
 #include "GameLib\RigidGeomCollision.hpp"
@@ -43,7 +44,7 @@
 inline 
 void debug_log_msg_fn(...) {}
 
-//void draw_Cylinder  ( const vector3& Center, f32 Radius, f32 Height, s32 nSteps, xcolor Color, xbool bCapped, const vector3& Up);
+//void render::debug::Cylinder  ( const vector3& Center, f32 Radius, f32 Height, s32 nSteps, xcolor Color, xbool bCapped, const vector3& Up);
 //==============================================================================
 //  DEFINES
 //==============================================================================
@@ -147,8 +148,6 @@ turret::turret( void ) :
     m_UpperBoundary( NULL_GUID ),
     m_LowerBoundary( NULL_GUID )
 {
-    InvalidateRenderState();
-
    m_ProjectileTemplateID   = -1;
     
     m_State                 = STATE_IDLE;
@@ -281,73 +280,6 @@ turret::~turret( void )
 
 //=============================================================================
 
-void turret::InvalidateRenderState( void )
-{
-    InitSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=============================================================================
-
-void turret::CaptureRenderInterpState( void )
-{
-    if( CaptureSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer ) == INTERP_CAPTURE_CHANGED )
-        RegisterRenderInterpUpdate();
-}
-
-//=============================================================================
-
-void turret::UpdateRenderInterpState( f32 Alpha )
-{
-    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
-}
-
-//=============================================================================
-
-void turret::ClearRenderInterpState( void )
-{
-    ClearSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=============================================================================
-
-void turret::InvalidateRenderInterpState( void )
-{
-    play_surface::InvalidateRenderInterpState();
-    InvalidateSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=============================================================================
-
-void turret::SnapRenderInterpState( void )
-{
-    play_surface::SnapRenderInterpState();
-    SnapSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer );
-}
-
-//=============================================================================
-
-const matrix4& turret::GetRenderL2W( void ) const
-{
-    return GetSimpleAnimInterpCacheL2W( m_RenderCache, GetL2W() );
-}
-
-//=============================================================================
-
-xbool turret::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
-{
-    if( GetSimpleAnimInterpCacheBoneL2W( m_RenderCache, iBone, L2W ) )
-        return TRUE;
-
-    const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
-    if( !pBone )
-        return FALSE;
-
-    L2W = *pBone;
-    return TRUE;
-}
-
-//=============================================================================
-
 void turret::OnImport( text_in& TextIn )
 {
     (void)TextIn;
@@ -406,9 +338,9 @@ void turret::StopAimingSound( void )
 
 //=============================================================================
 
-void turret::OnAdvanceLogic( f32 DeltaTime )
+void turret::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "turret::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "turret::OnAdvanceSimulation" );
 
     // Update animation?
     if( !m_hAnimGroup.IsLoaded() )
@@ -1104,10 +1036,6 @@ void turret::OnDebugRender( void )
 #ifdef X_EDITOR
     matrix4     L2W = GetL2W();             // not const&, we need to modify it later
     f32 LocalYaw   = L2W.GetRotation().Yaw;
-    f32 LocalPitch = -(L2W.GetRotation().Pitch);
-
-    draw_ClearL2W();
-
     vector3 SensorPos;
     radian3 SensorRot;
     vector3 MyPos     = GetPosition();
@@ -1115,7 +1043,7 @@ void turret::OnDebugRender( void )
     GetSensorInfo( SensorPos, SensorRot );
 
     // Sensor
-    draw_Sphere( SensorPos, 20, XCOLOR_YELLOW );
+    render::debug::Sphere( SensorPos, 20, XCOLOR_YELLOW );
     
     // Horizontal yaw limits
     vector3 Dir(0,0,-1);
@@ -1123,29 +1051,14 @@ void turret::OnDebugRender( void )
     
     Yaw += LocalYaw;
     Dir.RotateY( Yaw );  
-    draw_Arc( MyPos, (GetEffectiveRadiusSense()), Dir.GetYaw(), m_YawLeftLimit + m_YawRightLimit, XCOLOR_YELLOW );    
+    render::debug::Arc( MyPos, (GetEffectiveRadiusSense()), Dir.GetYaw(), m_YawLeftLimit + m_YawRightLimit, XCOLOR_YELLOW );
     
-    /*
-    // Vertical pitch limits
-    Dir.Set(0,0,-1);
-    f32 Pitch = -m_PitchUpLimit + m_PitchDownLimit;
-    f32 LocalPitch = L2W.GetRotation().Pitch;
-    Pitch += LocalPitch;
-    Dir.RotateZ( Pitch );  
-    matrix4 TempL2W;
-    TempL2W.Identity();
-    TempL2W.Rotate( radian3(0,0,R_90) );
-    draw_SetL2W( TempL2W );  
-    draw_Arc( MyPos, (m_RadiusSense * m_RadiusMultiplier), Dir.GetPitch(), m_PitchUpLimit + m_PitchDownLimit, XCOLOR_YELLOW );
-    draw_ClearL2W();
-    */
-
     if (m_TargetGuid != 0)
     {
         // Targeting
         vector3 TargetPos = GetTargetPos();
-        draw_Sphere( TargetPos, 15, XCOLOR_RED );
-        draw_Line( SensorPos, TargetPos, XCOLOR_RED );
+        render::debug::Sphere( TargetPos, 15, XCOLOR_RED );
+        render::debug::Line( SensorPos, TargetPos, XCOLOR_RED );
 
         // Aiming
         vector3 Aim(0,0,300);
@@ -1155,7 +1068,7 @@ void turret::OnDebugRender( void )
         L2WNoRot.Transform( &Aim, &Aim, 1 );
 
         //Aim.Rotate( radian3( m_Pitch + LocalPitch, m_Yaw + R_180 + LocalYaw, 0 ) );
-        draw_Line( SensorPos, SensorPos + Aim, XCOLOR_GREEN );
+        render::debug::Line( SensorPos, SensorPos + Aim, XCOLOR_GREEN );
 
         
 
@@ -1165,15 +1078,15 @@ void turret::OnDebugRender( void )
             C.A = 255;
             vector3 Vel = m_LastFireTargetVel;
             Vel.NormalizeAndScale( 200 );
-            draw_Line( m_LastFireBarrelPos, m_LastFireTargetPos, C );
-            draw_Line( m_LastFireTargetPos, m_LastFireTargetPos+Vel, C );
+            render::debug::Line( m_LastFireBarrelPos, m_LastFireTargetPos, C );
+            render::debug::Line( m_LastFireTargetPos, m_LastFireTargetPos+Vel, C );
         #endif
 
     }
 
     // Ranges
-    draw_Cylinder( MyPos, (m_RadiusSense), 800.0f, 32, xcolor(64,64,190,128) );
-    draw_Cylinder( MyPos, (m_RadiusFire), 800.0f, 32, xcolor(190,64,64,128) );
+    render::debug::Cylinder( MyPos, (m_RadiusSense), 800.0f, 32, xcolor(64,64,190,128) );
+    render::debug::Cylinder( MyPos, (m_RadiusFire), 800.0f, 32, xcolor(190,64,64,128) );
 
     
     // Activatable guids    
@@ -1181,42 +1094,42 @@ void turret::OnDebugRender( void )
 
     if ((m_ActivateOnDestruction!=0) && (pObj = g_ObjMgr.GetObjectByGuid( m_ActivateOnDestruction )))        
     {
-        draw_Line( SensorPos, pObj->GetPosition(), XCOLOR_AQUA );
-        draw_BBox( pObj->GetBBox(), XCOLOR_AQUA );
-        draw_Label( pObj->GetPosition(), XCOLOR_PURPLE, "Activate On Destruction" );
+        render::debug::Line( SensorPos, pObj->GetPosition(), XCOLOR_AQUA );
+        render::debug::Box( pObj->GetBBox(), XCOLOR_AQUA );
+        render::debug::Label( pObj->GetPosition(), XCOLOR_PURPLE, "Activate On Destruction" );
     }    
 
     if ((m_ActivateOnActivation!=0) && (pObj = g_ObjMgr.GetObjectByGuid( m_ActivateOnActivation )))        
     {
-        draw_Line( SensorPos, pObj->GetPosition(), XCOLOR_AQUA );
-        draw_BBox( pObj->GetBBox(), XCOLOR_AQUA );
-        draw_Label( pObj->GetPosition(), XCOLOR_PURPLE, "Activate On Activation" );
+        render::debug::Line( SensorPos, pObj->GetPosition(), XCOLOR_AQUA );
+        render::debug::Box( pObj->GetBBox(), XCOLOR_AQUA );
+        render::debug::Label( pObj->GetPosition(), XCOLOR_PURPLE, "Activate On Activation" );
     }    
 
     if ((m_ActivateOnDeactivation!=0) && (pObj = g_ObjMgr.GetObjectByGuid( m_ActivateOnDeactivation )))        
     {
-        draw_Line( SensorPos, pObj->GetPosition(), XCOLOR_AQUA );
-        draw_BBox( pObj->GetBBox(), XCOLOR_AQUA );
-        draw_Label( pObj->GetPosition(), XCOLOR_PURPLE, "Activate On Deactivation" );
+        render::debug::Line( SensorPos, pObj->GetPosition(), XCOLOR_AQUA );
+        render::debug::Box( pObj->GetBBox(), XCOLOR_AQUA );
+        render::debug::Label( pObj->GetPosition(), XCOLOR_PURPLE, "Activate On Deactivation" );
     }    
 
     if ((m_ActivateOnTargetLoss!=0) && (pObj = g_ObjMgr.GetObjectByGuid( m_ActivateOnTargetLoss )))        
     {
-        draw_Line( SensorPos, pObj->GetPosition(), XCOLOR_AQUA );
-        draw_BBox( pObj->GetBBox(), XCOLOR_AQUA );
-        draw_Label( pObj->GetPosition(), XCOLOR_PURPLE, "Activate On Target Loss" );
+        render::debug::Line( SensorPos, pObj->GetPosition(), XCOLOR_AQUA );
+        render::debug::Box( pObj->GetBBox(), XCOLOR_AQUA );
+        render::debug::Label( pObj->GetPosition(), XCOLOR_PURPLE, "Activate On Target Loss" );
     }    
 
     if ((m_ActivateOnTargetAcquisition!=0) && (pObj = g_ObjMgr.GetObjectByGuid( m_ActivateOnTargetAcquisition )))        
     {
-        draw_Line( SensorPos, pObj->GetPosition(), XCOLOR_AQUA );
-        draw_BBox( pObj->GetBBox(), XCOLOR_AQUA );
-        draw_Label( pObj->GetPosition(), XCOLOR_PURPLE, "Activate On Target Acquisition" );
+        render::debug::Line( SensorPos, pObj->GetPosition(), XCOLOR_AQUA );
+        render::debug::Box( pObj->GetBBox(), XCOLOR_AQUA );
+        render::debug::Label( pObj->GetPosition(), XCOLOR_PURPLE, "Activate On Target Acquisition" );
     }    
 
-    draw_Label( GetPosition() + vector3(0,100,0), XCOLOR_WHITE, "Pitch: %5.3f(%5.3f deg)",m_Pitch,RAD_TO_DEG(m_Pitch));
-    draw_Label( GetPosition() + vector3(0,150,0), XCOLOR_WHITE, "Yaw: %5.3f(%5.3f deg)",m_Yaw,RAD_TO_DEG(m_Yaw));
-    draw_Label( GetPosition() + vector3(0,200,0), XCOLOR_WHITE, "State: %s, Cycle %d, IdleCycle %d",GetStateName( m_State ),m_AnimPlayer.GetCycle(),m_IdleCycle);
+    render::debug::Label( GetPosition() + vector3(0,100,0), XCOLOR_WHITE, "Pitch: %5.3f(%5.3f deg)",m_Pitch,RAD_TO_DEG(m_Pitch));
+    render::debug::Label( GetPosition() + vector3(0,150,0), XCOLOR_WHITE, "Yaw: %5.3f(%5.3f deg)",m_Yaw,RAD_TO_DEG(m_Yaw));
+    render::debug::Label( GetPosition() + vector3(0,200,0), XCOLOR_WHITE, "State: %s, Cycle %d, IdleCycle %d",GetStateName( m_State ),m_AnimPlayer.GetCycle(),m_IdleCycle);
 
     if (m_bRequiesOrbPower)
     {        
@@ -1224,9 +1137,9 @@ void turret::OnDebugRender( void )
         L2W.ClearTranslation();
         L2W.Transform( &LaunchDelta, &LaunchDelta, 1 );
 
-        draw_Line( MyPos, MyPos + LaunchDelta, XCOLOR_YELLOW );
-        draw_Sphere( MyPos + LaunchDelta, 20, XCOLOR_YELLOW );
-        draw_Label( MyPos + LaunchDelta, XCOLOR_BLUE, "LAUNCH HERE" );
+        render::debug::Line( MyPos, MyPos + LaunchDelta, XCOLOR_YELLOW );
+        render::debug::Sphere( MyPos + LaunchDelta, 20, XCOLOR_YELLOW );
+        render::debug::Label( MyPos + LaunchDelta, XCOLOR_BLUE, "LAUNCH HERE" );
     }
 #endif // X_EDITOR
 }
@@ -1236,7 +1149,7 @@ void turret::OnDebugRender( void )
 
 void turret::OnRender( void )
 {
-    CONTEXT( "turret::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "turret::OnRender" );
 
     // Early exit if this turret is hidden
     if( m_IsHidden )
@@ -1258,7 +1171,7 @@ void turret::OnRender( void )
     else
     {
 #ifdef X_EDITOR
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif // X_EDITOR
     }
 
@@ -1272,29 +1185,29 @@ void turret::OnRender( void )
     if ( m_LeftBoundary && (pBoundaryObject = g_ObjMgr.GetObjectByGuid( m_LeftBoundary )) )
     {
         BoundaryPosition = pBoundaryObject->GetPosition();
-        draw_Label( BoundaryPosition, XCOLOR_PURPLE, "Left" );
-        draw_Line( GetPosition(), BoundaryPosition, XCOLOR_PURPLE );
+        render::debug::Label( BoundaryPosition, XCOLOR_PURPLE, "Left" );
+        render::debug::Line( GetPosition(), BoundaryPosition, XCOLOR_PURPLE );
     }
 
     if ( m_RightBoundary && (pBoundaryObject = g_ObjMgr.GetObjectByGuid( m_RightBoundary )) )
     {
         BoundaryPosition = pBoundaryObject->GetPosition();
-        draw_Label( BoundaryPosition, XCOLOR_PURPLE, "Right" );
-        draw_Line( GetPosition(), BoundaryPosition, XCOLOR_PURPLE );
+        render::debug::Label( BoundaryPosition, XCOLOR_PURPLE, "Right" );
+        render::debug::Line( GetPosition(), BoundaryPosition, XCOLOR_PURPLE );
     }
 
     if ( m_UpperBoundary && (pBoundaryObject = g_ObjMgr.GetObjectByGuid( m_UpperBoundary )) )
     {
         BoundaryPosition = pBoundaryObject->GetPosition();
-        draw_Label( BoundaryPosition, XCOLOR_PURPLE, "Upper" );
-        draw_Line( GetPosition(), BoundaryPosition, XCOLOR_PURPLE );
+        render::debug::Label( BoundaryPosition, XCOLOR_PURPLE, "Upper" );
+        render::debug::Line( GetPosition(), BoundaryPosition, XCOLOR_PURPLE );
     }
 
     if ( m_LowerBoundary && (pBoundaryObject = g_ObjMgr.GetObjectByGuid( m_LowerBoundary )) )
     {
         BoundaryPosition = pBoundaryObject->GetPosition();
-        draw_Label( BoundaryPosition, XCOLOR_PURPLE, "Lower" );
-        draw_Line( GetPosition(), BoundaryPosition, XCOLOR_PURPLE );
+        render::debug::Label( BoundaryPosition, XCOLOR_PURPLE, "Lower" );
+        render::debug::Line( GetPosition(), BoundaryPosition, XCOLOR_PURPLE );
     }
 
 #endif // X_EDITOR
@@ -1304,7 +1217,7 @@ void turret::OnRender( void )
 
 void turret::OnRenderShadowCast( u64 ProjMask )
 {
-    CONTEXT( "turret::OnRenderShadowCast" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "turret::OnRenderShadowCast" );
 
     if( m_IsHidden )
         return;
@@ -1316,7 +1229,7 @@ void turret::OnRenderShadowCast( u64 ProjMask )
 
 void turret::OnRenderTransparent( void )
 {
-    CONTEXT( "turret::OnRenderTransparent" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "turret::OnRenderTransparent" );
     // Early exit if this turret is hidden
     if( m_IsHidden )
         return;
@@ -1328,7 +1241,7 @@ void turret::OnRenderTransparent( void )
 
 void turret::OnColCheck ( void )
 {
-    CONTEXT("play_surface::OnColCheck");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "play_surface::OnColCheck");
     
     // Early exit if this turret is hidden
     if( m_IsHidden )
@@ -1381,15 +1294,6 @@ void turret::OnColRender( xbool bRenderHigh )
 
 const matrix4* turret::GetBoneL2Ws( void )
 {
-    if( m_hAnimGroup.GetPointer() )
-    {
-        const matrix4* pMatrices = BuildSimpleAnimInterpCacheMatrices( m_RenderCache,
-                                                                       *m_hAnimGroup.GetPointer(),
-                                                                       m_hAnimGroup.GetPointer()->GetNBones() );
-        if( pMatrices )
-            return pMatrices;
-    }
-
     return m_AnimPlayer.GetBoneL2Ws( TRUE );
 }
 
@@ -2882,22 +2786,15 @@ void turret::GetSensorInfo( vector3& Pos, radian3& Rot )
         return;
     }
 
-    matrix4 L2W;
-    if( HasSimpleAnimInterpCache( m_RenderCache ) && GetRenderBoneL2W( iSensorBone, L2W ) )
-    {
-        Pos = L2W.GetTranslation();
-        Rot = L2W.GetRotation();
-        return;
-    }
-
-    const matrix4* pBoneL2W = m_AnimPlayer.GetBoneL2W( iSensorBone, TRUE );
-    if (NULL == pBoneL2W)
+    const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iSensorBone, TRUE );
+    if (NULL == pL2W)
     {
         Pos = GetPosition();
         return;
     }
 
-    L2W = *pBoneL2W;
+    matrix4 L2W = *pL2W;
+
     L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iSensorBone ) );
 
     Pos = L2W.GetTranslation();
@@ -3329,8 +3226,6 @@ xbool turret::CalculateLinearAimDirection(   const vector3& TargetPos,
     return( AimDirection.SafeNormalize() && ((T * 0.001f) <= LifetimeS) );
 }
 
-//=========================================================================
-
 //=============================================================================
 
 void turret::EnumAttachPoints( xstring& String ) const
@@ -3494,8 +3389,6 @@ void turret::OnAttachedMove( s32             iAttachPt,
     }
 }
 
-
-
 //=============================================================================
 
 xbool turret::GetAttachPointData( s32      iAttachPt,
@@ -3504,13 +3397,13 @@ xbool turret::GetAttachPointData( s32      iAttachPt,
 {
     if (iAttachPt == 0)
     {
-        L2W = GetRenderL2W();
+        L2W = GetL2W();
         return TRUE;
     }
     else
     if (iAttachPt == 1)
     {               
-        const matrix4& MyL2W = GetRenderL2W();
+        const matrix4& MyL2W = GetL2W();
 
         vector3 Pos;
         radian3 Rot;
@@ -3546,22 +3439,14 @@ xbool turret::GetAttachPointData( s32      iAttachPt,
             if ( (iAttachPt >= 0) &&
                  (iAttachPt < nBones ))
             {
-                if( HasSimpleAnimInterpCache( m_RenderCache ) && GetRenderBoneL2W( iAttachPt, L2W ) )
-                {
-                    if( !(Flags & ATTACH_USE_WORLDSPACE) )
-                        L2W = L2W * pGroup->GetBoneBindInvMatrix( iAttachPt );
-                }
+                const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iAttachPt );            
+                if ( NULL != pL2W )
+                    L2W = *pL2W;
                 else
-                {
-                    const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iAttachPt );
-                    if ( NULL != pL2W )
-                        L2W = *pL2W;
-                    else
-                        L2W.Identity();
+                    L2W.Identity();
  
-                    if (Flags & ATTACH_USE_WORLDSPACE)
-                        L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
-                }
+                if (Flags & ATTACH_USE_WORLDSPACE)
+                    L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
         
                 return TRUE;
             }        
@@ -3801,9 +3686,3 @@ const char* turret::GetLogicalName( void )
         return( "TURRET" );
     }
 }
-
-//=============================================================================
-
-//=============================================================================
-
-

@@ -1,9 +1,8 @@
 #include "PerceptionMgr.hpp"
 #include "e_Audio.hpp"
-#include "audio\audio_hardware.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 #ifndef X_EDITOR
-#include "NetworkMgr\NetworkMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
 #endif
 
 perception_mgr g_PerceptionMgr;
@@ -44,7 +43,7 @@ void perception_mgr::Init( void )
 
     m_State = STATE_NORMAL;
 
-    g_AudioHardware.SetPitchFactor( m_AudioTimeDialation );
+    g_AudioMgr.SetPitchFactor( m_AudioTimeDialation );
 }
 
 void perception_mgr::Kill( void )
@@ -147,7 +146,7 @@ void perception_mgr::Update( f32 DeltaTime )
                 m_PlayerTimeDialation /= m_GlobalTimeDialation;
             }
 
-            g_AudioHardware.SetPitchFactor( m_AudioTimeDialation );
+            g_AudioMgr.SetPitchFactor( m_AudioTimeDialation );
             break;
 
         case STATE_MUTATED:
@@ -222,7 +221,7 @@ void perception_mgr::Update( f32 DeltaTime )
                 m_PlayerTimeDialation /= m_GlobalTimeDialation;
             }
 
-            g_AudioHardware.SetPitchFactor( m_AudioTimeDialation );
+            g_AudioMgr.SetPitchFactor( m_AudioTimeDialation );
             break;
 
         case STATE_BEGIN_SHELLSHOCK:

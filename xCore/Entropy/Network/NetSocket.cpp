@@ -26,7 +26,7 @@ net_socket::net_socket(void)
 void net_socket::Clear( void )
 {
     m_Socket            = BAD_SOCKET;
-    m_Flags             = 0;
+    m_flags             = 0;
     m_BytesSent         = 0;
     m_BytesReceived     = 0;
     m_PacketsSent       = 0;
@@ -38,23 +38,23 @@ void net_socket::Clear( void )
 void net_socket::SetBlocking(xbool Block)
 {
     if (Block)
-        m_Flags |= NET_FLAGS_BLOCKING;
+        m_flags |= NET_FLAGS_BLOCKING;
     else
-        m_Flags &= ~NET_FLAGS_BLOCKING;
+        m_flags &= ~NET_FLAGS_BLOCKING;
 }
 
 //=============================================================================
 
 xbool net_socket::GetBlocking(void) const
 {
-    return (m_Flags & NET_FLAGS_BLOCKING) != 0;
+    return (m_flags & NET_FLAGS_BLOCKING) != 0;
 }
 
 //=============================================================================
 
 xbool net_socket::IsClosed( void )
 {
-    return (m_Flags & NET_FLAGS_CLOSED) != 0;
+    return (m_flags & NET_FLAGS_CLOSED) != 0;
 }
 
 //=============================================================================
@@ -189,7 +189,7 @@ xbool net_socket::Receive( net_address& Remote, void* pBuffer, s32& BufferSize )
         {
             if( BufferSize == -1 )
             {
-                m_Flags |= NET_FLAGS_CLOSED;
+                m_flags |= NET_FLAGS_CLOSED;
             }
             BufferSize = 0;
         }
@@ -218,7 +218,7 @@ xbool net_socket::Receive( net_address& Remote, void* pBuffer, s32& BufferSize )
 
     g_NetStats.ReceiveTime.Stop();
 
-    if( (ISettings.BlockReceives || (ISettings.Random.irand(0,100) < ISettings.PercReceivesLost)) && ((m_Flags & NET_FLAGS_TCP)==0) )
+    if( (ISettings.BlockReceives || (ISettings.Random.irand(0,100) < ISettings.PercReceivesLost)) && ((m_flags & NET_FLAGS_TCP)==0) )
     {
         #ifdef SHOW_ISETTINGS_ACTIONS
         x_DebugMsg("NetCommon: RECEIVE DROPPED\n");
@@ -276,7 +276,7 @@ xbool net_socket::Receive( void* pBuffer, s32& Length )
 {
     net_address Dummy;
 
-    ASSERT( m_Flags & NET_FLAGS_TCP );
+    ASSERT( m_flags & NET_FLAGS_TCP );
     return Receive(Dummy,pBuffer,Length);
 
 }
@@ -287,7 +287,7 @@ xbool net_socket::Receive( void* pBuffer, s32& Length )
 xbool net_socket::Send( const void* pBuffer, s32 Length )
 {
     net_address Dummy(-1,-1);
-    ASSERT( m_Flags & NET_FLAGS_TCP );
+    ASSERT( m_flags & NET_FLAGS_TCP );
     return Send( Dummy, pBuffer, Length );
 }
 
@@ -309,7 +309,7 @@ xbool net_socket::Send( const net_address& Remote, const void* pBuffer, s32 Buff
     ASSERT( Remote.GetIP() );
     ASSERT( Remote.GetPort() );
 
-    if( (m_Flags & NET_FLAGS_TCP)==0 )
+    if( (m_flags & NET_FLAGS_TCP)==0 )
     {
         if( (ISettings.BlockSends) || 
             (ISettings.Random.irand(0,100) < ISettings.PercSendsLost) )
@@ -377,7 +377,7 @@ xbool net_socket::Send( const net_address& Remote, const void* pBuffer, s32 Buff
 
     net_UpdateHistory(BufferSize,0);
 
-    if( (m_Flags & NET_FLAGS_TCP)==0 )
+    if( (m_flags & NET_FLAGS_TCP)==0 )
     {
         if( ISettings.pPacketSwapBuffer != NULL )
         {

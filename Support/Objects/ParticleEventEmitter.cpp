@@ -7,9 +7,9 @@
 //==============================================================================
 
 #include "ParticleEventEmitter.hpp"
-#include "Animation\AnimData.hpp"
-#include "Objects\Event.hpp"
-#include "gamelib\StatsMgr.hpp"
+#include "Animation/AnimData.hpp"
+#include "Objects/Event.hpp"
+#include "GameLib/StatsMgr.hpp"
 #include "ParticleEmiter.hpp"
 
 //=========================================================================
@@ -44,7 +44,7 @@ static struct particle_event_emitter_desc : public object_desc
     virtual s32  OnEditorRender( object& Object ) const
     {
         object_desc::OnEditorRender( Object );
-        return EDITOR_ICON_PARTICLE_EMITTER;
+        return static_cast<s32>( EditorIcon::ParticleEmitter );
     }
 
 #endif // X_EDITOR
@@ -84,7 +84,7 @@ particle_event_emitter::particle_event_emitter( void )
 
 //=========================================================================
 
-void particle_event_emitter::OnAdvanceLogic ( f32 DeltaTime )
+void particle_event_emitter::OnAdvanceSimulation ( f32 DeltaTime )
 {
     LOG_STAT(k_stats_ParticleSystem);
     (void)DeltaTime;

@@ -88,7 +88,7 @@ void raycast_lighting::Clear( void )
     m_LBuffSize             = 0;
     m_nLights               = 0;
 
-    m_BBox.Clear();
+    m_bBox.Clear();
     m_TotalVerticesRemoved  = 0;
     //
     // Collision info
@@ -213,7 +213,7 @@ void raycast_lighting::AddFacet(
     m_pFacet[ m_nFacets ].BBox.AddVerts( &P2, 1 );
 
     // Include this facet in the main bbox
-    m_BBox += m_pFacet[ m_nFacets ].BBox;
+    m_bBox += m_pFacet[ m_nFacets ].BBox;
 
     m_pFacet[ m_nFacets ].iVertex[0] = m_nVertices+0;
     m_pFacet[ m_nFacets ].iVertex[1] = m_nVertices+1;

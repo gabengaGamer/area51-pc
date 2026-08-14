@@ -8,13 +8,14 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "marker_object.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 #include "Entropy.hpp"
 
 #ifdef X_EDITOR
-#include "Dictionary\global_dictionary.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #endif
 
 
@@ -82,7 +83,7 @@ static struct marker_object_desc : public object_desc
     {
         (void)Object;
         //object_desc::OnEditorRender( Object );
-        return EDITOR_ICON_MARKER;
+        return static_cast<s32>( EditorIcon::Marker );
     }
 
 #endif // X_EDITOR
@@ -114,6 +115,8 @@ marker_object::marker_object(void)
     m_AnimName      = -1;           // Name of animation to play
     m_AnimFrame     = 0;            // Frame of animation to display
     m_bAnimate      = TRUE;         // Animate or show static frame
+    m_AnimDeltaTime  = 0.0f;
+    m_AnimTimer.Start();
 #endif
 }
 
@@ -301,12 +304,12 @@ void marker_object::OnRender( void )
         if( pAnimGroup->GetNBones() < pGeom->m_nBones )
         {
             // Show error message
-            draw_Label( GetPosition(), XCOLOR_YELLOW, "ERROR - Incompatible\nanimation package!\nShowing bind pose." );
+            render::debug::Label( GetPosition(), XCOLOR_YELLOW, "ERROR - Incompatible\nanimation package!\nShowing bind pose." );
         }
         else if( iAnim < 0 )   // Found anim?
         {
             // Show error message
-            draw_Label( GetPosition(), XCOLOR_YELLOW, "ERROR - Animation not found!\nShowing bind pose." );
+            render::debug::Label( GetPosition(), XCOLOR_YELLOW, "ERROR - Animation not found!\nShowing bind pose." );
         }
         else        
         {
@@ -320,11 +323,11 @@ void marker_object::OnRender( void )
                 vector3 Offset( 0, 5, 0 );
                 vector3 Dir   ( 0, 0, 200 );
                 Dir.RotateY( Yaw );
-                draw_Marker( Pos, XCOLOR_BLUE );
-                draw_Line( Pos + Offset, Pos + Offset + Dir, XCOLOR_PURPLE );
+                render::debug::Marker( Pos, XCOLOR_BLUE );
+                render::debug::Line( Pos + Offset, Pos + Offset + Dir, XCOLOR_PURPLE );
                 
                 // Show current frame
-                draw_Label( Pos, XCOLOR_YELLOW, "Frame:%d", (s32)m_AnimPlayer.GetFrame() );
+                render::debug::Label( Pos, XCOLOR_YELLOW, "Frame:%d", (s32)m_AnimPlayer.GetFrame() );
             }
             
             // Get matrices for current frame
@@ -334,20 +337,18 @@ void marker_object::OnRender( void )
             if( m_bAnimate )
             {
                 // Compute delta time since last render
-                static f32    DeltaTime = 0.0f;
-                static xtimer Timer;
-                DeltaTime += Timer.ReadSec();
-                Timer.Reset();
-                Timer.Start();
+                m_AnimDeltaTime += m_AnimTimer.ReadSec();
+                m_AnimTimer.Reset();
+                m_AnimTimer.Start();
                 
                 // Cap at 10 FPS
-                if( DeltaTime > 0.1f )
-                    DeltaTime = 0.1f;
+                if( m_AnimDeltaTime > 0.1f )
+                    m_AnimDeltaTime = 0.1f;
                     
                 // Advance animation                
-                while( DeltaTime >= ( 1.0f / 30.0f ) )
+                while( m_AnimDeltaTime >= ( 1.0f / 30.0f ) )
                 {
-                    DeltaTime -= 1.0f / 30.0f;
+                    m_AnimDeltaTime -= 1.0f / 30.0f;
                     AdvanceAnimPlayer( 1.0f / 30.0f );
                 }                    
             }            

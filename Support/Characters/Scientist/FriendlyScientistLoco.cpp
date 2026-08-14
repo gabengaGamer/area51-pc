@@ -10,11 +10,6 @@
 
 //==============================================================================
 
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( push )
-    #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
-#endif
-
 friendly_scientist_loco::friendly_scientist_loco( void ) :
     loco(),
     m_PlayAnim( *this ),
@@ -22,10 +17,6 @@ friendly_scientist_loco::friendly_scientist_loco( void ) :
     m_Move    ( *this )
 {
 }
-
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( pop )
-#endif
 
 //==============================================================================
 

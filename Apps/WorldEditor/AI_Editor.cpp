@@ -10,7 +10,7 @@
 #include "ai_editor.hpp"
 //#include "obj_mgr\obj_mgr.hpp"
 
-#include "objects\player.hpp"
+#include "Objects\Player\Player.hpp"
 #include "navigation\nav_map.hpp"
 #include "Navigation\ng_connection2.hpp"
 //#include "Navigation\CoverNode.hpp"
@@ -617,7 +617,7 @@ void ai_editor::CreateNavMap( void )
                 }
                 if (bOutside)
                 {
-                    pNavOverlapVertData[ iFirstVert + j ].m_Flags |= nav_map::overlap_vert::FLAG_OUTSIDE;
+                    pNavOverlapVertData[ iFirstVert + j ].m_flags |= nav_map::overlap_vert::FLAG_OUTSIDE;
                 }
             }
         }
@@ -631,7 +631,7 @@ void ai_editor::CreateNavMap( void )
         for (i=0;i<nRequiredOverlaps;i++)
         {
             pNavOverlapData[i].m_Center         = OverlapData[i].Centroid;
-            pNavOverlapData[i].m_Flags          = OverlapData[i].Flags;
+            pNavOverlapData[i].m_flags          = OverlapData[i].Flags;
             pNavOverlapData[i].m_iConnection[0] = -1;
             pNavOverlapData[i].m_iConnection[1] = -1;
             pNavOverlapData[i].m_iFirstOverlapPt= OverlapData[i].iFirstVertInNavMapData;
@@ -660,7 +660,7 @@ void ai_editor::CreateNavMap( void )
             //g_NavMap.Set
 
             DstConn.m_Width = SrcConn.pConnection->GetWidth();
-            DstConn.m_Flags = SrcConn.pConnection->GetFlags();           
+            DstConn.m_flags = SrcConn.pConnection->GetFlags();           
             DstConn.m_nOverlaps = SrcConn.OverlapInfo.GetCount();
             DstConn.m_iFirstConnectivity = iCurConnectivity;
             DstConn.m_StartPt       = SrcConn.pConnection->GetAnchorPosition(0);

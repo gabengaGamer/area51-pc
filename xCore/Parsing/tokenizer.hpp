@@ -45,7 +45,7 @@ public:
 
     void                CloseFile           ( void );
     char*               GetDelimeter        ( void );
-    void                SetDelimeter        ( char* pStr );
+    void                SetDelimeter        ( const char* pStr );
 
     // Move through tokens in file
     void                Rewind              ( void );
@@ -71,7 +71,7 @@ public:
     char*               GetFilename         ( void )                                        { return m_Filename;        }
 
     // Interrogate about current token
-    type                Type                ( void )                                        { return m_Type;            }
+    type                Type                ( void )                                        { return m_type;            }
     f32                 Float               ( void )                                        { return m_Float;           }
     s32                 Int                 ( void )                                        { return m_Int;             }
     char                Delimiter           ( void )                                        { return m_Delimiter;       }
@@ -94,7 +94,7 @@ protected:
     char                m_DelimiterStr[16];
     byte                m_IsCharNumber[256];
 
-    type                m_Type;
+    type                m_type;
     char                m_String[TOKEN_STRING_SIZE];
     f32                 m_Float;
     s32                 m_Int;

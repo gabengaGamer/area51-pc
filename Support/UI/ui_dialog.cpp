@@ -4,18 +4,14 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 #include "ui_dialog.hpp"
 #include "ui_manager.hpp"
 #include "ui_control.hpp"
 #include "ui_edit.hpp"
 #include "ui_font.hpp"
-#include "StringMgr\StringMgr.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-
-#if defined(TARGET_PS2)
-#include "Entropy\PS2\ps2_misc.hpp"
-#endif
+#include "StringMgr/StringMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 
 //=========================================================================
 //  Defines
@@ -51,19 +47,13 @@ ui_win* ui_dialog_factory( s32 UserID, ui_manager* pManager, ui_manager::dialog_
 
 ui_dialog::ui_dialog( void )
 {
-#ifdef TARGET_XBOX
-    m_XBOXNotificationOffsetX = 28;
-    m_XBOXNotificationOffsetY = 6;
-    m_bIsPopup                = 0;
-    m_bUseTopmost             = 0;
-#endif //TARGET_XBOX
+    m_IsNavTextVisible = TRUE;
 }
 
 //=========================================================================
 
 ui_dialog::~ui_dialog( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -98,13 +88,14 @@ xbool ui_dialog::Create( s32                        UserID,
     m_NavX              = 0;
     m_NavY              = 0;
 
-//  m_BackgroundColor   = FECOL_DIALOG;			  //-- Jhowa
-    m_BackgroundColor   = xcolor(40,40,0,192);//xcolor(0, 20, 30,192);  //-- Jhowa
+    m_BackgroundColor   = xcolor( 40, 40, 0, 192 );
 
     m_InputEnabled      = TRUE;
     m_pUserData         = pUserData;
     m_State             = DIALOG_STATE_INIT;
     m_CurrentControl    = -1;
+    m_NavText.Clear();
+    m_IsNavTextVisible  = TRUE;
 
 
     // Setup Navgraph size
@@ -124,8 +115,6 @@ xbool ui_dialog::Create( s32                        UserID,
         {
             m_Label.Clear();
         }
-        //xwstring tempString("Test");
-        //m_Label = tempString;
     }
  
     // Save Template Pointer
@@ -138,30 +127,9 @@ xbool ui_dialog::Create( s32                        UserID,
         {
             ui_manager::control_tem*    pControlTem = &pDialogTem->pControls[i];
 
-            // For now create each control
+            // Templates and controls share the same logical coordinate space.
             irect Pos;
             Pos.Set( pControlTem->x, pControlTem->y, pControlTem->x + pControlTem->w, pControlTem->y + pControlTem->h );
-
-            // check for scaling
-            if( 1 )//pControlTem->Flags & ui_win::WF_SCALE_XPOS )
-            {
-                Pos.l = (s32)( (f32)pControlTem->x * m_pManager->GetScaleX() );
-            }
-
-            if( 1 )//pControlTem->Flags & ui_win::WF_SCALE_YPOS )
-            {
-                Pos.t = (s32)( (f32)pControlTem->y * m_pManager->GetScaleY() );
-            }
-
-            if( 1 )//pControlTem->Flags & ui_win::WF_SCALE_XSIZE )
-            {
-                Pos.r = Pos.l + (s32)( (f32)pControlTem->w * m_pManager->GetScaleX() );
-            }
-
-            if( 1 )//pControlTem->Flags & ui_win::WF_SCALE_YSIZE )
-            {
-                Pos.b = Pos.t + (s32)( (f32)pControlTem->h * m_pManager->GetScaleY() );
-            }
 
             ui_control* pControl = (ui_control*)pManager->CreateWin( UserID, pControlTem->pClass, Pos, this, pControlTem->Flags );
             ASSERT( pControl );
@@ -178,8 +146,6 @@ xbool ui_dialog::Create( s32                        UserID,
                 ASSERTS( pLabel, ".stringbin files might not be compiled!" );
             }
             pControl->SetLabel( pLabel );
-            //pControl->SetLabel( m_Label );
-
             if( x_strcmp( pControlTem->pClass, "edit" ) == 0 )
             {
                 ui_edit*    pEdit = (ui_edit*)pControl;
@@ -214,29 +180,6 @@ xbool ui_dialog::Create( s32                        UserID,
 
 void ui_dialog::Render( s32 ox, s32 oy )
 {
-#ifdef TARGET_PC
-    // If this is not a TAB dialog page
-/*    if( !(GetFlags() & ui_win::WF_TAB) )
-    {
-        // Adjust the position of the dialogs according to the resolution.
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        s32 midX = XRes>>1;
-        s32 midY = YRes>>1;
-
-        s32 dx = midX - 256;
-        s32 dy = midY - 256;
-        ox = dx;
-        oy = dy;
-    }
-*/
-#endif
-
-    // Get the hardware resolution for use later
-    s32 XRes;
-    s32 YRes;
-    eng_GetRes( XRes, YRes );
-
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
@@ -246,40 +189,28 @@ void ui_dialog::Render( s32 ox, s32 oy )
         irect  rb = r;
         rb.Deflate( 1, 1 );
 
-        // clamp scissor region to XRes
+        // Clipping remains in logical coordinates until renderer submission.
         irect clipRect = r;
-        if( clipRect.l < 0 )
+
+        const xbool WipeClipped     = m_pManager->IsWipeActiveFor( this );
+        const xbool ScalingClipped  = m_pManager->IsScreenScaling();
+        const xbool ChildrenClipped = WipeClipped || ScalingClipped;
+        if( WipeClipped )
         {
-            clipRect.l = 0;
-            clipRect.r = XRes;
+            clipRect.b = MIN( clipRect.b, m_pManager->GetWipeRevealY() );
+            if( clipRect.b < clipRect.t )
+            {
+                clipRect.b = clipRect.t;
+            }
         }
 
-        if (g_UiMgr->IsWipeActive())
+        if( ChildrenClipped )
         {
-            irect wipePos;
-            g_UiMgr->GetWipePos(wipePos);
-
-#ifdef TARGET_PS2
-            gsreg_Begin( 1 );
-            gsreg_SetScissor(   clipRect.l, 
-                                clipRect.t,
-                                clipRect.r, 
-                                wipePos.t);
-            gsreg_End();
-#endif
-
-#ifdef TARGET_XBOX
-            D3DRECT Rects[1];
-            Rects[0].x1 = clipRect.l;
-            Rects[0].y1 = clipRect.t;
-            Rects[0].x2 = clipRect.r;
-            Rects[0].y2 = wipePos.t;
-            g_pd3dDevice->SetScissors( 1,FALSE,Rects );
-#endif
+            m_pManager->PushClipWindow( clipRect );
         }
 
         // render the background highlight
-        g_UiMgr->RenderScreenHighlight();
+        m_pManager->RenderScreenHighlight();
 
         // Render children
         for( s32 i=0; i<m_Children.GetCount(); i++ )
@@ -287,62 +218,22 @@ void ui_dialog::Render( s32 ox, s32 oy )
             m_Children[i]->Render( m_Position.l+ox, m_Position.t+oy );
         }
 
-        #ifdef TARGET_XBOX
-
-        if( g_UiMgr->IsWipeActive( ))
+        if( ChildrenClipped )
         {
-            D3DRECT Rects[1];
-            Rects[0].x1 = clipRect.l;
-            Rects[0].y1 = clipRect.t;
-            Rects[0].x2 = clipRect.r;
-            Rects[0].y2 = clipRect.b;
-            g_pd3dDevice->SetScissors( 1,FALSE,Rects );
+            m_pManager->PopClipWindow();
         }
 
-        #endif
-
-        #ifdef TARGET_PS2
-        if (g_UiMgr->IsWipeActive())
-        {
-            gsreg_Begin( 1 );
-            gsreg_SetScissor(   clipRect.l, 
-                                clipRect.t,
-                                clipRect.r, 
-                                clipRect.b );
-            gsreg_End();
-        }
-        #endif
-
-        // render wipe
-        g_UiMgr->RenderScreenWipe();
-
-        // render refresh bar
-        g_UiMgr->RenderRefreshBar();
+        m_pManager->RenderScreenWipe( this );
 
         // Render frame
         if( m_Flags & WF_BORDER )
         {
-            // Render background color
-//            if( m_BackgroundColor.A > 0 )
-//            {
-//                m_pManager->RenderRect( rb, m_BackgroundColor, FALSE );
-//            }
-
-            // Render Title Bar Gradient
-//            rb.SetHeight( 40 );
-//          xcolor c1 = xcolor(150,150,0,255);//xcolor(30,100,150,255);//FECOL_TITLE1; 
-//          xcolor c2 = xcolor(150,150,0,0);//xcolor(30,100,150,  0);//FECOL_TITLE2; 
-//          m_pManager->RenderGouraudRect( rb, c1, c1, c2, c2, FALSE );
-
-            // Render the Frame
             if( m_Flags & WF_DISABLED )
             {
-                // disabled version
                 m_pManager->RenderElement( m_iElement, r, 1 );
             }
             else
             {
-                // normal frame
                 m_pManager->RenderElement( m_iElement, r, 0 );
             }
 
@@ -351,44 +242,27 @@ void ui_dialog::Render( s32 ox, s32 oy )
             if (!m_pManager->IsScreenScaling())
             {
                 rb.Deflate( 0, 5 );
-                s32 FontID = g_UiMgr->FindFont("large");
+                s32 FontID = m_pManager->FindFont("large");
                 m_pManager->RenderText( FontID, rb, ui_font::h_center, m_TextColorShadow, m_Label );
                 rb.Translate( -1, -1 );
                 m_pManager->RenderText( FontID, rb, ui_font::h_center, m_TextColorNormal, m_Label );
             }
 
             // render screen glow effect
-            g_UiMgr->RenderScreenGlow();
+            m_pManager->RenderScreenGlow();
         }
 
-        // restore scissor region
-#ifdef TARGET_PS2
-        gsreg_Begin( 1 );
-        gsreg_SetScissor( 0, 0, XRes, YRes );
-        gsreg_End();
-#endif
-
-#ifdef TARGET_XBOX
-        // ensure we're not using a shrunken viewport
-        g_pd3dDevice->SetViewport( NULL );
-#endif
     }
 }
 
 //=========================================================================
 
-const irect& ui_dialog::GetCreatePosition( void ) const
-{
-    return m_CreatePosition;
-}
-
-//=========================================================================
 //=========================================================================
 //  Message Handler Functions
 //=========================================================================
 //=========================================================================
 
-void ui_dialog::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void ui_dialog::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
     (void)pWin;
     (void)Presses;
@@ -406,42 +280,40 @@ void ui_dialog::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats,
     // Which way are we moving
     switch( Code )
     {
-    case ui_manager::NAV_UP:
+    case ui_navigation::Up:
         dy = -1;
         break;
-    case ui_manager::NAV_DOWN:
+    case ui_navigation::Down:
         dy = 1;
         break;
-    case ui_manager::NAV_LEFT:
+    case ui_navigation::Left:
         dx = -1;
         break;
-    case ui_manager::NAV_RIGHT:
+    case ui_navigation::Right:
         dx = 1;
+        break;
+
+    default:
         break;
     }
 
-/*
-    x += dx;
-    y += dy;
-    if( x <       0 ) x = m_NavW-1;
-    if( x >= m_NavW ) x = 0;
-    if( y <       0 ) y = m_NavH-1;
-    if( y >= m_NavH ) y = 0;
-*/
+    if( (dx == 0) && (dy == 0) )
+    {
+        return;
+    }
 
     xbool bWrapped = FALSE;
 
     // Scan until the control to move to is found
     ui_win* pCurrentWin = pUser->pFocusedWindow;
-//    while( ((x != m_NavX) && (dx != 0)) || ((y != m_NavY) && (dy != 0)) )
     while( ((x < m_NavW) && (x >= 0)) && ((y < m_NavH) && (y >= 0)) )
     {
-        ui_win* pWin = m_NavGraph[x+y*m_NavW];
-        if( pWin && (pWin != pCurrentWin) )
+        ui_win* pCandidate = m_NavGraph[x+y*m_NavW];
+        if( pCandidate && (pCandidate != pCurrentWin) )
         {
             xbool Found = FALSE;
 
-            if( pWin->GetFlags() & ui_win::WF_DISABLED )
+            if( !pCandidate->CanFocus() )
             {
                 if( dy != 0 )
                 {
@@ -457,8 +329,8 @@ void ui_dialog::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats,
                         if( xleft > 0 )
                         {
                             xleft--;
-                            pWin = m_NavGraph[xleft+y*m_NavW];
-                            if( pWin && (pWin != pCurrentWin) && !( pWin->GetFlags() & ui_win::WF_DISABLED ) )
+                            pCandidate = m_NavGraph[xleft+y*m_NavW];
+                            if( pCandidate && (pCandidate != pCurrentWin) && pCandidate->CanFocus() )
                             {
                                 x = xleft;
                                 Found = TRUE;
@@ -474,8 +346,8 @@ void ui_dialog::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats,
                         if( xright < (m_NavW-1) )
                         {
                             xright++;
-                            pWin = m_NavGraph[xright+y*m_NavW];
-                            if( pWin && (pWin != pCurrentWin) && !( pWin->GetFlags() & ui_win::WF_DISABLED ) )
+                            pCandidate = m_NavGraph[xright+y*m_NavW];
+                            if( pCandidate && (pCandidate != pCurrentWin) && pCandidate->CanFocus() )
                             {
                                 x = xright;
                                 Found = TRUE;
@@ -499,9 +371,10 @@ void ui_dialog::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats,
 
             if( Found )
             {
-                m_pManager->SetFocusWindow( m_UserID, pWin );
+                m_pManager->SetFocusWindow( m_UserID, pCandidate );
                 m_NavX = x;
                 m_NavY = y;
+                m_CurrentControl = m_Children.Find( pCandidate );
                 break;
             }
         }
@@ -540,12 +413,30 @@ void ui_dialog::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats,
                 bWrapped = TRUE;
             }
         }
-/*
-        if( x <       0 ) x = m_NavW-1;
-        if( x >= m_NavW ) x = 0;
-        if( y <       0 ) y = m_NavH-1;
-        if( y >= m_NavH ) y = 0;
-*/
+    }
+}
+
+//=========================================================================
+
+void ui_dialog::OnFocusWithin( ui_win* pWin )
+{
+    if( m_NavW > 0 )
+    {
+        for( s32 i = 0; i < m_NavGraph.GetCount(); i++ )
+        {
+            if( m_NavGraph[i] == pWin )
+            {
+                m_NavX = i % m_NavW;
+                m_NavY = i / m_NavW;
+                break;
+            }
+        }
+    }
+
+    s32 const iControl = m_Children.Find( pWin );
+    if( iControl != -1 )
+    {
+        m_CurrentControl = iControl;
     }
 }
 
@@ -581,9 +472,7 @@ ui_control* ui_dialog::GotoControl( s32 iControl )
     ASSERT( pChild );
     if( !pChild ) return NULL;
 
-    // Only goto non-static & enabled controls
-    if( (!(pChild->GetFlags() & ui_win::WF_STATIC  )) &&
-        (!(pChild->GetFlags() & ui_win::WF_DISABLED)) )
+    if( pChild->CanFocus() )
     {
         // Set focus on this control
         m_pManager->SetFocusWindow( m_UserID, pChild );
@@ -620,10 +509,12 @@ xbool ui_dialog::GotoControl( ui_control* pControl )
         }
     }
     ASSERT( pChild );
+    if( !pChild )
+    {
+        return FALSE;
+    }
 
-    // Only goto non-static & enabled controls
-    if( (!(pChild->GetFlags() & ui_win::WF_STATIC  )) &&
-        (!(pChild->GetFlags() & ui_win::WF_DISABLED)) )
+    if( pChild->CanFocus() )
     {
         // Set focus on this control
         m_pManager->SetFocusWindow( m_UserID, pChild );
@@ -651,13 +542,56 @@ s32 ui_dialog::GetNumControls( void ) const
 
 //=========================================================================
 
+void ui_dialog::SetNavText( const xwstring& Text )
+{
+    m_NavText = Text;
+}
+
+//=========================================================================
+
+void ui_dialog::SetNavText( const xwchar* pText )
+{
+    ASSERT( pText );
+    if( pText )
+    {
+        m_NavText = pText;
+    }
+    else
+    {
+        m_NavText.Clear();
+    }
+}
+
+//=========================================================================
+
+void ui_dialog::SetNavTextVisible( xbool IsVisible )
+{
+    m_IsNavTextVisible = IsVisible;
+}
+
+//=========================================================================
+
+const xwstring& ui_dialog::GetNavText( void ) const
+{
+    return m_NavText;
+}
+
+//=========================================================================
+
+xbool ui_dialog::IsNavTextVisible( void ) const
+{
+    return m_IsNavTextVisible;
+}
+
+//=========================================================================
+
 void ui_dialog::InitScreenScaling( const irect& Position )
 {
     // store requested frame size
     m_RequestedPos = Position;
 
     // set starting position
-    g_UiMgr->GetScreenSize(m_CurrPos);
+    m_pManager->GetScreenSize(m_CurrPos);
     m_StartPos = m_CurrPos;
     
     // set up scaling
@@ -668,10 +602,10 @@ void ui_dialog::InitScreenScaling( const irect& Position )
 
     // set starting position
     SetPosition(m_CurrPos);
-    g_UiMgr->SetScreenScaling(TRUE);
+    m_pManager->SetScreenScaling(TRUE);
 
     // play scaling sound
-    if( g_UiMgr->IsScreenOn() )
+    if( m_pManager->IsScreenOn() )
     {
         if( m_scaleX > 0 )
         {
@@ -702,11 +636,6 @@ xbool ui_dialog::UpdateScreenScaling( f32 DeltaTime, xbool DoWipe )
     // scale window if necessary
     if (m_scaleCount)
     {
-#if defined( TARGET_PC ) && !defined( X_EDITOR )
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        DeltaTime = DeltaTime * YRes / 448;
-#endif
         // apply delta time
         m_scaleCount -= DeltaTime;
 
@@ -718,13 +647,13 @@ xbool ui_dialog::UpdateScreenScaling( f32 DeltaTime, xbool DoWipe )
 
             // resize the window
             SetPosition(m_CurrPos);        
-            g_UiMgr->SetScreenSize(m_CurrPos);
-            g_UiMgr->SetScreenScaling(FALSE);
+            m_pManager->SetScreenSize(m_CurrPos);
+            m_pManager->SetScreenScaling(FALSE);
 
             // start a screen wipe
             if ( DoWipe )
             {
-                g_UiMgr->InitScreenWipe();
+                m_pManager->InitScreenWipe( this );
             }
         }
         else
@@ -735,7 +664,7 @@ xbool ui_dialog::UpdateScreenScaling( f32 DeltaTime, xbool DoWipe )
 
             // resize the window
             SetPosition(m_CurrPos);        
-            g_UiMgr->SetScreenSize(m_CurrPos);
+            m_pManager->SetScreenSize(m_CurrPos);
 
             // still more to do!
             return TRUE;
@@ -758,6 +687,3 @@ ui_manager::dialog_tem* ui_dialog::GetTemplate( void )
 }
 
 //=========================================================================
-
-
-

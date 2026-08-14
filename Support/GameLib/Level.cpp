@@ -1,6 +1,6 @@
 #include "Level.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Objects\Render\RenderInst.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Render/RenderInst.hpp"
 
 //=============================================================================
 

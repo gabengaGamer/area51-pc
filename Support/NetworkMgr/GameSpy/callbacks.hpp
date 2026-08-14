@@ -9,7 +9,7 @@
 #include "NetworkMgr/GameSpy/gp/gp.h"
 
 #define FRIEND
-#include "NetworkMgr/GameSpy/CallbackPrototypes.hpp"
+#include "NetworkMgr/GameSpy/callbackprototypes.hpp"
 #undef FRIEND
 
 #endif;

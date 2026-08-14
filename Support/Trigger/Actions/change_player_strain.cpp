@@ -1,7 +1,7 @@
-#include "..\Support\Trigger\Actions\change_player_strain.hpp"
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "Objects\Player.hpp"
+#include "../Support/Trigger/Actions/change_player_strain.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "Objects/Player/Player.hpp"
 #include "Entropy.hpp"
 
 //=========================================================================
@@ -18,7 +18,7 @@ change_player_strain::change_player_strain( guid ParentGuid ) :
 
 void change_player_strain::Execute ( trigger_object* pParent )
 { 
-    TRIGGER_CONTEXT( "ACTION * change_player_strain::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * change_player_strain::Execute" );
 
     ( void ) pParent;
 

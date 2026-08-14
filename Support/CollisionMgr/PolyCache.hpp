@@ -13,10 +13,15 @@
 
 #include "x_stdio.hpp"
 #include "x_math.hpp"
-#include "miscutils\Guid.hpp"
-#include "render\collisionvolume.hpp"
-#include "objects\object.hpp"
+#include "MiscUtils/Guid.hpp"
+#include "Render/CollisionVolume.hpp"
+#include "Objects/object.hpp"
 #include "GridWalker.hpp"
+
+namespace render
+{
+class PrimitiveBatch;
+}
 
 #if defined( X_EDITOR ) || (!defined( CONFIG_RETAIL ) && !defined(CONFIG_PROFILE))
 #define DEBUG_POLY_CACHE
@@ -32,29 +37,14 @@ class poly_cache;
 //  DEFINES
 //==============================================================================
 
-#ifdef TARGET_PC
-
-    #define POLYCACHE_MAX_CELLS                         800
-    #define POLYCACHE_HASH_SIZE                        2053
-    #define POLYCACHE_MAX_8_CLUSTERS                   1024
-    #define POLYCACHE_MAX_16_CLUSTERS                   512
-    #define POLYCACHE_MAX_32_CLUSTERS                   512
-    #define POLYCACHE_NUM_CLUSTER_BANKS                   3  
-    #define POLYCACHE_MAX_CLUSTER_PTRS_PER_CELL          32
-    #define POLYCACHE_MAX_CLUSTERS_IN_LIST             1024
-
-#else
-
-    #define POLYCACHE_MAX_CELLS                         800
-    #define POLYCACHE_HASH_SIZE                        2053
-    #define POLYCACHE_MAX_8_CLUSTERS                    512
-    #define POLYCACHE_MAX_16_CLUSTERS                    64
-    #define POLYCACHE_MAX_32_CLUSTERS                   180
-    #define POLYCACHE_NUM_CLUSTER_BANKS                   3  
-    #define POLYCACHE_MAX_CLUSTER_PTRS_PER_CELL          35
-    #define POLYCACHE_MAX_CLUSTERS_IN_LIST              512
-
-#endif
+#define POLYCACHE_MAX_CELLS                         800
+#define POLYCACHE_HASH_SIZE                        2053
+#define POLYCACHE_MAX_8_CLUSTERS                    512
+#define POLYCACHE_MAX_16_CLUSTERS                    64
+#define POLYCACHE_MAX_32_CLUSTERS                   180
+#define POLYCACHE_NUM_CLUSTER_BANKS                   3  
+#define POLYCACHE_MAX_CLUSTER_PTRS_PER_CELL          35
+#define POLYCACHE_MAX_CLUSTERS_IN_LIST              512
 
 #define POLYCACHE_MAX_CLUSTERS      (POLYCACHE_MAX_8_CLUSTERS+POLYCACHE_MAX_16_CLUSTERS+POLYCACHE_MAX_32_CLUSTERS)
 #define POLYCACHE_CLUSTER_HASH_SIZE ((POLYCACHE_MAX_CLUSTERS*2)+1)
@@ -112,7 +102,7 @@ public:
             vector3 BBoxMax;
             u32     Flags;
             f32     PlaneD;
-        }  PS2_ALIGNMENT(16);
+        };
 
         struct quad
         {
@@ -324,8 +314,8 @@ private:
         cluster*        FindCluster         ( guid Guid, s32 iCollDataCluster );
         void            FreeCluster         ( cluster* pCluster );
         s32             ComputeClusterHash  ( guid Guid, s32 iCollDataCluster );
-        void            DrawCluster         ( cluster* pCL, f32* Intensity );
-        void            DrawClusterNormals  ( cluster* pCL );
+        void            AddClusterGeometry  ( render::PrimitiveBatch& Batch, cluster* pCL, f32* Intensity );
+        void            AddClusterNormals   ( render::PrimitiveBatch& Batch, cluster* pCL );
 
         void            SanityCheckFreeClusterList( void );
         xbool           VerifyInFreeList( cluster* pCL );

@@ -144,7 +144,7 @@ protected:
 
         T*          m_pData; 
         s32         m_Count;   
-        s32         m_Capacity;
+        s32         m_capacity;
         s32         m_Status;
         s32         m_GrowAmount;
 };
@@ -188,7 +188,7 @@ public:
     const   xharray<T>&  operator = ( const xharray<T>& Array   );
 
 protected:
-    s32         m_Capacity;
+    s32         m_capacity;
     s32         m_nNodes;
     xhandle*    m_pHandle;
     T*          m_pList;    
@@ -203,7 +203,7 @@ protected:
 template< class T >
 inline s32 xharray<T>::CalcGrowth( void )
 {
-    return MAX( 100, (m_Capacity/2) );
+    return MAX( 100, (m_capacity/2) );
 }
 
 //=========================================================================
@@ -211,7 +211,7 @@ inline s32 xharray<T>::CalcGrowth( void )
 template< class T > inline
 xharray<T>::xharray( void )
 {
-    m_Capacity    = 0;
+    m_capacity    = 0;
     m_nNodes      = 0;
     m_pHandle     = NULL;
     m_pList       = NULL;    
@@ -246,7 +246,7 @@ const xharray<T>& xharray<T>::operator = ( const xharray<T>& Array )
     //
     // Reset all the variables
     //
-    m_Capacity    = 0;
+    m_capacity    = 0;
     m_nNodes      = 0;
     m_pHandle     = NULL;
     m_pList       = NULL;    
@@ -281,15 +281,15 @@ void xharray<T>::GrowListBy( s32 nNodes )
     //
     // Increase the capacity
     //
-    m_Capacity += nNodes;
+    m_capacity += nNodes;
 
     //
     // Allocate the new arrays
     //
-    pNewList   = new T[m_Capacity];
+    pNewList   = new T[m_capacity];
     ASSERT( pNewList );
 
-    pNewHandle = new xhandle[m_Capacity];
+    pNewHandle = new xhandle[m_capacity];
     ASSERT( pNewHandle );
 
     //
@@ -304,7 +304,7 @@ void xharray<T>::GrowListBy( s32 nNodes )
     //
     // Fill in the rest of the hash entries
     //
-    for( i = m_nNodes; i<m_Capacity; i++ )
+    for( i = m_nNodes; i<m_capacity; i++ )
     {
         pNewHandle[ i ].Handle = i;
     }
@@ -347,7 +347,7 @@ template< class T > inline
 T& xharray<T>::operator()( xhandle hHandle )
 {
     ASSERT( hHandle >= 0 );
-    ASSERT( hHandle < m_Capacity );
+    ASSERT( hHandle < m_capacity );
 
     return m_pList[ hHandle.Handle ];
 }
@@ -358,7 +358,7 @@ template< class T > inline
 const T& xharray<T>::operator()( xhandle hHandle ) const
 {
     ASSERT( hHandle >= 0 );
-    ASSERT( hHandle < m_Capacity );
+    ASSERT( hHandle < m_capacity );
 
     return m_pList[ hHandle.Handle ];
 }
@@ -376,7 +376,7 @@ s32 xharray<T>::GetCount( void ) const
 template< class T > inline
 s32 xharray<T>::GetCapacity( void ) const
 {
-    return m_Capacity;
+    return m_capacity;
 }
     
 //=========================================================================
@@ -441,7 +441,7 @@ T& xharray<T>::Add( xhandle& hHandle )
     //
     // Grow if need it
     //
-    if( m_nNodes >= m_Capacity )
+    if( m_nNodes >= m_capacity )
     {
         GrowListBy( CalcGrowth() );
     }
@@ -474,11 +474,11 @@ void xharray<T>::Clear( xbool bReorder )
     // reorder if the user request it
     if( bReorder )
     {
-        for( i=0; i<m_Capacity; i++ )
+        for( i=0; i<m_capacity; i++ )
             m_pHandle[i].Handle = i;
     }
 
-    m_Capacity = 0;
+    m_capacity = 0;
     m_nNodes = 0;
 
     delete[] m_pHandle;
@@ -493,8 +493,8 @@ template< class T > inline
 xbool xharray<T>::Save( X_FILE* Fp )
 {
     x_fwrite( this,         sizeof(*this),          1,              Fp );
-    x_fwrite( m_pHandle,    sizeof(*m_pHandle),     m_Capacity,     Fp );
-    x_fwrite( m_pList,      sizeof(*m_pList),       m_Capacity,     Fp );
+    x_fwrite( m_pHandle,    sizeof(*m_pHandle),     m_capacity,     Fp );
+    x_fwrite( m_pList,      sizeof(*m_pList),       m_capacity,     Fp );
 
     return TRUE;
 }
@@ -506,13 +506,13 @@ xbool xharray<T>::Load( X_FILE* Fp )
 {
     x_fread( this,         sizeof(*this),          1,          Fp );
 
-    m_pList   = (T*)x_malloc( (sizeof(xhandle)+sizeof(T)) * m_Capacity );
+    m_pList   = (T*)x_malloc( (sizeof(xhandle)+sizeof(T)) * m_capacity );
     ASSERT( m_pList );
 
-    m_pHandle = (xhandle*)(m_pList+m_Capacity);
+    m_pHandle = (xhandle*)(m_pList+m_capacity);
 
-    x_fread( m_pHandle,    sizeof(*m_pHandle),     m_Capacity, Fp );
-    x_fread( m_pList,      sizeof(*m_pList),       m_Capacity, Fp );
+    x_fread( m_pHandle,    sizeof(*m_pHandle),     m_capacity, Fp );
+    x_fread( m_pList,      sizeof(*m_pList),       m_capacity, Fp );
 
     return TRUE;
 }

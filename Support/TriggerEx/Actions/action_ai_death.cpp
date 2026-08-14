@@ -9,7 +9,7 @@
 //=========================================================================
 
 #include "action_ai_death.hpp"
-#include "Loco\LocoUtil.hpp"
+#include "Loco/LocoUtil.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS

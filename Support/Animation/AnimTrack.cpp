@@ -8,7 +8,7 @@
 // INCLUDES
 //=========================================================================
 
-#include "animtrack.hpp"
+#include "AnimTrack.hpp"
 
 #define INTERP_TEST InterpolateSRT
 //=========================================================================
@@ -644,7 +644,7 @@ void anim_track_controller::MixKeys( anim_key* pDestKey )
 
 void anim_track_controller::BlendedMixKeys( anim_key* pDestKey )
 {
-    CONTEXT("anim_track_controller::MixKeys") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "anim_track_controller::MixKeys") ;
 
     // If we aren't playing anything then just return
     if( (m_iAnim == -1) || (m_Weight==0.0f) )
@@ -688,7 +688,7 @@ void anim_track_controller::BlendedMixKeys( anim_key* pDestKey )
 
 void anim_track_controller::AdditiveMixKeys( anim_key* pDestKey )
 {
-    CONTEXT(" anim_track_controller::AdditiveMixKeys");
+    X_PROFILE_SCOPE_CATEGORY( "Context", " anim_track_controller::AdditiveMixKeys");
 
     // If we aren't playing anything then just return
     if( (m_iAnim == -1) || (m_Weight==0.0f) )

@@ -9,11 +9,12 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\cause_damage.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/cause_damage.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "render\LightMgr.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "Render/LightMgr.hpp"
 
 #include "Entropy.hpp"
 
@@ -65,7 +66,7 @@ void cause_damage::Execute ( trigger_object* pParent )
 {
     (void)pParent;
 
-    TRIGGER_CONTEXT( "ACTION * cause_damage::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * cause_damage::Execute" );
     
     if (m_bCreateLight)
     {
@@ -120,8 +121,8 @@ void cause_damage::Execute ( trigger_object* pParent )
 
 void cause_damage::OnRender ( void )
 {
-    draw_BBox( GetDamageBBox(), XCOLOR_RED );
-    draw_Label( GetPositionOwner(), XCOLOR_WHITE, GetTypeName() );
+    render::debug::Box( GetDamageBBox(), XCOLOR_RED );
+    render::debug::Label( GetPositionOwner(), XCOLOR_WHITE, GetTypeName() );
 }
 
 //=========================================================================

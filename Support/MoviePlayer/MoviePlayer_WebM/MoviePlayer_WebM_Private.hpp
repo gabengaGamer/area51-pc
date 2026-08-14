@@ -28,28 +28,24 @@
 #include "x_files.hpp"
 #include "Entropy.hpp"
 
-#include "3rdParty\WebM\include\x86\webm\mkvparser\mkvparser.h"
-#include "3rdParty\WebM\include\x86\webm\mkvparser\mkvreader.h"
-#include "3rdParty\WebM\include\x86\webm\reader.h"
-#include "3rdParty\WebM\include\x86\vpx\vpx_image.h"
-#include "3rdParty\WebM\include\x86\vpx\vpx_decoder.h"
-#include "3rdParty\WebM\include\x86\vpx\vp8dx.h"
-#include "3rdParty\WebM\include\x86\opus\opus.h"
-#include "3rdParty\WebM\include\x86\opus\opus_multistream.h"
-#include "3rdParty\WebM\include\x86\vorbis\codec.h"
-#include "3rdParty\WebM\include\x86\ogg\ogg.h"
+#include "3rdParty/WebM/include/webm/mkvparser/mkvparser.h"
+#include "3rdParty/WebM/include/webm/mkvparser/mkvreader.h"
+#include "3rdParty/WebM/include/webm/reader.h"
+#include "3rdParty/WebM/include/vpx/vpx_image.h"
+#include "3rdParty/WebM/include/vpx/vpx_decoder.h"
+#include "3rdParty/WebM/include/vpx/vp8dx.h"
+#include "3rdParty/WebM/include/opus/opus.h"
+#include "3rdParty/WebM/include/opus/opus_multistream.h"
+#include "3rdParty/WebM/include/vorbis/codec.h"
+#include "3rdParty/WebM/include/ogg/ogg.h"
 
-struct IXAudio2;
-struct IXAudio2MasteringVoice;
-struct IXAudio2SourceVoice;
+struct SDL_AudioStream;
 struct OpusDecoder;
 struct OpusMSDecoder;
 struct vorbis_info;
 struct vorbis_comment;
 struct vorbis_dsp_state;
 struct vorbis_block;
-
-struct ID3D11Texture2D;
 
 namespace movie_webm
 {
@@ -63,11 +59,11 @@ static const f64 WEBM_NANOSEC = 1000000000.0;
 // ENUMS AND STRUCTURES
 //==============================================================================
 
-enum stream_type
+enum stream_Type
 {
-    STREAM_TYPE_UNKNOWN = 0,
-    STREAM_TYPE_VIDEO,
-    STREAM_TYPE_AUDIO
+    STREAm_Type_UNKNOWN = 0,
+    STREAm_Type_VIDEO,
+    STREAm_Type_AUDIO
 };
 
 //------------------------------------------------------------------------------
@@ -88,6 +84,7 @@ struct player_config
         AudioChannels   = 0;
         AudioSampleRate = 0;
         AudioBitDepth   = 16;
+        AudioLanguage   = XL_LANG_ENGLISH;
         AudioCodecId.Clear();
         VideoCodecId.Clear();
         AudioCodecPrivate.Clear();
@@ -107,6 +104,7 @@ struct player_config
     s32         AudioChannels;
     s32         AudioSampleRate;
     s32         AudioBitDepth;
+    x_language  AudioLanguage;
     xarray<u8>  AudioCodecPrivate;
 };
 
@@ -116,7 +114,7 @@ struct sample
 {
     sample(void)
     {
-        Type        = STREAM_TYPE_UNKNOWN;
+        Type        = STREAm_Type_UNKNOWN;
         pEntry      = NULL;
         pBlock      = NULL;
         pCluster    = NULL;
@@ -124,7 +122,7 @@ struct sample
         IsKeyFrame  = FALSE;
     }
 
-    stream_type                 Type;
+    stream_Type                 Type;
     const mkvparser::BlockEntry* pEntry;
     const mkvparser::Block*     pBlock;
     const mkvparser::Cluster*   pCluster;
@@ -281,12 +279,8 @@ private:
         CODEC_VORBIS
     };
 
-    class voice_callback;
-
-    xbool           InitializeXAudio    (void);
-    void            ShutdownXAudio      (void);
-    xbool           CreateSourceVoice   (void);
-    void            DestroySourceVoice  (void);
+    xbool           InitializeSDL       (void);
+    void            ShutdownSDL         (void);
     xbool           InitializeOpus      (const player_config& Config);
     void            DestroyOpus         (void);
     xbool           InitializeVorbis    (const player_config& Config);
@@ -298,7 +292,6 @@ private:
     xbool           SubmitPCM           (const s16* pSamples, s32 SampleCount);
     xbool           DecodeOpusFrame     (const u8* pData, s32 DataSize);
     xbool           DecodeVorbisPacket  (const u8* pData, s32 DataSize);
-    u32             GetChannelMask      (s32 ChannelCount) const;
 
 private:
     f32                         m_Volume;
@@ -306,14 +299,10 @@ private:
     s32                         m_Channels;
     s32                         m_SampleRate;
     s32                         m_BitsPerSample;
-    xbool                       m_bInitialized;
-    xbool                       m_bVoiceStarted;
-    xbool                       m_ComInitialized;
-
-    IXAudio2*                   m_pXAudio2;
-    IXAudio2MasteringVoice*     m_pMasterVoice;
-    IXAudio2SourceVoice*        m_pSourceVoice;
-    voice_callback*             m_pVoiceCallback;
+    xbool                       m_isInitialized;
+    xbool                       m_SdlInitialized;
+    SDL_AudioStream*            m_pAudioStream;
+    s32                         m_MaxQueuedBytes;
 
     xarray<u8>                  m_CompressedBuffer;
     xarray<s16>                 m_PCMBuffer;
@@ -369,6 +358,10 @@ private:
 } // namespace movie_webm
 
 //==============================================================================
+// MOVIE PRESENTATION
+//==============================================================================
+
+//==============================================================================
 // MOVIE PRIVATE CLASS
 //==============================================================================
 
@@ -379,7 +372,7 @@ public:
                    ~movie_private       (void);
 
     void            Init                (void);
-    xbool           Open                (const char* pFilename, xbool PlayResident, xbool IsLooped);
+    xbool           Open                (const char* pFilename, xbool PlayResident, xbool IsLooped, x_language Language);
     void            Close               (void);
     void            Kill                (void);
 
@@ -397,7 +390,7 @@ public:
 private:
     void            Shutdown            (void);
 
-    static void     ThreadEntry         (s32 argc, char** argv);
+    static void     WorkerEntry         (void* pData);
     void            ThreadMain          (void);
     void            ThreadLoop          (void);
 
@@ -421,10 +414,9 @@ private:
     s32                         m_Height;
     f32                         m_Volume;
     xbool                       m_IsLooped;
-    xbool                       m_bForceStretch;
 
     // Threading
-    xthread*                    m_pThread;
+    x_worker_service            m_WorkerService;
     volatile xbool              m_bThreadExit;
     volatile xbool              m_bThreadRunning;
     volatile xbool              m_bThreadFinished;
@@ -434,9 +426,8 @@ private:
     volatile xbool              m_bThreadBusy;
 
     // Rendering
-    ID3D11Texture2D*            m_pTexture;
-    s32                         m_TextureVRAMID;
-    movie_webm::render_data     m_RenderData;
+    vram_texture                m_VideoTexture;
+    movie_webm::render_data     m_renderData;
     xarray<u8>                  m_RenderBuffer;
 
     // Playback helpers

@@ -187,9 +187,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     {
         RECT Window;
         ::GetWindowRect( ::GetDesktopWindow(), &Window );
-        d3deng_SetWindowHandle( GetSafeHwnd() );
-        d3deng_SetParentHandle( GetSafeHwnd() );
-        d3deng_SetResolution( Window.right - Window.left, Window.bottom - Window.top );
+        eng_SetWindowHandle( GetSafeHwnd() );
+        eng_SetParentWindowHandle( GetSafeHwnd() );
+        eng_SetResolution( Window.right - Window.left, Window.bottom - Window.top );
 
         eng_Init();
 //        theApp.InitGame();
@@ -741,14 +741,11 @@ bool CMainFrame::DoFileOpen( const char* pFileName )
 {
     bool Success = false;
 
-    x_ContextEnableProfiling();
-    x_ContextResetProfile();
-
     //extern xarray<xstring> g_AuditionPackages;
     //g_AuditionPackages.Clear();
 
     {
-        CONTEXT( "CMainFrame::DoFileOpen" );
+        X_PROFILE_SCOPE_CATEGORY( "Context", "CMainFrame::DoFileOpen" );
 
         POSITION pos = m_pProjectDocTemplate->GetFirstDocPosition( );
         if (pos)
@@ -806,9 +803,6 @@ bool CMainFrame::DoFileOpen( const char* pFileName )
             }
         }
     }
-
-    x_ContextSaveProfile( "c:\\Context_Load.txt" );
-    x_ContextDisableProfiling();
 
     return Success;
 }

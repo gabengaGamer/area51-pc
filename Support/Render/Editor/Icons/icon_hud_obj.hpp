@@ -298,5 +298,4 @@ static s16 s_iicon_hud_obj[] =
 };
 
 
-#define DRAW_ICON_HUD_OBJ() draw_icon( NUM_FACETS_ICON_HUD_OBJ, NUM_VERTICES_ICON_HUD_OBJ, s_vicon_hud_obj, s_iicon_hud_obj )
 

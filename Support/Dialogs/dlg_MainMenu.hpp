@@ -11,10 +11,10 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
 #include "dlg_PopUp.hpp"
 //==============================================================================
 //  DEFINES
@@ -28,10 +28,9 @@ enum menu_menu_controls
     IDC_MAIN_MENU_SETTINGS,
     IDC_MAIN_MENU_PROFILES,
     IDC_MAIN_MENU_CREDITS,
-#if defined(TARGET_PC)		
+#if defined(TARGET_DESKTOP)		
     IDC_MAIN_MENU_EXIT,
 #endif
-    IDC_MAIN_MENU_NAV_TEXT,
     IDC_MAIN_MENU_SIGN_IN,
     IDC_MAIN_MENU_SILENT_LOGIN_TEXT,
 };
@@ -63,7 +62,7 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
 protected:
@@ -74,14 +73,14 @@ protected:
     ui_button*          m_pButtonSettings;
     ui_button*          m_pButtonProfiles;
     ui_button*          m_pButtonCredits;
-#if defined(TARGET_PC)		
+#if defined(TARGET_DESKTOP)		
     ui_button*          m_pButtonExit;
 #endif	
-    ui_text*            m_pNavText;
     ui_text*            m_pSilentLoginText;
 
     dlg_popup*          m_PopUp;
     s32                 m_PopUpResult;
+    s32                 m_LogoBitmapID;
 
     s32                 m_CurrHL;
 

@@ -4,17 +4,17 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_ProfileHeadset.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "StateMgr\StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
 
 //=========================================================================
 //  Main Options Dialog
@@ -31,7 +31,6 @@ enum controls
     IDC_HEADSET_TOGGLE_HEADSET,
     IDC_HEADSET_RESTORE_DEFAULTS,
 
-    IDC_HEADSET_NAV_TEXT,
 };
 
 //-------------------------------------------------------------------------
@@ -39,16 +38,15 @@ enum controls
 ui_manager::control_tem ProfileHeadsetControls[] = 
 {
     // Frames.
-    { IDC_HEADSET_TOGGLE_HEADSET_TEXT,  "IDS_OPTIONS_HEADSET_AUDIO",    "text",      40,  40, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_HEADSET_VOLUME_SPEAKER_TEXT,  "IDS_SPEAKER_VOLUME",           "text",      40,  75, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_HEADSET_VOLUME_MIC_TEXT,      "IDS_MIC_VOLUME",               "text",      40, 110, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_HEADSET_TOGGLE_HEADSET_TEXT,  "IDS_OPTIONS_HEADSET_AUDIO",    "text",      40,  40, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_HEADSET_VOLUME_SPEAKER_TEXT,  "IDS_SPEAKER_VOLUME",           "text",      40,  75, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_HEADSET_VOLUME_MIC_TEXT,      "IDS_MIC_VOLUME",               "text",      40, 110, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_HEADSET_TOGGLE_HEADSET,       "IDS_NULL",                     "combo",    290,  40, 140, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_HEADSET_VOLUME_SPEAKER,       "IDS_NULL",                     "slider",   300,  75, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_HEADSET_VOLUME_MIC,           "IDS_NULL",                     "slider",   300, 110, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_HEADSET_TOGGLE_HEADSET,       "IDS_NULL",                     "combo",    290,  40, 140, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_HEADSET_VOLUME_SPEAKER,       "IDS_NULL",                     "slider",   300,  75, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_HEADSET_VOLUME_MIC,           "IDS_NULL",                     "slider",   300, 110, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_HEADSET_RESTORE_DEFAULTS,     "IDS_OPTIONS_RESTORE_DEFAULTS", "button",    40, 285, 220, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_HEADSET_NAV_TEXT,             "IDS_NULL",                     "text",       0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_HEADSET_RESTORE_DEFAULTS,     "IDS_OPTIONS_RESTORE_DEFAULTS", "button",    40, 285, 220, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
 };
 
 //-------------------------------------------------------------------------
@@ -137,7 +135,6 @@ xbool dlg_profile_headset::Create( s32                        UserID,
     m_pToggleHeadsetAudioText	= (ui_text*)    FindChildByID( IDC_HEADSET_TOGGLE_HEADSET_TEXT  );
     m_pVolumeSpeakerText	    = (ui_text*)    FindChildByID( IDC_HEADSET_VOLUME_SPEAKER_TEXT  );
     m_pVolumeMicText	        = (ui_text*)    FindChildByID( IDC_HEADSET_VOLUME_MIC_TEXT      );
-    m_pNavText                  = (ui_text*)    FindChildByID( IDC_HEADSET_NAV_TEXT             );
 
     GotoControl( (ui_control*)m_pToggleHeadsetAudio );
     m_CurrentControl = IDC_HEADSET_TOGGLE_HEADSET;
@@ -156,7 +153,6 @@ xbool dlg_profile_headset::Create( s32                        UserID,
     m_pToggleHeadsetAudioText  ->SetFlag( ui_win::WF_VISIBLE, FALSE );
     m_pVolumeSpeakerText       ->SetFlag( ui_win::WF_VISIBLE, FALSE );
     m_pVolumeMicText           ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText                 ->SetFlag( ui_win::WF_VISIBLE, FALSE );
 
     m_pToggleHeadsetAudioText  ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
     m_pVolumeSpeakerText       ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
@@ -176,9 +172,7 @@ xbool dlg_profile_headset::Create( s32                        UserID,
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
   
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // set default values from pending settings
     global_settings& Settings = g_StateMgr.GetPendingSettings();
@@ -235,9 +229,7 @@ void dlg_profile_headset::Render( s32 ox, s32 oy )
     
     if( m_bRenderBlackout )
     {
-	    s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-        rb.Set( 0, 0, XRes, YRes );
+	    rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
@@ -290,34 +282,33 @@ void dlg_profile_headset::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_profile_headset::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_profile_headset::OnNotify( ui_notification const& Event )
 {
-    (void)pWin;
-    (void)pSender;
-    (void)Command;
-    (void)pData;
+    (void)Event.m_pSender;
+    (void)Event.m_Type;
+    (void)Event.m_pText;
 
     // set default values (should be set from options data)
     global_settings& Settings = g_StateMgr.GetPendingSettings();
    
-    switch (Command)
+    switch (Event.m_Type)
     {    
-        case WN_SLIDER_CHANGE:
+        case ui_notification_type::SliderChanged:
         {
-            if ( pSender == (ui_win*)m_pVolumeSpeaker )
+            if ( Event.m_pSender == (ui_win*)m_pVolumeSpeaker )
             {
                 Settings.SetVolume( VOLUME_SPEAKER, m_pVolumeSpeaker->GetValue() );
             }
-            else if ( pSender == (ui_win*)m_pVolumeMic )
+            else if ( Event.m_pSender == (ui_win*)m_pVolumeMic )
             {
                 Settings.SetVolume( VOLUME_MIC, m_pVolumeMic->GetValue() );
             }
         }
         break;
 
-        case WN_COMBO_SELCHANGE:
+        case ui_notification_type::ComboSelectionChanged:
         {
-            if ( pSender == (ui_win*)m_pToggleHeadsetAudio )
+            if ( Event.m_pSender == (ui_win*)m_pToggleHeadsetAudio )
             {
                 Settings.SetHeadsetMode( (headset_mode)m_pToggleHeadsetAudio->GetSelectedItemData() );
                 Settings.UpdateHeadsetMode( Settings.GetHeadsetMode() );
@@ -329,7 +320,7 @@ void dlg_profile_headset::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, 
 
 //=========================================================================
 
-void dlg_profile_headset::OnPadSelect( ui_win* pWin )
+void dlg_profile_headset::OnAccept( ui_win* pWin )
 {
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
@@ -368,7 +359,7 @@ void dlg_profile_headset::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_profile_headset::OnPadBack( ui_win* pWin )
+void dlg_profile_headset::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -402,10 +393,8 @@ void dlg_profile_headset::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pToggleHeadsetAudioText   ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pVolumeSpeakerText        ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pVolumeMicText            ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pNavText                  ->SetFlag( ui_win::WF_VISIBLE, TRUE );
 
             GotoControl( (ui_control*)m_pToggleHeadsetAudio );
-            m_pToggleHeadsetAudio->SetFlag(WF_HIGHLIGHT, TRUE);        
             g_UiMgr->SetScreenHighlight( m_pToggleHeadsetAudioText->GetPosition() );
         }
     }
@@ -414,7 +403,7 @@ void dlg_profile_headset::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
     // update labels
-    if( m_pToggleHeadsetAudio->GetFlags(WF_HIGHLIGHT) )
+    if( m_pToggleHeadsetAudio->IsFocused() )
     {
         highLight = 0;
         m_pToggleHeadsetAudioText->SetLabelColor( xcolor(255,252,204,255) );
@@ -423,7 +412,7 @@ void dlg_profile_headset::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pToggleHeadsetAudioText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pVolumeSpeaker->GetFlags(WF_HIGHLIGHT) )
+    if( m_pVolumeSpeaker->IsFocused() )
     {
         highLight = 1;
         m_pVolumeSpeakerText->SetLabelColor( xcolor(255,252,204,255) );
@@ -432,7 +421,7 @@ void dlg_profile_headset::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pVolumeSpeakerText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pVolumeMic->GetFlags(WF_HIGHLIGHT) )
+    if( m_pVolumeMic->IsFocused() )
     {
         highLight = 2;
         m_pVolumeMicText->SetLabelColor( xcolor(255,252,204,255) );
@@ -441,7 +430,7 @@ void dlg_profile_headset::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pVolumeMicText->SetLabelColor( xcolor(126,220,60,255) );
     
-    if( m_pRestoreDefaults->GetFlags(WF_HIGHLIGHT) )
+    if( m_pRestoreDefaults->IsFocused() )
     {
         highLight = 3;
         g_UiMgr->SetScreenHighlight( m_pRestoreDefaults->GetPosition() );

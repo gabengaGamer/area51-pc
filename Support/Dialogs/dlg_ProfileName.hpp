@@ -11,10 +11,10 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_dlg_vkeyboard.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_dlg_vkeyboard.hpp"
 
 #include "dlg_PopUp.hpp"
 
@@ -44,9 +44,9 @@ public:
 
     virtual void        Render                  ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadNavigate           ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void        OnPadSelect             ( ui_win* pWin );
-    virtual void        OnPadBack               ( ui_win* pWin );
+    virtual void        OnNavigate           ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void        OnAccept             ( ui_win* pWin );
+    virtual void        OnCancel               ( ui_win* pWin );
     virtual void        OnUpdate                ( ui_win* pWin, f32 DeltaTime );
 
     void                EnableBlackout          ( void )                    { m_bRenderBlackout = TRUE;}
@@ -56,7 +56,6 @@ protected:
 
     ui_dlg_vkeyboard*   m_pVKeyboard;
 
-    ui_text*            m_pNavText;
 
     s32                 m_CurrHL;
 

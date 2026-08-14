@@ -16,7 +16,7 @@
 #include "LocoLipSyncController.hpp"
 #include "LocoEyeController.hpp"
 #include "Locomotion/CharacterPhysics.hpp"
-#include "Inventory\Inventory2.hpp"
+#include "Inventory/Inventory2.hpp"
 
 
 //=========================================================================

@@ -4,14 +4,11 @@
 #include "Objects\LightObject.hpp"
 #include "Objects\Render\RigidInst.hpp"
 #include "Render\Render.hpp"
+#include "Render\RigidColor.hpp"
 #include "..\WorldEditor\WorldEditor.hpp"
 #include "RaycastLighting.hpp"
 #include "ManagerRegistration.hpp"
 #include "..\Apps\Editor\Project.hpp"
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include "3rdParty/DirectX9/d3d9.h"
 
 // APP_EDITOR defines __PLACEMENT_NEW_INLINE, so keep a TU-local placement new
 // for the rigid-geom preload path instead of touching shared x_files headers.
@@ -32,7 +29,7 @@ struct info
 
 static vector3              s_LightDir( 0.3f, 1.0f, 0.8f );
 static raycast_lighting     s_RayCastSystem;
-static void*                s_pPlaySurfaceColors = NULL;
+static u32*                 s_pPlaySurfaceColors = NULL;
 static xcolor               s_ZoneColors[256];
 
 //=============================================================================
@@ -647,7 +644,7 @@ void lighting_LightObjects( platform            Platform,
         u16*                    pIndex;
         rigid_geom::vertex_pc*  pVertex;
         s32                     IndexVOffset;
-        render::hgeom_inst      hInstCache    = HNULL;
+        render::GeometryInstanceHandle      hInstCache    = HNULL;
         u32                     iSubMeshCache = 0xffffffff;
         guid                    GuidCache     = 0;
 
@@ -796,148 +793,34 @@ static void UnloadAllPlatformGeom( const xarray<rigid_geom*>& lRigidGeom )
 
 //=============================================================================
 
-static s32 CopyColorPS2( const rigid_geom::vertex_pc& VertexPC, const rigid_geom::dlist_ps2& DList, u16* pCol )
+static s32 CopyColors( platform Platform, const info& InfoPC, u32* pColBase )
 {
-    s32 nColorWrites = 0;
-    
-    // Look for PC vertex in PS2 display list
-    for( s32 i=0; i<DList.nVerts; i++ )
-    {
-        if( (VertexPC.Pos.X == DList.pPosition[i].GetX()) &&
-            (VertexPC.Pos.Y == DList.pPosition[i].GetY()) &&
-            (VertexPC.Pos.Z == DList.pPosition[i].GetZ()) )
-        {
-            s8 X = (s8)(VertexPC.Normal.X * (0xff>>1));
-            s8 Y = (s8)(VertexPC.Normal.Y * (0xff>>1));
-            s8 Z = (s8)(VertexPC.Normal.Z * (0xff>>1));
-            
-            if( (X == DList.pNormal[ (i*3)+0 ]) &&
-                (Y == DList.pNormal[ (i*3)+1 ]) &&
-                (Z == DList.pNormal[ (i*3)+2 ]) )
-            {
-                u8 R = (VertexPC.Color.R >> 3) & 0x1F;
-                u8 G = (VertexPC.Color.G >> 3) & 0x1F;
-                u8 B = (VertexPC.Color.B >> 3) & 0x1F;
+    ASSERT( (Platform == PLATFORM_PC) || (Platform == PLATFORM_XBOX) );
 
-                // 128 is 1.0 on PS2
-                // R >>= 1;
-                //G >>= 1;
-                //B >>= 1;
-                
-                // Copy color to Color Table
-                pCol[i] = 0x8000 | (B << 10) | (G << 5) | R;
-                
-                nColorWrites++;
-            }
-        }
-    }
-    
-    return( nColorWrites );
-}
-
-//=============================================================================
-
-static s32 CopyColors( platform Platform, const info& InfoPC, const rigid_geom* pRigidGeom, void* pColBase )
-{
     s32 nColors = 0;
-
     rigid_geom& RigidGeomPC = *(rigid_geom*)InfoPC.pGeom;
+    u32*        pColor      = pColBase;
 
-    switch( Platform )
+    for( s32 i = 0; i < RigidGeomPC.m_nSubMeshes; i++ )
     {
-        case PLATFORM_XBOX :
+        geom::submesh&        GeomSubMesh = RigidGeomPC.m_pSubMesh[i];
+        rigid_geom::dlist_pc& DListPC =
+            RigidGeomPC.m_System.pPC[GeomSubMesh.iDList];
+        rigid_geom::vertex_pc* pVertex = DListPC.pVert;
+
+        for( s32 j = 0; j < DListPC.nVerts; j++ )
         {
-            D3DCOLOR* pCol=( D3DCOLOR* )pColBase;
-
-            for( s32 i=0; i<RigidGeomPC.m_nSubMeshes; i++ )
-            {
-                // Get the PC display list
-                geom::submesh&        GeomSubMesh = RigidGeomPC.m_pSubMesh[i];
-                rigid_geom::dlist_pc& DListPC     = RigidGeomPC.m_System.pPC[ GeomSubMesh.iDList ];
-
-                rigid_geom::vertex_pc* pVertex = DListPC.pVert;
-
-                // Loop through all the vertices in the display list
-                for( s32 j=0; j<DListPC.nVerts; j++ )
-                {
-                    xcolor& C = pVertex[j].Color;
-
-                   *pCol = D3DCOLOR_RGBA( C.R,C.G,C.B,C.A );
-                    pCol++;
-                }
-
-                nColors += DListPC.nVerts;
-            }
-            
-            ASSERT( nColors == RigidGeomPC.GetNVerts() );
-            break;
+            const xcolor& Color = pVertex[j].Color;
+            *pColor++ = ((u32)Color.A << 24) |
+                        ((u32)Color.R << 16) |
+                        ((u32)Color.G << 8)  |
+                        ((u32)Color.B);
         }
 
-        case PLATFORM_PS2 :
-        {
-            u16* pCol=( u16* )pColBase;
-
-            const rigid_geom& RigidGeomPS2 = *pRigidGeom;
-        
-            for( s32 i=0; i<RigidGeomPS2.m_nSubMeshes; i++ )
-            {
-                geom::submesh&         GeomSubMesh = RigidGeomPS2.m_pSubMesh[i];
-                rigid_geom::dlist_pc&  DListPC     = RigidGeomPC.m_System.pPC  [ GeomSubMesh.iDList ];
-                rigid_geom::dlist_ps2& DListPS2    = RigidGeomPS2.m_System.pPS2[ GeomSubMesh.iDList ];
-
-                rigid_geom::vertex_pc* pVertex = DListPC.pVert;
-
-                s32 nColorWrites = 0;
-
-                // Copy each PC vertex color into the PS2 color table.
-                for( s32 j=0; j<DListPC.nVerts; j++ )
-                {
-                    nColorWrites += CopyColorPS2( pVertex[j], DListPS2, pCol + nColors );
-                }
-                if( nColorWrites < DListPS2.nVerts )
-                    x_DebugMsg(xfs("Color count < number of vertices:   %s\n",pRigidGeom->GetMeshName( 0 ) ) );
-
-                nColors += ALIGN_16( sizeof( u16 ) * DListPS2.nVerts ) / sizeof( u16 );
-            }
-
-            ASSERT( nColors >= RigidGeomPS2.GetNVerts() );
-            break;
-        }
-
-        case PLATFORM_PC :
-        {
-            u16* pCol=( u16* )pColBase;
-
-            for( s32 i=0; i<RigidGeomPC.m_nSubMeshes; i++ )
-            {
-                // Get the PC display list
-                geom::submesh&        GeomSubMesh = RigidGeomPC.m_pSubMesh[i];
-                rigid_geom::dlist_pc& DListPC     = RigidGeomPC.m_System.pPC[ GeomSubMesh.iDList ];
-
-                rigid_geom::vertex_pc* pVertex = DListPC.pVert;
-            
-                // Loop through all the vertices in the display list
-                for( s32 j=0; j<DListPC.nVerts; j++ )
-                {
-                    xcolor& C = pVertex[j].Color;
-                    
-                    u8 R = (C.R >> 3) & 0x1F;
-                    u8 G = (C.G >> 3) & 0x1F;
-                    u8 B = (C.B >> 3) & 0x1F;
-                    
-                    // Copy color to Color Table
-                    *pCol = (B << 10) | (G << 5) | R;
-                    pCol++;
-                }
-            
-                nColors += DListPC.nVerts;
-            }
-            
-            ASSERT( nColors == RigidGeomPC.GetNVerts() );
-            break;
-        }
+        nColors += DListPC.nVerts;
     }
 
+    ASSERT( nColors == RigidGeomPC.GetNVerts() );
     return( nColors );
 }
 
@@ -1076,6 +959,11 @@ void lighting_ExportTo3DMax( const xarray<guid>& lGuid, const char* pFileName )
 
 void lighting_CreateColorTable( platform Platform, const xarray<guid>& lGuid, const char* pFileName )
 {
+    if( (Platform != PLATFORM_PC) && (Platform != PLATFORM_XBOX) )
+    {
+        x_throw( "Rigid color export supports only 32-bit PC/Xbox colors." );
+    }
+
     xarray<info>        lInfo;
     xarray<rigid_geom*> lRigidGeom;
 
@@ -1102,32 +990,9 @@ void lighting_CreateColorTable( platform Platform, const xarray<guid>& lGuid, co
         lInfo.Append() = Info;
     }
 
-    // Allocate memory for the color table
-    color_info RigidColor;
-    {
-        RigidColor.SetCount( TotalColors );
-        switch( Platform )
-        {
-            case PLATFORM_XBOX:
-                RigidColor.Set( new u32[ TotalColors ] );
-                break;
-            case PLATFORM_PS2:
-            case PLATFORM_PC:
-                RigidColor.Set( new u16[ TotalColors ] );
-                break;
-
-            default:
-                ASSERT(0);
-                break;                    
-        }
-    }
-
-    void* pCol = RigidColor;
-    if( ! pCol )
-    {
-        UnloadAllPlatformGeom( lRigidGeom );
-        x_throw( "Out of memory" );
-    }
+    RigidColorData RigidColor;
+    RigidColor.Colors.SetCount( TotalColors );
+    u32* pCol = RigidColor.Colors.GetPtr();
 
     s32 iColor = 0;
     // Build the color table
@@ -1136,60 +1001,36 @@ void lighting_CreateColorTable( platform Platform, const xarray<guid>& lGuid, co
         info& Info  = lInfo[i];
         s32 nColors = 0;
 
-        // PC Version doesnt have any loaded Geom's for other platforms
-        if( lRigidGeom.GetCount  ( ))
-            nColors  = CopyColors( Platform,
-                                  Info,
-                                  lRigidGeom[i],
-                                  pCol );
-        else
-            nColors = CopyColors( Platform,
-                                  Info,
-                                  NULL,
-                                  pCol );
+        nColors = CopyColors( Platform, Info, pCol );
 
         // NULL because we're just building it, and this is only a temp ptr
         Info.pRigidInst->SetColorTable( NULL, iColor, nColors );
 
         iColor += nColors;
-
-        switch( Platform )
-        {
-            case PLATFORM_XBOX:
-                pCol = ((u32*)RigidColor)+iColor;
-                break;
-            case PLATFORM_PS2:
-            case PLATFORM_PC:
-                pCol = ((u16*)RigidColor)+iColor;
-                break;
-        }
+        pCol = RigidColor.Colors.GetPtr() + iColor;
     }
 
-    // Save the Rigid Color Table
-    fileio File;
-    File.Save( pFileName, RigidColor, FALSE );
-    
-    // Free up any allocated memory
-    UnloadAllPlatformGeom( lRigidGeom );
+    ASSERT( iColor == TotalColors );
 
-    switch( Platform )
+    xstring Error;
+    if( !rigid_color_file::Save( pFileName, RigidColor, Error ) )
     {
-        case PLATFORM_XBOX:
-            ASSERT( pCol == ((u32*)RigidColor)+TotalColors );
-            delete[](u32*)RigidColor;
-            break;
-        case PLATFORM_PS2:
-        case PLATFORM_PC:
-            ASSERT( pCol == ((u16*)RigidColor)+TotalColors );
-            delete[](u16*)RigidColor;
-            break;
+        UnloadAllPlatformGeom( lRigidGeom );
+        x_throw( (const char*)Error );
     }
+
+    UnloadAllPlatformGeom( lRigidGeom );
 }
 
 //=============================================================================
 
 void lighting_CreatePlaySurfaceColors( platform Platform, const xarray<guid>& lGuid )
 {
+    if( (Platform != PLATFORM_PC) && (Platform != PLATFORM_XBOX) )
+    {
+        x_throw( "Play-surface rigid colors support only 32-bit PC/Xbox colors." );
+    }
+
     delete []s_pPlaySurfaceColors;
     s_pPlaySurfaceColors = NULL;
 
@@ -1222,34 +1063,9 @@ void lighting_CreatePlaySurfaceColors( platform Platform, const xarray<guid>& lG
         x_catch_display;
     }
 
-    // Allocate memory for the color table
-    color_info RigidColor;
-    {
-        RigidColor.SetCount( TotalColors );
-        switch( Platform )
-        {
-            case PLATFORM_XBOX:
-                RigidColor.Set( new u32[ TotalColors ] );
-                x_memset( RigidColor, 0, TotalColors * sizeof(u32)  );
-                break;
-            case PLATFORM_PS2:
-            case PLATFORM_PC:
-                RigidColor.Set( new u16[ TotalColors ] );
-                x_memset( RigidColor, 0, TotalColors * sizeof(u16)  );
-                break;
-
-            default:
-                ASSERT(0);
-        }
-    }
-
-    s_pPlaySurfaceColors = RigidColor;
-    void* pCol = RigidColor;
-    if( ! pCol )
-    {
-        UnloadAllPlatformGeom( lRigidGeom );
-        x_throw( "Out of memory" );
-    }
+    s_pPlaySurfaceColors = new u32[TotalColors];
+    x_memset( s_pPlaySurfaceColors, 0, TotalColors * sizeof(u32) );
+    u32* pCol = s_pPlaySurfaceColors;
 
     s32 iColor = 0;
     
@@ -1259,44 +1075,18 @@ void lighting_CreatePlaySurfaceColors( platform Platform, const xarray<guid>& lG
         info& Info  = lInfo[i];
         s32 nColors = 0;
 
-        // PC Version doesnt have any loaded Geom's for other platforms
-        if( lRigidGeom.GetCount() == 0 )
-        {
-            nColors = CopyColors( Platform, Info, NULL, pCol );
-        }
-        else
-        {
-            nColors = CopyColors( Platform, Info, lRigidGeom[i], pCol );
-        }
+        nColors = CopyColors( Platform, Info, pCol );
         
         // s_pPlaySurfaceColors is only temporary, we'll need to clear the
         // color table later to be safe...
         Info.pRigidInst->SetColorTable( s_pPlaySurfaceColors, iColor, nColors );
         
         iColor += nColors;
-
-        switch( Platform )
-        {
-            case PLATFORM_XBOX:
-                pCol = ((u32*)RigidColor)+iColor;
-                break;
-            case PLATFORM_PS2:
-            case PLATFORM_PC:
-                pCol = ((u16*)RigidColor)+iColor;
-                break;
-        }
+        pCol = s_pPlaySurfaceColors + iColor;
     }
 
-    switch( Platform )
-    {
-        case PLATFORM_XBOX:
-            ASSERT( pCol == ((u32*)RigidColor)+TotalColors );
-            break;
-        case PLATFORM_PS2:
-        case PLATFORM_PC:
-            ASSERT( pCol == ((u16*)RigidColor)+TotalColors );
-            break;
-    }
+    ASSERT( pCol == s_pPlaySurfaceColors + TotalColors );
+    UnloadAllPlatformGeom( lRigidGeom );
 }
 
 //=============================================================================

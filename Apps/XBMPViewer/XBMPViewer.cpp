@@ -558,36 +558,36 @@ void XBMPViewer::OnShowAboutQt(void)
 void XBMPViewer::LoadBitmap(const QString& Path)
 {
     m_HasBitmap = FALSE;
-    m_Bitmap.Kill();
+    m_bitmap.Kill();
     m_pMipSlider->setRange(0, 0);
     m_pMipSlider->setEnabled(FALSE);
     m_pMipSlider->setValue(0);
 
     const QByteArray PathBytes = Path.toLocal8Bit();
-    if (!auxbmp_Load(m_Bitmap, PathBytes.constData()))
+    if (!auxbmp_Load(m_bitmap, PathBytes.constData()))
     {
         x_DebugMsg("xbmpViewer: failed to load bitmap: %s\n", PathBytes.constData());
         return;
     }
 
-    if (m_Bitmap.GetFlags() & xbitmap::FLAG_GCN_DATA_SWIZZLED)
-        m_Bitmap.GCNUnswizzleData();
+    if (m_bitmap.GetFlags() & xbitmap::FLAG_GCN_DATA_SWIZZLED)
+        m_bitmap.GCNUnswizzleData();
 
-    switch (m_Bitmap.GetFormat())
+    switch (m_bitmap.GetFormat())
     {
     case xbitmap::FMT_DXT1:
     case xbitmap::FMT_DXT3:
     case xbitmap::FMT_DXT5:
-        auxbmp_Decompress(m_Bitmap);
+        auxbmp_Decompress(m_bitmap);
         break;
     default:
         break;
     }
 
     if (m_SelectedGameType == "The Hobbit")
-        m_Bitmap.SetFormat(RemapFormatForHobbit(m_Bitmap.GetFormat()));
+        m_bitmap.SetFormat(RemapFormatForHobbit(m_bitmap.GetFormat()));
 
-    s32 MipCount = m_Bitmap.GetNMips();
+    s32 MipCount = m_bitmap.GetNMips();
     if (MipCount < 0)
         MipCount = 0;
 
@@ -611,12 +611,12 @@ void XBMPViewer::UpdatePreview(void)
     }
 
     s32 Mip = m_pMipSlider->value();
-    const s32 MipCount = m_Bitmap.GetNMips();
+    const s32 MipCount = m_bitmap.GetNMips();
     if (MipCount >= 0 && Mip > MipCount)
         Mip = MipCount;
 
-    QImage ColorImage = BuildPreviewImage(m_Bitmap, Mip, FALSE);
-    QImage AlphaImage = BuildPreviewImage(m_Bitmap, Mip, TRUE);
+    QImage ColorImage = BuildPreviewImage(m_bitmap, Mip, FALSE);
+    QImage AlphaImage = BuildPreviewImage(m_bitmap, Mip, TRUE);
 
     m_pPreviewPanel->GetColorWidget()->SetImage(ColorImage);
     m_pPreviewPanel->GetAlphaWidget()->SetImage(AlphaImage);

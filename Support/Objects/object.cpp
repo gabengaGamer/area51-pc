@@ -9,64 +9,25 @@
 //==============================================================================
  
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Entropy.hpp"
-#include "obj_mgr\Obj_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "object.hpp"
-#include "PainMgr\Pain.hpp"
+#include "PainMgr/Pain.hpp"
 #include "Event.hpp"
-#include "Parsing\TextIn.hpp"
-#include "e_Draw.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
-#include "Objects\Interpolation\InterpolationMath.hpp"
+#include "Parsing/TextIn.hpp"
 
 #ifdef X_EDITOR
-#include "..\Apps\WorldEditor\WorldEditor.hpp"
-#include "TriggerEx\Affecters\object_affecter.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "Globals\Global_Variables_Manager.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Templatemgr\TemplateMgr.hpp"
+#include "../Apps/WorldEditor/WorldEditor.hpp"
+#include "TriggerEx/Affecters/object_affecter.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Globals/Global_Variables_Manager.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
 #endif
 
-#include "Render\RenderInst.hpp"
-#include "Gamelib\binLevel.hpp"
-
-//==============================================================================
-//  DEFINES
-//==============================================================================
-
-struct object_render_interp_state
-{
-    guid    Guid;
-    matrix4 PrevL2W;
-    matrix4 CurrL2W;
-    matrix4 BackupL2W;
-    xbool   Valid;
-    xbool   Active;
-    xbool   Changed;
-    s32     QueueID;
-};
-
-struct object_render_update_entry
-{
-    slot_id SlotID;
-    guid    Guid;
-};
-
-static object_render_interp_state s_ObjectRenderInterp[ obj_mgr::MAX_OBJECTS ];
-static object_render_update_entry s_ObjectRenderUpdate[ obj_mgr::MAX_OBJECTS ];
-static s32                        s_nObjectRenderUpdates = 0;
-static s32                        s_ObjectRenderQueueID  = 0;
-static interpolation_mgr::provider s_ObjectInterpolationProvider( object::CaptureRenderInterpStates,
-                                                                  object::UpdateRenderInterpStates,
-                                                                  object::ClearRenderInterpStates,
-                                                                  interpolation_mgr::CLEAR_STAGE_END_FRAME,
-                                                                  1000 );
-static interpolation_mgr::provider s_ObjectPerViewInterpolationProvider( NULL,
-                                                                         NULL,
-                                                                         object::ClearRenderInterpStatesPerView,
-                                                                         interpolation_mgr::CLEAR_STAGE_PER_VIEW,
-                                                                         1000 );
+#include "Render/RenderInst.hpp"
+#include "GameLib/BinLevel.hpp"
 
 //==============================================================================
 //  OBJECT FUNCTIONS
@@ -124,250 +85,6 @@ object::~object( void )
         // TODO: Ask the string manager to nuke this string
         // m_hCustomName        
     }
-}
-
-//==============================================================================
-
-static matrix4 InterpObjectL2W( const matrix4& PrevL2W, const matrix4& CurrL2W, f32 T )
-{
-    vector3 PrevScale;
-    vector3 CurrScale;
-    quaternion PrevRot;
-    quaternion CurrRot;
-    vector3 PrevPos;
-    vector3 CurrPos;
-
-    matrix4 PrevMatrix = PrevL2W;
-    matrix4 CurrMatrix = CurrL2W;
-
-    PrevMatrix.DecomposeSRT( PrevScale, PrevRot, PrevPos );
-    CurrMatrix.DecomposeSRT( CurrScale, CurrRot, CurrPos );
-
-    matrix4 L2W;
-    L2W.Setup( InterpVector  ( PrevScale, CurrScale, T ),
-               Blend         ( PrevRot,   CurrRot,   T ),
-               InterpVector  ( PrevPos,   CurrPos,   T ) );
-    return L2W;
-}
-
-//==============================================================================
-
-static object_render_interp_state& GetObjectRenderInterpState( const object& Object )
-{
-    const s32 Slot = Object.GetSlot();
-    ASSERT( IN_RANGE( 0, Slot, obj_mgr::MAX_OBJECTS-1 ) );
-    return s_ObjectRenderInterp[ Slot ];
-}
-
-//==============================================================================
-
-void object::RegisterRenderInterpUpdate( void )
-{
-    if( !(GetAttrBits() & object::ATTR_RENDERABLE) ||
-        ( GetAttrBits() & object::ATTR_DESTROY    ) )
-    {
-        return;
-    }
-
-    object_render_interp_state& State = GetObjectRenderInterpState( *this );
-    if( State.QueueID == s_ObjectRenderQueueID )
-        return;
-
-    ASSERT( s_nObjectRenderUpdates < obj_mgr::MAX_OBJECTS );
-    State.QueueID = s_ObjectRenderQueueID;
-
-    s_ObjectRenderUpdate[ s_nObjectRenderUpdates ].SlotID = m_SlotID;
-    s_ObjectRenderUpdate[ s_nObjectRenderUpdates ].Guid   = m_Guid;
-    s_nObjectRenderUpdates++;
-}
-
-//==============================================================================
-
-void object::CaptureRenderInterpStates( void )
-{
-    s_nObjectRenderUpdates = 0;
-    s_ObjectRenderQueueID++;
-
-    for( s32 Type = object::TYPE_NULL + 1; Type < object::TYPE_END_OF_LIST; Type++ )
-    {
-        slot_id SlotID = g_ObjMgr.GetFirst( (object::type)Type );
-        while( SlotID != SLOT_NULL )
-        {
-            object* pObject = g_ObjMgr.GetObjectBySlot( SlotID );
-            slot_id NextSlotID = g_ObjMgr.GetNext( SlotID );
-
-            if( pObject )
-                pObject->CaptureRenderInterpState();
-
-            SlotID = NextSlotID;
-        }
-    }
-}
-
-//==============================================================================
-
-void object::UpdateRenderInterpStates( f32 Alpha )
-{
-    for( s32 i = 0; i < s_nObjectRenderUpdates; i++ )
-    {
-        object* pObject = g_ObjMgr.GetObjectBySlot( s_ObjectRenderUpdate[i].SlotID );
-
-        if( pObject && (pObject->GetGuid() == s_ObjectRenderUpdate[i].Guid) )
-            pObject->UpdateRenderInterpState( Alpha );
-    }
-}
-
-//==============================================================================
-
-void object::ClearRenderInterpStates( void )
-{
-    for( s32 i = 0; i < s_nObjectRenderUpdates; i++ )
-    {
-        object* pObject = g_ObjMgr.GetObjectBySlot( s_ObjectRenderUpdate[i].SlotID );
-
-        if( pObject && (pObject->GetGuid() == s_ObjectRenderUpdate[i].Guid) )
-            pObject->ClearRenderInterpState();
-    }
-}
-
-//==============================================================================
-
-void object::ClearRenderInterpStatesPerView( void )
-{
-    slot_id SlotID = g_ObjMgr.GetFirst( object::TYPE_PLAYER );
-    while( SlotID != SLOT_NULL )
-    {
-        object* pObject = g_ObjMgr.GetObjectBySlot( SlotID );
-        slot_id NextSlotID = g_ObjMgr.GetNext( SlotID );
-
-        if( pObject )
-            pObject->ClearRenderInterpStatePerView();
-
-        SlotID = NextSlotID;
-    }
-}
-
-//==============================================================================
-
-void object::CaptureRenderInterpState( void )
-{
-    object_render_interp_state& State = GetObjectRenderInterpState( *this );
-
-    if( State.Guid != GetGuid() )
-    {
-        State.Guid   = GetGuid();
-        State.Valid  = FALSE;
-        State.Active = FALSE;
-        State.Changed = FALSE;
-        State.QueueID = 0;
-    }
-
-    if( !(GetAttrBits() & object::ATTR_RENDERABLE) ||
-        ( GetAttrBits() & object::ATTR_DESTROY    ) )
-    {
-        State.Valid   = FALSE;
-        State.Active  = FALSE;
-        State.Changed = FALSE;
-        return;
-    }
-
-    const matrix4& L2W = GetL2W();
-
-    if( !State.Valid )
-    {
-        State.PrevL2W = L2W;
-        State.CurrL2W = L2W;
-        State.Valid   = TRUE;
-        State.Changed = FALSE;
-        return;
-    }
-
-    State.PrevL2W = State.CurrL2W;
-    State.CurrL2W = L2W;
-    State.Changed = (x_memcmp( &State.PrevL2W, &State.CurrL2W, sizeof( matrix4 ) ) != 0);
-
-    if( ShouldSnapInterpL2W( State.PrevL2W, State.CurrL2W ) )
-    {
-        State.PrevL2W = State.CurrL2W;
-        State.Changed = FALSE;
-    }
-
-    if( State.Changed )
-        RegisterRenderInterpUpdate();
-}
-
-//==============================================================================
-
-void object::UpdateRenderInterpState( f32 Alpha )
-{
-    object_render_interp_state& State = GetObjectRenderInterpState( *this );
-
-    if( State.Active )
-        object::ClearRenderInterpState();
-
-    if( !State.Valid ||
-        !State.Changed ||
-        !(GetAttrBits() & object::ATTR_RENDERABLE) ||
-        ( GetAttrBits() & object::ATTR_DESTROY    ) )
-    {
-        return;
-    }
-
-    Alpha = ClampInterpAlpha( Alpha );
-
-    State.BackupL2W = m_L2W;
-    m_L2W           = InterpObjectL2W( State.PrevL2W, State.CurrL2W, Alpha );
-    State.Active    = TRUE;
-
-    m_FlagBits |= FLAG_DIRTY_TRANSFORM;
-    UpdateTransform();
-}
-
-//==============================================================================
-
-void object::ClearRenderInterpState( void )
-{
-    object_render_interp_state& State = GetObjectRenderInterpState( *this );
-
-    if( !State.Active )
-        return;
-
-    m_L2W        = State.BackupL2W;
-    State.Active = FALSE;
-
-    m_FlagBits |= FLAG_DIRTY_TRANSFORM;
-    UpdateTransform();
-}
-
-//==============================================================================
-
-void object::InvalidateRenderInterpState( void )
-{
-    object::ClearRenderInterpState();
-
-    object_render_interp_state& State = GetObjectRenderInterpState( *this );
-    State.Guid    = GetGuid();
-    State.Valid   = FALSE;
-    State.Active  = FALSE;
-    State.Changed = FALSE;
-}
-
-//==============================================================================
-
-void object::SnapRenderInterpState( void )
-{
-    object::ClearRenderInterpState();
-
-    object_render_interp_state& State = GetObjectRenderInterpState( *this );
-    const matrix4& L2W = GetL2W();
-
-    State.Guid      = GetGuid();
-    State.PrevL2W   = L2W;
-    State.CurrL2W   = L2W;
-    State.BackupL2W = L2W;
-    State.Valid     = TRUE;
-    State.Active    = FALSE;
-    State.Changed   = FALSE;
 }
 
 //==============================================================================
@@ -464,9 +181,8 @@ void  object::OnActivate( xbool Flag )
         m_AttrBits &= ~ATTR_NEEDS_LOGIC_TIME;
     }
 
-    InvalidateRenderInterpState();
 }
-   
+
 //==============================================================================
 void object::OnKill( void )
 {  
@@ -478,8 +194,8 @@ void object::OnKill( void )
 #ifndef X_RETAIL
 void object::OnDebugRender( void )
 {
-    draw_Marker( m_L2W.GetTranslation(), XCOLOR_GREEN );
-    draw_BBox  ( GetBBox() );
+    render::debug::Marker( m_L2W.GetTranslation(), XCOLOR_GREEN );
+    render::debug::Box  ( GetBBox() );
 }
 #endif
 
@@ -546,11 +262,11 @@ void object::OnColRender( xbool bRenderHigh )
 {
     if( bRenderHigh )
     {
-        draw_BBox( GetBBox(), XCOLOR_GREEN );
+        render::debug::Box( GetBBox(), XCOLOR_GREEN );
     }
     else
     {
-        draw_BBox( GetBBox(), XCOLOR_BLUE );
+        render::debug::Box( GetBBox(), XCOLOR_BLUE );
     }
 }   
 #endif
@@ -1496,6 +1212,7 @@ void object::OnAttachedMove(       s32      iAttachPt,
 
 void object::OnRenderShadowCast( u64 ProjMask )
 {
+    // Lookup geometry	
     render_inst* pRenderInst = GetRenderInstPtr();
     if( !pRenderInst )
         return;
@@ -1514,15 +1231,13 @@ void object::OnRenderShadowCast( u64 ProjMask )
         pMatrices = pL2W;
     }
 
+    // Setup render flags
     const u32 Flags = NeedsClipping() ? render::CLIPPED : 0;
-    pRenderInst->RenderShadowCast( pMatrices, Flags, ProjMask );
-}
-
-//=============================================================================
-
-void object::OnRenderShadowReceive( u64 ProjMask )
-{
-    (void)ProjMask;
+	
+	// Render
+    pRenderInst->RenderShadowCast( pMatrices, 
+	                               Flags, 
+								   ProjMask );
 }
 
 //=============================================================================
@@ -1623,4 +1338,3 @@ void object::OnAddedToGroup( guid gGroup )
 {
     (void)gGroup;
 }
-

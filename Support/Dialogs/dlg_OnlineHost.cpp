@@ -4,26 +4,26 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_textbox.hpp"
-#include "ui\ui_edit.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_textbox.hpp"
+#include "UI/ui_edit.hpp"
 
 #include "dlg_OnlineHost.hpp"
-#include "dlg_popup.hpp"
+#include "dlg_PopUp.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Parsing/textin.hpp"
-#include "StateMgr/mapList.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Parsing/TextIn.hpp"
+#include "StateMgr/MapList.hpp"
 #include "Configuration/GameConfig.hpp"
 
 //=========================================================================
@@ -45,7 +45,6 @@ enum controls
     IDC_ONLINE_HOST_VOICE_SELECTOR,
     IDC_ONLINE_HOST_PRIVATE_SELECTOR,
     IDC_ONLINE_HOST_CONTINUE,
-    IDC_ONLINE_HOST_NAV_TEXT,
 };
 
 //-------------------------------------------------------------------------
@@ -53,23 +52,22 @@ enum controls
 ui_manager::control_tem OnlineHostControls[] = 
 {
     // Frames.
-    { IDC_ONLINE_HOST_SERVER_NAME,          "IDS_HOST_SERVER_NAME",     "text",    40,  40, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_PASSWORD,             "IDS_HOST_PASSWORD",        "text",    40,  75, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_GAME_TYPE,            "IDS_HOST_GAME_TYPE",       "text",    40, 110, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_MUTATION,             "IDS_HOST_MUTATION",        "text",    40, 145, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_VOICE,                "IDS_HOST_VOICE_ENABLED",   "text",    40, 180, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_PRIVATE,              "IDS_HOST_PRIVATE_SERVER",  "text",    40, 215, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_ONLINE_HOST_SERVER_NAME,          "IDS_HOST_SERVER_NAME",     "text",    40,  40, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_PASSWORD,             "IDS_HOST_PASSWORD",        "text",    40,  75, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_GAME_TYPE,            "IDS_HOST_GAME_TYPE",       "text",    40, 110, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_MUTATION,             "IDS_HOST_MUTATION",        "text",    40, 145, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_VOICE,                "IDS_HOST_VOICE_ENABLED",   "text",    40, 180, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_PRIVATE,              "IDS_HOST_PRIVATE_SERVER",  "text",    40, 215, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_ONLINE_HOST_USER_SERVER,          "IDS_HOST_SERVER_NAME",     "edit",   240,  40, 210, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_USER_PASSWORD,        "IDS_HOST_PASSWORD",        "edit",   240,  75, 210, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_TYPE_SELECTOR,        "IDS_NULL",                 "combo",  230, 110, 230, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_MUTATION_SELECTOR,    "IDS_NULL",                 "combo",  230, 145, 230, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_VOICE_SELECTOR,       "IDS_NULL",                 "combo",  230, 180, 230, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_PRIVATE_SELECTOR,     "IDS_NULL",                 "combo",  230, 215, 230, 40,  0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_ONLINE_HOST_USER_SERVER,          "IDS_HOST_SERVER_NAME",     "edit",   240,  40, 210, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_USER_PASSWORD,        "IDS_HOST_PASSWORD",        "edit",   240,  75, 210, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_TYPE_SELECTOR,        "IDS_NULL",                 "combo",  230, 110, 230, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_MUTATION_SELECTOR,    "IDS_NULL",                 "combo",  230, 145, 230, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_VOICE_SELECTOR,       "IDS_NULL",                 "combo",  230, 180, 230, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_PRIVATE_SELECTOR,     "IDS_NULL",                 "combo",  230, 215, 230, 40,  0, 5, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_ONLINE_HOST_CONTINUE,             "IDS_HOST_CONTINUE",        "button",  40, 285, 220, 40,  0, 6, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_ONLINE_HOST_CONTINUE,             "IDS_HOST_CONTINUE",        "button",  40, 285, 220, 40,  0, 6, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_ONLINE_HOST_NAV_TEXT,             "IDS_NULL",                 "text",     0,   0,   0,  0,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -152,7 +150,6 @@ xbool dlg_online_host::Create( s32                        UserID,
     m_pMutationText     = (ui_text*)FindChildByID( IDC_ONLINE_HOST_MUTATION    );
     m_pVoiceText        = (ui_text*)FindChildByID( IDC_ONLINE_HOST_VOICE       );
     m_pPrivateText      = (ui_text*)FindChildByID( IDC_ONLINE_HOST_PRIVATE     );
-    m_pNavText          = (ui_text*)FindChildByID( IDC_ONLINE_HOST_NAV_TEXT    );
 
     m_pUserServerEdit   = (ui_edit*)FindChildByID( IDC_ONLINE_HOST_USER_SERVER   );
     m_pUserPasswordEdit = (ui_edit*)FindChildByID( IDC_ONLINE_HOST_USER_PASSWORD );
@@ -175,10 +172,7 @@ xbool dlg_online_host::Create( s32                        UserID,
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);    
+    SetNavText( navText );
 
     // set up edit boxes
     m_pUserServerEdit   ->SetBufferSize( NET_SERVER_NAME_LENGTH );
@@ -229,7 +223,7 @@ xbool dlg_online_host::Create( s32                        UserID,
     
     // set initial highlight/control
     m_CurrHL = 5;
-    m_pContinueButton->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pContinueButton->SetActive( TRUE );
     GotoControl( (ui_control*)m_pContinueButton );
 
     // get pending settings
@@ -278,7 +272,7 @@ xbool dlg_online_host::Create( s32                        UserID,
         m_pVoiceSelect->SetSelection( 1 );
 
     // initialize private server selection
-    if( Settings.m_Flags & SERVER_IS_PRIVATE )    
+    if( Settings.m_Flags & SERVER_IS_PRIVATE )
         m_pPrivateSelect->SetSelection( 0 );
     else
         m_pPrivateSelect->SetSelection( 1 );
@@ -319,9 +313,7 @@ void dlg_online_host::Render( s32 ox, s32 oy )
     
     if( m_bRenderBlackout )
     {
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-        rb.Set( 0, 0, XRes, YRes );
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
             xcolor(0,0,0,180),
             xcolor(0,0,0,180),
@@ -374,7 +366,7 @@ void dlg_online_host::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_online_host::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_online_host::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
     //s32 OriginalSelection;
 
@@ -384,26 +376,26 @@ void dlg_online_host::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Re
         {
             switch( Code )
             {
-                case ui_manager::NAV_LEFT:
-                case ui_manager::NAV_RIGHT:
+                case ui_navigation::Left:
+                case ui_navigation::Right:
                     ResetMapCycle();                   
                     InitializeMutationModes();
                     break;
                 default:
-                    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+                    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
                     break;
             }
         }
         else
         {
-            ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+            ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
         }
     }
 }
 
 //=========================================================================
 
-void dlg_online_host::OnPadBack( ui_win* pWin )
+void dlg_online_host::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -416,7 +408,7 @@ void dlg_online_host::OnPadBack( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_online_host::OnPadSelect( ui_win* pWin )
+void dlg_online_host::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -548,10 +540,8 @@ void dlg_online_host::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pVoiceSelect      ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pPrivateSelect    ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pContinueButton   ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pNavText          ->SetFlag( ui_win::WF_VISIBLE, TRUE );
     
             GotoControl( (ui_control*)m_pContinueButton );
-            m_pContinueButton->SetFlag(WF_HIGHLIGHT, TRUE);        
             g_UiMgr->SetScreenHighlight( m_pContinueButton->GetPosition() );
         }
     }
@@ -560,7 +550,7 @@ void dlg_online_host::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
     // update labels
-    if( m_pUserServerEdit->GetFlags(WF_HIGHLIGHT) )
+    if( m_pUserServerEdit->IsFocused() )
     {
         highLight = 0;
         m_pServerNameText->SetLabelColor( xcolor(255,252,204,255) );
@@ -569,7 +559,7 @@ void dlg_online_host::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pServerNameText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pUserPasswordEdit->GetFlags(WF_HIGHLIGHT) )
+    if( m_pUserPasswordEdit->IsFocused() )
     {
         highLight = 1;
         m_pPasswordText->SetLabelColor( xcolor(255,252,204,255) );
@@ -578,7 +568,7 @@ void dlg_online_host::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pPasswordText->SetLabelColor( xcolor(126,220,60,255) );
     
-    if( m_pGameTypeSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pGameTypeSelect->IsFocused() )
     {
         highLight = 2;
         m_pGameTypeText->SetLabelColor( xcolor(255,252,204,255) );
@@ -587,7 +577,7 @@ void dlg_online_host::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pGameTypeText->SetLabelColor( xcolor(126,220,60,255) );
     
-    if( m_pMutationSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pMutationSelect->IsFocused() )
     {
         highLight = 3;
         m_pMutationText->SetLabelColor( xcolor(255,252,204,255) );
@@ -596,7 +586,7 @@ void dlg_online_host::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pMutationText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pVoiceSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pVoiceSelect->IsFocused() )
     {
         highLight = 4;
         m_pVoiceText->SetLabelColor( xcolor(255,252,204,255) );
@@ -605,7 +595,7 @@ void dlg_online_host::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pVoiceText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pPrivateSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pPrivateSelect->IsFocused() )
     {
         highLight = 5;
         m_pPrivateText->SetLabelColor( xcolor(255,252,204,255) );
@@ -614,7 +604,7 @@ void dlg_online_host::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pPrivateText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pContinueButton->GetFlags(WF_HIGHLIGHT) )
+    if( m_pContinueButton->IsFocused() )
     {
         highLight = 6;
         g_UiMgr->SetScreenHighlight( m_pContinueButton->GetPosition() );

@@ -102,7 +102,7 @@ void CView3D::OnPaint()
     m_bDirtyView = FALSE;
 
     // No need to call the parent this is the top most
-    d3deng_UpdateDisplayWindow( GetSafeHwnd() );
+    eng_UpdateDisplayWindow( GetSafeHwnd() );
 
     eng_MaximizeViewport( m_View );
     eng_SetView         ( m_View );

@@ -9,9 +9,8 @@
 //==============================================================================
 
 #include "StringMgr.hpp"
-#include "e_Virtual.hpp"
 #include "Entropy.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 //==============================================================================
 //  STORAGE
@@ -65,6 +64,14 @@ void* binstring_loader::PreLoad( X_FILE*& Fp, const char* pFileName )
     const char* LocalizedName = g_StringTableMgr.GetLocalizedName( pFileName, CharString );
 
     Fp = x_fopen( LocalizedName, "rb" );
+
+    if( !Fp && (x_GetLocale() != XL_LANG_ENGLISH) )
+    {
+        LocalizedName = g_StringTableMgr.GetLocalizedName( pFileName,
+                                                           XL_LANG_ENGLISH,
+                                                           CharString );
+        Fp = x_fopen( LocalizedName, "rb" );
+    }
 
     if( Fp )
     {
@@ -147,7 +154,8 @@ xbool   string_mgr::m_Initialized = FALSE;
 
 string_table::string_table( void )
 {
-    m_pTableName    = NULL;
+    m_TableName[0]  = 0;
+    m_SourceName[0] = 0;
     m_pData         = NULL;
     m_nStrings      = 0;
     m_Version       = 0;
@@ -170,13 +178,24 @@ string_table::~string_table( void )
         m_pStrings  = NULL;
 
         LOG_MESSAGE( "string_table::~string_table",
-                     "Unloaded: %s", m_pTableName );
+                     "Unloaded: %s", m_TableName );
     }
 }
 
 //==============================================================================
 
 const char* string_mgr::GetLocalizedName( const char* pFileName, char_string& LocalizedName ) const
+{
+    return GetLocalizedName( pFileName,
+                             x_GetLocale(),
+                             LocalizedName );
+}
+
+//==============================================================================
+
+const char* string_mgr::GetLocalizedName( const char* pFileName,
+                                          x_language  Language,
+                                          char_string& LocalizedName ) const
 {
     char pDrive[X_MAX_DRIVE], pPath[X_MAX_PATH], pName[X_MAX_FNAME], pExt[X_MAX_EXT];
     ASSERT( pFileName );
@@ -186,7 +205,13 @@ const char* string_mgr::GetLocalizedName( const char* pFileName, char_string& Lo
     ASSERTS( x_strlen(pName) < (s32)sizeof( LocalizedName ), xfs( "Inc char_string to %d chars", x_strlen( pName ) ) );
 
     char* Name = LocalizedName.m_String;
-    x_sprintf(Name, "%s%s%s%s%s", pDrive, pPath, x_GetLocaleString(), pName + 3, pExt);
+    x_sprintf( Name,
+               "%s%s%s%s%s",
+               pDrive,
+               pPath,
+               x_GetLocaleString( Language ),
+               pName + 3,
+               pExt );
 
 #if defined(X_DEBUG) && defined(ctetrick)
     if( x_strcmp(pFileName, Name) != 0 )
@@ -198,12 +223,16 @@ const char* string_mgr::GetLocalizedName( const char* pFileName, char_string& Lo
 
 //==============================================================================
 
-xbool string_table::Load( const char* pTableName, const char* pFileName )
+xbool string_table::Load( const char* pTableName,
+                          const char* pFileName,
+                          x_language  Language )
 {
     xbool Success = FALSE;
 
     string_mgr::char_string CharString;
-    const char* LocalizedName = g_StringTableMgr.GetLocalizedName( pFileName, CharString );
+    const char* LocalizedName = g_StringTableMgr.GetLocalizedName( pFileName,
+                                                                   Language,
+                                                                   CharString );
 
     X_FILE* pFile = x_fopen( LocalizedName, "rb" );
     if( pFile )
@@ -289,7 +318,10 @@ xbool string_table::Load( const char* pTableName, const char* pFileName )
             m_pIndex   = (s32*)(m_pData + IndexOffset);
             m_pStrings = m_pData + IndexOffset + IndexSize;
 
-            m_pTableName = pTableName;
+            x_strncpy( m_TableName, pTableName, sizeof(m_TableName) );
+            m_TableName[sizeof(m_TableName) - 1] = 0;
+            x_strncpy( m_SourceName, pFileName, sizeof(m_SourceName) );
+            m_SourceName[sizeof(m_SourceName) - 1] = 0;
             Success = TRUE;
 
             LOG_MESSAGE( "string_table::Load",
@@ -301,7 +333,8 @@ xbool string_table::Load( const char* pTableName, const char* pFileName )
         {
             x_free( m_pData );
             m_pData      = NULL;
-            m_pTableName = NULL;
+            m_TableName[0] = 0;
+            m_SourceName[0] = 0;
             m_nStrings   = 0;
             m_Version    = 0;
             m_pIndex     = NULL;
@@ -313,7 +346,6 @@ xbool string_table::Load( const char* pTableName, const char* pFileName )
         LOG_ERROR( "string_table::Load",
                    "Failed to load string table: %s - %s",
                    pTableName, pFileName );
-        ASSERT( FALSE );
     }
 
     return Success;
@@ -507,12 +539,7 @@ const xwchar* string_table::FindString( const char* lookupString ) const
 
 const xwchar* string_table::GetAt( const char* lookupString ) const
 {
-#if defined(TARGET_XBOX)
-    char TARGETTAG[6] = {'_','X','B','O','X','\0'};
-#elif defined(TARGET_PS2)
-    char TARGETTAG[5] = {'_','P','S','2','\0'};
-    char ALTTARGET[6] = {'_','S','C','E','E','\0'};
-#elif defined(TARGET_PC)
+#if defined(TARGET_DESKTOP)
     char TARGETTAG[4] = {'_','P','C','\0'};
 #else
     char TARGETTAG[1] = {'\0'};
@@ -521,28 +548,9 @@ const xwchar* string_table::GetAt( const char* lookupString ) const
     const xwchar* pString = NULL;
     char LOOKUPSTRING_TAG[256];
 
-#if defined(TARGET_PS2)
-    char LOOKUPSTRING_ALT[256];
-    ASSERT( ( x_strlen(ALTTARGET) + x_strlen(lookupString) ) < (s32)sizeof( LOOKUPSTRING_ALT ) );
-    x_strncpy( LOOKUPSTRING_ALT, lookupString, sizeof( LOOKUPSTRING_ALT ) );  //-- ID
-    x_strncat( LOOKUPSTRING_ALT, ALTTARGET, 7 );     //-- TAG
-#endif
-
     ASSERT( ( x_strlen(TARGETTAG) + x_strlen(lookupString) ) < (s32)sizeof( LOOKUPSTRING_TAG ) );
     x_strncpy( LOOKUPSTRING_TAG, lookupString, sizeof( LOOKUPSTRING_TAG ) );  //-- ID
     x_strncat( LOOKUPSTRING_TAG, TARGETTAG, 7 );     //-- TAG
-
-    // look first for SCEE tags
-#if defined(TARGET_PS2)
-    if(x_GetTerritory() == XL_TERRITORY_EUROPE)
-    {
-        pString = FindString( LOOKUPSTRING_ALT );
-        if( pString )
-        {
-            return( pString );
-        }
-    }
-#endif
 
     //-- Look for the ID with the Tag hooked to the end.
     pString = FindString( LOOKUPSTRING_TAG );
@@ -715,6 +723,7 @@ string_mgr::string_mgr( void )
     m_Initialized = TRUE;
     m_Tables.SetCapacity( 64 );
     m_Tables.SetLocked( TRUE );
+    m_RetiredTables.SetCapacity( 64 );
 }
 
 //==============================================================================
@@ -722,6 +731,19 @@ string_mgr::string_mgr( void )
 string_mgr::~string_mgr( void )
 {
     ASSERT( m_Initialized );
+
+    for( s32 i = 0; i < m_Tables.GetCount(); i++ )
+    {
+        delete m_Tables[i];
+    }
+    m_Tables.Clear();
+
+    for( s32 i = 0; i < m_RetiredTables.GetCount(); i++ )
+    {
+        delete m_RetiredTables[i];
+    }
+    m_RetiredTables.Clear();
+
     m_Initialized = FALSE;
 }
 
@@ -744,7 +766,7 @@ s32 string_mgr::GetStringCount( const char* pTableName )
 
 xbool string_mgr::LoadTable( const char* pTableName, const char* pFileName )
 {
-    CONTEXT( "string_mgr::LoadTable" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "string_mgr::LoadTable" );
 
     // If the table is already loaded then just return.
     if( FindTable( pTableName ) != 0 )
@@ -755,7 +777,13 @@ xbool string_mgr::LoadTable( const char* pTableName, const char* pFileName )
     ASSERT( pTable );
 
     // Load the table
-    xbool Success = pTable->Load( pTableName, pFileName );
+    x_language const Language = x_GetLocale();
+    xbool Success = pTable->Load( pTableName, pFileName, Language );
+
+    if( !Success && (Language != XL_LANG_ENGLISH) )
+    {
+        Success = pTable->Load( pTableName, pFileName, XL_LANG_ENGLISH );
+    }
 
     // Keep it or heave it.
     if( Success )
@@ -781,6 +809,53 @@ xbool string_mgr::LoadTable( const char* pTableName, const char* pFileName )
 
 //==============================================================================
 
+xbool string_mgr::ReloadLocalizedTables( void )
+{
+    X_PROFILE_SCOPE_CATEGORY( "Context", "string_mgr::ReloadLocalizedTables" );
+
+    xarray<string_table*> ReplacementTables;
+    ReplacementTables.SetCapacity( m_Tables.GetCount() );
+
+    for( s32 i = 0; i < m_Tables.GetCount(); i++ )
+    {
+        string_table* pReplacement = new string_table;
+        ASSERT( pReplacement );
+
+        x_language const Language = x_GetLocale();
+        xbool Loaded = pReplacement->Load( m_Tables[i]->m_TableName,
+                                           m_Tables[i]->m_SourceName,
+                                           Language );
+        if( !Loaded && (Language != XL_LANG_ENGLISH) )
+        {
+            Loaded = pReplacement->Load( m_Tables[i]->m_TableName,
+                                         m_Tables[i]->m_SourceName,
+                                         XL_LANG_ENGLISH );
+        }
+
+        if( !Loaded )
+        {
+            delete pReplacement;
+            for( s32 j = 0; j < ReplacementTables.GetCount(); j++ )
+            {
+                delete ReplacementTables[j];
+            }
+            return FALSE;
+        }
+
+        ReplacementTables.Append( pReplacement );
+    }
+
+    for( s32 i = 0; i < m_Tables.GetCount(); i++ )
+    {
+        m_RetiredTables.Append( m_Tables[i] );
+        m_Tables[i] = ReplacementTables[i];
+    }
+
+    return TRUE;
+}
+
+//==============================================================================
+
 void string_mgr::UnloadTable( const char* pTableName )
 {
     s32 iTable = -1;
@@ -788,7 +863,7 @@ void string_mgr::UnloadTable( const char* pTableName )
     // Find Table
     for( s32 i=0 ; i<m_Tables.GetCount() ; i++ )
     {
-        if( x_strcmp( m_Tables[i]->m_pTableName, pTableName ) == 0 )
+        if( x_strcmp( m_Tables[i]->m_TableName, pTableName ) == 0 )
         {
             iTable = i;
             break;
@@ -817,7 +892,7 @@ const string_table* string_mgr::FindTable( const char* pTableName ) const
     // Find Table
     for( s32 i=0 ; i<m_Tables.GetCount() ; i++ )
     {
-        if( x_stricmp(m_Tables[i]->m_pTableName, pTableName) == 0 )
+        if( x_stricmp(m_Tables[i]->m_TableName, pTableName) == 0 )
         {
             return m_Tables[i];
         }

@@ -132,5 +132,4 @@ static s16 s_iicon_mp_settings[] =
 };
 
 
-#define DRAW_ICON_MP_SETTINGS() draw_icon( NUM_FACETS_ICON_MP_SETTINGS, NUM_VERTICES_ICON_MP_SETTINGS, s_vicon_mp_settings, s_iicon_mp_settings )
 

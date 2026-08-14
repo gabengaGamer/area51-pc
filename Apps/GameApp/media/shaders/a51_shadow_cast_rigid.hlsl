@@ -6,20 +6,36 @@
 //
 //==============================================================================
 
-cbuffer cbShadowCast : register(b0)
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
+#include "common/shader_bindings.hlsl"
+
+//==============================================================================
+//  RESOURCES
+//==============================================================================
+
+A51_CBUFFER_ATTR(0, 0) cbuffer cbShadowCast A51_CBUFFER_BIND(0, 0)
 {
     float4x4 ShadowViewProjection;
-    float4x4 World;
+    uint4    ShadowCastPadding;
 };
 
-//------------------------------------------------------------------------------
+A51_STORAGE_BUFFER_ATTR(0, 0)
+StructuredBuffer<float4x4> ShadowRigidWorld
+    A51_STORAGE_BUFFER_BIND(0, 0);
+
+//==============================================================================
+//  TYPES
+//==============================================================================
 
 struct VS_INPUT
 {
-    float3 Position : POSITION;
-    float3 Normal   : NORMAL;
-    float4 Color    : COLOR0;
-    float2 UV       : TEXCOORD0;
+    float3 Position : TEXCOORD0;
+    float3 Normal   : TEXCOORD1;
+    float2 UV       : TEXCOORD2;
+    uint   InstanceIndex : TEXCOORD3;
 };
 
 //------------------------------------------------------------------------------
@@ -31,11 +47,14 @@ struct VS_OUTPUT
 };
 
 //==============================================================================
+//  SHADERS
+//==============================================================================
 
 VS_OUTPUT VSMain( VS_INPUT input )
 {
     VS_OUTPUT output;
-    float4 worldPos = mul( World, float4( input.Position, 1.0f ) );
+    float4 worldPos = mul( ShadowRigidWorld[input.InstanceIndex],
+                           float4( input.Position, 1.0f ) );
     output.Position = mul( ShadowViewProjection, worldPos );
     output.UV       = input.UV;
     return output;

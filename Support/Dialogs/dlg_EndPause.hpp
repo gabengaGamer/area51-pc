@@ -11,10 +11,10 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
 
 
 

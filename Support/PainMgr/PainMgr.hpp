@@ -10,8 +10,8 @@
 //  INCLUDES
 //==============================================================================
 
-#include "DataVault\DataVault.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
+#include "DataVault/DataVault.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
 
 class  pain_handle;
 class  health_handle;

@@ -24,19 +24,27 @@
     <ClCompile Include="..\..\..\xCore\MeshUtil\RawSettings.cpp">
       <Filter>ExternMiscUtils</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\ResourceMgr\ResourceMgr.cpp">
+      <Filter>ExternMiscUtils</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\Apps\MeshViewer\RigidDesc.cpp">
       <Filter>ExternMiscUtils</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\Apps\MeshViewer\SkinDesc.cpp">
       <Filter>ExternMiscUtils</Filter>
     </ClCompile>
-    <ClCompile Include="ArmOptimizer.cpp" />
     <ClCompile Include="BMPUtil.cpp" />
-    <ClCompile Include="faststrip.cpp" />
     <ClCompile Include="GeomCompiler.cpp" />
+    <ClCompile Include="GeomCompiler_Collision.cpp" />
+    <ClCompile Include="GeomCompiler_Materials.cpp" />
+    <ClCompile Include="GeomCompiler_Model.cpp" />
+    <ClCompile Include="GeomCompiler_Skeleton.cpp" />
+    <ClCompile Include="GeomCompiler_Rigid.cpp" />
+    <ClCompile Include="GeomCompiler_Skin.cpp" />
+    <ClCompile Include="GeomCompiler_Utilities.cpp" />
+    <ClCompile Include="GeomSource.cpp" />
+    <ClCompile Include="MatxSource.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PS2SkinOptimizer.cpp" />
-    <ClCompile Include="PS2strip.cpp" />
     <ClCompile Include="texinfo.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -58,21 +66,18 @@
     <ClInclude Include="..\..\..\xCore\MeshUtil\RawSettings.hpp">
       <Filter>ExternMiscUtils</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\ResourceMgr\ResourceMgr.hpp">
+      <Filter>ExternMiscUtils</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\Apps\MeshViewer\RigidDesc.hpp">
       <Filter>ExternMiscUtils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\Apps\MeshViewer\SkinDesc.hpp">
       <Filter>ExternMiscUtils</Filter>
     </ClInclude>
-    <ClInclude Include="ArmOptimizer.hpp" />
     <ClInclude Include="BMPUtil.hpp" />
-    <ClInclude Include="faststrip.hpp" />
     <ClInclude Include="GeomCompiler.hpp" />
-    <ClInclude Include="PS2SkinOptimizer.hpp" />
-    <ClInclude Include="PS2strip.hpp" />
+    <ClInclude Include="GeomSource.hpp" />
     <ClInclude Include="texinfo.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\..\..\xCore\3rdParty\Nvidia\NvTriStrip\NvTriStrip.lib" />
   </ItemGroup>
 </Project>

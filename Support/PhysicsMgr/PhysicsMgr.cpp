@@ -8,17 +8,18 @@
 // INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "PhysicsMgr.hpp"
 #include "Collider.hpp"
 #include "CollisionShape.hpp"
 #include "Entropy.hpp"
-#include "Gamelib\StatsMgr.hpp"
-#include "Objects\Actor\Actor.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 #ifdef ENABLE_PHYSICS_DEBUG
-#include "Ui\ui_manager.hpp"
-#include "Ui\ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_font.hpp"
 #endif
 
 
@@ -91,17 +92,18 @@ s32 collision_sort_hi_to_lo( const void* pItem1, const void* pItem2 )
 physics_mgr::physics_mgr()
 {
     // Settings
-    m_Settings.m_MaxTimeStep                = 1.0f / 29.0f;     // Maximum time step of simulation
-    m_Settings.m_nMaxTimeSteps              = 1;                // Maximum # of steps to take
+    m_Settings.m_MaxSubstepSeconds          = 1.0f / 30.0f;     // Maximum substep duration
     m_Settings.m_Gravity.Set( 0, -9.81f * 100.0f * 2.0f, 0 );   // World gravity
     
     m_Settings.m_nMaxCollisions             = 400;              // Maximum # of collisions
     m_Settings.m_nCollisionIterations       = 4;                // # of iterations to solve collision
-    m_Settings.m_CollisionHitBackoffDist    = 1.0f;             // Dist to backoff when a collision occurs
     m_Settings.m_bInstInstCollision         = TRUE;             // Collide physics instance with others?
     m_Settings.m_bSelfCollision             = TRUE;             // Collide bodies within physics instance?
-    m_Settings.m_PenetrationFix             = 1.0f;             // Penetration fix scalar
-    m_Settings.m_MaxPenetrationFix          = 2.0f;             // Max amount of penetration fix
+    m_Settings.m_CollisionHitBackoffDist    = 1.0f;             // Dist to backoff when a collision occurs
+    m_Settings.m_RestitutionMinSpeed        = 100.0f;           // Minimum bounce speed
+    m_Settings.m_PositionCorrectionRate     = 7.0f;             // Contact correction rate
+    m_Settings.m_MaxContactCorrectionSpeed  = 200.0f;           // Maximum contact correction speed in cm/s
+    m_Settings.m_ContactSlop                = 0.5f;             // Allowed penetration in cm
     
     m_Settings.m_bSolveContacts             = TRUE;             // Solve contacts?
     m_Settings.m_nContactIterations         = 5;                // # of iterations to solve contact
@@ -109,8 +111,7 @@ physics_mgr::physics_mgr()
     m_Settings.m_bShock                     = TRUE;             // Do shock propagation?
     
     m_Settings.m_nMaxActiveConstraints      = 10*56;            // Maximum # of active constraints (56 per ragdoll)
-    m_Settings.m_ConstraintFix              = 60.0f;            // Constraint fix scalar
-    m_Settings.m_MaxConstraintFix           = 6000.0f;          // Max amount of constraint
+    m_Settings.m_MaxConstraintCorrectionSpeed = 6000.0f;        // Maximum joint correction speed
     
     m_Settings.m_ActiveLinearSpeed          = 30.0f;            // Translation speed at which body is considered active
     m_Settings.m_ActiveAngularSpeed         = 4.0f;             // Rotation speed at which body is considered active
@@ -130,8 +131,6 @@ physics_mgr::physics_mgr()
 
     // Collision
     m_NextCollisionGroup = -1;
-    m_DeltaTime = 0.0f;
-    
 #ifdef ENABLE_PHYSICS_DEBUG
     
     // Clear profile stats
@@ -196,25 +195,6 @@ void physics_mgr::Init( void )
     g_ActorBody.SetDynamicFriction( 1.0f );
     g_ActorBody.SetStaticFriction( 1.0f );
     
-#ifdef sbroumley    
-    // Show size info
-    x_DebugMsg( "sizeof(rigid_body) = %d bytes\n", sizeof(rigid_body) );
-    x_DebugMsg( "sizeof(active_constraint) = %d bytes\n", sizeof(active_constraint) );
-    x_DebugMsg( "sizeof(constraint) = %d bytes\n", sizeof(constraint) );
-    x_DebugMsg( "sizeof(collision_shape) = %d bytes\n", sizeof(collision_shape) );
-    x_DebugMsg( "sizeof(physics_inst) = %d bytes\n", sizeof(physics_inst) );
-    x_DebugMsg( "sizeof(collisions) * nMaxCollisions = %d bytes\n", sizeof(collision) * m_Collisions.GetCapacity() );
-    x_DebugMsg( "sizeof(active_constraint) * nMaxActiveConstraints = %d bytes\n", sizeof(active_constraint) * m_ActiveConstraints.GetCapacity() );
-    
-    // Show size info
-    LOG_MESSAGE( "physics_mgr::Init", "sizeof(rigid_body) = %d bytes\n", sizeof(rigid_body) );
-    LOG_MESSAGE( "physics_mgr::Init", "sizeof(active_constraint) = %d bytes\n", sizeof(active_constraint) );
-    LOG_MESSAGE( "physics_mgr::Init", "sizeof(constraint) = %d bytes\n", sizeof(constraint) );
-    LOG_MESSAGE( "physics_mgr::Init", "sizeof(collision_shape) = %d bytes\n", sizeof(collision_shape) );
-    LOG_MESSAGE( "physics_mgr::Init", "sizeof(physics_inst) = %d bytes\n", sizeof(physics_inst) );
-    LOG_MESSAGE( "physics_mgr::Init", "sizeof(collisions) * nMaxCollisions = %d bytes\n", sizeof(collision) * m_Collisions.GetCapacity() );
-    LOG_MESSAGE( "physics_mgr::Init", "sizeof(active_constraint) * nMaxActiveConstraints = %d bytes\n", sizeof(active_constraint) * m_ActiveConstraints.GetCapacity() );
-#endif    
 }
 
 //==============================================================================
@@ -243,7 +223,7 @@ void physics_mgr::Kill( void )
 void physics_mgr::AddInstance( physics_inst* pInstance )
 {
     // Instance should be initialized, but not in ANY lists
-    ASSERT( pInstance->m_bInitialized           == FALSE );
+    ASSERT( pInstance->m_isInitialized           == FALSE );
     ASSERT( pInstance->m_bInAwakeList           == FALSE );
     ASSERT( pInstance->m_bInSleepingList        == FALSE );
     ASSERT( pInstance->m_bInCollisionWakeupList == FALSE );
@@ -253,7 +233,7 @@ void physics_mgr::AddInstance( physics_inst* pInstance )
     pInstance->m_bInSleepingList = TRUE;
 
     // Flag as ready    
-    pInstance->m_bInitialized = TRUE;
+    pInstance->m_isInitialized = TRUE;
 }
 
 //==============================================================================
@@ -261,7 +241,7 @@ void physics_mgr::AddInstance( physics_inst* pInstance )
 void physics_mgr::RemoveInstance( physics_inst* pInstance )
 {
     // Not in physics mgr?
-    if( pInstance->m_bInitialized == FALSE )
+    if( pInstance->m_isInitialized == FALSE )
     {
         ASSERT( pInstance->m_bInAwakeList           == FALSE );
         ASSERT( pInstance->m_bInSleepingList        == FALSE );
@@ -270,7 +250,7 @@ void physics_mgr::RemoveInstance( physics_inst* pInstance )
     }
     
     // Instance should be initialized, but never in BOTH lists
-    ASSERT( pInstance->m_bInitialized  == TRUE );
+    ASSERT( pInstance->m_isInitialized  == TRUE );
     ASSERT( !( ( pInstance->m_bInAwakeList == TRUE ) && ( pInstance->m_bInSleepingList == TRUE ) ) );
     
     // Remove from awake list?
@@ -297,7 +277,7 @@ void physics_mgr::RemoveInstance( physics_inst* pInstance )
     while( pSleepingInst )
     {
         // Validate list management
-        ASSERT( pSleepingInst->m_bInitialized           == TRUE  );
+        ASSERT( pSleepingInst->m_isInitialized           == TRUE  );
         ASSERT( pSleepingInst->m_bInAwakeList           == FALSE );
         ASSERT( pSleepingInst->m_bInSleepingList        == TRUE  );
         ASSERT( pSleepingInst->m_bInCollisionWakeupList == FALSE );
@@ -321,7 +301,7 @@ void physics_mgr::RemoveInstance( physics_inst* pInstance )
     }
     
     // Flag as not ready any more
-    pInstance->m_bInitialized = FALSE;
+    pInstance->m_isInitialized = FALSE;
 }
 
 //==============================================================================
@@ -329,7 +309,7 @@ void physics_mgr::RemoveInstance( physics_inst* pInstance )
 void physics_mgr::WakeupInstance( physics_inst* pInstance )
 {
     // Should be initialized
-    ASSERT( pInstance->m_bInitialized );
+    ASSERT( pInstance->m_isInitialized );
 
     // Already awake?
     if( pInstance->m_bInAwakeList )
@@ -366,7 +346,7 @@ void physics_mgr::WakeupInstance( physics_inst* pInstance )
 void physics_mgr::PutToSleepInstance( physics_inst* pInstance )
 {
     // Should be initialized
-    ASSERT( pInstance->m_bInitialized );
+    ASSERT( pInstance->m_isInitialized );
     ASSERT( pInstance->m_bInCollisionWakeupList == FALSE );
 
     // Already asleep?
@@ -400,7 +380,7 @@ void physics_mgr::PutToSleepInstance( physics_inst* pInstance )
 void physics_mgr::CollisionWakeupInstance( physics_inst* pInstance )
 {
     // Should be initialized
-    ASSERT( pInstance->m_bInitialized );
+    ASSERT( pInstance->m_isInitialized );
     ASSERT( pInstance->m_bInAwakeList == FALSE);
 
     // Already in collision wakeup list?
@@ -466,7 +446,11 @@ s32 physics_mgr::AddCollision(       rigid_body* pBody0,
     Collision.m_StaticFriction  = 0.5f * ( pBody0->GetStaticFriction() + pBody1->GetStaticFriction() );
     Collision.m_DynamicFriction = 0.5f * ( pBody0->GetDynamicFriction() + pBody1->GetDynamicFriction() );
     
-    Collision.m_PenetrationExtra.Zero();
+    Collision.m_PushSpeed   = 0.0f;
+    Collision.m_PushImpulse = 0.0f;
+    Collision.m_BounceSpeed = 0.0f;
+    Collision.m_NormalImpulse = 0.0f;
+    Collision.m_FrictionImpulse.Zero();
     Collision.m_Denominator = 0.0f;
     
     return Index;
@@ -478,7 +462,7 @@ void physics_mgr::DetectWorldCollisions( physics_inst* pInst )
 {
     // Validate list management
     ASSERT( pInst );
-    ASSERT( pInst->m_bInitialized           == TRUE  );
+    ASSERT( pInst->m_isInitialized           == TRUE  );
     ASSERT( pInst->m_bInAwakeList           == TRUE  );
     ASSERT( pInst->m_bInSleepingList        == FALSE );
     ASSERT( pInst->m_bInCollisionWakeupList == FALSE );
@@ -517,7 +501,7 @@ void physics_mgr::DetectSelfCollisions( physics_inst* pInst )
 {
     // Validate list management
     ASSERT( pInst );
-    ASSERT( pInst->m_bInitialized           == TRUE  );
+    ASSERT( pInst->m_isInitialized           == TRUE  );
     ASSERT( pInst->m_bInAwakeList           == TRUE  );
     ASSERT( pInst->m_bInSleepingList        == FALSE );
     ASSERT( pInst->m_bInCollisionWakeupList == FALSE );
@@ -588,7 +572,7 @@ void physics_mgr::DetectInstInstCollisions( physics_inst* pInst0 )
 {
     // Validate list management
     ASSERT( pInst0 );
-    ASSERT( pInst0->m_bInitialized           == TRUE  );
+    ASSERT( pInst0->m_isInitialized           == TRUE  );
     ASSERT( pInst0->m_bInAwakeList           == TRUE  );
     ASSERT( pInst0->m_bInSleepingList        == FALSE );
     ASSERT( pInst0->m_bInCollisionWakeupList == FALSE );
@@ -603,7 +587,7 @@ void physics_mgr::DetectInstInstCollisions( physics_inst* pInst0 )
     {
         // Validate list management
         ASSERT( pInst0 != pInst1 );
-        ASSERT( pInst1->m_bInitialized           == TRUE  );
+        ASSERT( pInst1->m_isInitialized           == TRUE  );
         ASSERT( pInst1->m_bInAwakeList           == TRUE  );
         ASSERT( pInst1->m_bInSleepingList        == FALSE );
         ASSERT( pInst1->m_bInCollisionWakeupList == FALSE );
@@ -668,7 +652,7 @@ void physics_mgr::DetectInstInstCollisions( physics_inst* pInst0 )
     {
         // Validate list management
         ASSERT( pInst0 != pInst1 );
-        ASSERT( pInst1->m_bInitialized           == TRUE  );
+        ASSERT( pInst1->m_isInitialized           == TRUE  );
         ASSERT( pInst1->m_bInAwakeList           == FALSE );
         ASSERT( pInst1->m_bInSleepingList        == TRUE  );
         ASSERT( pInst1->m_bInCollisionWakeupList == FALSE );
@@ -739,7 +723,7 @@ void physics_mgr::DetectInstInstCollisions( physics_inst* pInst0 )
 void physics_mgr::DetectInstActorCollisions( physics_inst* pInst )
 {
     // Validate list management
-    ASSERT( pInst->m_bInitialized           == TRUE );
+    ASSERT( pInst->m_isInitialized           == TRUE );
     ASSERT( pInst->m_bInAwakeList           == TRUE );
     ASSERT( pInst->m_bInSleepingList        == FALSE );
     ASSERT( pInst->m_bInCollisionWakeupList == FALSE );
@@ -779,6 +763,7 @@ void physics_mgr::DetectInstActorCollisions( physics_inst* pInst )
                 vector3 CapsuleBase   = pActor->GetPosition();
                 vector3 CapsuleStart  = CapsuleBase;
                 vector3 CapsuleEnd    = CapsuleBase + vector3( 0.0f, pActor->GetCollisionHeight(), 0.0f );
+                g_ActorBody.SetPosition( (CapsuleStart + CapsuleEnd) * 0.5f );
 
                 // Setup capsule collision shape (just setup start and end spheres)
                 collision_shape::sphere& Start = g_ActorColl.GetSphere( 0 );
@@ -786,10 +771,8 @@ void physics_mgr::DetectInstActorCollisions( physics_inst* pInst )
                 g_ActorColl.SetRadius( CapsuleRadius );
                 Start.m_PrevPos     = CapsuleStart;
                 Start.m_CurrPos     = CapsuleStart;
-                Start.m_CollFreePos = CapsuleStart;
                 End.m_PrevPos       = CapsuleEnd;
                 End.m_CurrPos       = CapsuleEnd;
-                End.m_CollFreePos   = CapsuleEnd;
 
                 // Check for collision
                 if( g_Collider.Check( pColl, &g_ActorColl ) )
@@ -824,7 +807,7 @@ void physics_mgr::DetectCollisions( void )
     while( pInst )
     {
         // Validate list management
-        ASSERT( pInst->m_bInitialized           == TRUE  );
+        ASSERT( pInst->m_isInitialized           == TRUE  );
         ASSERT( pInst->m_bInAwakeList           == TRUE  );
         ASSERT( pInst->m_bInSleepingList        == FALSE );
         ASSERT( pInst->m_bInCollisionWakeupList == FALSE );
@@ -841,7 +824,7 @@ void physics_mgr::DetectCollisions( void )
     while( pInst )
     {
         // Validate list management
-        ASSERT( pInst->m_bInitialized           == TRUE );
+        ASSERT( pInst->m_isInitialized           == TRUE );
         ASSERT( pInst->m_bInAwakeList           == TRUE );
         ASSERT( pInst->m_bInSleepingList        == FALSE );
         ASSERT( pInst->m_bInCollisionWakeupList == FALSE );
@@ -873,7 +856,7 @@ void physics_mgr::DetectCollisions( void )
     while( pInst )
     {
         // Validate list management
-        ASSERT( pInst->m_bInitialized           == TRUE );
+        ASSERT( pInst->m_isInitialized           == TRUE );
         ASSERT( pInst->m_bInAwakeList           == FALSE );
         ASSERT( pInst->m_bInSleepingList        == FALSE );
         ASSERT( pInst->m_bInCollisionWakeupList == TRUE  );
@@ -885,7 +868,7 @@ void physics_mgr::DetectCollisions( void )
         WakeupInstance( pInst );
 
         // Validate list management
-        ASSERT( pInst->m_bInitialized           == TRUE  );
+        ASSERT( pInst->m_isInitialized           == TRUE  );
         ASSERT( pInst->m_bInAwakeList           == TRUE  );
         ASSERT( pInst->m_bInSleepingList        == FALSE );
         ASSERT( pInst->m_bInCollisionWakeupList == FALSE );
@@ -915,21 +898,35 @@ void physics_mgr::PreApplyCollisions( f32 DeltaTime )
         vector3&    R1     = Collision.m_R1;
         vector3&    Normal = Collision.m_Normal;
         
-        // Compute penetration penalty
-        
-        // Actually - this breaks the shock prop!!!!
-        if( Collision.m_Depth > 0 )
+        const f32 PositionError = x_max( 0.0f, Collision.m_Depth - m_Settings.m_ContactSlop );
+        const f32 CorrectionFraction = 1.0f -
+                                       x_exp( -m_Settings.m_PositionCorrectionRate * DeltaTime );
+        Collision.m_PushSpeed = x_min( PositionError * CorrectionFraction / DeltaTime,
+                                      m_Settings.m_MaxContactCorrectionSpeed );
+        Collision.m_PushImpulse = 0.0f;
+        Collision.m_NormalImpulse = 0.0f;
+        Collision.m_FrictionImpulse.Zero();
+
+        vector3 VRel( 0.0f, 0.0f, 0.0f );
+        if( pBody0 )
+            VRel += pBody0->GetLinearVelocity() +
+                    v3_Cross( pBody0->GetAngularVelocity(), R0 );
+        if( pBody1 == &g_ActorBody )
         {
-            f32 Extra = Collision.m_Depth * m_Settings.m_PenetrationFix / ( DeltaTime * 60.0f );
-            if( Extra > m_Settings.m_MaxPenetrationFix )
-                Extra = m_Settings.m_MaxPenetrationFix;
-            
-            Collision.m_PenetrationExtra = -Extra * Normal;
+            ASSERT( Collision.m_pActor1 );
+            VRel -= Collision.m_pActor1->GetVelocity();
         }
+        else if( pBody1 )
+        {
+            VRel -= pBody1->GetLinearVelocity() +
+                    v3_Cross( pBody1->GetAngularVelocity(), R1 );
+        }
+
+        const f32 NormalVel = v3_Dot( VRel, Normal );
+        if( NormalVel <= -m_Settings.m_RestitutionMinSpeed )
+            Collision.m_BounceSpeed = -Collision.m_Elasticity * NormalVel;
         else
-        {
-            Collision.m_PenetrationExtra.Zero();
-        }
+            Collision.m_BounceSpeed = 0.0f;
             
         // Compute denominator
         f32 Denominator = 0.0f;
@@ -983,8 +980,7 @@ s32 physics_mgr::SolveCollision( collision&  Collision )
         g_ActorBody.SetLinearVelocity( Collision.m_pActor1->GetVelocity() );
     }
     
-    // Compute relative velocity of bodies, taking penetration penatly into account
-    vector3 VRel = Collision.m_PenetrationExtra;
+    vector3 VRel( 0.0f, 0.0f, 0.0f );
     if( pBody0 )
         VRel += pBody0->GetLinearVelocity() + v3_Cross( pBody0->GetAngularVelocity(), Collision.m_R0 );
     if( pBody1 )
@@ -993,73 +989,32 @@ s32 physics_mgr::SolveCollision( collision&  Collision )
     // Compute velocity along penetration normal
     f32 NormalVel = v3_Dot( VRel, Collision.m_Normal );
 
-    // Moving away from each other?
-    if( NormalVel >= 0.0f )
-        return FALSE;
-
-    // Record collision on body0
-    if( pBody0 )
+    if( pBody0 && (NormalVel < 0.0f) )
     {
-        // Flag collision has happened
         pBody0->m_Flags |= rigid_body::FLAG_HAS_COLLIDED;
-        
-        // Biggest impact so far?
-        f32 CollisionSpeedSqr = VRel.LengthSquared();
-        if( CollisionSpeedSqr > pBody0->m_CollisionSpeedSqr )
-            pBody0->m_CollisionSpeedSqr = CollisionSpeedSqr;
+
+        const f32 ImpactSpeedSqr = NormalVel * NormalVel;
+        if( ImpactSpeedSqr > pBody0->m_ImpactSpeedSqr )
+            pBody0->m_ImpactSpeedSqr = ImpactSpeedSqr;
     }
-    
-    // Bodies are moving into each other, compute impulse
-    f32 Numerator     = -(1.0f + Collision.m_Elasticity) * NormalVel;
-    f32 NormalImpulse = Numerator / Collision.m_Denominator;
 
-/*
-    // Lookup frozen flags
-    s32 Body0Active = pBody0->IsActive();
-    s32 Body1Active = pBody1->IsActive();
-*/
+    const f32 OldNormalImpulse = Collision.m_NormalImpulse;
+    Collision.m_NormalImpulse = x_max( 0.0f,
+                                       OldNormalImpulse +
+                                       (Collision.m_BounceSpeed - NormalVel) /
+                                       Collision.m_Denominator );
+    const f32 NormalImpulseChange = Collision.m_NormalImpulse - OldNormalImpulse;
+    xbool bChanged = x_abs( NormalImpulseChange ) > 0.00001f;
 
-    vector3 CollisionImpulse = NormalImpulse * Collision.m_Normal;
-
-    // Apply impulse to bodies
-    if( pBody0 )
+    if( bChanged )
     {
-        pBody0->ApplyLocalImpulse( CollisionImpulse, Collision.m_R0 );
+        const vector3 Impulse = Collision.m_Normal * NormalImpulseChange;
+        if( pBody0 )
+            pBody0->ApplyLocalImpulse( Impulse, Collision.m_R0 );
+        if( pBody1 )
+            pBody1->ApplyLocalImpulse( -Impulse, Collision.m_R1 );
     }
 
-    if( pBody1 )
-    {
-        pBody1->ApplyLocalImpulse( -CollisionImpulse, Collision.m_R1 );
-    }
-/*
-
-    // TO DO: Test this
-    
-    // Was body0 moving into a frozen body1?
-    if ((Body0Active == TRUE) && (Body1Active == FALSE))
-    {
-        // If body1 should still be frozen, remove the impulse from body1 and apply to body0
-        if ((pBody1->HasActiveEnergy() == FALSE) && (pBody1->GetMass() != 0))
-        {
-            pBody1->ApplyWorldImpulse( NormalImpulse * Collision.m_Normal, Collision.m_Position );
-            pBody0->ApplyWorldImpulse( NormalImpulse * Collision.m_Normal, Collision.m_Position );
-        }
-    }
-    
-    // Was body1 moving into a frozen body0?
-    if ((Body1Active == TRUE) && (Body0Active == FALSE))
-    {
-        // If body0 should still be frozen, remove the impulse from body1 and apply to body0
-        if ((pBody0->HasActiveEnergy() == FALSE) && (pBody0->GetMass() != 0))
-        {
-            pBody0->ApplyWorldImpulse( -NormalImpulse * Collision.m_Normal, Collision.m_Position );
-            pBody1->ApplyWorldImpulse( -NormalImpulse * Collision.m_Normal, Collision.m_Position );
-        }
-    }
-*/
-    // Apply friction
-        
-    // Re-compute relative velocity of bodies ready for friction
     VRel.Zero();
     if( pBody0 )
         VRel += pBody0->GetLinearVelocity() + v3_Cross( pBody0->GetAngularVelocity(), Collision.m_R0 );
@@ -1067,56 +1022,96 @@ s32 physics_mgr::SolveCollision( collision&  Collision )
         VRel -= pBody1->GetLinearVelocity() + v3_Cross( pBody1->GetAngularVelocity(), Collision.m_R1 );
 
     // Compute tangent vel and speed
-	vector3 TangentVel      = VRel - v3_Dot(VRel, Collision.m_Normal ) * Collision.m_Normal ;
-    f32     TangentSpeedSqr = TangentVel.LengthSquared();
+    vector3 TangentVel = VRel - v3_Dot( VRel, Collision.m_Normal ) * Collision.m_Normal;
+    const f32 TangentSpeedSqr = TangentVel.LengthSquared();
 
-    // Apply friction?
+    const vector3 OldFrictionImpulse = Collision.m_FrictionImpulse;
+    vector3 FrictionImpulse = OldFrictionImpulse;
     if( TangentSpeedSqr > 0.001f )
     {
-        // Compute tagent direction
-	    f32     TangentSpeed = x_sqrt( TangentSpeedSqr );
-		vector3 T            = -TangentVel / TangentSpeed;
+        const f32 TangentSpeed = x_sqrt( TangentSpeedSqr );
+        const vector3 T = -TangentVel / TangentSpeed;
 
-        Numerator = TangentSpeed;
-        f32 Denominator=0;
+        f32 Denominator = 0.0f;
         if( pBody0 )
         {
             Denominator += pBody0->GetInvMass() +
-                            v3_Dot( T, v3_Cross( pBody0->GetWorldInvInertia().RotateVector( v3_Cross( Collision.m_R0, T ) ), Collision.m_R0 ) );
+                v3_Dot( T, v3_Cross( pBody0->GetWorldInvInertia().RotateVector(
+                    v3_Cross( Collision.m_R0, T ) ), Collision.m_R0 ) );
         }
-                                        
+
         if( pBody1 )
         {
-            Denominator += pBody1->GetInvMass() + 
-                            v3_Dot( T, v3_Cross( pBody1->GetWorldInvInertia().RotateVector( v3_Cross( Collision.m_R1, T ) ), Collision.m_R1 ) );
-        }                               
+            Denominator += pBody1->GetInvMass() +
+                v3_Dot( T, v3_Cross( pBody1->GetWorldInvInertia().RotateVector(
+                    v3_Cross( Collision.m_R1, T ) ), Collision.m_R1 ) );
+        }
 
-		if( Denominator > 0.0001f )
-		{
-            f32 ImpulseToReverse         = Numerator / Denominator;
-            f32 ImpulseFromNormalImpulse = Collision.m_StaticFriction * NormalImpulse;
-            f32 FrictionImpulse;
+        if( Denominator > 0.0001f )
+            FrictionImpulse += T * (TangentSpeed / Denominator);
+    }
 
-            if (ImpulseToReverse < ImpulseFromNormalImpulse)
-                FrictionImpulse = ImpulseToReverse;
-            else
-                FrictionImpulse = Collision.m_DynamicFriction * NormalImpulse;
+    const f32 StaticLimit = Collision.m_StaticFriction * Collision.m_NormalImpulse;
+    if( FrictionImpulse.LengthSquared() > x_sqr( StaticLimit ) )
+    {
+        const f32 DynamicLimit = Collision.m_DynamicFriction * Collision.m_NormalImpulse;
+        FrictionImpulse.NormalizeAndScale( DynamicLimit );
+    }
 
-            T *= FrictionImpulse;
+    Collision.m_FrictionImpulse = FrictionImpulse;
+    const vector3 FrictionImpulseChange = FrictionImpulse - OldFrictionImpulse;
+    if( FrictionImpulseChange.LengthSquared() > 0.0000000001f )
+    {
+        bChanged = TRUE;
+        if( pBody0 )
+            pBody0->ApplyLocalImpulse( FrictionImpulseChange, Collision.m_R0 );
+        if( pBody1 )
+            pBody1->ApplyLocalImpulse( -FrictionImpulseChange, Collision.m_R1 );
+    }
 
-            if( pBody0 )
-            {
-	            pBody0->ApplyLocalImpulse(T, Collision.m_R0 );
-            }
+    return bChanged;
+}
 
-            if( pBody1 )
-            {
-    	        pBody1->ApplyLocalImpulse(-T, Collision.m_R1 );
-            }
-		}
-	}
+//==============================================================================
 
-    // Collision occurred!
+s32 physics_mgr::SolveCollisionPosition( collision& Collision )
+{
+    if( (Collision.m_PushSpeed <= 0.0f) || (Collision.m_Denominator < 0.0001f) )
+        return FALSE;
+
+    rigid_body* pBody0 = Collision.m_pBody0;
+    rigid_body* pBody1 = Collision.m_pBody1;
+    if( pBody0 && (pBody0->GetMass() == 0.0f) )
+        pBody0 = NULL;
+    if( pBody1 && (pBody1->GetMass() == 0.0f) )
+        pBody1 = NULL;
+    if( !pBody0 && !pBody1 )
+        return FALSE;
+
+    vector3 RelativeVelocity( 0.0f, 0.0f, 0.0f );
+    if( pBody0 )
+        RelativeVelocity += pBody0->m_SplitLinearVelocity +
+                            v3_Cross( pBody0->m_SplitAngularVelocity, Collision.m_R0 );
+    if( pBody1 )
+        RelativeVelocity -= pBody1->m_SplitLinearVelocity +
+                            v3_Cross( pBody1->m_SplitAngularVelocity, Collision.m_R1 );
+
+    const f32 NormalSpeed = v3_Dot( RelativeVelocity, Collision.m_Normal );
+    const f32 OldImpulse  = Collision.m_PushImpulse;
+    Collision.m_PushImpulse = x_max( 0.0f,
+                                     OldImpulse +
+                                     (Collision.m_PushSpeed - NormalSpeed) /
+                                     Collision.m_Denominator );
+    const f32 ImpulseChange = Collision.m_PushImpulse - OldImpulse;
+    if( x_abs( ImpulseChange ) < 0.00001f )
+        return FALSE;
+
+    const vector3 Impulse = Collision.m_Normal * ImpulseChange;
+    if( pBody0 )
+        pBody0->ApplySplitImpulse( Impulse, Collision.m_R0 );
+    if( pBody1 )
+        pBody1->ApplySplitImpulse( -Impulse, Collision.m_R1 );
+
     return TRUE;
 }
 
@@ -1321,7 +1316,8 @@ void physics_mgr::ShockPropagation( void )
     for( s32 i = 0; i < m_Collisions.GetCount(); i++ )
     {
         // Get collision
-        collision& Collision = m_Collisions[i];
+        const collision& Collision = m_Collisions[i];
+        collision ShockCollision = Collision;
 
         // Lookup rigid bodies
         rigid_body* pBody0 = Collision.m_pBody0;
@@ -1333,27 +1329,64 @@ void physics_mgr::ShockPropagation( void )
         if( pBody0->GetPosition().GetY() < pBody1->GetPosition().GetY() )
         {
             // Clear lower body
-            Collision.m_pBody0 = NULL;
+            ShockCollision.m_pBody0 = NULL;
             
             // Re-compute denominator
-            Collision.m_Denominator = pBody1->GetInvMass() + 
+            ShockCollision.m_Denominator = pBody1->GetInvMass() +
                                       v3_Dot( Collision.m_Normal, v3_Cross( pBody1->GetWorldInvInertia().RotateVector( v3_Cross( Collision.m_R1, Collision.m_Normal ) ), Collision.m_R1 ) );
         }
         else
         {
             // Clear lower body
-            Collision.m_pBody1 = NULL;
+            ShockCollision.m_pBody1 = NULL;
             
             // Re-compute denominator
-            Collision.m_Denominator = pBody0->GetInvMass() +
+            ShockCollision.m_Denominator = pBody0->GetInvMass() +
                                       v3_Dot( Collision.m_Normal, v3_Cross( pBody0->GetWorldInvInertia().RotateVector( v3_Cross( Collision.m_R0, Collision.m_Normal ) ), Collision.m_R0 ) );
         }
+
+        ShockCollision.m_BounceSpeed = 0.0f;
+        ShockCollision.m_NormalImpulse = 0.0f;
+        ShockCollision.m_FrictionImpulse.Zero();
         
         // Solve the collision
-        SolveCollision( Collision );
+        SolveCollision( ShockCollision );
     }
     
     PHYSICS_DEBUG_STOP_TIMER( m_Profile.m_ShockPropagation );
+}
+
+//==============================================================================
+
+void physics_mgr::SolvePositionCorrections( f32 DeltaTime, s32 nIterations )
+{
+    rigid_body* pBody = m_ActiveBodies.GetHead();
+    while( pBody )
+    {
+        pBody->ClearSplitVelocity();
+        pBody = m_ActiveBodies.GetNext( pBody );
+    }
+
+    PreApplyCollisions( DeltaTime );
+
+    while( nIterations-- > 0 )
+    {
+        xbool bChanged = FALSE;
+
+        for( s32 i = 0; i < m_Collisions.GetCount(); i++ )
+            bChanged |= SolveCollisionPosition( m_Collisions[i] );
+
+        if( !bChanged )
+            break;
+    }
+
+    pBody = m_ActiveBodies.GetHead();
+    while( pBody )
+    {
+        pBody->IntegrateSplitPosition( DeltaTime );
+        pBody->ClearSplitVelocity();
+        pBody = m_ActiveBodies.GetNext( pBody );
+    }
 }
 
 //==============================================================================
@@ -1367,7 +1400,7 @@ void physics_mgr::PutInstancesToSleep( f32 DeltaTime )
     while( pInst )
     {
         // Validate list management
-        ASSERT( pInst->m_bInitialized );
+        ASSERT( pInst->m_isInitialized );
         ASSERT( pInst->m_bInAwakeList           == TRUE );
         ASSERT( pInst->m_bInSleepingList        == FALSE );
         ASSERT( pInst->m_bInCollisionWakeupList == FALSE );
@@ -1375,16 +1408,12 @@ void physics_mgr::PutInstancesToSleep( f32 DeltaTime )
         // Get next instance in-case of deletion from this list
         physics_inst* pNextInst = m_AwakeInstances.GetNext( pInst );            
 
-        // Default to not active
         xbool bInstActive = FALSE;
-        
-        // Update body active state
-        for( s32 i = 0; i < pInst->GetNRigidBodies(); i++ )        
+        for( s32 i = 0; i < pInst->GetNRigidBodies(); i++ )
         {
             // Lookup body
             rigid_body& Body = pInst->GetRigidBody( i );
 
-            // Update active state
             Body.UpdateActiveState( DeltaTime );
 
             // If body is active, then instance is active
@@ -1429,7 +1458,7 @@ void physics_mgr::BuildActiveBodyList( void )
     while( pInst )
     {
         // Validate list management
-        ASSERT( pInst->m_bInitialized );
+        ASSERT( pInst->m_isInitialized );
         ASSERT( pInst->m_bInAwakeList           == TRUE  );
         ASSERT( pInst->m_bInSleepingList        == FALSE );
         ASSERT( pInst->m_bInCollisionWakeupList == FALSE );
@@ -1473,7 +1502,7 @@ void physics_mgr::BuildActiveBodyAndConstraintList( void )
     while( pInst )
     {
         // Validate list management
-        ASSERT( pInst->m_bInitialized );
+        ASSERT( pInst->m_isInitialized );
         ASSERT( pInst->m_bInAwakeList           == TRUE );
         ASSERT( pInst->m_bInSleepingList        == FALSE );
         ASSERT( pInst->m_bInCollisionWakeupList == FALSE );
@@ -1593,8 +1622,8 @@ void physics_mgr::Step( f32 DeltaTime )
     12) clear forces
     13) process contacts/constraints
     14) shock propagation
-    15) integrate positions
-    16) separate bodies
+    15) resolve position error using split impulses
+    16) integrate positions
 */
 
     // Try put awake bodies to sleep
@@ -1612,7 +1641,7 @@ void physics_mgr::Step( f32 DeltaTime )
         while( pBody )
         {
             pBody->GetState         ( pBody->m_BackupState );
-            pBody->ComputeForces    ( DeltaTime );
+            pBody->ComputeForces();
             pBody->IntegrateVelocity( DeltaTime );
             pBody->IntegratePosition( DeltaTime );
             
@@ -1684,6 +1713,9 @@ void physics_mgr::Step( f32 DeltaTime )
         ShockPropagation();
     }
 
+    // Resolve penetration
+    SolvePositionCorrections( DeltaTime, m_Settings.m_nContactIterations );
+
     // Finally, integrate position
     if(1)
     {
@@ -1717,10 +1749,10 @@ void physics_mgr::Step( f32 DeltaTime )
 
 void physics_mgr::Advance( f32 DeltaTime )
 {
-    LOG_STAT(k_stats_Physics);
+    LOG_STAT( k_stats_Physics );
 
-    // Nothing to do?
-    if( DeltaTime == 0.0f )
+    ASSERTS( x_isvalid( DeltaTime ), "Physics received an invalid frame delta" );
+    if( !x_isvalid( DeltaTime ) || (DeltaTime <= 0.0f) )
         return;
 
     // Clear profile stats
@@ -1740,7 +1772,6 @@ void physics_mgr::Advance( f32 DeltaTime )
     PHYSICS_DEBUG_ZERO_COUNT( m_Profile.m_nSphereNGonCollTests );
     PHYSICS_DEBUG_ZERO_COUNT( m_Profile.m_nSphereNGonIntersecTests );
 
-    // Reset all profile timers
     PHYSICS_DEBUG_RESET_TIMER( m_Profile.m_Advance );
     PHYSICS_DEBUG_RESET_TIMER( m_Profile.m_BuildLists );
     PHYSICS_DEBUG_RESET_TIMER( m_Profile.m_PredictNew );
@@ -1755,20 +1786,17 @@ void physics_mgr::Advance( f32 DeltaTime )
     PHYSICS_DEBUG_RESET_TIMER( m_Profile.m_IntegratePos );
     PHYSICS_DEBUG_RESET_TIMER( m_Profile.m_Render );
 
-    // Loop and simulate
-    PHYSICS_DEBUG_START_TIMER( m_Profile.m_Advance );
-    s32 Iterations = m_Settings.m_nMaxTimeSteps;
-    m_DeltaTime += DeltaTime;
-    while( ( Iterations-- ) && ( m_DeltaTime > 0 ) )
-    {
-        // Compute time step
-        f32 TimeStep = x_min( m_Settings.m_MaxTimeStep, m_DeltaTime );
-        
-        // Step physics simulation
-        Step( TimeStep );
+    ASSERT( m_Settings.m_MaxSubstepSeconds > 0.0f );
+    if( m_Settings.m_MaxSubstepSeconds <= 0.0f )
+        return;
 
-        // Update accumulated time        
-        m_DeltaTime -= TimeStep;
+    const s32 nSubsteps = x_max( 1, (s32)x_ceil( DeltaTime / m_Settings.m_MaxSubstepSeconds ) );
+    const f32 SubstepSeconds = DeltaTime / (f32)nSubsteps;
+
+    PHYSICS_DEBUG_START_TIMER( m_Profile.m_Advance );
+    for( s32 i = 0; i < nSubsteps; i++ )
+    {
+        Step( SubstepSeconds );
     }
     PHYSICS_DEBUG_STOP_TIMER( m_Profile.m_Advance );
 }
@@ -1805,7 +1833,7 @@ void physics_mgr::DebugFindClosestInstanceInView( const view*         pView,
     while( pInst )
     {
         // Validate list management
-        ASSERT( pInst->m_bInitialized );
+        ASSERT( pInst->m_isInitialized );
         ASSERT( pInst->m_bInAwakeList || pInst->m_bInSleepingList );
         ASSERT(!( pInst->m_bInAwakeList && pInst->m_bInSleepingList ) );
     
@@ -1813,13 +1841,13 @@ void physics_mgr::DebugFindClosestInstanceInView( const view*         pView,
         if( pView->BBoxInView( pInst->GetWorldBBox() ) )
         {
             // Draw inst bbox  
-            draw_BBox( pInst->GetWorldBBox(), XCOLOR_WHITE );
+            render::debug::Box( pInst->GetWorldBBox(), XCOLOR_WHITE );
 
             // Render rigid bodies
             for( s32 i = 0; i < pInst->GetNRigidBodies(); i++ )
             {
                 rigid_body& Body = pInst->GetRigidBody( i );
-                draw_BBox( Body.GetWorldBBox(), XCOLOR_RED );
+                render::debug::Box( Body.GetWorldBBox(), XCOLOR_RED );
 
                 Body.DebugRender();
             }
@@ -1844,9 +1872,6 @@ void physics_mgr::DebugFindClosestInstanceInView( const view*         pView,
 void physics_mgr::DebugRenderInstances( xbool bRenderConstraints /*= FALSE*/ )
 {
     s32 i;
-
-    // All drawing is in world space
-    draw_ClearL2W();
 
     // Search for the closest instance to the camera (otherwise we run out of dlist)
     const view*     pView     = eng_GetView();
@@ -1885,8 +1910,6 @@ void physics_mgr::DebugRenderInstances( xbool bRenderConstraints /*= FALSE*/ )
                 Con.DebugRender();
             }
         }
-                
-        draw_ClearL2W();
     }        
 }
 
@@ -1894,8 +1917,6 @@ void physics_mgr::DebugRenderInstances( xbool bRenderConstraints /*= FALSE*/ )
 
 void physics_mgr::DebugRenderCollisions( void )
 {
-    // Draw collision normals
-    draw_Begin( DRAW_LINES, DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE );
     for ( s32 i = 0 ; i < m_Collisions.GetCount() ; i++)
     {
         collision& Collision = m_Collisions[i];
@@ -1905,22 +1926,18 @@ void physics_mgr::DebugRenderCollisions( void )
             ||  ( Collision.m_pBody1 == &g_WorldBody ) )
         {
             // Draw world collision normal
-            draw_Color( XCOLOR_WHITE );
-            draw_Vertex( Collision.m_Position );
-            draw_Color( XCOLOR_BLUE );
-            draw_Vertex( Collision.m_Position + ( 25.0f * Collision.m_Normal ) );
+            render::debug::Line( Collision.m_Position,
+                                 Collision.m_Position + ( 25.0f * Collision.m_Normal ),
+                                 XCOLOR_BLUE, render::PRIMITIVE_DEPTH_DISABLED );
         }
         else
         {
             // Draw body v body collision normal
-            draw_Color( XCOLOR_WHITE );
-            draw_Vertex( Collision.m_Position );
-            draw_Color( XCOLOR_RED );
-            draw_Vertex( Collision.m_Position + ( 25.0f * Collision.m_Normal ) );
+            render::debug::Line( Collision.m_Position,
+                                 Collision.m_Position + ( 25.0f * Collision.m_Normal ),
+                                 XCOLOR_RED, render::PRIMITIVE_DEPTH_DISABLED );
         }
     }
-    draw_End();
-    draw_ClearL2W();
 }
 
 

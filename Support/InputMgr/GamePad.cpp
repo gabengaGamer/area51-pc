@@ -16,11 +16,29 @@
 //  GLOBAL STATE
 //=========================================================================
 
-ingame_pad g_IngamePad[ MAX_LOCAL_PLAYERS ];
+frontend_input g_FrontendInput;
+game_input     g_GameInput;
 
 #if CONFIG_IS_DEMO && !defined( X_EDITOR )
 extern xtimer g_DemoIdleTimer;
 #endif
+
+//=========================================================================
+//  HELPERS
+//=========================================================================
+
+static
+void RecordDemoInputActivity( f32 Value )
+{
+#if CONFIG_IS_DEMO && !defined( X_EDITOR )
+    if( x_abs( Value ) > 0.2f )
+    {
+        g_DemoIdleTimer.Trip();
+    }
+#else
+    (void)Value;
+#endif
+}
 
 //=========================================================================
 //  STRUCTS
@@ -28,26 +46,37 @@ extern xtimer g_DemoIdleTimer;
 
 struct logical_definition
 {
-    ingame_pad::logical_id  LogicalID;
-    const char*             pName;
+    s32         LogicalID;
+    const char* pName;
 };
 
 //-------------------------------------------------------------------------
 
 struct mapping_definition
 {
-    ingame_pad::logical_id  LogicalID;
+    s32                     LogicalID;
     input_gadget            GadgetID;
     f32                     Scale;
     u32                     ContextMask;
+    input_action_value_mode ValueMode = INPUT_ACTION_VALUE_POSITIVE_AXIS;
+};
+
+//-------------------------------------------------------------------------
+
+enum class prompt_map
+{
+    Gameplay,
+    Frontend,
+    System,
 };
 
 //-------------------------------------------------------------------------
 
 struct prompt_definition
 {
-    const char*             pToken;
-    ingame_pad::logical_id  LogicalID;
+    const char* pToken;
+    prompt_map  Map;
+    s32         LogicalID;
 };
 
 //=========================================================================
@@ -105,8 +134,7 @@ const logical_definition s_GameplayLogicals[] =
     { ingame_pad::ACTION_MP_FLASHLIGHT,        "Multiplayer Toggle Flashlight" },
     { ingame_pad::ACTION_MP_MUTATE,            "Multiplayer Toggle Mutation" },
     { ingame_pad::ACTION_DROP_FLAG,            "Drop Flag" },
-
-    { ingame_pad::ACTION_PAUSE_CONTEXT,        "Pause" },
+    { ingame_pad::ACTION_SCOREBOARD,           "Show Scoreboard" },
 };
 
 //-------------------------------------------------------------------------
@@ -114,19 +142,19 @@ const logical_definition s_GameplayLogicals[] =
 static
 const logical_definition s_FrontendLogicals[] =
 {
-    { ingame_pad::UI_UP,                       "UI Up" },
-    { ingame_pad::UI_DOWN,                     "UI Down" },
-    { ingame_pad::UI_LEFT,                     "UI Left" },
-    { ingame_pad::UI_RIGHT,                    "UI Right" },
-    { ingame_pad::UI_SELECT,                   "UI Select" },
-    { ingame_pad::UI_BACK,                     "UI Back" },
-    { ingame_pad::UI_DELETE,                   "UI Delete" },
-    { ingame_pad::UI_ACTIVATE,                 "UI Activate" },
-    { ingame_pad::UI_SHOULDER_L,               "UI Shoulder Left" },
-    { ingame_pad::UI_SHOULDER_R,               "UI Shoulder Right" },
-    { ingame_pad::UI_SHOULDER_L2,              "UI Shoulder Left 2" },
-    { ingame_pad::UI_SHOULDER_R2,              "UI Shoulder Right 2" },
-    { ingame_pad::UI_HELP,                     "UI Help" },
+    { frontend_pad::UI_UP,                     "UI Up" },
+    { frontend_pad::UI_DOWN,                   "UI Down" },
+    { frontend_pad::UI_LEFT,                   "UI Left" },
+    { frontend_pad::UI_RIGHT,                  "UI Right" },
+    { frontend_pad::UI_SELECT,                 "UI Select" },
+    { frontend_pad::UI_BACK,                   "UI Back" },
+    { frontend_pad::UI_DELETE,                 "UI Delete" },
+    { frontend_pad::UI_ACTIVATE,               "UI Activate" },
+    { frontend_pad::UI_SHOULDER_L,             "UI Shoulder Left" },
+    { frontend_pad::UI_SHOULDER_R,             "UI Shoulder Right" },
+    { frontend_pad::UI_SHOULDER_L2,            "UI Shoulder Left 2" },
+    { frontend_pad::UI_SHOULDER_R2,            "UI Shoulder Right 2" },
+    { frontend_pad::UI_HELP,                   "UI Help" },
 };
 
 //-------------------------------------------------------------------------
@@ -135,15 +163,15 @@ const logical_definition s_FrontendLogicals[] =
 static
 const logical_definition s_DebugMenuLogicals[] =
 {
-    { ingame_pad::DEBUG_MENU_NEXT_PAGE,        "Debug Menu Next Page" },
-    { ingame_pad::DEBUG_MENU_PREV_PAGE,        "Debug Menu Previous Page" },
-    { ingame_pad::DEBUG_MENU_NEXT_ITEM,        "Debug Menu Next Item" },
-    { ingame_pad::DEBUG_MENU_PREV_ITEM,        "Debug Menu Previous Item" },
-    { ingame_pad::DEBUG_MENU_INCREMENT,        "Debug Menu Increment" },
-    { ingame_pad::DEBUG_MENU_DECREMENT,        "Debug Menu Decrement" },
-    { ingame_pad::DEBUG_MENU_ACTION,           "Debug Menu Action" },
-    { ingame_pad::DEBUG_MENU_EXIT_MODIFIER,    "Debug Menu Exit Modifier" },
-    { ingame_pad::DEBUG_MENU_EXIT,             "Debug Menu Exit" },
+    { frontend_pad::DEBUG_MENU_NEXT_PAGE,      "Debug Menu Next Page" },
+    { frontend_pad::DEBUG_MENU_PREV_PAGE,      "Debug Menu Previous Page" },
+    { frontend_pad::DEBUG_MENU_NEXT_ITEM,      "Debug Menu Next Item" },
+    { frontend_pad::DEBUG_MENU_PREV_ITEM,      "Debug Menu Previous Item" },
+    { frontend_pad::DEBUG_MENU_INCREMENT,      "Debug Menu Increment" },
+    { frontend_pad::DEBUG_MENU_DECREMENT,      "Debug Menu Decrement" },
+    { frontend_pad::DEBUG_MENU_ACTION,         "Debug Menu Action" },
+    { frontend_pad::DEBUG_MENU_EXIT_MODIFIER,  "Debug Menu Exit Modifier" },
+    { frontend_pad::DEBUG_MENU_EXIT,           "Debug Menu Exit" },
 };
 #endif // defined( ENABLE_DEBUG_MENU )
 
@@ -158,8 +186,8 @@ const mapping_definition s_GameplayMappings[] =
     { ingame_pad::MOVE_BACKWARD,                         INPUT_XBOX_STICK_LEFT_Y,   -1.0f,  INGAME_CONTEXT },
     { ingame_pad::STRAFE_LEFT,                           INPUT_XBOX_STICK_LEFT_X,   -1.0f,  INGAME_CONTEXT },
     { ingame_pad::STRAFE_RIGHT,                          INPUT_XBOX_STICK_LEFT_X,   1.0f,   INGAME_CONTEXT },
-    { ingame_pad::LOOK_HORIZONTAL,                       INPUT_XBOX_STICK_RIGHT_X,  1.0f,   INGAME_CONTEXT },
-    { ingame_pad::LOOK_VERTICAL,                         INPUT_XBOX_STICK_RIGHT_Y,  -1.0f,  INGAME_CONTEXT },
+    { ingame_pad::LOOK_HORIZONTAL,                       INPUT_XBOX_STICK_RIGHT_X,  1.0f,   INGAME_CONTEXT, INPUT_ACTION_VALUE_SIGNED_AXIS },
+    { ingame_pad::LOOK_VERTICAL,                         INPUT_XBOX_STICK_RIGHT_Y,  -1.0f,  INGAME_CONTEXT, INPUT_ACTION_VALUE_SIGNED_AXIS },
     { ingame_pad::ACTION_JUMP,                           INPUT_XBOX_BTN_A,          1.0f,   INGAME_CONTEXT },
     { ingame_pad::ACTION_CROUCH,                         INPUT_XBOX_BTN_L_STICK,    1.0f,   INGAME_CONTEXT },
     { ingame_pad::ACTION_PRIMARY,                        INPUT_XBOX_R_TRIGGER,      1.0f,   INGAME_CONTEXT },
@@ -187,6 +215,7 @@ const mapping_definition s_GameplayMappings[] =
     { ingame_pad::ACTION_MP_FLASHLIGHT,                  INPUT_XBOX_BTN_DOWN,       1.0f,   INGAME_CONTEXT },
     { ingame_pad::ACTION_MP_MUTATE,                      INPUT_XBOX_BTN_UP,         1.0f,   INGAME_CONTEXT },
     { ingame_pad::ACTION_DROP_FLAG,                      INPUT_XBOX_BTN_DOWN,       1.0f,   INGAME_CONTEXT },
+    { ingame_pad::ACTION_SCOREBOARD,                     INPUT_XBOX_BTN_BACK,       1.0f,   INGAME_CONTEXT },
 
     { ingame_pad::MOVE_FORWARD,                          INPUT_KBD_W,               1.0f,   INGAME_CONTEXT },
     { ingame_pad::MOVE_BACKWARD,                         INPUT_KBD_S,               1.0f,   INGAME_CONTEXT },
@@ -228,13 +257,14 @@ const mapping_definition s_GameplayMappings[] =
     { ingame_pad::ACTION_MP_FLASHLIGHT,                  INPUT_KBD_F,               1.0f,   INGAME_CONTEXT },
     { ingame_pad::ACTION_MP_MUTATE,                      INPUT_KBD_X,               1.0f,   INGAME_CONTEXT },
     { ingame_pad::ACTION_DROP_FLAG,                      INPUT_KBD_N,               1.0f,   INGAME_CONTEXT },
+    { ingame_pad::ACTION_SCOREBOARD,                     INPUT_KBD_TAB,             1.0f,   INGAME_CONTEXT },
 
     { ingame_pad::MOVE_FORWARD,                          INPUT_PS2_STICK_LEFT_Y,    1.0f,   INGAME_CONTEXT },
     { ingame_pad::MOVE_BACKWARD,                         INPUT_PS2_STICK_LEFT_Y,    -1.0f,  INGAME_CONTEXT },
     { ingame_pad::STRAFE_LEFT,                           INPUT_PS2_STICK_LEFT_X,    -1.0f,  INGAME_CONTEXT },
     { ingame_pad::STRAFE_RIGHT,                          INPUT_PS2_STICK_LEFT_X,    1.0f,   INGAME_CONTEXT },
-    { ingame_pad::LOOK_HORIZONTAL,                       INPUT_PS2_STICK_RIGHT_X,   1.0f,   INGAME_CONTEXT },
-    { ingame_pad::LOOK_VERTICAL,                         INPUT_PS2_STICK_RIGHT_Y,   -1.0f,  INGAME_CONTEXT },
+    { ingame_pad::LOOK_HORIZONTAL,                       INPUT_PS2_STICK_RIGHT_X,   1.0f,   INGAME_CONTEXT, INPUT_ACTION_VALUE_SIGNED_AXIS },
+    { ingame_pad::LOOK_VERTICAL,                         INPUT_PS2_STICK_RIGHT_Y,   -1.0f,  INGAME_CONTEXT, INPUT_ACTION_VALUE_SIGNED_AXIS },
     { ingame_pad::ACTION_JUMP,                           INPUT_PS2_BTN_L1,          1.0f,   INGAME_CONTEXT },
     { ingame_pad::ACTION_CROUCH,                         INPUT_PS2_BTN_L2,          1.0f,   INGAME_CONTEXT },
     { ingame_pad::ACTION_PRIMARY,                        INPUT_PS2_BTN_R1,          1.0f,   INGAME_CONTEXT },
@@ -263,6 +293,7 @@ const mapping_definition s_GameplayMappings[] =
     { ingame_pad::ACTION_MP_FLASHLIGHT,                  INPUT_PS2_BTN_L_STICK,     1.0f,   INGAME_CONTEXT },
     { ingame_pad::ACTION_MP_MUTATE,                      INPUT_PS2_BTN_L_UP,        1.0f,   INGAME_CONTEXT },
     { ingame_pad::ACTION_DROP_FLAG,                      INPUT_PS2_BTN_L_DOWN,      1.0f,   INGAME_CONTEXT },
+    { ingame_pad::ACTION_SCOREBOARD,                     INPUT_PS2_BTN_SELECT,      1.0f,   INGAME_CONTEXT },
 };
 
 //-------------------------------------------------------------------------
@@ -270,18 +301,9 @@ const mapping_definition s_GameplayMappings[] =
 static
 const mapping_definition s_SystemMappings[] =
 {
-    { ingame_pad::ACTION_PAUSE_CONTEXT,                  INPUT_XBOX_BTN_START,      1.0f,   ALL_CONTEXTS },
-    { ingame_pad::ACTION_PAUSE_CONTEXT,                  INPUT_KBD_ESCAPE,          1.0f,   ALL_CONTEXTS },
-    { ingame_pad::ACTION_PAUSE_CONTEXT,                  INPUT_PS2_BTN_START,       1.0f,   ALL_CONTEXTS },
-
-#if defined( ENABLE_DEBUG_MENU )
-    { ingame_pad::DEBUG_MENU_EXIT_MODIFIER,              INPUT_XBOX_BTN_BACK,       1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_EXIT,                       INPUT_XBOX_BTN_START,      1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_EXIT_MODIFIER,              INPUT_KBD_TAB,             1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_EXIT,                       INPUT_KBD_RETURN,          1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_EXIT_MODIFIER,              INPUT_PS2_BTN_SELECT,      1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_EXIT,                       INPUT_PS2_BTN_START,       1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
-#endif
+    { system_pad::PAUSE,                                  INPUT_XBOX_BTN_START,      1.0f,   ALL_CONTEXTS },
+    { system_pad::PAUSE,                                  INPUT_KBD_ESCAPE,          1.0f,   ALL_CONTEXTS },
+    { system_pad::PAUSE,                                  INPUT_PS2_BTN_START,       1.0f,   ALL_CONTEXTS },
 };
 
 //-------------------------------------------------------------------------
@@ -289,52 +311,56 @@ const mapping_definition s_SystemMappings[] =
 static
 const mapping_definition s_FrontendMappings[] =
 {
-    { ingame_pad::UI_UP,                                 INPUT_XBOX_BTN_UP,         1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_DOWN,                               INPUT_XBOX_BTN_DOWN,       1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_LEFT,                               INPUT_XBOX_BTN_LEFT,       1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_RIGHT,                              INPUT_XBOX_BTN_RIGHT,      1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_UP,                                 INPUT_XBOX_STICK_LEFT_Y,   1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_DOWN,                               INPUT_XBOX_STICK_LEFT_Y,   -1.0f,  FRONTEND_CONTEXT },
-    { ingame_pad::UI_LEFT,                               INPUT_XBOX_STICK_LEFT_X,   -1.0f,  FRONTEND_CONTEXT },
-    { ingame_pad::UI_RIGHT,                              INPUT_XBOX_STICK_LEFT_X,   1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_SELECT,                             INPUT_XBOX_BTN_A,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_BACK,                               INPUT_XBOX_BTN_B,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_BACK,                               INPUT_XBOX_BTN_BACK,       1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_DELETE,                             INPUT_XBOX_BTN_X,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_ACTIVATE,                           INPUT_XBOX_BTN_Y,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_SHOULDER_L,                         INPUT_XBOX_BTN_WHITE,      1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_SHOULDER_R,                         INPUT_XBOX_BTN_BLACK,      1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_SHOULDER_L2,                        INPUT_XBOX_L_TRIGGER,      1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_SHOULDER_R2,                        INPUT_XBOX_R_TRIGGER,      1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_HELP,                               INPUT_XBOX_BTN_START,      1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_UP,                               INPUT_XBOX_BTN_UP,         1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_DOWN,                             INPUT_XBOX_BTN_DOWN,       1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_LEFT,                             INPUT_XBOX_BTN_LEFT,       1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_RIGHT,                            INPUT_XBOX_BTN_RIGHT,      1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_UP,                               INPUT_XBOX_STICK_LEFT_Y,   1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_DOWN,                             INPUT_XBOX_STICK_LEFT_Y,   -1.0f,  FRONTEND_CONTEXT },
+    { frontend_pad::UI_LEFT,                             INPUT_XBOX_STICK_LEFT_X,   -1.0f,  FRONTEND_CONTEXT },
+    { frontend_pad::UI_RIGHT,                            INPUT_XBOX_STICK_LEFT_X,   1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SELECT,                           INPUT_XBOX_BTN_A,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_BACK,                             INPUT_XBOX_BTN_B,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_BACK,                             INPUT_XBOX_BTN_BACK,       1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_DELETE,                           INPUT_XBOX_BTN_X,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_ACTIVATE,                         INPUT_XBOX_BTN_Y,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_L,                       INPUT_XBOX_BTN_WHITE,      1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_R,                       INPUT_XBOX_BTN_BLACK,      1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_L2,                      INPUT_XBOX_L_TRIGGER,      1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_R2,                      INPUT_XBOX_R_TRIGGER,      1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_HELP,                             INPUT_XBOX_BTN_START,      1.0f,   FRONTEND_CONTEXT },
 
-    { ingame_pad::UI_UP,                                 INPUT_KBD_UP,              1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_DOWN,                               INPUT_KBD_DOWN,            1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_LEFT,                               INPUT_KBD_LEFT,            1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_RIGHT,                              INPUT_KBD_RIGHT,           1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_SELECT,                             INPUT_KBD_RETURN,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_BACK,                               INPUT_KBD_ESCAPE,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_DELETE,                             INPUT_KBD_DELETE,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_DELETE,                             INPUT_KBD_BACK,            1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_ACTIVATE,                           INPUT_KBD_R,               1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_HELP,                               INPUT_KBD_RETURN,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_UP,                                 INPUT_PS2_BTN_L_UP,        1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_DOWN,                               INPUT_PS2_BTN_L_DOWN,      1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_LEFT,                               INPUT_PS2_BTN_L_LEFT,      1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_RIGHT,                              INPUT_PS2_BTN_L_RIGHT,     1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_UP,                                 INPUT_PS2_STICK_LEFT_Y,    1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_DOWN,                               INPUT_PS2_STICK_LEFT_Y,    -1.0f,  FRONTEND_CONTEXT },
-    { ingame_pad::UI_LEFT,                               INPUT_PS2_STICK_LEFT_X,    -1.0f,  FRONTEND_CONTEXT },
-    { ingame_pad::UI_RIGHT,                              INPUT_PS2_STICK_LEFT_X,    1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_SELECT,                             INPUT_PS2_BTN_CROSS,       1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_BACK,                               INPUT_PS2_BTN_SQUARE,      1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_DELETE,                             INPUT_PS2_BTN_CIRCLE,      1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_ACTIVATE,                           INPUT_PS2_BTN_TRIANGLE,    1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_SHOULDER_L,                         INPUT_PS2_BTN_L1,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_SHOULDER_R,                         INPUT_PS2_BTN_R1,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_SHOULDER_L2,                        INPUT_PS2_BTN_L2,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_SHOULDER_R2,                        INPUT_PS2_BTN_R2,          1.0f,   FRONTEND_CONTEXT },
-    { ingame_pad::UI_HELP,                               INPUT_PS2_BTN_START,       1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_UP,                               INPUT_KBD_UP,              1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_DOWN,                             INPUT_KBD_DOWN,            1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_LEFT,                             INPUT_KBD_LEFT,            1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_RIGHT,                            INPUT_KBD_RIGHT,           1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SELECT,                           INPUT_KBD_RETURN,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_BACK,                             INPUT_KBD_ESCAPE,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_DELETE,                           INPUT_KBD_DELETE,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_DELETE,                           INPUT_KBD_BACK,            1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_ACTIVATE,                         INPUT_KBD_R,               1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_L,                       INPUT_KBD_PRIOR,           1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_R,                       INPUT_KBD_NEXT,            1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_L2,                      INPUT_KBD_HOME,            1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_R2,                      INPUT_KBD_END,             1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_HELP,                             INPUT_KBD_RETURN,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_UP,                               INPUT_PS2_BTN_L_UP,        1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_DOWN,                             INPUT_PS2_BTN_L_DOWN,      1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_LEFT,                             INPUT_PS2_BTN_L_LEFT,      1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_RIGHT,                            INPUT_PS2_BTN_L_RIGHT,     1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_UP,                               INPUT_PS2_STICK_LEFT_Y,    1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_DOWN,                             INPUT_PS2_STICK_LEFT_Y,    -1.0f,  FRONTEND_CONTEXT },
+    { frontend_pad::UI_LEFT,                             INPUT_PS2_STICK_LEFT_X,    -1.0f,  FRONTEND_CONTEXT },
+    { frontend_pad::UI_RIGHT,                            INPUT_PS2_STICK_LEFT_X,    1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SELECT,                           INPUT_PS2_BTN_CROSS,       1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_BACK,                             INPUT_PS2_BTN_SQUARE,      1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_DELETE,                           INPUT_PS2_BTN_CIRCLE,      1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_ACTIVATE,                         INPUT_PS2_BTN_TRIANGLE,    1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_L,                       INPUT_PS2_BTN_L1,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_R,                       INPUT_PS2_BTN_R1,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_L2,                      INPUT_PS2_BTN_L2,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_SHOULDER_R2,                      INPUT_PS2_BTN_R2,          1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_HELP,                             INPUT_PS2_BTN_START,       1.0f,   FRONTEND_CONTEXT },
 };
 
 //-------------------------------------------------------------------------
@@ -343,43 +369,49 @@ const mapping_definition s_FrontendMappings[] =
 static
 const mapping_definition s_DebugMenuMappings[] =
 {
-    { ingame_pad::DEBUG_MENU_NEXT_PAGE,                  INPUT_XBOX_BTN_BLACK,      1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_NEXT_PAGE,                  INPUT_XBOX_R_TRIGGER,      1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_PREV_PAGE,                  INPUT_XBOX_BTN_WHITE,      1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_PREV_PAGE,                  INPUT_XBOX_L_TRIGGER,      1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_NEXT_ITEM,                  INPUT_XBOX_BTN_DOWN,       1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_NEXT_ITEM,                  INPUT_XBOX_STICK_LEFT_Y,  -1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_PREV_ITEM,                  INPUT_XBOX_BTN_UP,         1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_PREV_ITEM,                  INPUT_XBOX_STICK_LEFT_Y,   1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_INCREMENT,                  INPUT_XBOX_BTN_RIGHT,      1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_INCREMENT,                  INPUT_XBOX_STICK_LEFT_X,   1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_DECREMENT,                  INPUT_XBOX_BTN_LEFT,       1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_DECREMENT,                  INPUT_XBOX_STICK_LEFT_X,  -1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_ACTION,                     INPUT_XBOX_BTN_A,          1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_ACTION,                     INPUT_XBOX_BTN_X,          1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_EXIT_MODIFIER,            INPUT_XBOX_BTN_BACK,       1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_EXIT,                     INPUT_XBOX_BTN_START,      1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_NEXT_PAGE,                INPUT_XBOX_BTN_BLACK,      1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_NEXT_PAGE,                INPUT_XBOX_R_TRIGGER,      1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_PREV_PAGE,                INPUT_XBOX_BTN_WHITE,      1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_PREV_PAGE,                INPUT_XBOX_L_TRIGGER,      1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_NEXT_ITEM,                INPUT_XBOX_BTN_DOWN,       1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_NEXT_ITEM,                INPUT_XBOX_STICK_LEFT_Y,  -1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_PREV_ITEM,                INPUT_XBOX_BTN_UP,         1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_PREV_ITEM,                INPUT_XBOX_STICK_LEFT_Y,   1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_INCREMENT,                INPUT_XBOX_BTN_RIGHT,      1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_INCREMENT,                INPUT_XBOX_STICK_LEFT_X,   1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_DECREMENT,                INPUT_XBOX_BTN_LEFT,       1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_DECREMENT,                INPUT_XBOX_STICK_LEFT_X,  -1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_ACTION,                   INPUT_XBOX_BTN_A,          1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_ACTION,                   INPUT_XBOX_BTN_X,          1.0f,   DEBUG_MENU_CONTEXT },
 
-    { ingame_pad::DEBUG_MENU_NEXT_ITEM,                  INPUT_KBD_DOWN,            1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_PREV_ITEM,                  INPUT_KBD_UP,              1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_INCREMENT,                  INPUT_KBD_RIGHT,           1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_DECREMENT,                  INPUT_KBD_LEFT,            1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_ACTION,                     INPUT_KBD_RETURN,          1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_ACTION,                     INPUT_KBD_DELETE,          1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_ACTION,                     INPUT_KBD_BACK,            1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_EXIT_MODIFIER,            INPUT_KBD_TAB,             1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_EXIT,                     INPUT_KBD_RETURN,          1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_NEXT_ITEM,                INPUT_KBD_DOWN,            1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_PREV_ITEM,                INPUT_KBD_UP,              1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_INCREMENT,                INPUT_KBD_RIGHT,           1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_DECREMENT,                INPUT_KBD_LEFT,            1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_ACTION,                   INPUT_KBD_RETURN,          1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_ACTION,                   INPUT_KBD_DELETE,          1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_ACTION,                   INPUT_KBD_BACK,            1.0f,   DEBUG_MENU_CONTEXT },
 
-    { ingame_pad::DEBUG_MENU_NEXT_PAGE,                  INPUT_PS2_BTN_R1,          1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_NEXT_PAGE,                  INPUT_PS2_BTN_R2,          1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_PREV_PAGE,                  INPUT_PS2_BTN_L1,          1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_PREV_PAGE,                  INPUT_PS2_BTN_L2,          1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_NEXT_ITEM,                  INPUT_PS2_BTN_L_DOWN,      1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_NEXT_ITEM,                  INPUT_PS2_STICK_LEFT_Y,   -1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_PREV_ITEM,                  INPUT_PS2_BTN_L_UP,        1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_PREV_ITEM,                  INPUT_PS2_STICK_LEFT_Y,    1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_INCREMENT,                  INPUT_PS2_BTN_L_RIGHT,     1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_INCREMENT,                  INPUT_PS2_STICK_LEFT_X,    1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_DECREMENT,                  INPUT_PS2_BTN_L_LEFT,      1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_DECREMENT,                  INPUT_PS2_STICK_LEFT_X,   -1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_ACTION,                     INPUT_PS2_BTN_CROSS,       1.0f,   DEBUG_MENU_CONTEXT },
-    { ingame_pad::DEBUG_MENU_ACTION,                     INPUT_PS2_BTN_CIRCLE,      1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_EXIT_MODIFIER,            INPUT_PS2_BTN_SELECT,      1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_EXIT,                     INPUT_PS2_BTN_START,       1.0f,   INGAME_CONTEXT | DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_NEXT_PAGE,                INPUT_PS2_BTN_R1,          1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_NEXT_PAGE,                INPUT_PS2_BTN_R2,          1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_PREV_PAGE,                INPUT_PS2_BTN_L1,          1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_PREV_PAGE,                INPUT_PS2_BTN_L2,          1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_NEXT_ITEM,                INPUT_PS2_BTN_L_DOWN,      1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_NEXT_ITEM,                INPUT_PS2_STICK_LEFT_Y,   -1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_PREV_ITEM,                INPUT_PS2_BTN_L_UP,        1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_PREV_ITEM,                INPUT_PS2_STICK_LEFT_Y,    1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_INCREMENT,                INPUT_PS2_BTN_L_RIGHT,     1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_INCREMENT,                INPUT_PS2_STICK_LEFT_X,    1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_DECREMENT,                INPUT_PS2_BTN_L_LEFT,      1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_DECREMENT,                INPUT_PS2_STICK_LEFT_X,   -1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_ACTION,                   INPUT_PS2_BTN_CROSS,       1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_ACTION,                   INPUT_PS2_BTN_CIRCLE,      1.0f,   DEBUG_MENU_CONTEXT },
 };
 #endif // defined( ENABLE_DEBUG_MENU )
 
@@ -390,49 +422,49 @@ const mapping_definition s_DebugMenuMappings[] =
 static
 const prompt_definition s_PromptDefinitions[] =
 {
-    { "x",          ingame_pad::UI_SELECT             },
-    { "q",          ingame_pad::UI_DELETE             },
-    { "a",          ingame_pad::UI_BACK               },
-    { "o",          ingame_pad::UI_ACTIVATE           },
-    { "X",          ingame_pad::UI_DELETE             },
-    { "Y",          ingame_pad::UI_ACTIVATE           },
-    { "A",          ingame_pad::UI_SELECT             },
-    { "B",          ingame_pad::UI_BACK               },
-    { "S",          ingame_pad::UI_HELP               },
-    { "SQUARE",     ingame_pad::UI_DELETE             },
-    { "CROSS",      ingame_pad::UI_SELECT             },
-    { "TRIANGLE",   ingame_pad::UI_ACTIVATE           },
-    { "CIRCLE",     ingame_pad::UI_BACK               },
-    { "DOWN",       ingame_pad::UI_DOWN               },
-    { "LEFT",       ingame_pad::UI_LEFT               },
-    { "UP",         ingame_pad::UI_UP                 },
-    { "RIGHT",      ingame_pad::UI_RIGHT              },
-    { "UPDOWN",     ingame_pad::UI_UP                 },
-    { "LEFTRIGHT",  ingame_pad::UI_LEFT               },
-    { "PAUSE",      ingame_pad::ACTION_PAUSE_CONTEXT  },
-    { "START",      ingame_pad::UI_HELP               },
-    { "SELECT",     ingame_pad::UI_SELECT             },
-    { "BACK",       ingame_pad::UI_BACK               },
-    { "DELETE",     ingame_pad::UI_DELETE             },
-    { "ACTIVATE",   ingame_pad::UI_ACTIVATE           },
-    { "GRENADE",    ingame_pad::ACTION_THROW_GRENADE  },
-    { "RELOAD",     ingame_pad::ACTION_RELOAD         },
-    { "USE",        ingame_pad::ACTION_USE            },
-    { "PREVWEAPON", ingame_pad::ACTION_CYCLE_LEFT     },
-    { "NEXTWEAPON", ingame_pad::ACTION_CYCLE_RIGHT    },
-    { "LEANLEFT",   ingame_pad::LEAN_LEFT             },
-    { "LEANRIGHT",  ingame_pad::LEAN_RIGHT            },
-    { "LEAN",       ingame_pad::LEAN_LEFT             },
-    { "MUTATE",     ingame_pad::ACTION_MUTATION       },
-    { "TRANSFORM",  ingame_pad::ACTION_MUTATION       },
-    { "JUMP",       ingame_pad::ACTION_JUMP           },
-    { "CROUCH",     ingame_pad::ACTION_CROUCH         },
-    { "FLASHLIGHT", ingame_pad::ACTION_FLASHLIGHT     },
-    { "FIRE",       ingame_pad::ACTION_PRIMARY        },
-    { "SECONDARY",  ingame_pad::ACTION_SECONDARY      },
-    { "MELEE",      ingame_pad::ACTION_MELEE_ATTACK   },
-    { "PARASITE",   ingame_pad::ACTION_FIRE_PARASITES },
-    { "CONTAGION",  ingame_pad::ACTION_FIRE_CONTAGION },
+    { "x",          prompt_map::Frontend, frontend_pad::UI_SELECT             },
+    { "q",          prompt_map::Frontend, frontend_pad::UI_DELETE             },
+    { "a",          prompt_map::Frontend, frontend_pad::UI_BACK               },
+    { "o",          prompt_map::Frontend, frontend_pad::UI_ACTIVATE           },
+    { "X",          prompt_map::Frontend, frontend_pad::UI_DELETE             },
+    { "Y",          prompt_map::Frontend, frontend_pad::UI_ACTIVATE           },
+    { "A",          prompt_map::Frontend, frontend_pad::UI_SELECT             },
+    { "B",          prompt_map::Frontend, frontend_pad::UI_BACK               },
+    { "S",          prompt_map::Frontend, frontend_pad::UI_HELP               },
+    { "SQUARE",     prompt_map::Frontend, frontend_pad::UI_DELETE             },
+    { "CROSS",      prompt_map::Frontend, frontend_pad::UI_SELECT             },
+    { "TRIANGLE",   prompt_map::Frontend, frontend_pad::UI_ACTIVATE           },
+    { "CIRCLE",     prompt_map::Frontend, frontend_pad::UI_BACK               },
+    { "DOWN",       prompt_map::Frontend, frontend_pad::UI_DOWN               },
+    { "LEFT",       prompt_map::Frontend, frontend_pad::UI_LEFT               },
+    { "UP",         prompt_map::Frontend, frontend_pad::UI_UP                 },
+    { "RIGHT",      prompt_map::Frontend, frontend_pad::UI_RIGHT              },
+    { "UPDOWN",     prompt_map::Frontend, frontend_pad::UI_UP                 },
+    { "LEFTRIGHT",  prompt_map::Frontend, frontend_pad::UI_LEFT               },
+    { "PAUSE",      prompt_map::System,   system_pad::PAUSE                   },
+    { "START",      prompt_map::Frontend, frontend_pad::UI_HELP               },
+    { "SELECT",     prompt_map::Frontend, frontend_pad::UI_SELECT             },
+    { "BACK",       prompt_map::Frontend, frontend_pad::UI_BACK               },
+    { "DELETE",     prompt_map::Frontend, frontend_pad::UI_DELETE             },
+    { "ACTIVATE",   prompt_map::Frontend, frontend_pad::UI_ACTIVATE           },
+    { "GRENADE",    prompt_map::Gameplay, ingame_pad::ACTION_THROW_GRENADE    },
+    { "RELOAD",     prompt_map::Gameplay, ingame_pad::ACTION_RELOAD           },
+    { "USE",        prompt_map::Gameplay, ingame_pad::ACTION_USE              },
+    { "PREVWEAPON", prompt_map::Gameplay, ingame_pad::ACTION_CYCLE_LEFT       },
+    { "NEXTWEAPON", prompt_map::Gameplay, ingame_pad::ACTION_CYCLE_RIGHT      },
+    { "LEANLEFT",   prompt_map::Gameplay, ingame_pad::LEAN_LEFT               },
+    { "LEANRIGHT",  prompt_map::Gameplay, ingame_pad::LEAN_RIGHT              },
+    { "LEAN",       prompt_map::Gameplay, ingame_pad::LEAN_LEFT               },
+    { "MUTATE",     prompt_map::Gameplay, ingame_pad::ACTION_MUTATION         },
+    { "TRANSFORM",  prompt_map::Gameplay, ingame_pad::ACTION_MUTATION         },
+    { "JUMP",       prompt_map::Gameplay, ingame_pad::ACTION_JUMP             },
+    { "CROUCH",     prompt_map::Gameplay, ingame_pad::ACTION_CROUCH           },
+    { "FLASHLIGHT", prompt_map::Gameplay, ingame_pad::ACTION_FLASHLIGHT       },
+    { "FIRE",       prompt_map::Gameplay, ingame_pad::ACTION_PRIMARY          },
+    { "SECONDARY",  prompt_map::Gameplay, ingame_pad::ACTION_SECONDARY        },
+    { "MELEE",      prompt_map::Gameplay, ingame_pad::ACTION_MELEE_ATTACK     },
+    { "PARASITE",   prompt_map::Gameplay, ingame_pad::ACTION_FIRE_PARASITES   },
+    { "CONTAGION",  prompt_map::Gameplay, ingame_pad::ACTION_FIRE_CONTAGION   },
 };
 
 //=========================================================================
@@ -448,9 +480,9 @@ s32 CountOf( const T (&)[Count] )
 
 //=========================================================================
 
-template< int Count >
+template< typename TPad, int Count >
 static
-void RegisterLogicalNames( ingame_pad& Pad, const logical_definition (&Definitions)[Count] )
+void RegisterLogicalNames( TPad& Pad, const logical_definition (&Definitions)[Count] )
 {
     for( s32 i = 0; i < Count; i++ )
     {
@@ -460,26 +492,9 @@ void RegisterLogicalNames( ingame_pad& Pad, const logical_definition (&Definitio
 
 //=========================================================================
 
+template< typename TPad, int Count >
 static
-input_action_value_mode GetMappingValueMode( ingame_pad::logical_id LogicalID, input_gadget GadgetID )
-{
-    if( input_system::GetGadgetValueKind( GadgetID ) != INPUT_VALUE_ABSOLUTE_AXIS )
-        return INPUT_ACTION_VALUE_AUTO;
-
-    if( (LogicalID == ingame_pad::LOOK_HORIZONTAL) ||
-        (LogicalID == ingame_pad::LOOK_VERTICAL) )
-    {
-        return INPUT_ACTION_VALUE_SIGNED_AXIS;
-    }
-
-    return INPUT_ACTION_VALUE_POSITIVE_AXIS;
-}
-
-//=========================================================================
-
-template< int Count >
-static
-void RegisterInputMappings( ingame_pad& Pad, const mapping_definition (&Definitions)[Count] )
+void RegisterInputMappings( TPad& Pad, const mapping_definition (&Definitions)[Count] )
 {
     for( s32 i = 0; i < Count; i++ )
     {
@@ -488,7 +503,7 @@ void RegisterInputMappings( ingame_pad& Pad, const mapping_definition (&Definiti
                         Mapping.GadgetID,
                         Mapping.Scale,
                         Mapping.ContextMask,
-                        GetMappingValueMode( Mapping.LogicalID, Mapping.GadgetID ) );
+                        Mapping.ValueMode );
     }
 }
 
@@ -521,7 +536,7 @@ ingame_pad::logical_id FindRegisteredLogicalID( const logical_definition (&Defin
     for( s32 i = 0; i < Count; i++ )
     {
         if( x_stricmp( pName, Definitions[i].pName ) == 0 )
-            return Definitions[i].LogicalID;
+            return static_cast<ingame_pad::logical_id>( Definitions[i].LogicalID );
     }
 
     return ingame_pad::ACTION_NULL;
@@ -587,7 +602,7 @@ const prompt_definition* FindPromptToken( const xwchar* pToken )
 
 template< int Count >
 static
-const mapping_definition* FindLogicalMapping( const mapping_definition (&Mappings)[Count], ingame_pad::logical_id LogicalID, input_platform Platform )
+const mapping_definition* FindLogicalMapping( const mapping_definition (&Mappings)[Count], s32 LogicalID, input_platform Platform )
 {
     for( s32 i = 0; i < Count; i++ )
     {
@@ -605,17 +620,19 @@ const mapping_definition* FindLogicalMapping( const mapping_definition (&Mapping
 //=========================================================================
 
 static
-const mapping_definition* FindPromptLogicalMapping( ingame_pad::logical_id LogicalID, input_platform Platform )
+const mapping_definition* FindPromptLogicalMapping( const prompt_definition& Prompt, input_platform Platform )
 {
-    const mapping_definition* pMapping = FindLogicalMapping( s_FrontendMappings, LogicalID, Platform );
-    if( pMapping )
-        return pMapping;
+    if( Prompt.Map == prompt_map::Frontend )
+    {
+        return FindLogicalMapping( s_FrontendMappings, Prompt.LogicalID, Platform );
+    }
 
-    pMapping = FindLogicalMapping( s_SystemMappings, LogicalID, Platform );
-    if( pMapping )
-        return pMapping;
+    if( Prompt.Map == prompt_map::System )
+    {
+        return FindLogicalMapping( s_SystemMappings, Prompt.LogicalID, Platform );
+    }
 
-    return FindLogicalMapping( s_GameplayMappings, LogicalID, Platform );
+    return FindLogicalMapping( s_GameplayMappings, Prompt.LogicalID, Platform );
 }
 
 //=========================================================================
@@ -630,47 +647,29 @@ ingame_pad::ingame_pad( void )
 
 //=========================================================================
 
-ingame_pad::logical& ingame_pad::GetLogical( s32 I )
+ingame_pad::logical& ingame_pad::GetFrameLogical( s32 I )
 {
     return GetActionState( I );
 }
 
 //=========================================================================
 
-const ingame_pad::logical& ingame_pad::GetLogical( s32 I ) const
+const ingame_pad::logical& ingame_pad::GetFrameLogical( s32 I ) const
 {
     return GetActionState( I );
 }
 
 //=========================================================================
 
-xbool ingame_pad::ShouldPollInput( void ) const
+void ingame_pad::Sample( input_snapshot const& Snapshot, f32 DeltaTime )
 {
     if( !HasDeviceID() )
-    {
-        u32 UnassignedContexts = FRONTEND_CONTEXT;
-#if defined( ENABLE_DEBUG_MENU )
-        UnassignedContexts |= DEBUG_MENU_CONTEXT;
-#endif
-
-        if( (GetActiveContext() & UnassignedContexts) == 0 )
-            return FALSE;
-    }
-
-    return TRUE;
-}
-
-//=========================================================================
-
-void ingame_pad::SampleFrame( f32 DeltaTime )
-{
-    if( !ShouldPollInput() )
     {
         ClearAllActions();
         return;
     }
 
-    input_action_map::SampleDevice( DeltaTime, GetResolvedDeviceID( 0 ) );
+    input_action_map::Sample( Snapshot, DeltaTime );
 }
 
 //=========================================================================
@@ -678,15 +677,7 @@ void ingame_pad::SampleFrame( f32 DeltaTime )
 void ingame_pad::OnActionValue( s32 ActionID, f32 Value )
 {
     (void)ActionID;
-
-#if CONFIG_IS_DEMO && !defined( X_EDITOR )
-    if( x_abs( Value ) > 0.2f )
-    {
-        g_DemoIdleTimer.Trip();
-    }
-#else
-    (void)Value;
-#endif
+    RecordDemoInputActivity( Value );
 }
 
 //=========================================================================
@@ -694,25 +685,12 @@ void ingame_pad::OnActionValue( s32 ActionID, f32 Value )
 void ingame_pad::OnInitialize( void )
 {
     ASSERT( CountOf( s_GameplayLogicals ) == (GAMEPLAY_ACTION_END - GAMEPLAY_ACTION_FIRST) );
-    ASSERT( CountOf( s_FrontendLogicals ) == (FRONTEND_ACTION_END - FRONTEND_ACTION_FIRST) );
-#if defined( ENABLE_DEBUG_MENU )
-    ASSERT( CountOf( s_DebugMenuLogicals ) == (DEBUG_MENU_ACTION_END - DEBUG_MENU_ACTION_FIRST) );
-#endif
 
     SetActionCount( MAX_ACTION );
 
     RegisterLogicalNames( *this, s_GameplayLogicals );
-    RegisterLogicalNames( *this, s_FrontendLogicals );
-#if defined( ENABLE_DEBUG_MENU )
-    RegisterLogicalNames( *this, s_DebugMenuLogicals );
-#endif
 
     RegisterInputMappings( *this, s_GameplayMappings );
-    RegisterInputMappings( *this, s_SystemMappings );
-    RegisterInputMappings( *this, s_FrontendMappings );
-#if defined( ENABLE_DEBUG_MENU )
-    RegisterInputMappings( *this, s_DebugMenuMappings );
-#endif
 }
 
 //=========================================================================
@@ -722,16 +700,6 @@ const char* ingame_pad::GetLogicalIDName( s32 Index )
     const char* pName = FindRegisteredLogicalName( s_GameplayLogicals, Index );
     if( pName )
         return pName;
-
-    pName = FindRegisteredLogicalName( s_FrontendLogicals, Index );
-    if( pName )
-        return pName;
-
-#if defined( ENABLE_DEBUG_MENU )
-    pName = FindRegisteredLogicalName( s_DebugMenuLogicals, Index );
-    if( pName )
-        return pName;
-#endif
 
     ASSERTS( 0, "Unknown logical input id" );
     return "";
@@ -770,7 +738,250 @@ ingame_pad::logical_id ingame_pad::GetLogicalIDByName( const char* pName )
 
 //=========================================================================
 
-input_gadget ingame_pad::GetInputPromptGadget( const xwchar* pToken )
+system_pad::system_pad( void )
+{
+    SetActiveContext( INGAME_CONTEXT );
+    OnInitialize();
+}
+
+//=========================================================================
+
+const input_action_state& system_pad::GetFrameLogical( s32 I ) const
+{
+    return GetActionState( I );
+}
+
+//=========================================================================
+
+void system_pad::OnInitialize( void )
+{
+    SetActionCount( MAX_ACTION );
+    SetActionName( PAUSE, "Pause" );
+    RegisterInputMappings( *this, s_SystemMappings );
+}
+
+//=========================================================================
+
+void system_pad::OnActionValue( s32 ActionID, f32 Value )
+{
+    (void)ActionID;
+    RecordDemoInputActivity( Value );
+}
+
+//=========================================================================
+
+frontend_pad::frontend_pad( void )
+{
+    SetActiveContext( FRONTEND_CONTEXT );
+    OnInitialize();
+}
+
+//=========================================================================
+
+frontend_pad::logical& frontend_pad::GetFrameLogical( s32 I )
+{
+    return GetActionState( I );
+}
+
+//=========================================================================
+
+const frontend_pad::logical& frontend_pad::GetFrameLogical( s32 I ) const
+{
+    return GetActionState( I );
+}
+
+//=========================================================================
+
+void frontend_pad::OnInitialize( void )
+{
+    ASSERT( CountOf( s_FrontendLogicals ) == UI_HELP + 1 );
+#if defined( ENABLE_DEBUG_MENU )
+    ASSERT( CountOf( s_DebugMenuLogicals ) == (MAX_ACTION - DEBUG_MENU_NEXT_PAGE) );
+#endif
+
+    SetActionCount( MAX_ACTION );
+
+    RegisterLogicalNames( *this, s_FrontendLogicals );
+    RegisterInputMappings( *this, s_FrontendMappings );
+
+#if defined( ENABLE_DEBUG_MENU )
+    RegisterLogicalNames( *this, s_DebugMenuLogicals );
+    RegisterInputMappings( *this, s_DebugMenuMappings );
+#endif
+}
+
+//=========================================================================
+
+void frontend_pad::OnActionValue( s32 ActionID, f32 Value )
+{
+    (void)ActionID;
+    RecordDemoInputActivity( Value );
+}
+
+//=========================================================================
+
+frontend_input::frontend_input( void )
+{
+    for( s32 i = 0; i < MAX_CONTROLLERS; i++ )
+    {
+        m_Pads[i].SetDeviceID( i );
+    }
+}
+
+//=========================================================================
+
+void frontend_input::Update( f32 DeltaTime )
+{
+    g_Input.CaptureFrameInput();
+    SampleFrame( g_Input.GetFrameSnapshot(), DeltaTime, FRONTEND_CONTEXT );
+}
+
+//=========================================================================
+
+void frontend_input::SampleFrame( input_snapshot const& Snapshot, f32 DeltaTime, u32 Context )
+{
+    for( s32 i = 0; i < MAX_CONTROLLERS; i++ )
+    {
+        m_Pads[i].SetActiveContext( Context );
+        m_Pads[i].Sample( Snapshot, DeltaTime );
+    }
+}
+
+//=========================================================================
+
+frontend_pad& frontend_input::GetPad( s32 ControllerID )
+{
+    ASSERT( (ControllerID >= 0) && (ControllerID < MAX_CONTROLLERS) );
+    return m_Pads[ControllerID];
+}
+
+//=========================================================================
+
+const frontend_pad& frontend_input::GetPad( s32 ControllerID ) const
+{
+    ASSERT( (ControllerID >= 0) && (ControllerID < MAX_CONTROLLERS) );
+    return m_Pads[ControllerID];
+}
+
+//=========================================================================
+
+game_input::game_input( void )
+{
+    for( s32 i = 0; i < frontend_input::MAX_CONTROLLERS; i++ )
+    {
+        m_SystemPads[i].SetDeviceID( i );
+    }
+}
+
+//=========================================================================
+
+xbool game_input::UpdateFrame( f32 DeltaTime, u32 Context )
+{
+    xbool const ExitRequested = g_Input.CaptureFrameInput();
+    input_snapshot const& Snapshot = g_Input.GetFrameSnapshot();
+
+    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
+    {
+        m_Players[i].SetActiveContext( Context );
+        m_Players[i].Sample( Snapshot, DeltaTime );
+    }
+
+    for( s32 i = 0; i < frontend_input::MAX_CONTROLLERS; i++ )
+    {
+        m_SystemPads[i].SetActiveContext( Context );
+        m_SystemPads[i].Sample( Snapshot, DeltaTime );
+    }
+
+    g_FrontendInput.SampleFrame( Snapshot, DeltaTime, Context );
+    return ExitRequested;
+}
+
+//=========================================================================
+
+void game_input::ClearInput( void )
+{
+    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
+    {
+        m_Players[i].ClearAllActions();
+    }
+}
+
+//=========================================================================
+
+const ingame_pad& game_input::GetPlayer( s32 PlayerIndex ) const
+{
+    ASSERT( (PlayerIndex >= 0) && (PlayerIndex < MAX_LOCAL_PLAYERS) );
+    return m_Players[PlayerIndex];
+}
+
+//=========================================================================
+
+const ingame_pad& game_input::operator[]( s32 PlayerIndex ) const
+{
+    return GetPlayer( PlayerIndex );
+}
+
+void game_input::SetPlayerDevice( s32 PlayerIndex, s32 DeviceID )
+{
+    ASSERT( (PlayerIndex >= 0) && (PlayerIndex < MAX_LOCAL_PLAYERS) );
+    ASSERT( (DeviceID >= 0) && (DeviceID < frontend_input::MAX_CONTROLLERS) );
+    m_Players[PlayerIndex].SetDeviceID( DeviceID );
+}
+
+//=========================================================================
+
+s32 game_input::GetPlayerDevice( s32 PlayerIndex ) const
+{
+    return GetPlayer( PlayerIndex ).GetDeviceID();
+}
+
+//=========================================================================
+
+void game_input::ClearPlayerDevice( s32 PlayerIndex )
+{
+    ASSERT( (PlayerIndex >= 0) && (PlayerIndex < MAX_LOCAL_PLAYERS) );
+    m_Players[PlayerIndex].SetDeviceID( -1 );
+    m_Players[PlayerIndex].ClearAllActions();
+}
+
+//=========================================================================
+
+void game_input::ClearPlayerDevices( void )
+{
+    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
+    {
+        ClearPlayerDevice( i );
+    }
+}
+
+//=========================================================================
+
+void game_input::ClearPlayerActions( s32 PlayerIndex )
+{
+    ASSERT( (PlayerIndex >= 0) && (PlayerIndex < MAX_LOCAL_PLAYERS) );
+    m_Players[PlayerIndex].ClearAllActions();
+}
+
+//=========================================================================
+
+s32 game_input::GetPauseController( void ) const
+{
+    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
+    {
+        s32 const DeviceID = GetPlayerDevice( i );
+        if( (DeviceID >= 0) && (DeviceID < frontend_input::MAX_CONTROLLERS) &&
+            (m_SystemPads[DeviceID].GetFrameLogical( system_pad::PAUSE ).GetWasValue() > 0.25f) )
+        {
+            return DeviceID;
+        }
+    }
+
+    return -1;
+}
+
+//=========================================================================
+
+input_gadget input_GetPromptGadget( const xwchar* pToken, input_platform Platform )
 {
     ASSERT( pToken );
 
@@ -781,14 +992,9 @@ input_gadget ingame_pad::GetInputPromptGadget( const xwchar* pToken )
     if( !pPrompt || IsPromptTokenComposite( pToken ) )
         return INPUT_UNDEFINED;
 
-    if( g_Input.GetCurrentInputDevice() != INPUT_DEVICE_GAMEPAD )
-        return INPUT_UNDEFINED;
-
-    input_platform Platform = g_Input.GetCurrentInputPlatform();
-
     if( (Platform != INPUT_PLATFORM_XBOX) && (Platform != INPUT_PLATFORM_PS2) )
         return INPUT_UNDEFINED;
 
-    const mapping_definition* pMapping = FindPromptLogicalMapping( pPrompt->LogicalID, Platform );
+    const mapping_definition* pMapping = FindPromptLogicalMapping( *pPrompt, Platform );
     return pMapping ? pMapping->GadgetID : INPUT_UNDEFINED;
 }

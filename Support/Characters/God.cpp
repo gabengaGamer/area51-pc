@@ -8,18 +8,23 @@
 // INCLUDES
 //=========================================================================
 #include "God.hpp"
-#include "Characters\Character.hpp"
-#include "Objects\Corpse.hpp"
-#include "Gamelib\StatsMgr.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
-#include "MusicStateMgr\MusicStateMgr.hpp"
+#include "Characters/Character.hpp"
+#include "Objects/Camera.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/Pip.hpp"
+#include "Objects/Corpse.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
+#include "MusicStateMgr/MusicStateMgr.hpp"
 
 //=========================================================================
 // DATA
 //=========================================================================
 
 static const f32    s_KeepActiveAfterRendering      =    2.0f;
+static const f32    s_CharacterThinkInterval        =    1.0f / 60.0f;
 static const s32    k_MaxNumPlayers                 =    5;
+static const s32    k_MaxNumSimulationViews         =    k_MaxNumPlayers + 1;
 const f32           k_MinActiveDistance             =    10000.0f;
 f32 g_MinGodTimeTalk    = 10.0f;
 f32 g_MaxGodTimeTalk    = 20.0f;
@@ -150,6 +155,7 @@ void god::TargettingData::Clear()
 god::god()
 {
     m_ActiveThinkID = -1 ;  // Current ID of character that can think
+    m_ThinkTimeAccumulator = 0.0f;
     m_SoundTimer = 0;
     m_GrenadeTimer = 0;
 
@@ -168,6 +174,7 @@ void god::OnActivate( xbool bActive )
 {
     ( void ) bActive ;
     m_ActiveThinkID = -1 ;  // Current ID of character that can think
+    m_ThinkTimeAccumulator = 0.0f;
 
     m_AStarPathFinder.ResetNumNodes() ;
 
@@ -218,13 +225,11 @@ xbool god::GetCanMeleePlayer( guid reqestNPC )
 
 //=============================================================================
 
-void god::OnAdvanceLogic( f32 DeltaTime )
+void god::OnAdvanceSimulation( f32 DeltaTime )
 {
-    (void)DeltaTime ;
-
     STAT_LOGGER( temp, k_stats_AI_Think );
 
-    CONTEXT( "god::OnAdvanceLogic" ) ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "god::OnAdvanceSimulation" ) ;
 
 #ifdef X_EDITOR
     // rmb: I'm pulling this out because this code is poo!
@@ -234,6 +239,8 @@ void god::OnAdvanceLogic( f32 DeltaTime )
 
     // Create infinite bbox incase a player is not found
     bbox ActiveBBox[k_MaxNumPlayers];
+    const view* LocalViews[k_MaxNumSimulationViews];
+    s32         LocalViewCount = 0;
 
     for (s32 i = 0; i < k_MaxNumPlayers; i++)
     {
@@ -262,8 +269,36 @@ void god::OnAdvanceLogic( f32 DeltaTime )
 
         ActiveBBox[CurrentBBox] = pObject->GetBBox();
         ActiveBBox[CurrentBBox].Inflate( 2000.f, 2000.f, 2000.f ) ;
+
+        player* pPlayer = (player*)pObject;
+        if( (pPlayer->GetLocalSlot() != -1) && (LocalViewCount < k_MaxNumSimulationViews) )
+        {
+            LocalViews[LocalViewCount++] = &pPlayer->GetSimulationView();
+        }
       
         PlayerID = g_ObjMgr.GetNext(PlayerID);
+    }
+
+    // Characters visible through an active PIP must remain simulation-active.
+    // Before the update/render paths were separated, rendering the PIP updated
+    // TimeSinceLastRender and provided this behavior implicitly.
+    slot_id PipID = g_ObjMgr.GetFirst( object::TYPE_PIP );
+    while( (PipID != SLOT_NULL) && (LocalViewCount < k_MaxNumSimulationViews) )
+    {
+        pip* pPip = (pip*)g_ObjMgr.GetObjectBySlot( PipID );
+        ASSERT( pPip );
+
+        if( pPip->GetState() == pip::STATE_ACTIVE )
+        {
+            object_ptr<camera> pCamera( pPip->GetCameraGuid() );
+            if( pCamera )
+            {
+                LocalViews[LocalViewCount++] = &pCamera->GetView();
+                break;
+            }
+        }
+
+        PipID = g_ObjMgr.GetNext( PipID );
     }
 
     /*
@@ -290,7 +325,7 @@ void god::OnAdvanceLogic( f32 DeltaTime )
 
     // Loop through all characters, setting up their active flag and 
     // records which character should think next (if any)
-    character* pActiveThink = NULL ;
+    m_ActiveCharacterGuids.SetCount( 0 );
     s32        ActiveCount = 0 ;
 
     //=============================================================================
@@ -346,6 +381,17 @@ void god::OnAdvanceLogic( f32 DeltaTime )
 
                     xbool bShouldBeActive = FALSE;
 
+                    xbool IsVisible = FALSE;
+                    for( s32 iView = 0; iView < LocalViewCount; ++iView )
+                    {
+                        if( LocalViews[iView]->BBoxInView( pCharacter->GetBBox() ) != view::VISIBLE_NONE )
+                        {
+                            IsVisible = TRUE;
+                            break;
+                        }
+                    }
+                    pCharacter->UpdateViewActivity( DeltaTime, IsVisible );
+
                     // Setup active flag
                     if (pCharacter->m_pActiveState && pCharacter->m_pActiveState->m_State == character_state::STATE_HOLD)
                     {
@@ -367,7 +413,7 @@ void god::OnAdvanceLogic( f32 DeltaTime )
                         //dead, so must be active to finish death anim
                         bShouldBeActive = TRUE;
                     }
-                    else if ( pCharacter->TimeSinceLastRender() < s_KeepActiveAfterRendering )
+                    else if ( pCharacter->TimeSinceVisible() < s_KeepActiveAfterRendering )
                     {
                         //keep active for a few seconds after last rendering
                         bShouldBeActive = TRUE;
@@ -414,11 +460,9 @@ void god::OnAdvanceLogic( f32 DeltaTime )
                         //       That's why I have to keep a pointer to the active thinker
                         //       and call the OnThink functions outside this loop.
 
-                        // Keep this character for later so we can make it think
-                        if (ActiveCount == m_ActiveThinkID)
-                            pActiveThink = pCharacter ;
-
-                        // Update count
+                        // Keep the active characters for the think pass after this
+                        // object-manager loop has finished.
+                        m_ActiveCharacterGuids.Append( pCharacter->GetGuid() );
                         ActiveCount++ ;
                     }
 
@@ -444,19 +488,48 @@ void god::OnAdvanceLogic( f32 DeltaTime )
     if ( pDebugThinker )
     {
         // Think every "DEBUG_ACTIVE_THINK_COUNT" frames
-        ActiveCount = DEBUG_ACTIVE_THINK_COUNT;
         if ( m_ActiveThinkID == 0 )
-            pActiveThink = pDebugThinker.m_pObject;
-        else
-            pActiveThink = 0;
+        {
+            pDebugThinker.m_pObject->m_bThinking = TRUE ;
+            pDebugThinker.m_pObject->OnThink() ;
+            pDebugThinker.m_pObject->m_bThinking = FALSE ;
+        }
+
+        if ( ++m_ActiveThinkID >= DEBUG_ACTIVE_THINK_COUNT )
+            m_ActiveThinkID = 0 ;
+
+        return;
     }
-    
+
 #endif
 
-    // Let one character do some thinking this frame
-    if (pActiveThink)
+    if( ActiveCount == 0 )
     {
-        CONTEXT("god::OnThink") ;
+        m_ActiveThinkID = 0;
+        m_ThinkTimeAccumulator = 0.0f;
+        return;
+    }
+
+    // Let the AI think rate stable when the render frame rate changes.
+    m_ThinkTimeAccumulator += DeltaTime;
+    s32 ThinkCount = (s32)( m_ThinkTimeAccumulator / s_CharacterThinkInterval );
+    m_ThinkTimeAccumulator -= ThinkCount * s_CharacterThinkInterval;
+
+    if( ThinkCount > ActiveCount )
+        ThinkCount = ActiveCount;
+
+    if( m_ActiveThinkID < 0 || m_ActiveThinkID >= ActiveCount )
+        m_ActiveThinkID = 0;
+
+    for( s32 iThink = 0; iThink < ThinkCount; iThink++ )
+    {
+        object* pObject = g_ObjMgr.GetObjectByGuid( m_ActiveCharacterGuids[(m_ActiveThinkID + iThink) % ActiveCount] );
+        if( !pObject || !pObject->IsKindOf( character::GetRTTI() ) )
+            continue;
+
+        character* pActiveThink = (character*)pObject;
+
+        X_PROFILE_SCOPE_CATEGORY( "Context", "god::OnThink") ;
 
         // Flag as thinking and then think!
         pActiveThink->m_bThinking = TRUE ;
@@ -464,9 +537,7 @@ void god::OnAdvanceLogic( f32 DeltaTime )
         pActiveThink->m_bThinking = FALSE ;
     }
 
-    // Goto next thinking ID
-    if (++m_ActiveThinkID >= ActiveCount)
-        m_ActiveThinkID = 0 ;
+    m_ActiveThinkID = ( m_ActiveThinkID + ThinkCount ) % ActiveCount;
 }
 
 //=============================================================================
@@ -571,7 +642,7 @@ s32 god::GetNumTargettingCloser( TargettingData newTargetData )
 /*
 xbool   god::RequestPath( const s32 SourceNodeIndex, const s32 DestNodeIndex, const guid RequestorGuid , s32* PathList , s32 PathCount )
 { 
-    CONTEXT("god::RequestPath1") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "god::RequestPath1") ;
 
     //get the references to the nodes.
     ng_node2& SourceNode = g_NavMap.GetNodeByID( SourceNodeIndex );
@@ -600,7 +671,7 @@ xbool   god::RequestPath( const s32 SourceNodeIndex, const s32 DestNodeIndex, co
 
 xbool   god::RequestPath( vector3 SourcePos ,vector3 DestPos ,guid RequestorGuid, s32* PathList , s32 PathCount )
 {
-    CONTEXT("god::RequestPath2") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "god::RequestPath2") ;
 
     //get the nearest node to SourcePos and to DestPos
     s32 SourceID = g_NavMap.GetNearestNode( SourcePos );
@@ -612,7 +683,7 @@ xbool   god::RequestPath( vector3 SourcePos ,vector3 DestPos ,guid RequestorGuid
 
 xbool   god::RequestPath( s32 SourceID ,vector3 DestPos ,guid RequestorGuid, s32* PathList , s32 PathCount )
 {
-    CONTEXT("god::RequestPath3") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "god::RequestPath3") ;
 
     //get the nearest node to SourcePos and to DestPos
     s32 DestID   = g_NavMap.GetNearestNode( DestPos );
@@ -1197,4 +1268,3 @@ xbool god::RequestRetreatPath( object*                  pRequestObject,
 }
 
 */
-

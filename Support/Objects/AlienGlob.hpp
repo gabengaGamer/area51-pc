@@ -8,12 +8,12 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
-#include "obj_mgr\obj_mgr.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
-#include "..\Auxiliary\fx_RunTime\Fx_Mgr.hpp"
-#include "render/RigidInst.hpp"
-#include "Characters\FloorProperties.hpp"
-#include "Decals\DecalPackage.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
+#include "FX/fx_Mgr.hpp"
+#include "Render/RigidInst.hpp"
+#include "Characters/FloorProperties.hpp"
+#include "Decals/DecalPackage.hpp"
 
 //=============================================================================
 // DEFINES
@@ -34,7 +34,7 @@ public:
 
     virtual bbox        GetLocalBBox        ( void ) const;
 
-    virtual void        OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void        OnMove				( const vector3& rNewPos );
     virtual void        OnTransform         ( const matrix4& L2W );
     virtual void        OnRender            ( void );

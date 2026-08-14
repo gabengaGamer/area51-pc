@@ -34,15 +34,15 @@
 #include "Actor.hpp"
 #include "x_bitstream.hpp"
 #include "Objects/Event.hpp"
-#include "Objects\PlayerLoco.hpp"
-#include "Characters\Grunt\GruntLoco.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
+#include "Objects/Player/PlayerLoco.hpp"
+#include "Characters/Grunt/GruntLoco.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
 #include "NetworkMgr/NetworkMgr.hpp"
 #include "NetworkMgr/GameMgr.hpp"
 #include "NetworkMgr/PainQueue.hpp"
 #include "Inventory/Inventory2.hpp"
-#include "Characters\ActorEffects.hpp"
-#include "Objects\Player.hpp"
+#include "Characters/ActorEffects.hpp"
+#include "Objects/Player/Player.hpp"
 
 //==============================================================================
 
@@ -914,7 +914,6 @@ void actor::net_Activate( void )
                  (m_NetModeBits & CONTROL_LOCAL) ? "LOCAL"  : "REMOTE",
                  (m_NetModeBits & ON_SERVER    ) ? "SERVER" : "CLIENT" );
 
-    InvalidateRenderInterpState();
 }
 
 //==============================================================================
@@ -1033,7 +1032,6 @@ void actor::net_AcceptUpdate( const update& Update )
             net_SetVoiceActor( Update.VoiceActor );
         }
 
-        InvalidateRenderInterpState();
     }
 
     // Don't need to worry about DEACTIVATE_BIT here.  That is handled by the
@@ -1175,8 +1173,22 @@ void actor::net_AcceptUpdate( const update& Update )
             radian  Pitch    = Update.Pitch;
             radian  Yaw      = Update.Yaw;
             
-            // TO DO - More data.
-            Teleport( Position, Pitch, Yaw, FALSE, FALSE );
+            if( GetType() == object::TYPE_PLAYER )
+            {
+                static_cast<player*>( this )->Teleport(
+                    Position,
+                    Pitch,
+                    Yaw,
+                    static_cast<zone_mgr::zone_id>( GetZone1() ),
+                    static_cast<zone_mgr::zone_id>( GetZone2() ),
+                    PlayerTeleportVelocityPolicy::Clear,
+                    FALSE,
+                    FALSE );
+            }
+            else
+            {
+                Teleport( Position, Pitch, Yaw, FALSE, FALSE );
+            }
 
             // TO DO - Set all of the stuff from the TO DO above.
             OnSpawn();
@@ -2285,7 +2297,6 @@ xbool actor::net_EquipWeapon2( inven_item WeaponItem )
 
         // Position ready for rendering.
         MoveWeapon( TRUE );
-        SnapRenderInterpState();
 
         // I thought that this would have happened somewhere else, 
         // but it seems not.  So...

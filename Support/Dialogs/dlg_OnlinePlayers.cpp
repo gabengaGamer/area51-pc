@@ -4,22 +4,22 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_blankbox.hpp"
-#include "ui\ui_playerlist.hpp"
-#include "ui\ui_dlg_vkeyboard.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_blankbox.hpp"
+#include "UI/ui_playerlist.hpp"
+#include "UI/ui_dlg_vkeyboard.hpp"
 
 #include "dlg_OnlinePlayers.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
@@ -51,7 +51,6 @@ enum controls
     IDC_INFO_CONNECTION,
    
     IDC_PLAYERLIST,
-    IDC_PLAYERS_NAV_TEXT,
 };
 
 //-------------------------------------------------------------------------
@@ -59,25 +58,24 @@ enum controls
 ui_manager::control_tem OnlinePlayersControls[] = 
 {
     // Frames.
-    { IDC_SERVER_DETAILS,   "IDS_NULL",             "blankbox",    48,  40, 416,  80, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_SERVER_DETAILS,   "IDS_NULL",             "blankbox",    48,  40, 416,  80, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_FRIENDLYFIRE_TEXT,"IDS_JOIN_FRIENDLYFIRE","text",        56,  62, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PCTCOMPLETE_TEXT, "IDS_JOIN_PCTCOMPLETE", "text",        56,  78, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CONNECTION_TEXT,  "IDS_JOIN_CONNECTION",  "text",        56,  94, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_GAMETYPE_TEXT,    "IDS_JOIN_GAMETYPE",    "text",       221,  62, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CURRENTMAP_TEXT,  "IDS_JOIN_CURRENTMAP",  "text",       221,  78, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_NEXTMAP_TEXT,     "IDS_JOIN_NEXTMAP",     "text",       221,  94, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_FRIENDLYFIRE_TEXT,"IDS_JOIN_FRIENDLYFIRE","text",        56,  62, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PCTCOMPLETE_TEXT, "IDS_JOIN_PCTCOMPLETE", "text",        56,  78, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_CONNECTION_TEXT,  "IDS_JOIN_CONNECTION",  "text",        56,  94, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_GAMETYPE_TEXT,    "IDS_JOIN_GAMETYPE",    "text",       221,  62, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_CURRENTMAP_TEXT,  "IDS_JOIN_CURRENTMAP",  "text",       221,  78, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_NEXTMAP_TEXT,     "IDS_JOIN_NEXTMAP",     "text",       221,  94, 100,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_INFO_FRIENDLYFIRE,"IDS_NULL",             "text",       161,  62,  57,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_INFO_PCTCOMPLETE, "IDS_NULL",             "text",       161,  78,  57,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_INFO_CONNECTION,  "IDS_NULL",             "text",       161,  94,  57,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_INFO_GAMETYPE,    "IDS_NULL",             "text",       326,  62, 128,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_INFO_CURRENTMAP,  "IDS_NULL",             "text",       326,  78, 128,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_INFO_NEXTMAP,     "IDS_NULL",             "text",       326,  94, 128,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_INFO_FRIENDLYFIRE,"IDS_NULL",             "text",       161,  62,  57,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_INFO_PCTCOMPLETE, "IDS_NULL",             "text",       161,  78,  57,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_INFO_CONNECTION,  "IDS_NULL",             "text",       161,  94,  57,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_INFO_GAMETYPE,    "IDS_NULL",             "text",       326,  62, 128,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_INFO_CURRENTMAP,  "IDS_NULL",             "text",       326,  78, 128,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_INFO_NEXTMAP,     "IDS_NULL",             "text",       326,  94, 128,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_PLAYERLIST,       "IDS_NULL",             "playerlist",  48, 130, 416, 180, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PLAYERLIST,       "IDS_NULL",             "playerlist",  48, 130, 416, 180, 0, 0, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_PLAYERS_NAV_TEXT, "IDS_NULL",             "text",         0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -159,7 +157,7 @@ xbool dlg_online_players::Create( s32                        UserID,
 	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
     
     m_pPlayerList = (ui_playerlist*)FindChildByID( IDC_PLAYERLIST );
-    m_pPlayerList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pPlayerList->SetActive( TRUE );
     m_pPlayerList->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pPlayerList->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pPlayerList->EnableHeaderBar();
@@ -173,15 +171,11 @@ xbool dlg_online_players::Create( s32                        UserID,
     m_CurrHL = 0;
 
     // set up nav text
-    m_pNavText = (ui_text*) FindChildByID( IDC_PLAYERS_NAV_TEXT );
     
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_JOIN" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
 
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);    
+    SetNavText( navText );
 
     // get server details box
     m_pServerDetails = (ui_blankbox*)FindChildByID( IDC_SERVER_DETAILS );
@@ -360,31 +354,14 @@ void dlg_online_players::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_online_players::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_online_players::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    (void)pWin;
-    (void)pSender;
-    (void)Command;
-    (void)pData;
-
-    if ( m_State == DIALOG_STATE_ACTIVE )
-    {
-        if (Command == WN_LIST_ACCEPTED)
-        {
-        }
-    } 
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 }
 
 //=========================================================================
 
-void dlg_online_players::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
-{
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
-}
-
-//=========================================================================
-
-void dlg_online_players::OnPadSelect( ui_win* pWin )
+void dlg_online_players::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -399,7 +376,7 @@ void dlg_online_players::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_online_players::OnPadBack( ui_win* pWin )
+void dlg_online_players::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -441,7 +418,6 @@ void dlg_online_players::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pFriendlyFireInfo     ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pPctCompleteInfo      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pConnectionSpeedInfo  ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText              ->SetFlag(ui_win::WF_VISIBLE, TRUE);
         }
     }
 

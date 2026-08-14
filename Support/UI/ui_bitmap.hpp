@@ -37,8 +37,6 @@ public:
                                           s32           Flags );
 
     virtual void    Render              ( s32 ox=0, s32 oy=0 );
-    virtual void    OnUpdate            ( f32 DeltaTime );
-
     void            SetBitmap           ( s32 BitmapID, xbool bIsElement = FALSE, s32 State = 0);
 
 protected:

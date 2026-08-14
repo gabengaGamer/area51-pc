@@ -9,13 +9,15 @@
 #ifndef GEOM_PIXEL_SHADING_HLSL
 #define GEOM_PIXEL_SHADING_HLSL
 
-GEOM_PIXEL_OUTPUT ShadeGeometryPixel( GEOM_PIXEL_INPUT input )
+//==============================================================================
+//  FUNCTIONS
+//==============================================================================
+
+GEOM_PIXEL_OUTPUT ShadeGeometryPixel( GEOM_PIXEL_INPUT input, bool isFrontFace )
 {
     GEOM_PIXEL_OUTPUT output;
     output.FinalColor  = 0.0f;
-    output.Albedo      = 0.0f;
-    output.Normal      = 0.0f;
-    output.LinearDepth = GeomEncodeLinearDepth( input );
+    output.NormalDepth = float4( 0.5f, 0.5f, 1.0f, GeomEncodeLinearDepth( input ).r );
     output.Glow        = 0.0f;
 
     uint  materialFlags = GeomGetMaterialFlags( input );
@@ -24,49 +26,72 @@ GEOM_PIXEL_OUTPUT ShadeGeometryPixel( GEOM_PIXEL_INPUT input )
 
     if( EnvParams.w > 0.5f )
     {
-        output.FinalColor  = float4( 0.0, 0.0, 0.0, 0.0 );
-        output.Albedo      = float4( 0.0, 0.0, 0.0, 0.0 );
-        output.Normal      = float4( 0.5, 0.5, 1.0, 0.0 );
-        output.LinearDepth = GeomEncodeLinearDepth( input );
-        output.Glow        = float4( 0.0, 0.0, 0.0, 0.0 );
+        output.FinalColor  = float4( 0.0f, 0.0f, 0.0f, 0.0f );
+        output.NormalDepth = float4( 0.5f, 0.5f, 1.0f, GeomEncodeLinearDepth( input ).r );
+        output.Glow        = float4( 0.0f, 0.0f, 0.0f, 0.0f );
         return output;
     }
 
-    if( materialFlags & (MATERIAL_FLAG_DISTORTION | MATERIAL_FLAG_DISTORTION_PERPOLY_ENV) )
+    input.Normal     = normalize( input.Normal );
+    input.ViewNormal = normalize( input.ViewNormal );
+
+    if( ( materialFlags & MATERIAL_FLAG_TWO_SIDED ) && isFrontFace )
+    {
+        input.Normal     = -input.Normal;
+        input.ViewNormal = -input.ViewNormal;
+    }
+
+    if( materialFlags & ( MATERIAL_FLAG_DISTORTION | MATERIAL_FLAG_DISTORTION_PERPOLY_ENV ) )
     {
         return GeomShadeDistortionPixel( input, materialFlags, fadeAlpha );
+    }
+
+    const float3 worldPositionDx = ddx( input.WorldPos );
+    const float3 worldPositionDy = ddy( input.WorldPos );
+    float3       geometricNormal = cross( worldPositionDx, worldPositionDy );
+    const float  geometricNormalLengthSq = dot( geometricNormal, geometricNormal );
+    if( geometricNormalLengthSq > 1e-12f )
+    {
+        geometricNormal *= rsqrt( geometricNormalLengthSq );
+        if( dot( geometricNormal, input.Normal ) < 0.0f )
+        {
+            geometricNormal = -geometricNormal;
+        }
+    }
+    else
+    {
+        geometricNormal = input.Normal;
     }
 
     GeomDiffuseResult diffuse = GeomEvaluateDiffuse( input, materialFlags, alphaRef );
     GeomApplyEnvironment( diffuse, materialFlags, input.Normal, input.ViewVector );
 
-    float4 baseColor  = diffuse.Color;
-    float3 totalLight = GeomComputeLighting( input, materialFlags );
-    float3 specular   = GeomComputeSpecular( input, materialFlags, diffuse.Sample.a );
-    float4 finalColor = float4( diffuse.Color.rgb * totalLight + specular, diffuse.Color.a );
+    const GeomLightingResult lighting =
+        GeomComputeLighting( input, materialFlags, diffuse.Sample.a, geometricNormal );
+    float4 finalColor = float4( diffuse.Color.rgb * lighting.Diffuse + lighting.Specular, diffuse.Color.a );
 
     if( materialFlags & INSTANCE_FLAG_PROJ_LIGHT )
+    {
         finalColor.rgb = ApplyProjLights( finalColor.rgb, input.WorldPos );
+    }
 
     if( materialFlags & INSTANCE_FLAG_PROJ_SHADOW )
+    {
         finalColor.rgb = ApplyProjShadows( finalColor.rgb, input.WorldPos );
+    }
 
     finalColor.rgb = saturate( finalColor.rgb );
 
-    output.Glow       = GeomComputeGlow( input, materialFlags, finalColor, diffuse.Sample );
-    output.FinalColor = finalColor;
-    output.Albedo     = baseColor;
-    output.Normal     = float4( input.ViewNormal * 0.5 + 0.5, 0.0 );
-    output.LinearDepth= GeomEncodeLinearDepth( input );
+    output.Glow        = GeomComputeGlow( input, materialFlags, finalColor, diffuse.Sample );
+    output.FinalColor  = finalColor;
+    output.NormalDepth = float4( input.ViewNormal * 0.5 + 0.5, GeomEncodeLinearDepth( input ).r );
 
     if( fadeAlpha < 1.0f )
     {
-        const bool  bFadeByTextureAlpha = (materialFlags & (MATERIAL_FLAG_ALPHA_BLEND | MATERIAL_FLAG_ALPHA_TEST)) != 0;
+        const bool  bFadeByTextureAlpha = ( materialFlags & ( MATERIAL_FLAG_ALPHA_BLEND | MATERIAL_FLAG_ALPHA_TEST ) ) != 0;
         const float blendAlpha          = bFadeByTextureAlpha ? saturate( output.FinalColor.a * fadeAlpha ) : fadeAlpha;
 
         output.FinalColor.a = blendAlpha;
-        output.Albedo.a     = blendAlpha;
-        output.Normal.a     = blendAlpha;
         output.Glow.a       = saturate( output.Glow.a * fadeAlpha );
     }
 

@@ -12,8 +12,10 @@
 
 #include "hud_Health.hpp"
 #include "HudObject.hpp"
-#include "NetworkMgr\Networkmgr.hpp"
-#include "StringMgr\StringMgr.hpp"
+#include "UI/ui_renderer.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "e_Audio.hpp"
 
 #ifndef X_EDITOR
 #include "../../Apps/GameApp/Config.hpp"
@@ -23,9 +25,8 @@
 //  STORAGE
 //==============================================================================
 
-rhandle<xbitmap>            hud_health::m_InnerBmp;
-rhandle<xbitmap>            hud_health::m_OuterBmp;
-rhandle<xbitmap>            hud_health::m_MutationBmp;
+rhandle<texture>            hud_health::m_OuterBmp;
+rhandle<texture>            hud_health::m_MutationBmp;
 s32                         hud_health::m_Instances=0;
 
 #define HEALTH_STUN_TIME    0.30f
@@ -116,15 +117,10 @@ hud_health::hud_health ( void )
     //
     // Initialize the flashlight bar.
     //
-    //m_FlashLightBmp.SetName( PRELOAD_FILE("HUD_Campaign_flashlight_on.xbmp") );
 
     //
     // Volume scanner (EQ) (polish)
     //
-#ifdef TARGET_PS2
-    extern void EnableAudioLevels( xbool IsEnabled );
-    EnableAudioLevels(TRUE);
-#endif // TARGET_PS2
     m_VolScanBmp.SetName( PRELOAD_FILE("HUD_Campaign_volume_scan.xbmp") );
 
     //-- EKG Init
@@ -147,6 +143,7 @@ hud_health::hud_health ( void )
     m_OldBeatArray = 1;
     m_FlashLightActive = FALSE;
     m_staticFrame = 0;
+    m_StaticFrameTime = 0.0f;
 
     // EQ Bars ( left side )
     m_EQBarUpdate = 0.0f;
@@ -259,7 +256,7 @@ void hud_health::OnRender( player* pPlayer )
 
 //==============================================================================
 
-void hud_health::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
+void hud_health::OnAdvanceSimulation( player* pPlayer, f32 DeltaTime )
 {
     // First pass we need to setup some stuff based on the number
     // of players.
@@ -268,23 +265,25 @@ void hud_health::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
 
     AdvanceBar( pPlayer, DeltaTime, HEALTH );
 
-    if( pPlayer->GetInventory2().HasItem( INVEN_WEAPON_MUTATION ) || pPlayer->IsMutated() )
+    if( (pPlayer->GetInventory2().HasItem( INVEN_WEAPON_MUTATION ) || pPlayer->IsMutated()) &&
+        m_bPlayHudMutation )
     {
-        if( m_bPlayHudMutation == TRUE )
-        {
-            UpdateMutationTakeOver(pPlayer,DeltaTime);
-        }
-        else
-            AdvanceBar( pPlayer, DeltaTime, MUTAGEN );
+        // This sequence fills authoritative mutagen during the simulation update.
+        UpdateMutationTakeOver( pPlayer, DeltaTime );
+    }
+    else if( pPlayer->GetInventory2().HasItem( INVEN_WEAPON_MUTATION ) || pPlayer->IsMutated() )
+    {
+        AdvanceBar( pPlayer, DeltaTime, MUTAGEN );
     }
 
     AdvanceEKG( pPlayer, DeltaTime );
-
     UpdateEQBar( pPlayer, DeltaTime );
 }
 
 //==============================================================================
+
 static u8 EKG_BACK_ALPHA = 255;
+
 void hud_health::RenderEKG( void )
 {
     // If this is 3 or 4 player then we dont need EKG
@@ -295,19 +294,16 @@ void hud_health::RenderEKG( void )
     // Draw the background.
     //
     {
-        xbitmap* staticBMP = NULL;
+        texture* pStaticTexture = NULL;
         if( m_staticFrame == 0 )
-            staticBMP = m_StaticBmp1.GetPointer();
+            pStaticTexture = m_StaticBmp1.GetPointer();
         else if ( m_staticFrame == 1 )
-            staticBMP = m_StaticBmp2.GetPointer();
+            pStaticTexture = m_StaticBmp2.GetPointer();
         else if ( m_staticFrame == 2 )
-            staticBMP = m_StaticBmp3.GetPointer();
+            pStaticTexture = m_StaticBmp3.GetPointer();
 
-        if( staticBMP )
+        if( pStaticTexture )
         {        
-            draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
-            draw_SetTexture(*staticBMP);
-            draw_DisableBilinear();
             static xcolor EKGBackColor = xcolor( 0, 150, 0, EKG_BACK_ALPHA );
 
             player* pPlayer = SMP_UTIL_GetActivePlayer();
@@ -318,8 +314,12 @@ void hud_health::RenderEKG( void )
 
             static f32 STATIC_X = 3;
             static f32 STATIC_Y = -42;
-            draw_Sprite( vector3(m_XPos + STATIC_X,m_YPos + STATIC_Y,0), vector2((f32)m_StaticBmp1.GetPointer()->GetWidth(), (f32)m_StaticBmp1.GetPointer()->GetHeight()), EKGBackColor);
-            draw_End();
+            const xbitmap& Bitmap = pStaticTexture->m_bitmap;
+            g_UIRenderer.DrawImage( *pStaticTexture,
+                                    vector2( m_XPos + STATIC_X, m_YPos + STATIC_Y ),
+                                    vector2( (f32)Bitmap.GetWidth(), (f32)Bitmap.GetHeight() ),
+                                    vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
+                                    EKGBackColor, 0.0f, UI_BLEND_ALPHA, UI_SAMPLER_LINEAR_CLAMP );
         }
     }
 
@@ -327,9 +327,6 @@ void hud_health::RenderEKG( void )
     // Render Line (ekg)
     //
     {
-        draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
-        s32 W = 1;
-        s32 H = 1;
         u8 AlphaStep = (255 / NUM_DOTS);
 
         s32 Type1 = 0;
@@ -380,42 +377,16 @@ void hud_health::RenderEKG( void )
 
             xcolor c = m_LineColor;
 
-            if( i == (NUM_DOTS - 1) )
-            {
-                draw_Color( xcolor( c.R, c.G, c.B, 255 ) );
-            }
-            else
-            {
-                s32 Alpha = x_max( 0, (AlphaStep * i) - 55 );
-                draw_Color( xcolor( c.R, c.G, c.B, Alpha ) );
-            }
+            const s32 Alpha = (i == (NUM_DOTS - 1)) ? 255 : x_max( 0, (AlphaStep * i) - 55 );
 
             if( SpotX2 < SpotX1 )
             {
-                if( SpotY1 == SpotY2 )
-                {
-                    draw_Vertex( SpotX1, SpotY1+H, 0.001f ); 
-                    draw_Vertex( SpotX1, SpotY1-H, 0.001f ); 
-                    draw_Vertex( SpotX2, SpotY2+H, 0.001f ); 
-                    draw_Vertex( SpotX2, SpotY2-H, 0.001f ); 
-                }
-                else if ( SpotY1 > SpotY2 )
-                {
-                    draw_Vertex( SpotX1 + W, SpotY1 - H, 0.001f ); 
-                    draw_Vertex( SpotX1 - W, SpotY1 + H, 0.001f ); 
-                    draw_Vertex( SpotX2 - W, SpotY2 + H, 0.001f ); 
-                    draw_Vertex( SpotX2 + W, SpotY2 - H, 0.001f ); 
-                }
-                else // SpotY1 < SpotY2
-                {
-                    draw_Vertex( SpotX1 - W, SpotY1 - H, 0.001f ); 
-                    draw_Vertex( SpotX1 + W, SpotY1 + H, 0.001f ); 
-                    draw_Vertex( SpotX2 + W, SpotY2 + H, 0.001f ); 
-                    draw_Vertex( SpotX2 - W, SpotY2 - H, 0.001f ); 
-                }
+                g_UIRenderer.DrawLine( vector2( SpotX1, SpotY1 ),
+                                       vector2( SpotX2, SpotY2 ),
+                                       xcolor( c.R, c.G, c.B, Alpha ),
+                                       2.0f );
             }
         }
-        draw_End();
     }
 }
 
@@ -476,15 +447,15 @@ void hud_health::AdvanceEKG( player* pPlayer, f32 DeltaTime )
 //==============================================================================
 void Draw_ShiftCube( f32 X, f32 Y, f32 W, f32 H, f32 S, xcolor tColor, xcolor bColor )
 {
-    draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER );
-    draw_Color( tColor );
-    draw_Vertex( X, Y, 0.001f ); 
-    draw_Color( bColor );
-    draw_Vertex( X+S, Y+H, 0.001f ); 
-    draw_Vertex( X+W+S, Y+H, 0.001f );
-    draw_Color( tColor );
-    draw_Vertex( X+W, Y, 0.001f ); 
-    draw_End();
+    const ui_vertex Vertices[4] =
+    {
+        ui_vertex( vector2( X,       Y     ), vector2( 0.0f, 0.0f ), tColor ),
+        ui_vertex( vector2( X + S,   Y + H ), vector2( 0.0f, 1.0f ), bColor ),
+        ui_vertex( vector2( X + W+S, Y + H ), vector2( 1.0f, 1.0f ), bColor ),
+        ui_vertex( vector2( X + W,   Y     ), vector2( 1.0f, 0.0f ), tColor )
+    };
+    static const u32 Indices[6] = { 0, 1, 2, 2, 3, 0 };
+    g_UIRenderer.GetDrawList().AddTriangles( ui_material(), Vertices, 4, Indices, 6 );
 }
 
 //==============================================================================
@@ -492,81 +463,46 @@ void hud_health::RenderBar( bar_type BarNum )
 {
     status_bar& Bar = m_Bars[ BarNum ];
 
-    xbitmap* pBitmap = NULL;
+    texture* pTexture = NULL;
 
     if( BarNum == HEALTH  )
-        pBitmap = m_OuterBmp.GetPointer();
+        pTexture = m_OuterBmp.GetPointer();
     else
-        pBitmap = m_MutationBmp.GetPointer();
+        pTexture = m_MutationBmp.GetPointer();
 
     //
     // Draw the border.
     //
-    if( pBitmap )
+    if( pTexture )
     {
+        const xbitmap& Bitmap = pTexture->m_bitmap;
         vector2 WH;
-        vector3 Pos;
+        vector2 Pos;
         xcolor DisplayColor;
 
         if( BarNum == HEALTH )
         {
             static s32 HUD_HEALTH_X = 0;
             static s32 HUD_HEALTH_Y = -44;
-            WH( (f32)m_OuterBmp.GetPointer()->GetWidth(), (f32)m_OuterBmp.GetPointer()->GetHeight() );
-            Pos.GetX()  = m_XPos + HUD_HEALTH_X;
-            Pos.GetY()  = m_YPos + HUD_HEALTH_Y;
+            WH( (f32)Bitmap.GetWidth(), (f32)Bitmap.GetHeight() );
+            Pos.X  = m_XPos + HUD_HEALTH_X;
+            Pos.Y  = m_YPos + HUD_HEALTH_Y;
             DisplayColor = g_HudColor;
         }
         else
         {
-            WH( (f32)m_MutationBmp.GetPointer()->GetWidth(), (f32)m_MutationBmp.GetPointer()->GetHeight() );
+            WH( (f32)Bitmap.GetWidth(), (f32)Bitmap.GetHeight() );
             static s32 HUD_MUTANT_X = 0;
             static s32 HUD_MUTANT_Y = -44;
-            Pos.GetX()  = m_XPos + HUD_MUTANT_X;
-            Pos.GetY()  = m_YPos + HUD_MUTANT_Y;
+            Pos.X  = m_XPos + HUD_MUTANT_X;
+            Pos.Y  = m_YPos + HUD_MUTANT_Y;
             DisplayColor = g_HudColor;
         }
 
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
-        draw_SetTexture( *pBitmap );
-        draw_DisableBilinear();
-        vector2 TL;
-        vector2 BR;
-        TL = vector2( 0.0f, 0.0f );
-        BR = vector2( 1.0f, 1.0f );   
-        draw_SpriteUV( Pos, WH, TL, BR, DisplayColor );
-        draw_End(); 
+        g_UIRenderer.DrawImage( *pTexture, Pos, WH,
+                                vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
+                                DisplayColor, 0.0f, UI_BLEND_ALPHA, UI_SAMPLER_LINEAR_CLAMP );
     }
-
-    //
-    // FlashLight Indicator
-    //
-    //if( BarNum == HEALTH && m_FlashLightActive )
-    //{
-    //    xbitmap* flashLightBMP;
-    //    flashLightBMP = m_FlashLightBmp.GetPointer();
-
-    //    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
-    //    draw_SetTexture(*flashLightBMP);
-    //    draw_DisableBilinear();
-
-    //    vector2 WH( (f32)m_FlashLightBmp.GetPointer()->GetWidth(), (f32)m_FlashLightBmp.GetPointer()->GetHeight() );
-    //    vector3 Pos;
-    //    vector2 TL;
-    //    vector2 BR;
-
-    //    TL = vector2( 0.0f, 0.0f );
-    //    BR = vector2( 1.0f, 1.0f );
-
-    //    static s32 HUD_FL_X = 8;
-    //    static s32 HUD_FL_Y = -55;
-
-    //    Pos.GetX() = m_XPos + HUD_FL_X;
-    //    Pos.GetY() = m_YPos + HUD_FL_Y;
-
-    //    draw_SpriteUV( Pos, WH, TL, BR, xcolor( 200,200,0,255 ));
-    //    draw_End();
-    //}
 
     s32 X;
     s32 Y;
@@ -581,17 +517,9 @@ void hud_health::RenderBar( bar_type BarNum )
     static s32 NUM_BUBS_M       = NUM_MUTATION_UNITS;
     static s32 BUB_SPACEING_M   = 4;
     static s32 BUB_X_M          = 46;
-#ifdef TARGET_XBOX
-    static s32 BUB_Y_M          = -26;
-#else
     static s32 BUB_Y_M          = -25;
-#endif
     static s32 BUB_H_M          = 8;
-#ifdef TARGET_XBOX 
     static s32 BUB_W_M          = 5;
-#else
-    static s32 BUB_W_M          = 5;
-#endif
 
     // Health bar ( BUBs )
     static s32 NUM_BUBS_H       = NUM_HEALTH_UNITS;
@@ -599,11 +527,7 @@ void hud_health::RenderBar( bar_type BarNum )
     static s32 BUB_X_H          = 45;
     static s32 BUB_Y_H          = -15;
     static s32 BUB_H_H          = 11;
-#ifdef TARGET_XBOX  
     static s32 BUB_W_H          = 5;
-#else
-    static s32 BUB_W_H          = 5;
-#endif
 
     // If we are in a Multi Player game then we need to move the health bars to fit the smaller hud.
     if( m_MultiPlayerHud )
@@ -617,11 +541,7 @@ void hud_health::RenderBar( bar_type BarNum )
     {
         BUB_X_M = 46;
         BUB_X_H = 45;
-#ifdef TARGET_XBOX  
-        BUB_Y_M = -26;
-#else
         BUB_Y_M = -25;
-#endif
     }
 
     if( BarNum == MUTAGEN )
@@ -710,8 +630,6 @@ void hud_health::RenderBar( bar_type BarNum )
 
 void hud_health::AdvanceBar( player* pPlayer, f32 DeltaTime, bar_type BarNum )
 {
-    (void)DeltaTime;
-
     f32 PlayerValue = 0.0f;
 
     s32 NumCells = NUM_HEALTH_UNITS;
@@ -725,6 +643,7 @@ void hud_health::AdvanceBar( player* pPlayer, f32 DeltaTime, bar_type BarNum )
     switch( BarNum )
     {
     case HEALTH:
+    {
         //-- if this is the first time we have updated the bars then
         if( Bar.m_FirstPass )
         {
@@ -735,9 +654,16 @@ void hud_health::AdvanceBar( player* pPlayer, f32 DeltaTime, bar_type BarNum )
         Bar.m_MaxVal = pPlayer->GetMaxHealth();
         PlayerValue = pPlayer->GetHealth();   
 
-        m_staticFrame++;
-        if( m_staticFrame>2 )
-            m_staticFrame=0;
+        // The three-frame static texture is authored for 30 Hz playback.
+        // Advance it by elapsed time instead of one image per simulation tick.
+        const f32 StaticFrameDuration = 1.0f / 30.0f;
+        m_StaticFrameTime += DeltaTime;
+        while( m_StaticFrameTime >= StaticFrameDuration )
+        {
+            m_StaticFrameTime -= StaticFrameDuration;
+            m_staticFrame = (m_staticFrame + 1) % 3;
+        }
+    }
     break;
 
     case MUTAGEN:
@@ -841,7 +767,7 @@ void hud_health::AdvanceBar( player* pPlayer, f32 DeltaTime, bar_type BarNum )
             }
             if( m_Cells[BarNum][c].timeslice < 0.0f )
             {
-                m_Cells[BarNum][c].ypos += 1.25f;
+                m_Cells[BarNum][c].ypos += 75.0f * DeltaTime;
 
                 f32 YSize = HEALTH_FALL_OFF_SIZE;
                 if( BarNum == MUTAGEN )
@@ -867,11 +793,8 @@ void hud_health::RenderEQBar( s32 EQBar, s32 AmountPercent )
     static s32 HUD_VS_X = 7;
     static s32 HUD_VS_Y = -69;
     static s32 HUD_VS_W = 8;
-#ifdef TARGET_XBOX
-    static s32 HUD_VS_H =  80;
-#else
     static s32 HUD_VS_H = 100;
-#endif
+
     s32 X = (s32)m_XPos + HUD_VS_X;
     s32 Y = (s32)m_YPos + HUD_VS_Y;
 
@@ -888,19 +811,7 @@ void hud_health::RenderEQBar( s32 EQBar, s32 AmountPercent )
 
     static xcolor EQColor = xcolor(80, 150, 150, 30);
     static xcolor EQColorHigh = xcolor(80, 150, 150, 50);
-    draw_GouraudRect(R, EQColorHigh, EQColorHigh, EQColor, EQColor, FALSE, DRAW_UI_RTARGET );
-
-    // Has the bar went up? if so update the peak
-    if( Y-(HUD_VS_H-(BarLength)) < m_EQBarPeaks[EQBar] )
-        m_EQBarPeaks[EQBar] = (s32)(Y-(HUD_VS_H-(BarLength)));
-
-    // Are we in a Update Peak mode?
-    if( m_EQBarPeakUpdate ) // do we need to update?
-    {
-        m_EQBarPeaks[EQBar] = (s32)(Y-(HUD_VS_H-(BarLength)));
-        if( EQBar == 2 ) // EEK UGLY
-            m_EQBarPeakUpdate = FALSE;
-    }
+    g_UIRenderer.DrawGradientRect( R, EQColorHigh, EQColorHigh, EQColor, EQColor );
 
      // Render Peak
     R.Set(
@@ -910,7 +821,7 @@ void hud_health::RenderEQBar( s32 EQBar, s32 AmountPercent )
         x_max( 0,m_EQBarPeaks[EQBar]-2 )
     );
 
-    draw_Rect(R, g_HudColor, FALSE, DRAW_UI_RTARGET);
+    g_UIRenderer.DrawRect( R, g_HudColor );
 }
 
 //==============================================================================
@@ -932,8 +843,7 @@ void hud_health::UpdateEQBar( player* pPlayer, f32 DeltaTime )
 
     // Sound player is hearing
     Rand = x_frand( -3.0f, 3.0f );
-    extern s32 GetAudioLevel( void );
-    s32 AudioLevel = (GetAudioLevel() / 256);
+    s32 AudioLevel = (g_AudioMgr.GetAudioLevel() / 256);
     m_EQBar2_Value = MIN( (s32)(fabs(AudioLevel+Rand)), 100);
 
     // Movement.. not good..
@@ -947,24 +857,38 @@ void hud_health::UpdateEQBar( player* pPlayer, f32 DeltaTime )
         m_EQBarUpdate = 3.2f;
         m_EQBarPeakUpdate = TRUE;
     }
+
+    static s32 const HUD_VS_Y = -69;
+    static s32 const HUD_VS_H = 100;
+
+    const s32 Values[3] = { m_EQBar1_Value, m_EQBar2_Value, m_EQBar3_Value };
+    const s32 Y = (s32)m_YPos + HUD_VS_Y;
+    for( s32 Bar = 0; Bar < 3; ++Bar )
+    {
+        const s32 BarLength = HUD_VS_H - MIN( Values[Bar], HUD_VS_H );
+        const s32 Peak = Y - (HUD_VS_H - BarLength);
+        if( m_EQBarPeakUpdate || (Peak < m_EQBarPeaks[Bar]) )
+            m_EQBarPeaks[Bar] = Peak;
+    }
+    m_EQBarPeakUpdate = FALSE;
 }
 
 //==============================================================================
 void hud_health::RenderVolScanner( void )
 {
-    xbitmap* volScannerBMP = NULL;
-    volScannerBMP = m_VolScanBmp.GetPointer();
+    texture* pVolScannerTexture = m_VolScanBmp.GetPointer();
 
-    if( volScannerBMP )
+    if( pVolScannerTexture )
     {        
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER );
-        draw_SetTexture(*volScannerBMP);
-        draw_DisableBilinear();
         static xcolor HUD_VOL_SCAN_COLOR = xcolor( 80,150,150,180 );
         static f32 HUD_VOL_SCAN_X = -8;
         static f32 HUD_VOL_SCAN_Y = -176;
-        draw_Sprite( vector3(m_XPos + HUD_VOL_SCAN_X,m_YPos + HUD_VOL_SCAN_Y,0), vector2((f32)m_VolScanBmp.GetPointer()->GetWidth(), (f32)m_VolScanBmp.GetPointer()->GetHeight()), HUD_VOL_SCAN_COLOR);
-        draw_End();
+        const xbitmap& Bitmap = pVolScannerTexture->m_bitmap;
+        g_UIRenderer.DrawImage( *pVolScannerTexture,
+                                vector2( m_XPos + HUD_VOL_SCAN_X, m_YPos + HUD_VOL_SCAN_Y ),
+                                vector2( (f32)Bitmap.GetWidth(), (f32)Bitmap.GetHeight() ),
+                                vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
+                                HUD_VOL_SCAN_COLOR, 0.0f, UI_BLEND_ALPHA, UI_SAMPLER_LINEAR_CLAMP );
 
         RenderEQBar( 0, m_EQBar1_Value );
         RenderEQBar( 1, m_EQBar2_Value );
@@ -986,28 +910,28 @@ void hud_health::RenderMutationTakeOver( void )
     case MUTATION_SUIT_BREACH:
         {
             irect box;
-            box.Set(0,180,512,448);
+            box.Set( 0, 180, ui_viewport::CONTENT_WIDTH, ui_viewport::CONTENT_HEIGHT );
             RenderLine( g_StringTableMgr("ui", "IDS_MUTATION_SUIT_BREACH"), box, 255, g_HudColor, 1, ui_font::h_center|ui_font::v_top, FALSE );
         }
         break;
     case MUTATION_MUTATION_DETECTED_1:
         {
             irect box;
-            box.Set(0,180,512,448);
+            box.Set( 0, 180, ui_viewport::CONTENT_WIDTH, ui_viewport::CONTENT_HEIGHT );
             RenderLine( g_StringTableMgr("ui", "IDS_MUTATION_MUTATION_DETECTED_1"), box, 255, g_HudColor, 1, ui_font::h_center|ui_font::v_top, FALSE );
         }
         break;
     case MUTATION_MUTATION_DETECTED_2:        
         {
             irect box;
-            box.Set(0,180,512,448);
+            box.Set( 0, 180, ui_viewport::CONTENT_WIDTH, ui_viewport::CONTENT_HEIGHT );
             RenderLine( g_StringTableMgr("ui", "IDS_MUTATION_MUTATION_DETECTED_2"), box, 255, g_HudColor, 1, ui_font::h_center|ui_font::v_top, FALSE );
         }
         break;
     case MUTATION_MUTATION_PROTOCOL_INIT:
         {
             irect box;
-            box.Set(0,180,512,448);
+            box.Set( 0, 180, ui_viewport::CONTENT_WIDTH, ui_viewport::CONTENT_HEIGHT );
             RenderLine( g_StringTableMgr("ui", "IDS_MUTATION_MUTATION_PROTOCOL_INIT"), box, 255, g_HudColor, 1, ui_font::h_center|ui_font::v_top, FALSE );
         }
         break;
@@ -1018,28 +942,23 @@ void hud_health::RenderMutationTakeOver( void )
 
     case MUTATION_FADE_BAR_IN:
         {    
-            xbitmap* pBitmap = m_MutationBmp.GetPointer();
-            if( pBitmap )
+            texture* pTexture = m_MutationBmp.GetPointer();
+            if( pTexture )
             {
+                const xbitmap& Bitmap = pTexture->m_bitmap;
                 vector2 WH;
-                vector3 Pos;
+                vector2 Pos;
                 xcolor DisplayColor;
-                WH( (f32)m_MutationBmp.GetPointer()->GetWidth(), (f32)m_MutationBmp.GetPointer()->GetHeight() );
-                Pos.GetX()  = m_XPos + 0; //HUD_MUTANT_X;
-                Pos.GetY()  = m_YPos + -44;//HUD_MUTANT_Y;
+                WH( (f32)Bitmap.GetWidth(), (f32)Bitmap.GetHeight() );
+                Pos.X  = m_XPos;
+                Pos.Y  = m_YPos - 44;
                 DisplayColor = g_HudColor;// HUD_MUTANT_BAR_COLOR;
 
-                DisplayColor.A = m_MutationBarAlpha;
+                DisplayColor.A = (u8)m_MutationBarAlpha;
 
-                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
-                draw_SetTexture( *pBitmap );
-                draw_DisableBilinear();
-                vector2 TL;
-                vector2 BR;
-                TL = vector2( 0.0f, 0.0f );
-                BR = vector2( 1.0f, 1.0f );   
-                draw_SpriteUV( Pos, WH, TL, BR, DisplayColor );
-                draw_End();
+                g_UIRenderer.DrawImage( *pTexture, Pos, WH,
+                                        vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
+                                        DisplayColor, 0.0f, UI_BLEND_ALPHA, UI_SAMPLER_LINEAR_CLAMP );
             }
         }
         break;
@@ -1051,7 +970,7 @@ void hud_health::RenderMutationTakeOver( void )
     case MUTATION_LIFESIGN_STABILIZED:
         {
             irect box;
-            box.Set(0,180,512,448);
+            box.Set( 0, 180, ui_viewport::CONTENT_WIDTH, ui_viewport::CONTENT_HEIGHT );
             RenderLine( g_StringTableMgr("ui", "IDS_MUTATION_LIFESIGN_STABILIZED"), box, 255, g_HudColor, 1, ui_font::h_center|ui_font::v_top, FALSE );
             RenderBar( MUTAGEN );
         }
@@ -1079,7 +998,7 @@ void hud_health::UpdateMutationTakeOver( player* pPlayer, f32 DeltaTime )
     case MUTATION_START:
         // init all variables
         m_MutationBarAlpha = 0;
-        m_MutationFadeInStep = 8;
+        m_MutationFadeInRate = 480.0f;
         m_MutationFadeResetChance = 40;
         m_MutationDisplayTime = 0.0f;
         m_MutationState++;
@@ -1131,11 +1050,11 @@ void hud_health::UpdateMutationTakeOver( player* pPlayer, f32 DeltaTime )
         break;
 
     case MUTATION_FADE_BAR_IN:
-        m_MutationBarAlpha += m_MutationFadeInStep;
-        m_MutationFadeResetChance += 1;
+        m_MutationBarAlpha += m_MutationFadeInRate * DeltaTime;
+        m_MutationFadeResetChance += 60.0f * DeltaTime;
 
         if( x_rand()%100 > m_MutationFadeResetChance )
-            m_MutationBarAlpha -= 32;
+            m_MutationBarAlpha -= 32.0f;
 
         m_MutationBarAlpha = MAX(0, m_MutationBarAlpha);
         m_MutationBarAlpha = MIN(255,m_MutationBarAlpha);
@@ -1150,7 +1069,7 @@ void hud_health::UpdateMutationTakeOver( player* pPlayer, f32 DeltaTime )
 
     case MUTATION_BAR_FILL:
         AdvanceBar(pPlayer,DeltaTime, MUTAGEN );
-        pPlayer->SetMutagen(pPlayer->GetMutagen()+1.0f);
+        pPlayer->SetMutagen( pPlayer->GetMutagen() + (60.0f * DeltaTime) );
         
         if( pPlayer->GetMutagen() >= pPlayer->GetMaxMutagen() )
         {

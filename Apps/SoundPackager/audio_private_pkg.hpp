@@ -255,7 +255,7 @@ enum compression_methods
 enum element_type
 {
     HOT_SAMPLE = 0,
-    WARM_SAMPLE,
+    WARM_SAMPLE,         // Reserved legacy slot; not generated.
     COLD_SAMPLE,
     NUM_TEMPERATURES,
 };
@@ -263,7 +263,7 @@ enum element_type
 enum sample_temperature
 {
     HOT=0,
-    WARM,
+    WARM,                // Reserved legacy slot; not generated.
     COLD,
 };
 
@@ -279,7 +279,7 @@ enum descriptor_type
 enum index_type
 {
     HOT_INDEX = 0,      // Index references a loaded sample.
-    WARM_INDEX,         // Index references a "hybrid" sample.
+    WARM_INDEX,         // Reserved legacy slot; not generated.
     COLD_INDEX,         // Index references a streamed sample.
     DESCRIPTOR_INDEX,   // Index references an audio descriptor.
 };

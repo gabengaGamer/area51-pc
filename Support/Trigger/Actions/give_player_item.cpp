@@ -9,13 +9,13 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\give_player_item.hpp"
+#include "../Support/Trigger/Actions/give_player_item.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Objects\Player.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 #include "Entropy.hpp"
 
@@ -31,7 +31,7 @@ give_player_item::give_player_item ( guid ParentGuid ) : actions_base( ParentGui
 
 void  give_player_item::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * give_player_item::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * give_player_item::Execute" );
 
     ( void ) pParent;
 

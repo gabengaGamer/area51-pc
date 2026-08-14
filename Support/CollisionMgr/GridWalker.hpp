@@ -21,7 +21,7 @@ class grid_walker
 {
 public:
 
-    grid_walker::grid_walker( void );
+    grid_walker( void );
 
     void        Setup       ( const vector3&    StartPos, 
                               const vector3&    EndPos, 

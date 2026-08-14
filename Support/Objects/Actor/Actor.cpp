@@ -8,36 +8,36 @@
 #define X_SUPPRESS_LOGS
 #endif
 
-#include "EventMgr\EventMgr.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "EventMgr/EventMgr.hpp"
 #include "Actor.hpp"
-#include "Objects\Corpse.hpp"
-#include "Characters\Character.hpp"
-#include "Characters\GenericNPC\GenericNPC.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "Objects\NewWeapon.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Debris\debris_rigid.hpp"
-#include "Objects\door.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "Objects\object.hpp"
-#include "Objects\CokeCan.hpp"
-#include "Objects\Player.hpp"
-#include "objects\turret.hpp"
-#include "Characters\ActorEffects.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Render\LightMgr.hpp"
-#include "Objects\ParticleEmiter.hpp"
-#include "Objects\ForceField.hpp"
-#include "Objects\Teleporter.hpp"
-#include "Objects\Interpolation\InterpolationMath.hpp"
-#include "StateMgr\MapList.hpp"
+#include "Objects/Corpse.hpp"
+#include "Characters/Character.hpp"
+#include "Characters/GenericNPC/GenericNPC.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Debris/debris_rigid.hpp"
+#include "Objects/Door.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "Objects/object.hpp"
+#include "Objects/CokeCan.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/Turret.hpp"
+#include "Characters/ActorEffects.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/ForceField.hpp"
+#include "Objects/Teleporter.hpp"
+#include "StateMgr/MapList.hpp"
 
 
 #ifndef X_EDITOR
-#include "NetworkMgr\GameMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "Objects\NetGhost.hpp"
-#include "NetworkMgr\MsgMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "Objects/NetGhost.hpp"
+#include "NetworkMgr/MsgMgr.hpp"
 #endif
 
 //=========================================================================
@@ -144,7 +144,7 @@ actor::actor( void ) :
     m_pLoco                         ( NULL                       ),
     m_bIgnoreLocoInTransform        ( FALSE                      ),
     m_LastTimeStaggered             ( 0.0f                       ),
-    m_TimeSinceLastRender           ( 10.0f                      ),
+    m_TimeSinceVisible              ( 10.0f                      ),
     m_LeanAmount                    ( 0.0f                       ),
     m_LeanState                     ( LEAN_NONE                  ),
     m_FriendlyGlowColor             (  50, 255, 0, 255           ),
@@ -186,9 +186,8 @@ actor::actor( void ) :
 
     m_FloorProperties.Init( 100.0f, 0.128f );
 
-    m_BigPainTakenTime = (f32)x_GetTimeSec();
+    m_BigPainTakenTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
     m_pEffects = NULL;    
-    InvalidateActorRenderInterpState();
 
     SetAvatarMutationState( AVATAR_NORMAL );
 
@@ -258,233 +257,6 @@ void actor::OnKill( void )
         m_pMPContagion = NULL;
     }
 #endif
-}
-
-//=========================================================================
-
-void actor::InvalidateActorRenderInterpState( void )
-{
-    actor_interp_state InitialState;
-    InitialState.Valid = FALSE;
-    InitSkinnedInterpState( InitialState.Body );
-    InitWeaponInterpState( InitialState.Weapon );
-
-    InitInterpCache( m_ActorRenderCache, InitialState );
-}
-
-//=========================================================================
-
-void actor::InvalidateRenderInterpState( void )
-{
-    object::InvalidateRenderInterpState();
-    InvalidateActorRenderInterpState();
-}
-
-//=========================================================================
-
-void actor::SnapActorRenderInterpState( void )
-{
-    CaptureActorRenderInterpState();
-    m_ActorRenderCache.Prev   = m_ActorRenderCache.Curr;
-    m_ActorRenderCache.Interp = m_ActorRenderCache.Curr;
-    ClearActorRenderInterpState();
-}
-
-//=========================================================================
-
-void actor::SnapRenderInterpState( void )
-{
-    object::SnapRenderInterpState();
-    SnapActorRenderInterpState();
-}
-
-//=========================================================================
-
-void actor::CaptureRenderInterpState( void )
-{
-    if( !m_bIsActive )
-    {
-        ClearActorRenderInterpState();
-        return;
-    }
-
-    if( CaptureActorRenderInterpState() == INTERP_CAPTURE_CHANGED )
-        RegisterRenderInterpUpdate();
-}
-
-//=========================================================================
-
-void actor::UpdateRenderInterpState( f32 Alpha )
-{
-    if( m_bIsActive )
-        UpdateActorRenderInterpState( Alpha );
-}
-
-//=========================================================================
-
-void actor::ClearRenderInterpState( void )
-{
-    if( m_bIsActive )
-        ClearActorRenderInterpState();
-}
-
-//=========================================================================
-
-interp_capture_status actor::CaptureActorRenderInterpState( void )
-{
-    actor_interp_state& Snapshot = BeginCaptureInterpCache( m_ActorRenderCache );
-    Snapshot.Valid = TRUE;
-    CaptureSkinnedInterpState( Snapshot.Body, GetL2W() );
-    InitWeaponInterpState( Snapshot.Weapon );
-
-    loco* pLoco = GetLocoPointer();
-    if( pLoco && pLoco->IsAnimLoaded() )
-    {
-        const s32 nBones = MIN( pLoco->m_Player.GetNBones(), MAX_ANIM_BONES );
-        if( nBones > 0 )
-        {
-            pLoco->m_Player.SetNActiveBones( nBones );
-            Snapshot.Body.NBones = nBones;
-            pLoco->m_Player.GetBoneL2Ws( Snapshot.Body.Bones, FALSE );
-        }
-    }
-
-    new_weapon* pWeapon = GetCurrentWeaponPtr();
-    if( pWeapon )
-    {
-        const new_weapon::render_state OldState = pWeapon->GetRenderState();
-        pWeapon->SetRenderState( new_weapon::RENDER_STATE_NPC );
-
-        if( pWeapon->HasAnimGroup() )
-        {
-            char_anim_player& WeaponAnimPlayer = pWeapon->GetCurrentAnimPlayer();
-            xbool bHasExtraTrackControllers = FALSE;
-            for( s32 i = 1; i < MAX_CHAR_ANIM_PLAYER_TRACKS; i++ )
-            {
-                if( WeaponAnimPlayer.GetTrackController( i ) )
-                {
-                    bHasExtraTrackControllers = TRUE;
-                    break;
-                }
-            }
-
-            bbox WeaponBBox = pWeapon->GetLocalBBox();
-            WeaponBBox.Transform( pWeapon->GetL2W() );
-            const xbool bWeaponVisible = (g_ObjMgr.IsBoxInView( WeaponBBox, XBIN(111111) ) != -1);
-
-            if( bWeaponVisible && !bHasExtraTrackControllers )
-            {
-                CaptureWeaponInterpState( Snapshot.Weapon, pWeapon->GetL2W() );
-                Snapshot.Weapon.NBones = MIN( WeaponAnimPlayer.GetNBones(), MAX_ANIM_BONES );
-                if( Snapshot.Weapon.NBones > 0 )
-                    WeaponAnimPlayer.GetBoneL2Ws( Snapshot.Weapon.Bones, FALSE );
-            }
-        }
-
-        pWeapon->SetRenderState( OldState );
-    }
-
-    return FinishCaptureInterpCache( m_ActorRenderCache,
-                                     []( const actor_interp_state& Prev, const actor_interp_state& Curr )
-                                          {
-                                              return ShouldSnapSkinnedInterpState( Prev.Body, Curr.Body ) ||
-                                                     (Prev.Weapon.Active != Curr.Weapon.Active) ||
-                                                     (Prev.Weapon.NBones != Curr.Weapon.NBones);
-                                          } );
-}
-
-//=========================================================================
-
-void actor::UpdateActorRenderInterpState( f32 Alpha )
-{
-    UpdateInterpCache( m_ActorRenderCache, Alpha,
-                       []( const actor_interp_state& Prev,
-                           const actor_interp_state& Curr,
-                                 actor_interp_state& Interp,
-                                 f32                 T )
-                            {
-                                Interp.Valid = Curr.Valid;
-                                UpdateSkinnedInterpState( Prev.Body, Curr.Body, Interp.Body, T );
-                                UpdateWeaponInterpState( Prev.Weapon, Curr.Weapon, Interp.Weapon, T );
-                            } );
-}
-
-//=========================================================================
-
-void actor::ClearActorRenderInterpState( void )
-{
-    ClearInterpCache( m_ActorRenderCache );
-}
-
-//=========================================================================
-
-const matrix4& actor::GetActorRenderL2W( void ) const
-{
-    if( HasInterpCache( m_ActorRenderCache ) )
-        return m_ActorRenderCache.Interp.Body.L2W;
-
-    return GetL2W();
-}
-
-//=========================================================================
-
-xbool actor::GetActorRenderBoneL2W( s32 iBone, matrix4& L2W ) const
-{
-    if( HasInterpCache( m_ActorRenderCache ) &&
-        GetSkinnedInterpBoneL2W( m_ActorRenderCache.Interp.Body, iBone, L2W ) )
-    {
-        return TRUE;
-    }
-
-    if( m_pLoco )
-    {
-        s32 nBones = m_pLoco->m_Player.GetNBones();
-        if( (iBone >= 0) && (iBone < nBones) )
-        {
-            L2W = m_pLoco->m_Player.GetBoneL2W( iBone );
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
-//=========================================================================
-
-xbool actor::GetRenderWeaponL2W( matrix4& L2W, new_weapon::render_state RenderState ) const
-{
-    (void)RenderState;
-    loco* pLoco = m_pLoco;
-    if( !pLoco || !HasInterpCache( m_ActorRenderCache ) )
-        return FALSE;
-
-    const s32 iBone = pLoco->GetWeaponBoneIndex();
-    if( !GetActorRenderBoneL2W( iBone, L2W ) )
-        return FALSE;
-    return TRUE;
-}
-
-//=========================================================================
-
-const matrix4* actor::GetRenderWeaponBones( s32& nBones, new_weapon::render_state RenderState ) const
-{
-    (void)RenderState;
-    if( !HasInterpCache( m_ActorRenderCache ) )
-    {
-        nBones = 0;
-        return NULL;
-    }
-
-    return GetWeaponInterpStateBones( m_ActorRenderCache.Interp.Weapon, nBones );
-}
-
-//=========================================================================
-
-const vector3& actor::GetRenderWeaponCollisionOffset( new_weapon::render_state RenderState ) const
-{
-    (void)RenderState;
-    static vector3 s_ZeroOffset( 0.0f, 0.0f, 0.0f );
-    return s_ZeroOffset;
 }
 
 //=========================================================================
@@ -725,7 +497,12 @@ xbool actor::OnProperty( prop_query& rPropQuery )
         // Initialize zone tracker?
         if( rPropQuery.IsVar( "Base\\Position" ) )
         {
-            g_ZoneMgr.InitZoneTracking( *this, m_ZoneTracker );
+            g_ZoneMgr.RebaseZoneTracking( *this,
+                                          m_ZoneTracker,
+                                          GetPosition(),
+                                          GetZone1(),
+                                          GetZone2(),
+                                          zone_mgr::SeedSource::Object );
         }
         
         // Initialize locomotion?
@@ -964,12 +741,12 @@ actor_effects* actor::GetActorEffects( xbool bCreate )
 static xbool s_DumpInventory = 0;
 #endif
 
-void actor::OnAdvanceLogic( f32 DeltaTime )
+void actor::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "actor::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "actor::OnAdvanceSimulation" );
 
     // update the skin instance so actors can fade based on a super-event
-    m_SkinInst.OnAdvanceLogic( DeltaTime );
+    m_SkinInst.OnAdvanceSimulation( DeltaTime );
 
     m_TimeSinceLastPain = x_min( m_TimeSinceLastPain + DeltaTime, 1.0f );
 
@@ -1014,9 +791,6 @@ void actor::OnAdvanceLogic( f32 DeltaTime )
     {
         m_LastTimeStaggered -= DeltaTime;
     }
-
-    // Update rendering
-    m_TimeSinceLastRender += DeltaTime;
 
     // Debug to dump inventory
 #ifdef ENABLE_DEBUG_MENU
@@ -1131,11 +905,6 @@ void actor::OnRender( void )
             return;
     #endif
 
-    const matrix4& RenderL2W = GetActorRenderL2W();
-
-    // Reset timer
-    m_TimeSinceLastRender = 0.0f;
-    
     // Lookup skin geometry
     skin_geom* pSkinGeom = GetSkinInst().GetSkinGeom();
     if (!pSkinGeom)
@@ -1149,13 +918,13 @@ void actor::OnRender( void )
 #endif
 
     // Compute LOD mask
-    u64 LODMask = m_SkinInst.GetLODMask( RenderL2W );
+    u64 LODMask = m_SkinInst.GetLODMask( GetL2W() );
     if( m_CloakState == CLOAKING_ON )
     {
         s32 CloakVMesh = pSkinGeom->GetVMeshIndex( "CLOAK" );
         if( CloakVMesh != -1 )
         {
-            u16 ScreenSize = (u16)eng_GetView()->CalcScreenSize( RenderL2W.GetTranslation(), m_SkinInst.GetBBox().GetRadius() );
+            u16 ScreenSize = (u16)eng_GetView()->CalcScreenSize( GetPosition(), m_SkinInst.GetBBox().GetRadius() );
             LODMask = pSkinGeom->GetLODMask( 1<<CloakVMesh, ScreenSize );
         }
     }
@@ -1221,7 +990,7 @@ void actor::OnRender( void )
             NormalRot.Pitch += x_frand( R_0, MaxRot );
             NormalRot.Roll  += x_frand( R_0, MaxRot );
         }
-        GetSkinInst().RenderDistortion(&RenderL2W, 
+        GetSkinInst().RenderDistortion(&GetL2W(), 
             pMatrices, 
             nActiveBones,
             Flags,
@@ -1246,7 +1015,7 @@ void actor::OnRender( void )
             Flags |= render::FADING_ALPHA;
         }
 
-        GetSkinInst().Render(&RenderL2W, 
+        GetSkinInst().Render(&GetL2W(), 
             pMatrices, 
             nActiveBones,
             Flags,
@@ -1275,11 +1044,6 @@ void actor::OnRenderShadowCast( u64 ProjMask )
             return;
     #endif
 
-    const matrix4& RenderL2W = GetActorRenderL2W();
-
-    // Reset timer
-    m_TimeSinceLastRender = 0;    
-        
     // don't render a shadow if we're cloaked
     if ( m_CloakState == CLOAKING_ON )
         return;
@@ -1290,14 +1054,8 @@ void actor::OnRenderShadowCast( u64 ProjMask )
         return;
 
     // Compute LOD mask for the normal render
-    u64 LODMask = GetSkinInst().GetLODMask( RenderL2W ) ;
+    u64 LODMask = GetSkinInst().GetLODMask( GetL2W() ) ;
     if (LODMask == 0)
-        return ;
-
-    // Compute LOD mask for the shadow render (by forcing 0 for the screen size
-    // we are sure to get the lowest LOD)
-    u64 ShadLODMask = GetSkinInst().GetLODMask(0);
-    if (ShadLODMask == 0)
         return ;
 
     // Setup render flags
@@ -1305,15 +1063,17 @@ void actor::OnRenderShadowCast( u64 ProjMask )
 
     // compute bones
     s32 nActiveBones = 0;
-    const matrix4* pMatrices = GetBonesForRender( LODMask|ShadLODMask, nActiveBones );
+    const matrix4* pMatrices = GetBonesForRender( LODMask, nActiveBones );
+    if( !pMatrices || ( nActiveBones <= 0 ) )
+        return;
 
     // Render
-    GetSkinInst().RenderShadowCast(&RenderL2W, 
-                                pMatrices, 
-                                nActiveBones,
-                                Flags,
-                                ShadLODMask,
-                                ProjMask );
+    GetSkinInst().RenderShadowCast(&GetL2W(), 
+                                   pMatrices, 
+                                   nActiveBones,
+                                   Flags,
+                                   LODMask,
+                                   ProjMask );
 
     if( IsAlive() )
     {
@@ -1585,12 +1345,12 @@ void  actor::OnColRender( xbool bRenderHigh )
         GetLocoPointer()->m_Physics.RenderCollision();
         bbox BBox(GetLocoPointer()->m_Physics.GetBBox() );
         BBox.Transform( GetL2W() );
-        draw_BBox( BBox );
+        render::debug::Box( BBox );
     }
     else
     {
         // Just your regular bounding box
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
     }
 }
 #endif // X_RETAIL
@@ -1663,6 +1423,17 @@ void actor::OnTransform( const matrix4& L2W )
 
     // Update zone tracker
     UpdateZoneTrack();
+}
+
+//===========================================================================
+
+void actor::OnRidingPlatformMove( const vector3& NewPos, radian DeltaYaw )
+{
+    matrix4 L2W;
+    L2W.Setup( vector3( 1, 1, 1 ),
+               radian3( 0, GetL2W().GetRotation().Yaw + DeltaYaw, 0 ),
+               NewPos );
+    OnTransform( L2W );
 }
 
 //===========================================================================
@@ -2286,7 +2057,7 @@ void actor::PlayImpactAnim( const pain& Pain, eHitType hitType )
                                       loco::ANIM_FLAG_TURN_OFF_AIMER   |
                                       loco::ANIM_FLAG_RESTART_IF_SAME_ANIM ) )
         {
-            m_BigPainTakenTime = (f32)x_GetTimeSec();
+            m_BigPainTakenTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
             m_LastTimeStaggered = k_MinTimeBetweenBigStaggers;
         }
     }
@@ -2341,7 +2112,7 @@ void actor::PlayImpactAnim( const pain& Pain, eHitType hitType )
                                            loco::ANIM_FLAG_TURN_OFF_AIMER   |
                                            loco::ANIM_FLAG_RESTART_IF_SAME_ANIM ) )
             {
-                m_BigPainTakenTime = (f32)x_GetTimeSec();
+                m_BigPainTakenTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
                 m_LastTimeStaggered = k_MinTimeBetweenBigStaggers;
             }
         }
@@ -2656,6 +2427,11 @@ void actor::Teleport( const vector3& Position, xbool DoBlend, xbool DoEffect )
     }
     #endif
 
+    // Players are always teleported with explicit destination zones. Their
+    // caller rebases the tracker after the transform and ground check.
+    if( GetType() == object::TYPE_PLAYER )
+        return;
+
     // Fire a ray down from the given position.  Use the zone information from
     // the play surface hit by the ray.
 
@@ -2700,7 +2476,12 @@ void actor::Teleport( const vector3& Position, xbool DoBlend, xbool DoEffect )
         SetZone2( pObject->GetZone2() );
         
         // Update the zone tracker
-        g_ZoneMgr.InitZoneTracking( *pObject, m_ZoneTracker );
+        g_ZoneMgr.RebaseZoneTracking( *this,
+                                      m_ZoneTracker,
+                                      GetPosition(),
+                                      GetZone1(),
+                                      GetZone2(),
+                                      zone_mgr::SeedSource::Destination );
         
         /*
         LOG_MESSAGE( "actor::Teleport", "Zone1:%d - Zone2:%d", 
@@ -2710,7 +2491,6 @@ void actor::Teleport( const vector3& Position, xbool DoBlend, xbool DoEffect )
         // Exit for loop
         break;
     }
-    
     /*
     LOG_MESSAGE( "actor::Teleport", "After:%.3f,%.3f,%.3f", 
                                     GetPosition().GetX(), 
@@ -2718,8 +2498,6 @@ void actor::Teleport( const vector3& Position, xbool DoBlend, xbool DoEffect )
                                     GetPosition().GetZ() );
     */
 
-    if( !DoBlend || DoEffect )
-        actor::SnapRenderInterpState();
 }
 
 //==============================================================================
@@ -2733,17 +2511,18 @@ void actor::Teleport( const vector3& Position,
     Teleport( Position, DoBlend, DoEffect );
     SetPitch( Pitch );
     SetYaw  ( Yaw   );
-
-    if( !DoBlend || DoEffect )
-        actor::SnapRenderInterpState();
 }
 
 //==============================================================================
 
 void actor::InitZoneTracking( void )
 {
-    // Update the zone tracker
-    g_ZoneMgr.InitZoneTracking( *this, m_ZoneTracker );
+    g_ZoneMgr.RebaseZoneTracking( *this,
+                                  m_ZoneTracker,
+                                  GetPosition(),
+                                  GetZone1(),
+                                  GetZone2(),
+                                  zone_mgr::SeedSource::Object );
 }
 
 //==============================================================================
@@ -2751,16 +2530,10 @@ void actor::InitZoneTracking( void )
 void actor::UpdateZoneTrack ( void )
 { 
     // Update tracker
-    g_ZoneMgr.UpdateZoneTracking( *this, m_ZoneTracker, GetPosition() );
+    g_ZoneMgr.AdvanceZoneTracking( *this, m_ZoneTracker, GetPosition() );
 }
 
 //==============================================================================
-
-void actor::UpdateZone( u8 Zone )
-{
-    SetZone1(Zone);
-    SetZone2(0);
-}
 
 //==============================================================================
 // Contagion FUNCTIONS
@@ -3075,7 +2848,7 @@ new_weapon* actor::GetWeaponPtr( inven_item WeaponItem )
 void actor::MoveWeapon( xbool UpdateWeaponRenderState ) 
 {
     //move the weapon using the prop points position... from the character animiation player
-    CONTEXT("actor::MoveWeapon");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "actor::MoveWeapon");
     
     //
     // move our 3rd person weapon?
@@ -3115,7 +2888,7 @@ void actor::MoveWeapon( xbool UpdateWeaponRenderState )
 
 void actor::UpdateWeapon( f32 DeltaTime )
 {
-    CONTEXT( "actor::UpdateWeapon" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "actor::UpdateWeapon" );
 
     if( !IsAlive() )
     {
@@ -3126,7 +2899,7 @@ void actor::UpdateWeapon( f32 DeltaTime )
     if( pWeapon && ( pWeapon->GetRenderState() != new_weapon::RENDER_STATE_PLAYER ) )
     {
         //advance currently held weapon's logic.
-        pWeapon->OnAdvanceLogic( DeltaTime );    
+        pWeapon->OnAdvanceSimulation( DeltaTime );
     }
 }
 
@@ -3141,7 +2914,6 @@ xbool actor::EquipWeapon2( inven_item WeaponItem )
     {
         pNewWeapon->InitWeapon( GetPosition(), new_weapon::RENDER_STATE_NPC, GetGuid() ); 
         m_CurrentWeaponItem = WeaponItem;
-        SnapRenderInterpState();
         return TRUE;
     }
 
@@ -3162,7 +2934,6 @@ void actor::UnequipCurrentWeapon()
         pWeapon->SetVisible(FALSE);
     }
     m_CurrentWeaponItem = INVEN_NULL;
-    SnapRenderInterpState();
 }
 
 //=============================================================================
@@ -3646,7 +3417,7 @@ void actor::PlayFlinch( const pain& Pain )
     {
         // convert up to a full body hit
         if( isIdle && 
-            x_GetTimeSec() - m_BigPainTakenTime >= k_MinTimeBetweenBigHits &&
+            g_ObjMgr.GetSimulationTimeSeconds() - m_BigPainTakenTime >= k_MinTimeBetweenBigHits &&
             HasAnim(loco::ANIM_PAIN_IDLE_FRONT) )
         {
         //  LOG_MESSAGE( "actor::PlayFlinch", "HITTYPE_LIGHT->HITTYPE_IDLE" );
@@ -3660,7 +3431,7 @@ void actor::PlayFlinch( const pain& Pain )
     else
     {
         // downgrade to light if timer to low.
-        if( (x_GetTimeSec() - m_BigPainTakenTime < k_MinTimeBetweenBigHits) ||
+        if( (g_ObjMgr.GetSimulationTimeSeconds() - m_BigPainTakenTime < k_MinTimeBetweenBigHits) ||
             IsDead() )
         {
         //  LOG_MESSAGE("actor::PlayFlinch","HITTYPE_BIG->HITTYPE_LIGHT");
@@ -4325,7 +4096,6 @@ void  actor::SetIsActive( xbool bIsActive )
     if( m_bIsActive == bIsActive )
         return;
 
-    InvalidateRenderInterpState();
 
     if( bIsActive )
     {
@@ -4475,7 +4245,7 @@ xbool actor::GetAttachPointData( s32      iAttachPt,
 {
     if (iAttachPt == 0)
     {
-        L2W = GetActorRenderL2W();
+        L2W = GetL2W();
         return TRUE;
     }
     if (m_pLoco)
@@ -4486,17 +4256,9 @@ xbool actor::GetAttachPointData( s32      iAttachPt,
         if ( (iAttachPt >= 0) &&
              (iAttachPt < nBones ))
         {
-            if( HasInterpCache( m_ActorRenderCache ) && GetActorRenderBoneL2W( iAttachPt, L2W ) )
-            {
-                if( !(Flags & ATTACH_USE_WORLDSPACE) )
-                    L2W = L2W * m_pLoco->m_Player.GetBone( iAttachPt ).BindMatrixInv;
-            }
-            else
-            {
-                L2W = m_pLoco->m_Player.GetBoneL2W( iAttachPt );
-                if ( Flags & ATTACH_USE_WORLDSPACE)
-                    L2W.PreTranslate( m_pLoco->m_Player.GetBoneBindPosition( iAttachPt ) );
-            }
+            L2W = m_pLoco->m_Player.GetBoneL2W( iAttachPt );
+            if ( Flags & ATTACH_USE_WORLDSPACE)
+                L2W.PreTranslate( m_pLoco->m_Player.GetBoneBindPosition( iAttachPt ) );
 
             return TRUE;
         }        
@@ -4548,13 +4310,6 @@ const matrix4* actor::GetBonesForRender( u64 LODMask, s32& nActiveBones )
     if( nActiveBones == 0 )
         return NULL ;
 
-    if( HasInterpCache( m_ActorRenderCache ) && (m_ActorRenderCache.Interp.Body.NBones >= nActiveBones) )
-    {
-        ASSERT( pLoco->m_Player.GetAnimGroup() );
-        const anim_group& AnimGroup = *pLoco->m_Player.GetAnimGroup();
-        return BuildSkinnedInterpMatrices( m_ActorRenderCache.Interp.Body, AnimGroup, nActiveBones );
-    }
-
     // Use loco to compute bones?
     const matrix4* pMatrices = NULL;
     if( pLoco->IsAnimLoaded() )
@@ -4577,7 +4332,7 @@ const matrix4* actor::GetBonesForRender( u64 LODMask, s32& nActiveBones )
             return NULL;
 
         // Get object transform
-        const matrix4& L2W = GetActorRenderL2W();
+        const matrix4& L2W = GetL2W();
         
         // Use bind pose at current transform
         for( i = 0; i < nActiveBones ; i++ )
@@ -4607,7 +4362,7 @@ void actor::RenderHitLocations( void )
         return;
 
     // Compute LOD mask
-    u64 LODMask = SkinInst.GetLODMask(GetL2W());
+    u64 LODMask = SkinInst.GetLODMask( GetL2W() );
     if ( LODMask == 0 )
         return;
 
@@ -4652,10 +4407,8 @@ void actor::RenderHitLocations( void )
         const matrix4& L2W       = pMatrices[i];
         
         // Draw bone aligned bbox
-        draw_SetL2W( L2W );
-        draw_BBox( LocalBBox, Clr );
+        render::debug::Box( LocalBBox, L2W, Clr );
     }
-    draw_ClearL2W();            
 }
 
 #endif // !defined( CONFIG_RETAIL )

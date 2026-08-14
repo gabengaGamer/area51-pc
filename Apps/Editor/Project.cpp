@@ -1,7 +1,7 @@
 #include "BaseStdAfx.h"
 #include "Project.hpp"
-#include "Parsing\TextIn.hpp"
-#include "Parsing\TextOut.hpp"
+#include "Parsing/TextIn.hpp"
+#include "Parsing/TextOut.hpp"
 
 //==============================================================================
 //  Global declarations

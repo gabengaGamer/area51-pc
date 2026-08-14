@@ -40,19 +40,6 @@ const s32 NET_GAME_PORT = 3658;
 const s32 NET_LAST_MAP_ID = 1130;
 
 //==============================================================================
-//  TYPES
-//==============================================================================
-
-enum osd_destination
-{
-    OSD_EXIT_MANAGE,        // Run network configuration tool or troubleshooter
-    OSD_EXIT_NEW_USER,      // XBOX: New user account needed
-    OSD_EXIT_UPDATE,        // XBOX: Required update available
-    OSD_EXIT_MESSAGE,       // XBOX: Required message available
-    OSD_EXIT_REBOOT,
-};
-
-//==============================================================================
 //  FUNCTIONS
 //==============================================================================
 
@@ -65,11 +52,18 @@ public:
     // Lifecycle
     void                Init                    ( void );
     void                Kill                    ( void );
-    void                Update                  ( f32 DeltaTime );
+    void                BeginFrame              ( f32 RealDeltaTime );
+    void                AdvanceSimulation       ( f32 DeltaTime );
+    void                EndFrame                ( f32 RealDeltaTime );
+    void                UpdateFrame             ( f32 RealDeltaTime );
 
     // Online state
     void                SetOnline               ( xbool IsOnline );
     xbool               IsOnline                ( void ) const              { return m_IsOnline; }
+    xbool               BeginOnlineStateChange  ( xbool IsOnline );
+    xbool               IsOnlineStateChangeDone ( void ) const;
+    xbool               IsOnlineStateChanging   ( void ) const              { return m_OnlineStateChangeJob.IsNonNull(); }
+    void                FinishOnlineStateChange ( void );
 
     // Server / client roles
     void                BecomeServer            ( void );
@@ -119,15 +113,14 @@ public:
     game_server&        GetServerObject         ( void )                    { ASSERT( m_pServer ); return *m_pServer; }
     game_client&        GetClientObject         ( void )                    { ASSERT( m_pClient ); return *m_pClient; }
 
-#if defined(TARGET_PS2)
-    void                OnRepollCB              ( void );
-#endif
-
 private:
+    static void         OnlineStateChangeJob    ( void* pData );
     // Internal silence implementation; ForceDisconnect=TRUE closes the socket immediately.
     void                SilenceInternal         ( xbool ForceDisconnect );
 
     xbool               m_IsOnline;
+    xbool               m_RequestedOnlineState;
+    xhandle             m_OnlineStateChangeJob;
     net_socket          m_LocalSocket;
     game_client*        m_pClient;
     game_server*        m_pServer;

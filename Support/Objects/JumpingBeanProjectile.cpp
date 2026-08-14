@@ -6,18 +6,18 @@
 // INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "JumpingBeanProjectile.hpp"
-#include "Entropy\e_Draw.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "render\LightMgr.hpp"
-#include "Objects\AnimSurface.hpp"
-#include "objects\ClothObject.hpp"
-#include "objects\DestructibleObj.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "Gamelib/DebugCheats.hpp"
-#include "Objects/Player.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Objects/AnimSurface.hpp"
+#include "Objects/ClothObject.hpp"
+#include "Objects/DestructibleObj.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "GameLib/DebugCheats.hpp"
+#include "Objects/Player/Player.hpp"
 #include "x_files/x_plus.hpp"
 
 //==============================================================================
@@ -208,7 +208,7 @@ bbox jumping_bean_projectile::GetLocalBBox( void ) const
 
     if( pRigidGeom )
     {
-        return( pRigidGeom->m_Collision.BBox );
+        return( pRigidGeom->m_collision.BBox );
     }
     
     return( bbox( vector3( 10.0f, 10.0f, 10.0f),
@@ -374,11 +374,11 @@ void jumping_bean_projectile::StageLogic( f32 DeltaTime )
 
 //=============================================================================================
 u8 g_JBG_BounceCount = 0;
-void jumping_bean_projectile::OnAdvanceLogic( f32 DeltaTime )
+void jumping_bean_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
     if( m_Exploded )
     {
-        net_proj::OnAdvanceLogic( DeltaTime );
+        net_proj::OnAdvanceSimulation( DeltaTime );
         return;
     }
 
@@ -396,7 +396,7 @@ void jumping_bean_projectile::OnAdvanceLogic( f32 DeltaTime )
         m_MaxBounces    = s_JBEAN_MaxBouncesTweak.GetS32();
     }
 
-    net_proj::OnAdvanceLogic( DeltaTime );
+    net_proj::OnAdvanceSimulation( DeltaTime );
 
     if( m_Age > m_MaxAliveTime )
     {
@@ -788,7 +788,7 @@ void jumping_bean_projectile::OnRender( void )
         return;
 
     // Setup Render Matrix
-    m_RenderL2W = GetL2W();
+    matrix4 RenderL2W = GetL2W();
 
     radian Pitch, Yaw;
     m_Velocity.GetPitchYaw(Pitch, Yaw);
@@ -800,7 +800,7 @@ void jumping_bean_projectile::OnRender( void )
         Rot.Set(Pitch, Yaw, R_0);    
     }
 
-    m_RenderL2W.SetRotation(Rot);
+    RenderL2W.SetRotation( Rot );
 
     rigid_geom* pRigidGeom = m_RigidInst.GetRigidGeom();
     
@@ -808,12 +808,12 @@ void jumping_bean_projectile::OnRender( void )
     {
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         
-        m_RigidInst.Render( &m_RenderL2W, Flags );
+        m_RigidInst.Render( &RenderL2W, Flags );
     }
 
 #ifdef X_EDITOR
-//    draw_Line( GetPosition() , GetPosition() + m_NormalCollision );
-//    draw_Line( GetPosition() , GetPosition() + m_Velocity , XCOLOR_BLUE );
+//    render::debug::Line( GetPosition() , GetPosition() + m_NormalCollision );
+//    render::debug::Line( GetPosition() , GetPosition() + m_Velocity , XCOLOR_BLUE );
 #endif // X_EDITOR
 }
 

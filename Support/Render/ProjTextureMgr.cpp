@@ -11,297 +11,272 @@
 #include "ProjTextureMgr.hpp"
 
 //=========================================================================
-// GLOBAL INSTANCE
+//  GLOBAL INSTANCE
 //=========================================================================
 
-proj_texture_mgr    g_ProjTextureMgr;
+ProjTextureMgr g_ProjTextureMgr;
 
 //=========================================================================
-// FUNCTIONS
+//  FUNCTIONS
 //=========================================================================
 
-proj_texture_mgr::proj_texture_mgr( void ) :
-    m_NLightProjections     ( 0 ),
-    m_NShadowProjections    ( 0 ),
-    m_NCollectedLights      ( 0 ),
-    m_NCollectedShadows     ( 0 ),
-    m_CurrCollectedLight    ( 0 ),
-    m_CurrCollectedShadow   ( 0 )
+ProjTextureMgr::ProjTextureMgr( void )
+    : m_LightProjectionCount( 0 )
+    , m_ShadowProjectionCount( 0 )
+    , m_CollectedLightCount( 0 )
+    , m_CollectedShadowCount( 0 )
+    , m_CurrentCollectedLightIndex( 0 )
+    , m_CurrentCollectedShadowIndex( 0 )
 {
 }
 
 //=========================================================================
 
-proj_texture_mgr::~proj_texture_mgr( void )
+ProjTextureMgr::~ProjTextureMgr( void )
 {
     ClearProjTextures();
 }
 
 //=========================================================================
 
-xbool proj_texture_mgr::CanReceiveProjTexture( material_type Type,
-                                               u16           MaterialFlags ) const
-{
-    if ( !IsAlphaMaterial( Type ) )
-        return TRUE;
-
-    if ( !(MaterialFlags & geom::material::FLAG_FORCE_ZFILL) )
-        return FALSE;
-
-    if ( MaterialFlags & geom::material::FLAG_IS_SUBTRACTIVE )
-        return FALSE;
-
-    return TRUE;
-}
-
-//=========================================================================
-
-xbool proj_texture_mgr::CanReceiveProjTexture( const geom::material& Mat ) const
-{
-    return CanReceiveProjTexture( (material_type)Mat.Type, Mat.Flags );
-}
-
-//=========================================================================
-
-xbool proj_texture_mgr::CanReceiveProjTexture( const material& Mat ) const
-{
-    return CanReceiveProjTexture( (material_type)Mat.m_Type, Mat.m_Flags );
-}
-
-//=========================================================================
-
-xbool proj_texture_mgr::ProjectionIntersectsBBox( const projection& Proj, const bbox& B )
-{
-    return ( Proj.ProjView.BBoxInView( B ) != view::VISIBLE_NONE );
-}
-
-//=========================================================================
-
-s32 proj_texture_mgr::CollectProjections( const projection* pProjections,
-                                          s32               NProjections,
-                                          s32*              pCollectedProjections,
-                                          s32&              NCollectedProjections,
-                                          s32&              CurrCollectedProjection,
-                                          const matrix4&    L2W,
-                                          const bbox&       B,
-                                          s32               MaxProjectionCount )
+void ProjTextureMgr::ClearProjections( Projection* pProjections, s32& ProjectionCount )
 {
     ASSERT( pProjections );
-    ASSERT( pCollectedProjections );
-    ASSERT( NProjections >= 0 );
-    ASSERT( MaxProjectionCount >= 0 );
+    ASSERT( ProjectionCount >= 0 );
 
-    bbox WorldBBox = B;
-    WorldBBox.Transform( L2W );
-
-    NCollectedProjections   = 0;
-    CurrCollectedProjection = 0;
-
-    if ( MaxProjectionCount <= 0 )
-        return 0;
-
-    for ( s32 iProjection = 0;
-          (iProjection < NProjections) && (NCollectedProjections < MaxProjectionCount);
-          iProjection++ )
+    for( s32 ProjectionIndex = 0; ProjectionIndex < ProjectionCount; ProjectionIndex++ )
     {
-        if ( ProjectionIntersectsBBox( pProjections[iProjection], WorldBBox ) )
-            pCollectedProjections[NCollectedProjections++] = iProjection;
+        pProjections[ProjectionIndex].m_Texture.Destroy();
     }
 
-    return NCollectedProjections;
+    ProjectionCount = 0;
 }
 
 //=========================================================================
 
-void proj_texture_mgr::GetCollectedProjection( const projection* pProjections,
-                                               const s32*        pCollectedProjections,
-                                               s32               NCollectedProjections,
-                                               s32&              CurrCollectedProjection,
-                                               matrix4&          ProjMatrix,
-                                               xbitmap*&         pBitmap )
+void ProjTextureMgr::AddProjection( Projection* pProjections, s32& ProjectionCount,
+                                    s32 MaxProjectionCount, matrix4 const& LocalToWorld,
+                                    radian FieldOfView, f32 Length, texture::handle Texture )
 {
     ASSERT( pProjections );
-    ASSERT( pCollectedProjections );
-    ASSERT( NCollectedProjections >= 0 );
-    ASSERT( (CurrCollectedProjection >= 0) && (CurrCollectedProjection < NCollectedProjections) );
-
-    const projection& Proj = pProjections[pCollectedProjections[CurrCollectedProjection++]];
-
-    ProjMatrix = Proj.ProjMatrix;
-
-    texture* pTex = Proj.ProjTexture.GetPointer();
-    pBitmap = pTex ? &pTex->m_Bitmap : NULL;
-}
-
-//=========================================================================
-
-void proj_texture_mgr::AddProjLight( const matrix4&  L2W,
-                                     radian          FOV,
-                                     f32             Length,
-                                     texture::handle Texture )
-{
-    ASSERT( (m_NLightProjections >= 0) && (m_NLightProjections <= MAX_PROJ_LIGHTS) );
+    ASSERT( ProjectionCount >= 0 );
+    ASSERT( ProjectionCount <= MaxProjectionCount );
+    ASSERT( MaxProjectionCount >= 0 );
     ASSERT( Texture.GetPointer() );
 
-    if ( Texture.GetPointer() == NULL )
+    if( Texture.GetPointer() == nullptr )
+    {
         return;
+    }
 
-    if ( m_NLightProjections >= MAX_PROJ_LIGHTS )
+    if( ProjectionCount >= MaxProjectionCount )
+    {
         return;
+    }
 
-    SetupProjection( m_LightProjections[m_NLightProjections], L2W, FOV, Length, Texture );
-    m_NLightProjections++;
+    SetupProjection( pProjections[ProjectionCount], LocalToWorld, FieldOfView, Length, Texture );
+    ProjectionCount++;
 }
 
 //=========================================================================
 
-void proj_texture_mgr::AddProjShadow( const matrix4&  L2W,
-                                      radian          FOV,
-                                      f32             Length,
-                                      texture::handle Texture )
+s32 ProjTextureMgr::CollectProjections( Projection const* pProjections, s32 ProjectionCount,
+                                        s32* pCollectedIndices, s32& CollectedCount,
+                                        s32& CurrentCollectedIndex, matrix4 const& LocalToWorld,
+                                        bbox const& LocalBBox, s32 MaxCollectedCount )
 {
-    ASSERT( (m_NShadowProjections >= 0) && (m_NShadowProjections <= MAX_PROJ_SHADOWS) );
-    ASSERT( Texture.GetPointer() );
+    ASSERT( pProjections );
+    ASSERT( pCollectedIndices );
+    ASSERT( ProjectionCount >= 0 );
+    ASSERT( MaxCollectedCount >= 0 );
 
-    if ( Texture.GetPointer() == NULL )
-        return;
+    bbox WorldBBox = LocalBBox;
+    WorldBBox.Transform( LocalToWorld );
 
-    if ( m_NShadowProjections >= MAX_PROJ_SHADOWS )
-        return;
+    CollectedCount = 0;
+    CurrentCollectedIndex = 0;
 
-    SetupProjection( m_ShadowProjections[m_NShadowProjections], L2W, FOV, Length, Texture );
-    m_NShadowProjections++;
+    if( MaxCollectedCount <= 0 )
+    {
+        return 0;
+    }
+
+    for( s32 ProjectionIndex = 0;
+         ( ProjectionIndex < ProjectionCount ) && ( CollectedCount < MaxCollectedCount );
+         ProjectionIndex++ )
+    {
+        if( ProjectionIntersectsBBox( pProjections[ProjectionIndex], WorldBBox ) )
+        {
+            pCollectedIndices[CollectedCount++] = ProjectionIndex;
+        }
+    }
+
+    return CollectedCount;
 }
 
 //=========================================================================
 
-s32 proj_texture_mgr::CollectLights( const matrix4& L2W, const bbox& B, s32 MaxLightCount )
+void ProjTextureMgr::GetCollectedProjection( Projection const* pProjections,
+                                             s32 const* pCollectedIndices, s32 CollectedCount,
+                                             s32& CurrentCollectedIndex, matrix4& ProjectionMatrix,
+                                             texture const*& pTexture )
 {
-    ASSERT( (m_NLightProjections >= 0) && (m_NLightProjections <= MAX_PROJ_LIGHTS) );
+    ASSERT( pProjections );
+    ASSERT( pCollectedIndices );
+    ASSERT( CollectedCount >= 0 );
+    ASSERT( ( CurrentCollectedIndex >= 0 ) && ( CurrentCollectedIndex < CollectedCount ) );
 
-    if ( MaxLightCount > MAX_PROJ_LIGHTS )
-        MaxLightCount = MAX_PROJ_LIGHTS;
+    s32 const ProjectionIndex = pCollectedIndices[CurrentCollectedIndex++];
+    Projection const& ProjectionData = pProjections[ProjectionIndex];
 
-    return CollectProjections( m_LightProjections,
-                               m_NLightProjections,
-                               m_CollectedLights,
-                               m_NCollectedLights,
-                               m_CurrCollectedLight,
-                               L2W,
-                               B,
+    ProjectionMatrix = ProjectionData.m_Matrix;
+    pTexture = ProjectionData.m_Texture.GetPointer();
+}
+
+//=========================================================================
+
+xbool ProjTextureMgr::ProjectionIntersectsBBox( Projection const& ProjectionData,
+                                                bbox const& WorldBBox )
+{
+    return ( ProjectionData.m_View.BBoxInView( WorldBBox ) != view::VISIBLE_NONE );
+}
+
+//=========================================================================
+
+xbool ProjTextureMgr::AnyProjectionIntersectsBBox( Projection const* pProjections,
+                                                   s32 ProjectionCount,
+                                                   bbox const& WorldBBox )
+{
+    ASSERT( pProjections );
+    ASSERT( ProjectionCount >= 0 );
+
+    for( s32 ProjectionIndex = 0; ProjectionIndex < ProjectionCount; ProjectionIndex++ )
+    {
+        if( ProjectionIntersectsBBox( pProjections[ProjectionIndex], WorldBBox ) )
+        {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+//=========================================================================
+
+void ProjTextureMgr::AddProjLight( matrix4 const& LocalToWorld, radian FieldOfView, f32 Length,
+                                   texture::handle Texture )
+{
+    AddProjection( m_LightProjections, m_LightProjectionCount, MaxLightProjectionCount,
+                   LocalToWorld, FieldOfView, Length, Texture );
+}
+
+//=========================================================================
+
+void ProjTextureMgr::AddProjShadow( matrix4 const& LocalToWorld, radian FieldOfView, f32 Length,
+                                    texture::handle Texture )
+{
+    AddProjection( m_ShadowProjections, m_ShadowProjectionCount, MaxShadowProjectionCount,
+                   LocalToWorld, FieldOfView, Length, Texture );
+}
+
+//=========================================================================
+
+s32 ProjTextureMgr::CollectLights( matrix4 const& LocalToWorld, bbox const& LocalBBox,
+                                   s32 MaxLightCount )
+{
+    if( MaxLightCount > MaxLightProjectionCount )
+    {
+        MaxLightCount = MaxLightProjectionCount;
+    }
+
+    return CollectProjections( m_LightProjections, m_LightProjectionCount,
+                               m_CollectedLightIndices, m_CollectedLightCount,
+                               m_CurrentCollectedLightIndex, LocalToWorld, LocalBBox,
                                MaxLightCount );
 }
 
 //=========================================================================
 
-void proj_texture_mgr::GetCollectedLight( matrix4& LightMatrix, xbitmap*& pBitmap )
+void ProjTextureMgr::GetCollectedLight( matrix4& LightMatrix, texture const*& pTexture )
 {
-    GetCollectedProjection( m_LightProjections,
-                            m_CollectedLights,
-                            m_NCollectedLights,
-                            m_CurrCollectedLight,
-                            LightMatrix,
-                            pBitmap );
+    GetCollectedProjection( m_LightProjections, m_CollectedLightIndices,
+                            m_CollectedLightCount, m_CurrentCollectedLightIndex,
+                            LightMatrix, pTexture );
 }
 
 //=========================================================================
 
-s32 proj_texture_mgr::CollectShadows( const matrix4& L2W, const bbox& B, s32 MaxShadowCount )
+s32 ProjTextureMgr::CollectShadows( matrix4 const& LocalToWorld, bbox const& LocalBBox,
+                                    s32 MaxShadowCount )
 {
-    ASSERT( (m_NShadowProjections >= 0) && (m_NShadowProjections <= MAX_PROJ_SHADOWS) );
+    if( MaxShadowCount > MaxShadowProjectionCount )
+    {
+        MaxShadowCount = MaxShadowProjectionCount;
+    }
 
-    if ( MaxShadowCount > MAX_PROJ_SHADOWS )
-        MaxShadowCount = MAX_PROJ_SHADOWS;
-
-    return CollectProjections( m_ShadowProjections,
-                               m_NShadowProjections,
-                               m_CollectedShadows,
-                               m_NCollectedShadows,
-                               m_CurrCollectedShadow,
-                               L2W,
-                               B,
+    return CollectProjections( m_ShadowProjections, m_ShadowProjectionCount,
+                               m_CollectedShadowIndices, m_CollectedShadowCount,
+                               m_CurrentCollectedShadowIndex, LocalToWorld, LocalBBox,
                                MaxShadowCount );
 }
 
 //=========================================================================
 
-void proj_texture_mgr::GetCollectedShadow( matrix4& ShadMatrix, xbitmap*& pBitmap )
+void ProjTextureMgr::GetCollectedShadow( matrix4& ShadowMatrix, texture const*& pTexture )
 {
-    ASSERT( (m_NCollectedShadows >= 0) && (m_NCollectedShadows <= MAX_PROJ_SHADOWS) );
-
-    GetCollectedProjection( m_ShadowProjections,
-                            m_CollectedShadows,
-                            m_NCollectedShadows,
-                            m_CurrCollectedShadow,
-                            ShadMatrix,
-                            pBitmap );
+    GetCollectedProjection( m_ShadowProjections, m_CollectedShadowIndices,
+                            m_CollectedShadowCount, m_CurrentCollectedShadowIndex,
+                            ShadowMatrix, pTexture );
 }
 
 //=========================================================================
 
-u32 proj_texture_mgr::CollectProjectionFlags( u32 RenderFlags, const bbox& WorldBBox )
+u32 ProjTextureMgr::CollectProjectionFlags( u32 RenderFlags, bbox const& WorldBBox )
 {
-    ASSERT( (m_NLightProjections  >= 0) && (m_NLightProjections  <= MAX_PROJ_LIGHTS ) );
-    ASSERT( (m_NShadowProjections >= 0) && (m_NShadowProjections <= MAX_PROJ_SHADOWS) );
+    u32 ProjectionFlags = 0;
 
-    u32 RetFlags = 0;
-
-    if ( !m_NLightProjections && !m_NShadowProjections )
-        return RetFlags;
-
-    if ( !(RenderFlags & render::DISABLE_SPOTLIGHT) )
+    if( ( m_LightProjectionCount == 0 ) && ( m_ShadowProjectionCount == 0 ) )
     {
-        for ( s32 i = 0; i < m_NLightProjections; i++ )
-        {
-            if ( ProjectionIntersectsBBox( m_LightProjections[i], WorldBBox ) )
-            {
-                RetFlags |= render::INSTFLAG_SPOTLIGHT;
-                break;
-            }
-        }
+        return ProjectionFlags;
     }
 
-    if ( !(RenderFlags & render::DISABLE_PROJ_SHADOWS) )
+    if( !( RenderFlags & render::DISABLE_SPOTLIGHT ) &&
+        AnyProjectionIntersectsBBox( m_LightProjections, m_LightProjectionCount, WorldBBox ) )
     {
-        for ( s32 i = 0; i < m_NShadowProjections; i++ )
-        {
-            if ( !ProjectionIntersectsBBox( m_ShadowProjections[i], WorldBBox ) )
-                continue;
-
-            RetFlags |= render::INSTFLAG_PROJ_SHADOW;
-            break;
-        }
+        ProjectionFlags |= render::INSTFLAG_SPOTLIGHT;
     }
 
-    return RetFlags;
+    if( !( RenderFlags & render::DISABLE_PROJ_SHADOWS ) &&
+        AnyProjectionIntersectsBBox( m_ShadowProjections, m_ShadowProjectionCount, WorldBBox ) )
+    {
+        ProjectionFlags |= render::INSTFLAG_PROJ_SHADOW;
+    }
+
+    return ProjectionFlags;
 }
 
 //=========================================================================
 
-void proj_texture_mgr::SetupProjection( projection&     Dest,
-                                        const matrix4&  L2W,
-                                        radian          FOV,
-                                        f32             Length,
-                                        texture::handle Texture )
+void ProjTextureMgr::SetupProjection( Projection& Destination, matrix4 const& LocalToWorld,
+                                      radian FieldOfView, f32 Length, texture::handle Texture )
 {
-    // set up the bitmap
-    Dest.ProjTexture = Texture;
+    ASSERT( Texture.GetPointer() );
+    ASSERT( Length > 1.0f );
 
-    // set up the view
-    texture* pProjTexture = Texture.GetPointer();
-    ASSERT( pProjTexture );
-    xbitmap& ProjBMP = pProjTexture->m_Bitmap;
-    Dest.ProjView.SetXFOV( FOV );
-    Dest.ProjView.SetZLimits( 1.0f, Length );
-    Dest.ProjView.SetViewport( 0, 0, ProjBMP.GetWidth(), ProjBMP.GetHeight() );
-    Dest.ProjView.SetV2W( L2W );
+    Destination.m_Texture = Texture;
 
-    Dest.ProjMatrix = Dest.ProjView.GetV2C();
-    Dest.ProjMatrix(2,2) = -1.0f /       (Length - 1.0f);
-    Dest.ProjMatrix(3,2) =  1.0f + 1.0f / (Length - 1.0f);
-    Dest.ProjMatrix *= Dest.ProjView.GetW2V();
-    Dest.ProjMatrix.Scale( vector3( 0.5f, -0.5f, 1.0f ) );
-    Dest.ProjMatrix.Translate( vector3( 0.5f, 0.5f, 0.0f ) );
+    texture* pProjectionTexture = Texture.GetPointer();
+    xbitmap& ProjectionBitmap = pProjectionTexture->m_bitmap;
+
+    Destination.m_View.SetXFOV( FieldOfView );
+    Destination.m_View.SetZLimits( 1.0f, Length );
+    Destination.m_View.SetViewport( 0, 0, ProjectionBitmap.GetWidth(), ProjectionBitmap.GetHeight() );
+    Destination.m_View.SetV2W( LocalToWorld );
+
+    Destination.m_Matrix = Destination.m_View.GetV2C();
+    Destination.m_Matrix( 2, 2 ) = -1.0f / ( Length - 1.0f );
+    Destination.m_Matrix( 3, 2 ) = 1.0f + 1.0f / ( Length - 1.0f );
+    Destination.m_Matrix *= Destination.m_View.GetW2V();
+    Destination.m_Matrix.Scale( vector3( 0.5f, -0.5f, 1.0f ) );
+    Destination.m_Matrix.Translate( vector3( 0.5f, 0.5f, 0.0f ) );
 }
-
-//=========================================================================

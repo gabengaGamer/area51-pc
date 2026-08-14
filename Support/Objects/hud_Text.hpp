@@ -15,9 +15,8 @@
 
 #include "x_types.hpp"
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "x_bitmap.hpp"
-#include "Objects\Player.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Player/Player.hpp"
 
 #include "hud_Renderable.hpp"
 
@@ -34,7 +33,8 @@
     
 struct text_display
 {
-    xwchar  Text[ MAX_DISPLAY_LENGTH ];
+    xwchar  SourceText[ MAX_DISPLAY_LENGTH ];
+    xwchar  WrappedText[ MAX_DISPLAY_LENGTH ];
     f32     Time;
     xbool     InUse;
 
@@ -47,7 +47,8 @@ struct text_display
     {
         InUse          = FALSE;
         Time           = -1.0;
-        Text[0]        = 0;
+        SourceText[0]  = 0;
+        WrappedText[0] = 0;
         ScrollState    = 0.0f;
         SeqNum         = 0;
         KeyingPos      = 0;
@@ -67,7 +68,7 @@ public:
     virtual        ~hud_text        ( void );
 
     virtual void    OnRender        ( player*       pPlayer );
-    virtual void    OnAdvanceLogic  ( player*       pPlayer, f32 DeltaTime );
+    virtual void    OnAdvanceSimulation( player*       pPlayer, f32 DeltaTime );
 
             void    AddLine         ( const xwchar* pLine );
 
@@ -78,14 +79,16 @@ public:
 
             s32     GetIthGoal      ( s32 Index );
 
-            void    SetMaxWidth     ( s32 MaxWidth ) { m_MaxTextWidth = MaxWidth; }
+            void    SetMaxWidth     ( s32 MaxWidth );
 
 //------------------------------------------------------------------------------
 // Private Functions
 private:
             void    AddGoal         ( s32 GoalSeq, const xwchar* pGoal, f32 Time = -1.0f );
             void    ClearGoal       ( s32 GoalSeq );
-    inline  void    AddLinesAndChars( s32& NumLines, s32& NumChars, xwchar* pLine );
+            void    SetDisplayText  ( text_display& Display, const xwchar* pText );
+            void    RewrapDisplayText( text_display& Display );
+    inline  void    AddLinesAndChars( s32& NumLines, s32& NumChars, const xwchar* pLine );
     inline  void    ClearAllBelow   ( s32 MsgIndex );
 
 
@@ -111,8 +114,6 @@ private:
     s32 m_PosY;
     s32 m_NumDisplay;
 
-    rhandle<xbitmap>            m_TextBoxBitmap;
-
     s32 m_TopLine;
     f32 m_CursorPos; // Position in the buffer of text messages.  Allows fractional lines.
 
@@ -133,9 +134,6 @@ private:
     irect                       m_TextBoxRect;
     s32                         m_TextBoxRectState;
     f32                         m_PercentOpen;
-    rhandle<xbitmap>            m_IncomingBmp;
-
 };
 
 #endif
-

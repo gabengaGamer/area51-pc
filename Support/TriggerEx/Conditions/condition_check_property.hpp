@@ -13,9 +13,9 @@
 //=========================================================================
 
 #include "x_types.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
-#include "..\TriggerEx_Conditionals.hpp"
-#include "..\Affecters\object_affecter.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
+#include "../TriggerEx_Conditionals.hpp"
+#include "../Affecters/object_affecter.hpp"
 
 //=========================================================================
 // Check Property

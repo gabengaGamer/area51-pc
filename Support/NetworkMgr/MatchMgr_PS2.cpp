@@ -26,7 +26,7 @@
 #include "../Apps/GameApp/Config.hpp"
 #include "IOManager/Device_DVD/io_device_cache.hpp"
 #include "libscf.h"
-#include "Parsing/textin.hpp"
+#include "Parsing/TextIn.hpp"
 
 const s32 A51_MIDWAY_FPS_CATEGORY = 1010000032;
 
@@ -34,8 +34,8 @@ const s32 A51_MIDWAY_FPS_CATEGORY = 1010000032;
 #include "NetworkMgr/GameSpy/available.h"
 #include "NetworkMgr/GameSpy/qr2/qr2regkeys.h"
 #include "NetworkMgr/GameSpy/qr2/qr2.h"
-#include "NetworkMgr/GameSpy/GStats/gstats.h"
-#include "NetworkMgr/GameSpy/GStats/gpersist.h"
+#include "NetworkMgr/GameSpy/gstats/gstats.h"
+#include "NetworkMgr/GameSpy/gstats/gpersist.h"
 #include "ResourceMgr/ResourceMgr.hpp"
 
 
@@ -59,7 +59,7 @@ const s32 A51_MIDWAY_FPS_CATEGORY = 1010000032;
 //  <motd-text>
 // The patches are named as <product_code>_<changelist>_UPDATE.BIN, for example, 
 // 20595_83119_UPDATE.BIN, and are stored on the server pointed to by 
-// MANIFEST_LOCATION (currently http://216.201.187.178/DownloadTest)
+// MATCH_DOWNLOAD_LOCATION.
 //
 //=========================================================================
 // How patching works.
@@ -81,7 +81,7 @@ const s32 A51_MIDWAY_FPS_CATEGORY = 1010000032;
 //  <motd-text>
 // The patches are named as <product_code>_<changelist>_UPDATE.BIN, for example, 
 // 20595_83119_UPDATE.BIN, and are stored on the server pointed to by 
-// MANIFEST_LOCATION (currently http://216.201.187.178/DownloadTest)
+// MATCH_DOWNLOAD_LOCATION.
 //
 
 void PersAuthCallback( int localid, int profileid, int authenticated, gsi_char *errmsg, void *instance);
@@ -185,8 +185,6 @@ extern s32 g_Changelist;
 //=========================================================================
 //  External function and data prototypes
 //=========================================================================
-
-extern const char* MANIFEST_LOCATION;
 
 #if !defined(ENABLE_LAN_LOOKUP)
 static unsigned char SLUS_20595_pass_phrase[] = { 0xb9, 0xfd, 0xb2, 0xce, 0x5c, 0xd9, 0x0e, 0x0c };
@@ -1330,7 +1328,7 @@ void match_mgr::EnterState( match_mgr_state NewState )
 
         //-----------------------------------------------------
     case MATCH_GET_PATCH:
-        x_sprintf(m_DownloadFilename,"%s/%d_%d_UPDATE.BIN",MANIFEST_LOCATION, eng_GetProductCode(), g_Changelist );
+        x_sprintf(m_DownloadFilename,"%s/%d_%d_UPDATE.BIN",MATCH_DOWNLOAD_LOCATION, eng_GetProductCode(), g_Changelist );
         InitDownload( m_DownloadFilename );
         break;
 
@@ -1414,7 +1412,11 @@ void match_mgr::SetState( match_mgr_state NewState )
         if( m_MessageOfTheDayReceived == FALSE )
         {
             m_MessageOfTheDay.Clear();
-            x_sprintf(m_DownloadFilename,"%s/%s_%d_Message.txt",MANIFEST_LOCATION, x_GetLocaleString(), g_Changelist );
+            x_sprintf( m_DownloadFilename,
+                       "%s/%s_%d_Message.txt",
+                       MATCH_DOWNLOAD_LOCATION,
+                       x_GetLocaleString(),
+                       g_Changelist );
             InitDownload( m_DownloadFilename );
         }
         break;

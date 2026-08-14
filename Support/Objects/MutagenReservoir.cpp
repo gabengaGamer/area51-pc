@@ -8,7 +8,7 @@
 // INCLUDES
 //=============================================================================
 #include "MutagenReservoir.hpp"
-#include "player.hpp"
+#include "Player/Player.hpp"
 
 //=============================================================================
 // TWEAKS
@@ -80,9 +80,9 @@ void mutagen_reservoir::OnInit( void )
 
 //=============================================================================================
 
-void mutagen_reservoir::OnAdvanceLogic( f32 DeltaTime )
+void mutagen_reservoir::OnAdvanceSimulation( f32 DeltaTime )
 {
-    object::OnAdvanceLogic( DeltaTime );
+    object::OnAdvanceSimulation( DeltaTime );
 }
 
 //=============================================================================================

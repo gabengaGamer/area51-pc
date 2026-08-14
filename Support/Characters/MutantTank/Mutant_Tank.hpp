@@ -13,14 +13,14 @@
 //=========================================================================
 
 #include "Mutant_Tank_Loco.hpp"
-#include "..\Character.hpp"
-#include "..\Auxiliary\fx_RunTime\Fx_Mgr.hpp"
+#include "../Character.hpp"
+#include "FX/fx_Mgr.hpp"
 
-#include "Characters\BaseStates\Character_Idle_State.hpp"
-#include "Characters\BaseStates\Character_Alert_State.hpp"
-#include "Characters\BaseStates\Character_Search_State.hpp"
-#include "Characters\BaseStates\Character_Attack_State.hpp"
-#include "Characters\BaseStates\Character_Death_State.hpp"
+#include "Characters/BaseStates/Character_Idle_State.hpp"
+#include "Characters/BaseStates/Character_Alert_State.hpp"
+#include "Characters/BaseStates/Character_Search_State.hpp"
+#include "Characters/BaseStates/Character_Attack_State.hpp"
+#include "Characters/BaseStates/Character_Death_State.hpp"
 #include "MutantTank_Attack_State.hpp"
 
 //=========================================================================
@@ -185,7 +185,7 @@ public:
     virtual xbool   TakeDamage              ( const pain& Pain );
     virtual void    OnRender                ( void );
     virtual void    OnRenderTransparent     ( void );
-    virtual void    OnAdvanceLogic          ( f32 DeltaTime );      
+    virtual void    OnAdvanceSimulation          ( f32 DeltaTime );      
 //    virtual guid    GetHopPoint             ( void );
 
     

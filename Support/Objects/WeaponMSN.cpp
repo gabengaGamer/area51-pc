@@ -1,23 +1,23 @@
 //=========================================================================
 // WEAPON MESON CANNON
 //=========================================================================
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "ProjectileEnergy.hpp"
 #include "ProjectileMesonSeeker.hpp"
 #include "WeaponMSN.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "objects\Projector.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "render\LightMgr.hpp"
-#include "Player.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/Projector.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Player/Player.hpp"
 #include "GravChargeProjectile.hpp"
-#include "Characters\character.hpp"
+#include "Characters/Character.hpp"
 
 #if !defined(X_EDITOR)
 #include "NetworkMgr/NetworkMgr.hpp"
 #endif
-#include "Gamelib/DebugCheats.hpp"
+#include "GameLib/DebugCheats.hpp"
 
 //=========================================================================
 // STATIC DEFINTIONS AND CONSTANTS
@@ -140,7 +140,7 @@ weapon_msn::weapon_msn( void )
     m_hMuzzleFXSecondary.SetName( PRELOAD_FILE("mhg_muzzleflash_000.fxo") );
 
     // initialize time
-    m_LastUpdateTime = (f32)x_GetTimeSec();
+    m_LastUpdateTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
 
     m_bIsAltFiring = FALSE;
     m_AltChargeUpTime = 0.0f;
@@ -471,11 +471,11 @@ void weapon_msn::ResetWeapon( void )
 
 //=========================================================================
 f32 s_MSN_Pitch_Factor = 0.5f;
-void weapon_msn::OnAdvanceLogic( f32 DeltaTime )
+void weapon_msn::OnAdvanceSimulation( f32 DeltaTime )
 {
-    m_LastUpdateTime = (f32)x_GetTimeSec();
+    m_LastUpdateTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
 
-    new_weapon::OnAdvanceLogic( DeltaTime );
+    new_weapon::OnAdvanceSimulation( DeltaTime );
 }
 
 //==============================================================================
@@ -505,7 +505,7 @@ void weapon_msn::UpdateReticle( f32 DeltaTime )
             if( m_LastLockonTime >= s_MSNLockonBeepDelay )
             {
                 g_AudioMgr.Play( "Reticule_Shift_Red" );
-                m_LastLockonTime = 0.0f;
+                m_LastLockonTime -= s_MSNLockonBeepDelay;
             }
         }
         else
@@ -928,7 +928,7 @@ void weapon_msn::BeginAltRampUp( void )
 {
     m_AmmoBurned = 0;
     m_bIsAltFiring = TRUE;
-    m_LastAmmoBurnTime = (f32)x_GetTimeSec();
+    m_LastAmmoBurnTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
     m_AltChargeUpTime = 0.0f;
     m_FiringStage = FS_NONE;
 }
@@ -1370,7 +1370,7 @@ void weapon_msn::DecrementAmmo( const ammo_priority& rAmmoPriority, const s32& n
 {
     object *pObj = g_ObjMgr.GetObjectByGuid(m_ParentGuid);
 
-    if( DEBUG_INFINITE_AMMO == FALSE && !pObj->IsKindOf( character::GetRTTI() ) )
+    if( DEBUG_INFINITE_AMMO == FALSE && (!pObj || !pObj->IsKindOf( character::GetRTTI() ) ) )
     {
         // decrement count of bullets in current clip
         m_WeaponAmmo[ rAmmoPriority ].m_AmmoInCurrentClip -= nAmt;

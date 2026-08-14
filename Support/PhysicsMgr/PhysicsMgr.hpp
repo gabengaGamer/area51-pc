@@ -56,7 +56,11 @@ public:
         f32                 m_Denominator;          // Impulse denominator
         vector3             m_R0;                   // Position of collision relative to shape0
         vector3             m_R1;                   // Position of collision relative to shape1
-        vector3             m_PenetrationExtra;     // Penetration penalty velocity
+        f32                 m_BounceSpeed;          // Restitution target speed
+        f32                 m_NormalImpulse;        // Accumulated normal impulse
+        vector3             m_FrictionImpulse;      // Accumulated friction impulse
+        f32                 m_PushSpeed;             // Desired separation speed for split solve
+        f32                 m_PushImpulse;           // Accumulated unilateral split impulse
     };
 
 //==============================================================================
@@ -68,7 +72,6 @@ public:
 
             // Initialization
             void        Init                ( void );
-            void        ClearDeltaTime      ( void );
             void        Kill                ( void );
 
             // Physics instance list management functions
@@ -98,17 +101,18 @@ public:
             
             void        PreApplyCollisions  ( f32 DeltaTime ) X_SECTION(physics);
             s32         SolveCollision      ( collision& Collision ) X_SECTION(physics);
+            s32         SolveCollisionPosition( collision& Collision ) X_SECTION(physics);
                                               
             void        PreApplyConstraints (  f32 DeltaTime ) X_SECTION(physics);
             void        SolveCollisions     ( f32 DeltaTime, s32 nIterations ) X_SECTION(physics);
             void        SolveContacts       ( f32 DeltaTime, s32 nIterations ) X_SECTION(physics);
             void        ShockPropagation    ( void ) X_SECTION(physics);
+            void        SolvePositionCorrections( f32 DeltaTime, s32 nIterations ) X_SECTION(physics);
                        
             // Logic functions
             void        PutInstancesToSleep             ( f32 DeltaTime ) X_SECTION(physics);
             void        BuildActiveBodyList             ( void ) X_SECTION(physics);
             void        BuildActiveBodyAndConstraintList( void ) X_SECTION(physics);
-            void        Step                ( f32 DeltaTime ) X_SECTION(physics);
             void        Advance             ( f32 DeltaTime ) X_SECTION(physics);
             
 #ifdef ENABLE_PHYSICS_DEBUG
@@ -133,17 +137,18 @@ public:
     // Settings
     struct settings
     {
-        f32     m_MaxTimeStep;                  // Maximum time step of simulation
-        s32     m_nMaxTimeSteps;                // Maximum # of steps to take
+        f32     m_MaxSubstepSeconds;            // Maximum duration of one internal solver step
         vector3 m_Gravity;                      // World gravity
         
         s32     m_nMaxCollisions;               // Maximum # of collisions
         s32     m_nCollisionIterations;         // # of iterations to solve collision
-        f32     m_CollisionHitBackoffDist;      // Dist to backoff when a collision occurs
         xbool   m_bInstInstCollision;           // Collide physics instance with others?
         xbool   m_bSelfCollision;               // Collide bodies within physics instance?
-        f32     m_PenetrationFix;               // Penetration fix scalar
-        f32     m_MaxPenetrationFix;            // Max amount of penetration fix
+        f32     m_CollisionHitBackoffDist;       // Dist to backoff when a collision occurs
+        f32     m_RestitutionMinSpeed;           // Minimum impact speed for restitution in cm/s
+        f32     m_PositionCorrectionRate;        // Contact error decay rate in inverse seconds
+        f32     m_MaxContactCorrectionSpeed;     // Maximum contact correction speed
+        f32     m_ContactSlop;                   // Allowed contact penetration
         
         xbool   m_bSolveContacts;               // Solve contacts?
         s32     m_nContactIterations;           // # of iterations to solve contact
@@ -151,8 +156,7 @@ public:
         xbool   m_bShock;                       // Do shock propagation?
         
         s32     m_nMaxActiveConstraints;        // Maximum # of active constraints
-        f32     m_ConstraintFix;                // Constraint fix scalar
-        f32     m_MaxConstraintFix;             // Max amount of constraint
+        f32     m_MaxConstraintCorrectionSpeed;  // Maximum joint correction speed
         
         f32     m_ActiveLinearSpeed;            // Translation speed at which body is considered active
         f32     m_ActiveAngularSpeed;           // Rotation speed at which body is considered active
@@ -230,6 +234,8 @@ public:
     settings                    m_Settings;             // Settings
     
 private:    
+
+    void                        Step                    ( f32 DeltaTime ) X_SECTION(physics);
     
     // Physics instance list
     physics_inst_list           m_AwakeInstances;           // List of active instances
@@ -247,17 +253,7 @@ private:
     s32                         m_NextCollisionGroup;   // Next collision group to allocate
     xarray<collision>           m_Collisions;           // List of collisions
 
-    // Logic
-    f32                         m_DeltaTime;            // Current delta time
 };
-
-//==============================================================================
-
-inline
-void physics_mgr::ClearDeltaTime( void )
-{
-    m_DeltaTime = 0.0f;
-}
 
 //==============================================================================
 // Physics instance list management functions

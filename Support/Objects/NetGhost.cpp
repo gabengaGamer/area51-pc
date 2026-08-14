@@ -12,20 +12,21 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "NetGhost.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "Objects\PlayerLoco.hpp"
-#include "Characters\Grunt\GruntLoco.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Objects\HudObject.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Objects/Player/PlayerLoco.hpp"
+#include "Characters/Grunt/GruntLoco.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Objects/HudObject.hpp"
 #include "GrenadeProjectile.hpp"
 #include "GravChargeProjectile.hpp"
-#include "EventMgr\EventMgr.hpp"
-#include "Objects\Event.hpp"  
-#include "Objects\JumpPad.hpp"  
-#include "Characters\ActorEffects.hpp"
-#include "Sound\EventSoundEmitter.hpp"
+#include "EventMgr/EventMgr.hpp"
+#include "Objects/Event.hpp"  
+#include "Objects/JumpPad.hpp"  
+#include "Characters/ActorEffects.hpp"
+#include "Sound/EventSoundEmitter.hpp"
 
 //==============================================================================
 //  STORAGE
@@ -39,9 +40,9 @@ s32 net_ghost::m_NInstances = 0;
 static struct net_ghost_tweak
 {
     // Data
-    s32     m_FramesToBlendPos;     // Frames to blend position
-    s32     m_FramesToBlendRot;     // Frames to blend rotation
-    s32     m_FramesToBlendLean;    // Frames to blend lean
+    f32     m_PositionBlendSeconds;
+    f32     m_RotationBlendSeconds;
+    f32     m_LeanBlendSeconds;
     #ifndef X_RETAIL
     xbool   m_bDebugRender;         // Shows debugging info
     #endif
@@ -49,9 +50,9 @@ static struct net_ghost_tweak
     // Functions
     net_ghost_tweak()
     {
-        m_FramesToBlendPos  = 4;
-        m_FramesToBlendRot  = 3;
-        m_FramesToBlendLean = 2;
+        m_PositionBlendSeconds = 4.0f / 60.0f;
+        m_RotationBlendSeconds = 3.0f / 60.0f;
+        m_LeanBlendSeconds     = 2.0f / 60.0f;
         #ifndef X_RETAIL
         m_bDebugRender      = FALSE;
         #endif
@@ -125,8 +126,11 @@ net_ghost::net::net() :
     LocoType          ( -1    ),
     DoTeleport        ( FALSE ),
     DoWayPoint        ( FALSE ),
-    SnapRenderInterp  ( FALSE )
+    SnapNetworkBlend  ( FALSE )
 {
+    UpdateElapsedSeconds = 0.0f;
+    UpdateIntervals[0]   = 0.0f;
+    UpdateIntervals[1]   = 0.0f;
 }
 
 //==============================================================================
@@ -153,9 +157,10 @@ net_ghost::net_ghost( void )
     m_bWantToSpawn = TRUE;
 
 #ifndef X_EDITOR
-    m_Net.Frames[0]  = 4;
-    m_Net.Frames[1]  = 4;
-    m_Net.FrameDelay = 4;
+    f32 const InitialUpdateInterval = 4.0f / 60.0f;
+    m_Net.UpdateIntervals[0]    = InitialUpdateInterval;
+    m_Net.UpdateIntervals[1]    = InitialUpdateInterval;
+    m_Net.UpdateElapsedSeconds   = InitialUpdateInterval;
 
     m_BlindLogic     = 0.0f;
     m_NInstances    += 1;
@@ -324,9 +329,9 @@ void net_ghost::OnDeath( void )
 
 //==============================================================================
 
-void net_ghost::OnAdvanceLogic( f32 DeltaTime )
+void net_ghost::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "net_ghost::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "net_ghost::OnAdvanceSimulation" );
 
     //
     // Do player relative aiming here.
@@ -378,7 +383,7 @@ void net_ghost::OnAdvanceLogic( f32 DeltaTime )
     OnAdvanceGhostLogic( DeltaTime );
 
     // Call base class.
-    actor::OnAdvanceLogic( DeltaTime );    
+    actor::OnAdvanceSimulation( DeltaTime );    
 
     // Send out animation events (firing etc)
     SendAnimEvents();
@@ -416,7 +421,7 @@ void net_ghost::OnAdvanceLogic( f32 DeltaTime )
     if( (pLoco) && 
         (g_NetGhost.m_bDebugRender) )
     {
-        draw_Label( GetPosition(), 
+        render::debug::Label( GetPosition(), 
                     XCOLOR_WHITE,
                     "\n\n\n\n\n\n\n\nState:%s\nStyle:%s\nAnim:%s\n",
                     pLoco->GetStateName(),
@@ -430,7 +435,7 @@ void net_ghost::OnAdvanceLogic( f32 DeltaTime )
 
 void net_ghost::OnRender( void )
 {
-    CONTEXT( "net_ghost::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "net_ghost::OnRender" );
 
     // Skip if dead body is present.
     if( m_bDead )
@@ -459,7 +464,7 @@ void net_ghost::OnRender( void )
         // A line from the barrel with the correct pitch and yaw.
         {
             vector3 TargetPos = FirePos + vector3( GetPitch(), GetYaw() ) * 1000.0f; 
-            draw_Line(FirePos, TargetPos, XCOLOR_BLUE);
+            render::debug::Line(FirePos, TargetPos, XCOLOR_BLUE);
         }
 
         // Where the bullets will get drawn, and where it looks like the gun is pointing.
@@ -469,13 +474,13 @@ void net_ghost::OnRender( void )
             FireDirection = FireDirection;
 
             vector3 TargetPos = FirePos + FireDirection * 1000.0f;
-            draw_Line(FirePos, TargetPos, XCOLOR_RED);
+            render::debug::Line(FirePos, TargetPos, XCOLOR_RED);
         }
 
         // Approximately where the player is looking.
         {
             vector3 LookPos   = EyePos + vector3( GetPitch(), GetYaw() ) * 1000.0f;
-            draw_Line(EyePos, LookPos, XCOLOR_YELLOW);
+            render::debug::Line(EyePos, LookPos, XCOLOR_YELLOW);
         }
     }
 #endif    
@@ -703,16 +708,16 @@ void net_ghost::net_Activate( void )
     // Call base class.
     actor::net_Activate();
 
-    m_Net.BlendPosX .Init( 1.000f, 500.0f, g_NetGhost.m_FramesToBlendPos,  FALSE );
-    m_Net.BlendPosY .Init( 1.000f, 500.0f, g_NetGhost.m_FramesToBlendPos,  FALSE );
-    m_Net.BlendPosZ .Init( 1.000f, 500.0f, g_NetGhost.m_FramesToBlendPos,  FALSE );
-    m_Net.BlendPitch.Init( 0.001f,     PI, g_NetGhost.m_FramesToBlendRot,  TRUE  );
-    m_Net.BlendYaw  .Init( 0.001f,     PI, g_NetGhost.m_FramesToBlendRot,  TRUE  );
-    m_Net.BlendLean .Init( 0.001f,   3.0f, g_NetGhost.m_FramesToBlendLean, FALSE );
+    m_Net.BlendPosX .Init( 1.000f, 500.0f, g_NetGhost.m_PositionBlendSeconds, FALSE );
+    m_Net.BlendPosY .Init( 1.000f, 500.0f, g_NetGhost.m_PositionBlendSeconds, FALSE );
+    m_Net.BlendPosZ .Init( 1.000f, 500.0f, g_NetGhost.m_PositionBlendSeconds, FALSE );
+    m_Net.BlendPitch.Init( 0.001f,     PI, g_NetGhost.m_RotationBlendSeconds, TRUE  );
+    m_Net.BlendYaw  .Init( 0.001f,     PI, g_NetGhost.m_RotationBlendSeconds, TRUE  );
+    m_Net.BlendLean .Init( 0.001f,   3.0f, g_NetGhost.m_LeanBlendSeconds,     FALSE );
 
     m_Net.DoTeleport = FALSE;
     m_Net.DoWayPoint = FALSE;
-    m_Net.SnapRenderInterp = FALSE;
+    m_Net.SnapNetworkBlend = FALSE;
 
     LOG_MESSAGE( "net_ghost::net_Activate",
                  "Addr:%08X - NetSlot:%d - Status:%s on %s",
@@ -730,19 +735,21 @@ void net_ghost::net_AcceptUpdate( const update& Update )
     m_BlindLogic = 0.0f;
 
     //
-    // Update the average number of frames between updates.
+    // Update the estimated time between network updates.
     //
 
-    s32 BlendFrames = MAX( m_Net.Frames[0], m_Net.Frames[1] );
-    BlendFrames     = MAX( BlendFrames, m_Net.FrameDelay );
+    f32 BlendDurationSeconds = MAX( m_Net.UpdateIntervals[0],
+                                    m_Net.UpdateIntervals[1] );
+    BlendDurationSeconds     = MAX( BlendDurationSeconds,
+                                    m_Net.UpdateElapsedSeconds );
 
-    m_Net.Frames[0]  = m_Net.Frames[1];
-    m_Net.Frames[1]  = m_Net.FrameDelay;
-    m_Net.FrameDelay = 0;
+    m_Net.UpdateIntervals[0]   = m_Net.UpdateIntervals[1];
+    m_Net.UpdateIntervals[1]   = m_Net.UpdateElapsedSeconds;
+    m_Net.UpdateElapsedSeconds  = 0.0f;
 
-    m_Net.BlendPosX.SetBlendFrames( BlendFrames );
-    m_Net.BlendPosY.SetBlendFrames( BlendFrames );
-    m_Net.BlendPosZ.SetBlendFrames( BlendFrames );
+    m_Net.BlendPosX.SetBlendDuration( BlendDurationSeconds );
+    m_Net.BlendPosY.SetBlendDuration( BlendDurationSeconds );
+    m_Net.BlendPosZ.SetBlendDuration( BlendDurationSeconds );
 
     //
     // Let the ancestor (actor) class handle most of the update work.
@@ -829,7 +836,6 @@ void net_ghost::net_AcceptUpdate( const update& Update )
             {
                 actor::Teleport( Target, Update.Pitch, Update.Yaw );
             }
-            actor::SnapRenderInterpState();
 
             /*
             CLOG_MESSAGE( m_NetSlot == 1, "net_ghost::net_AcceptUpdate",
@@ -851,9 +857,9 @@ void net_ghost::net_AcceptUpdate( const update& Update )
                 CLOG_MESSAGE( m_NetSlot == 1, "net_ghost::net_AcceptUpdate",
                               "SetBlendTargetZ:%d", (s32)Target.GetZ() );
                 */
-                m_Net.SnapRenderInterp |= m_Net.BlendPosX.SetTarget( Target.GetX() );
-                m_Net.SnapRenderInterp |= m_Net.BlendPosY.SetTarget( Target.GetY() );
-                m_Net.SnapRenderInterp |= m_Net.BlendPosZ.SetTarget( Target.GetZ() );
+            m_Net.SnapNetworkBlend |= m_Net.BlendPosX.SetTarget( Target.GetX() );
+            m_Net.SnapNetworkBlend |= m_Net.BlendPosY.SetTarget( Target.GetY() );
+            m_Net.SnapNetworkBlend |= m_Net.BlendPosZ.SetTarget( Target.GetZ() );
             }
         }
 
@@ -889,15 +895,15 @@ void net_ghost::net_AcceptUpdate( const update& Update )
         }
         else
         {
-            m_Net.SnapRenderInterp |= m_Net.BlendPitch.SetTarget( m_Net.Actual.Pitch );
-            m_Net.SnapRenderInterp |= m_Net.BlendYaw  .SetTarget( m_Net.Actual.Yaw   );
+            m_Net.SnapNetworkBlend |= m_Net.BlendPitch.SetTarget( m_Net.Actual.Pitch );
+            m_Net.SnapNetworkBlend |= m_Net.BlendYaw  .SetTarget( m_Net.Actual.Yaw   );
         }
     }
     
     if( Update.DirtyBits & LEAN_BIT )
     {
         m_Net.Actual.Lean = Update.Lean;
-        m_Net.SnapRenderInterp |= m_Net.BlendLean.SetTarget( m_Net.Actual.Lean );
+        m_Net.SnapNetworkBlend |= m_Net.BlendLean.SetTarget( m_Net.Actual.Lean );
     }
 }
 
@@ -921,22 +927,23 @@ void net_ghost::net_Logic( f32 DeltaTime )
     ASSERT( m_NetModeBits & CONTROL_REMOTE );   // Must be a ghost!
 
     m_BlindLogic += DeltaTime;
-    m_Net.FrameDelay++;
+    m_Net.UpdateElapsedSeconds += MAX( 0.0f, DeltaTime );
 
-    if( m_WayPointTimeOut < 15 )
-        m_WayPointTimeOut++;
-    else
+    static const f32 WayPointEffectLifetime = 15.0f / 60.0f;
+    m_WayPointTimeOut = MIN( m_WayPointTimeOut + MAX( 0.0f, DeltaTime ),
+                              WayPointEffectLifetime );
+    if( m_WayPointTimeOut >= WayPointEffectLifetime )
         m_WayPointFlags = 0;
 
     if( IsAlive() )
     {
         // Update blending.
-        m_Net.BlendPosX .BlendLogic();
-        m_Net.BlendPosY .BlendLogic();
-        m_Net.BlendPosZ .BlendLogic();
-        m_Net.BlendPitch.BlendLogic();
-        m_Net.BlendYaw  .BlendLogic();
-        m_Net.BlendLean .BlendLogic();
+        m_Net.BlendPosX .Advance( DeltaTime );
+        m_Net.BlendPosY .Advance( DeltaTime );
+        m_Net.BlendPosZ .Advance( DeltaTime );
+        m_Net.BlendPitch.Advance( DeltaTime );
+        m_Net.BlendYaw  .Advance( DeltaTime );
+        m_Net.BlendLean .Advance( DeltaTime );
         
         // Way point logic.
 
@@ -1016,14 +1023,14 @@ void net_ghost::net_Logic( f32 DeltaTime )
             CLOG_MESSAGE( m_NetSlot == 1, "net_ghost::net_Logic",
                           "SetBlendTargetZ:%d", (s32)m_Net.Actual.Position.GetZ() );
             */
-            m_Net.SnapRenderInterp |= m_Net.BlendPosX.SetTarget( m_Net.Actual.Position.GetX() );
-            m_Net.SnapRenderInterp |= m_Net.BlendPosY.SetTarget( m_Net.Actual.Position.GetY() );
-            m_Net.SnapRenderInterp |= m_Net.BlendPosZ.SetTarget( m_Net.Actual.Position.GetZ() );
+            m_Net.SnapNetworkBlend |= m_Net.BlendPosX.SetTarget( m_Net.Actual.Position.GetX() );
+            m_Net.SnapNetworkBlend |= m_Net.BlendPosY.SetTarget( m_Net.Actual.Position.GetY() );
+            m_Net.SnapNetworkBlend |= m_Net.BlendPosZ.SetTarget( m_Net.Actual.Position.GetZ() );
 
             if( m_TargetNetSlot != -1 )
             {
-                m_Net.SnapRenderInterp |= m_Net.BlendPitch.SetTarget( m_Net.Actual.Pitch );
-                m_Net.SnapRenderInterp |= m_Net.BlendYaw  .SetTarget( m_Net.Actual.Yaw   );
+                m_Net.SnapNetworkBlend |= m_Net.BlendPitch.SetTarget( m_Net.Actual.Pitch );
+                m_Net.SnapNetworkBlend |= m_Net.BlendYaw  .SetTarget( m_Net.Actual.Yaw   );
             }
 
             m_Net.DoTeleport = FALSE;
@@ -1048,10 +1055,9 @@ void net_ghost::net_Logic( f32 DeltaTime )
         SetYaw        ( m_Net.Render.Yaw      );
         SetLeanAmount ( m_Net.Render.Lean     );
 
-        if( m_Net.SnapRenderInterp )
+        if( m_Net.SnapNetworkBlend )
         {
-            actor::SnapRenderInterpState();
-            m_Net.SnapRenderInterp = FALSE;
+            m_Net.SnapNetworkBlend = FALSE;
         }
         /*
         CLOG_MESSAGE( (m_NetSlot == 1), "net_ghost::net_Logic", 

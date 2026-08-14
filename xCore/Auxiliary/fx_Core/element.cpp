@@ -2,6 +2,7 @@
 // INCLUDES
 //============================================================================
 
+#include "Render\PrimitiveDebug.hpp"
 #include "controller.hpp"
 #include "element.hpp"
 #include "element_sprite.hpp"
@@ -503,7 +504,11 @@ void element::RenderBBox( f32 T ) const
         bbox BBox;
         if( GetLocalBBoxAtTime( T, BBox ) ) // Returns FALSE if the object doesn't exist at that time
         {
-            draw_BBox( BBox, IsSelected() ? XCOLOR_WHITE : XCOLOR_GREY );
+            matrix4 localToWorld;
+            if( GetL2WAtTime( T, localToWorld ) )
+            {
+                render::debug::Box( BBox, localToWorld, IsSelected() ? XCOLOR_WHITE : XCOLOR_GREY );
+            }
         }
     }
 }
@@ -518,11 +523,6 @@ void element::RenderTrajectory( void ) const
 
         if( NumKeys > 1 )
         {
-            // Reset the L2W Matrix
-            matrix4 m;
-            m.Identity();
-            draw_SetL2W( m );
-
             s32 StartFrame  = m_pTranslation->GetKeyByIndex( 0         )->GetKeyTime();
             s32 EndFrame    = m_pTranslation->GetKeyByIndex( NumKeys-1 )->GetKeyTime();
 
@@ -538,7 +538,7 @@ void element::RenderTrajectory( void ) const
                 m_pTranslation->GetValue( f32( i ), PosA );
                 m_pTranslation->GetValue( f32(i+1), PosB );
 
-                draw_Line( vector3(PosA[0],PosA[1],PosA[2]), vector3(PosB[0],PosB[1],PosB[2]) );
+                render::debug::Line( vector3(PosA[0],PosA[1],PosA[2]), vector3(PosB[0],PosB[1],PosB[2]) );
             }
 
             // Draw the keyframes as points
@@ -547,7 +547,7 @@ void element::RenderTrajectory( void ) const
                 KeyTime = m_pTranslation->GetKeyByIndex( i )->GetKeyTime();
                 m_pTranslation->GetValue( f32( KeyTime ), PosA );
 
-                draw_Point( vector3(PosA[0],PosA[1],PosA[2]) );
+                render::debug::Point( vector3(PosA[0],PosA[1],PosA[2]) );
             }
         }
     }

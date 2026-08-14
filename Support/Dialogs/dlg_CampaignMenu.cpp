@@ -4,19 +4,19 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_PopUp.hpp"
 
 #include "dlg_CampaignMenu.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "StringMgr\StringMgr.hpp"
-#include "StateMgr/mapList.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "StateMgr/MapList.hpp"
 
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
@@ -32,16 +32,15 @@
 
 ui_manager::control_tem CampaignMenuControls[] = 
 {
-    { IDC_CAMPAIGN_MENU_NEW_CAMPAIGN,       "IDS_CAMPAIGN_MENU_NEW_CAMPAIGN",   "button",   80,  60, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CAMPAIGN_MENU_RESUME_CAMPAIGN,    "IDS_CAMPAIGN_MENU_RESUME_CAMPAIGN","button",   80, 100, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CAMPAIGN_MENU_EDIT_PROFILE,       "IDS_CAMPAIGN_MENU_EDIT_PROFILE",   "button",   80, 140, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CAMPAIGN_MENU_LORE,               "IDS_CAMPAIGN_MENU_LORE",           "button",   80, 180, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CAMPAIGN_MENU_SECRETS,            "IDS_CAMPAIGN_MENU_SECRETS",        "button",   80, 220, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CAMPAIGN_MENU_EXTRAS,             "IDS_CAMPAIGN_MENU_EXTRAS",         "button",   80, 260, 120, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_CAMPAIGN_MENU_NEW_CAMPAIGN,       "IDS_CAMPAIGN_MENU_NEW_CAMPAIGN",   "button",   80,  60, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CAMPAIGN_MENU_RESUME_CAMPAIGN,    "IDS_CAMPAIGN_MENU_RESUME_CAMPAIGN","button",   80, 100, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CAMPAIGN_MENU_EDIT_PROFILE,       "IDS_CAMPAIGN_MENU_EDIT_PROFILE",   "button",   80, 140, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CAMPAIGN_MENU_LORE,               "IDS_CAMPAIGN_MENU_LORE",           "button",   80, 180, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CAMPAIGN_MENU_SECRETS,            "IDS_CAMPAIGN_MENU_SECRETS",        "button",   80, 220, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CAMPAIGN_MENU_EXTRAS,             "IDS_CAMPAIGN_MENU_EXTRAS",         "button",   80, 260, 120, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE },
 #ifndef CONFIG_RETAIL
-    { IDC_CAMPAIGN_MENU_LEVEL_SELECT,       "IDS_CAMPAIGN_MENU_LEVEL_SELECT",   "button",   80, 300, 120, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_CAMPAIGN_MENU_LEVEL_SELECT,       "IDS_CAMPAIGN_MENU_LEVEL_SELECT",   "button",   80, 300, 120, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE },
 #endif
-    { IDC_CAMPAIGN_MENU_NAV_TEXT,           "IDS_NULL",                         "text",      0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 }; 
 
 ui_manager::dialog_tem CampaignMenuDialog =
@@ -129,7 +128,6 @@ xbool dlg_campaign_menu::Create( s32                        UserID,
 #ifndef CONFIG_RETAIL
     m_pButtonLevelSelect    = (ui_button*)  FindChildByID( IDC_CAMPAIGN_MENU_LEVEL_SELECT  );
 #endif
-    m_pNavText              = (ui_text*)    FindChildByID( IDC_CAMPAIGN_MENU_NAV_TEXT      );
 
     m_CurrHL            = 0;
     m_PopUp             = NULL;
@@ -146,8 +144,6 @@ xbool dlg_campaign_menu::Create( s32                        UserID,
 #ifndef CONFIG_RETAIL
     m_pButtonLevelSelect    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 #endif
-    m_pNavText              ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-
 #ifdef LAN_PARTY_BUILD
     m_pButtonNewCampaign    ->SetFlag( ui_win::WF_DISABLED, TRUE );
     m_pButtonResumeCampaign ->SetFlag( ui_win::WF_DISABLED, TRUE );
@@ -271,9 +267,7 @@ xbool dlg_campaign_menu::Create( s32                        UserID,
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
 
-    m_pNavText->SetLabel( xwstring(navText) );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( xwstring(navText) );
 
     // set the number of players to 1
     g_PendingConfig.SetPlayerCount( 1 );
@@ -364,7 +358,7 @@ void dlg_campaign_menu::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_campaign_menu::OnPadSelect( ui_win* pWin )
+void dlg_campaign_menu::OnAccept( ui_win* pWin )
 {
     if( g_UiMgr->IsScreenScaling() )
         return;
@@ -379,7 +373,7 @@ void dlg_campaign_menu::OnPadSelect( ui_win* pWin )
             player_profile& Profile = g_StateMgr.GetActiveProfile(0);
 
             // check if we beat the campaign on hard (or we have no checkpoints)
-            if( ( Profile.m_bAlienAvatarsOn ) || ( m_pButtonResumeCampaign->GetFlags() & ui_win::WF_DISABLED ) )
+            if( Profile.GetAlienAvatarsOn() || ( m_pButtonResumeCampaign->GetFlags() & ui_win::WF_DISABLED ) )
             {
                 // store the active controller
                 m_CurrentControl =  IDC_CAMPAIGN_MENU_NEW_CAMPAIGN;
@@ -388,12 +382,12 @@ void dlg_campaign_menu::OnPadSelect( ui_win* pWin )
             {
                 // warn the player that their checkpoint are about to be reset!
                 irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
                 // set nav text
                 xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
                 navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                SetNavTextVisible( FALSE );
 
                 // configure message
                 m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_CAMPAIGN_MENU_NEW_CAMPAIGN" ), 
@@ -441,7 +435,7 @@ void dlg_campaign_menu::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_campaign_menu::OnPadBack( ui_win* pWin )
+void dlg_campaign_menu::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -479,7 +473,6 @@ void dlg_campaign_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 #ifndef CONFIG_RETAIL
             m_pButtonLevelSelect    ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 #endif
-            m_pNavText              ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 
 
             s32 iControl = g_StateMgr.GetCurrentControl();
@@ -487,7 +480,6 @@ void dlg_campaign_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             {
 #ifdef LAN_PARTY_BUILD
                 GotoControl( (ui_control*)m_pButtonLevelSelect );
-                m_pButtonLevelSelect->SetFlag(WF_HIGHLIGHT, TRUE);
                 g_UiMgr->SetScreenHighlight( m_pButtonLevelSelect->GetPosition() );
 #ifndef CONFIG_RETAIL
                 m_CurrentControl =  IDC_CAMPAIGN_MENU_LEVEL_SELECT;
@@ -496,14 +488,12 @@ void dlg_campaign_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 if( m_pButtonResumeCampaign->GetFlags() & ui_win::WF_DISABLED )
                 {
                     GotoControl( (ui_control*)m_pButtonNewCampaign );
-                    m_pButtonNewCampaign->SetFlag(WF_HIGHLIGHT, TRUE);        
                     g_UiMgr->SetScreenHighlight( m_pButtonNewCampaign->GetPosition() );
                     m_CurrentControl = IDC_CAMPAIGN_MENU_NEW_CAMPAIGN;
                 }
                 else
                 {
                     GotoControl( (ui_control*)m_pButtonResumeCampaign );
-                    m_pButtonResumeCampaign->SetFlag(WF_HIGHLIGHT, TRUE);        
                     g_UiMgr->SetScreenHighlight( m_pButtonResumeCampaign->GetPosition() );
                     m_CurrentControl = IDC_CAMPAIGN_MENU_RESUME_CAMPAIGN;
                 }
@@ -513,7 +503,6 @@ void dlg_campaign_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             {
                 ui_control* pControl = GotoControl( iControl );
                 ASSERT( pControl );
-                pControl->SetFlag(WF_HIGHLIGHT, TRUE);
                 g_UiMgr->SetScreenHighlight(pControl->GetPosition() );
                 m_CurrentControl = iControl;
             }
@@ -558,44 +547,44 @@ void dlg_campaign_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     }
 
     // update button pulse
-    m_pButtonLore    ->OnUpdate( DeltaTime );
-    m_pButtonSecrets ->OnUpdate( DeltaTime );
+    m_pButtonLore    ->OnUpdate( pWin, DeltaTime );
+    m_pButtonSecrets ->OnUpdate( pWin, DeltaTime );
 
     // update the glow bar
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
-    if( m_pButtonNewCampaign->GetFlags(WF_HIGHLIGHT) )
+    if( m_pButtonNewCampaign->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonNewCampaign->GetPosition() );
         highLight = 0;
     }
-    else if( m_pButtonResumeCampaign->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonResumeCampaign->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonResumeCampaign->GetPosition() );
         highLight = 1;
     }
-    else if( m_pButtonEditProfile->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonEditProfile->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonEditProfile->GetPosition() );
         highLight = 2;
     }
-    else if( m_pButtonLore->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonLore->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonLore->GetPosition() );
         highLight = 3;
     }
-    else if( m_pButtonSecrets->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonSecrets->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonSecrets->GetPosition() );
         highLight = 4;
     }
-    else if( m_pButtonExtras->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonExtras->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonExtras->GetPosition() );
         highLight = 5;
     }
 #ifndef CONFIG_RETAIL
-    else if( m_pButtonLevelSelect->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonLevelSelect->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonLevelSelect->GetPosition() );
         highLight = 6;

@@ -7,10 +7,9 @@
 
 #include "Circuit.hpp"
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Objects\LightObject.hpp"
-#include "Objects\Interpolation\TransformInterpolation.hpp"
-#include "Objects\Render\RigidInst.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/LightObject.hpp"
+#include "Objects/Render/RigidInst.hpp"
 
 //=========================================================================
 // CLASS
@@ -39,17 +38,10 @@ public:
                     circuit&    GetCircuit      ( void ) { return m_Circuit; }
 protected:   
     //=========================================================================
-    virtual void                CaptureRenderInterpState  ( void );
-    virtual void                UpdateRenderInterpState   ( f32 Alpha );
-    virtual void                ClearRenderInterpState    ( void );
-    virtual void                InvalidateRenderInterpState( void );
-    virtual void                SnapRenderInterpState     ( void );
-            void                InvalidateRenderState( void );
-    const   matrix4&            GetRenderL2W        ( void ) const;
 
     virtual void                OnCollectLight  ( void );
     virtual void                OnRender		( void );                                  
-    virtual void                OnAdvanceLogic	( f32     DelaTime );           
+    virtual void                OnAdvanceSimulation	( f32     DelaTime );           
     virtual void                OnInit          ( void );                       
                    
 
@@ -100,7 +92,6 @@ protected:
     state_vals  m_FoeAll;
 
     circuit     m_Circuit;
-    transform_interp_cache  m_RenderCache;
 
 };
 

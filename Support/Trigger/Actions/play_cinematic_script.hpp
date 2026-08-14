@@ -12,7 +12,7 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Trigger_Actions.hpp"
+#include "../Support/Trigger/Trigger_Actions.hpp"
 
 //=========================== ==============================================
 // play_cinematic_script

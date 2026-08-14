@@ -8,7 +8,7 @@
 
 #include "x_files.hpp"
 #include "RawAnim.hpp"
-#include "..\xcore\parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 struct rawmesh;
 
 //=========================================================================

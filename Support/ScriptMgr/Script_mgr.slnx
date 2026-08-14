@@ -5,8 +5,9 @@
     <BuildType Name="OptDebug" />
     <BuildType Name="QA" />
     <BuildType Name="Release" />
-    <BuildType Name="VIEWER-Debug" />
+    <Platform Name="ARM64" />
     <Platform Name="Win32" />
+    <Platform Name="x64" />
   </Configurations>
-  <Project Path="Script_mgr.vcxproj" />
+  <Project Path="Script_mgr.vcxproj" Id="4e845295-7f43-482b-b9d5-45ac080358b6" />
 </Solution>

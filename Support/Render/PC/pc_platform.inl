@@ -4,82 +4,38 @@
 //
 //=============================================================================
 
-#include "..\LightMgr.hpp"
-#include "..\platform_Render.hpp"
-#include "..\ProjTextureMgr.hpp"
-#include "..\..\Decals\DecalMgr.hpp"
-#include "..\..\GameLib\RenderContext.hpp"
+#include "../LightMgr.hpp"
+#include "../platform_Render.hpp"
+#include "../ProjTextureMgr.hpp"
+#include "../../Decals/DecalMgr.hpp"
 #include "VertexMgr.hpp"
 #include "SoftVertexMgr.hpp"
+#include "GeomStorage.hpp"
+#include "GeomMgr/GeomMgr.hpp"
+#include "DecalRenderer.hpp"
+#include "ForwardRenderMgr.hpp"
+#include "ProjectionAtlas.hpp"
 #include "ShadowMgr.hpp"
 #include "PostMgr/PostMgr.hpp"
+#include "PrimitiveMgr/PrimitiveMgr.hpp"
+#include "PrimitiveMgr/PrimitiveRenderer.hpp"
 #include "GBufferMgr.hpp"
-#include "Entropy/D3DEngine/d3deng_rtarget.hpp"
+#include "e_Engine.hpp"
 
 //=============================================================================
 // Static data specific to the pc-implementation
 //=============================================================================
 
-// KSS, remove me!
-static const material*         s_pMaterial        = NULL;
-static rigid_geom*             s_pRigidGeom       = NULL;
-static skin_geom*              s_pSkinGeom        = NULL;
-static const xbitmap*          s_pDrawBitmap      = NULL;
-static s32                     s_iRigidSubMesh    = -1;
-static s32                     s_iSkinSubMesh     = -1;
-
-static
-const rtarget* platform_GetFinalColorTarget( void )
-{
-    const rtarget* pFinalColor = g_GBufferMgr.GetGBufferTarget( GBUFFER_FINAL_COLOR );
-    if( pFinalColor )
-        return pFinalColor;
-
-    return rtarget_GetBackBuffer();
-}
+static u32                     s_RigidLightingQueryCount = 0;
+static u32                     s_RigidLightingSetupCount = 0;
+static u32                     s_SkinLightingQueryCount  = 0;
+static light_mgr::collection_stats s_LightStatsStart = {};
 
 //=============================================================================
 
-static
-const rtarget* platform_GetFinalDepthTarget( void )
-{
-    if( g_RenderContext.m_bIsPipRender && g_RenderContext.ArePipTargetsActive() )
-    {
-        pip_render_target_pc* pPipTarget = g_RenderContext.GetActivePipTarget();
-        if( pPipTarget &&
-            pPipTarget->bValid &&
-            pPipTarget->DepthTarget.bIsDepthTarget &&
-            pPipTarget->DepthTarget.pDepthStencilView )
-        {
-            return &pPipTarget->DepthTarget;
-        }
-    }
-
-    return g_GBufferMgr.GetGBufferTarget( GBUFFER_DEPTH );
-}
-
-static
-xbool platform_ApplyGDepthTarget( void )
-{
-    if( !g_GBufferMgr.IsGBufferEnabled() )
-        return TRUE;
-
-    const rtarget* pGBufferDepth = platform_GetFinalDepthTarget();
-    const rtarget* pFinalColor   = platform_GetFinalColorTarget();
-
-    if( pGBufferDepth && pFinalColor )
-    {
-        return rtarget_SetTargets( pFinalColor, 1, pGBufferDepth );
-    }
-
-    return FALSE;
-}
+static void platform_ExecuteGeomPackets( void );
 
 //=============================================================================
-// Distortion implementation
-//=============================================================================
-
-#include "pc_platform_distortion.inl"
 
 //=============================================================================
 // Implementation
@@ -88,14 +44,17 @@ xbool platform_ApplyGDepthTarget( void )
 static
 void platform_Init( void )
 {
-    platform_InitDefaultDistortionMaterial();
     g_GBufferMgr.Init();
     g_GeomMgr.Init();
     g_ShadowMgr.Init();
     g_PostMgr.Init(); 
-    g_RigidVertMgr.Init( sizeof( rigid_geom::vertex_pc ) );
+    g_DecalRenderer.Init();
+    g_PrimitiveMgr.Init();
+    g_PrimitiveRenderer.Init( g_PrimitiveMgr );
+    g_ForwardRenderMgr.Init( g_GeomMgr, g_PrimitiveMgr, g_DecalRenderer );
+    g_RigidVertMgr.Init( sizeof( rigid_geom::vertex ) );
     g_SkinVertMgr.Init();
-    draw_RegisterGDepthProvider( platform_ApplyGDepthTarget );
+    g_GeomStorage.Init( g_RigidVertMgr, g_SkinVertMgr );
 }
 
 //=============================================================================
@@ -103,13 +62,17 @@ void platform_Init( void )
 static
 void platform_Kill( void )
 {
-    platform_ReleaseDistortionScene();
+    g_GeomStorage.Kill();
     g_SkinVertMgr.Kill(); 
     g_RigidVertMgr.Kill();
+    g_ForwardRenderMgr.Kill();
+    g_PrimitiveRenderer.Kill();
+    g_PrimitiveMgr.Kill();
+    g_DecalRenderer.Kill();
     g_PostMgr.Kill();
     g_ShadowMgr.Kill();
     g_GeomMgr.Kill();
-    g_GBufferMgr.Kill();  
+    g_GBufferMgr.Kill();
 }
 
 //=============================================================================
@@ -132,795 +95,155 @@ void platform_EndSession( void )
 //=============================================================================
 
 static
-void platform_ActivateMaterial( const material& Material )
+xhandle platform_RegisterRigidGeom( const rigid_geom& Geom )
 {
-    if( !g_pd3dDevice )
+    return g_GeomStorage.AddRigid( Geom );
+}
+
+//=============================================================================
+
+static
+void platform_UnregisterRigidGeom( xhandle hGeom )
+{
+    g_GeomStorage.RemoveRigid( hGeom );
+}
+
+//=============================================================================
+
+static
+xhandle platform_RegisterSkinGeom( const skin_geom& Geom )
+{
+    return g_GeomStorage.AddSkin( Geom );
+}
+
+//=============================================================================
+
+static
+void platform_UnregisterSkinGeom( xhandle hGeom )
+{
+    g_GeomStorage.RemoveSkin( hGeom );
+}
+
+//-----------------------------------------------------------------------------
+//
+// Forward primitive entry points. PrimitiveRenderer owns modern submission.
+//
+//-----------------------------------------------------------------------------
+
+static
+xbool platform_SubmitPrimitives( render::primitive_draw_desc const& Desc,
+                                 matrix4 const&                     LocalToWorld,
+                                 render::primitive_vertex const*    pVertices,
+                                 s32                                nVertices,
+                                 u16 const*                         pIndices,
+                                 s32                                nIndices )
+{
+    return g_PrimitiveRenderer.SubmitPrimitives( Desc, LocalToWorld, pVertices, nVertices, pIndices, nIndices );
+}
+
+//=============================================================================
+
+static
+xbool platform_SetDepthRect( irect const& Rect, f32 Depth )
+{
+    return g_PrimitiveRenderer.SubmitDepthRect( Rect, Depth );
+}
+
+//=============================================================================
+
+static
+xbool platform_BeginPrimitiveRender( void )
+{
+    if( !g_PrimitiveRenderer.BeginSubmission() )
+    {
+        x_DebugMsg( "PCRender: failed to begin primitive submission\n" );
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+//=============================================================================
+
+static
+void platform_EndPrimitiveRender( void )
+{
+    if( g_PrimitiveRenderer.IsSubmissionActive() &&
+        !g_PrimitiveRenderer.EndSubmission() )
+    {
+        x_DebugMsg( "PCRender: failed to finish primitive submission\n" );
+    }
+}
+
+//=============================================================================
+
+static
+xbool platform_SubmitDecalBatch( render::decal_draw_desc const& Desc,
+                                 cubemap const*                  pCubeMap,
+                                 render::decal_vertex const*     pVertices,
+                                 s32                             nVertices,
+                                 u16 const*                      pIndices,
+                                 s32                             nIndices )
+{
+    return g_DecalRenderer.Submit( Desc, pCubeMap, pVertices, nVertices, pIndices, nIndices );
+}
+
+//=============================================================================
+
+static
+void platform_ReserveDecalSubmissionCapacity( s32 nVertices, s32 nIndices, s32 nDraws )
+{
+    if ( !g_DecalRenderer.Reserve( nVertices, nIndices, nDraws ) )
+    {
+        x_DebugMsg( "PCRender: failed to reserve decal submission capacity\n" );
+    }
+}
+
+//=============================================================================
+
+static
+void platform_ExecuteForwardRender( render::forward_render_stage Stage )
+{
+    frame_render_targets Targets;
+    if( !g_GBufferMgr.GetFrameTargets( Targets ) )
+    {
+        g_ForwardRenderMgr.DiscardQueuedDraws();
+        x_DebugMsg( "PCRender: forward frame targets are unavailable\n" );
         return;
-
-    x_try;
-
-    s_pMaterial = &Material;
-
-    if( ((Material.m_Type == Material_Distortion) ||
-         (Material.m_Type == Material_Distortion_PerPolyEnv)) &&
-        s_bInDistortionPass )
-    {
-        radian3 ZeroRot;
-        ZeroRot.Zero();
-        g_GeomMgr.SetDistortionState( ZeroRot );
-        platform_ActivateDistortionTextureBindings( &Material );
-    }
-    else
-    {
-        g_GeomMgr.ClearDistortionState();
-
-        // Get diffuse texture
-        texture* pDiffuse = Material.m_DiffuseMap.GetPointer();
-        const xbitmap* pDiffuseMap = pDiffuse ? &pDiffuse->m_Bitmap : NULL;
-
-        // Get detail texture
-        texture* pDetail = Material.m_DetailMap.GetPointer();
-        const xbitmap* pDetailMap = pDetail ? &pDetail->m_Bitmap : NULL;
-
-        // Get env texture
-        texture* pEnvironment = Material.m_EnvironmentMap.GetPointer();
-        const xbitmap* pEnvironmentMap = pEnvironment ? &pEnvironment->m_Bitmap : NULL;
-
-        // Set primary textures through MaterialMgr
-        g_GeomMgr.SetBitmap( pDiffuseMap, TEXTURE_SLOT_DIFFUSE );
-        g_GeomMgr.SetBitmap( pDetailMap, TEXTURE_SLOT_DETAIL  );
-
-        if( Material.m_Flags & geom::material::FLAG_ENV_CUBE_MAP )
-        {
-            if( !s_pCurrCubeMap )
-            {
-                x_DebugMsg( "MaterialMgr: WARNING - ENV cube map requested but no cubemap bound\n" );
-                ASSERT( s_pCurrCubeMap );
-            }
-
-            g_GeomMgr.SetBitmap( NULL, TEXTURE_SLOT_ENVIRONMENT );
-            g_GeomMgr.SetEnvironmentCubemap( s_pCurrCubeMap );
-        }
-        else
-        {
-            g_GeomMgr.SetEnvironmentCubemap( NULL );
-            g_GeomMgr.SetBitmap( pEnvironmentMap, TEXTURE_SLOT_ENVIRONMENT );
-        }
     }
 
-    x_catch_display;
-}
-
-//=============================================================================
-
-static
-void platform_ActivateZPrimeMaterial( void )
-{
-    s_pMaterial = NULL;
-    g_GeomMgr.ClearDistortionState();
-    g_GeomMgr.InvalidateCache();
-}
-
-//=============================================================================
-
-static
-xbool platform_ShouldRenderSceneOnly( const material* pMaterial, u32 RenderFlags, u8 MaterialOverride )
-{
-    if( MaterialOverride || s_bInDistortionPass || !pMaterial )
-        return FALSE;
-
-    if( rtarget_GetCurrentCount() <= 1 )
-        return FALSE;
-
-    const u32 FadeMask = (render::FADING_ALPHA | render::INSTFLAG_FADING_ALPHA);
-    if( RenderFlags & FadeMask )
-        return TRUE;
-
-    switch( pMaterial->m_Type )
+    xbool Result = FALSE;
+    switch( Stage )
     {
-        case Material_Alpha:
-        case Material_Alpha_PerPixelIllum:
-        case Material_Alpha_PerPolyIllum:
-        case Material_Alpha_PerPolyEnv:
-            return TRUE;
+        case render::FORWARD_RENDER_PRE_EFFECTS:
+            Result = g_ForwardRenderMgr.ExecutePreEffects( Targets );
+            break;
+
+        case render::FORWARD_RENDER_POST_EFFECTS:
+            Result = g_ForwardRenderMgr.ExecutePostEffects( Targets );
+            break;
+
+        case render::FORWARD_RENDER_ALL:
+            Result = g_ForwardRenderMgr.Execute( Targets );
+            break;
 
         default:
-            return FALSE;
-    }
-}
-
-//=============================================================================
-
-static
-xbool platform_BindSceneOnlyTargets( const material* pMaterial, u32 RenderFlags, u8 MaterialOverride )
-{
-    if( !platform_ShouldRenderSceneOnly( pMaterial, RenderFlags, MaterialOverride ) )
-        return FALSE;
-
-    const rtarget* pFinalColor = platform_GetFinalColorTarget();
-    const rtarget* pDepthTarget = platform_GetFinalDepthTarget();
-    if( !pFinalColor || !pDepthTarget )
-        return FALSE;
-
-    // Transparent/fading geometry should not populate auxiliary GBuffer targets.
-    return rtarget_SetTargets( pFinalColor, 1, pDepthTarget );
-}
-
-//=============================================================================
-
-static
-void platform_RestoreGBufferTargets( xbool bSceneOnlyBound )
-{
-    if( bSceneOnlyBound )
-        g_GBufferMgr.SetGBufferTargets();
-}
-
-//=============================================================================
-
-static
-void platform_FlushRigidBatch( void )
-{
-    if( !g_GeomMgr.HasRigidBatch() )
-    {
-        g_GeomMgr.FlushRigidBatch( s_pMaterial, FALSE );
-        return;
-    }
-
-    const u8 MaterialOverride = s_bInDistortionPass ? FALSE : g_GeomMgr.GetRigidBatchOverrideMat();
-    const xbool bSceneOnlyBound = platform_BindSceneOnlyTargets( s_pMaterial,
-                                                                 g_GeomMgr.GetRigidBatchFlags(),
-                                                                 MaterialOverride );
-
-    g_GeomMgr.FlushRigidBatch( s_pMaterial, MaterialOverride );
-    platform_RestoreGBufferTargets( bSceneOnlyBound );
-}
-
-//=============================================================================
-
-static
-void platform_FlushSkinBatch( void )
-{
-    if( !g_GeomMgr.HasSkinBatch() )
-    {
-        g_GeomMgr.FlushSkinBatch( s_pMaterial, FALSE );
-        return;
-    }
-
-    const u8 MaterialOverride = s_bInDistortionPass ? FALSE : g_GeomMgr.GetSkinBatchOverrideMat();
-    const xbool bSceneOnlyBound = platform_BindSceneOnlyTargets( s_pMaterial,
-                                                                 g_GeomMgr.GetSkinBatchFlags(),
-                                                                 MaterialOverride );
-
-    g_GeomMgr.FlushSkinBatch( s_pMaterial, MaterialOverride );
-    platform_RestoreGBufferTargets( bSceneOnlyBound );
-}
-
-//=============================================================================
-
-static
-void platform_BeginRigidGeom( geom* pGeom, s32 iSubMesh )
-{
-    ASSERT( s_pRigidGeom == NULL );
-    s_pRigidGeom = (rigid_geom*)pGeom;
-    s_iRigidSubMesh = iSubMesh;
-    g_GeomMgr.BeginRigidBatch();
-    g_RigidVertMgr.BeginRender();
-}
-
-//=============================================================================
-
-static
-void platform_EndRigidGeom( void )
-{
-    ASSERT( s_pRigidGeom );
-    platform_FlushRigidBatch();
-    s_pRigidGeom = NULL;
-    s_iRigidSubMesh = -1;
-}
-
-//=============================================================================
-
-static
-void platform_BeginSkinGeom( geom* pGeom, s32 iSubMesh )
-{
-    ASSERT( s_pSkinGeom == NULL );
-    s_pSkinGeom = (skin_geom*)pGeom;
-    s_iSkinSubMesh = iSubMesh;
-    g_GeomMgr.BeginSkinBatch();
-    g_SkinVertMgr.BeginRender();
-}
-
-//=============================================================================
-
-static
-void platform_EndSkinGeom( void )
-{
-    ASSERT( s_pSkinGeom );
-    platform_FlushSkinBatch();
-    s_pSkinGeom = NULL;
-    s_iSkinSubMesh = -1;
-}
-
-//=============================================================================
-
-static
-void platform_RenderRigidInstance( render_instance& Inst )
-{
-    if( !g_pd3dDevice || !s_pRigidGeom )
-        return;
-
-    ASSERT( s_iRigidSubMesh == Inst.SortKey.GeomSubMesh );
-
-    desc_rigid_batch Batch;
-    Batch.pGeom        = Inst.Data.Rigid.pGeom;
-    Batch.pL2W         = Inst.Data.Rigid.pL2W;
-    Batch.pLighting    = (const cb_geom_lighting*)Inst.pLighting;
-    Batch.pColorInfo   = (const u32*)Inst.Data.Rigid.pColInfo;
-    Batch.hDList       = Inst.hDList;
-    Batch.iSubMesh     = Inst.SortKey.GeomSubMesh;
-    Batch.RenderFlags  = Inst.Flags;
-    Batch.UOffset      = Inst.UOffset;
-    Batch.VOffset      = Inst.VOffset;
-    Batch.Alpha        = Inst.Alpha;
-    Batch.OverrideMat  = Inst.OverrideMat;
-
-    if( !g_GeomMgr.CanAppendRigidBatch( Batch ) )
-        platform_FlushRigidBatch();
-
-    g_GeomMgr.AddRigidBatchInstance( Batch );
-}
-
-//=============================================================================
-
-static
-void platform_RenderSkinInstance( render_instance& Inst )
-{
-    if( !g_pd3dDevice || !s_pSkinGeom )
-        return;
-
-    ASSERT( s_iSkinSubMesh == Inst.SortKey.GeomSubMesh );
-
-    desc_skin_batch Batch;
-    Batch.pGeom        = Inst.Data.Skin.pGeom;
-    Batch.pBones       = Inst.Data.Skin.pBones;
-    Batch.pLighting    = (const cb_geom_lighting*)Inst.pLighting;
-    Batch.hDList       = Inst.hDList;
-    Batch.iSubMesh     = Inst.SortKey.GeomSubMesh;
-    Batch.RenderFlags  = Inst.Flags;
-    Batch.UOffset      = Inst.UOffset;
-    Batch.VOffset      = Inst.VOffset;
-    Batch.Alpha        = Inst.Alpha;
-    Batch.OverrideMat  = Inst.OverrideMat;
-
-    if( !g_GeomMgr.CanAppendSkinBatch( Batch ) )
-        platform_FlushSkinBatch();
-
-    g_GeomMgr.AddSkinBatchInstance( Batch );
-}
-
-//=============================================================================
-
-static
-void platform_RegisterMaterial( material& Mat )
-{
-    (void)Mat;
-    // TODO:
-}
-
-//=============================================================================
-
-static
-void platform_RegisterRigidGeom( rigid_geom& Geom )
-{
-    private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
-    PrivateGeom.RigidDList.Clear();
-
-    rigid_geom::dlist_pc* pPCDList = Geom.m_System.pPC;
-
-    s32 nVerts = Geom.GetNVerts();
-    rigid_geom::vertex_pc* pBuffer = new rigid_geom::vertex_pc[nVerts];
-    rigid_geom::vertex_pc* pVertex = pBuffer;
-    rigid_geom::vertex_pc* pEnd    = (pVertex + nVerts);
-
-    for ( s32 iSubMesh = 0; iSubMesh < Geom.m_nSubMeshes; iSubMesh++ )
-    {
-        geom::submesh&        GeomSubMesh = Geom.m_pSubMesh[iSubMesh];
-        rigid_geom::dlist_pc& DList       = pPCDList[GeomSubMesh.iDList];
-
-        for ( s32 iVert = 0; iVert < DList.nVerts; iVert++ )
-        {
-            pVertex[iVert].Pos    = DList.pVert[iVert].Pos;
-            pVertex[iVert].UV     = DList.pVert[iVert].UV;
-            pVertex[iVert].Normal = DList.pVert[iVert].Normal;
-            pVertex[iVert].Color  = xcolor( 128, 128, 128, 255 );
-        }
-
-        xhandle& hDList = PrivateGeom.RigidDList.Append();
-        hDList = g_RigidVertMgr.AddDList( pVertex,
-                                          DList.nVerts,
-                                          DList.pIndices,
-                                          DList.nIndices,
-                                          DList.nIndices / 3 );
-
-        pVertex += DList.nVerts;
-    }
-
-    delete []pBuffer;
-    ASSERT( pVertex == pEnd );
-}
-
-//=============================================================================
-
-static
-void platform_UnregisterRigidGeom( rigid_geom& Geom )
-{
-    private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
-    for ( s32 i = 0; i < PrivateGeom.RigidDList.GetCount(); i++ )
-    {
-        g_RigidVertMgr.DelDList( PrivateGeom.RigidDList[i] );
-    }
-    PrivateGeom.RigidDList.Clear();
-}
-
-//=============================================================================
-
-static
-void platform_RegisterSkinGeom( skin_geom& Geom )
-{
-    private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
-    PrivateGeom.SkinDList.Clear();
-
-    // make a private copy of the display lists and register them with the
-    // skin vert manager
-    skin_geom::dlist_pc* pPCDList = Geom.m_System.pPC;
-
-    // Allocate work memory and setup pointers for the copy loop
-    s32 nVerts = Geom.GetNVerts();
-    skin_geom::vertex_pc* pBuffer = new skin_geom::vertex_pc[nVerts];
-    skin_geom::vertex_pc* pVertex = pBuffer;
-    skin_geom::vertex_pc* pEnd    = (pVertex + nVerts);
-
-    // Loop through all SubMeshs
-    for ( s32 iSubMesh = 0; iSubMesh < Geom.m_nSubMeshes; iSubMesh++ )
-    {
-        // Get the DList for this submesh
-        geom::submesh&       GeomSubMesh = Geom.m_pSubMesh[iSubMesh];
-        skin_geom::dlist_pc& DList       = pPCDList[GeomSubMesh.iDList];
-
-        // Copy vertex data
-        for ( s32 iVert = 0; iVert < DList.nVertices; iVert++ )
-        {
-            // Copy vert
-            pVertex[iVert].Position  = DList.pVertex[iVert].Position;
-            pVertex[iVert].Normal    = DList.pVertex[iVert].Normal;
-            pVertex[iVert].UVWeights = DList.pVertex[iVert].UVWeights;
-        }
-
-        // Create a new handle
-        xhandle& hDList = PrivateGeom.SkinDList.Append();
-
-        // Create the dlist and store out the handle
-        hDList = g_SkinVertMgr.AddDList( pVertex,
-                                         DList.nVertices,
-                                         (u16*)DList.pIndex,
-                                         DList.nIndices,
-                                         DList.nIndices / 3,
-                                         DList.nCommands,
-                                         DList.pCmd );
-
-        // Advance ptrs
-        pVertex += DList.nVertices;
-    }
-
-    // Free the work memory
-    delete []pBuffer;
-    ASSERT( pVertex == pEnd );
-}
-
-//=============================================================================
-
-static
-void platform_UnregisterSkinGeom( skin_geom& Geom )
-{
-    private_geom& PrivateGeom = s_lRegisteredGeoms(Geom.m_hGeom);
-    for ( s32 i = 0; i < PrivateGeom.SkinDList.GetCount(); i++ )
-    {
-        g_SkinVertMgr.DelDList( PrivateGeom.SkinDList[i] );
-    }
-    PrivateGeom.SkinDList.Clear();
-}
-
-//=============================================================================
-
-//-----------------------------------------------------------------------------
-//
-// VERY IMPORTANT NOTE: README README README README!!!!! 
-//
-// NOTE: platform_SetDiffuseMaterial, platform_SetGlowMaterial, platform_SetEnvMapMaterial
-// Sets ONLY materials for primitives like sprites and decals! This code NOT for models. 
-//
-// TODO: This shit needs to change its functions name a long time ago because it's so fucking confusing.
-//
-//-----------------------------------------------------------------------------
-
-static s32 s_DrawFlags = 0;
-
-static
-void platform_SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
-{
-    // do some entropy stuff //////////////////////////////////////////////////
-
-    vram_Activate( Bitmap );          
-    
-    // we can use draw to set up render states at which point the shader engine
-    // will hijack what it needs and route the verts through its pixel pipeline
-
-    s_DrawFlags = DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE;
-    if( !ZTestEnabled )
-        s_DrawFlags |= DRAW_NO_ZBUFFER;
-    else
-        s_DrawFlags |= DRAW_USE_GDEPTH;  
-    
-    switch( BlendMode ) 
-    { 
-        case render::BLEND_MODE_ADDITIVE: 
-            s_DrawFlags |=  DRAW_BLEND_ADD;
-            break;
-        case render::BLEND_MODE_SUBTRACTIVE: 
-            s_DrawFlags |= DRAW_BLEND_SUB;
-            break;
-        case render::BLEND_MODE_INTENSITY: 
-            s_DrawFlags |= DRAW_BLEND_INTENSITY;
-            break;
-        case render::BLEND_MODE_NORMAL: 
-            s_DrawFlags |= DRAW_USE_ALPHA;
-        default: 
+            g_ForwardRenderMgr.DiscardQueuedDraws();
             break;
     }
-    
-    s_pDrawBitmap = &Bitmap;    
+
+    if( !Result )
+        x_DebugMsg( "PCRender: failed to execute forward draw queue stage=%d\n", static_cast<s32>( Stage ) );
 }
 
 //=============================================================================
 
 static
-void platform_SetGlowMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
+void platform_ResetAfterException( void )
 {
-    platform_SetDiffuseMaterial( Bitmap, BlendMode, ZTestEnabled );
-}
-
-//=============================================================================
-
-static
-void platform_SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
-{
-    platform_SetDiffuseMaterial( Bitmap, BlendMode, ZTestEnabled );
-}
-
-//=============================================================================
-
-static
-void platform_StartRawDataMode( void )
-{
-    // TODO:
-}
-
-//=============================================================================
-
-static
-void platform_EndRawDataMode( void )
-{
-}
-
-//=============================================================================
-
-static
-void platform_RenderRawStrips( s32               nVerts,
-                               const matrix4&    L2W,
-                               const vector4*    pPos,
-                               const s16*        pUV,
-                               const u32*        pColor )
-{
-    static const f32 ItoFScale = 1.0f/4096.0f;
-
-    // sanity check
-    ASSERTS( s_pDrawBitmap, "You must set a material first!" );
-    if( nVerts < 3 )
-        return;
-
-    // fill in the l2w...note we have to reset draw to do this
-    draw_EnableBilinear();
-    draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
-    draw_SetTexture( *s_pDrawBitmap );
-    draw_SetL2W( L2W );
-
-    for( s32 iVert = 0; iVert < nVerts; ++iVert )
-    {
-        const f32 W = pPos[iVert].GetW();
-        if( (*((const u32*)&W)) & decal_mgr::decal_vert::FLAG_SKIP_TRIANGLE )
-            continue;
-
-        if( iVert < 2 )
-            continue;
-
-        const vector3 Pos0( pPos[iVert-2].GetX(), pPos[iVert-2].GetY(), pPos[iVert-2].GetZ() );
-        const vector3 Pos1( pPos[iVert-1].GetX(), pPos[iVert-1].GetY(), pPos[iVert-1].GetZ() );
-        const vector3 Pos2( pPos[iVert-0].GetX(), pPos[iVert-0].GetY(), pPos[iVert-0].GetZ() );
-
-        const vector2 UV0( pUV[(iVert-2)*2+0] * ItoFScale, pUV[(iVert-2)*2+1] * ItoFScale );
-        const vector2 UV1( pUV[(iVert-1)*2+0] * ItoFScale, pUV[(iVert-1)*2+1] * ItoFScale );
-        const vector2 UV2( pUV[(iVert-0)*2+0] * ItoFScale, pUV[(iVert-0)*2+1] * ItoFScale );
-
-        // Intensity decals ignore vertex color and always render white
-        const xcolor White( 255, 255, 255, 255 );
-        if( s_DrawFlags & DRAW_BLEND_INTENSITY )
-        {
-            draw_Color( White ); draw_UV( UV0 ); draw_Vertex( Pos0 );
-            draw_Color( White ); draw_UV( UV1 ); draw_Vertex( Pos1 );
-            draw_Color( White ); draw_UV( UV2 ); draw_Vertex( Pos2 );
-        }
-        else
-        {
-            const xcolor C0( pColor[iVert-2]&0xff,
-                             (pColor[iVert-2]&0xff00)>>8,
-                             (pColor[iVert-2]&0xff0000)>>16,
-                             (pColor[iVert-2]&0xff000000)>>24 );
-            const xcolor C1( pColor[iVert-1]&0xff,
-                             (pColor[iVert-1]&0xff00)>>8,
-                             (pColor[iVert-1]&0xff0000)>>16,
-                             (pColor[iVert-1]&0xff000000)>>24 );
-            const xcolor C2( pColor[iVert]&0xff,
-                             (pColor[iVert]&0xff00)>>8,
-                             (pColor[iVert]&0xff0000)>>16,
-                             (pColor[iVert]&0xff000000)>>24 );
-
-            draw_Color( C0 ); draw_UV( UV0 ); draw_Vertex( Pos0 );
-            draw_Color( C1 ); draw_UV( UV1 ); draw_Vertex( Pos1 );
-            draw_Color( C2 ); draw_UV( UV2 ); draw_Vertex( Pos2 );
-        }
-    }
-
-    // finished
-    draw_End();
-}
-
-//=============================================================================
-
-static
-void platform_Render3dSprites( s32               nSprites,
-                               f32               UniScale,
-                               const matrix4*    pL2W,
-                               const vector4*    pPositions,
-                               const vector2*    pRotScales,
-                               const u32*        pColors )
-{
-    // sanity check
-    ASSERTS( s_pDrawBitmap, "You must set a material first!" );
-    if( nSprites == 0 )
-        return;
-
-    // start up draw
-    const matrix4& V2W = eng_GetView()->GetV2W();
-    const matrix4& W2V = eng_GetView()->GetW2V();
-    matrix4 S2V;
-    if( pL2W )
-        S2V = W2V * (*pL2W);
-    else
-        S2V = W2V;
-    
-    draw_ClearL2W();
-    draw_EnableBilinear();
-    draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
-    draw_SetTexture( *s_pDrawBitmap );
-    draw_SetL2W( V2W );
-
-    // loop through the sprites and render them
-    s32 i, j;
-    for( i = 0; i < nSprites; i++ )
-    {
-        // 0x8000 is an active flag, meaning to skip this sprite, similar
-        // to the ADC bit on the ps2.
-        if( (pPositions[i].GetIW() & 0x8000) != 0x8000 )
-        {
-            vector3 Center( pPositions[i].GetX(), pPositions[i].GetY(), pPositions[i].GetZ() );
-            Center = S2V * Center;
-
-            // calc the four sprite corners
-            vector3 Corners[4];
-            f32 Sine, Cosine;
-            x_sincos( -pRotScales[i].X, Sine, Cosine );
-
-            vector3 v0( Cosine - Sine, Sine + Cosine, 0.0f );
-            vector3 v1( Cosine + Sine, Sine - Cosine, 0.0f );
-            Corners[0] = v0;
-            Corners[1] = v1;
-            Corners[2] = -v0;
-            Corners[3] = -v1;
-            
-            for( j = 0; j < 4; j++ )
-            {
-                Corners[j].Scale( pRotScales[i].Y * UniScale );
-                Corners[j] += Center;
-            }
-
-            // now render it through draw
-            xcolor Color( pColors[i] & 0xff,
-                        ( pColors[i] & 0xff00) >> 8,
-                        ( pColors[i] & 0xff0000) >> 16,
-                        ( pColors[i] & 0xff000000) >> 24 );
-            
-            draw_Color( Color );
-            draw_UV( 0.0f, 0.0f );  draw_Vertex( Corners[0] );
-            draw_UV( 1.0f, 0.0f );  draw_Vertex( Corners[3] );
-            draw_UV( 0.0f, 1.0f );  draw_Vertex( Corners[1] );         
-            draw_UV( 1.0f, 0.0f );  draw_Vertex( Corners[3] );
-            draw_UV( 0.0f, 1.0f );  draw_Vertex( Corners[1] );
-            draw_UV( 1.0f, 1.0f );  draw_Vertex( Corners[2] );
-        }
-    }
-
-    // finished
-    draw_End();
-}
-
-//=============================================================================
-
-static
-void platform_RenderHeatHazeSprites( s32 nSprites, f32 UniScale, const matrix4* pL2W, const vector4* pPositions, const vector2* pRotScales, const u32* pColors )
-{
-    (void)nSprites;
-    (void)UniScale;
-    (void)pL2W;
-    (void)pPositions;
-    (void)pRotScales;
-    (void)pColors;
-/*    
-    ASSERTS( s_pDrawBitmap, "You must set a material first!" );
-    if( (nSprites == 0) || !g_pd3dDevice )
-        return;
-
-    const view* pView = eng_GetView();
-    if( !pView )
-        return;
-
-    const matrix4& V2W = pView->GetV2W();
-    const matrix4& W2V = pView->GetW2V();
-    matrix4 S2V;
-
-    if( pL2W )
-        S2V = W2V * (*pL2W);
-    else
-        S2V = W2V;
-
-    draw_ClearL2W();
-    draw_EnableBilinear();
-    draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
-    draw_SetTexture( *s_pDrawBitmap );
-    draw_SetL2W( V2W );
-
-    for( s32 i = 0; i < nSprites; ++i )
-    {
-        if( (pPositions[i].GetIW() & 0x8000) == 0x8000 )
-            continue;
-
-        vector3 Center( pPositions[i].GetX(), pPositions[i].GetY(), pPositions[i].GetZ() );
-        Center = S2V * Center;
-
-        f32 Sine, Cosine;
-        x_sincos( -pRotScales[i].X, Sine, Cosine );
-
-        vector3 Corners[4];
-        vector3 v0( Cosine - Sine, Sine + Cosine, 0.0f );
-        vector3 v1( Cosine + Sine, Sine - Cosine, 0.0f );
-        Corners[0] = v0;
-        Corners[1] = v1;
-        Corners[2] = -v0;
-        Corners[3] = -v1;
-
-        for( s32 j = 0; j < 4; ++j )
-        {
-            Corners[j].Scale( pRotScales[i].Y * UniScale );
-            Corners[j] += Center;
-        }
-
-        xcolor Color( pColors[i] & 0xff,
-                    ( pColors[i] & 0xff00) >> 8,
-                    ( pColors[i] & 0xff0000) >> 16,
-                    ( pColors[i] & 0xff000000) >> 24 );
-
-        draw_Color( Color );
-        draw_UV( 0.0f, 0.0f ); draw_Vertex( Corners[0] );
-        draw_UV( 1.0f, 0.0f ); draw_Vertex( Corners[3] );
-        draw_UV( 0.0f, 1.0f ); draw_Vertex( Corners[1] );
-        draw_UV( 1.0f, 0.0f ); draw_Vertex( Corners[3] );
-        draw_UV( 0.0f, 1.0f ); draw_Vertex( Corners[1] );
-        draw_UV( 1.0f, 1.0f ); draw_Vertex( Corners[2] );
-    }
-
-    draw_End();
-*/    
-}
-
-//=============================================================================
-
-static
-void platform_RenderVelocitySprites( s32            nSprites,
-                                     f32            UniScale,
-                                     const matrix4* pL2W,
-                                     const matrix4* pVelMatrix,
-                                     const vector4* pPositions,
-                                     const vector4* pVelocities,
-                                     const u32*     pColors )
-{
-    // sanity check
-    ASSERTS( s_pDrawBitmap, "You must set a material first!" );
-    if( nSprites == 0 )
-        return;
-
-    // start up draw
-    draw_ClearL2W();
-    draw_EnableBilinear();
-    draw_Begin( DRAW_TRIANGLES, s_DrawFlags );
-    draw_SetTexture( *s_pDrawBitmap );
-
-    // Grab out a l2w matrix to use. If one is not specified, then
-    // we will use the identity matrix.
-    matrix4 L2W;
-    if( pL2W )
-        L2W = *pL2W;
-    else
-        L2W.Identity();
-
-    // calculate the velocity l2w matrix
-    matrix4 L2WNoTranslate = L2W;
-    L2WNoTranslate.ClearTranslation();
-    matrix4 VL2W = L2WNoTranslate * (*pVelMatrix);
-
-    // grab out the view direction
-    vector3 ViewDir = eng_GetView()->GetViewZ();
-
-    // render the sprites
-    s32 i;
-    for( i = 0; i < nSprites; i++ )
-    {
-        // 0x8000 is an active flag, meaning to skip this sprite, similar
-        // to the ADC bit on the ps2.
-        if( (pPositions[i].GetIW() & 0x8000) != 0x8000 )
-        {
-            // calculate the sprite points
-            vector3 P = L2W * vector3( pPositions[i].GetX(), pPositions[i].GetY(), pPositions[i].GetZ() );
-
-            vector3 Right( pVelocities[i].GetX(), pVelocities[i].GetY(), pVelocities[i].GetZ() );
-            Right = VL2W * Right;
-            Right.Normalize();
-            vector3 Up   = ViewDir.Cross( Right );
-            Right *= pVelocities[i].GetW()*UniScale;
-            Up    *= pVelocities[i].GetW()*UniScale;
-            vector3 Fore = P + Right;
-            vector3 Aft  = P - Right;
-            vector3 V0   = Fore - Up;
-            vector3 V1   = Aft  - Up;
-            vector3 V2   = Aft  + Up;
-            vector3 V3   = Fore + Up;
-
-            // now render it through draw
-            xcolor Color( pColors[i] & 0xff,
-                        ( pColors[i] & 0xff00) >> 8,
-                        ( pColors[i] & 0xff0000) >> 16,
-                        ( pColors[i] & 0xff000000) >> 24 );
-            
-            draw_Color( Color );
-            draw_UV( 1.0f, 0.0f );  draw_Vertex( V0 );
-            draw_UV( 0.0f, 0.0f );  draw_Vertex( V1 );
-            draw_UV( 1.0f, 1.0f );  draw_Vertex( V3 );        
-            draw_UV( 0.0f, 0.0f );  draw_Vertex( V1 );
-            draw_UV( 1.0f, 1.0f );  draw_Vertex( V3 );
-            draw_UV( 0.0f, 1.0f );  draw_Vertex( V2 );
-        }
-    }
-
-    // finished
-    draw_End();
+    g_PrimitiveRenderer.DiscardSubmission();
+    g_ForwardRenderMgr.DiscardQueuedDraws();
+    g_GeomMgr.ClearDistortionState();
 }
 
 //=============================================================================
@@ -929,7 +252,8 @@ static
 void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                        const bbox&      WorldBBox )
 {
-    CONTEXT( "platform_CalculateRigidLighting" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "platform_CalculateRigidLighting" );
+    s_RigidLightingQueryCount++;
     
     void* pResult = NULL;
     
@@ -997,12 +321,14 @@ void* platform_CalculateRigidLighting( const matrix4&   L2W,
                                             CookieU.GetZ(),
                                             (CookieIndex >= 0) ? (f32)(CookieIndex + 1) : 0.0f );
             pLighting->LightCookieV[i].Set( CookieV.GetX(),
-                                            CookieV.GetY(),
-                                            CookieV.GetZ(),
-                                            0.0f );
+                                             CookieV.GetY(),
+                                             CookieV.GetZ(),
+                                             0.0f );
+            pLighting->DynamicLightIndex[i] = g_LightMgr.GetCollectedDynamicLightIndex( i );
         }
         
         pResult = pLighting;
+        s_RigidLightingSetupCount++;
     }
     
     // Store in render instance
@@ -1017,13 +343,11 @@ void* platform_CalculateSkinLighting( u32            Flags,
                                       const bbox&    BBox,
                                       xcolor         Ambient )
 {
-    (void)Flags;
-    CONTEXT( "platform_CalculateSkinLighting" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "platform_CalculateSkinLighting" );
+    s_SkinLightingQueryCount++;
     
     void* pResult = NULL;
-    bbox WorldBBox = BBox;
-    WorldBBox.Transform( L2W );
-    
+
     // Try allocate
     cb_geom_lighting* pLighting = (cb_geom_lighting*)smem_BufferAlloc( sizeof(cb_geom_lighting) );
     x_memset( pLighting, 0, sizeof(cb_geom_lighting) );
@@ -1033,6 +357,15 @@ void* platform_CalculateSkinLighting( u32            Flags,
                            (f32)Ambient.G / 255.0f,
                            (f32)Ambient.B / 255.0f,
                            1.0f );
+
+    // Mutant vision uses the ambient color as forced glow without scene lighting.
+    if( Flags & render::GLOWING )
+    {
+        return pLighting;
+    }
+
+    bbox WorldBBox = BBox;
+    WorldBBox.Transform( L2W );
 
     s32 NSceneLights = g_LightMgr.CollectLights( WorldBBox, MAX_GEOM_LIGHTS );
     s32 LightIndex   = 0;
@@ -1090,9 +423,10 @@ void* platform_CalculateSkinLighting( u32            Flags,
                                                  CookieU.GetZ(),
                                                  (CookieIndex >= 0) ? (f32)(CookieIndex + 1) : 0.0f );
         pLighting->LightCookieV[LightIndex].Set( CookieV.GetX(),
-                                                 CookieV.GetY(),
-                                                 CookieV.GetZ(),
-                                                 0.0f );
+                                                  CookieV.GetY(),
+                                                  CookieV.GetZ(),
+                                                  0.0f );
+        pLighting->DynamicLightIndex[LightIndex] = g_LightMgr.GetCollectedDynamicLightIndex( i );
     }
 
     s32 NCharLights = g_LightMgr.CollectCharLightsOnly( L2W, BBox, MAX_GEOM_LIGHTS );
@@ -1114,9 +448,10 @@ void* platform_CalculateSkinLighting( u32            Flags,
                                              0.0f );
 
         pLighting->LightDir[LightIndex].Set( 0.0f,
-                                             0.0f,
-                                             0.0f,
-                                             2.0f );
+                                              0.0f,
+                                              0.0f,
+                                              2.0f );
+        pLighting->DynamicLightIndex[LightIndex] = -1;
     }
 
     pLighting->LightCount = LightIndex;
@@ -1127,156 +462,236 @@ void* platform_CalculateSkinLighting( u32            Flags,
     return pResult;
 }
 
-//=============================================================================
-// COMPILATION/EXPORT EDITOR FUNCTIONS
-//=============================================================================
-
-#ifdef X_EDITOR
-
 static
-xhandle pc_GetRigidDList( render::hgeom_inst hInst, s32 iSubMesh )
+void platform_ExecuteGeomPackets( void )
 {
-    ASSERT( hInst.IsNonNull() );
+    {
+        X_PROFILE_SCOPE_CATEGORY( "Renderer", "Geom/PrepareProjectionAtlas" );
+        g_GBufferMgr.EndPass();
 
-    private_instance& PrivateInst = s_lRegisteredInst(hInst);
-    rigid_geom*       pGeom       = (rigid_geom*)PrivateInst.pGeom;
-    ASSERT( PrivateInst.Type == TYPE_RIGID );
-    ASSERT( (iSubMesh >= 0) && (iSubMesh < pGeom->m_nSubMeshes) );
+        if( !g_DecalRenderer.RequestProjectionTextures() ||
+            !g_GeomMgr.PrepareProjectionAtlas() )
+        {
+            x_DebugMsg( "PCRender: failed to prepare projection atlas\n" );
+            g_ForwardRenderMgr.DiscardQueuedDraws();
+            return;
+        }
+    }
 
-    geom::submesh& SubMesh     = pGeom->m_pSubMesh[iSubMesh];
-    private_geom&  PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-    return PrivateGeom.RigidDList[(s32)SubMesh.iDList];
+    static xprofile_counter GeomPackets =
+        x_GetProfiler().RegisterCounter( "GeomPackets", "RenderCounter" );
+    static xprofile_counter GeomRigidInstances =
+        x_GetProfiler().RegisterCounter( "GeomRigidInstances", "RenderCounter" );
+    static xprofile_counter GeomSkinInstances =
+        x_GetProfiler().RegisterCounter( "GeomSkinInstances", "RenderCounter" );
+    static xprofile_counter GeomLitInstances =
+        x_GetProfiler().RegisterCounter( "GeomLitInstances", "RenderCounter" );
+    static xprofile_counter GeomInstanceLights =
+        x_GetProfiler().RegisterCounter( "GeomInstanceLights", "RenderCounter" );
+    static xprofile_counter GeomLightingRecords =
+        x_GetProfiler().RegisterCounter( "GeomLightingRecords", "RenderCounter" );
+    static xprofile_counter GeomGBufferPackets =
+        x_GetProfiler().RegisterCounter( "GeomGBufferPackets", "RenderCounter" );
+    static xprofile_counter GeomGBufferGpuDraws =
+        x_GetProfiler().RegisterCounter( "GeomGBufferGpuDraws", "RenderCounter" );
+    static xprofile_counter GeomGBufferRigidIndirectRuns =
+        x_GetProfiler().RegisterCounter( "GeomGBufferRigidIndirectRuns", "RenderCounter" );
+    static xprofile_counter GeomGBufferRigidIndirectCommands =
+        x_GetProfiler().RegisterCounter( "GeomGBufferRigidIndirectCommands", "RenderCounter" );
+    static xprofile_counter GeomGBufferSkinIndirectRuns =
+        x_GetProfiler().RegisterCounter( "GeomGBufferSkinIndirectRuns", "RenderCounter" );
+    static xprofile_counter GeomGBufferSkinIndirectCommands =
+        x_GetProfiler().RegisterCounter( "GeomGBufferSkinIndirectCommands", "RenderCounter" );
+    static xprofile_counter GeomGBufferInstances =
+        x_GetProfiler().RegisterCounter( "GeomGBufferInstances", "RenderCounter" );
+    static xprofile_counter GeomGBufferSkinSectionDraws =
+        x_GetProfiler().RegisterCounter( "GeomGBufferSkinSectionDraws", "RenderCounter" );
+    static xprofile_counter GeomGBufferSubmittedIndices =
+        x_GetProfiler().RegisterCounter( "GeomGBufferSubmittedIndices", "RenderCounter" );
+    static xprofile_gauge GeomGBufferInstancesPerPacket =
+        x_GetProfiler().RegisterGauge( "GeomGBufferInstancesPerPacket",
+                                       XPROFILE_UNIT_COUNT,
+                                       "RenderGauge" );
+    static xprofile_gauge GeomGBufferDrawsPerPacket =
+        x_GetProfiler().RegisterGauge( "GeomGBufferDrawsPerPacket",
+                                       XPROFILE_UNIT_COUNT,
+                                       "RenderGauge" );
+    static xprofile_gauge GeomGBufferIndicesPerDraw =
+        x_GetProfiler().RegisterGauge( "GeomGBufferIndicesPerDraw",
+                                       XPROFILE_UNIT_COUNT,
+                                       "RenderGauge" );
+    static xprofile_gauge GeomInstancesPerPacket =
+        x_GetProfiler().RegisterGauge( "GeomInstancesPerPacket",
+                                       XPROFILE_UNIT_COUNT,
+                                       "RenderGauge" );
+    static xprofile_gauge GeomLightsPerLitInstance =
+        x_GetProfiler().RegisterGauge( "GeomLightsPerLitInstance",
+                                       XPROFILE_UNIT_COUNT,
+                                       "RenderGauge" );
+    static xprofile_gauge GeomLightingRecordReuse =
+        x_GetProfiler().RegisterGauge( "GeomLightingRecordReuse",
+                                       XPROFILE_UNIT_COUNT,
+                                       "RenderGauge" );
+
+    GeomPackets.Add( g_GeomMgr.GetPacketCount() );
+    GeomRigidInstances.Add( g_GeomMgr.GetRigidInstanceCount() );
+    GeomSkinInstances.Add( g_GeomMgr.GetSkinInstanceCount() );
+    GeomLitInstances.Add( g_GeomMgr.GetLitInstanceCount() );
+    GeomInstanceLights.Add( g_GeomMgr.GetInstanceLightCount() );
+    const s32 GeomInstanceCount = g_GeomMgr.GetRigidInstanceCount() +
+                                  g_GeomMgr.GetSkinInstanceCount();
+    GeomInstancesPerPacket.Set( g_GeomMgr.GetPacketCount()
+                              ? (f64)GeomInstanceCount / g_GeomMgr.GetPacketCount()
+                              : 0.0 );
+    GeomLightsPerLitInstance.Set( g_GeomMgr.GetLitInstanceCount()
+                                ? (f64)g_GeomMgr.GetInstanceLightCount() /
+                                  g_GeomMgr.GetLitInstanceCount()
+                                : 0.0 );
+
+    {
+        X_PROFILE_SCOPE_CATEGORY( "Renderer", "Geom/Upload" );
+        if( !g_GeomMgr.PrepareSharedShadowData() )
+        {
+            x_DebugMsg( "PCRender: failed to prepare shared shadow data\n" );
+            g_ForwardRenderMgr.DiscardQueuedDraws();
+            return;
+        }
+        if( !g_GeomMgr.UploadPackets() )
+        {
+            x_DebugMsg( "PCRender: failed to upload geometry packets\n" );
+            g_ForwardRenderMgr.DiscardQueuedDraws();
+            return;
+        }
+        if( !g_DecalRenderer.UploadQueuedDraws( g_GeomMgr ) )
+        {
+            x_DebugMsg( "PCRender: failed to upload decal batches\n" );
+            g_ForwardRenderMgr.DiscardQueuedDraws();
+            return;
+        }
+    }
+
+    GeomLightingRecords.Add( g_GeomMgr.GetLightingRecordCount() );
+    GeomLightingRecordReuse.Set( g_GeomMgr.GetLightingRecordCount()
+                               ? (f64)g_GeomMgr.GetLitInstanceCount() /
+                                 g_GeomMgr.GetLightingRecordCount()
+                               : 0.0 );
+
+    frame_render_targets Targets;
+    if( !g_GBufferMgr.GetFrameTargets( Targets ) )
+    {
+        x_DebugMsg( "PCRender: geometry frame targets are unavailable\n" );
+        g_ForwardRenderMgr.DiscardQueuedDraws();
+        return;
+    }
+
+    geom_pass_desc GeomPass;
+    GeomPass.TargetWidth  = Targets.pSceneColor->Desc.Width;
+    GeomPass.TargetHeight = Targets.pSceneColor->Desc.Height;
+
+    xbool Result = TRUE;
+    u32 GBufferPacketCount = 0;
+    {
+        X_PROFILE_SCOPE_CATEGORY( "Renderer", "Geom/ExecuteGBuffer" );
+        for( s32 i = 0; i < g_GeomMgr.GetPacketCount(); ++i )
+        {
+            if( g_GeomMgr.GetPacketPass( i ) == GEOMETRY_PASS_GBUFFER )
+                ++GBufferPacketCount;
+        }
+
+        if( GBufferPacketCount > 0 )
+        {
+            Result = g_GBufferMgr.SetGBufferTargets();
+            if( !Result )
+                x_DebugMsg( "PCRender: failed to bind G-buffer targets\n" );
+            else
+            {
+                Result = g_GeomMgr.ExecuteGBuffer( GeomPass );
+                if( !Result )
+                    x_DebugMsg( "PCRender: failed to execute G-buffer packets\n" );
+            }
+        }
+    }
+
+    const u32 GBufferGpuDrawCount = g_GeomMgr.GetGBufferGpuDrawCount();
+    const u32 GBufferInstanceCount = g_GeomMgr.GetGBufferInstanceCount();
+    const u64 GBufferSubmittedIndexCount = g_GeomMgr.GetGBufferSubmittedIndexCount();
+    GeomGBufferPackets.Add( GBufferPacketCount );
+    GeomGBufferGpuDraws.Add( GBufferGpuDrawCount );
+    GeomGBufferRigidIndirectRuns.Add( g_GeomMgr.GetGBufferRigidIndirectRunCount() );
+    GeomGBufferRigidIndirectCommands.Add( g_GeomMgr.GetGBufferRigidIndirectCommandCount() );
+    GeomGBufferSkinIndirectRuns.Add( g_GeomMgr.GetGBufferSkinIndirectRunCount() );
+    GeomGBufferSkinIndirectCommands.Add( g_GeomMgr.GetGBufferSkinIndirectCommandCount() );
+    GeomGBufferInstances.Add( GBufferInstanceCount );
+    GeomGBufferSkinSectionDraws.Add( g_GeomMgr.GetGBufferSkinSectionDrawCount() );
+    GeomGBufferSubmittedIndices.Add( (f64)GBufferSubmittedIndexCount );
+    GeomGBufferInstancesPerPacket.Set( GBufferPacketCount
+                                     ? (f64)GBufferInstanceCount / GBufferPacketCount
+                                     : 0.0 );
+    GeomGBufferDrawsPerPacket.Set( GBufferPacketCount
+                                 ? (f64)GBufferGpuDrawCount / GBufferPacketCount
+                                 : 0.0 );
+    GeomGBufferIndicesPerDraw.Set( GBufferGpuDrawCount
+                                  ? (f64)GBufferSubmittedIndexCount / GBufferGpuDrawCount
+                                  : 0.0 );
+
+    if( !Result )
+    {
+        g_ForwardRenderMgr.DiscardQueuedDraws();
+        return;
+    }
+
+    {
+        X_PROFILE_SCOPE_CATEGORY( "Renderer", "Geom/QueueForward" );
+        for( s32 i = 0; Result && (i < g_GeomMgr.GetPacketCount()); ++i )
+        {
+            const geometry_render_pass Pass = g_GeomMgr.GetPacketPass( i );
+            if( Pass == GEOMETRY_PASS_GBUFFER )
+                continue;
+
+            forward_render_phase Phase;
+            switch( Pass )
+            {
+                case GEOMETRY_PASS_TRANSPARENT: Phase = FORWARD_PHASE_TRANSPARENT; break;
+                case GEOMETRY_PASS_ADDITIVE:    Phase = FORWARD_PHASE_ADDITIVE;    break;
+                case GEOMETRY_PASS_FORCE_LAST:  Phase = FORWARD_PHASE_FORCE_LAST;  break;
+                case GEOMETRY_PASS_ZPRIME:      Phase = FORWARD_PHASE_ZPRIME;      break;
+                case GEOMETRY_PASS_FADING:      Phase = FORWARD_PHASE_FADING;      break;
+                case GEOMETRY_PASS_DISTORTION:  Phase = FORWARD_PHASE_DISTORTION;  break;
+                default:
+                    Result = FALSE;
+                    continue;
+            }
+
+            Result = g_ForwardRenderMgr.QueueGeometry( i,
+                                                       Phase,
+                                                       g_GeomMgr.GetPacketSortDepth( i ),
+                                                       g_GeomMgr.GetPacketSequence( i ) );
+        }
+    }
+
+    if( !Result )
+    {
+        x_DebugMsg( "PCRender: failed to collect normal geometry packets\n" );
+        g_ForwardRenderMgr.DiscardQueuedDraws();
+    }
 }
 
 //=============================================================================
 
 static
-void* platform_LockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh )
+void platform_SubmitGeometry( const xarray<geometry_draw_item>&    Draws,
+                              const xarray<dynamic_geometry_draw>& DynamicDraws,
+                              const cubemap*                       pCubeMap )
 {
-    xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    return g_RigidVertMgr.LockDListVerts( Handle );
+    if( !g_GeomMgr.BuildPackets( Draws, DynamicDraws, pCubeMap ) )
+    {
+        x_DebugMsg( "PCRender: failed to build geometry packets\n" );
+        g_ForwardRenderMgr.DiscardQueuedDraws();
+        return;
+    }
+
+    platform_ExecuteGeomPackets();
 }
-
-//=============================================================================
-
-static
-void platform_UnlockRigidDListVertex( render::hgeom_inst hInst, s32 iSubMesh )
-{
-    xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    g_RigidVertMgr.UnlockDListVerts( Handle );
-}
-
-//=============================================================================
-
-static
-void* platform_LockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh,  s32& VertexOffset )
-{
-    xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    return g_RigidVertMgr.LockDListIndices( Handle, VertexOffset );
-}
-
-//=============================================================================
-
-static
-void platform_UnlockRigidDListIndex( render::hgeom_inst hInst, s32 iSubMesh )
-{
-    xhandle Handle = pc_GetRigidDList( hInst, iSubMesh );
-    g_RigidVertMgr.UnlockDListIndices( Handle );
-}
-
-#endif
-
-//=============================================================================
-// COMPILATION/EXPORT EDITOR FUNCTIONS - END
-//=============================================================================
-
-static
-void platform_BeginShaders( void )
-{
-    g_GeomMgr.InvalidateCache();
-}
-
-//=============================================================================
-
-static
-void platform_EndShaders( void )
-{
-    g_GeomMgr.ResetRigidInstanceData();
-    g_GeomMgr.ResetSkinInstanceData();
-    g_GeomMgr.ResetLightCookies();
-    g_GeomMgr.ResetProjTextures();
-    g_GeomMgr.ResetShadowMaps();
-}
-
-//=============================================================================
-
-static
-void platform_CreateEnvTexture( void )
-{
-    // TODO:
-}
-
-//=============================================================================
-// DEPRECATED - START
-//=============================================================================
-
-static
-void platform_SetProjectedTexture( texture::handle Texture )
-{
-    // DEAD
-}
-
-//=============================================================================
-
-static
-void platform_ComputeProjTextureMatrix( matrix4& Matrix, view& View, const texture_projection& Projection )
-{
-   // DEAD
-}
-
-//=============================================================================
-
-static
-void platform_SetTextureProjection( const texture_projection& Projection )
-{
-    // DEAD
-}
-
-//=============================================================================
-
-static
-void platform_SetTextureProjectionMatrix( const matrix4& Matrix )
-{
-    // DEAD
-}
-
-//=============================================================================
-
-static
-void platform_SetProjectedShadowTexture( s32 Index, texture::handle Texture )
-{
-    // DEAD
-}
-
-//=============================================================================
-
-static
-void platform_ComputeProjShadowMatrix( matrix4& Matrix, view& View, const texture_projection& Projection  )
-{
-    // DEAD
-}
-
-//=============================================================================
-
-static
-void platform_SetShadowProjectionMatrix( s32 Index, const matrix4& Matrix )
-{
-    // DEAD
-}
-
-//=============================================================================
-// DEPRECATED - END
-//=============================================================================
 
 static
 void platform_SetCustomFogPalette( const texture::handle& Texture, xbool ImmediateSwitch, s32 PaletteIndex )
@@ -1314,6 +729,14 @@ static
 void platform_ApplySelfIllumGlows( f32 MotionBlurIntensity, s32 GlowCutoff )
 {
     g_PostMgr.ApplySelfIllumGlows( MotionBlurIntensity, GlowCutoff );
+}
+
+//=============================================================================
+
+static
+void platform_UpdatePostEffects( f32 DeltaTime )
+{
+    g_PostMgr.Update( DeltaTime );
 }
 
 //=============================================================================
@@ -1424,36 +847,6 @@ void platform_EndShadowShaders( void )
 //=============================================================================
 
 static
-void platform_StartShadowCast( void )
-{
-    g_ShadowMgr.BeginCastPass();
-}
-
-//=============================================================================
-
-static
-void platform_EndShadowCast( void )
-{
-    g_ShadowMgr.EndCastPass();
-}
-
-//=============================================================================
-
-static
-void platform_StartShadowReceive( void )
-{
-}
-
-//=============================================================================
-
-static
-void platform_EndShadowReceive( void )
-{
-}
-
-//=============================================================================
-
-static
 void platform_ClearShadowSourceList( void )
 {
     g_ShadowMapMgr.ClearSources();
@@ -1476,7 +869,8 @@ void platform_AddPointShadowMapSource( const matrix4& L2W,
                                        f32            LightFalloff,
                                        s32            ShadowMapResolution,
                                        s32            ShadowPriority,
-                                       f32            ShadowScore )
+                                       f32            ShadowScore,
+                                       s32            DynamicLightIndex )
 {
     g_ShadowMapMgr.AddPointSource( L2W,
                                    FOV,
@@ -1484,7 +878,8 @@ void platform_AddPointShadowMapSource( const matrix4& L2W,
                                    LightFalloff,
                                    ShadowMapResolution,
                                    ShadowPriority,
-                                   ShadowScore );
+                                   ShadowScore,
+                                   DynamicLightIndex );
 }
 
 //=============================================================================
@@ -1496,7 +891,8 @@ void platform_AddSpotShadowMapSource( const matrix4& L2W,
                                       f32            LightFalloff,
                                       s32            ShadowMapResolution,
                                       s32            ShadowPriority,
-                                      f32            ShadowScore )
+                                      f32            ShadowScore,
+                                      s32            DynamicLightIndex )
 {
     g_ShadowMapMgr.AddSpotSource( L2W,
                                   FOV,
@@ -1504,138 +900,106 @@ void platform_AddSpotShadowMapSource( const matrix4& L2W,
                                   LightFalloff,
                                   ShadowMapResolution,
                                   ShadowPriority,
-                                  ShadowScore );
+                                  ShadowScore,
+                                  DynamicLightIndex );
 }
 
 //=============================================================================
 
 static
-void platform_BeginShadowCastRigid( geom* pGeom, s32 iSubMesh )
+void platform_RenderShadowCasters( const xarray<const geometry_draw_item*>& Draws,
+                                   const xarray<dynamic_geometry_shadow_draw>& DynamicDraws )
 {
-    (void)pGeom;
-    (void)iSubMesh;
-}
+    g_ShadowMgr.RenderCasters( Draws, DynamicDraws );
 
-//=============================================================================
+    const shadow_mgr::caster_stats& Stats = g_ShadowMgr.GetLastCasterStats();
+    static xprofile_counter ShadowCasterInputDraws =
+        x_GetProfiler().RegisterCounter( "ShadowCasterInputDraws", "RenderCounter" );
+    static xprofile_counter ShadowCasterPreparedDraws =
+        x_GetProfiler().RegisterCounter( "ShadowCasterPreparedDraws", "RenderCounter" );
+    static xprofile_counter ShadowCasterDroppedDraws =
+        x_GetProfiler().RegisterCounter( "ShadowCasterDroppedDraws", "RenderCounter" );
+    static xprofile_counter ShadowCasterPackets =
+        x_GetProfiler().RegisterCounter( "ShadowCasterPackets", "RenderCounter" );
+    static xprofile_counter ShadowCasterGpuDraws =
+        x_GetProfiler().RegisterCounter( "ShadowCasterGpuDraws", "RenderCounter" );
+    static xprofile_counter ShadowRigidInstances =
+        x_GetProfiler().RegisterCounter( "ShadowRigidInstances", "RenderCounter" );
+    static xprofile_counter ShadowSkinInstances =
+        x_GetProfiler().RegisterCounter( "ShadowSkinInstances", "RenderCounter" );
+    static xprofile_counter ShadowSkinPaletteMatrices =
+        x_GetProfiler().RegisterCounter( "ShadowSkinPaletteMatrices", "RenderCounter" );
+    static xprofile_counter ShadowRigidPackets =
+        x_GetProfiler().RegisterCounter( "ShadowRigidPackets", "RenderCounter" );
+    static xprofile_counter ShadowRigidIndirectRuns =
+        x_GetProfiler().RegisterCounter( "ShadowRigidIndirectRuns", "RenderCounter" );
+    static xprofile_counter ShadowRigidIndirectCommands =
+        x_GetProfiler().RegisterCounter( "ShadowRigidIndirectCommands", "RenderCounter" );
+    static xprofile_counter ShadowSkinIndirectRuns =
+        x_GetProfiler().RegisterCounter( "ShadowSkinIndirectRuns", "RenderCounter" );
+    static xprofile_counter ShadowSkinIndirectCommands =
+        x_GetProfiler().RegisterCounter( "ShadowSkinIndirectCommands", "RenderCounter" );
+    static xprofile_counter ShadowSkinPackets =
+        x_GetProfiler().RegisterCounter( "ShadowSkinPackets", "RenderCounter" );
+    static xprofile_counter ShadowAlphaPackets =
+        x_GetProfiler().RegisterCounter( "ShadowAlphaPackets", "RenderCounter" );
+    static xprofile_counter ShadowSourceStateChanges =
+        x_GetProfiler().RegisterCounter( "ShadowSourceStateChanges", "RenderCounter" );
+    static xprofile_counter ShadowSkinPalettes =
+        x_GetProfiler().RegisterCounter( "ShadowSkinPalettes", "RenderCounter" );
+    static xprofile_counter ShadowCasterUploadBytes =
+        x_GetProfiler().RegisterCounter( "ShadowCasterUploadBytes", "RenderCounter" );
+    static xprofile_counter ShadowCasterSubmittedIndices =
+        x_GetProfiler().RegisterCounter( "ShadowCasterSubmittedIndices", "RenderCounter" );
+    static xprofile_counter ShadowCasterBufferReallocs =
+        x_GetProfiler().RegisterCounter( "ShadowCasterBufferReallocs", "RenderCounter" );
+    static xprofile_gauge ShadowInstancesPerPacket =
+        x_GetProfiler().RegisterGauge( "ShadowInstancesPerPacket",
+                                       XPROFILE_UNIT_COUNT,
+                                       "RenderGauge" );
+    static xprofile_gauge ShadowDrawCompression =
+        x_GetProfiler().RegisterGauge( "ShadowDrawCompression",
+                                       XPROFILE_UNIT_PERCENT,
+                                       "RenderGauge" );
+    static xprofile_gauge ShadowPaletteReuse =
+        x_GetProfiler().RegisterGauge( "ShadowPaletteReuse",
+                                       XPROFILE_UNIT_COUNT,
+                                       "RenderGauge" );
+    static xprofile_gauge ShadowMaxPacketInstances =
+        x_GetProfiler().RegisterGauge( "ShadowMaxPacketInstances",
+                                       XPROFILE_UNIT_COUNT,
+                                       "RenderGauge" );
 
-static
-const material* platform_GetShadowCastMaterial( const render_instance& Inst )
-{
-    const geom* pGeom = ( Inst.ShadSortKey.GeomType == 0 ) ?
-                        (const geom*)Inst.Data.Rigid.pGeom :
-                        (const geom*)Inst.Data.Skin.pGeom;
-    if( !pGeom )
-        return NULL;
-
-    const s32 iSubMesh = Inst.ShadSortKey.GeomSubMesh;
-    if( (iSubMesh < 0) || (iSubMesh >= pGeom->m_nSubMeshes) )
-        return NULL;
-
-    const geom::submesh&  SubMesh = pGeom->m_pSubMesh[iSubMesh];
-    const geom::material& GeomMat = pGeom->m_pMaterial[SubMesh.iMaterial];
-    const xhandle         hMat    = pGeom->m_pVirtualMaterials[GeomMat.iVirtualMat].MatHandle;
-    if( (hMat < 0) || (hMat >= kMaxRegisteredMaterials) )
-        return NULL;
-
-    return &s_lRegisteredMaterials(hMat);
-}
-
-//=============================================================================
-
-static
-void platform_RenderShadowCastRigid( render_instance& Inst )
-{
-    g_ShadowMgr.RenderRigidCaster( Inst.hDList,
-                                   Inst.Data.Rigid.pL2W,
-                                   platform_GetShadowCastMaterial( Inst ),
-                                   Inst.UOffset,
-                                   Inst.VOffset,
-                                   Inst.ShadSortKey.ShadowSourceIndex );
-}
-
-//=============================================================================
-
-static
-void platform_EndShadowCastRigid( void )
-{
-}
-
-//=============================================================================
-
-static
-void platform_BeginShadowCastSkin( geom* pGeom, s32 iSubMesh )
-{
-    (void)pGeom;
-    (void)iSubMesh;
-}
-
-//=============================================================================
-
-static
-void platform_RenderShadowCastSkin( render_instance& Inst, s32 iShadowSource )
-{
-    g_ShadowMgr.RenderSkinCaster( Inst.hDList, 
-                                  Inst.Data.Skin.pBones, 
-                                  platform_GetShadowCastMaterial( Inst ),
-                                  Inst.UOffset,
-                                  Inst.VOffset,
-                                  iShadowSource );
-}
-
-//=============================================================================
-
-static
-void platform_EndShadowCastSkin( void )
-{
-}
-
-//=============================================================================
-
-static
-void platform_BeginShadowReceiveRigid( geom* pGeom, s32 iSubMesh )
-{
-    (void)pGeom;
-    (void)iSubMesh;
-}
-
-//=============================================================================
-
-static
-void platform_RenderShadowReceiveRigid( render_instance& Inst, s32 iShadowSource )
-{
-    (void)Inst;
-    (void)iShadowSource;
-}
-
-//=============================================================================
-
-static
-void platform_EndShadowReceiveRigid( void )
-{
-}
-
-//=============================================================================
-
-static
-void platform_BeginShadowReceiveSkin( geom* pGeom, s32 iSubMesh )
-{
-    (void)pGeom;
-    (void)iSubMesh;
-}
-
-//=============================================================================
-
-static
-void platform_RenderShadowReceiveSkin( render_instance& Inst )
-{
-    (void)Inst;
-}
-
-//=============================================================================
-
-static
-void platform_EndShadowReceiveSkin( void )
-{
+    ShadowCasterInputDraws.Add( Stats.InputDrawCount );
+    ShadowCasterPreparedDraws.Add( Stats.PreparedDrawCount );
+    ShadowCasterDroppedDraws.Add( Stats.InputDrawCount - Stats.PreparedDrawCount );
+    ShadowCasterPackets.Add( Stats.PacketCount );
+    ShadowCasterGpuDraws.Add( Stats.GpuDrawCount );
+    ShadowRigidInstances.Add( Stats.RigidInstanceCount );
+    ShadowSkinInstances.Add( Stats.SkinInstanceCount );
+    ShadowSkinPaletteMatrices.Add( Stats.SkinPaletteMatrixCount );
+    ShadowRigidPackets.Add( Stats.RigidPacketCount );
+    ShadowRigidIndirectRuns.Add( Stats.RigidIndirectRunCount );
+    ShadowRigidIndirectCommands.Add( Stats.RigidIndirectCommandCount );
+    ShadowSkinIndirectRuns.Add( Stats.SkinIndirectRunCount );
+    ShadowSkinIndirectCommands.Add( Stats.SkinIndirectCommandCount );
+    ShadowSkinPackets.Add( Stats.SkinPacketCount );
+    ShadowAlphaPackets.Add( Stats.AlphaPacketCount );
+    ShadowSourceStateChanges.Add( Stats.SourceStateChangeCount );
+    ShadowSkinPalettes.Add( Stats.SkinPaletteCount );
+    ShadowCasterUploadBytes.Add( (f64)Stats.UploadBytes );
+    ShadowCasterSubmittedIndices.Add( (f64)Stats.SubmittedIndexCount );
+    ShadowCasterBufferReallocs.Add( Stats.BufferReallocationCount );
+    ShadowInstancesPerPacket.Set( Stats.PacketCount
+                                ? (f64)Stats.PreparedDrawCount / Stats.PacketCount
+                                : 0.0 );
+    ShadowDrawCompression.Set( Stats.PreparedDrawCount
+                             ? 100.0 * (f64)Stats.GpuDrawCount / Stats.PreparedDrawCount
+                             : 0.0 );
+    ShadowPaletteReuse.Set( Stats.SkinPaletteCount
+                          ? (f64)Stats.SkinInstanceCount / Stats.SkinPaletteCount
+                          : 0.0 );
+    ShadowMaxPacketInstances.Set( Stats.MaxPacketInstanceCount );
 }
 
 //=============================================================================
@@ -1643,8 +1007,16 @@ void platform_EndShadowReceiveSkin( void )
 static
 void platform_BeginNormalRender( void )
 {
-    if( !g_pd3dDevice ) return;
-    
+    s_RigidLightingQueryCount = 0;
+    s_RigidLightingSetupCount = 0;
+    s_SkinLightingQueryCount  = 0;
+    s_LightStatsStart         = g_LightMgr.GetCollectionStats();
+
+    g_PrimitiveMgr.BeginRender();
+    g_DecalRenderer.BeginRender();
+    g_ForwardRenderMgr.BeginFrame();
+    g_ProjectionAtlas.BeginFrame();
+
     const view* pView = eng_GetView();
     if( !pView ) return;
         
@@ -1656,8 +1028,8 @@ void platform_BeginNormalRender( void )
     
     if( g_GBufferMgr.ResizeGBuffer( screenWidth, screenHeight ) )
     {
-        g_GBufferMgr.SetGBufferTargets();
         g_GBufferMgr.ClearGBuffer();
+        g_GBufferMgr.SetGBufferTargets();
     }
     
     g_ProjTextureMgr.ClearProjTextures();
@@ -1668,39 +1040,31 @@ void platform_BeginNormalRender( void )
 static
 void platform_EndNormalRender( void )
 {
+    const light_mgr::collection_stats& LightStats = g_LightMgr.GetCollectionStats();
+    static xprofile_counter LightRigidQueries =
+        x_GetProfiler().RegisterCounter( "LightRigidQueries", "RenderCounter" );
+    static xprofile_counter LightRigidSetups =
+        x_GetProfiler().RegisterCounter( "LightRigidSetups", "RenderCounter" );
+    static xprofile_counter LightSkinQueries =
+        x_GetProfiler().RegisterCounter( "LightSkinQueries", "RenderCounter" );
+    static xprofile_counter LightSceneCandidates =
+        x_GetProfiler().RegisterCounter( "LightSceneCandidates", "RenderCounter" );
+    static xprofile_counter LightCharCandidates =
+        x_GetProfiler().RegisterCounter( "LightCharCandidates", "RenderCounter" );
+    static xprofile_counter LightSceneHits =
+        x_GetProfiler().RegisterCounter( "LightSceneHits", "RenderCounter" );
+    static xprofile_counter LightCharHits =
+        x_GetProfiler().RegisterCounter( "LightCharHits", "RenderCounter" );
+
+    LightRigidQueries.Add( s_RigidLightingQueryCount );
+    LightRigidSetups.Add( s_RigidLightingSetupCount );
+    LightSkinQueries.Add( s_SkinLightingQueryCount );
+    LightSceneCandidates.Add( LightStats.SceneCandidates - s_LightStatsStart.SceneCandidates );
+    LightCharCandidates.Add( LightStats.CharCandidates - s_LightStatsStart.CharCandidates );
+    LightSceneHits.Add( LightStats.SceneHits - s_LightStatsStart.SceneHits );
+    LightCharHits.Add( LightStats.CharHits - s_LightStatsStart.CharHits );
+
     g_GBufferMgr.SetFinalColorTarget();
 }
 
 //=============================================================================
-
-static
-void platform_RegisterRigidInstance( rigid_geom& Geom, render::hgeom_inst hInst )
-{
-    (void)Geom;
-    (void)hInst;
-}
-
-//=============================================================================
-
-static
-void platform_RegisterSkinInstance( skin_geom& Geom, render::hgeom_inst hInst )
-{
-    (void)Geom;
-    (void)hInst;
-}
-
-//=============================================================================
-
-static
-void platform_UnregisterRigidInstance( render::hgeom_inst hInst )
-{
-    (void)hInst;
-}
-
-//=============================================================================
-
-static
-void platform_UnregisterSkinInstance( render::hgeom_inst hInst )
-{
-    (void)hInst;
-}

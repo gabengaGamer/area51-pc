@@ -12,11 +12,12 @@
 //==============================================================================
 
 #include "DecalMgr.hpp"
-#include "Decals\DecalPackage.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
-#include "e_draw.hpp"
-#include "Render\Render.hpp"
+#include "Decals/DecalPackage.hpp"
+#include "Decals/StaticDecalFile.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
+#include "Render/PrimitiveBatch.hpp"
+#include "Render/Render.hpp"
 
 //==============================================================================
 // Constants
@@ -45,97 +46,6 @@ static xbool                s_bExportingStaticDecals = FALSE;
 static xarray<export_decal> s_lDecalExportList;
 #endif
 
-//==============================================================================
-// The static data file code
-//==============================================================================
-
-decal_mgr::static_data::static_data( void ) :
-    Version         ( STATIC_DECAL_VERSION ),
-    nPackages       ( 0 ),
-    pPackage        ( NULL ),
-    nDefinitions    ( 0 ),
-    pDefinition     ( NULL ),
-    nZones          ( 0 ),
-    pZone           ( NULL ),
-    nVerts          ( 0 ),
-    pPos            ( NULL ),
-    pUV             ( NULL ),
-    pColor          ( NULL )
-{
-}
-
-//==============================================================================
-
-decal_mgr::static_data::static_data( fileio& File )
-{
-    (void)File;
-
-    if ( Version != STATIC_DECAL_VERSION )
-        x_throw( xfs( "Static decal version problem. App wants %d, data is %d", STATIC_DECAL_VERSION, Version ) );
-}
-
-//==============================================================================
-
-void decal_mgr::position_data::FileIO( fileio& File )
-{
-    File.Static( Pos );
-    File.Static( Flags );
-}
-
-//==============================================================================
-
-void decal_mgr::uv_data::FileIO( fileio& File )
-{
-    File.Static( U );
-    File.Static( V );
-}
-
-//==============================================================================
-
-void decal_mgr::static_data::package::FileIO( fileio& File )
-{
-    File.Static( PackageName, 256 );
-    File.Static( iDefinition );
-    File.Static( nDefinitions );
-}
-
-//==============================================================================
-
-void decal_mgr::static_data::definition::FileIO( fileio& File )
-{
-    File.Static( iGroup );
-    File.Static( iDecalDef );
-    File.Static( iZoneInfo );
-    File.Static( nZones );
-}
-
-//==============================================================================
-
-void decal_mgr::static_data::zone_info::FileIO( fileio& File )
-{
-    File.Static( iVert );
-    File.Static( nVerts );
-    File.Static( Zone );
-}
-
-//==============================================================================
-
-void decal_mgr::static_data::FileIO( fileio& File )
-{
-    File.Static( Version );
-    File.Static( nPackages );
-    File.Static( pPackage, nPackages );
-    File.Static( nDefinitions );
-    File.Static( pDefinition, nDefinitions );
-    File.Static( nZones );
-    File.Static( pZone, nZones );
-    File.Static( nVerts );
-    File.Static( pPos, nVerts );
-    File.Static( pUV, nVerts );
-    File.Static( pColor, nVerts );
-}
-
-//==============================================================================
 // Implementation
 //==============================================================================
 
@@ -215,7 +125,10 @@ void decal_mgr::RenderStaticDecal( const decal_definition& Def,
     // make sure we have room to add the verts
     registration_info& RegInfo = m_RegisteredDefs( Def.m_Handle );
     if ( (RegInfo.m_nStaticVerts + nVerts) > (RegInfo.m_nStaticVertsAlloced) )
+    {
         RegInfo.GrowStaticVertListBy( kRegInfoGrowAmount );
+        ReserveRenderCapacity();
+    }
 
     // grab pointers to where we'll be filling in the vertex data
     position_data* pPos   = &RegInfo.m_pStaticPositions[RegInfo.m_nStaticVerts];
@@ -608,12 +521,21 @@ void decal_mgr::EndStaticDecalExport( platform PlatformType )
     {
         // if there are no static decals to export, save out the empty
         // structure and do an early out
-        fileio File;
-        File.Save( s_ExportFileName, *m_pStaticData, FALSE );
+        xstring Error;
+        const xbool Saved = static_decal_file::Save(
+            s_ExportFileName,
+            *m_pStaticData,
+            Error );
 
         delete m_pStaticData;
         m_pStaticData            = NULL;
         s_bExportingStaticDecals = FALSE;
+        s_lDecalExportList.Clear();
+
+        if( !Saved )
+        {
+            x_throw( (const char*)Error );
+        }
         return;
     }
 
@@ -753,23 +675,22 @@ void decal_mgr::EndStaticDecalExport( platform PlatformType )
     ASSERT( iZoneInfo == m_pStaticData->nZones       );
 
     // save out the file
-    fileio File;
-    File.Save( s_ExportFileName, *m_pStaticData, FALSE );
+    xstring Error;
+    const xbool Saved = static_decal_file::Save(
+        s_ExportFileName,
+        *m_pStaticData,
+        Error );
 
-    // delete the static data (the reason we're doing this here and
-    // not in the destructor is because typically the data is not allocated
-    // manually but comes from fileio
-    delete []m_pStaticData->pPackage;
-    delete []m_pStaticData->pDefinition;
-    delete []m_pStaticData->pZone;
-    delete []m_pStaticData->pPos;
-    delete []m_pStaticData->pUV;
-    delete []m_pStaticData->pColor;
     delete m_pStaticData;
 
     m_pStaticData            = NULL;
     s_bExportingStaticDecals = FALSE;
     s_lDecalExportList.Clear();
+
+    if( !Saved )
+    {
+        x_throw( (const char*)Error );
+    }
 }
 
 #endif // X_EDITOR
@@ -782,9 +703,20 @@ void decal_mgr::LoadStaticDecals( const char* FileName )
     X_FILE* fh = x_fopen( FileName, "rb" );
     if ( fh )
     {
-        fileio File;
-        File.Load( fh, m_pStaticData );
+        xstring Error;
+        const xbool Loaded = static_decal_file::Load(
+            fh,
+            m_pStaticData,
+            Error );
         x_fclose(fh);
+
+        if( !Loaded )
+        {
+            x_DebugMsg( "STATIC DECALS: load failed for '%s': %s\n",
+                        FileName,
+                        (const char*)Error );
+            x_throw( (const char*)Error );
+        }
     }
     else
     {
@@ -825,7 +757,10 @@ void decal_mgr::LoadStaticDecals( const char* FileName )
                 }
             }
         }
+
+        BuildStaticSpans();
     }
+    ReserveRenderCapacity();
 }
 
 //==============================================================================
@@ -837,8 +772,11 @@ void decal_mgr::UnloadStaticDecals( void )
     for ( i = 0; i < m_RegisteredDefs.GetCount(); i++ )
     {
         m_RegisteredDefs[i].m_StaticDataOffset = -1;
+        m_RegisteredDefs[i].m_StaticSpanStart = 0;
+        m_RegisteredDefs[i].m_StaticSpanCount = 0;
     }
 
+    m_StaticSpans.Clear();
     delete m_pStaticData;
     m_pStaticData = NULL;
 }
@@ -846,111 +784,181 @@ void decal_mgr::UnloadStaticDecals( void )
 //==============================================================================
 
 #ifdef X_EDITOR
-void decal_mgr::RenderEditorStatics( registration_info& RegInfo, u32 DrawFlags )
+void decal_mgr::RenderEditorStaticWireframes( void )
 {
-    //======================================================================
-    // Draw the textured decals
-    //======================================================================
-    RenderVerts( RegInfo.m_nStaticVerts,
-                 RegInfo.m_pStaticPositions,
-                 RegInfo.m_pStaticUVs,
-                 RegInfo.m_pStaticColors );
-    draw_End();
+    const render::primitive_draw_desc material( NULL,
+                                                render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                render::PRIMITIVE_BLEND_OPAQUE,
+                                                render::PRIMITIVE_DEPTH_READ_WRITE,
+                                                render::PRIMITIVE_RASTER_WIREFRAME_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                render::PRIMITIVE_LAYER_SURFACE );
+    render::PrimitiveBatch batch( material );
+    const vector2 uv( 0.0f, 0.0f );
+    const xcolor color( 255, 50, 50, 255 );
 
-    //======================================================================
-    // Draw the decals in wireframe for selected decals
-    //======================================================================
-    draw_Begin( DRAW_TRIANGLES, DRAW_WIRE_FRAME );
-
-    // Note: this is editor-side only. The game-side data is precompiled,
-    // and will use microcode.
-    draw_ClearL2W();
-    draw_Color(xcolor(255,50,50,255));
-    
-    s32   iVert;
-    xbool WindingCW = TRUE;        
-    for ( iVert = 0; iVert < RegInfo.m_nStaticVerts; iVert++ )
+    for( s32 iReg = 0; iReg < m_RegisteredDefs.GetCount(); ++iReg )
     {
-        // start of a new strip?
-        if ( RegInfo.m_pStaticPositions[iVert].Flags & decal_vert::FLAG_SKIP_TRIANGLE )
-        {
-            WindingCW = TRUE;
-            continue;
-        }
+        registration_info& RegInfo = m_RegisteredDefs[iReg];
+        xbool WindingCW = TRUE;
 
-        if ( RegInfo.m_pStaticPositions[iVert].Flags & decal_vert::FLAG_DRAW_WIREFRAME )
+        for( s32 iVert = 0; iVert < RegInfo.m_nStaticVerts; ++iVert )
         {
-            // fill in the verts
+            if( RegInfo.m_pStaticPositions[iVert].Flags & decal_vert::FLAG_SKIP_TRIANGLE )
+            {
+                WindingCW = TRUE;
+                continue;
+            }
+
             ASSERT( iVert >= 2 );
-            if ( WindingCW )
+            if( RegInfo.m_pStaticPositions[iVert].Flags & decal_vert::FLAG_DRAW_WIREFRAME )
             {
-                draw_Vertex     ( RegInfo.m_pStaticPositions[iVert-2].Pos );
-                draw_Vertex     ( RegInfo.m_pStaticPositions[iVert-1].Pos );
-                draw_Vertex     ( RegInfo.m_pStaticPositions[iVert-0].Pos );
+                if( WindingCW )
+                {
+                    batch.AddTriangle( render::primitive_vertex( RegInfo.m_pStaticPositions[iVert-2].Pos, uv, color ),
+                                       render::primitive_vertex( RegInfo.m_pStaticPositions[iVert-1].Pos, uv, color ),
+                                       render::primitive_vertex( RegInfo.m_pStaticPositions[iVert-0].Pos, uv, color ) );
+                }
+                else
+                {
+                    batch.AddTriangle( render::primitive_vertex( RegInfo.m_pStaticPositions[iVert-0].Pos, uv, color ),
+                                       render::primitive_vertex( RegInfo.m_pStaticPositions[iVert-1].Pos, uv, color ),
+                                       render::primitive_vertex( RegInfo.m_pStaticPositions[iVert-2].Pos, uv, color ) );
+                }
             }
-            else
-            {
-                draw_Vertex     ( RegInfo.m_pStaticPositions[iVert-0].Pos );
-                draw_Vertex     ( RegInfo.m_pStaticPositions[iVert-1].Pos );
-                draw_Vertex     ( RegInfo.m_pStaticPositions[iVert-2].Pos );
-            }
+
+            WindingCW = !WindingCW;
         }
 
-        WindingCW = !WindingCW;
+        RegInfo.m_nStaticVerts = 0;
     }
 
-    // clear out the verts we have rendered
-    RegInfo.m_nStaticVerts = 0;
+    matrix4 identity;
+    identity.Identity();
+    batch.Submit( identity );
 }
 #endif
 
 //==============================================================================
 
-void decal_mgr::RenderStaticDecals( registration_info& RegInfo )
+void decal_mgr::BuildStaticSpans( void )
 {
-#ifdef X_EDITOR
-    // figure out the blend mode
-    u32 DrawFlags = DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_TEXTURED | DRAW_UV_CLAMP;
-    switch ( RegInfo.m_BlendMode )
+    m_StaticSpans.Clear();
+    if ( !m_pStaticData )
     {
-    default:
-    case decal_definition::DECAL_BLEND_NORMAL:
-    case decal_definition::DECAL_BLEND_INTENSITY:
-        break;
-
-    case decal_definition::DECAL_BLEND_ADD:
-        DrawFlags |= DRAW_BLEND_ADD;
-        break;
-
-    case decal_definition::DECAL_BLEND_SUBTRACT:
-        DrawFlags |= DRAW_BLEND_SUB;
-        break;
+        return;
     }
 
-    // draw the editor-side decals only
-    RenderEditorStatics( RegInfo, DrawFlags );
-    return;
-#else
-    // make sure this decal type has statics
-    if ( !m_pStaticData || RegInfo.m_StaticDataOffset == -1 )
-        return;
-
-    // render statics only if their zone is visible
-    static_data::definition& StaticDef = m_pStaticData->pDefinition[RegInfo.m_StaticDataOffset];
-    for ( s32 iZone = StaticDef.iZoneInfo;
-          iZone < (StaticDef.iZoneInfo+StaticDef.nZones);
-          iZone++ )
+    s32 const maxSpanCount = MAX( 1, m_pStaticData->nVerts / 3 );
+    if ( m_StaticSpans.GetCapacity() < maxSpanCount )
     {
-        static_data::zone_info& ZoneInfo = m_pStaticData->pZone[iZone];
-        if ( g_ZoneMgr.IsZoneVisible( (u8)ZoneInfo.Zone&0xff ) ||
-             g_ZoneMgr.IsZoneVisible( (u8)((ZoneInfo.Zone>>8)&0xff) ) )
+        m_StaticSpans.SetCapacity( maxSpanCount );
+    }
+
+    for ( s32 iReg = 0; iReg < m_RegisteredDefs.GetCount(); ++iReg )
+    {
+        registration_info& regInfo = m_RegisteredDefs[iReg];
+        regInfo.m_StaticSpanStart = m_StaticSpans.GetCount();
+        regInfo.m_StaticSpanCount = 0;
+        if ( regInfo.m_StaticDataOffset < 0 )
         {
-            RenderVerts( ZoneInfo.nVerts,
-                         &m_pStaticData->pPos[ZoneInfo.iVert],
-                         &m_pStaticData->pUV[ZoneInfo.iVert],
-                         &m_pStaticData->pColor[ZoneInfo.iVert] );
+            continue;
+        }
+
+        static_data::definition const& definition =
+            m_pStaticData->pDefinition[regInfo.m_StaticDataOffset];
+        for ( s32 iZone = definition.iZoneInfo;
+              iZone < definition.iZoneInfo + definition.nZones;
+              ++iZone )
+        {
+            static_data::zone_info const& zone = m_pStaticData->pZone[iZone];
+            s32 const rangeEnd = zone.iVert + zone.nVerts;
+            s32 spanStart = -1;
+            for ( s32 i = zone.iVert + 2; i <= rangeEnd; ++i )
+            {
+                xbool const isEnd = i == rangeEnd;
+                xbool const skipsTriangle =
+                    !isEnd && ( m_pStaticData->pPos[i].Flags & decal_vert::FLAG_SKIP_TRIANGLE );
+                if ( !isEnd && !skipsTriangle && ( spanStart < 0 ) )
+                {
+                    spanStart = i - 2;
+                }
+                if ( ( spanStart < 0 ) || ( !isEnd && !skipsTriangle ) )
+                {
+                    continue;
+                }
+
+                decal_span& span = m_StaticSpans.Append();
+                if ( BuildSpan( span, spanStart, i - spanStart, spanStart, i - spanStart,
+                                zone.Zone, m_pStaticData->pPos ) )
+                {
+                    ++regInfo.m_StaticSpanCount;
+                }
+                else
+                {
+                    m_StaticSpans.SetCount( m_StaticSpans.GetCount() - 1 );
+                }
+                spanStart = -1;
+            }
         }
     }
+}
+
+//==============================================================================
+
+xbool decal_mgr::RenderStaticDecals( registration_info& RegInfo, const texture& Texture )
+{
+#ifdef X_EDITOR
+    s32 const rangeEnd = RegInfo.m_nStaticVerts;
+    s32 spanStart = -1;
+    for ( s32 i = 2; i <= rangeEnd; ++i )
+    {
+        xbool const isEnd = i == rangeEnd;
+        xbool const skipsTriangle =
+            !isEnd && ( RegInfo.m_pStaticPositions[i].Flags & decal_vert::FLAG_SKIP_TRIANGLE );
+        if ( !isEnd && !skipsTriangle && ( spanStart < 0 ) )
+        {
+            spanStart = i - 2;
+        }
+        if ( ( spanStart < 0 ) || ( !isEnd && !skipsTriangle ) )
+        {
+            continue;
+        }
+
+        decal_span span;
+        if ( BuildSpan( span, spanStart, i - spanStart, spanStart, i - spanStart,
+                        0xffffffffu, RegInfo.m_pStaticPositions ) &&
+             !SubmitSpan( RegInfo, span, RegInfo.m_pStaticPositions, RegInfo.m_pStaticUVs,
+                          RegInfo.m_pStaticColors, Texture ) )
+        {
+            return FALSE;
+        }
+        spanStart = -1;
+    }
+    return TRUE;
+#else
+    if ( !m_pStaticData || ( RegInfo.m_StaticDataOffset == -1 ) )
+    {
+        return TRUE;
+    }
+
+    for ( s32 i = RegInfo.m_StaticSpanStart;
+          i < RegInfo.m_StaticSpanStart + RegInfo.m_StaticSpanCount;
+          ++i )
+    {
+        decal_span const& span = m_StaticSpans[i];
+        if ( g_ZoneMgr.IsZoneVisible( static_cast<u8>( span.Zone & 0xff ) ) ||
+             g_ZoneMgr.IsZoneVisible( static_cast<u8>( ( span.Zone >> 8 ) & 0xff ) ) )
+        {
+            if ( !SubmitSpan( RegInfo, span, m_pStaticData->pPos, m_pStaticData->pUV,
+                              m_pStaticData->pColor, Texture ) )
+            {
+                return FALSE;
+            }
+        }
+    }
+
+    return TRUE;
 #endif
 }
 

@@ -1,9 +1,9 @@
 #include "BlackOp_Cover_State.hpp"
-#include "..\Character.hpp"
-#include "navigation\coverNode.hpp"
-#include "objects\NewWeapon.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "soldier.hpp"
+#include "../Character.hpp"
+#include "Navigation/CoverNode.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Soldier.hpp"
 
 //=========================================================================
 // constants

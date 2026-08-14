@@ -1,20 +1,20 @@
 
 #include "AlienOrb.hpp"
 #include "AlienSpotter.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "Render\Render.hpp"
-#include "EventMgr\EventMgr.hpp"
-#include "render\LightMgr.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Characters\Soldiers\soldier.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "Render/Render.hpp"
+#include "EventMgr/EventMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Characters/Soldiers/Soldier.hpp"
 
 
 //=============================================================================
@@ -277,9 +277,9 @@ xbool alien_spotter::OnProperty( prop_query&   I    )
 
 //=============================================================================
 
-void alien_spotter::OnAdvanceLogic  ( f32 DeltaTime )
+void alien_spotter::OnAdvanceSimulation  ( f32 DeltaTime )
 {
-    turret::OnAdvanceLogic( DeltaTime );
+    turret::OnAdvanceSimulation( DeltaTime );
 
     m_TimeSinceLastOrbLaunch += DeltaTime;
     

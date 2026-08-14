@@ -2,7 +2,7 @@
 #include "x_memory.hpp"
 #include "x_files.hpp"
 #include "MemorySummary.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 mem_summary a51_mem_summary;
 

@@ -4,26 +4,26 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_textbox.hpp"
-#include "ui\ui_edit.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_textbox.hpp"
+#include "UI/ui_edit.hpp"
 
 #include "dlg_MultiOptions.hpp"
-#include "dlg_popup.hpp"
+#include "dlg_PopUp.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Parsing/textin.hpp"
-#include "StateMgr/mapList.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Parsing/TextIn.hpp"
+#include "StateMgr/MapList.hpp"
 #include "Configuration/GameConfig.hpp"
 
 //=========================================================================
@@ -50,7 +50,6 @@ enum controls
 #endif
     IDC_MULTI_OPTIONS_CONTINUE,
 
-    IDC_MULTI_OPTIONS_NAV_TEXT,
 };
 
 //-------------------------------------------------------------------------
@@ -58,23 +57,22 @@ enum controls
 ui_manager::control_tem MultiOptionsControls[] = 
 {
     // Frames.
-    { IDC_MULTI_OPTIONS_TIME_LIMIT,         "IDS_HOST_TIME_LIMIT",      "text",    40,  40, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_MULTI_OPTIONS_SCORE,              "IDS_HOST_SCORE",           "text",    40,  75, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_MULTI_OPTIONS_TIME_LIMIT,         "IDS_HOST_TIME_LIMIT",      "text",    40,  40, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_MULTI_OPTIONS_SCORE,              "IDS_HOST_SCORE",           "text",    40,  75, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
 #if defined (ALLOW_EXTENDED_OPTIONS)
-    { IDC_MULTI_OPTIONS_MUTATION,           "IDS_HOST_MUTATION",        "text",    40, 110, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_MULTI_OPTIONS_GAME_TYPE,          "IDS_HOST_GAME_TYPE",       "text",    40, 145, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_MULTI_OPTIONS_MUTATION,           "IDS_HOST_MUTATION",        "text",    40, 110, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_MULTI_OPTIONS_GAME_TYPE,          "IDS_HOST_GAME_TYPE",       "text",    40, 145, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
 #endif
 
-    { IDC_MULTI_OPTIONS_TIME_SELECTOR,      "IDS_NULL",                 "combo",  230,  40, 200, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_MULTI_OPTIONS_SCORE_SELECTOR,     "IDS_NULL",                 "combo",  230,  75, 200, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_MULTI_OPTIONS_TIME_SELECTOR,      "IDS_NULL",                 "combo",  230,  40, 200, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_MULTI_OPTIONS_SCORE_SELECTOR,     "IDS_NULL",                 "combo",  230,  75, 200, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE },
 #if defined (ALLOW_EXTENDED_OPTIONS)
-    { IDC_MULTI_OPTIONS_MUTATION_SELECTOR,  "IDS_NULL",                 "combo",  230, 110, 200, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_MULTI_OPTIONS_TYPE_SELECTOR,      "IDS_NULL",                 "combo",  230, 145, 200, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_MULTI_OPTIONS_MUTATION_SELECTOR,  "IDS_NULL",                 "combo",  230, 110, 200, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_MULTI_OPTIONS_TYPE_SELECTOR,      "IDS_NULL",                 "combo",  230, 145, 200, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE },
 #endif
 
-    { IDC_MULTI_OPTIONS_CONTINUE,           "IDS_HOST_CONTINUE",        "button",  40, 285, 180, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_MULTI_OPTIONS_CONTINUE,           "IDS_HOST_CONTINUE",        "button",  40, 285, 180, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_MULTI_OPTIONS_NAV_TEXT,           "IDS_NULL",                 "text",     0,   0,   0,  0,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -161,7 +159,6 @@ xbool dlg_multi_options::Create( s32                        UserID,
     m_pMutationText     = (ui_text*)FindChildByID( IDC_MULTI_OPTIONS_MUTATION   );
     m_pGameTypeText     = (ui_text*)FindChildByID( IDC_MULTI_OPTIONS_GAME_TYPE  );
 #endif
-    m_pNavText          = (ui_text*)FindChildByID( IDC_MULTI_OPTIONS_NAV_TEXT   );
 
     m_pTimeSelect       = (ui_combo*)FindChildByID( IDC_MULTI_OPTIONS_TIME_SELECTOR     );
     m_pScoreSelect      = (ui_combo*)FindChildByID( IDC_MULTI_OPTIONS_SCORE_SELECTOR    );
@@ -242,9 +239,7 @@ xbool dlg_multi_options::Create( s32                        UserID,
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
   
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // switch off the buttons to start
     m_pTimeLimitText    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
@@ -262,11 +257,10 @@ xbool dlg_multi_options::Create( s32                        UserID,
     m_pGameTypeSelect   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 #endif
 
-    m_pNavText          ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set initial highlight/control
     m_CurrHL = 4;
-    m_pContinueButton->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pContinueButton->SetActive( TRUE );
     GotoControl( (ui_control*)m_pContinueButton );
 
     // get pending settings 
@@ -408,7 +402,7 @@ void dlg_multi_options::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_multi_options::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_multi_options::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
@@ -417,29 +411,29 @@ void dlg_multi_options::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 
         {
             switch( Code )
             {
-                case ui_manager::NAV_LEFT:
-                case ui_manager::NAV_RIGHT:
+                case ui_navigation::Left:
+                case ui_navigation::Right:
                     // new game type selected - clear the map cycle
                     ResetMapCycle();
                     // reinitialize available mutation modes
                     InitializeMutationModes();
                     break;
                 default:
-                    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+                    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
                     break;
             }
         }
         else
 #endif
         {
-            ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+            ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
         }
     }
 }
 
 //=========================================================================
 
-void dlg_multi_options::OnPadBack( ui_win* pWin )
+void dlg_multi_options::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -452,7 +446,7 @@ void dlg_multi_options::OnPadBack( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_multi_options::OnPadSelect( ui_win* pWin )
+void dlg_multi_options::OnAccept( ui_win* pWin )
 {
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
@@ -473,11 +467,7 @@ void dlg_multi_options::OnPadSelect( ui_win* pWin )
             Settings.m_ScoreLimit   = m_pScoreSelect    ->GetSelectedItemData();
 
             // set max players
-#ifdef TARGET_XBOX
             g_PendingConfig.SetMaxPlayerCount( 4 );
-#else
-            g_PendingConfig.SetMaxPlayerCount( 2 );
-#endif
 
             // set game type
 #if defined (ALLOW_EXTENDED_OPTIONS)
@@ -560,10 +550,8 @@ void dlg_multi_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 #endif
             m_pContinueButton   ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 
-            m_pNavText          ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 
             GotoControl( (ui_control*)m_pContinueButton );
-            m_pContinueButton->SetFlag(WF_HIGHLIGHT, TRUE);  
             g_UiMgr->SetScreenHighlight( m_pContinueButton->GetPosition() );
         }
     }
@@ -572,7 +560,7 @@ void dlg_multi_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
     // update labels
-    if( m_pTimeSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pTimeSelect->IsFocused() )
     {
         highLight = 0;
         m_pTimeLimitText->SetLabelColor( xcolor(255,252,204,255) );
@@ -581,7 +569,7 @@ void dlg_multi_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pTimeLimitText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pScoreSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pScoreSelect->IsFocused() )
     {
         highLight = 1;
         m_pScoreText->SetLabelColor( xcolor(255,252,204,255) );
@@ -591,7 +579,7 @@ void dlg_multi_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         m_pScoreText->SetLabelColor( xcolor(126,220,60,255) );
 
 #if defined (ALLOW_EXTENDED_OPTIONS)
-    if( m_pMutationSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pMutationSelect->IsFocused() )
     {
         highLight = 2;
         m_pMutationText->SetLabelColor( xcolor(255,252,204,255) );
@@ -600,7 +588,7 @@ void dlg_multi_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pMutationText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pGameTypeSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pGameTypeSelect->IsFocused() )
     {
         highLight = 3;
         m_pGameTypeText->SetLabelColor( xcolor(255,252,204,255) );
@@ -610,7 +598,7 @@ void dlg_multi_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         m_pGameTypeText->SetLabelColor( xcolor(126,220,60,255) );
 #endif
 
-    if( m_pContinueButton->GetFlags(WF_HIGHLIGHT) )
+    if( m_pContinueButton->IsFocused() )
     {
         highLight = 4;
         g_UiMgr->SetScreenHighlight( m_pContinueButton->GetPosition() );

@@ -13,6 +13,13 @@
 #include "x_files.hpp"
 #include "io_dfs.hpp"
 
+#if defined( TARGET_PC )
+    #include <windows.h>
+#elif defined( TARGET_LINUX )
+    #include <dirent.h>
+    #include <sys/stat.h>
+#endif
+
 //==============================================================================
 //  IMPLEMENTATION
 //==============================================================================
@@ -40,7 +47,8 @@ dfs_header* dfs_InitHeaderFromRawPtr( void* pRawHeaderData, s32 Length )
     pHeader->StringsOffset      = LITTLE_ENDIAN_32( pHeader->StringsOffset      );
 
     // Make sure its valid!
-    if( (pHeader->Version == DFS_VERSION) )
+    if( (pHeader->Magic   == DFS_MAGIC) &&
+        (pHeader->Version == DFS_VERSION) )
     {
         dfs_file* pEntry;
         s32       i;
@@ -151,7 +159,7 @@ void dfs_BuildFileName( const dfs_header* pHeader, s32 iFile, char* pFileName )
 // DFS EMULATION
 //==============================================================================
 
-#ifdef TARGET_PC
+#if defined( TARGET_DESKTOP )
 struct dfs_emulated_entry
 {
     xstring RelPath;
@@ -175,15 +183,19 @@ struct dfs_string_entry
 
 //==============================================================================
 
-#ifdef TARGET_PC
+#if defined( TARGET_DESKTOP )
 static 
 void dfs_SplitRelativePath( const char* pRelativePath, xstring& Path, xstring& Name, xstring& Ext )
 {
     const char* pSlash = x_strrchr( pRelativePath, '\\' );
+    const char* pForwardSlash = x_strrchr( pRelativePath, '/' );
     const char* pBase = pRelativePath;
     Path.Clear();
     Name.Clear();
     Ext.Clear();
+
+    if( !pSlash || (pForwardSlash && (pForwardSlash > pSlash)) )
+        pSlash = pForwardSlash;
 
     if( pSlash )
     {
@@ -212,41 +224,63 @@ void dfs_SplitRelativePath( const char* pRelativePath, xstring& Path, xstring& N
         Name = pBase;
     }
 
+#if defined( TARGET_PC )
     if( Path.GetLength() > 0 ) Path.MakeUpper();
     if( Name.GetLength() > 0 ) Name.MakeUpper();
     if( Ext.GetLength()  > 0 ) Ext.MakeUpper();
+#endif
 }
 
 //==============================================================================
 
 static 
-u32 dfs_FindOrAddString( xarray<dfs_string_entry>& Table, u32& StringsLength, const xstring& Str )
+xbool dfs_FindOrAddString( xarray<dfs_string_entry>& Table, u64& StringsLength, const xstring& Str, u32& Offset )
 {
-    if( Str.GetLength() == 0 )
-        return 0;
+    const s32 StringLength = Str.GetLength();
+
+    if( StringLength == 0 )
+    {
+        Offset = 0;
+        return TRUE;
+    }
+
+    if( StringLength < 0 )
+        return FALSE;
 
     for( s32 i = 0; i < Table.GetCount(); i++ )
     {
         if( Table[i].Str == Str )
-            return Table[i].Offset;
+        {
+            Offset = Table[i].Offset;
+            return TRUE;
+        }
+    }
+
+    const u64 StringBytes = (u64)StringLength + 1;
+    if( (StringBytes > (u64)S32_MAX) ||
+        (StringsLength > ((u64)S32_MAX - StringBytes)) )
+    {
+        return FALSE;
     }
 
     dfs_string_entry& Entry = Table.Append();
     Entry.Str    = Str;
-    Entry.Offset = StringsLength;
-    StringsLength += (u32)Str.GetLength() + 1;
-    return Entry.Offset;
+    Entry.Offset = (u32)StringsLength;
+    Offset       = Entry.Offset;
+    StringsLength += StringBytes;
+    return TRUE;
 }
 
 //==============================================================================
 
 static 
-void dfs_CollectFiles( const char* pRootPath, const char* pRelativePath, xarray<dfs_emulated_entry>& Entries, s32 Depth = 0 )
+xbool dfs_CollectFiles( const char* pRootPath, const char* pRelativePath, xarray<dfs_emulated_entry>& Entries, s32 Depth = 0 )
 {
     ASSERT( Depth <= 64 );
     if( Depth > 64 )
-        return;
+        return FALSE;
 	
+#if defined( TARGET_PC )
     char SearchPath[X_MAX_PATH];
     WIN32_FIND_DATA FindData;
     HANDLE hFind;
@@ -258,7 +292,7 @@ void dfs_CollectFiles( const char* pRootPath, const char* pRelativePath, xarray<
 
     hFind = FindFirstFile( SearchPath, &FindData );
     if( hFind == INVALID_HANDLE_VALUE )
-        return;
+        return FALSE;
 
     do
     {
@@ -276,17 +310,27 @@ void dfs_CollectFiles( const char* pRootPath, const char* pRelativePath, xarray<
             else
                 x_sprintf( NextRelative, "%s", FindData.cFileName );
 
-            dfs_CollectFiles( pRootPath, NextRelative, Entries, Depth + 1 );
+            if( !dfs_CollectFiles( pRootPath, NextRelative, Entries, Depth + 1 ) )
+            {
+                FindClose( hFind );
+                return FALSE;
+            }
         }
         else
         {
+            if( FindData.nFileSizeHigh != 0 )  // Files >4 GB not supported.
+            {
+                ASSERTS( FALSE, "DFS emulation does not support files larger than 4 GiB" );
+                FindClose( hFind );
+                return FALSE;
+            }
+
             dfs_emulated_entry& Entry = Entries.Append();
             if( pRelativePath && *pRelativePath )
                 Entry.RelPath = xfs( "%s\\%s", pRelativePath, FindData.cFileName );
             else
                 Entry.RelPath = FindData.cFileName;
 
-            ASSERT( FindData.nFileSizeHigh == 0 );  // Files >4 GB not supported.
             Entry.Length = FindData.nFileSizeLow;
             Entry.PathOffset  = 0;
             Entry.Name1Offset = 0;
@@ -295,6 +339,82 @@ void dfs_CollectFiles( const char* pRootPath, const char* pRelativePath, xarray<
     } while( FindNextFile( hFind, &FindData ) );
 
     FindClose( hFind );
+    return TRUE;
+#elif defined( TARGET_LINUX )
+    char SearchPath[X_MAX_PATH];
+    DIR* pDirectory;
+    struct dirent* pDirectoryEntry;
+
+    if( pRelativePath && *pRelativePath )
+        x_sprintf( SearchPath, "%s/%s", pRootPath, pRelativePath );
+    else
+        x_sprintf( SearchPath, "%s", pRootPath );
+
+    pDirectory = opendir( SearchPath );
+    if( !pDirectory )
+        return FALSE;
+
+    while( (pDirectoryEntry = readdir( pDirectory )) != NULL )
+    {
+        const char* pName = pDirectoryEntry->d_name;
+        char FullPath[X_MAX_PATH];
+        struct stat FileStat;
+
+        if( (pName[0] == '.') &&
+            ((pName[1] == 0) || ((pName[1] == '.') && (pName[2] == 0))) )
+        {
+            continue;
+        }
+
+        if( pRelativePath && *pRelativePath )
+            x_sprintf( FullPath, "%s/%s/%s", pRootPath, pRelativePath, pName );
+        else
+            x_sprintf( FullPath, "%s/%s", pRootPath, pName );
+
+        // lstat keeps symlinks from turning into directory recursion loops.
+        if( lstat( FullPath, &FileStat ) != 0 )
+            continue;
+
+        if( S_ISDIR( FileStat.st_mode ) )
+        {
+            char NextRelative[X_MAX_PATH];
+            if( pRelativePath && *pRelativePath )
+                x_sprintf( NextRelative, "%s/%s", pRelativePath, pName );
+            else
+                x_sprintf( NextRelative, "%s", pName );
+
+            if( !dfs_CollectFiles( pRootPath, NextRelative, Entries, Depth + 1 ) )
+            {
+                closedir( pDirectory );
+                return FALSE;
+            }
+        }
+        else if( S_ISREG( FileStat.st_mode ) )
+        {
+            // DFS stores lengths as u32, so files larger than 4 GiB are not supported.
+            if( (FileStat.st_size < 0) || ((u64)FileStat.st_size > (u64)U32_MAX) )
+            {
+                ASSERTS( FALSE, "DFS emulation does not support files larger than 4 GiB" );
+                closedir( pDirectory );
+                return FALSE;
+            }
+
+            dfs_emulated_entry& Entry = Entries.Append();
+            if( pRelativePath && *pRelativePath )
+                Entry.RelPath = xfs( "%s/%s", pRelativePath, pName );
+            else
+                Entry.RelPath = pName;
+
+            Entry.Length      = (u32)FileStat.st_size;
+            Entry.PathOffset  = 0;
+            Entry.Name1Offset = 0;
+            Entry.ExtOffset   = 0;
+        }
+    }
+
+    closedir( pDirectory );
+    return TRUE;
+#endif
 }
 #endif
 
@@ -302,17 +422,18 @@ void dfs_CollectFiles( const char* pRootPath, const char* pRelativePath, xarray<
 
 dfs_header* dfs_BuildHeaderFromDirectory( const char* pRootPath )
 {
-#ifdef TARGET_PC
+#if defined( TARGET_DESKTOP )
     xarray<dfs_emulated_entry> Entries;
     xarray<dfs_string_entry>   StringTable;
-    u32 TotalDataSize = 0;
-    u32 StringsLength = 1;
+    u64 TotalDataSize = 0;
+    u64 StringsLength = 1;
     s32 i;
 
     if( (pRootPath == NULL) || (*pRootPath == 0) )
         return NULL;
 
-    dfs_CollectFiles( pRootPath, "", Entries, 0 );
+    if( !dfs_CollectFiles( pRootPath, "", Entries, 0 ) )
+        return NULL;
 
     if( Entries.GetCount() == 0 )
         return NULL;
@@ -322,46 +443,68 @@ dfs_header* dfs_BuildHeaderFromDirectory( const char* pRootPath )
     {
         dfs_SplitRelativePath( Entries[i].RelPath, Entries[i].Path, Entries[i].Name, Entries[i].Ext );
 
-        Entries[i].PathOffset  = dfs_FindOrAddString( StringTable, StringsLength, Entries[i].Path );
-        Entries[i].Name1Offset = dfs_FindOrAddString( StringTable, StringsLength, Entries[i].Name );
-        Entries[i].ExtOffset   = dfs_FindOrAddString( StringTable, StringsLength, Entries[i].Ext  );
+        if( !dfs_FindOrAddString( StringTable, StringsLength, Entries[i].Path, Entries[i].PathOffset ) ||
+            !dfs_FindOrAddString( StringTable, StringsLength, Entries[i].Name, Entries[i].Name1Offset ) ||
+            !dfs_FindOrAddString( StringTable, StringsLength, Entries[i].Ext,  Entries[i].ExtOffset ) )
+        {
+            ASSERTS( FALSE, "DFS string table exceeds the signed 32-bit DFS limit" );
+            return NULL;
+        }
 
         TotalDataSize += Entries[i].Length;
+
+        // The sub-file offset stores an end sentinel at TotalDataSize + 1.
+        if( TotalDataSize >= (u64)U32_MAX )
+        {
+            ASSERTS( FALSE, "DFS emulated data exceeds the 32-bit DFS offset limit" );
+            return NULL;
+        }
     }
 
-    u32 HeaderSize   = sizeof(dfs_header);
-    u32 SubFileSize  = sizeof(dfs_subfile);
-    u32 FileSize     = sizeof(dfs_file) * Entries.GetCount();
-    u32 TotalSize    = HeaderSize + SubFileSize + FileSize + StringsLength;
-    byte* pBuffer    = (byte*)x_malloc( TotalSize );
+    const u64 HeaderSize  = sizeof(dfs_header);
+    const u64 SubFileSize = sizeof(dfs_subfile);
+    const u64 FileSize    = (u64)sizeof(dfs_file) * (u64)Entries.GetCount();
+    const u64 TotalSize   = HeaderSize + SubFileSize + FileSize + StringsLength;
+
+    // x_malloc/x_memset take s32 sizes, and DFS offsets are u32 values.
+    if( (StringsLength > (u64)S32_MAX) ||
+        (TotalSize > (u64)S32_MAX) ||
+        (TotalSize > (u64)U32_MAX) )
+    {
+        ASSERTS( FALSE, "DFS header exceeds the supported allocation or format limit" );
+        return NULL;
+    }
+
+    const s32 BufferSize = (s32)TotalSize;
+    byte* pBuffer = (byte*)x_malloc( BufferSize );
     dfs_header* pHeader;
 
     if( !pBuffer )
         return NULL;
 
-    x_memset( pBuffer, 0, TotalSize );
+    x_memset( pBuffer, 0, BufferSize );
     pHeader = (dfs_header*)pBuffer;
 
     pHeader->Magic         = DFS_MAGIC;
     pHeader->Version       = DFS_VERSION;
     pHeader->Checksum      = 0;
     pHeader->SectorSize    = 32768;
-    pHeader->SplitSize     = TotalDataSize;
+    pHeader->SplitSize     = (u32)TotalDataSize;
     pHeader->nFiles        = Entries.GetCount();
     pHeader->nSubFiles     = 1;
-    pHeader->StringsLength = StringsLength;
+    pHeader->StringsLength = (s32)StringsLength;
 
-    pHeader->SubFileTableOffset = HeaderSize;
-    pHeader->FilesOffset        = HeaderSize + SubFileSize;
+    pHeader->SubFileTableOffset = (u32)HeaderSize;
+    pHeader->FilesOffset        = (u32)(HeaderSize + SubFileSize);
     pHeader->ChecksumsOffset    = NULL;
-    pHeader->StringsOffset      = HeaderSize + SubFileSize + FileSize;
+    pHeader->StringsOffset      = (u32)(HeaderSize + SubFileSize + FileSize);
 
     dfs_subfile* pSubFiles = dfs_GetSubFileTable( pHeader );
     dfs_file*    pFiles    = dfs_GetFiles( pHeader );
     char*        pStrings  = dfs_GetStrings( pHeader );
 
     // Offset is set one past total data size as an end of data sentinel.
-    pSubFiles[0].Offset        = TotalDataSize + 1;
+    pSubFiles[0].Offset        = (u32)(TotalDataSize + 1);
     pSubFiles[0].ChecksumIndex = 0;
 
     pStrings[0] = 0;
@@ -374,7 +517,7 @@ dfs_header* dfs_BuildHeaderFromDirectory( const char* pRootPath )
     }
 
     // Write file entries using cached offsets from first pass.
-    u32 DataOffset = 0;
+    u64 DataOffset = 0;
     for( i=0 ; i<Entries.GetCount() ; i++ )
     {
         dfs_file& File = pFiles[i];
@@ -383,7 +526,7 @@ dfs_header* dfs_BuildHeaderFromDirectory( const char* pRootPath )
         File.FileNameOffset1 = Entries[i].Name1Offset;
         File.FileNameOffset2 = 0;
         File.ExtNameOffset   = Entries[i].ExtOffset;
-        File.DataOffset      = DataOffset;
+        File.DataOffset      = (u32)DataOffset;
         File.Length          = Entries[i].Length;
 
         DataOffset += Entries[i].Length;

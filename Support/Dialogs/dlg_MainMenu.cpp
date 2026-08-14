@@ -4,18 +4,19 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_MainMenu.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "StringMgr\StringMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
 #include "Configuration/GameConfig.hpp"
+
 
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
@@ -29,16 +30,15 @@
 
 ui_manager::control_tem MainMenuControls[] = 
 {
-    { IDC_MAIN_MENU_CAMPAIGN,           "IDS_MAIN_MENU_CAMPAIGN",   "button",   60, 40,  120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_MAIN_MENU_MULTI,              "IDS_MAIN_MENU_MULTI",      "button",   60, 80,  120, 40, 0, 1, 1, 1,  ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },	
-    { IDC_MAIN_MENU_ONLINE,             "IDS_MAIN_MENU_ONLINE",     "button",   60, 120, 120, 40, 0, 2, 1, 1,  ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_MAIN_MENU_SETTINGS,           "IDS_MAIN_MENU_SETTINGS",   "button",   60, 160, 120, 40, 0, 3, 1, 1,  ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_MAIN_MENU_PROFILES,           "IDS_MAIN_MENU_PROFILES",   "button",   60, 200, 120, 40, 0, 4, 1, 1,  ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_MAIN_MENU_CREDITS,            "IDS_EXTRAS_ITEM_CREDITS",  "button",   60, 240, 120, 40, 0, 5, 1, 1,  ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-#if defined(TARGET_PC)		                                                                                   
-    { IDC_MAIN_MENU_EXIT,               "IDS_MAIN_MENU_QUIT",       "button",   60, 280, 120, 40, 0, 6, 1, 1,  ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_MAIN_MENU_CAMPAIGN,           "IDS_MAIN_MENU_CAMPAIGN",   "button",   60, 40,  120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_MAIN_MENU_MULTI,              "IDS_MAIN_MENU_MULTI",      "button",   60, 80,  120, 40, 0, 1, 1, 1,  ui_win::WF_VISIBLE },
+    { IDC_MAIN_MENU_ONLINE,             "IDS_MAIN_MENU_ONLINE",     "button",   60, 120, 120, 40, 0, 2, 1, 1,  ui_win::WF_VISIBLE },
+    { IDC_MAIN_MENU_SETTINGS,           "IDS_MAIN_MENU_SETTINGS",   "button",   60, 160, 120, 40, 0, 3, 1, 1,  ui_win::WF_VISIBLE },
+    { IDC_MAIN_MENU_PROFILES,           "IDS_MAIN_MENU_PROFILES",   "button",   60, 200, 120, 40, 0, 4, 1, 1,  ui_win::WF_VISIBLE },
+    { IDC_MAIN_MENU_CREDITS,            "IDS_EXTRAS_ITEM_CREDITS",  "button",   60, 240, 120, 40, 0, 5, 1, 1,  ui_win::WF_VISIBLE },
+#if defined(TARGET_DESKTOP)		                                                                                   
+    { IDC_MAIN_MENU_EXIT,               "IDS_MAIN_MENU_QUIT",       "button",   60, 280, 120, 40, 0, 6, 1, 1,  ui_win::WF_VISIBLE },
 #endif	                                                                                                       
-    { IDC_MAIN_MENU_NAV_TEXT,           "IDS_NULL",                 "text",      0,   0,   0,  0, 0, 0, 0, 0,  ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 }; 
 
 ui_manager::dialog_tem MainMenuDialog =
@@ -53,6 +53,10 @@ ui_manager::dialog_tem MainMenuDialog =
 //=========================================================================
 //  Defines
 //=========================================================================
+
+static const s32 MAIN_MENU_LOGO_WIDTH  = 128;
+static const s32 MAIN_MENU_LOGO_HEIGHT =  32;
+static const s32 MAIN_MENU_LOGO_TOP    =   2;
 
 //=========================================================================
 //  Structs
@@ -89,6 +93,7 @@ ui_win* dlg_main_menu_factory( s32 UserID, ui_manager* pManager, ui_manager::dia
 
 dlg_main_menu::dlg_main_menu( void )
 {
+    m_LogoBitmapID = -1;
 }
 
 //=========================================================================
@@ -116,16 +121,20 @@ xbool dlg_main_menu::Create( s32                        UserID,
     // Do dialog creation
     Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
+    // Place Area 51 logo here
+    m_Label.Clear();
+    m_LogoBitmapID = g_UiMgr->FindBitmap( "a51_logo" );
+    ASSERT( m_LogoBitmapID >= 0 );
+
     m_pButtonCampaign       = (ui_button*)  FindChildByID( IDC_MAIN_MENU_CAMPAIGN           );
     m_pButtonMultiPlayer    = (ui_button*)  FindChildByID( IDC_MAIN_MENU_MULTI              );
     m_pButtonOnline         = (ui_button*)  FindChildByID( IDC_MAIN_MENU_ONLINE             );
     m_pButtonSettings       = (ui_button*)  FindChildByID( IDC_MAIN_MENU_SETTINGS           );
     m_pButtonProfiles       = (ui_button*)  FindChildByID( IDC_MAIN_MENU_PROFILES           );
     m_pButtonCredits        = (ui_button*)  FindChildByID( IDC_MAIN_MENU_CREDITS            );
-#if defined(TARGET_PC)		
+#if defined(TARGET_DESKTOP)		
     m_pButtonExit           = (ui_button*)  FindChildByID( IDC_MAIN_MENU_EXIT               );
 #endif	
-    m_pNavText              = (ui_text*)    FindChildByID( IDC_MAIN_MENU_NAV_TEXT           );
 
     s32 iControl = g_StateMgr.GetCurrentControl();
     if( (iControl == -1) || (GotoControl(iControl)==NULL) )
@@ -149,20 +158,17 @@ xbool dlg_main_menu::Create( s32                        UserID,
     m_pButtonSettings     ->SetFlag(ui_win::WF_VISIBLE, FALSE);    
     m_pButtonProfiles     ->SetFlag(ui_win::WF_VISIBLE, FALSE);    
     m_pButtonCredits      ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-#if defined(TARGET_PC)	
+#if defined(TARGET_DESKTOP)	
     m_pButtonExit         ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 #endif	
-    m_pNavText            ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-#if defined(TARGET_PC) || defined(LAN_PARTY_BUILD)
+#if defined(TARGET_DESKTOP) || defined(LAN_PARTY_BUILD)
     m_pButtonMultiPlayer  ->SetFlag(ui_win::WF_DISABLED, TRUE);
 #endif
 
     // set up nav text 
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
 
-    m_pNavText->SetLabel( xwstring(navText) );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( xwstring(navText) );
 
     // set the number of players to 0
     g_PendingConfig.SetPlayerCount( 0 );
@@ -254,6 +260,17 @@ void dlg_main_menu::Render( s32 ox, s32 oy )
     // render the normal dialog stuff
     ui_dialog::Render( ox, oy );
 
+    if( !g_UiMgr->IsScreenScaling() && (m_LogoBitmapID >= 0) )
+    {
+        const s32 LogoLeft = m_Position.l + ox + (m_Position.GetWidth() - MAIN_MENU_LOGO_WIDTH) / 2;
+        const s32 LogoTop  = m_Position.t + oy + MAIN_MENU_LOGO_TOP;
+        const irect LogoPosition( LogoLeft,
+                                  LogoTop,
+                                  LogoLeft + MAIN_MENU_LOGO_WIDTH,
+                                  LogoTop  + MAIN_MENU_LOGO_HEIGHT );
+        g_UiMgr->RenderBitmap( m_LogoBitmapID, LogoPosition, XCOLOR_WHITE );
+    }
+
     // render the glow bar
     g_UiMgr->RenderGlowBar();
 
@@ -261,7 +278,7 @@ void dlg_main_menu::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_main_menu::OnPadSelect( ui_win* pWin )
+void dlg_main_menu::OnAccept( ui_win* pWin )
 {
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
@@ -301,7 +318,7 @@ void dlg_main_menu::OnPadSelect( ui_win* pWin )
             m_CurrentControl = IDC_MAIN_MENU_CREDITS;
             m_State = DIALOG_STATE_SELECT;
         }
-#if defined(TARGET_PC)			
+#if defined(TARGET_DESKTOP)			
         else if( pWin == (ui_win*)m_pButtonExit )
         {
             g_AudioMgr.Play("Select_Norm");
@@ -309,11 +326,11 @@ void dlg_main_menu::OnPadSelect( ui_win* pWin )
             {
                 m_PopUpResult = DLG_POPUP_IDLE;
                 irect r = g_UiMgr->GetUserBounds( m_UserID );
-                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog( m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog( m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL );
 
                 xwstring navText( g_StringTableMgr( "ui", "IDS_NAV_YES" ) );
                 navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                SetNavTextVisible( FALSE );
 
                 m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_APP_EXIT_VERIFY_TITLE" ),
                                     TRUE,
@@ -349,16 +366,14 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pButtonSettings     ->SetFlag(ui_win::WF_VISIBLE, TRUE);    
             m_pButtonProfiles     ->SetFlag(ui_win::WF_VISIBLE, TRUE);    
             m_pButtonCredits      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-#if defined(TARGET_PC)			
+#if defined(TARGET_DESKTOP)			
             m_pButtonExit         ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 #endif			
-            m_pNavText            ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 
             s32 iControl = g_StateMgr.GetCurrentControl();
             if( (iControl == -1) || (GotoControl(iControl)==NULL) )
             {
                 GotoControl( (ui_control*)m_pButtonCampaign );
-                m_pButtonCampaign->SetFlag(WF_HIGHLIGHT, TRUE);        
                 g_UiMgr->SetScreenHighlight( m_pButtonCampaign->GetPosition() );
                 m_CurrentControl =  IDC_MAIN_MENU_CAMPAIGN;
             }
@@ -366,7 +381,6 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             {
                 ui_control* pControl = GotoControl( iControl );
                 ASSERT( pControl );
-                pControl->SetFlag(WF_HIGHLIGHT, TRUE);
                 g_UiMgr->SetScreenHighlight(pControl->GetPosition() );
                 m_CurrentControl = iControl;
             }
@@ -380,7 +394,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         }
     }
 
-#if defined(TARGET_PC)
+#if defined(TARGET_DESKTOP)
     // check exit popup result
     if( m_PopUp )
     {
@@ -388,8 +402,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         {
             if( m_PopUpResult == DLG_POPUP_YES )
             {
-				// GS: TODO: Fix game exit for memcards, threads and etc...
-                PostQuitMessage(0);
+                g_StateMgr.Reboot( REBOOT_QUIT );
             }
             else
             {
@@ -401,7 +414,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp = NULL;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
         }
     }
 #endif	
@@ -409,38 +422,38 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     // update the glow bar
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
-    if( m_pButtonCampaign->GetFlags(WF_HIGHLIGHT) )
+    if( m_pButtonCampaign->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonCampaign->GetPosition() );
         highLight = 0;
     }
-    else if( m_pButtonMultiPlayer->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonMultiPlayer->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonMultiPlayer->GetPosition() );
         highLight = 1;
     }
-    else if( m_pButtonOnline->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonOnline->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonOnline->GetPosition() );
         highLight = 2;
     }
-    else if( m_pButtonSettings->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonSettings->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonSettings->GetPosition() );
         highLight = 3;
     }
-    else if( m_pButtonProfiles->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonProfiles->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonProfiles->GetPosition() );
         highLight = 4;
     }
-    else if( m_pButtonCredits->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonCredits->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonCredits->GetPosition() );
         highLight = 5;
     }
-#if defined(TARGET_PC)	
-    else if( m_pButtonExit->GetFlags(WF_HIGHLIGHT) )
+#if defined(TARGET_DESKTOP)	
+    else if( m_pButtonExit->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonExit->GetPosition() );
         highLight = 6;
@@ -460,8 +473,8 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     if( !m_bCheckKeySequence )
     {
     #if defined(TARGET_PC)
-        if( g_Input.IsPressed( INPUT_PS2_BTN_START,   0 ) &&
-            g_Input.IsPressed( INPUT_PS2_BTN_SELECT,  0 ) )
+        if( g_Input.GetFrameSnapshot().IsPressed( INPUT_PS2_BTN_START,   0 ) &&
+            g_Input.GetFrameSnapshot().IsPressed( INPUT_PS2_BTN_SELECT,  0 ) )
     #else
         ASSERT(0);
     #endif
@@ -473,7 +486,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
     {
     #if defined(TARGET_PC)
-        if( g_Input.WasPressed( INPUT_PS2_BTN_L_UP,  0 ) )
+        if( g_Input.GetFrameSnapshot().WasPressed( INPUT_PS2_BTN_L_UP,  0 ) )
     #else
         ASSERT(0);
     #endif
@@ -481,7 +494,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             g_Config.AutoServer = TRUE;
         }
     #if defined(TARGET_PC)
-        else if( g_Input.WasPressed( INPUT_PS2_BTN_L_DOWN, 0 ) )
+        else if( g_Input.GetFrameSnapshot().WasPressed( INPUT_PS2_BTN_L_DOWN, 0 ) )
     #else
         ASSERT(0);
     #endif

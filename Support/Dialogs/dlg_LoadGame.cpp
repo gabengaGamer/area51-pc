@@ -6,19 +6,17 @@
 
 // TODO: GS: Make better text effects.
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 #include "dlg_LoadGame.hpp"
-#include "StateMgr\StateMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
 
-#include "ui\ui_font.hpp"
-#include "e_VRAM.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_renderer.hpp"
 
 //=========================================================================
 //  Layout
 //=========================================================================
 
-#define LOAD_BASE_WIDTH             512
-#define LOAD_BASE_HEIGHT            448
 #define FINAL_FADE_OUT_TIME         1.0f
 #define SLIDESHOW_MAX_AUDIO_ERROR_TIME (2.5f / 30.0f)
 #define SLIDESHOW_MAX_AUDIO_ERROR_FIX  (1.0f / 3.0f)
@@ -142,12 +140,25 @@ void dlg_load_game::ResetSlides( void )
 {
     for( s32 i = 0; i < NUM_SLIDES; i++ )
     {
+        ReleaseSlide( m_Slides[i] );
         m_Slides[i].StartFadeIn  = 0.0f;
         m_Slides[i].EndFadeIn    = 1.0f;
         m_Slides[i].StartFadeOut = 2.0f;
         m_Slides[i].EndFadeOut   = 3.0f;
         m_Slides[i].SlideColor   = XCOLOR_WHITE;
-        m_Slides[i].HasImage     = FALSE;
+    }
+}
+
+//=========================================================================
+
+void dlg_load_game::ReleaseSlide( slide_info& Slide )
+{
+    if( Slide.BitmapName.GetLength() > 0 )
+    {
+        if( g_UiMgr )
+            g_UiMgr->UnloadBitmap( Slide.BitmapName );
+
+        Slide.BitmapName = "";
     }
 }
 
@@ -156,15 +167,7 @@ void dlg_load_game::ResetSlides( void )
 void dlg_load_game::ReleaseSlides( void )
 {
     for( s32 i = 0; i < NUM_SLIDES; i++ )
-    {
-        if( m_Slides[i].HasImage )
-        {
-            vram_Unregister( m_Slides[i].BMP );
-            m_Slides[i].HasImage = FALSE;
-        }
-
-        m_Slides[i].BMP.Kill();
-    }
+        ReleaseSlide( m_Slides[i] );
 }
 
 //=========================================================================
@@ -233,8 +236,8 @@ irect dlg_load_game::ScaleBaseRect( s32 L, s32 T, s32 R, s32 B ) const
 {
     const irect& Bounds = g_UiMgr->GetUserBounds( g_UiUserID );
 
-    f32 ScaleX = (f32)Bounds.GetWidth()  / (f32)LOAD_BASE_WIDTH;
-    f32 ScaleY = (f32)Bounds.GetHeight() / (f32)LOAD_BASE_HEIGHT;
+    f32 ScaleX = (f32)Bounds.GetWidth()  / (f32)ui_viewport::CONTENT_WIDTH;
+    f32 ScaleY = (f32)Bounds.GetHeight() / (f32)ui_viewport::CONTENT_HEIGHT;
 
     irect Result;
     Result.l = Bounds.l + (s32)((f32)L * ScaleX);
@@ -293,31 +296,25 @@ s32 dlg_load_game::GetSlideAlpha( const slide_info& Slide, f32 Time ) const
 
 void dlg_load_game::RenderFullscreen( xcolor Color )
 {
-    draw_Rect( GetScreenRect(), Color, FALSE, DRAW_UI_RTARGET );
+    g_UIRenderer.DrawRect( GetScreenRect(), Color );
 }
 
 //=========================================================================
 
 void dlg_load_game::RenderSlideImage( const slide_info& Slide, xcolor Color )
 {
-    irect Screen = GetScreenRect();
+    if( !g_UiMgr )
+        return;
 
-    draw_EnableBilinear();
-    draw_Begin( DRAW_SPRITES, DRAW_2D          |
-                              DRAW_TEXTURED    |
-                              DRAW_USE_ALPHA   |
-                              DRAW_NO_ZBUFFER  |
-                              DRAW_NO_ZWRITE   |
-                              DRAW_UV_CLAMP    |
-                              DRAW_CULL_NONE   |
-                              DRAW_UI_RTARGET );
-    draw_SetTexture( Slide.BMP );
-    draw_SpriteUV( vector3( (f32)Screen.l, (f32)Screen.t, 0.5f ),
-                   vector2( (f32)Screen.GetWidth(), (f32)Screen.GetHeight() ),
-                   vector2( 0.0f, 0.0f ),
-                   vector2( 1.0f, 1.0f ),
-                   Color );
-    draw_End();
+    const s32 BitmapID = g_UiMgr->FindBitmap( Slide.BitmapName );
+    if( BitmapID >= 0 )
+    {
+        g_UiMgr->RenderBitmapUV( BitmapID,
+                                 GetScreenRect(),
+                                 vector2( 0.0f, 0.0f ),
+                                 vector2( 1.0f, 1.0f ),
+                                 Color );
+    }
 }
 
 //=========================================================================
@@ -331,8 +328,8 @@ void dlg_load_game::RenderLevelName( s32 NameAlpha, f32 ShadowOffsetX, f32 Shado
     irect TextRect = GetLevelNameRect();
     u32   TextFlags = ui_font::h_right | ui_font::v_bottom;
 
-    f32 ScaleX = (f32)GetScreenRect().GetWidth()  / (f32)LOAD_BASE_WIDTH;
-    f32 ScaleY = (f32)GetScreenRect().GetHeight() / (f32)LOAD_BASE_HEIGHT;
+    f32 ScaleX = (f32)GetScreenRect().GetWidth()  / (f32)ui_viewport::CONTENT_WIDTH;
+    f32 ScaleY = (f32)GetScreenRect().GetHeight() / (f32)ui_viewport::CONTENT_HEIGHT;
 
     //irect ShadowRect = TextRect;
     //ShadowRect.Translate( (s32)(2.0f * ScaleX), (s32)(2.0f * ScaleY) );
@@ -369,10 +366,10 @@ void dlg_load_game::Render( s32 ox, s32 oy )
     (void)ox;
     (void)oy;
 
+    RenderFullscreen( XCOLOR_BLACK );
+
     if( (m_SlideshowState == STATE_IDLE) || (m_SlideshowState == STATE_SETUP) )
         return;
-
-    RenderFullscreen( XCOLOR_BLACK );
 
     s32 SlideAlphas[NUM_SLIDES];
     x_memset( SlideAlphas, 0, sizeof(SlideAlphas) );
@@ -445,7 +442,7 @@ void dlg_load_game::Render( s32 ox, s32 oy )
                   m_Slides[i].SlideColor.B,
                   (u8)SlideAlphas[i] );
 
-        if( m_Slides[i].HasImage )
+        if( m_Slides[i].BitmapName.GetLength() > 0 )
             RenderSlideImage( m_Slides[i], C );
         else
             RenderFullscreen( C );
@@ -465,7 +462,7 @@ void dlg_load_game::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_load_game::OnPadSelect( ui_win* pWin )
+void dlg_load_game::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -484,14 +481,6 @@ void dlg_load_game::OnPadSelect( ui_win* pWin )
 void dlg_load_game::OnUpdate( ui_win* pWin, f32 DeltaTime )
 {
     (void)pWin;
-
-    if( (m_SlideshowState != STATE_IDLE) &&
-        (m_SlideshowState != STATE_SETUP) &&
-        g_StateMgr.IsBackgroundThreadRunning() )
-    {
-        g_AudioMgr.Update( DeltaTime );
-        g_UiMgr->ProcessInput( DeltaTime );
-    }
 
     if( m_SlideshowState == STATE_SLIDESHOW )
     {
@@ -583,6 +572,7 @@ void dlg_load_game::SetNSlides( s32 nSlides )
     ASSERT( m_SlideshowState == STATE_SETUP );
     ASSERT( nSlides <= NUM_SLIDES );
 
+    ReleaseSlides();
     m_nSlides = MIN( nSlides, NUM_SLIDES );
 
     for( s32 i = 0; i < m_nSlides; i++ )
@@ -592,7 +582,6 @@ void dlg_load_game::SetNSlides( s32 nSlides )
         m_Slides[i].StartFadeOut = 2.0f;
         m_Slides[i].EndFadeOut   = 3.0f;
         m_Slides[i].SlideColor   = XCOLOR_WHITE;
-        m_Slides[i].HasImage     = FALSE;
     }
 }
 
@@ -612,12 +601,7 @@ void dlg_load_game::SetSlideInfo( s32         Index,
     if( (Index < 0) || (Index >= m_nSlides) )
         return;
 
-    if( m_Slides[Index].HasImage )
-    {
-        vram_Unregister( m_Slides[Index].BMP );
-        m_Slides[Index].BMP.Kill();
-        m_Slides[Index].HasImage = FALSE;
-    }
+    ReleaseSlide( m_Slides[Index] );
 
     m_Slides[Index].StartFadeIn  = StartFadeIn;
     m_Slides[Index].EndFadeIn    = EndFadeIn;
@@ -627,14 +611,10 @@ void dlg_load_game::SetSlideInfo( s32         Index,
 
     if( pTextureName && x_stricmp( pTextureName, "<NULL>" ) )
     {
-        if( m_Slides[Index].BMP.Load( pTextureName ) )
+        const xstring BitmapName = xfs( "load_game_slide_%02d", Index );
+        if( g_UiMgr && (g_UiMgr->LoadBitmap( BitmapName, pTextureName ) >= 0) )
         {
-            vram_Register( m_Slides[Index].BMP );
-            m_Slides[Index].HasImage = TRUE;
-        }
-        else
-        {
-            x_DebugMsg( "dlg_load_game: failed to load slide '%s'\n", pTextureName );
+            m_Slides[Index].BitmapName = BitmapName;
         }
     }
 }

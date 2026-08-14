@@ -14,7 +14,7 @@
 #include "PainMgr/PainTypes.hpp"
 
 #include "Objects/Actor/Actor.hpp"
-#include "Objects/Player.hpp"   // - For spawn_point
+#include "Objects/Player/Player.hpp"   // - For spawn_point
 
 #include "MsgMgr.hpp"
 
@@ -177,7 +177,8 @@ void logic_dm::AdvanceTime( f32 DeltaTime )
             {
                 m_RespawnDelay[i] -= DeltaTime;
             }
-            else
+
+            if( m_RespawnDelay[i] <= 0.0f )
             {
                 m_RespawnDelay[i] = 0.0f;
                 if( GameMgr.m_Score.Player[i].IsInGame )

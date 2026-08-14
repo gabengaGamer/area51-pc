@@ -49,7 +49,7 @@
 #include "..\Editor\MainFrm.h"
 #include "Gamelib\DebugCheats.hpp"
 
-#include "Objects\Player.hpp"   // Added to access the g_MPTweaks hack.
+#include "Objects\Player\Player.hpp"   // Added to access the g_MPTweaks hack.
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

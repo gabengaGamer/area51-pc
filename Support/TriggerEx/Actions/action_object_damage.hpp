@@ -11,9 +11,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\TriggerEx_Actions.hpp"
-#include "..\Affecters\object_affecter.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "../TriggerEx_Actions.hpp"
+#include "../Affecters/object_affecter.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 //=========================================================================
 // Check Property

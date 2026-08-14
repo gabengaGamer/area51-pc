@@ -1,12 +1,11 @@
 
 #include "BinLevel.hpp"
 #include <stdio.h>
-#include "Auxiliary\MiscUtils\Property.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Objects\Render\RenderInst.hpp"
-#include "UI\ui_manager.hpp"
+#include "Auxiliary/MiscUtils/Property.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Render/RenderInst.hpp"
 #include "NetworkMgr/NetworkMgr.hpp"
-#include "NetworkMgr/NetobjMgr.hpp"
+#include "NetworkMgr/NetObjMgr.hpp"
 #include "Configuration/GameConfig.hpp"
 //=========================================================================
 // VARIABLES
@@ -30,6 +29,9 @@ bin_level::bin_level( void )
     NullData( TRUE );
     m_bWantsToSave = FALSE;
     m_bWantsToLoad = FALSE;
+    m_LevelLoadObject = 0;
+    m_bLevelLoadActive = FALSE;
+    m_bSuppressNetObjects = FALSE;
 }
 
 //=========================================================================
@@ -91,152 +93,159 @@ void bin_level::ClearData( xbool bClearDictionary )
 
 //=============================================================================
 
-xbool bin_level::LoadLevel( const char* levelName, const char* dictionaryName, const char* pLoadOrderName )
+xbool bin_level::BeginLevelLoad( const char* pLevelName, const char* pDictionaryName )
 {
-    MEMORY_OWNER("bin_level::LoadLevel()");
- 
-    PreloadDataFiles(pLoadOrderName);
-    xtimer DeltaTime;
-    xbool  SuppressNetObjects = FALSE;
+    MEMORY_OWNER( "bin_level::BeginLevelLoad()" );
+    ASSERT( !m_bLevelLoadActive );
 
-    DeltaTime.Start();
-
+    if( m_bLevelLoadActive )
     {
-    //MEMORY_OWNER("_LoadData");
-    if( !LoadData( levelName, dictionaryName ) )
         return FALSE;
     }
 
-    if (!m_pDictionary)
+    if( !LoadData( pLevelName, pDictionaryName ) || !m_pDictionary )
+    {
+        ClearData( TRUE );
         return FALSE;
+    }
+
+    m_LevelLoadObject     = 0;
+    m_bSuppressNetObjects = FALSE;
 
 #ifndef X_EDITOR
-    // get current pct loaded
-    f32 StartPct;
-    StartPct = g_UiMgr->GetPercentLoaded();
-
-    // calculate percent per object loaded
-    f32 PctPerObject;
-    PctPerObject = ( (95.0f - StartPct) / m_nObjects);
-
-    if( g_NetworkMgr.IsClient() )
-        SuppressNetObjects = TRUE;
-#endif // X_EDITOR
-
-    for (s32 i = 0; i < m_nObjects; i++)
-    {
-        //MEMORY_OWNER("_loop1_a");
-//        m_BitStream.SetCursor( m_pObject[i].iStartBitStream );
-
-        // HACKOMOTRON
-        // The player object is exported in some levels - it shouldn't be!
-        if( x_strcmp( m_pDictionary->GetString(m_pObject[i].TypeIndex), "Player" ) == 0)
-        {
-            // don't create the player object if we already have one
-            if( g_PlayerGuid != 0 )
-            {
-                object* pObject = g_ObjMgr.GetObjectByGuid(g_PlayerGuid);
-                if (pObject)
-                {
-                    //MEMORY_OWNER("_loop1_b");
-                    pObject->LoadStart();
-                    
-                    //set all the objects properties
-                    for (s32 k = m_pObject[i].iProperty; k < (m_pObject[i].iProperty + m_pObject[i].nProperty); k++)
-                    {
-                        //MEMORY_OWNER("_loop1_c");
-                        AddPropertyToObject( m_pProperties[k], pObject);
-                    }
-                    
-                    {
-                    //MEMORY_OWNER("_loop1_d");
-                    pObject->LoadEnd();
-                    }
-
-                    // player has been successfully restored
-                    continue;
-                } 
-            }
-            // store the guid of this player
-            g_PlayerGuid = m_pObject[i].Guid;
-        }
-        // END HACKOMOTRON
-
-        //now create the object
-        guid ObjGuid = m_pObject[i].Guid;
-        {
-            //MEMORY_OWNER("_loop1_e");
-
-            const char*        pTypeName = m_pDictionary->GetString( m_pObject[i].TypeIndex );
-            const object_desc* pDesc     = g_ObjMgr.GetDescFromName( pTypeName );
-
-            if( (pDesc->GetType() == object::TYPE_PICKUP) && !SuppressNetObjects )
-            {
-                // Create a net pickup
-                g_ObjMgr.ReserveGuid( ObjGuid );
-                CREATE_NET_OBJECT( *pDesc, netobj::TYPE_PICKUP );
-
-#if !defined( X_EDITOR )
-                ASSERT( g_NetworkMgr.IsServer() );
+    m_bSuppressNetObjects = g_NetworkMgr.IsClient();
 #endif
-            }
-            else
+
+    if( m_nObjects == 0 )
+    {
+        ClearData( TRUE );
+        return TRUE;
+    }
+
+    m_bLevelLoadActive = TRUE;
+    return TRUE;
+}
+
+//=========================================================================
+
+xbool bin_level::IsLevelLoadComplete( void ) const
+{
+    return !m_bLevelLoadActive;
+}
+
+//=========================================================================
+
+void bin_level::UpdateLevelLoad( f32 TimeBudgetSeconds )
+{
+    ASSERT( m_bLevelLoadActive );
+    ASSERT( TimeBudgetSeconds >= 0.0f );
+
+    if( !m_bLevelLoadActive )
+        return;
+
+    xtimer TimeBudget;
+    TimeBudget.Start();
+
+    do
+    {
+        LoadLevelObject( m_LevelLoadObject );
+        m_LevelLoadObject++;
+
+        if( m_LevelLoadObject >= m_nObjects )
+        {
+            ClearData( TRUE );
+            m_bLevelLoadActive = FALSE;
+        }
+    }
+    while( m_bLevelLoadActive && (TimeBudget.ReadSec() < TimeBudgetSeconds) );
+}
+
+//=========================================================================
+
+void bin_level::LoadLevelObject( s32 ObjectIndex )
+{
+    ASSERT( (ObjectIndex >= 0) && (ObjectIndex < m_nObjects) );
+
+    // HACKOMOTRON
+    // The player object is exported in some levels - it shouldn't be!
+    if( x_strcmp( m_pDictionary->GetString(m_pObject[ObjectIndex].TypeIndex), "Player" ) == 0)
+    {
+        // don't create the player object if we already have one
+        if( g_PlayerGuid != 0 )
+        {
+            object* pObject = g_ObjMgr.GetObjectByGuid(g_PlayerGuid);
+            if( pObject )
             {
-                // Either not a pickup, or a suppressed pickup so just create it
-                g_ObjMgr.CreateObject( *pDesc, ObjGuid );
+                pObject->LoadStart();
+
+                for( s32 i = m_pObject[ObjectIndex].iProperty;
+                     i < (m_pObject[ObjectIndex].iProperty + m_pObject[ObjectIndex].nProperty);
+                     i++ )
+                {
+                    AddPropertyToObject( m_pProperties[i], pObject );
+                }
+
+                pObject->LoadEnd();
+                return;
             }
         }
 
-        object* pObject = g_ObjMgr.GetObjectByGuid(ObjGuid);
-        if (pObject)
-        {
-            //MEMORY_OWNER("_loop2_a");
-            pObject->LoadStart();
-            
-            //set all the objects properties
-            for (s32 k = m_pObject[i].iProperty; k < (m_pObject[i].iProperty + m_pObject[i].nProperty); k++)
-            {
-                //MEMORY_OWNER("AddPropertyToObject()");
-                AddPropertyToObject( m_pProperties[k], pObject);
-            }
-            {
-                //MEMORY_OWNER("_loop2_c");
-                pObject->LoadEnd();
-            }
-#if !defined( X_EDITOR )
-            //
-            // We don't really load the player, just allowing it so that the bitstream cursor
-            // stays current. Now we'll drop the player.
-            //
-            if ( pObject->GetType() == object::TYPE_PLAYER )
-            {
-                g_ObjMgr.DestroyObject( ObjGuid );
-                ASSERTS( FALSE, "We loaded a player, which should not have been exported, see mreed" );
-            }
+        // store the guid of this player
+        g_PlayerGuid = m_pObject[ObjectIndex].Guid;
+    }
+    // END HACKOMOTRON
 
-            // CJ: We don't really want the pickups on the client so nuke them now
-            if( (pObject->GetType() == object::TYPE_PICKUP) && SuppressNetObjects )
-            {
-                g_ObjMgr.DestroyObject( ObjGuid );
-            }
+    guid ObjGuid = m_pObject[ObjectIndex].Guid;
+    {
+        const char*        pTypeName = m_pDictionary->GetString( m_pObject[ObjectIndex].TypeIndex );
+        const object_desc* pDesc     = g_ObjMgr.GetDescFromName( pTypeName );
+
+        if( (pDesc->GetType() == object::TYPE_PICKUP) && !m_bSuppressNetObjects )
+        {
+            g_ObjMgr.ReserveGuid( ObjGuid );
+            CREATE_NET_OBJECT( *pDesc, netobj::TYPE_PICKUP );
+
+#if !defined( X_EDITOR )
+            ASSERT( g_NetworkMgr.IsServer() );
 #endif
         }
         else
         {
-            ASSERTS( 0, "Error loading couldn't create an object" );
+            g_ObjMgr.CreateObject( *pDesc, ObjGuid );
         }
-
     }
 
-#ifndef X_EDITOR
-    // make sure the progress bar is showing 95% loaded now.
-    //g_UiMgr->SetPercentLoaded( 95.0f );
-#endif // X_EDITOR
+    object* pObject = g_ObjMgr.GetObjectByGuid(ObjGuid);
+    if( pObject )
+    {
+        pObject->LoadStart();
 
-    // We don't need this data anymore...
-    ClearData( TRUE );
+        for( s32 i = m_pObject[ObjectIndex].iProperty;
+             i < (m_pObject[ObjectIndex].iProperty + m_pObject[ObjectIndex].nProperty);
+             i++ )
+        {
+            AddPropertyToObject( m_pProperties[i], pObject );
+        }
 
-    return TRUE;
+        pObject->LoadEnd();
+
+#if !defined( X_EDITOR )
+        if( pObject->GetType() == object::TYPE_PLAYER )
+        {
+            g_ObjMgr.DestroyObject( ObjGuid );
+            ASSERTS( FALSE, "We loaded a player, which should not have been exported, see mreed" );
+        }
+
+        if( (pObject->GetType() == object::TYPE_PICKUP) && m_bSuppressNetObjects )
+        {
+            g_ObjMgr.DestroyObject( ObjGuid );
+        }
+#endif
+    }
+    else
+    {
+        ASSERTS( 0, "Error loading couldn't create an object" );
+    }
 }
 
 //=========================================================================
@@ -313,7 +322,7 @@ xbool bin_level::LoadData( const char* pFile, const char* pDictionary )
         // mreed: ugly, but we need this in the dictionary since it's not being added through
         // export any more. GameApp's savegame looks for the entry in the dictionary because the
         // player's guid is dynamic...
-        g_BinLevelMgr.m_pDictionary->Add( "Player" );
+        m_pDictionary->Add( "Player" );
 
 
         x_fclose( fpDict );
@@ -676,21 +685,6 @@ void bin_level::SetRigidColor( const char* pFileName )
 
 //=============================================================================
 
-void bin_level::PreloadDataFiles ( const char* pLoadOrderName )
-{
-    (void)pLoadOrderName;
-    /*
-    X_FILE* fpTemplate;
-    if( !(fpTemplate = x_fopen( pLoadOrderName, "rb" ) ) )
-    {
-        ASSERT(FALSE);
-        return;// FALSE;
-    }
-    */
-}
-
-//=========================================================================
-
 void bin_level::AddDataToBitStream( prop_container& pc )
 {
     
@@ -983,9 +977,3 @@ xbool bin_level::EditorSaveData( const char* pFile, const char* pDictionary, xar
 //-----------------// END EDITOR SPECIFIC CODE
 #endif // X_EDITOR
 //-----------------//
-
-
-
-
-
-

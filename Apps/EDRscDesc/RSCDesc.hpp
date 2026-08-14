@@ -6,8 +6,8 @@
 #include "x_files.hpp"
 #include "Auxiliary\MiscUtils\Property.hpp"
 #include "Auxiliary\MiscUtils\rtti.hpp"
-#include "Parsing\TextOut.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextOut.hpp"
+#include "Parsing/TextIn.hpp"
 
 class rsc_desc_type;
 struct _finddata_t;
@@ -66,6 +66,7 @@ static  void                SetVerbose               ( xbool bVerbose ) { s_bVer
         virtual xbool       OnProperty               ( prop_query&       I                );
         virtual void        OnGetCompilerDependencies( xarray<xstring>&  List             ) = 0;
         virtual void        OnGetCompilerRules       ( xstring&          CompilerRules    ) = 0;
+        virtual const char* OnGetCompilerOutputOption( void ) const                         { return NULL; }
         virtual void        OnCheckIntegrity         ( void )                               = 0;
         virtual void        OnGetFinalDependencies   ( xarray<xstring>& List, platform Platform, const char* pDirectory ) = 0;
 
@@ -73,7 +74,7 @@ protected:
 
                         rsc_desc( rsc_desc_type& Desc );
 
-    rsc_desc_type&   m_Type;
+    rsc_desc_type&   m_type;
 
 private:
 
@@ -254,7 +255,7 @@ extern rsc_desc_mgr g_RescDescMGR;
 //=========================================================================
 inline
 rsc_desc::rsc_desc( rsc_desc_type& Desc ) :
-    m_Type( Desc )
+    m_type( Desc )
 {
     m_Name[0]=0;
     m_Path[0]=0;
@@ -298,7 +299,7 @@ const char* rsc_desc::GetName( void ) const
 inline
 const char* rsc_desc::GetType( void ) const
 {
-    return m_Type.GetName();
+    return m_type.GetName();
 }
 
 //=========================================================================

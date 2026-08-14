@@ -10,7 +10,7 @@
 // INCLUDES
 //=========================================================================
 
-#include "animtrack.hpp"
+#include "AnimTrack.hpp"
 #include "BasePlayer.hpp"
 
 //=========================================================================
@@ -119,13 +119,6 @@ public:
     void    SetMirrorBone       ( s32 iBone )   { m_iMirrorBone = iBone; }
       
     //
-    // The render offset translates the skeleton in addition to the animation.
-    // This is purely a render effect.
-    //
-    void    SetRenderOffset   ( const vector3& RenderOffset );
-    vector3 GetRenderOffset   ( void );
-
-    //
     // The SlideDelta is divided by the length of the animation and is combined
     // with the animation's delta and returned in the Advance( DeltaPos ).  
     // The SlideDelta is always described in worldspace.
@@ -195,7 +188,6 @@ public:
     // Returns the cached L2W matrix for that bone
     //
     const matrix4*  GetBoneL2Ws     ( void );
-    void            GetBoneL2Ws     ( matrix4* pBoneL2W, xbool bApplyBindPose );
     const matrix4&  GetBoneL2W      ( s32 iBone );
 
     //
@@ -301,7 +293,6 @@ private:
     f32                 m_WorldScale;
     radian              m_AnimHandleYaw;    // Handle of current animation
 
-    vector3             m_RenderOffset;
     vector3             m_SlideDelta;
     radian              m_YawDelta;
     f32                 m_YawStartFrame;
@@ -348,27 +339,6 @@ inline
 anim_group::handle char_anim_player::GetAnimGroupHandle( void )
 {
     return m_hAnimGroup;
-}
-
-//=========================================================================
-
-inline
-void char_anim_player::SetRenderOffset( const vector3& RenderOffset )
-{
-    ASSERT( RenderOffset.IsValid() );
-
-    // Mark cached L2W matrices as unusable
-    DirtyCachedL2W(); 
-
-    m_RenderOffset = RenderOffset;
-}
-
-//=========================================================================
-
-inline
-vector3 char_anim_player::GetRenderOffset( void )
-{
-    return m_RenderOffset;
 }
 
 //=========================================================================

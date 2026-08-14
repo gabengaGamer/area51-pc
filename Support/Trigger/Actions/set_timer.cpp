@@ -9,10 +9,10 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\set_timer.hpp"
+#include "../Support/Trigger/Actions/set_timer.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 
 #include "Entropy.hpp"
 
@@ -45,7 +45,7 @@ m_Code(CODE_RESET_TIMER)
 
 void set_timer::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * set_timer::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * set_timer::Execute" );
 
     (void) pParent;
     

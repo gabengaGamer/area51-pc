@@ -4,19 +4,19 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_playerlist.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_playerlist.hpp"
 
 #include "dlg_PopUp.hpp"
 #include "dlg_VoteKick.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "Objects\Player.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "Objects/Player/Player.hpp"
 
 //=========================================================================
 //  Vote Map Dialog
@@ -25,15 +25,13 @@
 enum controls
 {
 	IDC_VOTE_KICK_LISTBOX,
-    IDC_VOTE_KICK_NAV_TEXT,
 };
 
 
 ui_manager::control_tem VoteKickControls[] = 
 {
     // Frames.
-    { IDC_VOTE_KICK_LISTBOX,   "IDS_VOTE_KICK",    "playerlist",  45,  60, 320, 238, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_VOTE_KICK_NAV_TEXT,  "IDS_NULL",         "text",         0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_VOTE_KICK_LISTBOX,   "IDS_VOTE_KICK",    "playerlist",  45,  60, 320, 238, 0, 0, 1, 1, ui_win::WF_VISIBLE },
 };
 
 ui_manager::dialog_tem VoteKickDialog =
@@ -114,22 +112,18 @@ xbool dlg_vote_kick::Create( s32                        UserID,
 
     // find controls
     m_pPlayerList      = (ui_playerlist*) FindChildByID( IDC_VOTE_KICK_LISTBOX  );
-    m_pNavText         = (ui_text*)       FindChildByID( IDC_VOTE_KICK_NAV_TEXT );
 
     // hide them
     m_pPlayerList     ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText        ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
    
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // set up map list
-    m_pPlayerList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pPlayerList->SetActive( TRUE );
     m_pPlayerList->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pPlayerList->DisableFrame();
     m_pPlayerList->SetExitOnSelect(FALSE);
@@ -179,14 +173,7 @@ void dlg_vote_kick::Render( s32 ox, s32 oy )
 	irect rb;
     
     // render background filter
-    s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+    rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
         xcolor(0,0,0,180),
         xcolor(0,0,0,180),
@@ -238,7 +225,7 @@ void dlg_vote_kick::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_vote_kick::OnPadSelect( ui_win* pWin )
+void dlg_vote_kick::OnAccept( ui_win* pWin )
 {
     (void)pWin;
     
@@ -246,12 +233,12 @@ void dlg_vote_kick::OnPadSelect( ui_win* pWin )
     {
         // display confirmation popup
         irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
         // set nav text
         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
         navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-        m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+        SetNavTextVisible( FALSE );
        
         m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_VOTE_KICK" ), 
                             TRUE, 
@@ -267,7 +254,7 @@ void dlg_vote_kick::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_vote_kick::OnPadBack( ui_win* pWin )
+void dlg_vote_kick::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -292,7 +279,6 @@ void dlg_vote_kick::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         {
             // turn on the controls
             m_pPlayerList ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText    ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             GotoControl( (ui_control*)m_pPlayerList );
             g_UiMgr->SetScreenHighlight( m_pPlayerList->GetPosition() );
         }
@@ -349,7 +335,7 @@ void dlg_vote_kick::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         m_PopUp = NULL;
 
         // turn on nav text
-        m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+        SetNavTextVisible( TRUE );
     }
 
     // refresh player list

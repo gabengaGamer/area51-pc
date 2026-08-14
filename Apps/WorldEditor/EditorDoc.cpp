@@ -8,7 +8,7 @@
 #include "EditorView.h"
 #include "EditorFrame.h"
 
-#include "..\..\xCore\Parsing\TextIn.hpp"
+#include "../../xCore/Parsing/TextIn.hpp"
 #include "..\WinControls\ListBoxDlg.h"
 #include "..\WinControls\FileSearch.h"
 #include "..\Editor\MainFrm.h"
@@ -18,8 +18,8 @@
 #include "..\PropertyEditor\PropertyEditorView.h"
 #include "..\PropertyEditor\PropertyEditorDoc.h"
 
-#include "Parsing\TextIn.hpp"
-#include "Parsing\TextOut.hpp"
+#include "Parsing/TextIn.hpp"
+#include "Parsing/TextOut.hpp"
 
 #include "ai_editor.hpp"
 #include "EditorLayerView.h"
@@ -105,11 +105,11 @@ void CGridSettings::LoadImage()
 
     if (CFileSearch::DoesFileExist(m_strSchematic))
     {
-        if( auxbmp_LoadNative( m_xbmpImage, m_strSchematic ) )
+        if( auxbmp_LoadNative( m_SchematicTexture.m_bitmap, m_strSchematic ) )
         {
             BOOL bBadImage = FALSE;
             x_try;
-            s32 nWidth = m_xbmpImage.GetWidth();
+            s32 nWidth = m_SchematicTexture.m_bitmap.GetWidth();
             while( true )
             {
                 if (((nWidth%2) != 0) && (nWidth != 1) )
@@ -123,7 +123,7 @@ void CGridSettings::LoadImage()
                 nWidth /= 2;
             }
 
-            s32 nHeight = m_xbmpImage.GetHeight();
+            s32 nHeight = m_SchematicTexture.m_bitmap.GetHeight();
             while( true )
             {
                 if (((nHeight%2) != 0) && (nHeight != 1) )
@@ -137,14 +137,16 @@ void CGridSettings::LoadImage()
                 nHeight /= 2;
             }
 
-            m_bImageLoaded = TRUE;
-            vram_Register( m_xbmpImage  );
+            m_bImageLoaded = vram_CreateTexture( m_SchematicTexture.m_texture,
+                                                 m_SchematicTexture.m_bitmap,
+                                                 TRUE,
+                                                 "world editor schematic" );
 
             x_catch_display;
 
             if (bBadImage)
             {
-                 m_xbmpImage.Kill();
+                 m_SchematicTexture.m_bitmap.Kill();
             }
         }
     }
@@ -157,8 +159,8 @@ void CGridSettings::UnloadImage()
     if (m_bImageLoaded)
     {
         m_bImageLoaded = FALSE;
-        vram_Unregister( m_xbmpImage    );
-        m_xbmpImage.Kill();
+        vram_DestroyTexture( m_SchematicTexture.m_texture );
+        m_SchematicTexture.m_bitmap.Kill();
     }
 }
 
@@ -994,7 +996,7 @@ BOOL CEditorDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
 void CEditorDoc::OnProjectOpen()
 {
-    CONTEXT( "CEditorDoc::OnProjectOpen" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "CEditorDoc::OnProjectOpen" );
 
     GetView()->GetFrame()->SetWindowText( g_Project.GetName() );
     GetView()->GetFrame()->SetProject(g_Project.GetName());
@@ -3186,5 +3188,3 @@ int CEditorDoc::UpdateTreeView( void )
     }
     return g_LoadUpdateUserSettings.TreeView.GetCount();
 }
-
-

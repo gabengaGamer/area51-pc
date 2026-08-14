@@ -5,24 +5,25 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "ProjectileEnergy.hpp"
-#include "AudioMgr\AudioMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 #include "ClothObject.hpp"
 #include "DestructibleObj.hpp"
 #include "SuperDestructible.hpp"
 #include "Turret.hpp"
-#include "Actor\Actor.hpp"
-#include "gamelib\StatsMgr.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "Characters\Character.hpp"
-#include "render\LightMgr.hpp"
-#include "..\Support\Tracers\TracerMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "Objects\player.hpp"
+#include "Actor/Actor.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "Characters/Character.hpp"
+#include "Render/LightMgr.hpp"
+#include "../Support/Tracers/TracerMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "Objects/Player/Player.hpp"
 
 #ifndef X_EDITOR
-#include "Objects\netghost.hpp"
+#include "Objects/NetGhost.hpp"
 #endif
 
 //=============================================================================================
@@ -227,14 +228,14 @@ void energy_projectile::UpdateParticles( const vector3& NewPosition )
 
 //=============================================================================================
 
-void energy_projectile::OnAdvanceLogic( f32 DeltaTime )
+void energy_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "energy_projectile::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "energy_projectile::OnAdvanceSimulation" );
     LOG_STAT( k_stats_Projectiles);
 
     if( m_Exploded )
     {
-        net_proj::OnAdvanceLogic( DeltaTime );
+        net_proj::OnAdvanceSimulation( DeltaTime );
         return;
     }
 
@@ -269,7 +270,7 @@ void energy_projectile::OnAdvanceLogic( f32 DeltaTime )
     }
 
     // This is at the bottom because the projectile can be destroyed in the call
-    net_proj::OnAdvanceLogic( DeltaTime );
+    net_proj::OnAdvanceSimulation( DeltaTime );
 }
 
 //==============================================================================
@@ -320,9 +321,9 @@ void energy_projectile::OnImpact( collision_mgr::collision& Coll, object* pTarge
 void energy_projectile::OnRender( void )
 {
     // Setup Render Matrix
-    m_RenderL2W = GetL2W();
+    matrix4 RenderL2W = GetL2W();
 #ifndef X_EDITOR
-    m_RenderL2W.Translate( net_GetBlendOffset() );
+    RenderL2W.Translate( net_GetBlendOffset() );
 #endif
 
     rigid_geom* pRigidGeom = m_RigidInst.GetRigidGeom();
@@ -331,11 +332,11 @@ void energy_projectile::OnRender( void )
     {
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         
-        m_RigidInst.Render( &m_RenderL2W, Flags );
+        m_RigidInst.Render( &RenderL2W, Flags );
     }
     else
     {
-//        draw_BBox( GetBBox(), XCOLOR_RED );
+//        render::debug::Box( GetBBox(), XCOLOR_RED );
     }
 }
 
@@ -359,7 +360,7 @@ bbox energy_projectile::GetLocalBBox( void ) const
     rigid_geom* pRigidGeom = m_RigidInst.GetRigidGeom();
     if( pRigidGeom )
     {
-        return( pRigidGeom->m_Collision.BBox );
+        return( pRigidGeom->m_collision.BBox );
     }
     else
     {

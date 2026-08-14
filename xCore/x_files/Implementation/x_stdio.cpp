@@ -9,37 +9,42 @@
 //==============================================================================
 
 #ifndef X_STDIO_HPP
-#include "..\x_stdio.hpp"
+#include "../x_stdio.hpp"
 #endif
 
 #ifndef X_STRING_HPP
-#include "..\x_string.hpp"
+#include "../x_string.hpp"
 #endif
 
 #ifndef X_PLUS_HPP
-#include "..\x_plus.hpp"
+#include "../x_plus.hpp"
 #endif
 
 #ifndef X_DEBUG_HPP
-#include "..\x_debug.hpp"
+#include "../x_debug.hpp"
 #endif
 
-#ifndef X_CONTEXT_HPP
-#include "..\x_context.hpp"
+#ifndef X_PROFILE_HPP
+#include "../x_profile.hpp"
 #endif
 
 //------------------------------------------------------------------------------
 
-#ifdef TARGET_PC
 #include <stdio.h>
+
+#ifdef TARGET_PC
 #include <windows.h>
+#endif
+
+#ifdef TARGET_LINUX
+#include <sys/stat.h>
 #endif
 
 //==============================================================================
 //  DEFINES
 //==============================================================================
 
-#ifdef TARGET_PC
+#ifdef TARGET_DESKTOP
 #define USE_ANSI_IO_TEXT
 #endif
 
@@ -279,7 +284,7 @@ s32 x_vsprintf( char* pStr, const char* pFormatStr, x_va_list Args )
 /*
 s32 x_vsprintf( char* pStr, const char* pFormatStr, x_va_list Args )
 {
-    CONTEXT( "x_vsprintf" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_vsprintf" );
     
     ASSERT( pStr );
     ASSERT( pFormatStr );
@@ -301,7 +306,7 @@ s32 x_vsprintf( char* pStr, const char* pFormatStr, x_va_list Args )
 
 X_FILE* x_fopen( const char* pFileName, const char* pMode ) 
 {
-    CONTEXT( "x_fopen" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_fopen" );
 
     X_FILE* fp;
 
@@ -369,7 +374,7 @@ void AddToLoadMap(const char* pFilename)
 
 void x_fclose( X_FILE* pFile ) 
 {
-    CONTEXT( "x_fclose" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_fclose" );
 
     if( pFile == NULL )
         return;
@@ -386,7 +391,7 @@ void x_fclose( X_FILE* pFile )
 
 s32 x_fread( void* pBuffer, s32 Size, s32 Count, X_FILE* pFile ) 
 {
-    CONTEXT( "x_fread" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_fread" );
 
     s32 Bytes;
     
@@ -403,7 +408,7 @@ s32 x_fread( void* pBuffer, s32 Size, s32 Count, X_FILE* pFile )
 
 s32 x_fwrite( const void* pBuffer, s32 Size, s32 Count, X_FILE* pFile ) 
 {
-    CONTEXT( "x_fwrite" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_fwrite" );
 
     s32 Bytes;
     
@@ -420,7 +425,7 @@ s32 x_fwrite( const void* pBuffer, s32 Size, s32 Count, X_FILE* pFile )
 
 s32 x_fprintf( X_FILE* pFile, const char* pFormatStr, ... )
 {
-    CONTEXT( "x_fprintf" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_fprintf" );
 
     s32         NChars;
     s32         Bytes;
@@ -444,7 +449,7 @@ s32 x_fprintf( X_FILE* pFile, const char* pFormatStr, ... )
 
 s32 x_fflush( X_FILE* pFile ) 
 {
-    CONTEXT( "x_fflush" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_fflush" );
 
     ASSERT( s_pFlush );
     return( s_pFlush( pFile ) );
@@ -454,7 +459,7 @@ s32 x_fflush( X_FILE* pFile )
 
 s32 x_fseek( X_FILE* pFile, s32 Offset, s32 Origin ) 
 {
-    CONTEXT( "x_fseek" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_fseek" );
 
     ASSERT( IN_RANGE( 0, Origin, 2 ) );
     ASSERT( s_pSeek );
@@ -465,7 +470,7 @@ s32 x_fseek( X_FILE* pFile, s32 Offset, s32 Origin )
 
 s32 x_ftell( X_FILE* pFile ) 
 {
-    CONTEXT( "x_ftell" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_ftell" );
 
     ASSERT( s_pTell );
     return( s_pTell( pFile ) );
@@ -475,7 +480,7 @@ s32 x_ftell( X_FILE* pFile )
 
 s32 x_feof( X_FILE* pFile ) 
 {
-    CONTEXT( "x_feof" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_feof" );
 
     ASSERT( s_pEOF );
     return( s_pEOF( pFile ) );
@@ -485,7 +490,7 @@ s32 x_feof( X_FILE* pFile )
 
 s32 x_fgetc( X_FILE* pFile ) 
 {
-    CONTEXT( "x_fgetc" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_fgetc" );
 
     char Char;
     s32  Result;
@@ -501,7 +506,7 @@ s32 x_fgetc( X_FILE* pFile )
 
 s32 x_fputc( s32 C, X_FILE* pFile ) 
 {
-    CONTEXT( "x_fputc" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_fputc" );
 
     char Char = (char)C;
     s32  Result;
@@ -517,7 +522,7 @@ s32 x_fputc( s32 C, X_FILE* pFile )
 
 s32 x_flength( X_FILE* pFile ) 
 {
-    CONTEXT( "x_flength" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "x_flength" );
 
     ASSERT( s_pLength );
     return( s_pLength( pFile ) );
@@ -628,6 +633,11 @@ void ansi_PrintAt( const char* pString, s32 X, s32 Y )
     SetConsoleCursorPosition  ( hConOut, Coord );
 #endif
 
+#ifndef TARGET_PC
+    (void)X;
+    (void)Y;
+#endif
+
     printf( "%s", pString );
 
 #ifdef TARGET_PC
@@ -640,7 +650,7 @@ void ansi_PrintAt( const char* pString, s32 X, s32 Y )
 //==============================================================================
 
 //==============================================================================
-#ifdef TARGET_PC
+#if defined(TARGET_PC)
 //==============================================================================
 
 xbool   x_GetFileTime( const char* pFileName, u64& FileTime )
@@ -659,6 +669,21 @@ xbool   x_GetFileTime( const char* pFileName, u64& FileTime )
 }
 
 //==============================================================================
+#elif defined(TARGET_LINUX)
+//==============================================================================
+
+xbool x_GetFileTime( const char* pFileName, u64& FileTime )
+{
+    struct stat FileStat;
+
+    if( stat( pFileName, &FileStat ) != 0 )
+        return FALSE;
+
+    FileTime = static_cast<u64>( FileStat.st_mtime );
+    return TRUE;
+}
+
+//==============================================================================
 #endif
 //==============================================================================
 
@@ -668,8 +693,7 @@ xbool   x_GetFileTime( const char* pFileName, u64& FileTime )
 
 void x_IOInit( void )
 {
-#if defined(X_DEBUG) || defined(TARGET_PC)
-    #ifdef USE_ANSI_IO_TEXT
+#ifdef USE_ANSI_IO_TEXT
         x_SetFileIOHooks( ansi_Open, 
                           ansi_Close, 
                           ansi_Read, 
@@ -681,8 +705,7 @@ void x_IOInit( void )
                           ansi_Length  );
         x_SetPrintHook  ( ansi_Print   );
         x_SetPrintAtHook( ansi_PrintAt );
-    #endif // USE_ANSI_IO_TEXT
-#endif // X_DEBUG
+#endif // USE_ANSI_IO_TEXT
 
 #ifdef CAPTURE_FILE_NAMES
     for( s32 i=0; i<NUM_FILE_NAME_ENTRIES; i++ )

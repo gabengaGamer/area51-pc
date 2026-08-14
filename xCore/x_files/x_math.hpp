@@ -464,8 +464,7 @@ friend  vector2         operator *          (       f32      S,  const vector2& 
 //  VECTOR3
 //==============================================================================
 
-PC_ALIGNMENT(16)
-union vector3
+union PC_ALIGNMENT(16) vector3
 {
 
 //------------------------------------------------------------------------------
@@ -579,7 +578,7 @@ protected:
         f32 W;
     };
     
-} PS2_ALIGNMENT(16);
+};
 
 //==============================================================================
 
@@ -599,8 +598,7 @@ struct vector3p
 //  VECTOR4
 //==============================================================================
 
-PC_ALIGNMENT(16)
-union vector4
+union PC_ALIGNMENT(16) vector4
 {
 
 //------------------------------------------------------------------------------
@@ -684,7 +682,7 @@ protected:
         s32 iW;
     };
     
-} PS2_ALIGNMENT(16);
+};
 
 
 //==============================================================================
@@ -770,8 +768,7 @@ friend  quaternion  BlendToIdentity ( const quaternion& Q1, f32 T );
 //  MATRIX4
 //==============================================================================
 
-PC_ALIGNMENT(16)
-union matrix4
+union PC_ALIGNMENT(16) matrix4
 {
 
 //------------------------------------------------------------------------------
@@ -902,22 +899,20 @@ protected:
 
     f32     m_Cell[4][4];
 
-    struct
-    {
-        vector4 m_vCol0;
-        vector4 m_vCol1;
-        vector4 m_vCol2;
-        vector4 m_vCol3;
-    };
+};
 
-} PS2_ALIGNMENT(16);
+static_assert( sizeof( vector3 ) == 16, "vector3 layout must remain four floats" );
+static_assert( alignof( vector3 ) == 16, "vector3 must be 16-byte aligned" );
+static_assert( sizeof( vector4 ) == 16, "vector4 layout must remain four floats" );
+static_assert( alignof( vector4 ) == 16, "vector4 must be 16-byte aligned" );
+static_assert( sizeof( matrix4 ) == 64, "matrix4 layout must remain sixteen floats" );
+static_assert( alignof( matrix4 ) == 16, "matrix4 must be 16-byte aligned" );
 
 //==============================================================================
 //  PLANE
 //==============================================================================
 
-PC_ALIGNMENT(16)
-struct plane
+struct PC_ALIGNMENT(16) plane
 {
 
 //------------------------------------------------------------------------------
@@ -978,7 +973,7 @@ struct plane
 
 friend  plane       operator *      ( const matrix4& M, const plane& Plane );
 
-} PS2_ALIGNMENT(16);
+};
 
 
 //==============================================================================
@@ -1054,14 +1049,13 @@ friend  bbox        operator +      ( const bbox&    BBox1, const bbox&    BBox2
 friend  bbox        operator +      ( const bbox&    BBox,  const vector3& Point );
 friend  bbox        operator +      ( const vector3& Point, const bbox&    BBox  );
 
-} PS2_ALIGNMENT(16);
+};
 
 //==============================================================================
 //  SPHERE
 //==============================================================================
 
-PC_ALIGNMENT(16)
-struct sphere
+struct PC_ALIGNMENT(16) sphere
 {
     vector3 Pos;
     f32     R;
@@ -1083,7 +1077,7 @@ struct sphere
         //xbool       Intersert       ( f32& t, vector3& S0, vector3& E0, sphere& Sphere1, vector3& S1, vector3& E1 );
         //xbool       Intersect       ( sphere& Sphere ) const;
         //xbool       Intersect       ( vector3& P0, vector3& P1, vector3& P3 ) const;
-} PS2_ALIGNMENT(16);
+};
 
 
 //==============================================================================

@@ -1,25 +1,26 @@
 //=========================================================================
 // WEAPON BBG (Bouncy Ball Gun) or NAW (New Alien Weapon)
 //=========================================================================
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "ProjectileEnergy.hpp"
 #include "WeaponBBG.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "objects\Projector.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "render\LightMgr.hpp"
-#include "Player.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/Projector.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Player/Player.hpp"
 #include "Objects/DestructibleObj.hpp"
 #include "Objects/SuperDestructible.hpp"
 #include "Objects/Corpse.hpp"
 #include "Objects/Turret.hpp"
-#include "Characters\character.hpp"
+#include "Characters/Character.hpp"
+#include "Render/PrimitiveBatch.hpp"
 
 #if !defined(X_EDITOR)
 #include "NetworkMgr/NetworkMgr.hpp"
 #endif
-#include "Gamelib/DebugCheats.hpp"
+#include "GameLib/DebugCheats.hpp"
 
 //const   xcolor  g_BBG_LaserColor( 49, 49, 250, 255 );//( 255, 0, 0, 255 );//( 90, 80, 40, 255 ); //( 49, 49, 250, 200 );
 const   xcolor  g_BBG_LaserColor( 49, 250, 49, 255 );
@@ -117,6 +118,8 @@ weapon_bbg::weapon_bbg( void )
     m_LoopVoiceId           = 0;
     m_LockonLoopId          = 0;
     m_LaserOnLoopId         = 0;
+    m_LaserSegmentCount     = 0;
+    m_LaserLockedOn         = FALSE;
 
     m_SecondaryFireBaseDamage   = 20.0f;
     m_SecondaryFireMaxDamage    = 35.0f;
@@ -133,25 +136,25 @@ weapon_bbg::weapon_bbg( void )
     m_hMuzzleFXSecondary.SetName( PRELOAD_FILE("mhg_muzzleflash_000.fxo") );
 
     // initialize time
-    m_LastUpdateTime = (f32)x_GetTimeSec();
+    m_LastUpdateTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
 
     m_bIsAltFiring = FALSE;    
     m_LastAmmoBurnTime = m_LastUpdateTime;
     m_AmmoBurned = 0;
 
-    // load up the bitmaps
-    m_LaserBitmap.SetName( PRELOAD_FILE("Tracer_Laser.xbmp") );
-    m_LaserFixupBitmap.SetName( PRELOAD_FILE("Tracer_Glow.xbmp") );
+    // Load the renderer textures.
+    m_LaserTexture.SetName( PRELOAD_FILE("Tracer_Laser.xbmp") );
+    m_LaserFixupTexture.SetName( PRELOAD_FILE("Tracer_Glow.xbmp") );
 
 #ifndef X_EDITOR
-    if ( m_LaserBitmap.GetPointer() == NULL )
+    if ( m_LaserTexture.GetPointer() == NULL )
     {
-        ASSERTS( 0, xfs( "Unable to load %s", m_LaserBitmap.GetName() ) );
+        ASSERTS( 0, xfs( "Unable to load %s", m_LaserTexture.GetName() ) );
     }
 
-    if ( m_LaserFixupBitmap.GetPointer() == NULL )
+    if ( m_LaserFixupTexture.GetPointer() == NULL )
     {
-        ASSERTS( 0, xfs( "Unable to load %s", m_LaserFixupBitmap.GetName() ) );
+        ASSERTS( 0, xfs( "Unable to load %s", m_LaserFixupTexture.GetName() ) );
     }
 #endif
 
@@ -178,7 +181,6 @@ weapon_bbg::~weapon_bbg()
 
 //==============================================================================
 static s32 BBG_Alpha    = 100;
-static xbool g_bOldDraw = FALSE;
 static f32 g_BBGFirstSize1 = 5.0f;
 static f32 g_BBGFirstSize2 = 6.0f;
 static f32 g_BBGLastSize1 = 15.0f;
@@ -186,212 +188,171 @@ static f32 g_BBGLastSize2 = 15.0f;
 
 void weapon_bbg::OnRenderTransparent(void)
 {
-    // call base class render which basically just calles object::OnRenderTransparent()
+    // Call base class render which basically just calls object::OnRenderTransparent().
     new_weapon::OnRenderTransparent();
 
-    object* pObj = g_ObjMgr.GetObjectByGuid( m_ParentGuid );
-    if( pObj && pObj->IsKindOf( player::GetRTTI() ) )
+    if( m_LaserSegmentCount > 0 )
     {
-        draw_ClearL2W();
+        const texture* pLaserTexture = m_LaserTexture.GetPointer();
+        const texture* pFixupTexture = m_LaserFixupTexture.GetPointer();
+        const view* pView = eng_GetView();
 
-        // set up drawing
-        draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_BLEND_ADD | DRAW_CULL_NONE );
+        matrix4 Identity;
+        Identity.Identity();
 
-        player* pPlayer = (player*)pObj;
-
-        // is "laser" button held?
-        if( m_ZoomStep != 0 && IsZoomInComplete() )
+        if( pLaserTexture && pView )
         {
-            if( !g_bOldDraw )
+            xcolor BeamColor = m_LaserLockedOn ? g_BBG_LaserColor_Locked : g_BBG_LaserColor;
+            BeamColor.A = (u8)BBG_Alpha;
+
+            const render::primitive_draw_desc BeamMaterial( pLaserTexture,
+                                                            render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                            render::PRIMITIVE_BLEND_ADDITIVE,
+                                                            render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                            render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                            render::PRIMITIVE_SAMPLER_ANISOTROPIC_WRAP,
+                                                            render::PRIMITIVE_LAYER_ADDITIVE );
+            render::PrimitiveBatch BeamBatch( BeamMaterial );
+            BeamBatch.Reserve( m_LaserSegmentCount * 4, m_LaserSegmentCount * 6 );
+
+            for( s32 i = 0; i < m_LaserSegmentCount; i++ )
             {
-                // set draw texture
-                draw_SetTexture( *m_LaserBitmap.GetPointer() );
-            }
-            
-            vector3 StartPos, EndPos;
-            // get the point from which the projectile will fire
-            GetFiringStartPosition( StartPos );
-
-            // get the position the "laser" will do a collision trace to
-            pPlayer->GetProjectileHitLocation(EndPos, FALSE);
-
-            // init bounce count
-            u8 nBounces = 0;
-
-            // save off old start position so we can set StartPos to next start point
-            vector3 OldStartPos = StartPos;
-
-            //////////////
-            // setup collision info for firing "laser" from initial point to EndPos
-            g_CollisionMgr.AddToIgnoreList( pPlayer->GetGuid() );
-            g_CollisionMgr.RaySetup( pPlayer->GetGuid(), StartPos, EndPos );
-            g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, object::ATTR_BLOCKS_SMALL_PROJECTILES, object::ATTR_COLLISION_PERMEABLE);
-
-            // default modifier to full distance in case the collision manager returns no collisions
-            f32 DistModifier = 1.0f;
-
-            // if we don't hit anything, T is undefined
-            if( g_CollisionMgr.m_nCollisions > 0 )
-            {
-                DistModifier = g_CollisionMgr.m_Collisions[0].T;
+                const f32 Radius0 = (i == 0) ? g_BBGFirstSize1 : g_BBGLastSize1;
+                const f32 Radius1 = (i == 0) ? g_BBGFirstSize2 : g_BBGLastSize2;
+                BeamBatch.AddViewOrientedQuad( m_LaserSegments[i].Start,
+                                               m_LaserSegments[i].End,
+                                               pView->GetPosition(),
+                                               vector2( 0.0f, 0.0f ),
+                                               vector2( 1.0f, 1.0f ),
+                                               BeamColor,
+                                               BeamColor,
+                                               Radius0,
+                                               Radius1 );
             }
 
-            // get our new end position
-            EndPos = StartPos + (DistModifier*(EndPos-StartPos));            
-            //////////////
-
-            // get the object we hit
-            guid HitGuid = g_CollisionMgr.m_Collisions[0].ObjectHitGuid;
-            object* pObject = g_ObjMgr.GetObjectByGuid( HitGuid );
-
-            // set flag for colliding with living objects
-            xbool bStop = CheckLaserHitObject(pObject);
-
-            // set up color and alpha; if we hit something, change color
-            xcolor C = bStop ? g_BBG_LaserColor_Locked : g_BBG_LaserColor;
-
-            C.A = (u8)BBG_Alpha;
-
-            struct struct_CachedQuadInfo
-            {
-                vector3 StartPos;
-                vector3 EndPos;
-                collision_mgr::collision CachedCollision;
-
-            };
-
-            // +1 because we have an extra entry (the first one which is 0)
-            struct_CachedQuadInfo CachedQuadInfo[MAX_ENERGY_PROJ_IMPACTS+1];
-
-            CachedQuadInfo[nBounces].StartPos        = StartPos;
-            CachedQuadInfo[nBounces].EndPos          = EndPos;
-            // save off collision info (the first one is the initial collision).
-            CachedQuadInfo[nBounces].CachedCollision = g_CollisionMgr.m_Collisions[0];
-
-            if( g_bOldDraw )
-            {
-                // always draw the 1st "laser" textured quad (the one coming out of the gun)
-                draw_OrientedQuad( StartPos, EndPos,
-                    vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
-                    C, C,
-                    g_BBGFirstSize1, g_BBGFirstSize2 );
-            }
-
-            // go through MAX impacts.  Stop if this is living or this is our first bounce
-            if( !bStop )
-            {
-                while( nBounces < MAX_ENERGY_PROJ_IMPACTS )
-                {
-                    // put start position on our end postion
-                    StartPos = EndPos;
-
-                    nBounces++;
-
-                    vector3 Direction = (StartPos-OldStartPos);
-                    EndPos = GetLaserReflectVector( pPlayer, StartPos, Direction, g_CollisionMgr.m_Collisions[0] );
-
-                    // save off info
-                    CachedQuadInfo[nBounces].StartPos        = StartPos;
-                    CachedQuadInfo[nBounces].EndPos          = EndPos;
-
-                    // be sure we get the collision from GetLaserReflectVector() saved
-                    CachedQuadInfo[nBounces].CachedCollision = g_CollisionMgr.m_Collisions[0];
-
-                    // setup collision info
-                    // REMEMBER, this collision is coming from GetLaserReflectVector()
-                    HitGuid = g_CollisionMgr.m_Collisions[0].ObjectHitGuid;
-                    pObject = g_ObjMgr.GetObjectByGuid( HitGuid );
-
-                    // set flag for colliding with living objects
-                    bStop = CheckLaserHitObject(pObject);
-
-                    if( g_bOldDraw )
-                    {
-                        // draw the "laser" textured quad
-                        draw_OrientedQuad( StartPos, EndPos,
-                            vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
-                            C, C,
-                            g_BBGLastSize1, g_BBGFirstSize2 );
-                    }
-
-                    if( bStop )
-                    {                        
-                        break;
-                    }
-
-                    OldStartPos = StartPos;
-                }
-            }
-
-            // locked onto target
-            if( bStop )
-            {
-                C = g_BBG_LaserColor_Locked;
-                C.A = (u8)BBG_Alpha;
-
-                m_bLockedOn = TRUE;
-            }
-            else
-            {
-                m_bLockedOn = FALSE;
-            }
-
-            // our special little counter
-            u8 i = 0;
-
-            // do this in a separate loop so we aren't flushing the draw pipeline and switching textures so much
-            while( i <= nBounces )
-            {
-                if( !g_bOldDraw )
-                {
-                    // set draw texture
-                    draw_SetTexture( *m_LaserBitmap.GetPointer() );
-
-                    // make first quad smaller
-                    if( i == 0 )
-                    {
-                        // get the point from which the "laser" emits
-                        vector3 StartPos = GetLaserEmitPosition();
-                        draw_OrientedQuad( StartPos, CachedQuadInfo[i].EndPos,
-                            vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
-                            C, C,
-                            g_BBGFirstSize1, g_BBGFirstSize2 );
-                    }
-                    else
-                    {
-                        draw_OrientedQuad( CachedQuadInfo[i].StartPos, CachedQuadInfo[i].EndPos,
-                            vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
-                            C, C,
-                            g_BBGLastSize1, g_BBGLastSize2 );
-                    }
-                }
-
-                // draw bitmap "error hider" for "laser"
-                // change color if target is locked
-                xcolor c = bStop ? g_BBG_LaserColor_Locked : g_BBG_LaserColor;
-
-                new_weapon::DrawLaserFixupBitmap( m_LaserFixupBitmap.GetPointer(), 7.5f, c, CachedQuadInfo[i].CachedCollision );
-
-
-                i++;
-            }
-        }
-        else
-        {
-            // clear texture, alt fire isn't down
-            draw_SetTexture();
+            BeamBatch.Submit( Identity );
         }
 
-        // engine stop drawing
-        draw_End();
+        if( pFixupTexture )
+        {
+            const render::primitive_draw_desc FixupMaterial( pFixupTexture,
+                                                             render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                             render::PRIMITIVE_BLEND_ADDITIVE,
+                                                             render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                             render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                             render::PRIMITIVE_SAMPLER_ANISOTROPIC_WRAP,
+                                                             render::PRIMITIVE_LAYER_ADDITIVE );
+            render::PrimitiveBatch FixupBatch( FixupMaterial );
+            FixupBatch.Reserve( m_LaserSegmentCount * 4, m_LaserSegmentCount * 6 );
+
+            const xcolor FixupColor = m_LaserLockedOn ? g_BBG_LaserColor_Locked : g_BBG_LaserColor;
+            for( s32 i = 0; i < m_LaserSegmentCount; i++ )
+            {
+                if( !m_LaserSegments[i].HasImpact )
+                    continue;
+
+                const vector3& Normal = m_LaserSegments[i].ImpactNormal;
+                const vector3 Center = m_LaserSegments[i].ImpactPoint + Normal * 0.5f;
+                FixupBatch.AddPlaneAlignedQuad( Center, Normal, 7.5f, FixupColor );
+            }
+
+            FixupBatch.Submit( Identity );
+        }
     }
 
     RenderReloadFX();
 }
 
 //===========================================================================
+
+void weapon_bbg::ClearLaserPath( void )
+{
+    m_LaserSegmentCount = 0;
+    m_LaserLockedOn     = FALSE;
+}
+
+//===========================================================================
+
+void weapon_bbg::UpdateLaserPath( player& Player )
+{
+    ClearLaserPath();
+
+    if( (m_ZoomStep == 0) || !IsZoomInComplete() )
+    {
+        return;
+    }
+
+    vector3 StartPos;
+    if( !GetFiringStartPosition( StartPos ) )
+    {
+        return;
+    }
+
+    vector3 EndPos;
+    Player.GetProjectileHitLocation( EndPos, FALSE );
+    vector3 OldStartPos = StartPos;
+
+    g_CollisionMgr.AddToIgnoreList( Player.GetGuid() );
+    g_CollisionMgr.RaySetup( Player.GetGuid(), StartPos, EndPos );
+    g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES,
+                                    object::ATTR_BLOCKS_SMALL_PROJECTILES,
+                                    object::ATTR_COLLISION_PERMEABLE );
+
+    xbool HasCollision = g_CollisionMgr.m_nCollisions > 0;
+    if( HasCollision )
+    {
+        EndPos = StartPos + g_CollisionMgr.m_Collisions[0].T * (EndPos - StartPos);
+    }
+
+    object* pObject = HasCollision
+                    ? g_ObjMgr.GetObjectByGuid( g_CollisionMgr.m_Collisions[0].ObjectHitGuid )
+                    : NULL;
+    xbool StopAtTarget = CheckLaserHitObject( pObject );
+
+    while( m_LaserSegmentCount < MAX_LASER_SEGMENTS )
+    {
+        laser_segment& Segment = m_LaserSegments[m_LaserSegmentCount++];
+        Segment.Start     = (m_LaserSegmentCount == 1) ? GetLaserEmitPosition() : StartPos;
+        Segment.End       = EndPos;
+        Segment.HasImpact = HasCollision;
+
+        if( HasCollision )
+        {
+            Segment.ImpactPoint  = g_CollisionMgr.m_Collisions[0].Point;
+            Segment.ImpactNormal = g_CollisionMgr.m_Collisions[0].Plane.Normal;
+        }
+
+        if( StopAtTarget || !HasCollision ||
+            (m_LaserSegmentCount >= MAX_LASER_SEGMENTS) )
+        {
+            break;
+        }
+
+        const collision_mgr::collision PreviousCollision = g_CollisionMgr.m_Collisions[0];
+        StartPos = EndPos;
+        EndPos = GetLaserReflectVector( &Player,
+                                        StartPos,
+                                        StartPos - OldStartPos,
+                                        PreviousCollision );
+        OldStartPos = StartPos;
+
+        HasCollision = g_CollisionMgr.m_nCollisions > 0;
+        pObject = HasCollision
+                ? g_ObjMgr.GetObjectByGuid( g_CollisionMgr.m_Collisions[0].ObjectHitGuid )
+                : NULL;
+        StopAtTarget = CheckLaserHitObject( pObject );
+    }
+
+    m_LaserLockedOn = StopAtTarget;
+}
+
+//===========================================================================
+
 xbool weapon_bbg::CheckLaserHitObject(object *pObject)
 {
+    if( !pObject )
+        return FALSE;
+
     if( (pObject->GetAttrBits() & object::ATTR_DESTROY) )
     {
         // this thing is being deleted
@@ -448,6 +409,7 @@ void weapon_bbg::KillLaserSound( void )
     }
 
     m_bLockedOn = FALSE;
+    ClearLaserPath();
 }
 
 //===========================================================================
@@ -483,7 +445,7 @@ vector3 weapon_bbg::GetLaserReflectVector( player *pPlayer, const vector3& Start
     // if we don't hit anything, T is undefined
     if( g_CollisionMgr.m_nCollisions > 0 )
     {
-        DistModifier = Coll.T;
+        DistModifier = g_CollisionMgr.m_Collisions[0].T;
     }
 
     // get our new end position
@@ -773,30 +735,39 @@ void weapon_bbg::RenderReloadFX( void )
 
 //=========================================================================
 
-void weapon_bbg::OnAdvanceLogic( f32 DeltaTime )
+void weapon_bbg::OnAdvanceSimulation( f32 DeltaTime )
 {
-    f32 currentTime = (f32)x_GetTimeSec();
+    f32 currentTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
 
     // we are in idle mode or zoom idle, so recharge
     if( m_bIdleMode && m_ZoomStep == 0 )
     {   
-        m_CurrentWaitTime += ((currentTime - m_LastUpdateTime));
+        const f32 ElapsedTime = currentTime - m_LastUpdateTime;
+        if( x_isvalid( ElapsedTime ) && (ElapsedTime > 0.0f) )
+        {
+            m_CurrentWaitTime += ElapsedTime;
+        }
 
         if( (m_CurrentWaitTime >= m_ReloadWaitTime) && 
             (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount < m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax) )
         {
-            s32 Ammo = (s32)((m_CurrentWaitTime-m_ReloadWaitTime)/BBG_GainSecondsTweak.GetF32());
+            const f32 GainSeconds = BBG_GainSecondsTweak.GetF32();
+            s32 Ammo = 0;
+            if( x_isvalid( GainSeconds ) && (GainSeconds > F32_MIN) )
+            {
+                Ammo = (s32)((m_CurrentWaitTime-m_ReloadWaitTime)/GainSeconds);
+            }
 
             // clamp ammo
             Ammo = MIN( Ammo,   ((m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax) - (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount)) );
 
             // Did the ammo count change.
-            if( m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount != (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount+Ammo) )
+            if( Ammo > 0 )
             {
-                // Update the ammo and set the time back.
+                // Update the ammo and retain the fractional recharge time.
                 m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount += Ammo;
                 m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip    = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount;
-                m_CurrentWaitTime = m_ReloadWaitTime;
+                m_CurrentWaitTime -= Ammo * GainSeconds;
             }
 
             // All maxed out.
@@ -817,15 +788,25 @@ void weapon_bbg::OnAdvanceLogic( f32 DeltaTime )
         {
             if( m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount > 0 )
             {
-                f32 checkTime = (currentTime - m_LastAmmoBurnTime);
-
-                if( checkTime > BBG_BurnSecondsTweak.GetF32() )
+                const f32 BurnSeconds = BBG_BurnSecondsTweak.GetF32();
+                const f32 ElapsedTime = currentTime - m_LastAmmoBurnTime;
+                s32 AmmoToBurn = 0;
+                if( x_isvalid( BurnSeconds ) && (BurnSeconds > F32_MIN) &&
+                    x_isvalid( ElapsedTime ) && (ElapsedTime >= BurnSeconds) )
                 {
-                    // Decrement count of bullets in current clip
-                    // REMEMBER: this needs to take ammo from primary
-                    DecrementAmmo(AMMO_PRIMARY);
-                    m_AmmoBurned++;
-                    m_LastAmmoBurnTime = (f32)x_GetTimeSec();
+                    AmmoToBurn = (s32)(ElapsedTime / BurnSeconds);
+                    AmmoToBurn = MIN( AmmoToBurn,
+                                      m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip );
+                    if( AmmoToBurn > 0 )
+                    {
+                        // Decrement count of bullets in current clip
+                        // REMEMBER: this needs to take ammo from primary
+                        DecrementAmmo( AMMO_PRIMARY, AmmoToBurn );
+                        m_AmmoBurned += AmmoToBurn;
+                        // Retain the fractional burn time so the rate is not
+                        // quantized by the simulation update frequency.
+                        m_LastAmmoBurnTime += AmmoToBurn * BurnSeconds;
+                    }
                 }
 
                 PlayLaserSound();
@@ -850,12 +831,26 @@ void weapon_bbg::OnAdvanceLogic( f32 DeltaTime )
         }
     }
 
-    m_LastUpdateTime = (f32)x_GetTimeSec();
+    m_LastUpdateTime = currentTime;
 
     // Do this here.  Otherwise, the FX will trail a frame behind
     AdvanceReloadFx( DeltaTime );
 
-    new_weapon::OnAdvanceLogic( DeltaTime );
+    new_weapon::OnAdvanceSimulation( DeltaTime );
+
+    object* pOwner = g_ObjMgr.GetObjectByGuid( m_ParentGuid );
+    if( (m_CurrentRenderState == RENDER_STATE_PLAYER) &&
+        pOwner && pOwner->IsKindOf( player::GetRTTI() ) )
+    {
+        player& Player = player::GetSafeType( *pOwner );
+        if( !Player.IsCinemaRunning() )
+        {
+            UpdateLaserPath( Player );
+            return;
+        }
+    }
+
+    ClearLaserPath();
 }
 
 //==============================================================================
@@ -878,15 +873,14 @@ void weapon_bbg::UpdateReticle( f32 DeltaTime )
         }
 
         // reticle is on or laser is locked on
-        // NOTE: we hijacked m_bLockedOn to tell if laser locked onto an enemy
-        if( CheckReticleLocked() || m_bLockedOn )
+        if( CheckReticleLocked() || m_LaserLockedOn )
         {
             m_LastLockonTime += DeltaTime;
 
             if( m_LastLockonTime >= s_BBGLockonBeepDelay )
             {
                 g_AudioMgr.Play( "Reticule_Shift_Red" );
-                m_LastLockonTime = 0.0f;
+                m_LastLockonTime -= s_BBGLockonBeepDelay;
             }
         }
         else
@@ -1254,7 +1248,7 @@ void weapon_bbg::BeginAltRampUp( void )
 {
     m_AmmoBurned = 0;
     m_bIsAltFiring = TRUE;
-    m_LastAmmoBurnTime = (f32)x_GetTimeSec();    
+    m_LastAmmoBurnTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
 }
 
 //==============================================================================
@@ -1579,7 +1573,7 @@ void weapon_bbg::DecrementAmmo( const ammo_priority& rAmmoPriority, const s32& n
 {
     object *pObj = g_ObjMgr.GetObjectByGuid(m_ParentGuid);
 
-    if( DEBUG_INFINITE_AMMO == FALSE && !pObj->IsKindOf( character::GetRTTI() ) )
+    if( DEBUG_INFINITE_AMMO == FALSE && (!pObj || !pObj->IsKindOf( character::GetRTTI() ) ) )
     {
         // decrement count of bullets in current clip
         m_WeaponAmmo[ rAmmoPriority ].m_AmmoInCurrentClip -= nAmt;

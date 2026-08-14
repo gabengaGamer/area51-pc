@@ -5,6 +5,7 @@
 #include "entropy.hpp"
 #include "x_bytestream.hpp"
 #include "dlinkedlist.hpp"
+#include "Render/Texture.hpp"
 
 namespace fx_core
 {
@@ -26,13 +27,12 @@ class texture_mgr
     {
         char        Path[ X_MAX_PATH ];
         xbool       IsLoaded;
-        xbitmap     Bitmap;
-        s32         ID;
+        texture     Texture;
         xbool       UsedFlag;           // for use during export...is this bitmap referenced?
         FILETIME    CreationTime;
 
-        record()    { x_memset(this, 0, sizeof(record) ); ID = -1; }
-        ~record()   { if ( ID != -1 ) vram_Unregister( Bitmap ); }
+        record();
+        ~record();
     };
 
     // a collection of strings and the ID's they point to (Ptr is actually used as s32)
@@ -50,7 +50,7 @@ public:
 
     xbool   ActivateBitmap      ( const char* pFileName );
     xbool   DeActivateBitmap    ( const char* pFileName );
-    s32     GetBitmapID         ( const char* pFileName );
+    const texture* GetTexture   ( const char* pFileName );
     s32     GetTextureIndex     ( const char* pFileName );
     void    MarkAsUsed          ( const char* pFileName );
     s32     GetBitmapCount      ( void );

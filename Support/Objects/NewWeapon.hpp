@@ -7,13 +7,13 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Objects\Render\SkinInst.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "..\Support\Characters\factions.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Render/SkinInst.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "../Support/Characters/factions.hpp"
 #include "Inventory/Inventory2.hpp"
 #include "Objects/Render/RigidInst.hpp"
-#include "Auxiliary\fx_RunTime\Fx_Mgr.hpp"
+#include "FX/fx_Mgr.hpp"
 
 //=========================================================================
 // DEFINES
@@ -27,6 +27,7 @@ class bullet_projectile;
 class base_projectile;
 class hud_object;
 class player;
+class texture;
 
 
 //=========================================================================
@@ -197,7 +198,7 @@ public:
 // GetMaterial          -   Legacy code.  Returns material type.
 // OnEnumProp           -   Enumerates all the properties related to the player
 // OnProperty           -   Set/Gets properties for the player
-// OnAdvanceLogic       -   Called once per loop.  Advances animation player and makes the calls to handle animation events.
+// OnAdvanceSimulation       -   Called once per loop.  Advances animation player and makes the calls to handle animation events.
 // OnMove               -   Updates objects position in the world.
 // OnColCheck           -   Overload.  Does nothing (weapons do not currently collide with other objects.)
 // OnColNotify          -   Overload.  Does nothing (weapons do not currently collide with other objects.)
@@ -269,7 +270,7 @@ public:
     
     virtual void                ResetWeapon             ( void );
 
-    virtual void                OnAdvanceLogic          ( f32 DeltaTime );      
+    virtual void                OnAdvanceSimulation          ( f32 DeltaTime );
     virtual void                OnMove                  ( const vector3& NewPos   );      
     virtual void                OnTransform             ( const matrix4& L2W      ); 
   
@@ -283,6 +284,7 @@ public:
     virtual void                RenderWeaponShadow      ( u64 ProjMask );
     virtual void                OnRenderTransparent     ( void );
     virtual void                RenderWeapon            ( xbool bDebug, const xcolor& Ambient, xbool Cloaked );
+
             void                SetVisible              ( xbool bVisible ) { m_IsVisible = bVisible; }
 
             void                GetAmmoState            ( ammo_priority Priority,
@@ -305,8 +307,6 @@ public:
     static inven_item          GetParentIDForDualWeapon( inven_item DualItem );
 
             render_state        GetRenderState          ( void );
-
-            virtual void        DrawLaserFixupBitmap    ( xbitmap* pBitmap, f32 Radius, xcolor cColor, collision_mgr::collision& Coll );
 
             xbool               IsReloadCompleted       ( void ) { return m_bCompletedReload; }
             void                SetReloadCompleted      ( xbool bCompleted ) { m_bCompletedReload = bCompleted; }
@@ -364,8 +364,8 @@ public:
 // TODO: CJ: WEAPONS:    virtual use_item_err        UseItem                 ( void );
 //    virtual        void         ActivateItem            ( void );
 
-            xbitmap*            GetCenterReticleBmp     ( void );
-            xbitmap*            GetEdgeReticleBmp       ( void );
+            texture*            GetCenterReticleTexture ( void );
+            texture*            GetEdgeReticleTexture   ( void );
             f32                 GetCenterPixelOffset    ( void );
     virtual ammo_priority       GetPrimaryAmmoPriority  ( void ){ return AMMO_PRIMARY; }
     virtual ammo_priority       GetSecondaryAmmoPriority( void ){ return AMMO_PRIMARY; }
@@ -448,7 +448,7 @@ public:
 
 protected:
     // functions for the custom sniper scope texture
-            xbitmap*            GetScopeTexture             ( void );
+            texture*            GetScopeTextureResource     ( void );
             void                InstallCustomScope          ( void );
             void                UninstallCustomScope        ( void );
 
@@ -462,6 +462,7 @@ protected:
     virtual void                MoveMuzzleFx                ( void );
     virtual void                RenderMuzzleFx              ( void );
     virtual void                AdvanceMuzzleFX             ( f32 DeltaTime );
+            void                SyncMuzzleFXTransforms      ( void );
 
     //Overload this to define the type of muzzle flash for a particular gun, can be NULL
 public:    
@@ -526,8 +527,8 @@ protected:
     fx_handle               m_MuzzleSecondaryFX[ FIRE_POINT_COUNT ];             // Unique ID for the secondary muzzle flash
     const char*             m_NPCMuzzleSoundFx;                                 // Name of sound effect for muzzle flash for NPC
     
-    rhandle<xbitmap>        m_ReticleCenter;
-    rhandle<xbitmap>        m_ReticleEdge;
+    rhandle<texture>        m_ReticleCenter;
+    rhandle<texture>        m_ReticleEdge;
     f32                     m_ReticleCenterPixelOffset;
 
     f32                     m_AimDegradePrimary;                // how much to degrade aim for each primary fire
@@ -559,9 +560,7 @@ protected:
     s32                     m_ScopeMesh;                        // sniper-scope custom mesh (-1 if not present)
     s32                     m_ScopeLensMesh;                    // sniper-scope custom lens mesh (-1 if not present)
 
-    static s32              m_OrigScopeVramId;                  // original vram id of scope texture
     static s32              m_ScopeRefCount;                    // reference count to scope texture
-    static s32              m_ScopeTextureVramId;               // custom texture pulled from the screen
 
     xbool                   m_bLockedOn;                        // so we can tell a sound to play
     xbool                   m_bCompletedReload;                 // are we past the required reload threshold?

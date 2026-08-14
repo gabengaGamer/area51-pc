@@ -47,9 +47,8 @@
 #define NAV_MAP_HPP
 
 #include "x_files.hpp"
-#include "Auxiliary\MiscUtils\Fileio.hpp"
 #include "ConnectionZoneMgr.hpp"
-#include "MiscUtils\guid.hpp"
+#include "MiscUtils/Guid.hpp"
 #include "x_bitstream.hpp"
 
 typedef u16 nav_node_slot_id;

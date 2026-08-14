@@ -5,9 +5,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
-#include "..\Support\TriggerEx\Affecters\object_affecter.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
+#include "../Support/TriggerEx/Affecters/object_affecter.hpp"
 
 //=========================================================================
 // CLASS
@@ -51,7 +51,7 @@ public:
 	virtual			void	    OnColCheck			( void );
     virtual         void        OnColNotify         ( object& Object );
     virtual         void        OnActivate          ( xbool Flag );  
-    virtual         void        OnAdvanceLogic      ( f32 DeltaTime );      
+    virtual         void        OnAdvanceSimulation      ( f32 DeltaTime );      
     
     xbool           m_DrawActivationIcon;                       // Debug functionality
 

@@ -15,8 +15,9 @@
 
 #include "x_math.hpp"
 
-#include "Geom.hpp"
+#include "geom.hpp"
 #include "Material.hpp"
+#include "ShadowTypes.hpp"
 
 //==============================================================================
 //  CONSTANTS
@@ -25,10 +26,12 @@
 enum
 {
     POINT_SHADOW_FACE_COUNT = 6,
-	// NOTE: GS: Keep in mind that they all must be a power of two!
-    MAX_SHADOW_LIGHTS       = 8,
-    MAX_SHADOW_SOURCES      = 64,
-    MAX_SHADOW_ATLAS_SIZE   = 16384,
+    // NOTE: GS: Keep in mind that they all must be a power of two!
+    MAX_SHADOW_LIGHTS = 8,
+    MAX_SHADOW_SOURCES = 64,
+    MAX_SHADOW_ATLAS_SIZE = 16384,
+    MAX_SHADOW_MOMENT_ATLAS_SIZE = 2048,
+    SHADOW_EVSM_BLUR_RADIUS = 4,
 };
 
 class object;
@@ -37,15 +40,14 @@ class object;
 //  SHADOW MAP MANAGER
 //==============================================================================
 
-class shadow_map_mgr
+class ShadowMapMgr
 {
-public:
-
+  public:
     //--------------------------------------------------------------------------
     // Source Types
     //--------------------------------------------------------------------------
 
-    enum source_type
+    enum SourceType
     {
         SHADOW_SOURCE_POINT_FACE = 0,
         SHADOW_SOURCE_SPOT,
@@ -55,9 +57,10 @@ public:
     // Source Description
     //--------------------------------------------------------------------------
 
-    struct shadow_source
+    struct ShadowSource
     {
         s32     Type;
+        s32     DynamicLightIndex;
         s32     PointLightIndex;
         s32     FaceIndex;
         s32     RequestedResolution;
@@ -77,99 +80,88 @@ public:
         s32     AtlasY;
         s32     AtlasWidth;
         s32     AtlasHeight;
+        // Original packed tile retained for EVSM guard replication.
+        s32     AtlasTileX;
+        s32     AtlasTileY;
+        s32     AtlasTileWidth;
+        s32     AtlasTileHeight;
     };
 
     //--------------------------------------------------------------------------
     // Lifetime
     //--------------------------------------------------------------------------
 
-                shadow_map_mgr          ( void );
-               ~shadow_map_mgr          ( void );
+    ShadowMapMgr( void );
+    ~ShadowMapMgr( void );
 
     //--------------------------------------------------------------------------
     // Source Construction
     //--------------------------------------------------------------------------
 
-    void        ClearSources            ( void );
-    void        FinalizeSources         ( void );
-    xbool       AddPointSource          ( const matrix4& L2W,
-                                          radian         FOV,
-                                          f32            LightRadius,
-                                          f32            LightFalloff,
-                                          s32            ShadowMapResolution,
-                                          s32            ShadowPriority,
-                                          f32            ShadowScore );
-    xbool       AddSpotSource           ( const matrix4& L2W,
-                                          radian         FOV,
-                                          f32            LightRadius,
-                                          f32            LightFalloff,
-                                          s32            ShadowMapResolution,
-                                          s32            ShadowPriority,
-                                          f32            ShadowScore );
+    void  ClearSources        ( void );
+    void  FinalizeSources     ( void );
+    void  SetEnabled          ( xbool Enabled );
+    void  SetShadowFilterType ( ShadowFilterType Type );
+    xbool AddPointSource( matrix4 const& l2W, radian fov, f32 lightRadius, f32 lightFalloff, s32 shadowMapResolution,
+                          s32 shadowPriority, f32 shadowScore, s32 dynamicLightIndex );
+    xbool AddSpotSource( matrix4 const& l2W, radian fov, f32 lightRadius, f32 lightFalloff, s32 shadowMapResolution,
+                         s32 shadowPriority, f32 shadowScore, s32 dynamicLightIndex );
 
     //--------------------------------------------------------------------------
     // Source Queries
     //--------------------------------------------------------------------------
 
-    const shadow_source&
-                GetSource               ( s32 SourceIndex ) const;
-    s32         GetSourceCount          ( void ) const;
-    s32         GetAtlasSize            ( void ) const;
-    s32         GetAtlasSourceCount     ( void ) const;
-    xbool       HasActiveSources        ( void ) const;
-
-    //--------------------------------------------------------------------------
-    // Material Queries
-    //--------------------------------------------------------------------------
-
-    xbool       CanReceiveShadowMap     ( material_type          Type,
-                                          u16                    MaterialFlags ) const;
-    xbool       CanReceiveShadowMap     ( const geom::material&  Mat ) const;
-    xbool       CanReceiveShadowMap     ( const material&        Mat ) const;
+    ShadowSource const& GetSource( s32 sourceIndex ) const;
+    s32                 GetSourceCount( void ) const;
+    s32                 GetAtlasSize( void ) const;
+    s32                 GetAtlasSourceCount( void ) const;
+    ShadowFilterType    GetShadowFilterType( void ) const;
+    xbool               HasActiveSources( void ) const;
 
     //--------------------------------------------------------------------------
     // Shadow Map Build
     //--------------------------------------------------------------------------
 
-    void        CreateShadowMap         ( object* const* ppCasterCandidates,
-                                          s32            NCasterCandidates );
+    void CreateShadowMap( object* const* pPCasterCandidates, s32 nCasterCandidates );
 
-private:
+  private:
+    struct ScratchData;
+
+    ShadowMapMgr( ShadowMapMgr const& );
+    ShadowMapMgr& operator=( ShadowMapMgr const& );
 
     //--------------------------------------------------------------------------
     // Internal Helpers
     //--------------------------------------------------------------------------
 
-    void        ComputePerspectiveSource( shadow_source&  Dest,
-                                          s32             SourceType,
-                                          const matrix4&  L2W,
-                                          radian          FOV,
-                                          f32             LightRadius,
-                                          f32             LightFalloff,
-                                          s32             ShadowMapResolution ) const;
-    void        UpdateAtlasLayout       ( void );
+    void ComputePerspectiveSource( ShadowSource& dest, s32 sourceType, matrix4 const& l2W, radian fov, f32 lightRadius,
+                                   f32 lightFalloff, s32 shadowMapResolution ) const;
+    ScratchData& GetScratch( void );
+    void         UpdateAtlasLayout( void );
 
-private:
-
+  private:
     //--------------------------------------------------------------------------
     // Manager State
     //--------------------------------------------------------------------------
 
-    s32             m_SourceCount;
-    s32             m_PointFaceCount;
-    s32             m_PointLightCount;
-    s32             m_AtlasSourceCount;
-    s32             m_AtlasSize;
-    s32             m_AtlasSizeFloor;
-    xbool           m_AtlasLayoutDirty;
-    shadow_source   m_Sources[MAX_SHADOW_SOURCES];
+    ScratchData*     m_pScratch;
+    s32              m_sourceCount;
+    s32              m_pointFaceCount;
+    s32              m_pointLightCount;
+    s32              m_atlasSourceCount;
+    s32              m_atlasSize;
+    s32              m_atlasSizeFloor;
+    xbool            m_atlasLayoutDirty;
+    xbool            m_enabled;
+    ShadowFilterType m_shadowFilterType;
+    ShadowSource     m_sources[MAX_SHADOW_SOURCES];
 };
 
 //==============================================================================
 //  GLOBAL INSTANCE
 //==============================================================================
 
-extern shadow_map_mgr g_ShadowMapMgr;
+extern ShadowMapMgr g_ShadowMapMgr;
 
 //==============================================================================
 #endif // SHADOW_MAP_MGR_HPP

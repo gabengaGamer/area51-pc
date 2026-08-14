@@ -25,7 +25,7 @@
 
 #include "x_files.hpp"
 #include "x_threads.hpp"
-#include "e_network.hpp"
+#include "e_Network.hpp"
 #include "EntropyAbstraction.h"
 
 #ifdef TARGET_PS2
@@ -466,4 +466,3 @@ s32 GOAGetLastError( SOCKET s )
     return EWOULDBLOCK;
 }
 #endif // TARGET_PS2
-

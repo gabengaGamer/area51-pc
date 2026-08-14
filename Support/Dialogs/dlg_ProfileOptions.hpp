@@ -11,13 +11,14 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_blankbox.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_check.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_blankbox.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_check.hpp"
+#include "StateMgr/PlayerProfile.hpp"
 
 #include "dlg_PopUp.hpp"
 
@@ -43,7 +44,6 @@ enum profile_options_controls
     IDC_PROFILE_AUTOSAVE_BBOX,
     IDC_PROFILE_AUTOSAVE_SELECT,
 
-    IDC_PROFILE_OPTIONS_NAV_TEXT,
 };
 
 
@@ -83,16 +83,16 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
 
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
     void                OnSaveProfileCB     ( void );
-
-#if defined(TARGET_PC) || defined(TARGET_XBOX)
     void                OnProfileCreateCB   ( void );
-#endif
+
+private:
+    void                OpenProfileChangedPopup( void );
 
 protected:
     ui_frame*           m_pFrame1;
@@ -112,17 +112,15 @@ protected:
     ui_combo*           m_pOnlineStatusSelect;
     ui_combo*           m_pAutosaveSelect;
 
-    ui_text*            m_pNavText;
 
     s32                 m_CurrHL;
 
     profile_dlg_types   m_Type;
     xbool               m_bCreate;
-    s32                 m_iCard;
-
     dlg_popup*          m_PopUp;
     s32                 m_PopUpType;
     s32                 m_PopUpResult;
+    player_profile      m_OriginalProfile;
 
 #ifdef TARGET_XBOX
     s32                 m_BlocksRequired;

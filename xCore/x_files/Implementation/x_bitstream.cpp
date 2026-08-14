@@ -4,12 +4,12 @@
 //
 //=========================================================================
 
-#include "..\x_bitstream.hpp"
-#include "..\x_debug.hpp"
-#include "..\x_plus.hpp"
-#include "..\x_color.hpp"
-#include "..\x_string.hpp"
-#include "..\x_files.hpp"
+#include "../x_bitstream.hpp"
+#include "../x_debug.hpp"
+#include "../x_plus.hpp"
+#include "../x_color.hpp"
+#include "../x_string.hpp"
+#include "../x_files.hpp"
 
 //=========================================================================
 
@@ -1070,13 +1070,9 @@ void    bitstream::WriteRaw32         ( u32 Value, s32 NBits )
     m_HighestBitWritten = MAX( m_Cursor-1, m_HighestBitWritten );
 
     // Get mask highlighting bits that will be overwritten
-#ifdef TARGET_PC
-    u64 WriteMask = (0xFFFFFFFFFF >> LeftOffset) &
-                    (0xFFFFFFFFFF << RightOffset);
-#else
-    u64 WriteMask = (0xFFFFFFFFFFUL >> LeftOffset) & 
-                    (0xFFFFFFFFFFUL << RightOffset);
-#endif
+    const u64 BitMask = static_cast<u64>( 0xFFFFFFFFFFULL );
+    u64 WriteMask = (BitMask >> LeftOffset) &
+                    (BitMask << RightOffset);
 
     // Get data to align with mask
     u64 DataMask  = (((u64)Value) << RightOffset) & WriteMask;
@@ -1117,13 +1113,9 @@ u32    bitstream::ReadRaw32          ( s32 NBits ) const
     m_Cursor += NBits;
 
     // Get mask highlighting bits that will be read
-#ifdef TARGET_PC
-    u64 ReadMask = (0xFFFFFFFFFF >> LeftOffset) & 
-                   (0xFFFFFFFFFF << RightOffset);
-#else
-    u64 ReadMask = (0xFFFFFFFFFFUL >> LeftOffset) & 
-                   (0xFFFFFFFFFFUL << RightOffset);
-#endif
+    const u64 BitMask = static_cast<u64>( 0xFFFFFFFFFFULL );
+    u64 ReadMask = (BitMask >> LeftOffset) &
+                   (BitMask << RightOffset);
 
     // Clear data
     u64 DataMask = 0;

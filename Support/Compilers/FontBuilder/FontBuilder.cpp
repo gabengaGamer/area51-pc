@@ -5,9 +5,9 @@
 //==============================================================================
 
 #include "x_files.hpp"
-#include "commandline/CommandLine.hpp"
+#include "CommandLine/CommandLine.hpp"
 #include "x_bitmap.hpp"
-#include "bitmap/aux_bitmap.hpp"
+#include "Bitmap/aux_Bitmap.hpp"
 #include "x_bytestream.hpp"
 #include "TextIn.hpp"
 #include "TextOut.hpp"

@@ -13,9 +13,9 @@
 // INCLUDES
 //==============================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "x_bitmap.hpp"
-#include "Objects\Player.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
+#include "Objects/Player/Player.hpp"
 
 #include "hud_Renderable.hpp"
 
@@ -53,7 +53,6 @@ struct icon_inf
     icon_type       IconType; 
     vector3         FocusPosition;
     vector3         RenderPosition;
-    xbool           bOccludes;
     xbool           bAlignToBottom;
     gutter_type     GutterType; 
     xcolor          Color; 
@@ -75,14 +74,13 @@ public:
     void    Kill            ( void );
 
     virtual void    OnRender        ( player*   pPlayer );
-    virtual void    OnAdvanceLogic  ( player* pPlayer, f32 DeltaTime );
     virtual xbool   OnProperty      ( prop_query& rPropQuery );
     virtual void    OnEnumProp      ( prop_enum&  List );
 
-    void    AddIcon         (       icon_type     IconType, 
+    void    BeginSimulationSnapshot( void );
+    void    SubmitIcon      (       icon_type     IconType,
         const vector3&      FocusPosition,
         const vector3&      RenderPosition,
-        xbool         bOccludes,
         xbool         bAlignToBottom,
         gutter_type   GutterType, 
         xcolor        Color,
@@ -91,25 +89,34 @@ public:
         xbool         Distance, 
         f32           Opacity,
         f32           IconFadeDist = -1.0f,
-        f32           TextFadeDist = -1.0f
+        f32           TextFadeDist = -1.0f,
+        s32           PlayerNum = -1
         );
+    void    CommitSimulationSnapshot( void );
+    void    SetPlayerIconTarget( s32 PlayerNum, xbool Visible, xbool IsAlly );
 
-    void    RenderIcon      ( player* pPlayer, icon_inf& Icon );
-    void    Reset           ( void );
+    void    RenderIcon      ( player* pPlayer, const icon_inf& Icon );
     f32     GetOpacity      ( f32 DistFromCenter, f32 Opacity, f32 FadeDist );
 
     //------------------------------------------------------------------------------
     // Public Storage
-public:    
+public:
     s32                     m_NumActiveIcons;
     icon_inf                m_Icons[ NUM_ICONS ];
+    s32                     m_NumStagingIcons;
+    icon_inf                m_StagingIcons[ NUM_ICONS ];
+    xbool                   m_PlayerIconVisible[32];
+    xbool                   m_PlayerIconIsAlly[32];
+    f32                     m_PlayerIconOpacity[32];
+    f32                     m_PlayerIconSightDelay[32];
 
     xbool                   m_Active;
-    rect                    m_ViewDimensions;
-    rhandle<xbitmap>        m_ScreenEdgeBmp;
-    rhandle<xbitmap>        m_ScreenCenterBmp;
+    rhandle<texture>        m_ScreenEdgeBmp;
+    rhandle<texture>        m_ScreenCenterBmp;
     xcolor                  m_ScreenEdgeColor;
     xcolor                  m_ScreenCenterColor;
 };
 
 #endif
+
+

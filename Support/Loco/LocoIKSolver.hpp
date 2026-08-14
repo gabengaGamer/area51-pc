@@ -11,9 +11,9 @@
 //=========================================================================
 
 #include "x_math.hpp"
-#include "Animation\AnimData.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Render\Geom.hpp"
+#include "Animation/AnimData.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Render/geom.hpp"
 
 //=========================================================================
 // DEFINES

@@ -12,10 +12,10 @@
 //==============================================================================
 #include "x_files.hpp"
 
-#include "Objects\Render\SkinInst.hpp"
-#include "Animation\AnimData.hpp"
-#include "Loco\LocoAnimController.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "Objects/Render/SkinInst.hpp"
+#include "Animation/AnimData.hpp"
+#include "Loco/LocoAnimController.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 
 #include "Particle.hpp"
 #include "GeomBone.hpp"
@@ -85,7 +85,7 @@ struct bone_match_def
 
 struct ragdoll_def
 {    
-    xbool           m_bInitialized ;
+    xbool           m_isInitialized ;
 
     const char*     m_pName ;
 
@@ -390,7 +390,7 @@ const char* ragdoll::GetSkinGeomName( void ) const
 //==============================================================================
 
 #ifdef X_DEBUG
-void draw_Plane( const vector3& MidPt, const vector3& Normal, xcolor Color, f32 Size = 40 ) ;
+void RenderDebugPlane( const vector3& MidPt, const vector3& Normal, xcolor Color, f32 Size = 40 ) ;
 #endif
 
 void RagdollType_OnProperty ( prop_query& I, ragdoll::type& RagdollType );

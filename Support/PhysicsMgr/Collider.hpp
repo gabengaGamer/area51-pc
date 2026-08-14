@@ -12,7 +12,7 @@
 //==============================================================================
 
 #include "Physics.hpp"
-#include "CollisionMgr\PolyCache.hpp"
+#include "CollisionMgr/PolyCache.hpp"
 
 
 //==============================================================================
@@ -91,6 +91,9 @@ private:
         // Returns TRUE if sphere intersects any of world
         xbool   SphereWorldIntersection ( const vector3& SpherePos, const f32 SphereRadius );
 
+        vector3 ComputeFallbackNormal    ( const collision_shape* pColl0,
+                                           const collision_shape* pColl1 ) const;
+
         // Check sweeping sphere V NGon collision
         xbool   SphereNGonCollision     ( const plane&      Plane,
                                           const vector3*    Verts,
@@ -112,14 +115,16 @@ private:
         void    SphereSphereCollision   ( const vector3&    SpherePos0,
                                           const f32         SphereRadius0,
                                           const vector3&    SpherePos1,
-                                          const f32         SphereRadius1 ) X_SECTION(physics);
+                                          const f32         SphereRadius1,
+                                          const vector3&    FallbackNormal ) X_SECTION(physics);
 
         // Checks static sphere V sphere collision
         void    SphereCapsuleCollision  ( const vector3&    SpherePos,
                                           const f32         SphereRadius,
                                           const vector3&    CapsuleStartPos,
                                           const vector3&    CapsuleEndPos,
-                                          const f32         CapsuleRadius ) X_SECTION(physics);
+                                          const f32         CapsuleRadius,
+                                          const vector3&    FallbackNormal ) X_SECTION(physics);
 
         // Checks static capsule V capsule collision
         void    CapsuleCapsuleCollision  ( const vector3&    CapsuleStartPos0,
@@ -127,7 +132,8 @@ private:
                                            const f32         CapsuleRadius0,
                                            const vector3&    CapsuleStartPos1,
                                            const vector3&    CapsuleEndPos1,
-                                           const f32         CapsuleRadius1 ) X_SECTION(physics);
+                                           const f32         CapsuleRadius1,
+                                           const vector3&    FallbackNormal ) X_SECTION(physics);
 
 public:
         // Checks collision between swept spheres and world

@@ -646,5 +646,4 @@ static s16 s_iicon_viewable_trigger[] =
 };
 
 
-#define DRAW_ICON_VIEWABLE_TRIGGER() draw_icon( NUM_FACETS_ICON_VIEWABLE_TRIGGER, NUM_VERTICES_ICON_VIEWABLE_TRIGGER, s_vicon_viewable_trigger, s_iicon_viewable_trigger )
 

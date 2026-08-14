@@ -8,13 +8,14 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_ai_base.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "..\Support\Characters\Character.hpp"
-#include "Objects\group.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/Characters/Character.hpp"
+#include "Objects/Group.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS
@@ -120,16 +121,16 @@ void action_ai_base::OnDebugRender ( s32 Index )
     object* pObject = m_CharacterAffecter.GetObjectPtr();
     if (pObject && pObject->IsKindOf( character::GetRTTI() ) )
     {
-        draw_Line( GetPositionOwner(), pObject->GetPosition(), XCOLOR_PURPLE );
-        draw_BBox( pObject->GetBBox(), XCOLOR_PURPLE );
+        render::debug::Line( GetPositionOwner(), pObject->GetPosition(), XCOLOR_PURPLE );
+        render::debug::Box( pObject->GetBBox(), XCOLOR_PURPLE );
 
         if (!GetElse())
         {
-            draw_Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[%d]Trigger AI", Index) );
+            render::debug::Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[%d]Trigger AI", Index) );
         }
         else
         {
-            draw_Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[Else %d]Trigger AI", Index) );
+            render::debug::Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[Else %d]Trigger AI", Index) );
         }
     }
 }

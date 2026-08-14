@@ -8,11 +8,12 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_load_level.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "Entropy.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 #include "StateMgr/StateMgr.hpp"
 
 #ifdef X_EDITOR
@@ -63,7 +64,7 @@ void action_load_level::OnDebugRender ( s32 Index )
 
     if (m_StorageIndex >= 0)
     {
-        draw_Label( GetPositionOwner(), s_LoadLevelColor, xfs("Load Level %s", g_StringMgr.GetString(m_StorageIndex)) );
+        render::debug::Label( GetPositionOwner(), s_LoadLevelColor, xfs("Load Level %s", g_StringMgr.GetString(m_StorageIndex)) );
     }
 }
 #endif // X_RETAIL

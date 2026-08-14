@@ -4,39 +4,32 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
 
 #include "dlg_Autosave.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
 #include "Configuration/GameConfig.hpp"
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
 #else
 #include "../../Apps/GameApp/Config.hpp"	
 #endif
-#include "MemCardMgr/MemCardMgr.hpp"
 
 //=========================================================================
 //  Autosave Dialog
 //=========================================================================
 
-ui_manager::control_tem AutosaveControls[] = 
-{
-    { IDC_AUTOSAVE_NAV_TEXT,  "IDS_NULL",   "text", 0, 0, 0, 0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-};
-
-
 ui_manager::dialog_tem AutosaveDialog =
 {
     "IDS_AUTOSAVE_MENU",
     1, 9,
-    sizeof(AutosaveControls)/sizeof(ui_manager::control_tem),
-    &AutosaveControls[0],
+    0,
+    NULL,
     0
 };
 
@@ -110,9 +103,6 @@ xbool dlg_autosave::Create( s32                        UserID,
     // intialize popup pointer
     m_PopUp = NULL;
 
-    // initialize card id
-    m_iCard = 0;
-
     // initialize screen scaling
     InitScreenScaling( Position );
 
@@ -151,14 +141,7 @@ void dlg_autosave::Render( s32 ox, s32 oy )
 
 
     // render background filter
-    s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+    rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
@@ -232,50 +215,9 @@ void dlg_autosave::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 g_UiMgr->SetScreenOn(TRUE);
             }
 
-#ifdef TARGET_XBOX
-            // Xbox intercepts this keypress so it can prompt the user
-            // to go to the dashboard to free up space.
-            MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition(0);
-            // open confirmation dialog
-            irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
-
-            // set nav text
-            xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_DONT_FREE_BLOCKS" ));
-            
-            xbool SecondOption = FALSE;
-            if( GameMgr.GameInProgress() == FALSE )
-            {
-                navText += g_StringTableMgr( "ui", "IDS_NAV_FREE_MORE_BLOCKS" );
-                SecondOption = TRUE;
-            }
-
-            // calculate blocks required
-            m_BlocksRequired = ( (g_StateMgr.GetProfileSaveSize() - Condition.BytesFree) + 16383 ) / 16384;
-
-            if( x_GetLocale() == XL_LANG_ENGLISH )
-            {
-                r.SetWidth(380);
-                r.SetHeight(125);
-            }
-            else
-            {
-                r.SetWidth(400);
-                r.SetHeight(145);
-            }
-            m_PopUp->Configure( r, g_StringTableMgr( "ui", "IDS_MEMCARD_HEADER" ), 
-                TRUE, 
-                SecondOption, 
-                FALSE, 
-                xwstring( xfs( (const char*)xstring(g_StringTableMgr( "ui", "MC_NOT_ENOUGH_FREE_SPACE_SLOT1_XBOX" )), m_BlocksRequired ) ),
-                navText,
-                &m_PopUpResult );
-
-            return;
-#else
             // open a popup
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_RETRY" ));
@@ -290,26 +232,10 @@ void dlg_autosave::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             }
             else
             {
-                // failed due to a memory card error
-                MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
-
-                if( Condition.bNoCard )
-                {
-                    if( m_iCard == 0 )
-                        messageText = g_StringTableMgr( "ui", "IDS_AUTOSAVE_FAILED_NO_CARD_SLOT_1" );
-                    else
-                        messageText = g_StringTableMgr( "ui", "IDS_AUTOSAVE_FAILED_NO_CARD_SLOT_2" );
-                }
-                else
-                {
-                    if( m_iCard == 0 )
-                        messageText = g_StringTableMgr( "ui", "IDS_AUTOSAVE_FAILED_CARD_CHANGED_SLOT_1" );
-                    else
-                        messageText = g_StringTableMgr( "ui", "IDS_AUTOSAVE_FAILED_CARD_CHANGED_SLOT_2" );                       
-                }
+                messageText = g_StringTableMgr( "ui", "IDS_SAVE_DATA_ERROR" );
             }
 
-            if (x_GetLocale() == XL_LANG_ENGLISH)
+            if( x_GetLocale() == XL_LANG_ENGLISH )
             {
                 r.Set( 0, 0, 270, 200 );
             }
@@ -329,7 +255,6 @@ void dlg_autosave::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp->EnableBlackout( FALSE );
 
             return;
-#endif
         }
     }
 
@@ -338,31 +263,6 @@ void dlg_autosave::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     {
         if ( m_PopUpResult != DLG_POPUP_IDLE )
         {
-#ifdef TARGET_XBOX
-            if( m_PopUpResult == DLG_POPUP_YES )
-            {
-                // continue without saving
-                g_AudioMgr.Play( "Select_Norm" );
-                m_State = DIALOG_STATE_BACK;            
-            }
-            else
-            {
-                // If the player chose to go to the Dash, go to memory area
-                LD_LAUNCH_DASHBOARD LaunchDash;
-                LaunchDash.dwReason = XLD_LAUNCH_DASHBOARD_MEMORY;
-                // This value will be returned to the title via XGetLaunchInfo
-                // in the LD_FROM_DASHBOARD struct when the Dashboard reboots
-                // into the title. If not required, set to zero.
-                LaunchDash.dwContext = 0;
-                // Specify the logical drive letter of the region where
-                // data needs to be removed; either T or U.
-                LaunchDash.dwParameter1 = DWORD( 'U' );
-                // Specify the number of 16-KB blocks that are needed to save a profile (in total)
-                LaunchDash.dwParameter2 = ( g_StateMgr.GetProfileSaveSize() + 16383 ) / 16384;
-                // Launch the Xbox Dashboard
-                XLaunchNewImage( NULL, (PLAUNCH_DATA)(&LaunchDash) );
-            }
-#else
             if ( m_PopUpResult == DLG_POPUP_YES )
             {
                 // retry - goto select profile screen
@@ -373,7 +273,6 @@ void dlg_autosave::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 // continue without saving
                 m_State = DIALOG_STATE_BACK;
             }
-#endif
 
             // clear popup 
             m_PopUp = NULL;

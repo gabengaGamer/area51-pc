@@ -13,15 +13,15 @@
 //==============================================================================
 
 #ifndef X_BITMAP_HPP
-#include "..\x_bitmap.hpp"
+#include "../x_bitmap.hpp"
 #endif
 
 #ifndef X_MEMORY_HPP
-#include "..\x_memory.hpp"
+#include "../x_memory.hpp"
 #endif
 
 #ifndef X_MATH_HPP
-#include "..\x_math.hpp"
+#include "../x_math.hpp"
 #endif
 
 //==============================================================================

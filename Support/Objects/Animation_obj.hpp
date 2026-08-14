@@ -5,8 +5,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Animation\AnimPlayer.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Animation/AnimPlayer.hpp"
 
 //=========================================================================
 // CLASS
@@ -65,7 +65,7 @@ protected:
 
 protected:
 
-    virtual void            OnAdvanceLogic	    ( f32 DelaTime );
+    virtual void            OnAdvanceSimulation	    ( f32 DelaTime );
     virtual void            OnInit              ( void );     
 
 #ifndef X_RETAIL

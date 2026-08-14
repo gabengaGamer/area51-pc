@@ -28,7 +28,7 @@ public:
     virtual	void	            OnEnumProp		        ( prop_enum& list );
 	virtual	xbool	            OnProperty		        ( prop_query& rPropQuery );
 
-    virtual void                OnAdvanceLogic          ( f32 DeltaTime );
+    virtual void                OnAdvanceSimulation          ( f32 DeltaTime );
     virtual void                InitWeapon              ( const vector3& rInitPos, render_state rRenderState, guid OwnerGuid );
 
     virtual	void				InitWeapon			    (   const char* pSkinFileName , 
@@ -94,7 +94,7 @@ protected:
     f32                         m_SecondaryFireSpeed;
     f32                         m_SecondaryFireBaseForce;
     f32                         m_SecondaryFireMaxForce;
-    f32                         m_LastUpdateTime;       // since we don't get OnAdvanceLogic calls if weapon isn't equipped... store off time.
+    f32                         m_LastUpdateTime;       // since we don't get OnAdvanceSimulation calls if weapon isn't equipped... store off time.
     f32                         m_bIsAltFiring;    
     f32                         m_LastAmmoBurnTime;
     s32                         m_AmmoBurned;

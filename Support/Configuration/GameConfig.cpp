@@ -22,7 +22,7 @@
 #include "x_types.hpp"
 #include "GameConfig.hpp"
 #include "StateMgr/MapList.hpp"
-#include "stringmgr\stringmgr.hpp"
+#include "StringMgr/StringMgr.hpp"
 
 
 //==============================================================================
@@ -685,6 +685,8 @@ const char* GetExitReasonName(exit_reason Reason)
     case GAME_EXIT_SECURITY_FAILED:     return "GAME_EXIT_SECURITY_FAILED";
     case GAME_EXIT_SESSION_ENDED:       return "GAME_EXIT_SESSION_ENDED";
     case GAME_EXIT_DUPLICATE_LOGIN:     return "GAME_EXIT_DUPLICATE_LOGIN";
+    case GAME_EXIT_INVALID_CAMPAIGN_MISSION:
+                                        return "GAME_EXIT_INVALID_CAMPAIGN_MISSION";
     case GAME_EXIT_CONTINUE:            return "GAME_EXIT_CONTINUE";
     default:                            ASSERT(FALSE);  return "<unknown>";
     }

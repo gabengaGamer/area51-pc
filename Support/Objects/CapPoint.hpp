@@ -11,12 +11,12 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "NetworkMgr\NetObj.hpp"
-#include "Objects\Circuit.hpp"
-#include "Objects\TeamProp.hpp"
-#include "Objects\AnimSurface.hpp"
-#include "Auxiliary\fx_RunTime\Fx_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "NetworkMgr/NetObj.hpp"
+#include "Objects/Circuit.hpp"
+#include "Objects/TeamProp.hpp"
+#include "Objects/AnimSurface.hpp"
+#include "FX/fx_Mgr.hpp"
 
 //==============================================================================
 //  TYPES
@@ -44,7 +44,7 @@ virtual         s32             GetMaterial         ( void ) const;
 //              xbool           OnProperty          ( prop_query& Query );
 
 virtual         void            OnRender            ( void );
-virtual         void            OnAdvanceLogic      ( f32 DeltaTime );
+virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
                 void            OnRenderTransparent ( void );
 
                 void            SetElevation        ( f32 Elevation ) { m_Elevation = Elevation; }
@@ -93,7 +93,7 @@ protected:
     guid            m_BallAnim;
     guid            m_BallCore;
 
-    xbool           m_bInitialized;
+    xbool           m_isInitialized;
 
     fx_handle       m_Top;
     fx_handle       m_Bottom;
@@ -103,7 +103,6 @@ protected:
     xbool           m_bArcs[32];
     f32             m_Alpha;
     f32             m_IconOpacity;
-    xbool           m_bRendered;
 };
 
 //==============================================================================

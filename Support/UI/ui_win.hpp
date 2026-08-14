@@ -16,6 +16,9 @@
 #include "x_math.hpp"
 #endif
 
+#include "ui_input.hpp"
+#include "ui_notify.hpp"
+
 //==============================================================================
 //  ui_win
 //==============================================================================
@@ -27,12 +30,6 @@ class ui_win
     friend ui_manager;
 
 public:
-    enum hitcode
-    {
-        HT_NONE         = 0,
-        HT_CLIENT       = 1,
-    };
-
     enum flags
     {
         WF_VISIBLE      = 0x00000001,                   // Is visible
@@ -45,42 +42,12 @@ public:
         WF_DLG_CENTER   = 0x00000020,                   // Center Dialog when it is opened
 
         WF_DISABLED     = 0x00000100,                   // Is disabled
-        WF_SELECTED     = 0x00000200,                   // Is selected
-        WF_HIGHLIGHT    = 0x00000400,                   // Is highlight
-
         WF_INPUTMODAL   = 0x00001000,                   // Is input modal, input stops here
         WF_RENDERMODAL  = 0x00002000,                   // Is render modal, rendering stops here
 
         WF_BUTTON_LEFT  = 0x00004000,                   // Button needs to be left just.
         WF_BUTTON_RIGHT = 0x00008000,                   // Button needs to be right just.
 
-        WF_USE_ABSOLUTE = 0x00010000,                   // Use absolute co-ordinates
-
-        WF_SCALE_XPOS    = 0x00020000,                  // Scale dialog object X position
-        WF_SCALE_XSIZE   = 0x00040000,                  // Scale dialog object X size
-        WF_SCALE_YPOS    = 0x00080000,                  // Scale dialog object Y position
-        WF_SCALE_YSIZE   = 0x00100000,                  // Scale dialog object Y size
-    };
-
-    enum notifications
-    {
-        WN_COMBO_SELCHANGE  = 0x00000001,                   // Combo control selection change
-        
-        WN_SLIDER_CHANGE,                                   // Slider value has changed
-
-        WN_CHECK_CHANGE,                                    // Check state change
-        
-        WN_LIST_SELCHANGE,                                  // List selection changed
-        WN_LIST_ACCEPTED,                                   // New selection accepted
-        WN_LIST_CANCELLED,                                  // New selection cancelled
-
-        WN_TAB_CHANGE,                                      // Tabbed dialog changed tab
-
-        WN_USER             = 0x40000000,                   // First User Message
-    };
-
-    enum messages
-    {
     };
 
 public:
@@ -92,13 +59,13 @@ public:
                                                   const irect&  Position,
                                                   ui_win*       pParent,
                                                   s32           Flags );
-    virtual void            Destroy             ( void );
 
     virtual void            Render              ( s32 ox=0, s32 oy=0 );
 
+    void                    UpdateTree          ( f32 DeltaTime );
+
     virtual void            SetPosition         ( const irect& Position );
     virtual const irect&    GetPosition         ( void ) const;
-    virtual const irect&    GetCreatePosition   ( void ) const;
     s32                     GetWidth            ( void ) const;
     s32                     GetHeight           ( void ) const;
     ui_win*                 GetWindowAtXY       ( s32 x, s32 y ) const;
@@ -106,7 +73,14 @@ public:
     void                    SetFlags            ( s32 Flags );
     s32                     GetFlags            ( void ) const;
     void                    SetFlag             ( s32 Flag, s32 State );
-    s32                     GetFlags            ( s32 Flag );
+    s32                     GetFlags            ( s32 Flag ) const;
+
+    void                    SetActive           ( xbool State );
+    xbool                   IsActive            ( void ) const;
+    xbool                   IsFocused           ( void ) const;
+    xbool                   IsHovered           ( void ) const;
+    xbool                   IsPressed           ( void ) const;
+    virtual xbool           CanFocus            ( void ) const;
 
     virtual void            SetLabel            ( const xwstring&   Text );
     virtual void            SetLabel            ( const xwchar*     Text );
@@ -114,21 +88,15 @@ public:
     virtual const xcolor&   GetLabelColor       ( void ) const;
     virtual const xwstring& GetLabel            ( void ) const;
     virtual void            SetLabelFlags       ( u32 Flags );
+    u32                     GetLabelFlags       ( void ) const;
 
     void                    SetControlID        ( s32 ID );
     s32                     GetControlID        ( void ) const;
-
-//    virtual void            SetText             ( const xstring& Text );
-//    virtual void            SetText             ( const char*    Text );
-//    virtual const xstring&  GetText             ( void ) const;
-//    virtual void            SetTextFlags        ( u32 Flags );
 
     void                    SetParent           ( ui_win* pParent );
     ui_win*                 GetParent           ( void ) const;
 
     // Finding Children
-//    ui_win*                 FindChildByLabel    ( const xstring& Label ) const;
-//    ui_win*                 FindChildByLabel    ( const char*    Label ) const;
     ui_win*                 FindChildByID       ( s32 ID ) const;
     xbool                   IsChildOf           ( ui_win* pParent ) const;
 
@@ -137,44 +105,47 @@ public:
     void                    ScreenToLocal       ( s32& x, s32& y ) const;
     void                    LocalToScreen       ( irect& r ) const;
     void                    ScreenToLocal       ( irect& r ) const;
-    void                    LocalToScreenCreate ( irect& r ) const;
-    void                    ScreenToLocalCreate ( irect& r ) const;
 
     // Messaging functions
+    void                    Notify              ( ui_notification_type Type, s32 Value = 0 );
+    void                    Notify              ( ui_notification_type Type, xwstring const& Text );
+    virtual xbool           OnInput             ( ui_input_event& Event );
     virtual void            OnUpdate            ( ui_win* pWin, f32 DeltaTime );
-    virtual void            OnNotify            ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData );
-    virtual void            OnLBDown            ( ui_win* pWin );
-    virtual void            OnLBUp              ( ui_win* pWin );
-    virtual void            OnMBDown            ( ui_win* pWin );
-    virtual void            OnMBUp              ( ui_win* pWin );
-    virtual void            OnRBDown            ( ui_win* pWin );
-    virtual void            OnRBUp              ( ui_win* pWin );
-    virtual void            OnMouseMove         ( ui_win* pWin, s32 x, s32 y );
+    virtual void            OnNotify            ( ui_notification const& Event );
+    virtual void            OnPointerDown       ( ui_win* pWin, s32 x, s32 y );
+    virtual void            OnPointerUp         ( ui_win* pWin, s32 x, s32 y );
+    virtual void            OnPointerMove       ( ui_win* pWin, s32 x, s32 y );
+    virtual void            OnPointerLeave      ( ui_win* pWin );
+    virtual void            OnPointerWheel      ( ui_win* pWin, s32 Delta );
     virtual void            OnFocusGained       ( ui_win* pWin );
     virtual void            OnFocusLost         ( ui_win* pWin );
-    virtual void            OnKeyDown           ( ui_win* pWin, s32 Key );
-    virtual void            OnKeyUp             ( ui_win* pWin, s32 Key );
-    virtual void            OnPadNavigate       ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void            OnPadSelect         ( ui_win* pWin );
-    virtual void            OnPadBack           ( ui_win* pWin );
-    virtual void            OnPadDelete         ( ui_win* pWin );
-    virtual void            OnPadHelp           ( ui_win* pWin );
-    virtual void            OnPadActivate       ( ui_win* pWin );
-    virtual void            OnPadShoulder       ( ui_win* pWin, s32 Direction );
-    virtual void            OnPadShoulder2      ( ui_win* pWin, s32 Direction );
+    virtual void            OnFocusWithin       ( ui_win* pWin );
+    virtual void            OnNavigate          ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void            OnAccept            ( ui_win* pWin );
+    virtual void            OnCancel            ( ui_win* pWin );
+    virtual void            OnDelete            ( ui_win* pWin );
+    virtual void            OnHelp              ( ui_win* pWin );
+    virtual void            OnAlternate         ( ui_win* pWin );
+    virtual void            OnPage              ( ui_win* pWin, s32 Direction );
+    virtual void            OnJump              ( ui_win* pWin, s32 Direction );
 
 protected:
+    void                Destroy             ( void );
+
     ui_manager*         m_pManager;         // Pointer to ui manager
     s32                 m_UserID;           // UserID that owns this window
 
     ui_win*             m_pParent;          // Pointer to parent window
     xarray<ui_win*>     m_Children;         // List of child windows
     s32                 m_Flags;            // Window flags
+    xbool               m_IsActive;
+    xbool               m_IsFocused;
+    xbool               m_IsHovered;
+    xbool               m_IsPressed;
 
     s32                 m_ID;               // Window ID
-    irect               m_CreatePosition;   // Position of window at creation (before any resolution changes)
     irect               m_Position;         // Position of window
-    xwstring				m_Label;            // Window Label
+    xwstring            m_Label;            // Window Label
     u32                 m_LabelFlags;       // Window Label Flags
     xcolor              m_LabelColor;       // Window label color
     s32                 m_Font;             // Window Font

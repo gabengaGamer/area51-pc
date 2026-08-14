@@ -44,7 +44,7 @@ public:
     virtual        ~hud_renderable  ( void ) {}
     
     virtual void    OnRender        ( player*       /*pPlayer*/ )                    {  };
-    virtual void    OnAdvanceLogic  ( player*       /*pPlayer*/, f32 /*DeltaTime*/ ) {  };
+    virtual void    OnAdvanceSimulation  ( player*       /*pPlayer*/, f32 /*DeltaTime*/ ) {  };
     virtual xbool   OnProperty      ( prop_query&   /*rPropQuery*/ )                 { return FALSE; };
     virtual void    OnEnumProp      ( prop_enum&    /*List*/ )                       {  };
 
@@ -66,3 +66,5 @@ public:
 };
 
 #endif
+
+

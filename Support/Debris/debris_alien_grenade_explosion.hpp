@@ -8,9 +8,9 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
-#include "obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "debris_cannon.hpp"
-#include "Tracers\TracerMgr.hpp"
+#include "Tracers/TracerMgr.hpp"
 
 //=============================================================================
 class debris_alien_grenade_explosion : public debris_cannon
@@ -35,7 +35,7 @@ public:
     static  const object_desc&  GetObjectType   ( void );
     virtual void        OnRenderTransparent ( void );
 
-    virtual void        OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
 
     //==-----------------------------------------------------------------------
     //  STRUCTURES

@@ -8,9 +8,9 @@
 
 #include "Entropy.hpp"
 #include "Loco.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 
 //=========================================================================

@@ -5,8 +5,8 @@
 // INLCLUDES
 //=========================================================================
 
-#include "Auxiliary\MiscUtils\Property.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Auxiliary/MiscUtils/Property.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 #define NUM_STILL_FRAMES 15
 //=========================================================================
@@ -28,6 +28,7 @@ public:
     void                AdvanceWithoutCollision( const vector3& MoveTo, f32 DeltaTime, xbool bIsDead = FALSE );
     vector3             GetPosition         ( void ) const ;
     vector3             GetVelocity         ( void ) const ;
+    vector3             GetLastMoveVelocity ( void ) const { return m_LastMoveVelocity; }
     void                AddVelocity         ( const vector3& Delta ) ;
     void                SetVelocity         ( const vector3& Velocity ) ;
     void                ZeroVelocity        ( void ) ;
@@ -42,13 +43,16 @@ public:
     bbox                GetBBox             ( void ) const;
     xbool               SetCrouchParametric ( f32 NormalizePercent );
     void                Jump                ( f32 YVel );
-    void                Fling               ( const vector3& Velocity, 
-                                                    f32      DeltaTime, 
-                                                    f32      AirControl, 
-                                                    xbool    FlingOnly, 
-                                                    xbool    ReflingOnly, 
-                                                    xbool    Instantaneous, 
-                                                    guid     LastFling );
+    void                FlingWithVelocity   ( const vector3& Velocity,
+                                                    f32      AirControl,
+                                                    xbool    FlingOnly,
+                                                    xbool    ReflingOnly,
+                                                    guid     FlingGuid );
+    void                FlingWithAcceleration( const vector3& Acceleration,
+                                                    f32      DeltaTime,
+                                                    f32      AirControl,
+                                                    xbool    FlingOnly,
+                                                    xbool    ReflingOnly );
     xbool               Flung               ( void ) { return m_bFlingMode; }
     void                SetUseGravity       ( xbool bEnable )   { m_bUseGravity = bEnable ; }
 	void				SetGravityAccel		( const f32& GravityAccel ); 
@@ -70,6 +74,9 @@ public:
     void                SetHandlePermeable ( xbool bValue ) { m_bHandlePermeable = bValue; }
 
     void                SetSolveActorCollisions( xbool doSolve )    { m_SolveActorCollisions = doSolve; }    
+    xbool               IsLocoGravityOn          ( void ) const { return m_bLocoGravityOn; }
+    xbool               IsLocoCollisionOn        ( void ) const { return m_bLocoCollisionOn; }
+    xbool               IsSolvingActorCollisions ( void ) const { return m_SolveActorCollisions; }
 
     void                CopyValues          ( character_physics& rPhysics );
     
@@ -97,7 +104,8 @@ protected:
                         f32             SteepestSlide );
 
     xbool   UpdateGround        ( f32 DistBelow );
-    void    UpdatePhysics       ( f32 DeltaTime );
+    void    UpdatePhysics       ( f32 DeltaTime,
+                                  f32 IncomingVerticalVelocity );
     void    CollectPermeable    ( object* pObject, vector3& NewPos );
     void    CollectPermeable    ( object* pObject, const vector3& StartPos, const vector3& EndPos );
     void    SolveActorCollisions( void );
@@ -105,6 +113,12 @@ protected:
     void    SolvePlatformCollisions ( void );
 
     void    ResolvePenetrations ( void );
+    void    ApplyFling         ( const vector3& Velocity,
+                                 f32            AirControl,
+                                 xbool          FlingOnly,
+                                 xbool          ReflingOnly,
+                                 xbool          ReplaceVelocity,
+                                 guid           FlingGuid );
 
 //=========================================================================
 protected:
@@ -144,8 +158,9 @@ protected:
     vector3     m_OldMovingPlatformVelocity;
     guid        m_PlatformCollisionIgnoreList[8];
     s32         m_nPlatformsToIgnore;
-    vector3     m_LastMove;
+    vector3     m_LastMoveVelocity;
     guid        m_LastFling;
+    f32         m_StuckFallTime;
 
     vector3     m_LstDeltaPos[NUM_STILL_FRAMES];
     s32         m_DeltaPosIndex;

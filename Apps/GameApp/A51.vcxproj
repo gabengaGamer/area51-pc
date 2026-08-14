@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="Current">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -60,79 +60,79 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QA|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QA|ARM64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|ARM64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
@@ -256,7 +256,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <SmallerTypeCheck>false</SmallerTypeCheck>
@@ -274,20 +274,24 @@
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\x86;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\x86\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <SmallerTypeCheck>false</SmallerTypeCheck>
@@ -305,20 +309,24 @@
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\x64;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\x64\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <SmallerTypeCheck>false</SmallerTypeCheck>
@@ -336,15 +344,19 @@
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\arm64;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\arm64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\arm64\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|Win32'">
     <ClCompile>
@@ -357,7 +369,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_OPTDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling />
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -371,14 +383,18 @@
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\x32;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\x86\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|x64'">
     <ClCompile>
@@ -391,7 +407,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_OPTDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling />
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -405,14 +421,18 @@
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\x64;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\x64\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OptDebug|ARM64'">
     <ClCompile>
@@ -425,7 +445,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_OPTDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling />
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -439,14 +459,18 @@
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\arm64;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\arm64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\arm64\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QA|Win32'">
     <ClCompile>
@@ -460,7 +484,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_QA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -474,15 +498,19 @@
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\x32;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\x86\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QA|x64'">
     <ClCompile>
@@ -496,7 +524,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_QA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -510,15 +538,19 @@
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\x64;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\x64\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QA|ARM64'">
     <ClCompile>
@@ -532,7 +564,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_QA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -546,15 +578,19 @@
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\arm64;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\arm64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\arm64\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -568,7 +604,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling />
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -584,15 +620,19 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
       <CallingConvention>Cdecl</CallingConvention>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\x32;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\x86\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -606,7 +646,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling />
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -622,15 +662,19 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
       <CallingConvention>Cdecl</CallingConvention>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\x64;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\x64\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <ClCompile>
@@ -644,7 +688,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\ffmpeg-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(X);.\;$(X)\..\Support;$(X)\Auxiliary;$(X)\x_files;$(X)\Entropy;$(X)\3rdParty;$(X)\3rdParty\SDL3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TARGET_PC;CONFIG_RETAIL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling />
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -659,31 +703,40 @@
       <DisableSpecificWarnings>4996;4995;4244;4267;4018;4100;4101;4102;4189;4389;4245;4127</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>true</ShowIncludes>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalDependencies>dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(X)\3rdParty\DirectX9;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3.lib;dxguid.lib;dinput8.lib;dsound.lib;legacy_stdio_definitions.lib;ole32.lib;user32.lib;gdi32.lib;winmm.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(X)\3rdParty\SDL3\lib\arm64;$(X)\3rdParty\DirectX9;$(X)\3rdParty\WebM\lib\arm64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(X)\3rdParty\SDL3\lib\arm64\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Config.cpp" />
+    <ClCompile Include="FramePacer.cpp" />
+    <ClCompile Include="FrameTiming.cpp" />
+    <ClCompile Include="GameAppPlatform_Windows.cpp" />
     <ClCompile Include="IniFile.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.hpp" />
+    <ClInclude Include="FramePacer.hpp" />
+    <ClInclude Include="FrameTiming.hpp" />
     <ClInclude Include="IniFile.hpp" />
     <ClInclude Include="main.hpp" />
+    <ClInclude Include="A51Resources.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="main_pc.inl" />
-    <None Include="media\saves.rdf" />
-    <None Include="media\title.rdf" />
+    <ResourceCompile Include="A51.rc" />
+    <Image Include="media\Dreamland51.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Support\AudioMgr\AudioMgr.vcxproj">
@@ -730,7 +783,7 @@
       <Project>{9ca26e69-c9c6-433e-80d7-d28ac74c5d85}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="..\..\xCore\Auxiliary\fx_RunTime\fx_RunTime.vcxproj">
+    <ProjectReference Include="..\..\Support\FX\FX.vcxproj">
       <Project>{4283cee3-79de-4b21-97c3-d54749ef3907}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>

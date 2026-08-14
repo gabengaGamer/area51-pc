@@ -8,7 +8,7 @@
 #include "x_log.hpp"
 #include "x_string.hpp"
 
-#include "headset.hpp"
+#include "Headset.hpp"
 
 //==============================================================================
 
@@ -32,7 +32,7 @@ void headset::UpdateLoopBack( void )
     {
         char Buffer[ 256 ];
 
-        if( m_ReadFifo.Remove ( Buffer, m_EncodeBlockSize, m_EncodeBlockSize ) )
+        if( m_ReadFifo.Remove( Buffer, m_EncodeBlockSize, m_EncodeBlockSize ) )
         {
             m_WriteFifo.Insert( Buffer, m_EncodeBlockSize, m_EncodeBlockSize );
         }
@@ -45,13 +45,23 @@ s32 headset::Read( void* pBuffer, s32 Length )
 {
     s32     Available;
 
-    Available = m_ReadFifo.GetBytesUsed();
-    if( Available > Length )
+    if( (pBuffer == NULL) ||
+        (Length <= 0) ||
+        (m_EncodeBlockSize <= 0) )
     {
-        Available = Length;
+        return 0;
     }
 
-    m_ReadFifo.Remove( pBuffer, Available, m_EncodeBlockSize );
+    Available = m_ReadFifo.GetBytesUsed();
+    Available = MIN( Available, Length );
+    Available -= Available % m_EncodeBlockSize;
+
+    if( (Available <= 0) ||
+        !m_ReadFifo.Remove( pBuffer, Available, m_EncodeBlockSize ) )
+    {
+        return 0;
+    }
+
     return Available;
 }
 
@@ -59,30 +69,57 @@ s32 headset::Read( void* pBuffer, s32 Length )
 
 s32 headset::Write( const void* pBuffer, s32 Length )
 {
-    m_WriteFifo.Insert( pBuffer, Length, m_EncodeBlockSize );
-    return 0;
+    if( (pBuffer == NULL) ||
+        (Length <= 0) ||
+        (m_EncodeBlockSize <= 0) ||
+        ((Length % m_EncodeBlockSize) != 0) )
+    {
+        return 0;
+    }
+
+    if( !m_WriteFifo.Insert( pBuffer, Length, m_EncodeBlockSize ) )
+    {
+        return 0;
+    }
+
+    return Length;
+}
+
+//==============================================================================
+
+void headset::ClearReadFifo( void )
+{
+    m_ReadFifo.Clear();
+}
+
+//==============================================================================
+
+void headset::ClearWriteFifo( void )
+{
+    m_WriteFifo.Clear();
+}
+
+//==============================================================================
+
+void headset::UpdateTalkingState( void )
+{
+    m_IsTalking = m_TalkingRequested && (m_HeadsetCount > 0);
 }
 
 //==============================================================================
 
 void headset::SetTalking( xbool IsTalking )
 {
-    if( IsTalking && (m_HeadsetCount > 0) )
-    {
-        m_IsTalking = TRUE;
-    }
-    else
-    {
-        m_IsTalking = FALSE;
-    }
+    m_TalkingRequested = IsTalking;
+    UpdateTalkingState();
 }
 
 //==============================================================================
 
 void headset::SetVolume( f32 Headset, f32 MicrophoneSensitivity )
 {
-    m_HeadsetVolume = Headset;
-    m_MicrophoneSensitivity = MicrophoneSensitivity;
+    m_HeadsetVolume         = MAX( 0.0f, MIN( 1.0f, Headset ) );
+    m_MicrophoneSensitivity = MAX( 0.0f, MIN( 1.0f, MicrophoneSensitivity ) );
     m_VolumeChanged = TRUE;
 
 }

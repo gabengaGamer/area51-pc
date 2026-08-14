@@ -1,24 +1,40 @@
+//==============================================================================
+//
+//  audio_channel_mgr.hpp
+//
+//==============================================================================
+
 #ifndef AUDIO_CHANNEL_MGR_HPP
 #define AUDIO_CHANNEL_MGR_HPP
 
-#include "audio_private.hpp"
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
+#include "Audio/audio_types.hpp"
+
+//==============================================================================
+//  STRUCTS
+//==============================================================================
+
+struct audio_runtime;
+
+//==============================================================================
+//  AUDIO CHANNEL MGR CLASS
+//==============================================================================
 
 class audio_channel_mgr
 {
-
-//------------------------------------------------------------------------------
-// Public functions.
-
 public:
 
                         audio_channel_mgr   ( void );
                        ~audio_channel_mgr   ( void );
         
-        void            Init                ( void );
+        void            Init                ( audio_runtime& Runtime );
         void            Kill                ( void );
 
         xbool           Acquire             ( element*      pElement );
-        void            Release             ( channel*      pChannel );
+        xbool           Release             ( channel*      pChannel );
                                              
         void            Start               ( channel*      pChannel );
         void            Pause               ( channel*      pChannel );
@@ -50,21 +66,21 @@ public:
 
 inline  channel*        FreeList            ( void )        { return &m_FreeChannels; }
 inline  channel*        UsedList            ( void )        { return &m_UsedChannels; }
-//------------------------------------------------------------------------------
-// Private functions.
 
 private:
 
-        void            UpdatePriorityList  ( channel* pChannel, xbool RemoveFromFreeList );
-        void            Free                ( channel* pChannel, xbool PutInFreeList, xbool FreeParent );
+inline  audio_runtime&  Runtime             ( void ) { ASSERT( m_pRuntime ); return *m_pRuntime; }
 
-//------------------------------------------------------------------------------
-// Private variables.
+        void            UpdatePriorityList  ( channel* pChannel, xbool RemoveFromFreeList );
+        xbool           Free                ( channel* pChannel, xbool PutInFreeList, xbool FreeParent );
+
+private:
         
         channel         m_FreeChannels;
         channel         m_UsedChannels;
+        audio_runtime*  m_pRuntime;
 };
 
-extern audio_channel_mgr g_AudioChannelMgr;
-
-#endif
+//==============================================================================
+#endif // AUDIO_CHANNEL_MGR_HPP
+//==============================================================================

@@ -6,14 +6,13 @@
 // INCLUDES
 //=========================================================================
 #include "NavPoint.hpp"
-#include "e_Draw.hpp"
 #include "e_View.hpp"
 #include "Entropy.hpp"
 #include "x_math.hpp"
-#include "Objects\Player.hpp"
-#include "Font\Font.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Font/font.hpp"
 
-#include "Objects\HudObject.hpp"
+#include "Objects/HudObject.hpp"
 
 f32 s_BitmapOffsetX = 250.0f;
 f32 s_BitmapOffsetY = 150.0f;
@@ -28,8 +27,7 @@ static struct nav_point_desc : public object_desc
         object::TYPE_NAV_POINT, 
         "Nav Point", 
         "HUD",
-        object::ATTR_DRAW_2D                     |
-        object::ATTR_RENDERABLE,
+        object::ATTR_NEEDS_LOGIC_TIME,
 
         FLAGS_GENERIC_EDITOR_CREATE | 
         FLAGS_IS_DYNAMIC  ) {}         
@@ -48,7 +46,7 @@ static struct nav_point_desc : public object_desc
         virtual s32  OnEditorRender( object& Object ) const
         {
             object_desc::OnEditorRender( Object );
-            return EDITOR_ICON_TWO_WAY_ARROW;
+            return static_cast<s32>( EditorIcon::TwoWayArrow );
         }
 
 #endif // X_EDITOR
@@ -89,27 +87,14 @@ nav_point::~nav_point( void )
 
 //=========================================================================
 
-void nav_point::OnRender( void )
+void nav_point::OnAdvanceSimulation( f32 DeltaTime )
 {
+    (void)DeltaTime;
+
     if( !m_Active )
-        return;
-
-    // Get the active player
-    slot_id PlayerSlot  = g_ObjMgr.GetFirst( object::TYPE_PLAYER ) ;
-    player* pPlayer     = NULL;
-
-    while ( PlayerSlot != SLOT_NULL )
     {
-        pPlayer = (player*)g_ObjMgr.GetObjectBySlot( PlayerSlot ) ;
-        if ( pPlayer && pPlayer->IsActivePlayer() )
-        {
-            break;
-        }
-        PlayerSlot = g_ObjMgr.GetNext( PlayerSlot ) ;
-    }
-
-    if( pPlayer == NULL )
         return;
+    }
 
     vector3 TargetPosition = GetPosition();
 
@@ -141,10 +126,9 @@ void nav_point::OnRender( void )
         object* pObj    = g_ObjMgr.GetObjectBySlot( SlotID );
         hud_object& Hud = hud_object::GetSafeType( *pObj );
 
-        Hud.m_PlayerHuds[ 0 ].m_Icon.AddIcon(   ICON_WAYPOINT, 
+        Hud.m_PlayerHuds[ 0 ].m_Icon.SubmitIcon( ICON_WAYPOINT,
             TargetPosition, 
             TargetPosition,
-            FALSE,
             TRUE, 
             GUTTER_ELLIPSE, 
             XCOLOR_GREEN, 

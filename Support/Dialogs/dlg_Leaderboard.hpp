@@ -11,15 +11,15 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_blankbox.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_blankbox.hpp"
 #include "dlg_MPScore.hpp"
 #include "dlg_PopUp.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 
 //==============================================================================
 //  DEFINES
@@ -34,7 +34,6 @@ enum leaderboard_controls
     IDC_LEADERBOARD_TIMEOUT_TEXT,
     IDC_LEADERBOARD_LOADING_TEXT,
     IDC_LEADERBOARD_LOADING_PIPS,
-    IDC_LEADERBOARD_NAV_TEXT,
 };
 
 //==============================================================================
@@ -63,11 +62,9 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadDelete         ( ui_win* pWin );
-#if !defined( TARGET_XBOX )
-    virtual void        OnPadBack           ( ui_win* pWin );
-#endif
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnDelete         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
     virtual void        Configure           ( leaderboard_mode Mode );
@@ -86,7 +83,6 @@ protected:
 
     ui_text*            m_pLoadingText;
     ui_text*            m_pLoadingPips;
-    ui_text*            m_pNavText;
 
     player_score        m_PlayerData[32];
 

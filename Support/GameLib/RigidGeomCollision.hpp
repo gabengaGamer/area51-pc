@@ -11,10 +11,10 @@
 //  INCLUDES
 //==============================================================================
 
-#include "MiscUtils\Guid.hpp"
-#include "Render\RigidGeom.hpp"
-#include "Objects\Object.hpp"
-#include "Render\Render.hpp"
+#include "MiscUtils/Guid.hpp"
+#include "Render/RigidGeom.hpp"
+#include "Objects/object.hpp"
+#include "Render/Render.hpp"
 
 //==============================================================================
 //  FUNCTIONS
@@ -28,7 +28,7 @@ void RigidGeom_ApplyCollision( guid              Guid,
 
 xbool RigidGeom_GetColDetails( const rigid_geom*           pRigidGeom,
                                const matrix4*        pL2W,
-                               const void*           pColor,
+                               const u32*            pColor,
                                s32                   Key,
                                object::detail_tri&   Tri );
 

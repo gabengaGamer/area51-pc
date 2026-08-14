@@ -78,11 +78,6 @@ void mutant_tank_loco_move::OnEnter( void )
 
 //==============================================================================
 
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( push )
-    #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
-#endif
-
 mutant_tank_loco::mutant_tank_loco( void ) :
     loco(),
     m_PlayAnim( *this ),
@@ -90,10 +85,6 @@ mutant_tank_loco::mutant_tank_loco( void ) :
     m_Move    ( *this )
 {
 }
-
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( pop )
-#endif
 
 //==============================================================================
 

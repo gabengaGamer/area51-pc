@@ -8,10 +8,11 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Trigger_Object.hpp"
-#include "..\Support\Trigger\Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
 #include "Entropy.hpp"
-#include "Render\Editor\editor_icons.hpp"
+#include "Render/Editor/EditorIcons.hpp"
 
 //=========================================================================
 // GLOBALS
@@ -127,105 +128,6 @@ xbool trigger_object::trigger_selector::OnProperty ( prop_query& rPropQuery )
         
         return TRUE;
     }
-/*    
-    if( rPropQuery.IsVar( "Selector\\Global Variables\\Add Int" ) )
-    {
-        if( rPropQuery.IsRead() )
-        {
-            rPropQuery.SetVarButton( "Add Int" );
-        }
-        else
-        {
-            if (m_VariableName.IsEmpty())
-            {
-#ifdef TARGET_PC
-                MessageBox( NULL, "No variable named defined.", "Warning",MB_ICONWARNING );
-#endif
-            }
-            else
-            {
-                g_VarMgr.RegisterInt( m_VariableName.Get() );
-            }
-        }
-        
-        return TRUE;
-    }
-    
-    if( rPropQuery.IsVar( "Selector\\Global Variables\\Add Float" ) )
-    {
-        if( rPropQuery.IsRead() )
-        {
-            rPropQuery.SetVarButton( "Add Float" );
-        }
-        else
-        {
-            if (m_VariableName.IsEmpty())
-            {
-#ifdef TARGET_PC
-                MessageBox( NULL, "No variable named defined.", "Warning",MB_ICONWARNING  );
-#endif
-            }
-            else
-            {
-                g_VarMgr.RegisterFloat( m_VariableName.Get() );
-            }
-        }
-        
-        return TRUE;
-    }
-    
-    if( rPropQuery.IsVar( "Selector\\Global Variables\\Add Bool" ) )
-    {
-        if( rPropQuery.IsRead() )
-        {
-            rPropQuery.SetVarButton( "Add Bool" );
-        }
-        else
-        {
-            if (m_VariableName.IsEmpty())
-            {
-#ifdef TARGET_PC
-                MessageBox( NULL, "No variable named defined.", "Warning",MB_ICONWARNING  );
-#endif
-            }
-            else
-            {
-                g_VarMgr.RegisterBool( m_VariableName.Get() );
-            }
-        }
-        
-        return TRUE;
-    }
-
-    if( rPropQuery.IsVar( "Selector\\Global Variables\\Add Timer" ) )
-    {
-        if( rPropQuery.IsRead() )
-        {
-            rPropQuery.SetVarButton( "Add Timer" );
-        }
-        else
-        {
-            if (m_VariableName.IsEmpty())
-            {
-#ifdef TARGET_PC
-                MessageBox( NULL, "No variable named defined.", "Warning",MB_ICONWARNING  );
-#endif
-            }
-            else
-            {
-                g_VarMgr.RegisterTimer( m_VariableName.Get() );
-            }
-        }
-        
-        return TRUE;
-    }
-
-    if ( rPropQuery.VarString( "Selector\\Global Variables\\New Variable Name" , m_VariableName.Get(), m_VariableName.MaxLen() ) )
-    {
-       return TRUE; 
-    }
-*/  
-  
    
     /////////////////////////////////////////////////////////////////////////////////////////////////
     
@@ -342,8 +244,8 @@ struct trigger_object_desc : public object_desc
     virtual s32  OnEditorRender( object& Object ) const
     {
         object_desc::OnEditorRender( Object );
-        draw_Label( Object.GetPosition(), XCOLOR_RED, "<<OBSOLETE>>" );    
-        return EDITOR_ICON_TRIGGER;
+        render::debug::Label( Object.GetPosition(), XCOLOR_RED, "<<OBSOLETE>>" );    
+        return static_cast<s32>( EditorIcon::Trigger );
     }
 
 #endif // X_EDITOR
@@ -461,9 +363,9 @@ bbox trigger_object::GetLocalBBox( void ) const
 void trigger_object::OnDebugRender( void )
 {
     if (m_DrawActivationSphere)
-        draw_Sphere( object::GetPosition(), s_SphereRadius, s_TriggerColor_Checking );
+        render::debug::Sphere( object::GetPosition(), s_SphereRadius, s_TriggerColor_Checking );
 
-    draw_BBox( GetBBox(), xcolor(255,0,0) );
+    render::debug::Box( GetBBox(), xcolor(255,0,0) );
     OnRenderActions();
 }
 #endif // X_RETAIL
@@ -872,7 +774,7 @@ void trigger_object::ExecuteLogic( f32 DeltaTime )
     if (!m_OnActivate)
         return;
 
-    TRIGGER_CONTEXT( "trigger_object::ExecuteLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "trigger_object::ExecuteLogic" );
 
     switch ( m_State )
     {
@@ -929,7 +831,7 @@ void trigger_object::ExecuteChecking ( f32 DeltaTime )
     //Check state, checks all the conditions, if they meet the requeisite state flags then
     //run the actions.. Then using the type, determine what to do post activiation...
 
-    TRIGGER_CONTEXT( "trigger_object::ExecuteChecking" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "trigger_object::ExecuteChecking" );
 
     if ( CheckNextTime(DeltaTime) == FALSE )
         return;
@@ -952,7 +854,7 @@ void trigger_object::ExecuteRecovery ( f32 DeltaTime )
 
    ( void ) DeltaTime;
 
-    TRIGGER_CONTEXT( "trigger_object::ExecuteRecovery" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "trigger_object::ExecuteRecovery" );
 
     switch(m_Type) 
     {

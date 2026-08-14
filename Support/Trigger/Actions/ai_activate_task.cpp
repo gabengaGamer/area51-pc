@@ -9,12 +9,13 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\ai_activate_task.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/ai_activate_task.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "..\Support\Characters\Character.hpp"
-#include "..\Support\Characters\TaskSystem\character_task_set.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "../Support/Characters/Character.hpp"
+#include "../Support/Characters/TaskSystem/character_task_set.hpp"
 
 #include "Entropy.hpp"
 
@@ -30,7 +31,7 @@ ai_activate_task::ai_activate_task ( guid ParentGuid ) : actions_base( ParentGui
 
 void ai_activate_task::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * ai_activate_task::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * ai_activate_task::Execute" );
     
     (void) pParent;
 
@@ -63,9 +64,9 @@ void ai_activate_task::OnRender ( void )
     if ( ObjectPtr.IsValid() )
     {
         vector3 MyPosition =  GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
-        draw_Line( MyPosition, ObjectPtr.m_pObject->GetBBox().GetCenter(), XCOLOR_PURPLE );
-        draw_BBox( ObjectPtr.m_pObject->GetBBox(), XCOLOR_PURPLE );
-        draw_Label( ObjectPtr.m_pObject->GetPosition(), XCOLOR_WHITE, GetTypeName() );
+        render::debug::Line( MyPosition, ObjectPtr.m_pObject->GetBBox().GetCenter(), XCOLOR_PURPLE );
+        render::debug::Box( ObjectPtr.m_pObject->GetBBox(), XCOLOR_PURPLE );
+        render::debug::Label( ObjectPtr.m_pObject->GetPosition(), XCOLOR_WHITE, GetTypeName() );
     }
 }
 

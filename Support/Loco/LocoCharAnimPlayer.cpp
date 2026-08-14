@@ -8,13 +8,14 @@
 // INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Animation/AnimData.hpp"
 #include "Loco.hpp"
-#include "LocoCharAnimplayer.hpp"
+#include "LocoCharAnimPlayer.hpp"
 #include "LocoIKSolver.hpp"
 #include "e_ScratchMem.hpp"
 #include "Entropy.hpp"
-#include "Gamelib\StatsMgr.hpp"
+#include "GameLib/StatsMgr.hpp"
 
 //==============================================================================
 // EXTERNS
@@ -446,7 +447,7 @@ void loco_char_anim_player::ApplyBlendAnimDeltaYaw( radian DeltaYaw )
 void loco_char_anim_player::Advance( f32 nSeconds, vector3&  DeltaPos, radian& DeltaYaw )
 {
     LOG_STAT( k_stats_Animation );
-    CONTEXT("loco_char_anim_player::Advance") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "loco_char_anim_player::Advance") ;
 
     // Clear blend deltas incase anim rate is set to zero!
     DeltaPos.Zero();
@@ -869,8 +870,8 @@ void loco_char_anim_player::RenderSkeleton( xbool LabelBones )
         if( GetBone(i).iParent != -1 )
             PP = GetBonePosition( GetBone(i).iParent );
 
-        draw_Line( BP, PP, XCOLOR_GREEN );
-        draw_Point( BP, XCOLOR_RED );
+        render::debug::Line( BP, PP, XCOLOR_GREEN );
+        render::debug::Point( BP, XCOLOR_RED );
     }
 
     // Label bones
@@ -878,16 +879,16 @@ void loco_char_anim_player::RenderSkeleton( xbool LabelBones )
     {
         for( i=0; i<nBones; i++ )
         {
-            draw_Label( GetBonePosition( i ), XCOLOR_WHITE, GetBone(i).Name );
+            render::debug::Label( GetBonePosition( i ), XCOLOR_WHITE, GetBone(i).Name );
         }
     }
 
     // Render direction out of head
     vector3 Start = m_MidEyePosition ;
     vector3 End   = Start + (m_HeadL2W.RotateVector(vector3(0,0,-50))) ;
-    draw_Point(Start, XCOLOR_YELLOW) ;
-    draw_Point(End,  XCOLOR_YELLOW) ;
-    draw_Line(Start, End, XCOLOR_YELLOW) ;
+    render::debug::Point(Start, XCOLOR_YELLOW) ;
+    render::debug::Point(End,  XCOLOR_YELLOW) ;
+    render::debug::Line(Start, End, XCOLOR_YELLOW) ;
 }
 
 #endif // !defined( CONFIG_RETAIL )
@@ -1175,67 +1176,10 @@ const matrix4& loco_char_anim_player::GetCachedL2W( s32 iBone )
 
 //=========================================================================
 
-void loco_char_anim_player::GetBoneL2Ws( matrix4* pBoneL2W, xbool bApplyBindPose )
-{
-    ASSERT( pBoneL2W );
-
-    if( m_nActiveBones <= 0 )
-        return;
-
-    anim_key* MixBuffer = base_player::GetMixBuffer( base_player::MIX_BUFFER_PLAYER );
-    ASSERT( MixBuffer );
-
-    matrix4 L2W;
-    L2W.Identity();
-    L2W.SetTranslation( m_WorldPos );
-
-    GetInterpKeys( L2W, MixBuffer );
-
-    ASSERT( GetAnimGroup() );
-    const anim_group& AnimGroup = *GetAnimGroup();
-
-    AnimGroup.ComputeBonesL2W( L2W, MixBuffer, m_nActiveBones, pBoneL2W, FALSE );
-
-    if( m_pIKSolver )
-    {
-        matrix4 IKMatrices[MAX_ANIM_BONES];
-
-        for( s32 i = 0; i < m_nActiveBones; i++ )
-            IKMatrices[i] = pBoneL2W[i] * AnimGroup.GetBoneBindInvMatrix( i );
-
-        m_pIKSolver->Solve( IKMatrices, m_nActiveBones );
-
-        if( bApplyBindPose )
-        {
-            for( s32 i = 0; i < m_nActiveBones; i++ )
-                pBoneL2W[i] = IKMatrices[i];
-        }
-        else
-        {
-            for( s32 i = 0; i < m_nActiveBones; i++ )
-            {
-                matrix4 BindM = AnimGroup.GetBoneBindInvMatrix( i );
-                BindM.Invert();
-                pBoneL2W[i] = IKMatrices[i] * BindM;
-            }
-        }
-
-        return;
-    }
-
-    if( bApplyBindPose )
-    {
-        for( s32 i = 0; i < m_nActiveBones; i++ )
-            pBoneL2W[i] = pBoneL2W[i] * AnimGroup.GetBoneBindInvMatrix( i );
-    }
-}
-
-//=========================================================================
-
 void loco_char_anim_player::UpdateCachedL2Ws( void )
 {
     LOG_STAT( k_stats_Animation );
-    CONTEXT("loco_char_anim_player::UpdateCachedL2Ws") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "loco_char_anim_player::UpdateCachedL2Ws") ;
 
     s32 i;
     
@@ -1249,7 +1193,7 @@ void loco_char_anim_player::UpdateCachedL2Ws( void )
         return ;
 
     // Setup L2W
-    static matrix4 L2W PS2_ALIGNMENT(16) ;
+    static matrix4 L2W;
     L2W.Identity();
     L2W.SetTranslation(m_WorldPos) ;
 

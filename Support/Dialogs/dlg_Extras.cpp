@@ -4,21 +4,21 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_listbox.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_listbox.hpp"
 
 #include "dlg_Extras.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Parsing/textin.hpp"
-#include "StateMgr/mapList.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Parsing/TextIn.hpp"
+#include "StateMgr/MapList.hpp"
 #include "NetworkMgr/GameMgr.hpp"
 
 #ifdef CONFIG_VIEWER
@@ -28,10 +28,6 @@
 #endif
 
 #include "Configuration/GameConfig.hpp"
-#include "MoviePlayer/MoviePlayer.hpp"
-
-
-
 //=========================================================================
 //  Main Menu Dialog
 //=========================================================================
@@ -40,15 +36,13 @@ extern xstring SelectBestClip( const char* pName );
 enum controls
 {
 	IDC_EXTRAS_LISTBOX,
-    IDC_EXTRAS_NAV_TEXT,
 };
 
 
 ui_manager::control_tem ExtrasControls[] = 
 {
     // Frames.
-    { IDC_EXTRAS_LISTBOX,   "IDS_NULL",           "listbox",  50, 60, 220, 232, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_EXTRAS_NAV_TEXT,  "IDS_NULL",           "text",      0,  0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_EXTRAS_LISTBOX,   "IDS_NULL",           "listbox",  50, 60, 220, 232, 0, 0, 1, 1, ui_win::WF_VISIBLE },
 };
 
 
@@ -219,13 +213,12 @@ xbool dlg_extras::Create( s32                        UserID,
 	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pExtrasList   = (ui_listbox*) FindChildByID( IDC_EXTRAS_LISTBOX  );
-    m_pNavText      = (ui_text*)    FindChildByID( IDC_EXTRAS_NAV_TEXT );
     
     GotoControl( (ui_control*)m_pExtrasList );
     m_CurrentControl = IDC_EXTRAS_LISTBOX;
 
     FillExtrasList();
-    m_pExtrasList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pExtrasList->SetActive( TRUE );
     m_pExtrasList->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pExtrasList->SetLabelFlags( ui_font::h_left|ui_font::v_center|ui_font::clip_ellipsis|ui_font::clip_l_justify );
     m_pExtrasList->SetBackgroundColor( xcolor (39,117,28,128) );
@@ -237,10 +230,7 @@ xbool dlg_extras::Create( s32                        UserID,
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" ); 
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // initialize screen scaling
     InitScreenScaling( Position );
@@ -318,16 +308,15 @@ void dlg_extras::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_extras::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_extras::OnNotify( ui_notification const& Event )
 {
-    (void)pWin;
-    (void)pData;
+    (void)Event.m_pText;
 
     if( m_State == DIALOG_STATE_ACTIVE )
     {
-        if( pSender == (ui_win*)m_pExtrasList )
+        if( Event.m_pSender == (ui_win*)m_pExtrasList )
         {
-            if( Command == WN_LIST_ACCEPTED )
+            if( Event.m_Type == ui_notification_type::ListAccepted )
             {
                 g_AudioMgr.Play( "Select_Norm" );
                 PlaySelectedMovie();
@@ -343,44 +332,37 @@ void dlg_extras::PlaySelectedMovie( void )
     if( !m_pExtrasList )
         return;
 
-    // shut down background movie
-    g_StateMgr.DisableBackgoundMovie();
-	
-    // play the selected movie
     if( m_pExtrasList->GetSelection() != -1 )
     {
         s32 ItemIndex = m_pExtrasList->GetSelectedItemData( 0 );
         if( (ItemIndex >= 0) && (ItemIndex < (s32)(sizeof( s_MovieNames ) / sizeof( s_MovieNames[0] ))) )
         {
-            PlaySimpleMovie( SelectBestClip( s_MovieNames[ ItemIndex ] ) );
+            g_StateMgr.RequestSimpleMovie( SelectBestClip( s_MovieNames[ ItemIndex ] ) );
         }
     }
-
-    // start up the background movie
-    g_StateMgr.EnableBackgroundMovie();
 }
 
 
 //=========================================================================
 
-void dlg_extras::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_extras::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 }
 
 //=========================================================================
 
-void dlg_extras::OnPadSelect( ui_win* pWin )
+void dlg_extras::OnAccept( ui_win* pWin )
 {
     if( m_State == DIALOG_STATE_ACTIVE )
     {
-        m_pExtrasList->OnPadActivate( pWin );
+        m_pExtrasList->OnAlternate( pWin );
     }
 }
 
 //=========================================================================
 
-void dlg_extras::OnPadBack( ui_win* pWin )
+void dlg_extras::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -405,7 +387,6 @@ void dlg_extras::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         {
             // complete!  turn on the elements
             m_pExtrasList ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText    ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 
             GotoControl( (ui_control*)m_pExtrasList );
             g_UiMgr->SetScreenHighlight( m_pExtrasList->GetPosition() );
@@ -505,7 +486,7 @@ void dlg_extras::FillExtrasList( void )
     //m_pExtrasList->AddItem(DentString+=g_StringTableMgr( "ui", "IDS_EXTRAS_SLIDE_SHOW_17" ) , ID_EXTRA_SLIDE_SHOW_17   ,1120, FALSE); DentString = xwstring("     ");
     //m_pExtrasList->AddItem(DentString+=g_StringTableMgr( "ui", "IDS_EXTRAS_SLIDE_SHOW_18" ) , ID_EXTRA_SLIDE_SHOW_18   ,1125, FALSE); DentString = xwstring("     ");
     //m_pExtrasList->AddItem(DentString+=g_StringTableMgr( "ui", "IDS_EXTRAS_SLIDE_SHOW_19" ) , ID_EXTRA_SLIDE_SHOW_19   ,1130, FALSE); DentString = xwstring("     ");
-    m_pExtrasList->AddItem(DentString+=g_StringTableMgr( "ui", "IDS_EXTRAS_OUTRO"         ) , ID_EXTRA_OUTRO           ,9998, Profile.m_bGameFinished); DentString = xwstring("     ");
+    m_pExtrasList->AddItem(DentString+=g_StringTableMgr( "ui", "IDS_EXTRAS_OUTRO"         ) , ID_EXTRA_OUTRO           ,9998, Profile.GetGameFinished()); DentString = xwstring("     ");
 
     for( s32 i=0; i<g_MapList.GetCount(); i++ )
     {

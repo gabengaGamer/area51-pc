@@ -8,14 +8,14 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
-#include "obj_mgr\obj_mgr.hpp"
-#include "..\objects\Render\RigidInst.hpp"
-#include "..\PainMgr\Pain.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "..\Auxiliary\fx_RunTime\Fx_Mgr.hpp"
-#include "audiomgr\AudioMgr.hpp"
-#include "..\Objects\Player.hpp"
-#include "NetworkMgr\NetObj.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Objects/Render/RigidInst.hpp"
+#include "../PainMgr/Pain.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "FX/fx_Mgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "../Objects/Player/Player.hpp"
+#include "NetworkMgr/NetObj.hpp"
 
 #define MAX_LASHES                  8
 #define MAX_LASH_TARGETS            64
@@ -48,7 +48,7 @@ public:
 
     virtual bbox        GetLocalBBox        ( void ) const;
     virtual s32         GetMaterial         ( void ) const { return MAT_TYPE_CONCRETE;}
-    virtual void        OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void        OnMove				( const vector3& rNewPos );
     virtual void        OnRender            ( void );
     virtual void        OnRenderTransparent ( void );
@@ -257,7 +257,6 @@ protected:
     guid                    m_GuidOfOwner;
     s32                     m_NetSlotOfOwner;
 
-    rhandle<xbitmap>        m_Texture;
     rhandle<decal_package>  m_hDecalPackage;
 
     // Main data, timing, basic info, etc...

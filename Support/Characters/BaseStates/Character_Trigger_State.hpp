@@ -5,9 +5,9 @@
 #define __character_trigger_state_H
 
 
-#include "..\CharacterState.hpp"
-#include "..\Support\TriggerEx\Actions\action_ai_base.hpp"
-#include "Characters\ResponseList.hpp"
+#include "../CharacterState.hpp"
+#include "../Support/TriggerEx/Actions/action_ai_base.hpp"
+#include "Characters/ResponseList.hpp"
 
 /////////////////////////////////////////////////////////////////////////////
 // character_trigger_state class

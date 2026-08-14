@@ -1,7 +1,7 @@
 #ifndef _CHARACTER_ALARM_STATE_HPP_
 #define _CHARACTER_ALARM_STATE_HPP_
 
-#include "..\CharacterState.hpp"
+#include "../CharacterState.hpp"
 
 class character_alarm_state : public character_state
 {

@@ -11,8 +11,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\TriggerEx_Actions.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "../TriggerEx_Actions.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 //=========================== ==============================================
 // action_affect_global

@@ -13,8 +13,8 @@
 //=========================================================================
 
 #include "x_types.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
-#include "..\TriggerEx_Conditionals.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
+#include "../TriggerEx_Conditionals.hpp"
 
 //=========================================================================
 // Check Property

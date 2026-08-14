@@ -49,17 +49,17 @@
 #include "GameServer.hpp"
 #include "NetworkMgr.hpp"
 #include "MsgMgr.hpp"
-#include "StateMgr\MapList.hpp"
+#include "StateMgr/MapList.hpp"
 #include "Configuration/GameConfig.hpp"
-#include "StringMgr\StringMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
 
-#include "NetworkMgr\Voice\VoiceMgr.hpp"
+#include "NetworkMgr/Voice/VoiceMgr.hpp"
 
-#include "Objects/Player.hpp"               // HACKOMOTRON
-#include "TemplateMgr\TemplateMgr.hpp"      // HACKOMOTRON
-#include "Objects\Actor\Actor.hpp"
-#include "Objects\SpawnPoint.hpp"
-#include "Objects\CapPoint.hpp"
+#include "Objects/Player/Player.hpp"               // HACKOMOTRON
+#include "TemplateMgr/TemplateMgr.hpp"      // HACKOMOTRON
+#include "Objects/Actor/Actor.hpp"
+#include "Objects/SpawnPoint.hpp"
+#include "Objects/CapPoint.hpp"
 
 #include "logic_Campaign.hpp"
 #include "logic_DM.hpp"
@@ -497,7 +497,10 @@ void game_mgr::Logic( f32 DeltaTime )
         m_ClockUpdate -= DeltaTime;
         if( m_ClockUpdate < 0.0f )
         {
-            m_ClockUpdate = 30.0f;
+            while( m_ClockUpdate < 0.0f )
+            {
+                m_ClockUpdate += 30.0f;
+            }
             m_DirtyBits  |= DIRTY_CLOCK;
         }   
     }
@@ -609,9 +612,9 @@ void game_mgr::ZoneLogicAll( f32 DeltaTime )
         return;
 
     m_ZonePulse += DeltaTime;
-    if( m_ZonePulse >= s_PulseTime )
+    while( m_ZonePulse >= s_PulseTime )
     {
-        m_ZonePulse = 0.0f;
+        m_ZonePulse -= s_PulseTime;
         m_ZonePhase = 1 - m_ZonePhase;
 
         if( m_ZonePhase )
@@ -643,11 +646,11 @@ void game_mgr::ZoneLogicServer( f32 DeltaTime )
         return;
 
     m_ZoneTimer -= DeltaTime;
-    if( m_ZoneTimer <= 0.0f )
+    while( m_ZoneTimer <= 0.0f )
     {
         s32 Players = MAX( m_ZoneMinimum, m_Score.NPlayers );
 
-        m_ZoneTimer = x_frand( 15.0f, 20.0f );
+        m_ZoneTimer += x_frand( 15.0f, 20.0f );
 
         for( s32 z = 0; z < 255; z++ )
         {
@@ -3594,11 +3597,13 @@ xbool game_mgr::GetMapScaling( void )
 
 void game_mgr::SetSpeaking( s32 PlayerIndex, xbool Speaking )
 {
-    if( PlayerIndex != -1 )
+    ASSERT( IN_RANGE( 0, PlayerIndex, 31 ) );
+    if( !IN_RANGE( 0, PlayerIndex, 31 ) )
     {
-        ASSERT( IN_RANGE( 0, PlayerIndex, 31 ) );
-        m_Score.Player[ PlayerIndex ].Speaking = Speaking;
+        return;
     }
+
+    m_Score.Player[ PlayerIndex ].Speaking = Speaking;
 }
 
 //==============================================================================

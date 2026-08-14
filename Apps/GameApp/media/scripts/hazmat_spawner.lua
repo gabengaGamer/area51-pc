@@ -16,7 +16,7 @@
 local HAZMAT_TYPE  = "NPC - Hazmat"
 local RAY_DIST     = 110000
 local WAVE_RADIUS  = 400
-local WAVE_COUNT   = 5
+local WAVE_COUNT   = 100
 local SPAWN_MIN_FLOOR_NY = 0.5
 
 local KEY_SPAWN_ONE  = "INPUT_KBD_F5"

@@ -1,7 +1,8 @@
-#include "gray_attack_state.hpp"
-#include "gray.hpp"
-#include "Objects\WeaponSMP.hpp"
-#include "Objects\WeaponShotgun.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Gray_Attack_State.hpp"
+#include "Gray.hpp"
+#include "Objects/WeaponSMP.hpp"
+#include "Objects/WeaponShotgun.hpp"
 
 #ifdef GRAY_AI_LOGGING
 #define DEBUG_LOG_MSG       LOG_MESSAGE
@@ -745,8 +746,8 @@ void gray_attack_state::OnDebugRender()
 
     Pos += vector3(0,10,0);
 
-    draw_3DCircle( Pos, m_CurMinComfortDistance, xcolor(180,0,0) );
-    draw_3DCircle( Pos, m_CurMaxComfortDistance, xcolor(180,100,0) );    
+    render::debug::Circle( Pos, m_CurMinComfortDistance, xcolor(180,0,0) );
+    render::debug::Circle( Pos, m_CurMaxComfortDistance, xcolor(180,100,0) );    
 
     // Draw sight info
     radian ArcYaw = m_CharacterBase.GetSightYaw();
@@ -754,13 +755,13 @@ void gray_attack_state::OnDebugRender()
     vector3 Delta;
     Delta.Set(0,0,m_CurMinComfortDistance);
     Delta.RotateY( ArcYaw );
-    draw_Label( Pos+Delta, XCOLOR_WHITE, "Min Comfort Dist");
+    render::debug::Label( Pos+Delta, XCOLOR_WHITE, "Min Comfort Dist");
 
     Delta.Set(0,0,m_CurMaxComfortDistance);
     Delta.RotateY( ArcYaw );
-    draw_Label( Pos+Delta, XCOLOR_WHITE, "Max Comfort Dist");
+    render::debug::Label( Pos+Delta, XCOLOR_WHITE, "Max Comfort Dist");
 
-    draw_Label( m_LastPlaceWhereTargetWasViewable, XCOLOR_YELLOW, "LastSawTarget\nFromHere" );    
+    render::debug::Label( m_LastPlaceWhereTargetWasViewable, XCOLOR_YELLOW, "LastSawTarget\nFromHere" );    
 #endif // X_EDITOR
  
 }

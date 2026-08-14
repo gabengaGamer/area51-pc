@@ -11,15 +11,15 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_slider.hpp"
-#include "ui\ui_check.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_slider.hpp"
+#include "UI/ui_check.hpp"
+#include "UI/ui_button.hpp"
 
-#include "StateMgr\StateMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
 
 //==============================================================================
 //  dlg_headset
@@ -29,6 +29,7 @@ extern void     dlg_headset_register  ( ui_manager* pManager );
 extern ui_win*  dlg_headset_factory   ( s32 UserID, ui_manager* pManager, ui_manager::dialog_tem* pDialogTem, const irect& Position, ui_win* pParent, s32 Flags, void* pUserData );
 
 class ui_button;
+class dlg_popup;
 
 class dlg_headset : public ui_dialog
 {
@@ -47,14 +48,20 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
-    virtual void        OnPadDelete         ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
+    virtual void        OnDelete         ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
     void                EnableBlackout      ( void )                    { m_bRenderBlackout = TRUE; }
 
 protected:
+    void                ApplySettings      ( global_settings& Settings );
+    void                BeginSave          ( void );
+    void                OpenSavePopup      ( void );
+    void                RestoreSettings    ( void );
+    void                OnSaveSettingsCB   ( void );
+
     ui_frame*           m_pFrame1;
 
     ui_combo*           m_pToggleHeadsetAudio;
@@ -68,13 +75,14 @@ protected:
    
     ui_button*          m_pButtonAccept;
 
-    ui_text*            m_pNavText;
 
     s32                 m_CurrHL;
 
     xbool               m_bRenderBlackout;
 
-    player_profile      m_Profile;
+    global_settings     m_OriginalSettings;
+    dlg_popup*          m_PopUp;
+    s32                 m_PopUpResult;
 };
 
 //==============================================================================

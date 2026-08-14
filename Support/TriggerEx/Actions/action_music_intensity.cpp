@@ -11,12 +11,12 @@
 
 #include "action_music_intensity.hpp"
 
-#include "Music_mgr\Music_mgr.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "MusicStateMgr\MusicStateMgr.hpp"
+#include "Music_mgr/music_mgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "MusicStateMgr/MusicStateMgr.hpp"
 #include "Entropy.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 //=========================================================================
 // MUSIC_INTENSITY

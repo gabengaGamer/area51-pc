@@ -9,10 +9,11 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\open_and_lock_door.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/open_and_lock_door.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 #include "Entropy.hpp"
 
 static const xcolor s_OpenAndLockColor             (0,0,255);
@@ -31,7 +32,7 @@ open_and_lock_door::open_and_lock_door ( guid ParentGuid ) :
 
 void open_and_lock_door::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * move_object::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * move_object::Execute" );
 
     (void) pParent;
 
@@ -56,9 +57,9 @@ void open_and_lock_door::OnRender ( void )
 
 #ifdef TARGET_PC
     vector3 MyPosition =  GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
-    draw_Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_OpenAndLockColor );
-    draw_BBox( ObjectPtr.m_pObject->GetBBox(), s_OpenAndLockColor );
-    draw_Label( ObjectPtr.m_pObject->GetPosition(), s_OpenAndLockColor, GetTypeName() );
+    render::debug::Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_OpenAndLockColor );
+    render::debug::Box( ObjectPtr.m_pObject->GetBBox(), s_OpenAndLockColor );
+    render::debug::Label( ObjectPtr.m_pObject->GetPosition(), s_OpenAndLockColor, GetTypeName() );
 #endif
 }
 

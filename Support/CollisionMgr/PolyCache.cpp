@@ -8,15 +8,17 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "PolyCache.hpp"
 #include "Entropy.hpp"
 #include "CollisionMgr/CollisionMgr.hpp"
-#include "Objects\Object.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "PlaySurfaceMgr\PlaySurfaceMgr.hpp"
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
+#include "Objects/object.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "PlaySurfaceMgr/PlaySurfaceMgr.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_renderer.hpp"
 
 //==============================================================================
 
@@ -149,7 +151,7 @@ void poly_cache::DisplayStats( void )
     s32 font = g_UiMgr->FindFont("small");
 
     Rect.Set( x-5, y, x + 150, y + (g_UiMgr->GetLineHeight(font) * 4) );
-    draw_Rect( Rect, xcolor(0,0,0,128), FALSE, DRAW_UI_RTARGET );
+    g_UIRenderer.DrawRect( Rect, xcolor(0,0,0,128) );
 
     xwstring Text1 = (const char*)xfs( "Cache Hit: %d", g_PolyCache.m_nCacheHits ); 
     g_UiMgr->TextSize( font, Rect, Text1, Text1.GetLength());
@@ -463,7 +465,7 @@ void poly_cache::SanityCheck( void )
 //==============================================================================
 
 #ifndef CONFIG_RETAIL
-void poly_cache::DrawCluster( cluster* pCL, f32* Intensity )
+void poly_cache::AddClusterGeometry( render::PrimitiveBatch& Batch, cluster* pCL, f32* Intensity )
 {
 
     random R;
@@ -475,43 +477,27 @@ void poly_cache::DrawCluster( cluster* pCL, f32* Intensity )
     {
         cluster::quad& QD = pCL->pQuad[i];
 
-        // Set color
-        {
-            xcolor C;
-            f32    I = Intensity[(iC++)%128];
-            C.R = (u8)( CC.R * I );
-            C.G = (u8)( CC.G * I );
-            C.B = (u8)( CC.B * I );
-            C.A = 255;
-            draw_Color( C );
-        }
+        xcolor C;
+        f32 const I = Intensity[(iC++)%128];
+        C.R = (u8)( CC.R * I );
+        C.G = (u8)( CC.G * I );
+        C.B = (u8)( CC.B * I );
+        C.A = 255;
 
         vector3* P0 = &pCL->pPoint[ QD.iP[0] ];
         vector3* P1 = &pCL->pPoint[ QD.iP[1] ];
         vector3* P2 = &pCL->pPoint[ QD.iP[2] ];
         vector3* P3 = &pCL->pPoint[ QD.iP[3] ];
 
-        draw_Vertex( *P0 );
-        draw_Vertex( *P1 );
-        draw_Vertex( *P2 );
+        const render::primitive_vertex V0( *P0, vector2( 0.0f, 0.0f ), C );
+        const render::primitive_vertex V1( *P1, vector2( 0.0f, 0.0f ), C );
+        const render::primitive_vertex V2( *P2, vector2( 0.0f, 0.0f ), C );
+        Batch.AddTriangle( V0, V1, V2 );
 
         if( pCL->pBounds[i].Flags & BOUNDS_IS_QUAD )
         {
-/*
-            // Set color
-            {
-                xcolor C;
-                f32    I = Intensity[(iC++)%128];
-                C.R = (u8)( CC.R * I );
-                C.G = (u8)( CC.G * I );
-                C.B = (u8)( CC.B * I );
-                C.A = 255;
-                draw_Color( C );
-            }
-*/
-            draw_Vertex( *P0 );
-            draw_Vertex( *P2 );
-            draw_Vertex( *P3 );
+            const render::primitive_vertex V3( *P3, vector2( 0.0f, 0.0f ), C );
+            Batch.AddTriangle( V0, V2, V3 );
         }
     }
 
@@ -521,11 +507,8 @@ void poly_cache::DrawCluster( cluster* pCL, f32* Intensity )
 //==============================================================================
 
 #ifndef CONFIG_RETAIL
-void poly_cache::DrawClusterNormals( cluster* pCL )
+void poly_cache::AddClusterNormals( render::PrimitiveBatch& Batch, cluster* pCL )
 {
-
-    draw_Color( XCOLOR_RED );
-
     for( s32 i=0; i<(s32)pCL->nQuads; i++ )
     {
         cluster::quad& QD = pCL->pQuad[i];
@@ -534,28 +517,17 @@ void poly_cache::DrawClusterNormals( cluster* pCL )
         vector3* P1 = (vector3*)(&pCL->pPoint[ QD.iP[1] ]);
         vector3* P2 = (vector3*)(&pCL->pPoint[ QD.iP[2] ]);
         vector3* P3 = (vector3*)(&pCL->pPoint[ QD.iP[3] ]);
-/*
-        vector3 Center = (*P0+*P1+*P2+*P3)*0.25f;
-        plane Plane(*P0,*P1,*P2);
-        vector3 Tip = Center + (Plane.Normal * 10.0f); 
-        draw_Vertex( Center );
-        draw_Vertex( Tip );
-*/
         {
             vector3 Center = (*P0+*P1+*P2)*0.333f;
             plane Plane(*P0,*P1,*P2);
             vector3 Tip = Center + (Plane.Normal * 10.0f); 
-            draw_Color(XCOLOR_RED);
-            draw_Vertex( Center );
-            draw_Vertex( Tip );
+            Batch.AddLine( Center, Tip, XCOLOR_RED, XCOLOR_RED );
         }
         {
             vector3 Center = (*P0+*P2+*P3)*0.333f;
             plane Plane(*P0,*P2,*P3);
             vector3 Tip = Center + (Plane.Normal * 10.0f); 
-            draw_Color(XCOLOR_GREEN);
-            draw_Vertex( Center );
-            draw_Vertex( Tip );
+            Batch.AddLine( Center, Tip, XCOLOR_GREEN, XCOLOR_GREEN );
         }
     }
 }
@@ -604,8 +576,6 @@ void poly_cache::Render( void )
     s32 n16ClustersRefd=0;
     s32 n32ClustersRefd=0;
 
-    draw_ClearL2W();
-
     // Setup some random intensities
     f32 Intensity[128];
     {
@@ -617,88 +587,98 @@ void poly_cache::Render( void )
     // Draw clusters
     if( m_Debug.RENDER_HIT_CLUSTERS )
     {
-        draw_Begin( DRAW_TRIANGLES );
-        draw_ClearL2W();
-        draw_SetZBias( 3 );
+        const render::primitive_draw_desc Material( NULL,
+                                                    render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                    render::PRIMITIVE_BLEND_OPAQUE,
+                                                    render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                    render::PRIMITIVE_RASTER_COLLISION_BIASED,
+                                                    render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                    render::PRIMITIVE_LAYER_SURFACE );
+        render::PrimitiveBatch Batch( Material );
 
         s32 iCL;
 
         for( iCL=0; iCL<POLYCACHE_MAX_8_CLUSTERS; iCL++ )
         {
             if( m_Cluster_8[iCL].nHits )
-                DrawCluster( (cluster*)(&m_Cluster_8[iCL]), Intensity );
+                AddClusterGeometry( Batch, (cluster*)(&m_Cluster_8[iCL]), Intensity );
         }
 
         for( iCL=0; iCL<POLYCACHE_MAX_16_CLUSTERS; iCL++ )
         {
             if( m_Cluster_16[iCL].nHits )
-                DrawCluster( (cluster*)(&m_Cluster_16[iCL]), Intensity );
+                AddClusterGeometry( Batch, (cluster*)(&m_Cluster_16[iCL]), Intensity );
         }
 
         for( iCL=0; iCL<POLYCACHE_MAX_32_CLUSTERS; iCL++ )
         {
             if( m_Cluster_32[iCL].nHits )
-                DrawCluster( (cluster*)(&m_Cluster_32[iCL]), Intensity );
+                AddClusterGeometry( Batch, (cluster*)(&m_Cluster_32[iCL]), Intensity );
         }
 
-        draw_End();
-        draw_SetZBias( 0 );
+        matrix4 Identity;
+        Identity.Identity();
+        Batch.Submit( Identity );
     }
 
     // Draw cluster normals
     if( m_Debug.RENDER_HIT_CLUSTERS_NORMALS )
     {
-        draw_Begin( DRAW_LINES );
-        draw_ClearL2W();
-        draw_SetZBias( 3 );
+        const render::primitive_draw_desc Material( NULL,
+                                                    render::PRIMITIVE_TOPOLOGY_LINE_LIST,
+                                                    render::PRIMITIVE_BLEND_ALPHA,
+                                                    render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                    render::PRIMITIVE_RASTER_COLLISION_BIASED,
+                                                    render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                    render::PRIMITIVE_LAYER_TRANSPARENT );
+        render::PrimitiveBatch Batch( Material );
 
         s32 iCL;
 
         for( iCL=0; iCL<POLYCACHE_MAX_8_CLUSTERS; iCL++ )
         {
             if( m_Cluster_8[iCL].nHits )
-                DrawClusterNormals( (cluster*)(&m_Cluster_8[iCL]) );
+                AddClusterNormals( Batch, (cluster*)(&m_Cluster_8[iCL]) );
         }
 
         for( iCL=0; iCL<POLYCACHE_MAX_16_CLUSTERS; iCL++ )
         {
             if( m_Cluster_16[iCL].nHits )
-                DrawClusterNormals( (cluster*)(&m_Cluster_16[iCL]) );
+                AddClusterNormals( Batch, (cluster*)(&m_Cluster_16[iCL]) );
         }
 
         for( iCL=0; iCL<POLYCACHE_MAX_32_CLUSTERS; iCL++ )
         {
             if( m_Cluster_32[iCL].nHits )
-                DrawClusterNormals( (cluster*)(&m_Cluster_32[iCL]) );
+                AddClusterNormals( Batch, (cluster*)(&m_Cluster_32[iCL]) );
         }
 
-        draw_End();
-        draw_SetZBias( 0 );
+        matrix4 Identity;
+        Identity.Identity();
+        Batch.Submit( Identity );
     }
     
 
     if( m_Debug.RENDER_CLUSTER_BOXES )
     {
-        draw_ClearL2W();
-
         s32 iCL;
 
         for( iCL=0; iCL<POLYCACHE_MAX_8_CLUSTERS; iCL++ )
         {
             if( m_Cluster_8[iCL].nHits )
-                draw_BBox( m_Cluster_8[iCL].BBox, XCOLOR_RED );
+                render::debug::Box( m_Cluster_8[iCL].BBox, XCOLOR_RED );
         }
 
         for( iCL=0; iCL<POLYCACHE_MAX_16_CLUSTERS; iCL++ )
         {
             if( m_Cluster_16[iCL].nHits )
-                draw_BBox( m_Cluster_16[iCL].BBox, XCOLOR_RED );
+                render::debug::Box( m_Cluster_16[iCL].BBox, XCOLOR_RED );
         }
 
         for( iCL=0; iCL<POLYCACHE_MAX_32_CLUSTERS; iCL++ )
         {
             if( m_Cluster_32[iCL].nHits )
-                draw_BBox( m_Cluster_32[iCL].BBox, XCOLOR_RED );
+                render::debug::Box( m_Cluster_32[iCL].BBox, XCOLOR_RED );
         }
     }
 
@@ -742,8 +722,6 @@ void poly_cache::Render( void )
 
 
     // Draw Cell bboxes
-    draw_ClearL2W();
-
     cell* pCell = m_pMRU;
     while( pCell )
     {
@@ -759,22 +737,22 @@ void poly_cache::Render( void )
             {
                 bbox BBox;
                 GetCellBBox( *pCell, BBox );
-                draw_BBox(BBox,XCOLOR_RED);
-                draw_Marker(BBox.GetCenter(),R.color());
+                render::debug::Box(BBox,XCOLOR_RED);
+                render::debug::Marker(BBox.GetCenter(),R.color());
             }
 
             if( m_Debug.RENDER_HIT_CELL_BOXES && (pCell->nHits>0))
             {
                 bbox BBox;
                 GetCellBBox( *pCell, BBox );
-                draw_BBox(BBox,XCOLOR_BLUE);
+                render::debug::Box(BBox,XCOLOR_BLUE);
             }
 
             if( m_Debug.RENDER_ALL_CELL_BOXES )
             {
                 bbox BBox;
                 GetCellBBox( *pCell, BBox );
-                draw_BBox(BBox,XCOLOR_BLUE);
+                render::debug::Box(BBox,XCOLOR_BLUE);
             }
         }
 
@@ -792,7 +770,7 @@ void poly_cache::Render( void )
                 C.G = x_irand(128,255);
                 C.B = x_irand(128,255);
                 C.A = 255;
-                draw_Marker( pObj->GetBBox().GetCenter(), C );
+                render::debug::Marker( pObj->GetBBox().GetCenter(), C );
             }
         }
         POLYCACHE_N_INVALIDATE_GUIDS = 0;
@@ -855,7 +833,7 @@ void poly_cache::Render( void )
 
 poly_cache::cell* poly_cache::AcquireCell     ( s32 X, s32 Y, s32 Z )
 {
-    CONTEXT("poly_cache::AcquireCell");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "poly_cache::AcquireCell");
 
     cell* pCell = LookupCell(X,Y,Z);
     
@@ -912,7 +890,7 @@ poly_cache::cell* poly_cache::AcquireCell     ( s32 X, s32 Y, s32 Z )
 
 void poly_cache::InvalidateCell  ( s32 X, s32 Y, s32 Z )
 {
-    CONTEXT("poly_cache::InvalidateCell");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "poly_cache::InvalidateCell");
 
     cell* pCell = LookupCell(X,Y,Z);
 
@@ -936,7 +914,7 @@ void poly_cache::InvalidateCell  ( s32 X, s32 Y, s32 Z )
 void poly_cache::InvalidateCells ( const bbox& BBox, const guid& Guid )
 {
     (void)Guid;
-    CONTEXT("poly_cache::InvalidateCells");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "poly_cache::InvalidateCells");
 
     bbox IBBox = BBox;
     IBBox.Inflate(1,1,1);
@@ -1007,7 +985,7 @@ void poly_cache::InvalidateCells ( const bbox& BBox, const guid& Guid )
 
 void poly_cache::CacheCells( const bbox& BBox )
 {
-    CONTEXT("poly_cache::InvalidateCells");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "poly_cache::InvalidateCells");
 
     bbox IBBox = BBox;
     IBBox.Inflate(1,1,1);
@@ -1046,7 +1024,7 @@ void poly_cache::GetCellBBox( const cell& Cell, bbox& BBox )
 
 void poly_cache::DestroyCell( cell* pCell )
 {
-    CONTEXT("poly_cache::DestroyCell");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "poly_cache::DestroyCell");
 
 #ifndef X_RETAIL
 #if DO_LOGGING
@@ -1194,7 +1172,7 @@ void poly_cache::GetCellRegion( const bbox& aBBox,
 
 void poly_cache::InvalidateAllCells( void )
 {
-    CONTEXT("poly_cache::InvalidateAllCells");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "poly_cache::InvalidateAllCells");
 
     while( m_pMRU->iHash != -1 )
     {
@@ -1206,7 +1184,7 @@ void poly_cache::InvalidateAllCells( void )
 
 poly_cache::cell* poly_cache::BuildNewCell( s32 X, s32 Y, s32 Z )
 {
-    CONTEXT("poly_cache::BuildNewCell");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "poly_cache::BuildNewCell");
 
 #ifndef X_RETAIL
     SanityCheck();
@@ -1337,10 +1315,6 @@ void poly_cache::InitClusters( void )
         m_Cluster_8[i].pQuad   = m_Cluster_8[i].QUAD;
         m_Cluster_8[i].pBounds = m_Cluster_8[i].BOUNDS;
         m_Cluster_8[i].nReferences = 0;
-
-        #ifdef TARGET_PS2
-        ASSERT( (((u32)(m_Cluster_8[i].BOUNDS)) & 0xF)==0 );
-        #endif
     }
     m_Cluster_8[POLYCACHE_MAX_8_CLUSTERS-1].pNext = NULL;
 
@@ -1366,10 +1340,6 @@ void poly_cache::InitClusters( void )
         m_Cluster_16[i].pQuad   = m_Cluster_16[i].QUAD;
         m_Cluster_16[i].pBounds = m_Cluster_16[i].BOUNDS;
         m_Cluster_16[i].nReferences = 0;
-
-        #ifdef TARGET_PS2
-        ASSERT( (((u16)(m_Cluster_16[i].BOUNDS)) & 0xF)==0 );
-        #endif
     }
     m_Cluster_16[POLYCACHE_MAX_16_CLUSTERS-1].pNext = NULL;
 
@@ -1395,10 +1365,6 @@ void poly_cache::InitClusters( void )
         m_Cluster_32[i].pQuad   = m_Cluster_32[i].QUAD;
         m_Cluster_32[i].pBounds = m_Cluster_32[i].BOUNDS;
         m_Cluster_32[i].nReferences = 0;
-
-        #ifdef TARGET_PS2
-        ASSERT( (((u32)(m_Cluster_32[i].BOUNDS)) & 0xF)==0 );
-        #endif
     }
     m_Cluster_32[POLYCACHE_MAX_32_CLUSTERS-1].pNext = NULL;
 }
@@ -1787,49 +1753,14 @@ void poly_cache::GatherCluster( const collision_data&   CollData,
                 // Transform points
                 {
                     //-------------------------------------------------------
+					
                     const matrix4& M = pL2W[CL.iBone];
                     vector3* pS = CollData.pLowVector + CL.iVectorOffset;
                     vector3* pD = pCL->pPoint;
                     s32       N = pCL->nPoints;
 
-                    /*#ifdef TARGET_PS2
-                    asm __volatile__
-                    ("
-                        .set noreorder
-                        lqc2    vf04,   0x30(%4)            # load col3
-                        lqc2    vf03,   0x20(%4)            # load col2
-                        lqc2    vf02,   0x10(%4)            # load col1
-                        lqc2    vf01,   0x00(%4)            # load col0
-                        ctc2        %0,     vi21            # I = F32_MAX
-                        vsub.w      vf05,   vf05,   vf00    # bbox.min.w   = 0
-                        vaddi.xyz   vf05,   vf00,   I       # bbox.min.xyz = ( F32_MAX, F32_MAX, F32_MAX)
-                        vsub.w      vf06,   vf06,   vf00    # bbox.max.w   = 0
-                        vsubi.xyz   vf06,   vf00,   I       # bbox.max.xyz = (-F32_MAX,-F32_MAX,-F32_MAX)
-                        vsub.w      vf08, vf08, vf08        # zero out vf08w
-                    vert_trans_loop:
-                        lqc2        vf07, 0x00(%1)          # load *pS
-                        vmulaw.xyz  acc,  vf04, vf00w       # xform col3
-                        vmaddaz.xyz acc,  vf03, vf07z       # xform col2
-                        vmadday.xyz acc,  vf02, vf07y       # xform col1
-                        vmaddx.xyz  vf08, vf01, vf07x       # xform col0
-                        addi        %1, %1, 16              # pS++
-                        addi        %2, %2, 16              # pD++
-                        subi        %0, %0, 1               # N--
-                        vmini.xyz   vf05, vf05, vf08        # BBox.Min = MIN(BBox.Min,Point)
-                        vmax.xyz    vf06, vf06, vf08        # BBox.Max = MAX(BBox.Max,Point)
-                        bgtz        %0, vert_trans_loop     # loop
-                        sqc2        vf08, -16(%2)           # (BDS) store *(pD-1)
-                        vsubw.xyz   vf05,   vf05,   vf00w   # bbox.min -= 1.0f
-                        vaddw.xyz   vf06,   vf06,   vf00w   # bbox.max += 1.0f
-                        sqc2        vf05, 0x00(%3)          # store bbox
-                        sqc2        vf06, 0x10(%3)          # store bbox
-                        .set reorder
-                    " :
-                    "+r" (N), "+r" (pS), "+r" (pD) :
-                    "r" (&pCL->BBox), "r" (&M) :
-                    "memory", "vf1", "vf2", "vf3", "vf4", "vf5", "vf6", "vf7", "vf8" );
-                    #else*/
                     //-------------------------------------------------------
+
                     bbox BBox;
                     BBox.Clear();
                     while( N-- )
@@ -1841,7 +1772,6 @@ void poly_cache::GatherCluster( const collision_data&   CollData,
                     }
                     BBox.Inflate(1.0f,1.0f,1.0f);
                     pCL->BBox = BBox;
-                    /*#endif*/
 
 #if defined( X_ASSERT ) && defined( X_EDITOR )
                     if( CL.iBone != -1 )
@@ -1859,31 +1789,8 @@ void poly_cache::GatherCluster( const collision_data&   CollData,
                     vector3* pD = pCL->pNormal;
                     s32       N = pCL->nNormals;
 
-/*
-                    //#### Disabled until the vector3 optimizations are complete
-                    #ifdef TARGET_PS2
                     //-------------------------------------------------------
-                    ASSERT( (((u32)pS) & 0x0F) == 0 );
-                    ASSERT( (((u32)pD) & 0x0F) == 0 );
-                    asm __volatile__
-                    ("
-                        .set noreorder
-                        vsub.w      vf08, vf08, vf08        # zero out vf08w
-                    normal_trans_loop:
-                        lqc2        vf07, 0x00(%0)          # load *pS
-                        subi        %2, %2, 1               # N--
-                        vmulaz.xyz  acc,  vf03, vf07z       # xform col2
-                        vmadday.xyz acc,  vf02, vf07y       # xform col1
-                        vmaddx.xyz  vf08, vf01, vf07x       # xform col0
-                        addi        %0, %0, 16              # pS++
-                        addi        %1, %1, 16              # pD++
-                        bgtz        %2, normal_trans_loop   # loop
-                        sqc2        vf08, -16(%1)           # (BDS) store *(pD-1)
-                        .set reorder
-                    " : "+r" (pS), "+r" (pD), "+r" (N) : : "memory" );
-                    #else
-                    */
-                    //-------------------------------------------------------
+
                     const matrix4& M = pL2W[CL.iBone];
                     while( N-- )
                     {
@@ -1891,7 +1798,6 @@ void poly_cache::GatherCluster( const collision_data&   CollData,
                         pD++;
                         pS++;
                     }
-                    //#endif
                 }
 
                 // Copy over quad info and generate other information
@@ -1908,53 +1814,15 @@ void poly_cache::GatherCluster( const collision_data&   CollData,
 
                     // Clear the bbox and build it
                     bbox& BBox = *((bbox*)&(pCL->pBounds[i]));
-                    /*
-                    //#### Disabled until the vector3 optimizations are complete
-                    #ifdef TARGET_PS2
+
                     //-------------------------------------------------------
-                    f32 fmax = F32_MAX;
-                    u32 tmp  = reinterpret_cast<u32&>(fmax);
-                    asm __volatile__
-                    ("
-                        ctc2        %0,     vi21            # I = F32_MAX
-                        vsub.w      vf01,   vf01,   vf00    # bbox.min.w   = 0
-                        vaddi.xyz   vf01,   vf00,   I       # bbox.min.xyz = ( F32_MAX, F32_MAX, F32_MAX)
-                        vsub.w      vf02,   vf02,   vf00    # bbox.max.w   = 0
-                        vsubi.xyz   vf02,   vf00,   I       # bbox.max.xyz = (-F32_MAX,-F32_MAX,-F32_MAX)
-                        lqc2        vf03,   0x00(%2)        # point0
-                        lqc2        vf04,   0x00(%3)        # point1
-                        lqc2        vf05,   0x00(%4)        # point2
-                        lqc2        vf06,   0x00(%5)        # point3
-                        vmini.xyz   vf01,   vf01,   vf03    # bbox.min = MIN(bbox.min,point0)
-                        vmax.xyz    vf02,   vf02,   vf03    # bbox.max = MAX(bbox.max,point0)
-                        vmini.xyz   vf01,   vf01,   vf04    # bbox.min = MIN(bbox.min,point1)
-                        vmax.xyz    vf02,   vf02,   vf04    # bbox.max = MAX(bbox.max,point1)
-                        vmini.xyz   vf01,   vf01,   vf05    # bbox.min = MIN(bbox.min,point2)
-                        vmax.xyz    vf02,   vf02,   vf05    # bbox.max = MAX(bbox.max,point2)
-                        vmini.xyz   vf01,   vf01,   vf06    # bbox.min = MIN(bbox.min,point3)
-                        vmax.xyz    vf02,   vf02,   vf06    # bbox.max = MAX(bbox.max,point3)
-                        vsubw.xyz   vf01,   vf01,   vf00w   # bbox.min -= 1.0f
-                        vaddw.xyz   vf02,   vf02,   vf00w   # bbox.max += 1.0f
-                        sqc2        vf01,   0x00(%1)        # store bbox.min
-                        sqc2        vf02,   0x10(%1)        # store bbox.max
-                    " :
-                    "+r" (tmp) :
-                    "r" (&BBox),
-                    "r" (&pCL->pPoint[CQD.iP[0]]),
-                    "r" (&pCL->pPoint[CQD.iP[1]]),
-                    "r" (&pCL->pPoint[CQD.iP[2]]),
-                    "r" (&pCL->pPoint[CQD.iP[3]]) :
-                    "memory" );
-                    #else
-                    */
-                    //-------------------------------------------------------
+
                     BBox.Clear();
                     BBox += pCL->pPoint[ CQD.iP[0] ];
                     BBox += pCL->pPoint[ CQD.iP[1] ];
                     BBox += pCL->pPoint[ CQD.iP[2] ];
                     BBox += pCL->pPoint[ CQD.iP[3] ];
                     BBox.Inflate(1,1,1);
-                    //#endif
 
                     // Clear flags
                     pCL->pBounds[i].Flags = 0;

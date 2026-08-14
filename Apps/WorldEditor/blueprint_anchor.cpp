@@ -12,10 +12,10 @@
 
 #include "blueprint_anchor.hpp"
 #include "CollisionMgr\CollisionMgr.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "x_color.hpp"
 #include "Entropy.hpp"
-#include "Render\Editor\editor_icons.hpp"
+#include "Render\Editor\EditorIcons.hpp"
 
 const f32 c_Sphere_Radius = 50.0f;
 
@@ -44,7 +44,7 @@ static struct blueprint_anchor_desc : public object_desc
     virtual s32  OnEditorRender( object& Object ) const
     {
         object_desc::OnEditorRender( Object );
-        return EDITOR_ICON_ANCHOR;
+        return static_cast<s32>( EditorIcon::Anchor );
     }
 
 } s_blueprint_anchor_Desc;

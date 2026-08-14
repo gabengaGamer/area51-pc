@@ -11,10 +11,10 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
 
 #include "dlg_PopUp.hpp"
 
@@ -33,7 +33,6 @@ enum campaign_menu_controls
 #ifndef CONFIG_RETAIL
     IDC_CAMPAIGN_MENU_LEVEL_SELECT,
 #endif
-    IDC_CAMPAIGN_MENU_NAV_TEXT,
 };
 
 
@@ -63,8 +62,8 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
 protected:
@@ -78,7 +77,6 @@ protected:
 #ifndef CONFIG_RETAIL
     ui_button*          m_pButtonLevelSelect;       
 #endif
-    ui_text*            m_pNavText;
 
     dlg_popup*          m_PopUp;
     s32                 m_PopUpResult;

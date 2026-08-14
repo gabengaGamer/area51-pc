@@ -1,7 +1,8 @@
 
-#include "animation_obj.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "EventMgr\EventMgr.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Animation_obj.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "EventMgr/EventMgr.hpp"
 
 //=========================================================================
 // VARIABLES
@@ -39,7 +40,7 @@ static struct animation_obj_desc : public object_desc
     virtual s32     OnEditorRender  ( object& Object ) const 
     { 
         object_desc::OnEditorRender( Object );
-        return EDITOR_ICON_GEAR; 
+        return static_cast<s32>( EditorIcon::Gear ); 
     }
 
 #endif // X_EDITOR
@@ -558,7 +559,7 @@ xbool animation_obj::OnProperty( prop_query& I )
 #ifndef X_RETAIL
 void animation_obj::OnDebugRender  ( void )
 {
-    CONTEXT( "animation_obj::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "animation_obj::OnRender" );
 
 #ifdef X_EDITOR
 
@@ -576,36 +577,32 @@ void animation_obj::OnDebugRender  ( void )
        
             if( pObject ) 
             {
-                draw_Line( GetPosition(), pObject->GetBBox().GetCenter(), xcolor( 255,0,0,255) );
+                render::debug::Line( GetPosition(), pObject->GetBBox().GetCenter(), xcolor( 255,0,0,255) );
             }
         }
 
         for( i=0; i<m_KeyFrame.GetCount(); i++ )
         {
             matrix4 L2W( vector3(1,1,1), m_KeyFrame[i].Rot, m_KeyFrame[i].Translate );
-            draw_SetL2W( L2W );
-            draw_Axis  ( 100 );
-            draw_Label ( m_KeyFrame[i].Translate + vector3(0,140,0), xcolor(255,255,255,255), "%d", i );
+            render::debug::Axis( L2W, 100 );
+            render::debug::Label ( m_KeyFrame[i].Translate + vector3(0,140,0), xcolor(255,255,255,255), "%d", i );
 
             // Render the conection of the key frame
-            L2W.Identity();
-            draw_SetL2W( L2W );
             if ( (i+1) < m_KeyFrame.GetCount() )
             {
-                draw_Line( m_KeyFrame[i].Translate, m_KeyFrame[i+1].Translate, xcolor( 0,255,0,255) );
+                render::debug::Line( m_KeyFrame[i].Translate, m_KeyFrame[i+1].Translate, xcolor( 0,255,0,255) );
             }
             else
             {
-                draw_Line( m_KeyFrame[i].Translate, m_KeyFrame[0].Translate, xcolor( 0,255,0,255) );
+                render::debug::Line( m_KeyFrame[i].Translate, m_KeyFrame[0].Translate, xcolor( 0,255,0,255) );
             }
         }
 
         // Show Progress
         {
             matrix4 L2W( vector3(1,1,1), m_CurrentKey.Rot, m_CurrentKey.Translate );
-            draw_SetL2W( L2W );
-            draw_Axis  ( 100 );
-            draw_Label ( m_CurrentKey.Translate + vector3(0,160,0), xcolor(255,255,255,255), "Cursor" );
+            render::debug::Axis( L2W, 100 );
+            render::debug::Label ( m_CurrentKey.Translate + vector3(0,160,0), xcolor(255,255,255,255), "Cursor" );
         }
         
     }
@@ -852,9 +849,9 @@ void animation_obj::ComputeFrame( keyframe& Key, s32 iPrev, s32 iNext, f32 Time 
 
 //=========================================================================
 
-void animation_obj::OnAdvanceLogic( f32 DelaTime )
+void animation_obj::OnAdvanceSimulation( f32 DelaTime )
 {
-    CONTEXT( "animation_obj::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "animation_obj::OnAdvanceSimulation" );
 
     // OKay advance everything that we need to
     f32 ParamTime;

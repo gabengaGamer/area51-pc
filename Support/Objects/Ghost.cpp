@@ -10,19 +10,19 @@
 
 #include "Ghost.hpp"
 
-#include "Objects\Event.hpp"
-#include "Objects\DeadBody.hpp"
-#include "Objects\GrenadeProjectile.hpp"
-#include "Objects\GravChargeProjectile.hpp"
+#include "Objects/Event.hpp"
+#include "Objects/DeadBody.hpp"
+#include "Objects/GrenadeProjectile.hpp"
+#include "Objects/GravChargeProjectile.hpp"
 
-#include "Ragdoll\Ragdoll.hpp"
-#include "GameLib\StatsMgr.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "Sound\EventSoundEmitter.hpp"
+#include "Ragdoll/Ragdoll.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Sound/EventSoundEmitter.hpp"
 
-#include "NetworkMgr\GameMgr.hpp"
-#include "NetworkMgr\NetObjMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"       
+#include "NetworkMgr/GameMgr.hpp"
+#include "NetworkMgr/NetObjMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"       
 
 //==============================================================================
 //  TYPES
@@ -335,8 +335,6 @@ void ghost::LogWeapons( void )
                      pWeaponName ); 
     }
 
-    LOG_MESSAGE( "ghost::LogWeapons", "*** Weapon Inventory" );
-    m_WeaponInventory.LogInventory();
 #endif
 }
 
@@ -346,9 +344,9 @@ void ghost::LogWeapons( void )
 
 static xbool s_DumpWeapons = FALSE;
 
-void ghost::OnAdvanceLogic( f32 DeltaTime )
+void ghost::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "ghost::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ghost::OnAdvanceSimulation" );
     LOG_STAT(k_stats_Player);
 
     m_DeltaTime = DeltaTime;
@@ -365,8 +363,8 @@ void ghost::OnAdvanceLogic( f32 DeltaTime )
     m_pCurrentWeapon = GetCurrentWeaponPtr();
 
 	// Check to see if our current weapon is still in our inventory
-	if ( m_pCurrentWeapon 
-		&& (m_WeaponInventory.GetItemTypeCount( m_pCurrentWeapon->GetInvType()) < 1 ) )
+	if ( m_pCurrentWeapon
+		&& !m_Inventory2.HasItem( m_pCurrentWeapon->GetInvenItem() ) )
 	{
 		// we no longer have the weapon, drop it
 
@@ -376,15 +374,7 @@ void ghost::OnAdvanceLogic( f32 DeltaTime )
 		m_pCurrentWeapon = NULL;
 	}
 
-    // SB - Added to keep the weapon in sync with the player hands
-    //      (player::OnAdvanceLogic now updates the weapon)
-    if (( m_pCurrentWeapon ) && ( m_pCurrentWeapon->GetRenderState() != new_weapon::RENDER_STATE_PLAYER ))
-    {
-        m_pCurrentWeapon->OnAdvanceLogic( DeltaTime );
-    }
-
-
-    actor::OnAdvanceLogic( DeltaTime );    
+    actor::OnAdvanceSimulation( DeltaTime );    
 
     //invalidate the pointer to the current weapon.
     m_pCurrentWeapon = NULL;
@@ -491,49 +481,6 @@ ghost::player_weapon_obj ghost::GetWeaponObjFromVirtual( player_virtual_weapon V
 
 //==============================================================================
 
-s32 ghost::GetRenderIndexFromPlayer( void )
-{
-    if( m_CurrentStrain == STRAIN_HUMAN )
-    {
-        if( ( m_CurrentVirtualWeapon == DUAL_SMP ) )
-            return WEAPON_STRAIN_HUMAN_DUAL;
-        else
-            return WEAPON_STRAIN_HUMAN;
-    }
-    else
-    {
-        if( ( m_CurrentVirtualWeapon == DUAL_SMP ) )
-            return WEAPON_STRAIN_MUTANT_DUAL;
-        else
-            return WEAPON_STRAIN_MUTANT;
-    }
-}
-
-//==============================================================================
-
-inventory_item::inv_type ghost::GetInventoryType( player_virtual_weapon VirtualWeapon )
-{
-    switch( VirtualWeapon )
-    {
-        case MACHINE_GUN:   return inventory_item::INV_WPN_SMP;
-        
-// KSS -- TO ADD NEW WEAPON
-        case SHOTGUN:       return inventory_item::INV_WPN_SHOTGUN;
-
-        case GAUSS_RIFLE:   return inventory_item::INV_WPN_GAUSS;
-        case SNIPER_RIFLE:  return inventory_item::INV_WPN_SNIPER;
-        case DESERT_EAGLE:  return inventory_item::INV_WPN_DESERT_EAGLE;
-        case MHG:           return inventory_item::INV_WPN_MHG;     
-        case MSN:           return inventory_item::INV_WPN_MSN;     
-        case DUAL_SMP:      return inventory_item::INV_WPN_SMP;
-        case MUTATION:      return inventory_item::INV_WPN_MUTATION;
-
-        default:            return inventory_item::INV_INVALID;
-    }
-}
-
-//==============================================================================
-
 void ghost::OnAliveLogic( f32 DeltaTime )
 {   
     // Let physics keep track of riding on platform
@@ -568,7 +515,7 @@ void ghost::OnDeathLogic( f32 DeltaTime )
 
 void ghost::OnMove( const vector3& rNewPos )
 {
-    CONTEXT( "ghost::OnMove" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ghost::OnMove" );
 
     if( GetAttrBits() & object::ATTR_DESTROY )
         return;
@@ -647,20 +594,21 @@ ghost::player_virtual_weapon ghost::GetWeaponStateFromType( object::type Type )
         }        
         case TYPE_WEAPON_SMP:
         {
-            if ( m_WeaponInventory.GetItemTypeCount( inventory_item::INV_WPN_SMP ) > 1 )
-            {
-                return DUAL_SMP;
-            }
-            else
-            {
-                return MACHINE_GUN;
-            }
+            return MACHINE_GUN;
+        }
+        case TYPE_WEAPON_DUAL_SMP:
+        {
+            return DUAL_SMP;
         }
 
 // KSS -- TO ADD NEW WEAPON
         case TYPE_WEAPON_SHOTGUN:
         {
             return SHOTGUN;            
+        }
+        case TYPE_WEAPON_DUAL_SHT:
+        {
+            return SHOTGUN;
         }
         case TYPE_WEAPON_SNIPER:
         {
@@ -729,8 +677,6 @@ void ghost::AddNewWeapon( guid WeaponGuid )
         
         if ( WeaponObj.IsValid() )
         {
-            WeaponObj.m_pObject->SetCurrentRenderIndex( GetRenderIndexFromPlayer() );
-
             // Set the current weapon pointer.
             m_pCurrentWeapon = WeaponObj.m_pObject;
         }

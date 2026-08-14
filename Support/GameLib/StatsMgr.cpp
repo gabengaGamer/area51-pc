@@ -10,17 +10,14 @@
 // Includes
 //=============================================================================
 
-#include "render\Render.hpp"
-#include "Entropy\Audio\audio_channel_mgr.hpp"
+#include "Render/Render.hpp"
+#include "Entropy/Audio/audio_channel_mgr.hpp"
 #include "e_ScratchMem.hpp"
 #include "StatsMgr.hpp"
+#include "UI/ui_renderer.hpp"
 
 #ifndef TARGET_PC
-#include "e_engine.hpp"
-#endif
-
-#ifdef TARGET_PS2
-#include "PS2\PS2_misc.hpp"
+#include "e_Engine.hpp"
 #endif
 
 //=============================================================================
@@ -30,11 +27,6 @@
 //=============================================================================
 // Externs
 //=============================================================================
-
-#if defined(TARGET_PS2)
-extern s32   s_SMem;
-extern s32   ENG_DLIST_MAX_USED;
-#endif
 
 #if ENABLE_RENDER_STATS
 extern   render::stats s_RenderStats;
@@ -212,44 +204,9 @@ void stats_mgr::Reset (void)
 
 void stats_mgr::OnGameUpdate(f32 deltaTime)
 {
-    CONTEXT( "stats_mgr::OnGameUpdate" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "stats_mgr::OnGameUpdate" );
 
     (void)deltaTime;
-
-    // update ps2-specific stats
-#ifdef TARGET_PS2
-    RegisterStat( k_stats_VSync, x_TicksToMs(DLIST.GetVBlankTime()) );
-    RegisterStat( k_stats_DList, (f32)ENG_DLIST_MAX_USED);
-
-    // get all of the gpu stats
-    s32 DIRet = DI();
-    f32 TotalTime = 0.0f;
-    for ( s32 iTask = 0; iTask < DLIST.GetPrevNTasks(); iTask++ )
-    {
-        const char* pTaskName = DLIST.GetPrevTaskName( iTask );
-        f32         TaskTime  = x_TicksToMs(DLIST.GetPrevTaskTime( iTask ));
-
-        if ( !x_strcmp( "GSReset", pTaskName ) )                RegisterStat( k_stats_GSReset,        TaskTime );
-        else if ( !x_strcmp( "GSSettings0",     pTaskName ) )   RegisterStat( k_stats_GSSettings0,    TaskTime );
-        else if ( !x_strcmp( "Shadow Map",      pTaskName ) )   RegisterStat( k_stats_ShadowMap,      TaskTime );
-        else if ( !x_strcmp( "3d Objects",      pTaskName ) )   RegisterStat( k_stats_3dObjects,      TaskTime );
-        else if ( !x_strcmp( "Special Objects", pTaskName ) )   RegisterStat( k_stats_SpecialObjects, TaskTime );
-        else if ( !x_strcmp( "PolyCache",       pTaskName ) )   RegisterStat( k_stats_PolyCache,      TaskTime );
-        else if ( !x_strcmp( "2d Objects",      pTaskName ) )   RegisterStat( k_stats_2dObjects,      TaskTime );
-        else if ( !x_strcmp( "CollisionMgr",    pTaskName ) )   RegisterStat( k_stats_CollisionMgr,   TaskTime );
-        else if ( !x_strcmp( "GSSettings1",     pTaskName ) )   RegisterStat( k_stats_GSSettings1,    TaskTime );
-        else if ( !x_strcmp( "StatsMgr",        pTaskName ) )   RegisterStat( k_stats_StatsMgr,       TaskTime );
-        else if ( !x_strcmp( "UI",              pTaskName ) )   RegisterStat( k_stats_UI,             TaskTime );
-        else if ( !x_strcmp( "Text",            pTaskName ) )   RegisterStat( k_stats_DebugText,      TaskTime );
-        else                                                    RegisterStat( k_stats_GPUUnknown,     TaskTime );
-
-        TotalTime += TaskTime;
-    }
-    if( DIRet )
-        EI();
-
-    RegisterStat( k_stats_GS, TotalTime );
-#endif
 
     // update sats shared across all platforms
     s32 nTexture, TextureMemory;
@@ -291,7 +248,7 @@ void stats_mgr::DrawBar(    stat_fields thisStat,
 {
 #ifndef TARGET_PC
 
-    CONTEXT( "stats_mgr::Render" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "stats_mgr::Render" );
     
     //
     //  First we draw the base bar that other bars will be built on.
@@ -355,7 +312,7 @@ void stats_mgr::DrawBar(    stat_fields thisStat,
     // Draw.
     rect DrawRect;
     DrawRect.Set( corner1, corner2 );
-    draw_Rect( DrawRect, baseBar, FALSE, DRAW_UI_RTARGET );
+    g_UIRenderer.DrawRect( DrawRect, baseBar );
     
     if(thisStat == k_stats_Vertices ||
        thisStat == k_stats_Polygons   ||
@@ -382,7 +339,7 @@ void stats_mgr::DrawBar(    stat_fields thisStat,
         tempCorner1.Y += (tempCorner2.Y -tempCorner1.Y) * calculatedScale;
             
         DrawRect.Set( tempCorner1, tempCorner2 );
-        draw_Rect( DrawRect, midBar, FALSE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( DrawRect, midBar );
         
         //////////////////////////////////////////////////////////////////////////
         //  Draw the Instant value
@@ -397,7 +354,7 @@ void stats_mgr::DrawBar(    stat_fields thisStat,
         tempCorner1.Y += (tempCorner2.Y -tempCorner1.Y) * calculatedScale;
 
         DrawRect.Set( tempCorner1, tempCorner2 );
-        draw_Rect( DrawRect, highBar, FALSE, DRAW_UI_RTARGET );        
+        g_UIRenderer.DrawRect( DrawRect, highBar );        
 
         //////////////////////////////////////////////////////////////////////////
         //  Max Recent
@@ -412,7 +369,7 @@ void stats_mgr::DrawBar(    stat_fields thisStat,
         tempCorner2.Y = tempCorner1.Y + 3;
   
         DrawRect.Set( tempCorner1, tempCorner2 );
-        draw_Rect( DrawRect, XCOLOR_BLACK, FALSE, DRAW_UI_RTARGET );      
+        g_UIRenderer.DrawRect( DrawRect, XCOLOR_BLACK );      
 
         //////////////////////////////////////////////////////////////////////////
         //  Min Recent
@@ -428,7 +385,7 @@ void stats_mgr::DrawBar(    stat_fields thisStat,
         tempCorner2.Y = tempCorner1.Y + 3;
   
         DrawRect.Set( tempCorner1, tempCorner2 );
-        draw_Rect( DrawRect, XCOLOR_PURPLE, FALSE, DRAW_UI_RTARGET );      
+        g_UIRenderer.DrawRect( DrawRect, XCOLOR_PURPLE );      
     }
     
 #endif
@@ -622,7 +579,7 @@ void stats_mgr::DrawFPS(void)
     //draw base gray bars
     rect DrawRect;
     DrawRect.Set( CPUUpperLeft.X, CPUUpperLeft.Y, GSLowerRight.X, GSLowerRight.Y );
-    draw_Rect( DrawRect, xcolor(64,64,64,255), FALSE, DRAW_UI_RTARGET );
+    g_UIRenderer.DrawRect( DrawRect, xcolor(64,64,64,255) );
 
     // draw each of the timer stats
     temp1   = CPUUpperLeft;
@@ -633,14 +590,14 @@ void stats_mgr::DrawFPS(void)
         temp1.X = temp2.X;
         temp2.X = temp2.X + (CPULowerRight.X - CPUUpperLeft.X) * (percentTotalCPU*percents[i]);
         DrawRect.Set( temp1, temp2 );
-        draw_Rect( DrawRect, StatRenderInfo[i].BarColor, FALSE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( DrawRect, StatRenderInfo[i].BarColor );
     }
 
     // draw the vsync time
     temp1.X = temp2.X;
     temp2.X = temp2.X + (CPULowerRight.X - CPUUpperLeft.X) * (percentTotalCPU*fVSyncTime/fCPUStatTime);
     DrawRect.Set( temp1, temp2 );
-    draw_Rect( DrawRect, StatRenderInfo[k_stats_VSync].BarColor, FALSE, DRAW_UI_RTARGET );
+    g_UIRenderer.DrawRect( DrawRect, StatRenderInfo[k_stats_VSync].BarColor );
 
     // draw each of the GPU time stats
     temp1   = GSUpperLeft;
@@ -651,7 +608,7 @@ void stats_mgr::DrawFPS(void)
         temp1.X = temp2.X;
         temp2.X = temp2.X + (GSLowerRight.X - GSUpperLeft.X) * (percentTotalGS*GPUPercents[i-k_stats_GSReset]);
         DrawRect.Set( temp1, temp2 );
-        draw_Rect( DrawRect, StatRenderInfo[i].BarColor, FALSE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( DrawRect, StatRenderInfo[i].BarColor );
     }
 
 /*
@@ -660,7 +617,7 @@ void stats_mgr::DrawFPS(void)
     temp2   = GSLowerRight;
     temp2.X = GSUpperLeft.X + (GSLowerRight.X - GSUpperLeft.X) * percentTotalGS;
     DrawRect.Set( temp1, temp2 );
-    draw_Rect( DrawRect, xcolor(180,180,180,255), FALSE, DRAW_UI_RTARGET );
+    g_UIRenderer.DrawRect( DrawRect, xcolor(180,180,180,255) );
     */
 
     // draw the notches across
@@ -673,7 +630,7 @@ void stats_mgr::DrawFPS(void)
         temp1.X -=1;
         temp2.X = temp1.X +2;
         DrawRect.Set( temp1, temp2 );
-        draw_Rect( DrawRect, xcolor(0,0,0,255), FALSE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( DrawRect, xcolor(0,0,0,255) );
     }
 
     if(  m_bShowNumbers )
@@ -698,25 +655,6 @@ void stats_mgr::DrawCPULegend( void )
 {
     if ( !m_bShowCPUTimeLegend )
         return;
-
-#ifdef TARGET_PS2
-    static const s32 kCharHeight = 18;
-    irect DrawRect(188, 80, 214, 80+kCharHeight);
-
-    s32 YOffset = 4;
-    for ( s32 i = 0; i < k_stats_NumTimerStats; i++ )
-    {
-        x_printfxy( 16, YOffset++, StatRenderInfo[i].pName );
-        draw_Rect( DrawRect, StatRenderInfo[i].BarColor, FALSE, DRAW_UI_RTARGET );
-        DrawRect.t += kCharHeight;
-        DrawRect.b += kCharHeight;
-    }
-
-    x_printfxy( 16, YOffset++, StatRenderInfo[k_stats_VSync].pName );
-    draw_Rect( DrawRect, StatRenderInfo[k_stats_VSync].BarColor, FALSE, DRAW_UI_RTARGET );
-    DrawRect.t += kCharHeight;
-    DrawRect.b += kCharHeight;
-#endif
 }
 
 //=============================================================================
@@ -725,66 +663,12 @@ void stats_mgr::DrawGPULegend( void )
 {
     if ( !m_bShowGPUTimeLegend )
         return;
-
-#ifdef TARGET_PS2
-    static const s32 kCharHeight = 18;
-    irect DrawRect(188, 80, 214, 80+kCharHeight);
-
-    s32 YOffset = 4;
-    for ( s32 i = k_stats_GSReset; i <= k_stats_GPUUnknown; i++ )
-    {
-        x_printfxy( 16, YOffset++, StatRenderInfo[i].pName );
-        draw_Rect( DrawRect, StatRenderInfo[i].BarColor, FALSE, DRAW_UI_RTARGET );
-        DrawRect.t += kCharHeight;
-        DrawRect.b += kCharHeight;
-    }
-#endif
 }
 
 //=============================================================================
 
 void stats_mgr::DrawSmallBars( void )
 {
-#ifdef TARGET_PS2
-    static const s32 kCharWidth = 13;
-    irect DrawRect( 8+kCharWidth, 240, 8+kCharWidth+kCharWidth-1, 360 );
-    
-    stats_mgr::GetStatsMgr()->DrawBar(k_stats_Vertices,           DrawRect.l,DrawRect.t, DrawRect.r, DrawRect.b, xcolor(64, 64, 128) );
-    DrawRect.l += kCharWidth;
-    DrawRect.r += kCharWidth;
-
-    stats_mgr::GetStatsMgr()->DrawBar(k_stats_Polygons,           DrawRect.l,DrawRect.t, DrawRect.r, DrawRect.b, xcolor(64, 64, 128) );
-    DrawRect.l += kCharWidth;
-    DrawRect.r += kCharWidth;
-
-    stats_mgr::GetStatsMgr()->DrawBar(k_stats_Memory,             DrawRect.l,DrawRect.t, DrawRect.r, DrawRect.b, xcolor(64, 128, 64) );
-    DrawRect.l += kCharWidth;
-    DrawRect.r += kCharWidth;
-
-    stats_mgr::GetStatsMgr()->DrawBar(k_stats_DList,              DrawRect.l,DrawRect.t, DrawRect.r, DrawRect.b, xcolor(128, 128, 64) );
-    DrawRect.l += kCharWidth;
-    DrawRect.r += kCharWidth;
-
-    stats_mgr::GetStatsMgr()->DrawBar(k_stats_SMem,               DrawRect.l,DrawRect.t, DrawRect.r, DrawRect.b, xcolor(128, 128, 64) );
-    DrawRect.l += kCharWidth;
-    DrawRect.r += kCharWidth;
-
-    stats_mgr::GetStatsMgr()->DrawBar(k_stats_TextureMemory,      DrawRect.l,DrawRect.t, DrawRect.r, DrawRect.b, xcolor(64, 128, 64) );
-    DrawRect.l += kCharWidth;
-    DrawRect.r += kCharWidth;
-
-    stats_mgr::GetStatsMgr()->DrawBar(k_stats_VisibleObjectCount, DrawRect.l,DrawRect.t, DrawRect.r, DrawRect.b, xcolor(128, 128, 192) );
-    DrawRect.l += kCharWidth;
-    DrawRect.r += kCharWidth;
-
-    stats_mgr::GetStatsMgr()->DrawBar(k_stats_TotalObjectCount,   DrawRect.l,DrawRect.t, DrawRect.r, DrawRect.b, xcolor(128, 128, 192) );
-    DrawRect.l += kCharWidth;
-    DrawRect.r += kCharWidth;
-
-    stats_mgr::GetStatsMgr()->DrawBar(k_stats_AudioChannel,       DrawRect.l,DrawRect.t, DrawRect.r, DrawRect.b, xcolor(64, 128, 192) );
-    DrawRect.l += kCharWidth;
-    DrawRect.r += kCharWidth;
-#endif
 }
 
 //=============================================================================

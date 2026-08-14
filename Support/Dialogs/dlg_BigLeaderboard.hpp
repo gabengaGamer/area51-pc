@@ -11,15 +11,15 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_blankbox.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_blankbox.hpp"
 #include "dlg_PopUp.hpp"
-#include "dlg_leaderboard.hpp"
+#include "dlg_Leaderboard.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 
 //==============================================================================
 //  DEFINES
@@ -34,7 +34,6 @@ enum big_leaderboard_controls
     IDC_BIG_LEADERBOARD_FRAME_MAIN,
     IDC_BIG_LEADERBOARD_LOADING_TEXT,
     IDC_BIG_LEADERBOARD_LOADING_PIPS,
-    IDC_BIG_LEADERBOARD_NAV_TEXT,
 };
 
 enum player_data_types
@@ -76,9 +75,9 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadNavigate       ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadDelete         ( ui_win* pWin );
+    virtual void        OnNavigate       ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnDelete         ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
     void                FillScoreList       ( void );
@@ -97,7 +96,6 @@ protected:
 
     ui_text*            m_pLoadingText;
     ui_text*            m_pLoadingPips;
-    ui_text*            m_pNavText;
 
     player_score        m_PlayerData[NET_MAX_PLAYERS];
     player_score        m_PlayerTotals[2];

@@ -13,19 +13,12 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
-#include "navigation\ng_connection2.hpp"
-#include "objects\actor\actor.hpp"
-#include "BaseStates\Character_Trigger_State.hpp"
-#include "BaseStates\Character_Follow_State.hpp"
-#include "Objects\Event.hpp"
-//=========================================================================
-// SPECIAL COMPILER SWITCHES
-//=========================================================================
 
-#if ( defined TARGET_PC ) || ( defined TARGET_XBOX )
-// Get rid of "warning C4355: 'this' used in base member initializer list"
-#pragma warning( disable : 4355 ) 
-#endif
+#include "Navigation/ng_connection2.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "BaseStates/Character_Trigger_State.hpp"
+#include "BaseStates/Character_Follow_State.hpp"
+#include "Objects/Event.hpp"
 
 //=========================================================================
 // Defines
@@ -273,7 +266,7 @@ public:
 public:
     virtual void        OnInit                  ( void );
     virtual void        OnKill                  ( void );   
-    virtual void        OnAdvanceLogic          ( f32 DeltaTime );      
+    virtual void        OnAdvanceSimulation          ( f32 DeltaTime );      
     virtual void        OnRender                ( void );
             
     virtual void        InitLoco                ( void );

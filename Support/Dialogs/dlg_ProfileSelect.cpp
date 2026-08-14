@@ -4,31 +4,31 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_listbox.hpp"
-#include "ui\ui_dlg_vkeyboard.hpp"
-#include "ui\ui_blankbox.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_listbox.hpp"
+#include "UI/ui_dlg_vkeyboard.hpp"
+#include "UI/ui_blankbox.hpp"
 
 #include "dlg_PopUp.hpp"
 #include "dlg_ProfileSelect.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Parsing/textin.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Parsing/TextIn.hpp"
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
 #else
 #include "../../Apps/GameApp/Config.hpp"    
 #endif
-#include "MemCardMgr/MemCardMgr.hpp"
+#include "SaveData/SaveDataMgr.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
@@ -47,31 +47,27 @@ enum controls
     IDC_PROFILE_SELECT_LISTBOX,
     IDC_PROFILE_SELECT_INFOBOX,
 
-    IDC_PROFILE_CARD_SLOT,
     IDC_PROFILE_CREATE_DATE,
     IDC_PROFILE_MODIFIED_DATE,
 
     IDC_PROFILE_INFO_CREATE_DATE,
     IDC_PROFILE_INFO_MODIFIED_DATE,
 
-    IDC_PROFILE_SELECT_NAV_TEXT,
 };
 
 
 ui_manager::control_tem ProfileSelectControls[] = 
 {
     // Frames.
-    { IDC_PROFILE_SELECT_LISTBOX,       "IDS_PROFILE_PROFILES",         "listbox",  45,  40, 240, 206, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_SELECT_INFOBOX,       "IDS_PROFILE_INFO",             "blankbox", 45, 256, 240,  76, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PROFILE_SELECT_LISTBOX,       "IDS_PROFILE_PROFILES",         "listbox",  45,  40, 240, 206, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_SELECT_INFOBOX,       "IDS_PROFILE_INFO",             "blankbox", 45, 256, 240,  76, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_PROFILE_CARD_SLOT,            "IDS_NULL",                     "text",     53, 278, 120,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_CREATE_DATE,          "IDS_PROFILE_CREATE_DATE",      "text",     53, 294, 120,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_MODIFIED_DATE,        "IDS_PROFILE_MODIFIED_DATE",    "text",     53, 310, 120,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PROFILE_CREATE_DATE,          "IDS_PROFILE_CREATE_DATE",      "text",     53, 286, 120,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_MODIFIED_DATE,        "IDS_PROFILE_MODIFIED_DATE",    "text",     53, 306, 120,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_PROFILE_INFO_CREATE_DATE,     "IDS_NULL",                     "text",    157, 294,  80,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PROFILE_INFO_MODIFIED_DATE,   "IDS_NULL",                     "text",    157, 310,  80,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PROFILE_INFO_CREATE_DATE,     "IDS_NULL",                     "text",    157, 286,  80,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PROFILE_INFO_MODIFIED_DATE,   "IDS_NULL",                     "text",    157, 306,  80,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_PROFILE_SELECT_NAV_TEXT,      "IDS_NULL",                     "text",      0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 ui_manager::dialog_tem ProfileSelectDialog =
@@ -151,25 +147,18 @@ xbool dlg_profile_select::Create( s32                        UserID,
 
     // find controls
     m_pProfileList     = (ui_listbox*)    FindChildByID( IDC_PROFILE_SELECT_LISTBOX  );
-    m_pNavText         = (ui_text*)       FindChildByID( IDC_PROFILE_SELECT_NAV_TEXT );
-
-    // hide them
-    m_pProfileList    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText        ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
     navText += g_StringTableMgr( "ui", "IDS_NAV_DELETE" );
    
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
-    g_UIMemCardMgr.Poll( SM_CARDMODE_PROFILE, this, &dlg_profile_select::OnPollReturn );
+    g_SaveDataMgr.RefreshProfiles( this, &dlg_profile_select::OnPollReturn );
 
     // set up level list
-    m_pProfileList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pProfileList->SetActive( TRUE );
     m_pProfileList->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pProfileList->DisableFrame();
     m_pProfileList->SetExitOnSelect(FALSE);
@@ -180,38 +169,27 @@ xbool dlg_profile_select::Create( s32                        UserID,
 
     // get profile details box
     m_pProfileDetails = (ui_blankbox*)FindChildByID( IDC_PROFILE_SELECT_INFOBOX );
-    m_pProfileDetails->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pProfileDetails->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pProfileDetails->SetHasTitleBar( TRUE );
     m_pProfileDetails->SetLabelColor( xcolor(255,252,204,255) );
     m_pProfileDetails->SetTitleBarColor( xcolor(19,59,14,196) );
 
     // set up profile info text
-    m_pCardSlot         = (ui_text*)FindChildByID( IDC_PROFILE_CARD_SLOT          );
     m_pCreationDate     = (ui_text*)FindChildByID( IDC_PROFILE_CREATE_DATE        );
     m_pModifiedDate     = (ui_text*)FindChildByID( IDC_PROFILE_MODIFIED_DATE      );
     m_pInfoCreationDate = (ui_text*)FindChildByID( IDC_PROFILE_INFO_CREATE_DATE   );
     m_pInfoModifiedDate = (ui_text*)FindChildByID( IDC_PROFILE_INFO_MODIFIED_DATE );
 
-    m_pCardSlot         ->UseSmallText( TRUE );
     m_pCreationDate     ->UseSmallText( TRUE );
     m_pModifiedDate     ->UseSmallText( TRUE );
     m_pInfoCreationDate ->UseSmallText( TRUE );
     m_pInfoModifiedDate ->UseSmallText( TRUE );
 
-    m_pCardSlot         ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
     m_pCreationDate     ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
     m_pModifiedDate     ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
     m_pInfoCreationDate ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
     m_pInfoModifiedDate ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
 
-    m_pCardSlot         ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pCreationDate     ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pModifiedDate     ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pInfoCreationDate ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pInfoModifiedDate ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-
-    m_pCardSlot         ->SetLabelColor( xcolor(255,252,204,255) );
     m_pCreationDate     ->SetLabelColor( xcolor(255,252,204,255) );
     m_pModifiedDate     ->SetLabelColor( xcolor(255,252,204,255) );
     m_pInfoCreationDate ->SetLabelColor( xcolor(255,252,204,255) );
@@ -247,6 +225,20 @@ xbool dlg_profile_select::Create( s32                        UserID,
     // disable blackout
     m_bRenderBlackout = FALSE;
 
+    // switch off the controls to start
+    m_pProfileList       ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pProfileDetails    ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pCreationDate      ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pModifiedDate      ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pInfoCreationDate  ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pInfoModifiedDate  ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+
+    // set the frame to be disabled (if coming from off screen)
+    if( g_UiMgr->IsScreenOn() == FALSE )
+    {
+        SetFlag( WF_DISABLED, TRUE );
+    }
+
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
@@ -258,6 +250,7 @@ xbool dlg_profile_select::Create( s32                        UserID,
 
 void dlg_profile_select::Destroy( void )
 {
+    g_SaveDataMgr.CancelCallbacks( this );
     ui_dialog::Destroy();
 
     // kill screen wipe
@@ -279,7 +272,7 @@ void dlg_profile_select::Configure( profile_select_type DialogType )
             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
             navText += g_StringTableMgr( "ui", "IDS_NAV_DELETE" );
             navText += g_StringTableMgr( "ui", "IDS_NAV_EDIT" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
         }
         break;
 
@@ -303,55 +296,52 @@ void dlg_profile_select::Render( s32 ox, s32 oy )
     
     if( m_bRenderBlackout )
     {
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-        // Nasty hack to force PS2 to draw to rb.l = 0
-        rb.Set( -1, 0, XRes, YRes );
-#else
-        rb.Set( 0, 0, XRes, YRes );
-#endif
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
             xcolor(0,0,0,180),
             xcolor(0,0,0,180),
             xcolor(0,0,0,180),FALSE);
     }
 
-    // render transparent screen
-    rb.l = m_CurrPos.l + 22;
-    rb.t = m_CurrPos.t;
-    rb.r = m_CurrPos.r - 23;
-    rb.b = m_CurrPos.b;
-
-    g_UiMgr->RenderGouraudRect(rb, xcolor(56,115,58,64),
-                                   xcolor(56,115,58,64),
-                                   xcolor(56,115,58,64),
-                                   xcolor(56,115,58,64),FALSE);
-
-
-    // render the screen bars
-    s32 y = rb.t + offset;    
-
-    while (y < rb.b)
+    // render the screen (if we're correctly sized)
+    if (g_UiMgr->IsScreenOn())
     {
-        irect bar;
+        // render transparent screen
+        rb.l = m_CurrPos.l + 22;
+        rb.t = m_CurrPos.t;
+        rb.r = m_CurrPos.r - 23;
+        rb.b = m_CurrPos.b;
 
-        if ((y+width) > rb.b)
+        g_UiMgr->RenderGouraudRect(rb, xcolor(56,115,58,64),
+                                       xcolor(56,115,58,64),
+                                       xcolor(56,115,58,64),
+                                       xcolor(56,115,58,64),FALSE);
+
+
+        // render the screen bars
+        s32 y = rb.t + offset;
+
+        while (y < rb.b)
         {
-            bar.Set(rb.l, y, rb.r, rb.b);
-        }
-        else
-        {
-            bar.Set(rb.l, y, rb.r, y+width);
-        }
+            irect bar;
 
-        // draw the bar
-        g_UiMgr->RenderGouraudRect(bar, xcolor(56,115,58,30),
-                                        xcolor(56,115,58,30),
-                                        xcolor(56,115,58,30),
-                                        xcolor(56,115,58,30),FALSE);
+            if ((y+width) > rb.b)
+            {
+                bar.Set(rb.l, y, rb.r, rb.b);
+            }
+            else
+            {
+                bar.Set(rb.l, y, rb.r, y+width);
+            }
 
-        y+=gap;
+            // draw the bar
+            g_UiMgr->RenderGouraudRect(bar, xcolor(56,115,58,30),
+                                            xcolor(56,115,58,30),
+                                            xcolor(56,115,58,30),
+                                            xcolor(56,115,58,30),FALSE);
+
+            y+=gap;
+        }
     }
 
     // render the normal dialog stuff
@@ -362,24 +352,24 @@ void dlg_profile_select::Render( s32 ox, s32 oy )
 }
 
 //=========================================================================
-void dlg_profile_select::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_profile_select::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
     // only allow navigation if active
     if( m_State == DIALOG_STATE_ACTIVE )
     {
-        ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+        ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
     }
 }
 
 //=========================================================================
 
-void dlg_profile_select::OnPadSelect( ui_win* pWin )
+void dlg_profile_select::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
     if( m_State == DIALOG_STATE_ACTIVE )
     {
-        if( g_UIMemCardMgr.IsPolling() )
+        if( g_SaveDataMgr.IsBusy() )
         {
             g_AudioMgr.Play( "InvalidEntry" );
             return;
@@ -411,11 +401,10 @@ void dlg_profile_select::OnPadSelect( ui_win* pWin )
                 g_StateMgr.SetSelectedProfile( g_StateMgr.GetPendingProfileIndex(), NewProfile.GetHash() );//ProfileNames[index]->Hash );
 
                 // overwrite the selected profile
-                m_iCard = ProfileNames[index]->CardID;
-                g_UIMemCardMgr.OverwriteProfile( *ProfileNames[index], g_StateMgr.GetPendingProfileIndex(), this, &dlg_profile_select::OnSaveProfileCB );
+                g_SaveDataMgr.OverwriteProfile( *ProfileNames[index], g_StateMgr.GetPendingProfileIndex(), this, &dlg_profile_select::OnSaveProfileCB );
 
-                // change the dialog state to wait for the memcard
-                m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
+                // wait for the save data request
+                m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
             }
             else
             {
@@ -431,11 +420,10 @@ void dlg_profile_select::OnPadSelect( ui_win* pWin )
                 g_StateMgr.SetSelectedProfile( 0, ProfileNames[index]->Hash );
 
                 // attempt to load the selected profile
-                m_iCard = ProfileNames[index]->CardID;
-                g_UIMemCardMgr.LoadProfile( *ProfileNames[index], 0, this, &dlg_profile_select::OnLoadProfileCB );
+                g_SaveDataMgr.LoadProfile( *ProfileNames[index], 0, this, &dlg_profile_select::OnLoadProfileCB );
 
-                // change the dialog state to wait for the memcard
-                m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
+                // wait for the save data request
+                m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
             }
         }
         else
@@ -450,7 +438,7 @@ void dlg_profile_select::OnPadSelect( ui_win* pWin )
                 // store the id of the selected profile
                 g_StateMgr.SetSelectedProfile( g_StateMgr.GetPendingProfileIndex(), NewProfile.GetHash() );
 
-                // save the profile data in memory to a new dir on the memcard
+                // save the in-memory profile as a new save data file
                 m_State = DIALOG_STATE_CREATE;
             }
             else
@@ -460,6 +448,7 @@ void dlg_profile_select::OnPadSelect( ui_win* pWin )
 
                 // set the profile up with default settings
                 g_StateMgr.ResetProfile( 0 );
+                g_StateMgr.SetProfileNotSaved( 0, TRUE );
 
                 // init the pending profile for player 0
                 g_StateMgr.InitPendingProfile( 0 ); 
@@ -469,11 +458,8 @@ void dlg_profile_select::OnPadSelect( ui_win* pWin )
 
                 // open a VK to enter the profile name
                 irect   r = m_pManager->GetUserBounds( m_UserID );
-                ui_dlg_vkeyboard* pVKeyboard = (ui_dlg_vkeyboard*)m_pManager->OpenDialog( m_UserID, "ui_vkeyboard", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                ui_dlg_vkeyboard* pVKeyboard = (ui_dlg_vkeyboard*)m_pManager->OpenDialog( m_UserID, "ui_vkeyboard", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_INPUTMODAL );
                 pVKeyboard->Configure( TRUE );
-#ifdef TARGET_PC
-                pVKeyboard->SetGamepadMode( g_Input.GetPadCount() > 0 );
-#endif                
                 pVKeyboard->SetLabel( g_StringTableMgr( "ui", "IDS_PROFILE_CREATE" ) );
                 pVKeyboard->ConnectString( &m_ProfileName, SM_PROFILE_NAME_LENGTH );
                 pVKeyboard->SetReturn( &m_ProfileEntered, &m_ProfileOk );
@@ -482,7 +468,7 @@ void dlg_profile_select::OnPadSelect( ui_win* pWin )
                 xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
                 navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
                 navText += g_StringTableMgr( "ui", "IDS_NAV_DELETE" );
-                m_pNavText->SetLabel( navText );
+                SetNavText( navText );
             }
         }
     }
@@ -490,14 +476,16 @@ void dlg_profile_select::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_profile_select::OnLBDown( ui_win* pWin )
+void dlg_profile_select::OnPointerDown( ui_win* pWin, s32 x, s32 y )
 {
-    OnPadSelect( pWin );
+    (void)x;
+    (void)y;
+    OnAccept( pWin );
 }
 
 //=========================================================================
 
-void dlg_profile_select::OnPadBack( ui_win* pWin )
+void dlg_profile_select::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -509,13 +497,6 @@ void dlg_profile_select::OnPadBack( ui_win* pWin )
             return;
         }
 
-        // wait for pending memcard ops
-        while( !g_UIMemCardMgr.IsActionDone() )
-        {
-            g_UIMemCardMgr.Update( 0.001f );
-            x_DelayThread( 1 );
-        }
-
         // check for backing out during online connect phase
         if( g_StateMgr.GetState() == SM_ONLINE_PROFILE_SELECT )
         {
@@ -525,21 +506,21 @@ void dlg_profile_select::OnPadBack( ui_win* pWin )
 
         // Clear the poll callback
         g_AudioMgr.Play("Backup");
-        g_UIMemCardMgr.ClearCallback();
+        g_SaveDataMgr.CancelCallbacks( this );
         m_State = DIALOG_STATE_BACK;
     }
 }
 
 //=========================================================================
 
-void dlg_profile_select::OnPadDelete( ui_win* pWin )
+void dlg_profile_select::OnDelete( ui_win* pWin )
 {
     (void)pWin;
     // delete the profile
 
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
-        if( g_UIMemCardMgr.IsPolling() )
+        if( g_SaveDataMgr.IsBusy() )
         {
             g_AudioMgr.Play( "InvalidEntry" );
             return;
@@ -553,13 +534,14 @@ void dlg_profile_select::OnPadDelete( ui_win* pWin )
         {
             // open delete confirmation dialog
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
             m_PopUpType = POPUP_TYPE_DELETE;
+            m_State = DIALOG_STATE_POPUP;
 
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
             
 
             m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_PROFILE_DELETE" ), 
@@ -579,13 +561,13 @@ void dlg_profile_select::OnPadDelete( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_profile_select::OnPadActivate( ui_win* pWin )
+void dlg_profile_select::OnAlternate( ui_win* pWin )
 {
     (void)pWin;
 
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
-        if( g_UIMemCardMgr.IsPolling() )
+        if( g_SaveDataMgr.IsBusy() )
         {
             g_AudioMgr.Play( "InvalidEntry" );
             return;
@@ -597,7 +579,7 @@ void dlg_profile_select::OnPadActivate( ui_win* pWin )
             case PROFILE_SELECT_OVERWRITE:
             {
                 // Clear the poll callback
-                g_UIMemCardMgr.ClearCallback();
+                g_SaveDataMgr.CancelCallbacks( this );
                 // flag the profile as not saved
                 g_StateMgr.SetProfileNotSaved( g_StateMgr.GetPendingProfileIndex(), TRUE ); 
                 // Continue without saving
@@ -635,11 +617,10 @@ void dlg_profile_select::OnPadActivate( ui_win* pWin )
                     g_StateMgr.SetSelectedProfile( 0, ProfileNames[index]->Hash );
 
                     // attempt to load the selected profile
-                    m_iCard = ProfileNames[index]->CardID;
-                    g_UIMemCardMgr.LoadProfile( *ProfileNames[index], 0, this, &dlg_profile_select::OnLoadProfileCB );
+                    g_SaveDataMgr.LoadProfile( *ProfileNames[index], 0, this, &dlg_profile_select::OnLoadProfileCB );
 
-                    // change the dialog state to wait for the memcard
-                    m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
+                    // wait for the save data request
+                    m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
                 }
                 else
                 {
@@ -673,26 +654,22 @@ void dlg_profile_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         if( UpdateScreenScaling( DeltaTime ) == FALSE )
         {
             // turn on the controls
-            m_pProfileList      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pProfileDetails   ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pCardSlot         ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pCreationDate     ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pModifiedDate     ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pInfoCreationDate ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pInfoModifiedDate ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText          ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            {
-                s32 index = m_pProfileList->GetSelectedItemData();
-                if( index >= m_CreateIndex )
-                {
-                    m_pCreationDate    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-                    m_pModifiedDate    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-                    m_pInfoCreationDate->SetFlag(ui_win::WF_VISIBLE, FALSE);
-                    m_pInfoModifiedDate->SetFlag(ui_win::WF_VISIBLE, FALSE);
-                }
-            }
+            m_pProfileList       ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+            m_pProfileDetails    ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+            m_pCreationDate      ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+            m_pModifiedDate      ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+            m_pInfoCreationDate  ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+            m_pInfoModifiedDate  ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+
             GotoControl( (ui_control*)m_pProfileList );
             g_UiMgr->SetScreenHighlight( m_pProfileList->GetPosition() );
+
+            if( g_UiMgr->IsScreenOn() == FALSE )
+            {
+                // enable the frame
+                SetFlag( WF_DISABLED, FALSE );
+                g_UiMgr->SetScreenOn( TRUE );
+            }
         }
     }
 
@@ -715,12 +692,12 @@ void dlg_profile_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 {
                     // open duplicate name error popup
                     irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
                     m_PopUpType = POPUP_TYPE_BADNAME;
 
                     // set nav text
                     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_OK" ));
-                    m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                    SetNavTextVisible( FALSE );
 
                     m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_PROFILE_DUPLICATE_NAME" ), 
                         TRUE, 
@@ -769,11 +746,14 @@ void dlg_profile_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                         xarray<profile_info*>& ProfileNames = g_StateMgr.GetProfileList();
 
                         // Bye bye profile, bye bye!
-                        m_iCard = ProfileNames[index]->CardID;
-                        g_UIMemCardMgr.DeleteProfile( *ProfileNames[index], this, &dlg_profile_select::OnDeleteProfileCB );
+                        g_SaveDataMgr.DeleteProfile( *ProfileNames[index], this, &dlg_profile_select::OnDeleteProfileCB );
 
-                        // change the dialog state to wait for the memcard
-                        m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
+                        // wait for the save data request
+                        m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
+                    }
+                    else
+                    {
+                        m_State = DIALOG_STATE_ACTIVE;
                     }
                     break;
                 }
@@ -794,7 +774,7 @@ void dlg_profile_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp = NULL;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
         }
     }
     else if( m_BackupPopup )
@@ -819,9 +799,6 @@ void dlg_profile_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 }
             }
 
-            // poll the memcards in both slots
-            g_UIMemCardMgr.Poll( SM_CARDMODE_PROFILE, this,&dlg_profile_select::OnPollReturn );
-
             // update the profile lists
             RefreshProfileList();
 
@@ -842,7 +819,7 @@ void dlg_profile_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SAVE_CHANGES" ));
                             navText += g_StringTableMgr( "ui", "IDS_NAV_DELETE" );
                             navText += g_StringTableMgr( "ui", "IDS_NAV_CONT_NO_SAVE" );
-                            m_pNavText->SetLabel( navText );
+                            SetNavText( navText );
                         }
                         break;
 
@@ -851,7 +828,7 @@ void dlg_profile_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
                             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
                             navText += g_StringTableMgr( "ui", "IDS_NAV_DELETE" );
-                            m_pNavText->SetLabel( navText );
+                            SetNavText( navText );
                         }
                         break;
 
@@ -861,7 +838,7 @@ void dlg_profile_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
                             navText += g_StringTableMgr( "ui", "IDS_NAV_DELETE" );
                             navText += g_StringTableMgr( "ui", "IDS_NAV_EDIT" );
-                            m_pNavText->SetLabel( navText );
+                            SetNavText( navText );
                         }
                         break;
                     }
@@ -880,7 +857,7 @@ void dlg_profile_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                         navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
                     }
 
-                    m_pNavText->SetLabel( navText );
+                    SetNavText( navText );
                 }
             }
         }
@@ -913,8 +890,8 @@ void dlg_profile_select::RefreshProfileList( void )
     // clear the list
     m_pProfileList->DeleteAllItems();
 
-    // get the current list from the memcard manager
-    g_UIMemCardMgr.GetProfileNames( ProfileNames );
+    // get the current list from the save data manager
+    g_SaveDataMgr.GetProfileNames( ProfileNames );
 
     // fill it with the profile information
     for( s32 i = 0; i < ProfileNames.GetCount(); i++ )
@@ -922,13 +899,6 @@ void dlg_profile_select::RefreshProfileList( void )
         if( ProfileNames[i]->bDamaged )
         {
             // add the profile to the list
-            m_pProfileList->AddItem( g_StringTableMgr( "ui", "IDS_CORRUPT" ), i, PROFILE_CORRUPT );
-            m_pProfileList->SetItemColor( i, XCOLOR_RED );
-        }
-        else if ( ProfileNames[i]->Ver != PROFILE_VERSION_NUMBER )
-        {
-            // add the profile to the list
-            //m_pProfileList->AddItem( g_StringTableMgr( "ui", "IDS_BAD_VERSION" ), i, PROFILE_EXPIRED ); // not for retail
             m_pProfileList->AddItem( g_StringTableMgr( "ui", "IDS_CORRUPT" ), i, PROFILE_CORRUPT );
             m_pProfileList->SetItemColor( i, XCOLOR_RED );
         }
@@ -970,45 +940,24 @@ void dlg_profile_select::RefreshProfileList( void )
     if( SelIndex == m_CreateIndex )
     {
         m_pProfileDetails->SetLabel( g_StringTableMgr( "ui", "IDS_PROFILE_INFO" ) );
-        m_pCardSlot->SetLabel( g_StringTableMgr( "ui", "IDS_NULL" ) );
-
-#ifdef TARGET_PC
         m_pCreationDate     ->SetFlag( WF_VISIBLE, FALSE );
         m_pModifiedDate     ->SetFlag( WF_VISIBLE, FALSE );
         m_pInfoCreationDate ->SetFlag( WF_VISIBLE, FALSE );
         m_pInfoModifiedDate ->SetFlag( WF_VISIBLE, FALSE );
-#else
-        m_pCreationDate     ->SetFlag( WF_VISIBLE, TRUE );
-        m_pModifiedDate     ->SetFlag( WF_VISIBLE, TRUE );
-        m_pInfoCreationDate ->SetFlag( WF_VISIBLE, TRUE );
-        m_pInfoModifiedDate ->SetFlag( WF_VISIBLE, TRUE );
-        m_pInfoCreationDate ->SetLabel( xwstring(L"---") );
-        m_pInfoModifiedDate ->SetLabel( xwstring(L"---") );
-#endif
     }
     else
     {
         if( SelIndex >= 0 && SelIndex < ProfileNames.GetCount() )
         {
-            m_pCreationDate     ->SetFlag( WF_VISIBLE, TRUE );
-            m_pModifiedDate     ->SetFlag( WF_VISIBLE, TRUE );
-            m_pInfoCreationDate ->SetFlag( WF_VISIBLE, TRUE );
-            m_pInfoModifiedDate ->SetFlag( WF_VISIBLE, TRUE );
+            if( !g_UiMgr->IsScreenScaling() )
+            {
+                m_pCreationDate     ->SetFlag( WF_VISIBLE, TRUE );
+                m_pModifiedDate     ->SetFlag( WF_VISIBLE, TRUE );
+                m_pInfoCreationDate ->SetFlag( WF_VISIBLE, TRUE );
+                m_pInfoModifiedDate ->SetFlag( WF_VISIBLE, TRUE );
+            }
 
             m_pProfileDetails->SetLabel( g_StringTableMgr( "ui", "IDS_PROFILE_INFO" ) );
-
-#ifdef TARGET_PC
-            m_pCardSlot->SetLabel( g_StringTableMgr( "ui", "IDS_PROFILE_SAVE_LOCATION_PC" ) ); //TODO: GS: Make this locale
-#endif
-            // set the profile info
-            if( ProfileNames[SelIndex]->CardID == 0 )
-            {
-                m_pCardSlot->SetLabel( g_StringTableMgr( "ui", "IDS_PROFILE_CARD_SLOT_1" ) );
-            }
-            else
-            {
-                m_pCardSlot->SetLabel( g_StringTableMgr( "ui", "IDS_PROFILE_CARD_SLOT_2" ) );
-            }
 
             split_date TimeStamp = eng_SplitDate( ProfileNames[SelIndex]->CreationDate );
             const xwchar* Month = g_StringTableMgr( "ui", (const char*)xfs("IDS_MONTH%d", TimeStamp.Month));
@@ -1027,7 +976,6 @@ void dlg_profile_select::RefreshProfileList( void )
         else
         {
             m_pProfileDetails   ->SetLabel( g_StringTableMgr( "ui", "IDS_ERROR" ) );
-            m_pCardSlot         ->SetLabel( xwstring("") );
             m_pInfoCreationDate ->SetLabel( xwstring("") );
             m_pInfoModifiedDate ->SetLabel( xwstring("") );
         }
@@ -1038,14 +986,7 @@ void dlg_profile_select::RefreshProfileList( void )
 
 void dlg_profile_select::OnLoadProfileCB( void )
 {
-#ifdef TARGET_PC
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 );    
-#else
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
-#endif
-
-    // if the load was successful
-    if( Condition.SuccessCode )
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
     {
         // copy the data read into the profile
         g_StateMgr.SetProfileNotSaved( g_StateMgr.GetPendingProfileIndex(), FALSE );
@@ -1080,23 +1021,7 @@ void dlg_profile_select::OnLoadProfileCB( void )
 
 void dlg_profile_select::OnDeleteProfileCB( void )
 {
-#ifdef TARGET_PC
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 );    
-#else
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
-#endif
-
-    // if the delete was successful
-    if( Condition.SuccessCode )
-    {
-        // delete success - go back to polling
-        m_State = DIALOG_STATE_ACTIVE;
-    }
-    else
-    {
-        // delete failed - go back to polling
-        m_State = DIALOG_STATE_ACTIVE;
-    }
+    m_State = DIALOG_STATE_ACTIVE;
 
     // turn off autosave and reset profile selection
     g_StateMgr.ClearSelectedProfile( 0 );
@@ -1110,34 +1035,12 @@ void dlg_profile_select::OnDeleteProfileCB( void )
 
 void dlg_profile_select::OnSaveProfileCB( void )
 {
-#ifdef TARGET_PC
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 );    
-#else
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
-#endif
-
-    // if the save was successful (OR user wants to continue without saving)
-    if( Condition.SuccessCode )
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
     {
-        if( Condition.bCancelled )
-        {
-            // clear selected profile
-            g_StateMgr.ClearSelectedProfile( 0 );
-            g_StateMgr.SetProfileNotSaved( g_StateMgr.GetPendingProfileIndex(), TRUE ); 
-
-            // return to polling
-            m_State = DIALOG_STATE_ACTIVE;
-        }
-        else
-        {
-            // update the changes in the profile
-            g_StateMgr.SetProfileNotSaved( g_StateMgr.GetPendingProfileIndex(), FALSE ); 
-            g_StateMgr.ActivatePendingProfile();
-
-            // save successful - onward to load game
-            g_AudioMgr.Play( "Select_Norm" );
-            m_State = DIALOG_STATE_SELECT;            
-        }
+        g_StateMgr.SetProfileNotSaved( g_StateMgr.GetPendingProfileIndex(), FALSE );
+        g_StateMgr.ActivatePendingProfile();
+        g_AudioMgr.Play( "Select_Norm" );
+        m_State = DIALOG_STATE_SELECT;
     }
     else
     {
@@ -1154,8 +1057,8 @@ void dlg_profile_select::OnSaveProfileCB( void )
 
     // get the profile list
     xarray<profile_info*>& ProfileNames = g_StateMgr.GetProfileList();
-    // get the current list from the memcard manager
-    g_UIMemCardMgr.GetProfileNames( ProfileNames );
+    // get the current list from the save data manager
+    g_SaveDataMgr.GetProfileNames( ProfileNames );
 }
 
 //=========================================================================
@@ -1167,15 +1070,17 @@ void dlg_profile_select::UpdateBackupPopup(void)
         if( m_BackupPopupResult == DLG_POPUP_NO )
         {
             // stay in this dialog
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
-
+            SetNavTextVisible( TRUE );
+            m_State = DIALOG_STATE_ACTIVE;
         }
         else if ( m_BackupPopupResult == DLG_POPUP_YES )
         {
             // Clear the poll callback
-            g_UIMemCardMgr.ClearCallback();
+            g_SaveDataMgr.CancelCallbacks( this );
             m_State = DIALOG_STATE_BACK;
         }
+
+        m_BackupPopup = NULL;
     }
 }
 
@@ -1185,12 +1090,13 @@ void dlg_profile_select::CreateBackupPopup( void )
 {
     // open duplicate name error popup
     irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-    m_BackupPopup = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+    m_BackupPopup = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
+    m_State = DIALOG_STATE_POPUP;
 
     // set nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
     navText += g_StringTableMgr("ui", "IDS_NAV_NO" );
-    m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+    SetNavTextVisible( FALSE );
     m_BackupPopup->Configure( g_StringTableMgr( "ui", "IDS_NETWORK_POPUP" ), TRUE, TRUE, FALSE, g_StringTableMgr( "ui", "IDS_ONLINE_DISCONNECT" ), navText, &m_BackupPopupResult );
 }
 

@@ -1,20 +1,21 @@
 
+#include "Render/PrimitiveDebug.hpp"
 #include "AlienOrb.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "Render\Render.hpp"
-#include "EventMgr\EventMgr.hpp"
-#include "render\LightMgr.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "Objects\ParticleEmiter.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "Render/Render.hpp"
+#include "EventMgr/EventMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
 #include "Turret.hpp"
 #include "AlienSpawnTube.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "Objects\Group.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Objects/Group.hpp"
 
 
 //
@@ -647,7 +648,7 @@ void alien_orb::SetDestroyed( void )
 
 //=============================================================================
 
-void alien_orb::OnAdvanceLogic  ( f32 DeltaTime )
+void alien_orb::OnAdvanceSimulation  ( f32 DeltaTime )
 {
     if (m_Health <= 0)
     {
@@ -657,7 +658,7 @@ void alien_orb::OnAdvanceLogic  ( f32 DeltaTime )
         return;
     }
 
-    anim_surface::OnAdvanceLogic( DeltaTime );
+    anim_surface::OnAdvanceSimulation( DeltaTime );
 
     const matrix4& L2W = GetL2W();
 
@@ -1388,16 +1389,16 @@ void alien_orb::OnDebugRender( void )
         ScanCenter = pObj->GetPosition();
     }
 
-    draw_Label( ScanCenter, XCOLOR_WHITE, "Scan Center" );
-    draw_Line( Pos, ScanCenter, XCOLOR_GREEN );
-    draw_Label( Pos + vector3(0,50,0), XCOLOR_WHITE, xfs("State: %s",GetStateName()));
+    render::debug::Label( ScanCenter, XCOLOR_WHITE, "Scan Center" );
+    render::debug::Line( Pos, ScanCenter, XCOLOR_GREEN );
+    render::debug::Label( Pos + vector3(0,50,0), XCOLOR_WHITE, xfs("State: %s",GetStateName()));
     
     
     pObj = g_ObjMgr.GetObjectByGuid( m_TargetGuid );
     if (NULL != pObj)
     {
-        draw_Line( Pos, m_TargetPos, XCOLOR_RED );
-        draw_Label( m_TargetPos, XCOLOR_WHITE, "Target" );
+        render::debug::Line( Pos, m_TargetPos, XCOLOR_RED );
+        render::debug::Label( m_TargetPos, XCOLOR_WHITE, "Target" );
     }
 
     if (NULL_GUID != m_SpawnTubeLimitVolume)
@@ -1407,9 +1408,9 @@ void alien_orb::OnDebugRender( void )
         {
             bbox Box = pObj->GetBBox();
 
-            draw_Line( Pos, Box.GetCenter(), XCOLOR_YELLOW );
-            draw_BBox( Box, XCOLOR_YELLOW );
-            draw_Label( Box.GetCenter(), XCOLOR_YELLOW, "SPAWN TUBE LIMIT VOLUME" );
+            render::debug::Line( Pos, Box.GetCenter(), XCOLOR_YELLOW );
+            render::debug::Box( Box, XCOLOR_YELLOW );
+            render::debug::Label( Box.GetCenter(), XCOLOR_YELLOW, "SPAWN TUBE LIMIT VOLUME" );
         }
     }
     if (NULL_GUID != m_TurretLimitVolume)
@@ -1419,9 +1420,9 @@ void alien_orb::OnDebugRender( void )
         {
             bbox Box = pObj->GetBBox();
 
-            draw_Line( Pos, Box.GetCenter(), XCOLOR_YELLOW );
-            draw_BBox( Box, XCOLOR_YELLOW );
-            draw_Label( Box.GetCenter(), XCOLOR_YELLOW, "TURRET LIMIT VOLUME" );
+            render::debug::Line( Pos, Box.GetCenter(), XCOLOR_YELLOW );
+            render::debug::Box( Box, XCOLOR_YELLOW );
+            render::debug::Label( Box.GetCenter(), XCOLOR_YELLOW, "TURRET LIMIT VOLUME" );
         }
     }
     if (NULL_GUID != m_ScriptedPosition)
@@ -1432,12 +1433,12 @@ void alien_orb::OnDebugRender( void )
             const matrix4& L2W = pObj->GetL2W();
             vector3 ObjPos = L2W.GetTranslation();
 
-            draw_Line( Pos, ObjPos, XCOLOR_AQUA );
-            draw_Label( ObjPos, XCOLOR_AQUA, "SCRIPTED POS" );
+            render::debug::Line( Pos, ObjPos, XCOLOR_AQUA );
+            render::debug::Label( ObjPos, XCOLOR_AQUA, "SCRIPTED POS" );
 
             if (m_OrbitRadius > 0)
             {
-                draw_Cylinder( ObjPos, m_OrbitRadius, m_OrbitVerticalAmt, 16, xcolor(0,255,255,128), FALSE );
+                render::debug::Cylinder( ObjPos, m_OrbitRadius, m_OrbitVerticalAmt, 16, xcolor(0,255,255,128), FALSE );
             }
         }
     }
@@ -1449,9 +1450,9 @@ void alien_orb::OnDebugRender( void )
             const matrix4& L2W = pObj->GetL2W();
             vector3 ObjPos = L2W.GetTranslation();
 
-            draw_Line( Pos, ObjPos, XCOLOR_YELLOW );
-            draw_Sphere( ObjPos, 10, XCOLOR_YELLOW );
-            draw_Label( ObjPos, XCOLOR_YELLOW, "NEXT IN CHAIN" );            
+            render::debug::Line( Pos, ObjPos, XCOLOR_YELLOW );
+            render::debug::Sphere( ObjPos, 10, XCOLOR_YELLOW );
+            render::debug::Label( ObjPos, XCOLOR_YELLOW, "NEXT IN CHAIN" );            
         }
     }
 }
@@ -1598,7 +1599,7 @@ void alien_orb::MoveToTarget( f32 DeltaTime )
 
 void alien_orb::OnRender( void )
 {
-    CONTEXT( "alien_orb::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "alien_orb::OnRender" );
     if (m_bDestroyed)
         return;
     if (!m_bOrbActive)
@@ -1632,7 +1633,7 @@ void alien_orb::OnRender( void )
             f32     TimeToTarget = Dist / m_MoveSpeed;
             f32     WanderScale = 0;
 
-            draw_Label( MyPos + vector3(0,k_OFFSET_FROM_TARGET_ORIGIN,0), XCOLOR_WHITE, "TTT: %5.3f   Dist:%5.3f",TimeToTarget, Dist );
+            render::debug::Label( MyPos + vector3(0,k_OFFSET_FROM_TARGET_ORIGIN,0), XCOLOR_WHITE, "TTT: %5.3f   Dist:%5.3f",TimeToTarget, Dist );
         }
 #endif
 #endif
@@ -1640,7 +1641,7 @@ void alien_orb::OnRender( void )
     else
     {
 #ifdef X_EDITOR
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif // X_EDITOR
     }
 }

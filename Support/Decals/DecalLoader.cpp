@@ -8,9 +8,10 @@
 //==============================================================================
 
 #include "DecalDefinition.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "Decals\DecalPackage.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "Decals/DecalPackage.hpp"
+#include "Decals/DecalPackageFile.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 //==============================================================================
 // Decal loader
@@ -29,18 +30,24 @@ struct decal_loader : public rsc_loader
     virtual void* PreLoad ( X_FILE* FP )
     {
         MEMORY_OWNER( "DECAL DATA" );
-        fileio File;
-        return( File.PreLoad( FP ) );
+
+        decal_package* pPackage = NULL;
+        xstring        Error;
+        if( !decal_package_file::Load( FP, pPackage, Error ) )
+        {
+            x_DebugMsg( "DECALPKG: load failed: %s\n", (const char*)Error );
+            x_throw( (const char*)Error );
+        }
+
+        return( pPackage );
     }
 
     //-------------------------------------------------------------------------
     
     virtual void* Resolve ( void* pData ) 
     {
-        fileio         File;
-        decal_package* pDecalPkg = NULL;
-
-        File.Resolved( (fileio::resolve*)pData, pDecalPkg );
+        decal_package* pDecalPkg = (decal_package*)pData;
+        ASSERT( pDecalPkg );
 
         s32 i;
         for ( i = 0; i < pDecalPkg->GetNDecalDefs(); i++ )

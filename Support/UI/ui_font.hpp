@@ -15,7 +15,12 @@
 #include "x_types.hpp"
 #endif
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
+#include "e_Input.hpp"
+#include "ui_renderer.hpp"
+
+class ui_manager;
 
 //==============================================================================
 //  ui_font
@@ -32,6 +37,8 @@ typedef struct _CustomRenderStruct
 class ui_font
 {
 public:
+                        ui_font             ( void );
+
     enum Flags
     {
         h_left          = 0x0001,
@@ -44,8 +51,7 @@ public:
         clip_l_justify  = 0x0080,
         clip_r_justify  = 0x0100,
         clip_ellipsis   = 0x0200,
-        is_help_text    = 0x0400,
-        set_position    = 0x0800,
+        input_glyphs    = 0x0400,
         blend_additive  = 0x1000,
     };
 
@@ -57,9 +63,7 @@ public:
         s_fade_out      = 0x0008
     };
 
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
 #pragma pack(2)
-#endif
     struct Character
     {
         u16     X;
@@ -72,9 +76,7 @@ public:
         u16     character;
         u16     bitmap;
     };
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
 #pragma pack()
-#endif
 
 
 protected:
@@ -88,17 +90,13 @@ protected:
         f32 V0;
         f32 U1;
         f32 V1;
-        f32 T0;
-        f32 T1;
     };
 
-    static xcolor       LerpColor           ( const xcolor& C0, const xcolor& C1, f32 T );
     static glyph_quad   MakeGlyphQuad       ( f32 X0, f32 Y0, f32 X1, f32 Y1, f32 U0, f32 V0, f32 U1, f32 V1 );
-    static xbool        ClipGlyphQuad       ( glyph_quad& Quad, const irect& Clip );
-    static void         RenderGlyphQuad     ( glyph_quad Quad, const xcolor& TopColor, const xcolor& BottomColor, xbool DoClip, const irect& Clip );
-    static void         RenderGlyphSprite   ( glyph_quad Quad, const xcolor& Color, xbool DoClip, const irect& Clip );
+    static void         RenderGlyphQuad     ( const texture& Texture, const glyph_quad& Quad, const xcolor& TopColor, const xcolor& BottomColor, ui_blend_mode Blend );
+    static void         RenderGlyphSprite   ( const texture& Texture, const glyph_quad& Quad, const xcolor& Color, ui_blend_mode Blend );
 
-    rhandle<xbitmap>    m_Bitmap;
+    rhandle<texture>    m_bitmap;
     s32                 m_BmWidth;
     s32                 m_BmHeight;
     s32                 m_AvgWidth;
@@ -107,9 +105,10 @@ protected:
     charmap*            m_CMap;
     s32                 m_CMapSize; 
     s32                 m_NumChars;
+    ui_manager*         m_pManager;
 
 public:
-    xbool               Load                ( const char* pPathName );
+    xbool               Load                ( ui_manager* pManager, const char* pPathName );
     void                Kill                ( void );
     void                TextSize            ( irect& Rect, const   char* pString, s32 Count = -1 ) const;
     void                TextSize            ( irect& Rect, const xwchar* pString, s32 Count = -1 ) const;
@@ -125,12 +124,9 @@ public:
     void                RenderText          ( const irect& R, u32 Flags, const xcolor& Color, const   char* pString, xbool IgnoreEmbeddedColor = TRUE, xbool UseGradient = TRUE, f32 FlareAmount = 0.0f ) const;
     void                RenderText          ( const irect& R, u32 Flags, const xcolor& Color, const xwchar* pString, xbool IgnoreEmbeddedColor = TRUE, xbool UseGradient = TRUE, f32 FlareAmount = 0.0f ) const;
     void                RenderText          ( const irect& R, u32 Flags,       s32     Alpha, const xwchar* pString, xbool IgnoreEmbeddedColor = TRUE, xbool UseGradient = TRUE, f32 FlareAmount = 0.0f ) const;
-    void                RenderHelpText      ( const irect& R, u32 Flags, const xcolor& Color, const xwchar* pString, xbool IgnoreEmbeddedColor = TRUE, xbool UseGradient = TRUE, f32 FlareAmount = 0.0f ) const;
+    void                RenderInputText     ( const irect& R, u32 Flags, const xcolor& Color, const xwchar* pString, input_platform Platform ) const;
 
     void                RenderStateControlledText( const irect& Rect, u32 Flags, const xcolor& Color, const xwchar* pString, void* StateData) const;
-
-//  void                DrawFormattedText   ( const irect& R, u32 Flags, const xcolor& Color, const   char* pString ) const;
-//  void                DrawFormattedText   ( const irect& R, u32 Flags, const xcolor& Color, const xwchar* pString ) const;
 };
 
 //==============================================================================

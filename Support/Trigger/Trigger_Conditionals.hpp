@@ -13,13 +13,13 @@
 //=========================================================================
 
 #include "x_types.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "..\Support\Globals\Global_Variables_Manager.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
-#include "Inventory\\InventoryItem.hpp"
-#include "InputMgr\GamePad.hpp"
-#include "..\Support\Objects\Player.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/Globals/Global_Variables_Manager.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
+#include "Inventory/InventoryItem.hpp"
+#include "InputMgr/GamePad.hpp"
+#include "../Support/Objects/Player/Player.hpp"
 //=========================================================================
 // CONDITIONAL_BASE
 //=========================================================================

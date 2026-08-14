@@ -11,25 +11,20 @@
 //==========================================================================
 // INCLUDE
 //==========================================================================
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_manager.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_bitmap.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_bitmap.hpp"
 
 #include "dlg_Credits.hpp"  
-#include "stringmgr\stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "memcardmgr\memcardmgr.hpp" 
-#include "stateMgr/StateMgr.hpp"
-#include "ui\ui_font.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "UI/ui_font.hpp"
 #include "MoviePlayer/MoviePlayer.hpp"
 
-#include "ui/ui_manager.hpp"
-
-#ifdef TARGET_PS2
-#include "ps2\ps2_misc.hpp"
-#endif
+#include "UI/ui_manager.hpp"
 
 extern xstring SelectBestClip( const char* pName );
 
@@ -39,6 +34,7 @@ typedef struct _Sweep
 }Sweep;
 
 #define SWEEP_FRAME_MAX     30.0f
+#define SWEEP_FRAME_RATE    30.0f
 #define FINAL_PIXEL_COLOR   140.0f
 Sweep Sweeps[2] = 
 {
@@ -63,7 +59,7 @@ enum controls
 
 ui_manager::control_tem CreditsControls[] =
 {
-    { IDC_CREDIT_STRING_1, "IDS_PRESS_START_TEXT", "text",     0, 308, 480,  30, 0, 0, 1, 1, ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE  },
+    { IDC_CREDIT_STRING_1, "IDS_PRESS_START_TEXT", "text",     0, 308, 480,  30, 0, 0, 1, 1, 0 },
 };
 
 ui_manager::dialog_tem CreditsDialog =
@@ -195,14 +191,14 @@ void dlg_credits::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_credits::OnPadSelect( ui_win* pWin )
+void dlg_credits::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 }
 
 //=========================================================================
 
-void dlg_credits::OnPadBack( ui_win* pWin )
+void dlg_credits::OnCancel( ui_win* pWin )
 {
     (void)pWin;
     if( m_State == DIALOG_STATE_ACTIVE )
@@ -276,12 +272,14 @@ void dlg_credits::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 if( (m_CreditLines[index].m_FadeDelay[i] <= 0.0f) && m_CreditLines[index].m_CustomRenderStruct[i].m_Frame == 0)
                 {
                     m_CreditLines[index].m_CustomRenderStruct[i].m_State = ui_font::s_render;
-                    m_CreditLines[index].m_CustomRenderStruct[i].m_Frame++;
+                    m_CreditLines[index].m_SweepTime[i] = 1.0f;
+                    m_CreditLines[index].m_CustomRenderStruct[i].m_Frame = 1;
                     m_CreditLines[index].m_CustomRenderStruct[i].m_Value = 0;
                 }
                 else if( m_CreditLines[index].m_CustomRenderStruct[i].m_State == ui_font::s_render )
                 {
-                    m_CreditLines[index].m_CustomRenderStruct[i].m_Frame++;
+                    m_CreditLines[index].m_SweepTime[i] += DeltaTime * SWEEP_FRAME_RATE;
+                    m_CreditLines[index].m_CustomRenderStruct[i].m_Frame = (s32)m_CreditLines[index].m_SweepTime[i];
 
                     // Find what alpha we are in.
                     {
@@ -355,6 +353,7 @@ xbool dlg_credits::BuildPage( void )
             m_CreditLines[CurrentLine].m_CustomRenderStruct[i].m_Value  = 0.0f;
             m_CreditLines[CurrentLine].m_CustomRenderStruct[i].m_Frame  = 0;
             m_CreditLines[CurrentLine].m_FadeDelay[i]                   = x_frand(FADE_MIN_START,FADE_MAX_START);
+            m_CreditLines[CurrentLine].m_SweepTime[i]                   = 0.0f;
         }
 
         // Setup Line Types
@@ -398,13 +397,14 @@ xbool dlg_credits::BuildPage( void )
         m_CreditLines[line].m_StringLength = TextRect.GetWidth();
     }
 
+    const irect UserBounds = g_UiMgr->GetUserBounds( m_UserID );
+    const s32   PageCenter = (UserBounds.t + UserBounds.b) / 2;
+
     // Setup spaceing 
     for( line = 0 ; line < m_PageLineCount ; line++ )
     {
-        s32 PageCenter = g_UiMgr->GetUserBounds(g_UiUserID).b / 2;
-       
-        m_CreditLines[line].m_Rect.l = 0;
-        m_CreditLines[line].m_Rect.r = g_UiMgr->GetUserBounds(g_UiUserID).r;
+        m_CreditLines[line].m_Rect.l = UserBounds.l;
+        m_CreditLines[line].m_Rect.r = UserBounds.r;
 
         m_CreditLines[line].m_Rect.t = (PageCenter - (TotalPageHeight / 2)) +  LineOffset;
         m_CreditLines[line].m_Rect.b = m_CreditLines[line].m_Rect.t + g_UiMgr->GetLineHeight( g_UiMgr->FindFont(m_CreditLines[line].m_Font) ); 
@@ -429,9 +429,12 @@ s32 dlg_credits::CheckLine( const xwchar* pString )
     {
         xwchar c = *pString++;
 
-        if( c == 0xAB ) // '«'
+        if( c == 0xAB ) // 'ï¿½'
         {
-            s32 ButtonCode = g_UiMgr->LookUpButtonCode( pString, 0 );
+            s32 ButtonCode = g_UiMgr->LookUpButtonCode( pString,
+                                                        0,
+                                                        g_Input.GetCurrentInputDevice(),
+                                                        g_Input.GetCurrentInputPlatform() );
             if( ButtonCode != -1 )
             {
                 // for the start button, double it... 

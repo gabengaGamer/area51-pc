@@ -4,20 +4,20 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_maplist.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_maplist.hpp"
 
 #include "dlg_PopUp.hpp"
 #include "dlg_ChangeMap.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "StateMgr\MapList.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "StateMgr/MapList.hpp"
 
 //=========================================================================
 //  Vote Map Dialog
@@ -26,15 +26,13 @@
 enum controls
 {
 	IDC_CHANGE_MAP_LISTBOX,
-    IDC_CHANGE_MAP_NAV_TEXT,
 };
 
 
 ui_manager::control_tem ChangeMapControls[] = 
 {
     // Frames.
-    { IDC_CHANGE_MAP_LISTBOX,   "IDS_CHANGE_MAP",   "maplist",  45,  60, 260, 238, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CHANGE_MAP_NAV_TEXT,  "IDS_NULL",         "text",      0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_CHANGE_MAP_LISTBOX,   "IDS_CHANGE_MAP",   "maplist",  45,  60, 260, 238, 0, 0, 1, 1, ui_win::WF_VISIBLE },
 };
 
 ui_manager::dialog_tem ChangeMapDialog =
@@ -115,22 +113,18 @@ xbool dlg_change_map::Create( s32                        UserID,
 
     // find controls
     m_pMapList         = (ui_maplist*)    FindChildByID( IDC_CHANGE_MAP_LISTBOX  );
-    m_pNavText         = (ui_text*)       FindChildByID( IDC_CHANGE_MAP_NAV_TEXT );
 
     // hide them
     m_pMapList        ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText        ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
    
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // set up map list
-    m_pMapList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pMapList->SetActive( TRUE );
     m_pMapList->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pMapList->DisableFrame();
     m_pMapList->SetExitOnSelect(FALSE);
@@ -211,14 +205,7 @@ void dlg_change_map::Render( s32 ox, s32 oy )
 	irect rb;
     
     // render background filter
-    s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+    rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
         xcolor(0,0,0,180),
         xcolor(0,0,0,180),
@@ -270,7 +257,7 @@ void dlg_change_map::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_change_map::OnPadSelect( ui_win* pWin )
+void dlg_change_map::OnAccept( ui_win* pWin )
 {
 
     (void)pWin;
@@ -279,12 +266,12 @@ void dlg_change_map::OnPadSelect( ui_win* pWin )
     {
         // display confirmation popup
         irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
         // set nav text
         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
         navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-        m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+        SetNavTextVisible( FALSE );
 
         m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_CHANGE_MAP" ), 
             TRUE, 
@@ -300,7 +287,7 @@ void dlg_change_map::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_change_map::OnPadBack( ui_win* pWin )
+void dlg_change_map::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -325,7 +312,6 @@ void dlg_change_map::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         {
             // turn on the controls
             m_pMapList  ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText  ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             GotoControl( (ui_control*)m_pMapList );
             g_UiMgr->SetScreenHighlight( m_pMapList->GetPosition() );
         }
@@ -364,7 +350,7 @@ void dlg_change_map::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp = NULL;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
         }
     }
 }

@@ -4,23 +4,23 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "..\Support\TriggerEx\TriggerEx_Conditionals.hpp"
-#include "..\Support\TriggerEx\TriggerEx_Manager.hpp"
-#include "..\Support\Objects\Player.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
+#include "../Support/TriggerEx/TriggerEx_Conditionals.hpp"
+#include "../Support/TriggerEx/TriggerEx_Manager.hpp"
+#include "../Support/Objects/Player/Player.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
 
 //include all conditions
-#include "Conditions\condition_check_property.hpp"
-#include "Conditions\condition_object_exists.hpp"
-#include "Conditions\condition_player_button_state.hpp"
-#include "Conditions\condition_player_has_item.hpp"
-#include "Conditions\condition_random_chance.hpp"
-#include "Conditions\condition_check_global.hpp"
-#include "Conditions\condition_within_range.hpp"
-#include "Conditions\condition_line_of_sight.hpp"
-#include "Conditions\condition_check_focus_object.hpp"
-#include "Conditions\condition_check_health.hpp"
-#include "Conditions\condition_is_censored.hpp"
+#include "Conditions/condition_check_property.hpp"
+#include "Conditions/condition_object_exists.hpp"
+#include "Conditions/condition_player_button_state.hpp"
+#include "Conditions/condition_player_has_item.hpp"
+#include "Conditions/condition_random_chance.hpp"
+#include "Conditions/condition_check_global.hpp"
+#include "Conditions/condition_within_range.hpp"
+#include "Conditions/condition_line_of_sight.hpp"
+#include "Conditions/condition_check_focus_object.hpp"
+#include "Conditions/condition_check_health.hpp"
+#include "Conditions/condition_is_censored.hpp"
 
 //=========================================================================
 // STATIC FUNCTIONS

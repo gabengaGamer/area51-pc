@@ -5,15 +5,15 @@
 //  Copyright (c) 2002-2004 Inevitable Entertainment Inc.  All rights reserved.
 //
 //==============================================================================
-
 //==============================================================================
 // INCLUDES
 //==============================================================================
 
 #include "hud_Ammo.hpp"
+#include "UI/ui_renderer.hpp"
 #include "HudObject.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "ui\ui_font.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "UI/ui_font.hpp"
 
 //==============================================================================
 // STORAGE
@@ -144,13 +144,6 @@ void hud_ammo::OnRender( player* pPlayer )
         pPlayer->GetCurrentWeapon2() == INVEN_WEAPON_TRA
       )
     {
-        // Stop all warning and Critical sounds.
-        if (m_CriticalSoundID != -1)
-        {
-            g_AudioMgr.Release(m_CriticalSoundID,0.0f);
-            m_CriticalSoundID = -1;
-        }
-
         return;
     }
 
@@ -161,15 +154,124 @@ void hud_ammo::OnRender( player* pPlayer )
 
 //==============================================================================
 
-void hud_ammo::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
+void hud_ammo::OnAdvanceSimulation( player* pPlayer, f32 DeltaTime )
 {
-    (void)DeltaTime;
-    (void)pPlayer;
-
     // First pass we need to setup some stuff based on the number
     // of players.
     if( !m_AmmoHudInited )
         Init();
+
+    UpdateAmmoState( pPlayer, DeltaTime );
+    UpdateWarningAlpha( DeltaTime );
+}
+
+//==============================================================================
+
+void hud_ammo::UpdateAmmoState( player* pPlayer, f32 DeltaTime )
+{
+    (void)DeltaTime;
+    new_weapon* pWeapon = pPlayer->GetCurrentWeaponPtr();
+    const xbool ShowAmmo = pWeapon &&
+                           (pPlayer->GetCurrentWeapon2() != INVEN_WEAPON_MUTATION) &&
+                           (pPlayer->GetCurrentWeapon2() != INVEN_WEAPON_SCANNER) &&
+                           (pPlayer->GetCurrentWeapon2() != INVEN_WEAPON_TRA);
+
+    if( !ShowAmmo )
+    {
+        m_WarningClip = FALSE;
+        m_WarningResv = FALSE;
+        m_CriticalClip = FALSE;
+        m_CriticalResv = FALSE;
+        m_WarningClipALPHA = 0;
+        m_WarningResvALPHA = 0;
+        m_CurrentWeaponAmmo = 0;
+        m_WeaponAmmoQAmounts[ 0 ] = 0;
+
+        if( m_CriticalSoundID != -1 )
+        {
+            g_AudioMgr.Release( m_CriticalSoundID, 0.0f );
+            m_CriticalSoundID = -1;
+        }
+        return;
+    }
+
+    s32 AmmoMax;
+    s32 ClipMax;
+    pWeapon->GetAmmoState( new_weapon::AMMO_PRIMARY,
+                           m_CurrentWeaponAmmo,
+                           AmmoMax,
+                           ClipMax,
+                           m_WeaponAmmoQAmounts[0] );
+
+    const s32 AmmoResv = m_CurrentWeaponAmmo - m_WeaponAmmoQAmounts[0];
+    const s32 AmmoClip = m_WeaponAmmoQAmounts[0];
+    const xbool WarningsOverRide = (AmmoMax == ClipMax) ||
+                                    (pPlayer->GetCurrentWeapon2() == INVEN_WEAPON_MESON_CANNON);
+    const s32 ClipWarning  = MAX( 4, (s32)(0.25f * (f32)ClipMax) );
+    const s32 ResvWarning  = (s32)(0.25f * (f32)AmmoMax);
+
+    if( (AmmoClip < ClipWarning) && !m_WarningClip )
+    {
+        g_AudioMgr.Play( "Ammo_Low", TRUE );
+        m_WarningClip      = TRUE;
+        m_WarningClipALPHA = 0;
+    }
+    else if( AmmoClip >= ClipWarning )
+    {
+        m_WarningClip  = FALSE;
+        m_CriticalClip = FALSE;
+    }
+
+    if( WarningsOverRide )
+    {
+        m_WarningResv  = FALSE;
+        m_CriticalResv = FALSE;
+    }
+    else
+    {
+        m_CriticalResv = (AmmoResv == 0);
+        if( (AmmoResv < ResvWarning) && !m_WarningResv )
+        {
+            g_AudioMgr.Play( "Ammo_Low", TRUE );
+            m_WarningResv      = TRUE;
+            m_WarningResvALPHA = 0;
+        }
+        else if( AmmoResv >= ResvWarning )
+        {
+            m_WarningResv  = FALSE;
+            m_CriticalResv = FALSE;
+        }
+    }
+
+    if( (AmmoClip == 0) && (AmmoResv == 0) )
+    {
+        if( m_CriticalSoundID == -1 )
+            m_CriticalSoundID = g_AudioMgr.Play( "Ammo_Out_Loop", TRUE );
+        m_CriticalClip = TRUE;
+    }
+    else
+    {
+        if( m_CriticalSoundID != -1 )
+        {
+            g_AudioMgr.Release( m_CriticalSoundID, 0.0f );
+            m_CriticalSoundID = -1;
+        }
+        m_CriticalClip = FALSE;
+    }
+
+}
+
+//==============================================================================
+
+void hud_ammo::UpdateWarningAlpha( f32 DeltaTime )
+{
+    const s32 AlphaStep = (s32)(960.0f * DeltaTime);
+    m_WarningClipALPHA = m_WarningClip
+                       ? MIN( m_WarningClipALPHA + AlphaStep, 100 )
+                       : MAX( m_WarningClipALPHA - AlphaStep,   0 );
+    m_WarningResvALPHA = m_WarningResv
+                       ? MIN( m_WarningResvALPHA + AlphaStep, 100 )
+                       : MAX( m_WarningResvALPHA - AlphaStep,   0 );
 }
 
 //==============================================================================
@@ -199,7 +301,7 @@ void hud_ammo::RenderNades( player* pPlayer, inven_item NadType )
     (void)pPlayer;
     (void)NadType;
 
-    xbitmap*    pGrnBitmap = NULL;
+    texture*    pGrenadeTexture = NULL;
     s32         GrnCount    = 0;
     xcolor      GrnColor;
 
@@ -208,13 +310,13 @@ void hud_ammo::RenderNades( player* pPlayer, inven_item NadType )
     switch( NadType )
     {
         case INVEN_GRENADE_FRAG:
-            pGrnBitmap  = m_FragAmmoIcon.GetPointer();
+            pGrenadeTexture = m_FragAmmoIcon.GetPointer();
         break;
         case INVEN_GRENADE_JBEAN:
-            pGrnBitmap  = m_JBeanAmmoIcon.GetPointer();
+            pGrenadeTexture = m_JBeanAmmoIcon.GetPointer();
         break;
         case INVEN_GRENADE_JBEAN_ENHANCE:
-            pGrnBitmap  = m_JBeanXAmmoIcon.GetPointer();
+            pGrenadeTexture = m_JBeanXAmmoIcon.GetPointer();
         break;
 
         default:
@@ -225,13 +327,11 @@ void hud_ammo::RenderNades( player* pPlayer, inven_item NadType )
     GrnCount    = (s32)pPlayer->GetInventory2().GetAmount( NadType );
     GrnColor    = XCOLOR_WHITE;
 
-    if( pGrnBitmap == NULL )
+    if( pGrenadeTexture == NULL )
         return;
 
-    // BEGIN DRAW
-    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP );
-    draw_SetTexture( *pGrnBitmap );
-    vector2 WH( (f32)pGrnBitmap->GetWidth(), (f32)pGrnBitmap->GetHeight() );
+    const xbitmap& GrenadeBitmap = pGrenadeTexture->m_bitmap;
+    vector2 WH( (f32)GrenadeBitmap.GetWidth(), (f32)GrenadeBitmap.GetHeight() );
     vector3 Pos(0,0,0.01f);
     if( m_MultiPlayerHud )
     {
@@ -243,9 +343,12 @@ void hud_ammo::RenderNades( player* pPlayer, inven_item NadType )
         Pos.GetX() = m_XPos + HUD_AMMO_X_G;
         Pos.GetY() = m_YPos + HUD_AMMO_Y_G;
     }
-    draw_Sprite( Pos, WH, GrnColor );
-    draw_End();
-    // END DRAW
+    g_UIRenderer.DrawImage( *pGrenadeTexture,
+                            vector2( Pos.GetX(), Pos.GetY() ),
+                            WH,
+                            vector2( 0.0f, 0.0f ),
+                            vector2( 1.0f, 1.0f ),
+                            GrnColor );
 
     static xstring GrnCountString;
     GrnCountString = (const char *)xfs("%d", GrnCount);
@@ -268,93 +371,83 @@ void hud_ammo::RenderAmmoBar( player* pPlayer )
     (void)pPlayer;
     static xcolor AMMO_FRAME_COLOR = g_HudColor;
 
-    xbitmap* pBitmap = m_AmmoBoxBMP.GetPointer();
-    if( pBitmap == NULL )
+    texture* pFrameTexture = m_AmmoBoxBMP.GetPointer();
+    if( pFrameTexture == NULL )
         return;
 
-    // BEGIN DRAW
-    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
-
-    s32 BitmapWidth  = m_AmmoBoxBMP.GetPointer()->GetWidth();
-    s32 BitmapHeight = m_AmmoBoxBMP.GetPointer()->GetHeight();
+    const xbitmap& FrameBitmap = pFrameTexture->m_bitmap;
+    s32 BitmapWidth  = FrameBitmap.GetWidth();
+    s32 BitmapHeight = FrameBitmap.GetHeight();
 
     // Draw the ammo bar.
     vector2 WH( (f32)(BitmapWidth), (f32)(BitmapHeight) );
 
-    m_Dimensions = WH;
     vector3 Pos;
 
     Pos.GetX() = m_XPos+HUD_AMMO_X; 
     Pos.GetY() = m_YPos+HUD_AMMO_Y; 
    
-    draw_DisableBilinear();
+    const vector2 ScreenPos( Pos.GetX(), Pos.GetY() );
+    const vector2 UV0( 0.0f, 0.0f );
+    const vector2 UV1( 1.0f, 1.0f );
+
+    const auto DrawLayer = [&]( texture* pTexture, const xcolor& Color )
+    {
+        if( pTexture )
+            g_UIRenderer.DrawImage( *pTexture, ScreenPos, WH, UV0, UV1, Color,
+                                    0.0f, UI_BLEND_ALPHA, UI_SAMPLER_LINEAR_CLAMP );
+    };
 
     // Clip Box
-    draw_SetTexture( *m_AmmoBoxBMP_Clip.GetPointer() );
-    draw_Sprite( Pos, WH, AMMO_INSIDE_COLOR);
+    texture* pClipTexture = m_AmmoBoxBMP_Clip.GetPointer();
+    DrawLayer( pClipTexture, AMMO_INSIDE_COLOR );
     if( m_WarningClip )
     {
-        m_WarningClipALPHA += 16;
-        m_WarningClipALPHA = MIN(m_WarningClipALPHA,100);
         xcolor warning = xcolor( 200,50,0,m_WarningClipALPHA);
         if( m_CriticalClip )
         {
-            warning.A = hud_object::m_PulseAlpha;
-            warning.A = MIN( hud_object::m_PulseAlpha, 100 );
-            draw_Sprite( Pos, WH, warning );
+            warning.A = (u8)MIN( hud_object::m_PulseAlpha, 100.0f );
+            DrawLayer( pClipTexture, warning );
         }
         else
-            draw_Sprite( Pos, WH, warning );
+            DrawLayer( pClipTexture, warning );
     }    
     else
     {
-        m_WarningClipALPHA -= 16;
-        m_WarningClipALPHA = MAX(m_WarningClipALPHA,0);
         xcolor warning = xcolor( 200,50,0,m_WarningClipALPHA);
-        draw_Sprite( Pos, WH, warning );
+        DrawLayer( pClipTexture, warning );
     }
 
     // Box 2
-    draw_SetTexture( *m_AmmoBoxBMP_Resv.GetPointer() );
-    draw_Sprite( Pos, WH, AMMO_INSIDE_COLOR );
+    texture* pReserveTexture = m_AmmoBoxBMP_Resv.GetPointer();
+    DrawLayer( pReserveTexture, AMMO_INSIDE_COLOR );
     if( m_WarningResv )
     {
-        m_WarningResvALPHA += 16;
-        m_WarningResvALPHA = MIN(m_WarningResvALPHA,100);
         xcolor warning = xcolor( 200,50,0,m_WarningResvALPHA);
         if( m_CriticalResv )
         {
-            warning.A = hud_object::m_PulseAlpha;
-            warning.A = MIN( hud_object::m_PulseAlpha, 100 );
-            draw_Sprite( Pos, WH, warning );
+            warning.A = (u8)MIN( hud_object::m_PulseAlpha, 100.0f );
+            DrawLayer( pReserveTexture, warning );
         }
         else
-            draw_Sprite( Pos, WH, warning );
+            DrawLayer( pReserveTexture, warning );
     }    
     else
     {
-        m_WarningResvALPHA -= 16;
-        m_WarningResvALPHA = MAX(m_WarningResvALPHA,0);
         xcolor warning = xcolor( 200,50,0,m_WarningResvALPHA);
-        draw_Sprite( Pos, WH, warning );
+        DrawLayer( pReserveTexture, warning );
     }
 
     // Box 3
-    draw_SetTexture( *m_AmmoBoxBMP_Nads.GetPointer() );
+    texture* pGrenadesTexture = m_AmmoBoxBMP_Nads.GetPointer();
     if( m_WarningNads )
-        draw_Sprite( Pos, WH, xcolor(180,50,0,100) );
+        DrawLayer( pGrenadesTexture, xcolor(180,50,0,100) );
     else
-        draw_Sprite( Pos, WH, AMMO_INSIDE_COLOR );
+        DrawLayer( pGrenadesTexture, AMMO_INSIDE_COLOR );
 
 
     // Frame
-    draw_SetTexture( *m_AmmoBoxBMP.GetPointer() );
-    draw_Sprite( Pos, WH, AMMO_FRAME_COLOR );
-
-    draw_EnableBilinear();
-    draw_End();
-
-    // END DRAW
+    DrawLayer( pFrameTexture, AMMO_FRAME_COLOR );
 }
 
 //==============================================================================
@@ -387,79 +480,6 @@ void hud_ammo::RenderAmmoString( player* pPlayer )
     AmmoResv = m_CurrentWeaponAmmo - m_WeaponAmmoQAmounts[0];
     AmmoClip = m_WeaponAmmoQAmounts[0];
 
-    xbool WarningsOverRide = FALSE;
-
-    if( AmmoMax == ClipMax ) 
-        WarningsOverRide = TRUE;
-
-    // If this is the BBG then never render Red in only has 1 shot.
-    if( pPlayer->GetCurrentWeapon2() == INVEN_WEAPON_MESON_CANNON )
-        WarningsOverRide = TRUE;
-
-    // check clip warning and critical range.
-    f32 clip = (f32)ClipMax;
-    f32 resvMax = (f32)AmmoMax;
-
-    s32 percent     = (s32)(0.25f * clip);
-    s32 resvPercent = (s32)(0.25f * resvMax);
-
-    percent = MAX(4,percent);
-
-    if( AmmoClip < percent && m_WarningClip == FALSE )
-    {
-        g_AudioMgr.Play("Ammo_Low",TRUE);
-        m_WarningClip = TRUE;
-        m_WarningClipALPHA = 0;
-    }
-    else if( AmmoClip >= percent )
-    {
-        m_WarningClip = FALSE;     
-        m_CriticalClip = FALSE;
-    }
-
-    // check clip warning and criticl range.
-    if( AmmoResv == 0 && !WarningsOverRide)
-        m_CriticalResv = TRUE;    
-
-    // don't warn reserves for BBG or Meson cannon
-    if( WarningsOverRide )
-    {
-        m_CriticalResv = FALSE;
-        m_WarningResv = FALSE;        
-    }
-
-    if( AmmoResv < resvPercent && m_WarningResv == FALSE && !WarningsOverRide)
-    {
-        g_AudioMgr.Play("Ammo_Low",TRUE);
-        m_WarningResv = TRUE;
-        m_WarningResvALPHA = 0;
-    }
-    else if( AmmoResv >= resvPercent )
-    {
-        m_WarningResv= FALSE;     
-        m_CriticalResv= FALSE;
-    }
-
-    // Critical
-    if( AmmoClip == 0 && AmmoResv == 0 )
-    {
-        if( m_CriticalSoundID == -1 )
-            m_CriticalSoundID = g_AudioMgr.Play("Ammo_Out_Loop", TRUE );
-
-        m_CriticalClip = TRUE;
-    }
-    else
-    {
-        if (m_CriticalSoundID != -1)
-        {
-            g_AudioMgr.Release(m_CriticalSoundID,0.0f);
-            m_CriticalSoundID = -1;
-        }
-
-        m_CriticalClip = FALSE;
-    }
-
-    
     //
     // Render the ammo counts.
     //
@@ -471,23 +491,25 @@ void hud_ammo::RenderAmmoString( player* pPlayer )
         AmmoMagazineString = (const char *)xfs( "%d", AmmoClip );
 
         // Current loaded ammo.
-        m_AmmoRect.l = (s32)m_XPos - m_LeftMag;
-        m_AmmoRect.t = (s32)m_YPos - m_TopMag;
-        m_AmmoRect.SetHeight( (s32)   50 );
-        m_AmmoRect.SetWidth ( (s32)   20 ); 
+        irect MagazineRect;
+        MagazineRect.l = (s32)m_XPos - m_LeftMag;
+        MagazineRect.t = (s32)m_YPos - m_TopMag;
+        MagazineRect.SetHeight( 50 );
+        MagazineRect.SetWidth ( 20 );
 
         xcolor cAmmoColor = g_HudColor;     
         if( m_MultiPlayerHud )
-            RenderLine( (const xwchar*)(xwstring((const char*)AmmoMagazineString)), m_AmmoRect, 255, cAmmoColor, 1, ui_font::h_right|ui_font::v_top, FALSE );
+            RenderLine( (const xwchar*)(xwstring((const char*)AmmoMagazineString)), MagazineRect, 255, cAmmoColor, 1, ui_font::h_right|ui_font::v_top, FALSE );
         else
-            RenderLine( (const xwchar*)(xwstring((const char*)AmmoMagazineString)), m_AmmoRect, 255, cAmmoColor, 2, ui_font::h_right|ui_font::v_top, FALSE );
+            RenderLine( (const xwchar*)(xwstring((const char*)AmmoMagazineString)), MagazineRect, 255, cAmmoColor, 2, ui_font::h_right|ui_font::v_top, FALSE );
 
         // Ammo in reserve.
-        m_AmmoRect.l = (s32)m_XPos - m_LeftReserve;
-        m_AmmoRect.t = (s32)m_YPos - m_TopReserve;
-        m_AmmoRect.SetHeight( (s32)   50 );
-        m_AmmoRect.SetWidth ( (s32)   20 );
-        RenderLine( (const xwchar*)(xwstring((const char*)AmmoReserveString)), m_AmmoRect, 255, g_HudColor, 1, ui_font::h_right|ui_font::v_top, FALSE );
+        irect ReserveRect;
+        ReserveRect.l = (s32)m_XPos - m_LeftReserve;
+        ReserveRect.t = (s32)m_YPos - m_TopReserve;
+        ReserveRect.SetHeight( 50 );
+        ReserveRect.SetWidth ( 20 );
+        RenderLine( (const xwchar*)(xwstring((const char*)AmmoReserveString)), ReserveRect, 255, g_HudColor, 1, ui_font::h_right|ui_font::v_top, FALSE );
     }
 #endif
 }

@@ -1,26 +1,20 @@
 //==============================================================================
 //
-//  hud_Reticle.cpp
+//  hud_Sniper.cpp
 //
 //  Copyright (c) 2002-2004 Inevitable Entertainment Inc.  All rights reserved.
 //
 //==============================================================================
 
-//==============================================================================
-// INCLUDES
-//==============================================================================
-
+#include "Render/PrimitiveDebug.hpp"
 #include "hud_Sniper.hpp"
 #include "WeaponSniper.hpp"
-#include "Ui\ui_manager.hpp"
-#include "Ui\ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_renderer.hpp"
 
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-
-#if defined(TARGET_PS2)
-#include "Entropy\PS2\ps2_misc.hpp"
-#endif
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 
 //==============================================================================
 // STORAGE
@@ -29,703 +23,456 @@
 vector3 s_ZoomPos           ( 365.0f, 345.0f, 0.0f );
 vector3 s_DistancePos       ( 230.0f, 100.0f, 0.0f );
 f32     s_ZoomWidth         = 20.0f;
-f32     s_ZoomHeight        = 20.0f;  
+f32     s_ZoomHeight        = 20.0f;
 xcolor  s_ZoomColor         ( 49, 255, 49, 255 );
-xcolor  g_MipColor          (64,64,64,64);
 s32     s_TrackerCount      = 5;
-
-f32     g_MipParam1         = 8.0f;
-f32     g_MipParam2         = 100.0f;
-
-
-// aharp HACK These colors appears in hud_Ammo as well.
-xcolor  s_ShadowColor       ( 49,  49,  49, 255 );
-s32     s_ShadowOffsetX     = 2;
-s32     s_ShadowOffsetY     = 2;
-
-s32     g_nFilters          = 3;
-f32     g_MipOffset         = 4.0f;
-s32     g_MipFn             = 0;
 
 f32     g_ZoomDistance      = 10000.0f;
 
-#define ALPHA_CHANNEL_MASK      0x00FFFFFF
+static constexpr f32 s_ScopeScanLineRadiusScale = 116.0f / 128.0f;
+
+xcolor  s_ShadowColor       ( 49, 49, 49, 255 );
+s32     s_ShadowOffsetX     = 2;
+s32     s_ShadowOffsetY     = 2;
 
 xcolor hud_sniper::m_SniperHudColor;
 xcolor hud_sniper::m_SniperScanLineColor;
 xcolor hud_sniper::m_SniperTrackerLineColor;
 xcolor hud_sniper::m_SniperZoomTrackerColor;
 
-rhandle<xbitmap> hud_sniper::m_SniperHud;
-rhandle<xbitmap> hud_sniper::m_SniperStencilHud;
-rhandle<xbitmap> hud_sniper::m_SniperTrackerLine;
-rhandle<xbitmap> hud_sniper::m_SniperScanLine;
-rhandle<xbitmap> hud_sniper::m_SniperZoomPitchTracker;
+rhandle<texture> hud_sniper::m_SniperHud;
+rhandle<texture> hud_sniper::m_SniperStencilHud;
+rhandle<texture> hud_sniper::m_SniperTrackerLine;
+rhandle<texture> hud_sniper::m_SniperScanLine;
+rhandle<texture> hud_sniper::m_SniperZoomPitchTracker;
 
 //==============================================================================
-// FUNCTIONS
-//==============================================================================
 
-void hud_sniper::OnRender( player* pPlayer )
+static void DrawMirroredScope( const texture& Texture,
+                               const vector2& Center,
+                               const vector2& QuarterSize,
+                               const xcolor& Color,
+                               ui_blend_mode Blend )
 {
-    // Are we in the sniper zoom mode?
-    // Does the current player have the sniper rifle with the zoom mode.
-    if( !pPlayer->RenderSniperZoom() )
-    {
-        return;
-    }
-
-    // update distance meter
-    {
-        f32 ZoomDistance;
-        radian Pitch;
-        radian Yaw;
-
-        // set up positional information
-        const vector3 ViewPos = pPlayer->GetEyesPosition();
-        pPlayer->GetEyesPitchYaw(Pitch, Yaw);
-        vector3 Dest( radian3( Pitch, Yaw, 0.0f ) );
-        Dest *= g_ZoomDistance;
-        vector3 EndPos = ViewPos + Dest;
-
-        // set up collision info (NOTE: you can not use low poly here or it won't hit characters).
-        g_CollisionMgr.AddToIgnoreList( pPlayer->GetGuid() );
-        g_CollisionMgr.RaySetup( pPlayer->GetGuid(), ViewPos, EndPos );
-        g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, object::ATTR_COLLIDABLE, object::ATTR_COLLISION_PERMEABLE);
-
-        if( g_CollisionMgr.m_nCollisions > 0 )
-        {
-            ZoomDistance = g_CollisionMgr.m_Collisions[0].T * g_ZoomDistance;
-            ZoomDistance = ZoomDistance/100.0f; // convert to meters
-            xstring DistanceString( xfs("> %05.1f <", ZoomDistance) );
-            m_WeaponZoomDistance = DistanceString;
-        }
-        else
-        {
-            xstring DistanceString( xfs("> >%05.1f <", g_ZoomDistance/100.0f) );
-            m_WeaponZoomDistance = DistanceString;
-        }
-#ifndef X_RETAIL
-    #ifdef ksaffel
-            draw_Line( ViewPos, g_CollisionMgr.m_Collisions[0].Point,XCOLOR_YELLOW );
-            draw_Sphere( g_CollisionMgr.m_Collisions[0].Point, 20.0f );
-    #endif
-#endif
-    }
-    
-    new_weapon* pWeapon = pPlayer->GetCurrentWeaponPtr();
-    ASSERT( pWeapon );
-    weapon_sniper_rifle* pSniper = (weapon_sniper_rifle*)pWeapon;
-    s32 WeaponZoomLevel = (s32)pSniper->GetZoomLevel();
-
-    xstring ZoomString( xfs("%2dx", WeaponZoomLevel) );
-    m_WeaponZoomLevel = ZoomString;
-
-    vector3 ScreenCenter( (f32)m_ViewDimensions.Min.X + m_ViewDimensions.GetWidth()*0.5f, 
-                          (f32)m_ViewDimensions.Min.Y + m_ViewDimensions.GetHeight()*0.5f, 0.0f );
-    vector3 Pos( ScreenCenter );
-    (void)Pos;
-
-
-    // XBOX SNIPER BACKGROUND *************************************************
-
-#ifdef TARGET_XBOX
-
-    D3DVIEWPORT8 Vd;
-    D3DVIEWPORT8 Vs;
-
-    xbitmap* pStencilBmp = m_SniperStencilHud.GetPointer();
-    //
-    // Do the blurring, scan lines, and green coloring in here.
-    //
-    if( pStencilBmp )
-    {   //
-        // CLEAR THE ZBUFFER AND THE alpha channel simultaneously
-        //
-        irect iRect;
-        iRect.l = (s32)m_ViewDimensions.Min.X;
-        iRect.r = (s32)m_ViewDimensions.Max.X;
-        iRect.t = (s32)m_ViewDimensions.Min.Y;
-        iRect.b = (s32)m_ViewDimensions.Min.Y;
-
-        f32 NearZ, FarZ;
-        view rView;
-
-        rView.GetZLimits( NearZ, FarZ );
-
-        rect Rect;
-        view& View = pPlayer->GetView();
-        View.GetViewport( Rect );
-
-        //
-        // Blur the outside
-        //
-        extern void xbox_ApplyScopeBlur( xbitmap& BMP,D3DVIEWPORT8& Vd,D3DVIEWPORT8& Vs );
-        extern void xbox_SetBackWithZ  ( void );
-
-        g_RenderState.Set( D3DRS_STENCILPASS,D3DSTENCILOP_INCRSAT );
-        g_RenderState.Set( D3DRS_STENCILZFAIL,D3DSTENCILOP_KEEP );
-        g_RenderState.Set( D3DRS_STENCILFUNC,D3DCMP_ALWAYS );
-        g_RenderState.Set( D3DRS_STENCILENABLE, TRUE );
-
-        xbox_SetBackWithZ();
-        eng_SetViewport( View );
-
-        xbox_ApplyScopeBlur( *pStencilBmp,Vd,Vs );
-
-        g_RenderState.Set( D3DRS_STENCILZFAIL,D3DSTENCILOP_KEEP );
-        g_RenderState.Set( D3DRS_STENCILPASS,D3DSTENCILOP_KEEP );
-        g_RenderState.Set( D3DRS_STENCILFUNC,D3DCMP_NOTEQUAL );
-        g_RenderState.Set( D3DRS_STENCILREF,0 );
-        g_Texture.Clear( 0 );
-
-        // --------------------------------------------------------------------
-        //
-        // Draw the stencil to punch out the far the z and fill the alpha.
-        //
-        draw_Begin( DRAW_SPRITES,DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_UV_CLAMP|DRAW_NO_ZBUFFER|DRAW_XBOX_NO_BEGIN );
-
-            g_RenderState.Set( D3DRS_BLENDCOLOR, D3DCOLOR_RGBA( 0,0,0,32 ));
-            g_RenderState.Set( D3DRS_DESTBLEND,D3DBLEND_INVCONSTANTALPHA );
-            g_RenderState.Set( D3DRS_SRCBLEND,D3DBLEND_CONSTANTALPHA );
-            g_RenderState.Set( D3DRS_BLENDOP,D3DBLENDOP_ADD );
-
-            f32 Gx = f32(g_PhysW-640)*0.5f;
-
-        draw_Begin( DRAW_SPRITES,DRAW_KEEP_STATES );
-        {
-            rect Rect( f32(Vd.X)+Gx,
-                       f32(Vd.Y),
-                       f32(Vd.X)+f32(Vd.Width)+Gx,
-                       f32(Vd.Y)+f32(Vd.Height) );
-
-            // Just draw a big quad over the screen letting the stencil
-            // buffer mask out the gun sight.
-
-            draw_Color( XCOLOR_WHITE );
-            draw_Vertex( Rect.Min.X  , Rect.Min.Y  , 0.0f );
-            draw_Vertex( Rect.Min.X  , Rect.Max.Y-1, 0.0f );
-            draw_Vertex( Rect.Min.X  , Rect.Max.Y-1, 0.0f );
-            draw_Vertex( Rect.Max.X-1, Rect.Max.Y-1, 0.0f );
-            draw_Vertex( Rect.Max.X-1, Rect.Max.Y-1, 0.0f );
-            draw_Vertex( Rect.Max.X-1, Rect.Min.Y  , 0.0f );
-            draw_Vertex( Rect.Max.X-1, Rect.Min.Y  , 0.0f );
-            draw_Vertex( Rect.Min.X  , Rect.Min.Y  , 0.0f );
-        }
-        draw_End();
-
-        // --------------------------------------------------------------------
-        //
-        // Render the dark green part
-        //
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER );
-        draw_DisableBilinear();
-        //
-        // Render the scan lines.
-        //
-        xbitmap* pScanLine = m_SniperScanLine.GetPointer();
-        draw_SetTexture( *pScanLine );
-    
-        s32 ViewMinX = (s32)Vd.X;
-        s32 ViewMinY = (s32)Vd.Y;
-
-        vector2 ScanLineWH( (f32)pScanLine->GetWidth(), (f32)pScanLine->GetHeight() );
-        ScanLineWH.X = f32(Vd.Width);
-
-        vector3 ScanLinePos( 0.0f, 0.0f,( FarZ/NearZ)/2.0f );
-        for( s32 y = ViewMinY; y < (m_ViewDimensions.GetHeight()+ViewMinY); y += (s32)ScanLineWH.Y )
-        {
-            ScanLinePos.GetX() = (f32)ViewMinX;
-            ScanLinePos.GetY() = (f32)y;
-
-            draw_Sprite( ScanLinePos, ScanLineWH, m_SniperScanLineColor );
-        }
-
-        draw_End(); 
-        draw_EnableBilinear();
-    }
-
-    g_RenderState.Set( D3DRS_STENCILENABLE, FALSE );
-
-#endif
-
-    // PS2 SNIPER BACKGROUND **************************************************
-
-#ifdef TARGET_PS2
-    
-    xbitmap* pStencilBmp = m_SniperStencilHud.GetPointer();
-    
-    //
-    // Do the blurring, scan lines, and green coloring in here.
-    //
-    if( pStencilBmp )
-    {
-        draw_Begin( DRAW_QUADS, DRAW_USE_ALPHA|DRAW_2D );
-
-        //
-        // CLEAR THE ZBUFFER AND THE alpha channel simultaneously
-        //
-        irect iRect;
-        iRect.l = (s32)m_ViewDimensions.Min.X;
-        iRect.r = (s32)m_ViewDimensions.Max.X;
-        iRect.t = (s32)m_ViewDimensions.Min.Y;
-        iRect.b = (s32)m_ViewDimensions.Min.Y;
-        //draw_ClearZBuffer( iRect );
-
-        draw_Color( xcolor(255,255,255,0) );
-            
-        gsreg_Begin( 3 );
-
-            gsreg_SetZBufferUpdate(TRUE);
-            gsreg_SetFBMASK( ALPHA_CHANNEL_MASK );
-            gsreg_SetAlphaAndZBufferTests(  FALSE, ALPHA_TEST_GEQUAL, 1, ALPHA_TEST_FAIL_KEEP,
-                                            FALSE, DEST_ALPHA_TEST_1, TRUE, ZBUFFER_TEST_ALWAYS );
-        gsreg_End();
-
-            f32 NearZ, FarZ;
-            view rView;
-
-            rView.GetZLimits( NearZ, FarZ );
-
-            rect Rect( m_ViewDimensions );
-            Rect.Min.X = 0.0f;
-            Rect.Max.X = 512.0f;
-            draw_Vertex( Rect.Min.X, Rect.Min.Y, NearZ+10.0f );
-            draw_Vertex( Rect.Min.X, Rect.Max.Y, NearZ+10.0f );
-            draw_Vertex( Rect.Max.X, Rect.Max.Y, NearZ+10.0f );
-            draw_Vertex( Rect.Max.X, Rect.Min.Y, NearZ+10.0f );
-
-        draw_End();
-
-        //
-        // Draw the stencil to punch out the far the z and fill the alpha.
-        //
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_UV_CLAMP| DRAW_2D_KEEP_Z );
-
-        gsreg_Begin( 2 );
-            gsreg_SetFBMASK( ALPHA_CHANNEL_MASK );
-                gsreg_SetAlphaAndZBufferTests(  TRUE, ALPHA_TEST_GEQUAL, 64, ALPHA_TEST_FAIL_KEEP,
-                                                FALSE, DEST_ALPHA_TEST_1, TRUE, ZBUFFER_TEST_ALWAYS );
-            
-        gsreg_End();
-
-            // Get the scale of the bitmap relative to how long and the wide the screen is.
-            f32 ScaleX  = ((pStencilBmp->GetWidth()*2.0f) < m_ViewDimensions.GetWidth() ) ? 
-                            1.0f : (m_ViewDimensions.GetWidth()/(pStencilBmp->GetWidth()*2.0f));
-
-            f32 ScaleY  = ((pStencilBmp->GetHeight()*2.0f) < m_ViewDimensions.GetHeight() ) ? 
-                            1.0f : (m_ViewDimensions.GetHeight()/(pStencilBmp->GetHeight()*2.0f));
-    
-            f32 Scale   = MIN( ScaleX, ScaleY );
-
-            vector2 WH( (f32)m_ViewDimensions.Min.X + m_ViewDimensions.GetWidth()*0.5f, 
-                        (f32)m_ViewDimensions.Min.Y + m_ViewDimensions.GetHeight()*0.5f );
-
-            vector3 ScreenCenter( (f32)m_ViewDimensions.Min.X + m_ViewDimensions.GetWidth()*0.5f, 
-                                    (f32)m_ViewDimensions.Min.Y + m_ViewDimensions.GetHeight()*0.5f, 
-                                    0.0f );
-
-            vector3 Pos( ScreenCenter );
-            Pos.GetZ() = FarZ;
-
-            // Get the UV offsets.
-            f32 dx = WH.X/(pStencilBmp->GetWidth()*Scale);
-            f32 dy = WH.Y/(pStencilBmp->GetHeight()*Scale);
-
-            vector2 UV0(1.0f - dx, 1.0f - dy );
-            vector2 UV1(1.0f, 1.0f);
-
-            draw_SetTexture( *pStencilBmp );
-
-            // Top Left.
-            Pos.GetX() -= WH.X;
-            Pos.GetY() -= WH.Y;
-            draw_SpriteUV( Pos, WH, UV0, UV1, XCOLOR_WHITE );
-
-            // Bottom Left.
-            Pos.GetX() = ScreenCenter.GetX() - WH.X;
-            Pos.GetY() = ScreenCenter.GetY();
-            UV0.Y = 1.0f;
-            UV1.Y = 1.0f - dy;  
-            draw_SpriteUV( Pos, WH, UV0, UV1, XCOLOR_WHITE );
-
-            // Bottom Right.
-            WH.X  = 512.0f - ScreenCenter.GetX();
-            dx    = WH.X/(pStencilBmp->GetWidth()*Scale);
-
-            Pos.GetX() = ScreenCenter.GetX();
-            Pos.GetY() = ScreenCenter.GetY();
-            UV0.X = 1.0f;
-            UV1.X = 1.0f - dx;
-
-            draw_SpriteUV( Pos, WH, UV0, UV1, XCOLOR_WHITE );
-
-            // Top Right.
-            Pos.GetX() = ScreenCenter.GetX();
-            Pos.GetY() = ScreenCenter.GetY() - WH.Y;
-            UV0.Y = 1.0f - dy;
-            UV1.Y = 1.0f;
-            draw_SpriteUV( Pos, WH, UV0, UV1, XCOLOR_WHITE );
-
-        draw_End();
-
-        
-        //
-        // Blur the outside
-        //
-        render::BeginPostEffects();
-        render::MipFilter( g_nFilters, g_MipOffset, (render::post_falloff_fn)g_MipFn, g_MipColor, g_MipParam1, g_MipParam2, 2 );
-        render::EndPostEffects();
-
-
-        //
-        // Render the dark green part
-        //
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_2D_KEEP_Z );
-        //draw_Color( g_SniperStencilHudColor );
-        draw_DisableBilinear();
-    
-        gsreg_Begin( 2 );
-
-            gsreg_SetFBMASK( 0 );
-            gsreg_SetAlphaAndZBufferTests(  FALSE, ALPHA_TEST_GEQUAL, 1, ALPHA_TEST_FAIL_KEEP,
-                                            FALSE, DEST_ALPHA_TEST_1, TRUE, ZBUFFER_TEST_GEQUAL );
-        gsreg_End();
-
-
-        //
-        // Render the scan lines.
-        //
-        xbitmap* pScanLine = m_SniperScanLine.GetPointer();
-        draw_SetTexture( *pScanLine );
-    
-        s32 ViewMinX = (s32)m_ViewDimensions.Min.X;
-        s32 ViewMinY = (s32)m_ViewDimensions.Min.Y;
-
-        vector2 ScanLineWH( pScanLine->GetWidth(), pScanLine->GetHeight() );
-
-        vector3 ScanLinePos( 0.0f, 0.0f,( FarZ/NearZ)/2.0f );
-        for( s32 x = ViewMinX; x < (m_ViewDimensions.GetWidth()+ViewMinX); x += (s32)ScanLineWH.X)
-        {
-            for( s32 y = ViewMinY; y < (m_ViewDimensions.GetHeight()+ViewMinY); y += (s32)ScanLineWH.Y )
-            {
-                ScanLinePos.GetX() = (f32)x;
-                ScanLinePos.GetY() = (f32)y;
-                draw_Sprite( ScanLinePos, ScanLineWH, m_SniperScanLineColor );
-            }
-        }
-        
-        draw_End(); 
-        draw_EnableBilinear();
-    }
-#endif
-
-    //
-    // Draw the zoom scope bitmap.
-    //
-    {
-        xbitmap* pMainBmp       = m_SniperHud.GetPointer();
-        xbitmap* pStencilBmp    = m_SniperStencilHud.GetPointer();
-
-        if( !pMainBmp || !pStencilBmp )
-            return;
-
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP|DRAW_BLEND_ADD );
-
-        f32 ScaleX  = ((pMainBmp->GetWidth()*2.0f) < m_ViewDimensions.GetWidth() ) ? 
-                      1.0f : (m_ViewDimensions.GetWidth()/(pMainBmp->GetWidth()*2.0f));
-
-        f32 ScaleY  = ((pMainBmp->GetHeight()*2.0f) < m_ViewDimensions.GetHeight() ) ? 
-                      1.0f : (m_ViewDimensions.GetHeight()/(pMainBmp->GetHeight()*2.0f));
-        
-        f32 Scale   = MIN( ScaleX, ScaleY );
-
-        vector2 WH( pMainBmp->GetWidth () * Scale, 
-                    pMainBmp->GetHeight() * Scale);
-
-        Pos = ScreenCenter;
-
-        vector2 UV0(0.0f, 0.0f );
-        vector2 UV1(1.0f, 1.0f );
-
-        draw_SetTexture( *pMainBmp );
-    
-        // Top Left.
-        Pos.GetX() -= WH.X;
-        Pos.GetY() -= WH.Y;
-        draw_SpriteUV( Pos, WH, UV0, UV1, m_SniperHudColor );
-
-        // Bottom Left.
-        Pos.GetX() = ScreenCenter.GetX() - WH.X;
-        Pos.GetY() = ScreenCenter.GetY();
-        UV0.Y = 1.0f;
-        UV1.Y = 0.0f;  
-        draw_SpriteUV( Pos, WH, UV0, UV1, m_SniperHudColor );
-
-        // Bottom Right.
-        Pos.GetX() = ScreenCenter.GetX();
-        Pos.GetY() = ScreenCenter.GetY();
-        UV0.X = 1.0f;
-        UV1.X = 0.0f;
-        draw_SpriteUV( Pos, WH, UV0, UV1, m_SniperHudColor );
-
-        // Top Right.
-        Pos.GetX() = ScreenCenter.GetX();
-        Pos.GetY() = ScreenCenter.GetY() - WH.Y;
-        UV0.Y = 0.0f;
-        UV1.Y = 1.0f;
-        draw_SpriteUV( Pos, WH, UV0, UV1, m_SniperHudColor );
-    
-        xbitmap* pTrackerLines = m_SniperTrackerLine.GetPointer();
-        
-        //
-        // Draw the tracker lines on the side of the zoom bitmap.
-        //
-        if( pTrackerLines )
-        {
-            vector2 TrackerWH( (f32)pTrackerLines->GetWidth(), (f32)pTrackerLines->GetHeight() );
-
-            Pos.GetX() = ScreenCenter.GetX() - (WH.X + TrackerWH.X);
-            Pos.GetY() = ScreenCenter.GetY() - TrackerWH.Y;
-
-            vector3 tPos( Pos );
-
-            draw_SetTexture( *pTrackerLines );
-
-            // Draw the left side first.
-            draw_Sprite( tPos, TrackerWH, m_SniperTrackerLineColor );
-            s32 i = 1;
-            for( i = 1; i < s_TrackerCount; i++ )
-            {    
-                tPos.GetY() = Pos.GetY() + (f32)i*TrackerWH.Y;
-
-                draw_SpriteUV( tPos, TrackerWH, vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ), m_SniperTrackerLineColor );
-
-                tPos.GetY() = Pos.GetY() - (f32)i*TrackerWH.Y;
-                draw_SpriteUV( tPos, TrackerWH, vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ), m_SniperTrackerLineColor );
-            }
-
-            tPos.GetY() = Pos.GetY() + (f32)(i-1)*TrackerWH.Y + TrackerWH.Y*0.5f;
-
-            vector2 TempWH( TrackerWH );
-            TempWH.Y = TempWH.Y*0.5f;
-            draw_SpriteUV( tPos, TempWH, vector2( 0.0f, 0.0f ), vector2( 1.0f, 0.f), m_SniperTrackerLineColor );
-
-            // Draw the right side.
-            tPos.GetX() = ScreenCenter.GetX() + WH.X;
-            tPos.GetY() = ScreenCenter.GetY() - TrackerWH.Y;
-            draw_SpriteUV( tPos, TrackerWH, vector2( 1.0f, 0.0f ), vector2( 0.0f, 1.0f ),m_SniperTrackerLineColor );
-            for( i = 1; i < s_TrackerCount; i++ )
-            {    
-                tPos.GetY() = Pos.GetY() + (f32)i*TrackerWH.Y;
-
-                draw_SpriteUV( tPos, TrackerWH, vector2( 1.0f, 0.0f ), vector2( 0.0f, 1.0f ), m_SniperTrackerLineColor );
-
-                tPos.GetY() = Pos.GetY() - (f32)i*TrackerWH.Y;
-                draw_SpriteUV( tPos, TrackerWH, vector2( 1.0f, 0.0f ), vector2( 0.0f, 1.0f ), m_SniperTrackerLineColor );
-            }
-
-            tPos.GetY() = Pos.GetY() + (f32)(i-1)*TrackerWH.Y + TrackerWH.Y*0.5f;
-
-            draw_SpriteUV( tPos, TempWH, vector2( 1.0f, 0.0f ), vector2( 0.0f, 0.5f ), m_SniperTrackerLineColor );
-            
-
-        }
-        
-        //
-        // Draw the tracker arrow.
-        //
-        xbitmap* pPitchTracker = m_SniperZoomPitchTracker.GetPointer();
-        if( pPitchTracker && pTrackerLines )
-        {
-            
-            vector2 PitchTrackerWH( (f32)pPitchTracker->GetWidth(), (f32)pPitchTracker->GetHeight() );
-            vector2 TrackerWH( (f32)pTrackerLines->GetWidth(), (f32)pTrackerLines->GetHeight() );
-
-            draw_SetTexture( *pPitchTracker );
-
-            f32 Pitch,Yaw;
-            pPlayer->GetEyesPitchYaw( Pitch, Yaw );
-            
-            f32 YDelta = (f32)(s_TrackerCount-1)*TrackerWH.Y  * (Pitch/(PI/2.0f));
-
-            // Draw the left side first.
-            Pos.GetX() = ScreenCenter.GetX() - (WH.X + PitchTrackerWH.X + TrackerWH.X);
-            Pos.GetY() = (ScreenCenter.GetY()+YDelta) - (PitchTrackerWH.Y*0.5f);
-           
-            draw_Sprite( Pos, PitchTrackerWH, m_SniperZoomTrackerColor );
-
-            Pos.GetX() = ScreenCenter.GetX() + WH.X + TrackerWH.X;
-            Pos.GetY() = (ScreenCenter.GetY()+YDelta) - (PitchTrackerWH.Y*0.5f);
-            draw_SpriteUV( Pos, PitchTrackerWH, vector2( 1.0f, 0.0f ), vector2( 0.0f, 1.0f ),m_SniperZoomTrackerColor );
-        }
-        
-        draw_End();
-    }
-
-    //
-    // Draw the text.
-    //
-#ifndef X_EDITOR
-    {
-        irect ZoomRect;
-
-        // Get the position of the text in the view.
-        vector3 SniperZoomTextPos( s_ZoomPos );
-        SniperZoomTextPos.GetX() = (f32)((s32)( (SniperZoomTextPos.GetX()/512.0f)*(f32)m_ViewDimensions.GetWidth() ));
-        SniperZoomTextPos.GetY() = (f32)((s32)( (SniperZoomTextPos.GetY()/448.0f)*(f32)m_ViewDimensions.GetHeight() ));
-
-        ZoomRect.l = (s32)((SniperZoomTextPos.GetX() - s_ZoomWidth)  + m_ViewDimensions.Min.X);
-        ZoomRect.r = (s32)((SniperZoomTextPos.GetX() + s_ZoomWidth)  + m_ViewDimensions.Min.X);;
-        ZoomRect.t = (s32)((SniperZoomTextPos.GetY() - s_ZoomHeight) + m_ViewDimensions.Min.Y);;
-        ZoomRect.b = (s32)((SniperZoomTextPos.GetY() + s_ZoomHeight) + m_ViewDimensions.Min.Y);;
-
-        // Draw the shadow.
-        ZoomRect.Translate( s_ShadowOffsetX, s_ShadowOffsetY );
-        g_UiMgr->RenderText( 1, ZoomRect, ui_font::h_left|ui_font::v_top, s_ShadowColor, m_WeaponZoomLevel, TRUE, TRUE );
-
-        // Now the real deal.
-        ZoomRect.Translate( -s_ShadowOffsetX, -s_ShadowOffsetY );
-        g_UiMgr->RenderText( 1, ZoomRect, ui_font::h_left|ui_font::v_top, s_ZoomColor, m_WeaponZoomLevel, TRUE, TRUE );
-    }
-
-    // draw distance meter
-    {
-        irect ZoomRect;
-
-        // Get the position of the distance meter text in the view.
-        vector3 SniperZoomDistanceTextPos( s_DistancePos );
-
-        ui_font *pFont = g_UiMgr->GetFont("small");
-        s32 count = m_WeaponZoomDistance.GetLength();
-        s32 width = pFont->TextWidth(m_WeaponZoomDistance, count);
-        s32 height = pFont->TextHeight(m_WeaponZoomDistance, count);
-
-        rect screenRect;
-        
-        // set screenRect with actual values of active view
-        eng_GetView()->GetViewport(screenRect);
-
-        SniperZoomDistanceTextPos.GetX() = (f32)((screenRect.GetWidth()/2.0f) - width/2.0f);
-        SniperZoomDistanceTextPos.GetY() = 
-            (f32)((s32)( (SniperZoomDistanceTextPos.GetY()/screenRect.GetHeight())*(f32)m_ViewDimensions.GetHeight() ));
-
-        ZoomRect.l = (s32)SniperZoomDistanceTextPos.GetX();
-        ZoomRect.r = (s32)(SniperZoomDistanceTextPos.GetX() + width);
-        ZoomRect.t = (s32)(SniperZoomDistanceTextPos.GetY() - height);
-        ZoomRect.b = (s32)(SniperZoomDistanceTextPos.GetY() + height);
-
-        // Draw the shadow.
-        ZoomRect.Translate( s_ShadowOffsetX, s_ShadowOffsetY );
-        g_UiMgr->RenderText( 1, ZoomRect, ui_font::h_left|ui_font::v_top, s_ShadowColor, m_WeaponZoomDistance, TRUE, TRUE );
-
-        // Now the real deal.
-        ZoomRect.Translate( -s_ShadowOffsetX, -s_ShadowOffsetY );
-        g_UiMgr->RenderText( 1, ZoomRect, ui_font::h_left|ui_font::v_top, s_ZoomColor, m_WeaponZoomDistance, TRUE, TRUE );
-        
-    }
-
-#endif
-
+    const vector2 TopLeft( Center.X - QuarterSize.X, Center.Y - QuarterSize.Y );
+    const vector2 BottomLeft( Center.X - QuarterSize.X, Center.Y );
+    const vector2 BottomRight( Center.X, Center.Y );
+    const vector2 TopRight( Center.X, Center.Y - QuarterSize.Y );
+
+    g_UIRenderer.DrawImage( Texture, TopLeft, QuarterSize,
+                            vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
+                            Color, 0.0f, Blend, UI_SAMPLER_LINEAR_CLAMP );
+    g_UIRenderer.DrawImage( Texture, BottomLeft, QuarterSize,
+                            vector2( 0.0f, 1.0f ), vector2( 1.0f, 0.0f ),
+                            Color, 0.0f, Blend, UI_SAMPLER_LINEAR_CLAMP );
+    g_UIRenderer.DrawImage( Texture, BottomRight, QuarterSize,
+                            vector2( 1.0f, 1.0f ), vector2( 0.0f, 0.0f ),
+                            Color, 0.0f, Blend, UI_SAMPLER_LINEAR_CLAMP );
+    g_UIRenderer.DrawImage( Texture, TopRight, QuarterSize,
+                            vector2( 1.0f, 0.0f ), vector2( 0.0f, 1.0f ),
+                             Color, 0.0f, Blend, UI_SAMPLER_LINEAR_CLAMP );
 }
 
 //==============================================================================
 
-void hud_sniper::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
+static void DrawScopeScanLines( texture const& Texture,
+                                rect const& ViewBounds,
+                                vector2 const& Center,
+                                vector2 const& ScopeQuarterSize,
+                                xcolor const& Color )
+{
+    xbitmap const& Bitmap = Texture.m_bitmap;
+    f32 const TextureWidth = (f32)Bitmap.GetWidth();
+    f32 const TextureHeight = (f32)Bitmap.GetHeight();
+    if( (TextureWidth <= 0.0f) ||
+        (TextureHeight <= 0.0f) ||
+        (ScopeQuarterSize.X <= 0.0f) ||
+        (ScopeQuarterSize.Y <= 0.0f) )
+    {
+        return;
+    }
+
+    constexpr s32 PerimeterSectionCount = 8;
+    constexpr s32 QuadsPerSection = 4;
+    constexpr s32 QuadCount = PerimeterSectionCount * QuadsPerSection;
+    ui_vertex Vertices[QuadCount * 4];
+    u32 Indices[QuadCount * 6];
+    s32 VertexCount = 0;
+    s32 IndexCount = 0;
+
+    auto const GetUV = [&]( vector2 const& Position )
+    {
+        return vector2( (Position.X - ViewBounds.Min.X) / TextureWidth,
+                        (Position.Y - ViewBounds.Min.Y) / TextureHeight );
+    };
+
+    auto const AddQuad = [&]( vector2 const& P0,
+                              vector2 const& P1,
+                              vector2 const& P2,
+                              vector2 const& P3 )
+    {
+        u32 const BaseVertex = (u32)VertexCount;
+        Vertices[VertexCount++] = ui_vertex( P0, GetUV( P0 ), Color );
+        Vertices[VertexCount++] = ui_vertex( P1, GetUV( P1 ), Color );
+        Vertices[VertexCount++] = ui_vertex( P2, GetUV( P2 ), Color );
+        Vertices[VertexCount++] = ui_vertex( P3, GetUV( P3 ), Color );
+
+        Indices[IndexCount++] = BaseVertex + 0;
+        Indices[IndexCount++] = BaseVertex + 1;
+        Indices[IndexCount++] = BaseVertex + 2;
+        Indices[IndexCount++] = BaseVertex + 0;
+        Indices[IndexCount++] = BaseVertex + 2;
+        Indices[IndexCount++] = BaseVertex + 3;
+    };
+
+    f32 const LeftExtent = Center.X - ViewBounds.Min.X;
+    f32 const TopExtent = Center.Y - ViewBounds.Min.Y;
+    f32 const RightExtent = ViewBounds.Max.X - Center.X;
+    f32 const BottomExtent = ViewBounds.Max.Y - Center.Y;
+
+    radian const PerimeterAngles[PerimeterSectionCount + 1] =
+    {
+        -PI * 0.5f,
+        x_atan2( -TopExtent, RightExtent ),
+        0.0f,
+        x_atan2( BottomExtent, RightExtent ),
+        PI * 0.5f,
+        x_atan2( BottomExtent, -LeftExtent ),
+        PI,
+        x_atan2( -TopExtent, -LeftExtent ) + PI * 2.0f,
+        PI * 1.5f
+    };
+
+    auto const GetRingPoints = [&]( radian Angle,
+                                    vector2& Inner,
+                                    vector2& Outer )
+    {
+        f32 Sin;
+        f32 Cos;
+        x_sincos( Angle, Sin, Cos );
+
+        f32 const ScopeX = Cos / ScopeQuarterSize.X;
+        f32 const ScopeY = Sin / ScopeQuarterSize.Y;
+        f32 const InnerDistance = 1.0f / x_sqrt( ScopeX * ScopeX + ScopeY * ScopeY );
+
+        f32 HorizontalDistance = 1.0e30f;
+        if( x_abs( Cos ) > 0.00001f )
+        {
+            HorizontalDistance = (Cos > 0.0f ? RightExtent : LeftExtent) / x_abs( Cos );
+        }
+
+        f32 VerticalDistance = 1.0e30f;
+        if( x_abs( Sin ) > 0.00001f )
+        {
+            VerticalDistance = (Sin > 0.0f ? BottomExtent : TopExtent) / x_abs( Sin );
+        }
+
+        f32 const OuterDistance = MIN( HorizontalDistance, VerticalDistance );
+        Inner.Set( Center.X + Cos * InnerDistance,
+                   Center.Y + Sin * InnerDistance );
+        Outer.Set( Center.X + Cos * OuterDistance,
+                   Center.Y + Sin * OuterDistance );
+    };
+
+    for( s32 Section = 0; Section < PerimeterSectionCount; Section++ )
+    {
+        radian const SectionStart = PerimeterAngles[Section];
+        radian const AngleStep = (PerimeterAngles[Section + 1] - SectionStart) /
+                                 (f32)QuadsPerSection;
+        for( s32 Quad = 0; Quad < QuadsPerSection; Quad++ )
+        {
+            radian const Angle0 = SectionStart + Quad * AngleStep;
+            radian const Angle1 = Angle0 + AngleStep;
+            vector2 Inner0;
+            vector2 Outer0;
+            vector2 Inner1;
+            vector2 Outer1;
+            GetRingPoints( Angle0, Inner0, Outer0 );
+            GetRingPoints( Angle1, Inner1, Outer1 );
+            AddQuad( Outer0, Outer1, Inner1, Inner0 );
+        }
+    }
+
+    g_UIRenderer.GetDrawList().AddTriangles(
+        ui_material( Texture, UI_BLEND_ALPHA, UI_SAMPLER_LINEAR_WRAP ),
+        Vertices, VertexCount, Indices, IndexCount );
+}
+
+//==============================================================================
+
+void hud_sniper::OnRender( player* pPlayer )
+{
+    if( !pPlayer->RenderSniperZoom() )
+        return;
+
+    rect ScreenViewDimensions;
+    pPlayer->GetRenderView().GetViewport( ScreenViewDimensions );
+    const irect ScreenViewport( (s32)ScreenViewDimensions.Min.X,
+                                (s32)ScreenViewDimensions.Min.Y,
+                                (s32)ScreenViewDimensions.Max.X,
+                                (s32)ScreenViewDimensions.Max.Y );
+    const rect HudViewDimensions = g_UIRenderer.GetViewport().GetHudBounds( ScreenViewport );
+    const vector2 HudCenter( HudViewDimensions.GetCenter().X,
+                             HudViewDimensions.GetCenter().Y );
+    const irect ViewClip( (s32)x_floor( HudViewDimensions.Min.X ),
+                          (s32)x_floor( HudViewDimensions.Min.Y ),
+                          (s32)x_ceil ( HudViewDimensions.Max.X ),
+                          (s32)x_ceil ( HudViewDimensions.Max.Y ) );
+
+    texture* pMainTexture = m_SniperHud.GetPointer();
+    if( !pMainTexture )
+        return;
+
+    const xbitmap& MainBitmap = pMainTexture->m_bitmap;
+    const f32 ScaleX = ((MainBitmap.GetWidth() * 2.0f) < m_ViewDimensions.GetWidth())
+                     ? 1.0f
+                     : m_ViewDimensions.GetWidth() / (MainBitmap.GetWidth() * 2.0f);
+    const f32 ScaleY = ((MainBitmap.GetHeight() * 2.0f) < m_ViewDimensions.GetHeight())
+                     ? 1.0f
+                     : m_ViewDimensions.GetHeight() / (MainBitmap.GetHeight() * 2.0f);
+    const f32 Scale = MIN( ScaleX, ScaleY );
+    const vector2 ScopeQuarterSize( MainBitmap.GetWidth() * Scale,
+                                    MainBitmap.GetHeight() * Scale );
+
+    g_UIRenderer.PushClipRect( ViewClip );
+
+    texture* pScanLineTexture = m_SniperScanLine.GetPointer();
+    if( pScanLineTexture )
+    {
+        // Match the alpha >= 64 boundary authored into the legacy PS2 stencil.
+        const vector2 ScanLineRadius( ScopeQuarterSize.X * s_ScopeScanLineRadiusScale,
+                                      ScopeQuarterSize.Y * s_ScopeScanLineRadiusScale );
+        DrawScopeScanLines( *pScanLineTexture, HudViewDimensions, HudCenter,
+                            ScanLineRadius, m_SniperScanLineColor );
+    }
+
+    DrawMirroredScope( *pMainTexture, HudCenter, ScopeQuarterSize,
+                       m_SniperHudColor, UI_BLEND_ADDITIVE );
+
+    texture* pTrackerTexture = m_SniperTrackerLine.GetPointer();
+    if( pTrackerTexture )
+    {
+        const xbitmap& TrackerBitmap = pTrackerTexture->m_bitmap;
+        const vector2 TrackerSize( (f32)TrackerBitmap.GetWidth(),
+                                   (f32)TrackerBitmap.GetHeight() );
+        vector2 BasePosition( HudCenter.X - (ScopeQuarterSize.X + TrackerSize.X),
+                              HudCenter.Y - TrackerSize.Y );
+
+        g_UIRenderer.DrawImage( *pTrackerTexture, BasePosition, TrackerSize,
+                                vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
+                                m_SniperTrackerLineColor, 0.0f, UI_BLEND_ADDITIVE );
+
+        s32 i;
+        for( i = 1; i < s_TrackerCount; i++ )
+        {
+            vector2 Position( BasePosition.X, BasePosition.Y + i * TrackerSize.Y );
+            g_UIRenderer.DrawImage( *pTrackerTexture, Position, TrackerSize,
+                                    vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
+                                    m_SniperTrackerLineColor, 0.0f, UI_BLEND_ADDITIVE );
+
+            Position.Y = BasePosition.Y - i * TrackerSize.Y;
+            g_UIRenderer.DrawImage( *pTrackerTexture, Position, TrackerSize,
+                                    vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
+                                    m_SniperTrackerLineColor, 0.0f, UI_BLEND_ADDITIVE );
+        }
+
+        vector2 HalfSize( TrackerSize.X, TrackerSize.Y * 0.5f );
+        vector2 Position( BasePosition.X,
+                          BasePosition.Y + (i - 1) * TrackerSize.Y + HalfSize.Y );
+        g_UIRenderer.DrawImage( *pTrackerTexture, Position, HalfSize,
+                                vector2( 0.0f, 0.0f ), vector2( 1.0f, 0.5f ),
+                                m_SniperTrackerLineColor, 0.0f, UI_BLEND_ADDITIVE );
+
+        BasePosition.X = HudCenter.X + ScopeQuarterSize.X;
+        g_UIRenderer.DrawImage( *pTrackerTexture, BasePosition, TrackerSize,
+                                vector2( 1.0f, 0.0f ), vector2( 0.0f, 1.0f ),
+                                m_SniperTrackerLineColor, 0.0f, UI_BLEND_ADDITIVE );
+
+        for( i = 1; i < s_TrackerCount; i++ )
+        {
+            Position = vector2( BasePosition.X, BasePosition.Y + i * TrackerSize.Y );
+            g_UIRenderer.DrawImage( *pTrackerTexture, Position, TrackerSize,
+                                    vector2( 1.0f, 0.0f ), vector2( 0.0f, 1.0f ),
+                                    m_SniperTrackerLineColor, 0.0f, UI_BLEND_ADDITIVE );
+
+            Position.Y = BasePosition.Y - i * TrackerSize.Y;
+            g_UIRenderer.DrawImage( *pTrackerTexture, Position, TrackerSize,
+                                    vector2( 1.0f, 0.0f ), vector2( 0.0f, 1.0f ),
+                                    m_SniperTrackerLineColor, 0.0f, UI_BLEND_ADDITIVE );
+        }
+
+        Position = vector2( BasePosition.X,
+                            BasePosition.Y + (i - 1) * TrackerSize.Y + HalfSize.Y );
+        g_UIRenderer.DrawImage( *pTrackerTexture, Position, HalfSize,
+                                vector2( 1.0f, 0.0f ), vector2( 0.0f, 0.5f ),
+                                m_SniperTrackerLineColor, 0.0f, UI_BLEND_ADDITIVE );
+
+        texture* pPitchTexture = m_SniperZoomPitchTracker.GetPointer();
+        if( pPitchTexture )
+        {
+            const xbitmap& PitchBitmap = pPitchTexture->m_bitmap;
+            const vector2 PitchSize( (f32)PitchBitmap.GetWidth(),
+                                     (f32)PitchBitmap.GetHeight() );
+            f32 Pitch;
+            f32 Yaw;
+            pPlayer->GetEyesPitchYaw( Pitch, Yaw );
+            const f32 YDelta = (s_TrackerCount - 1) * TrackerSize.Y * (Pitch / (PI / 2.0f));
+
+            Position.X = HudCenter.X - (ScopeQuarterSize.X + PitchSize.X + TrackerSize.X);
+            Position.Y = HudCenter.Y + YDelta - PitchSize.Y * 0.5f;
+            g_UIRenderer.DrawImage( *pPitchTexture, Position, PitchSize,
+                                    vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
+                                    m_SniperZoomTrackerColor, 0.0f, UI_BLEND_ADDITIVE );
+
+            Position.X = HudCenter.X + ScopeQuarterSize.X + TrackerSize.X;
+            g_UIRenderer.DrawImage( *pPitchTexture, Position, PitchSize,
+                                    vector2( 1.0f, 0.0f ), vector2( 0.0f, 1.0f ),
+                                    m_SniperZoomTrackerColor, 0.0f, UI_BLEND_ADDITIVE );
+        }
+    }
+
+    g_UIRenderer.PopClipRect();
+
+#ifndef X_EDITOR
+    {
+        irect ZoomRect;
+        vector3 SniperZoomTextPos( s_ZoomPos );
+
+        ZoomRect.l = (s32)((SniperZoomTextPos.GetX() - s_ZoomWidth) + m_ViewDimensions.Min.X);
+        ZoomRect.r = (s32)((SniperZoomTextPos.GetX() + s_ZoomWidth) + m_ViewDimensions.Min.X);
+        ZoomRect.t = (s32)((SniperZoomTextPos.GetY() - s_ZoomHeight) + m_ViewDimensions.Min.Y);
+        ZoomRect.b = (s32)((SniperZoomTextPos.GetY() + s_ZoomHeight) + m_ViewDimensions.Min.Y);
+
+        ZoomRect.Translate( s_ShadowOffsetX, s_ShadowOffsetY );
+        g_UiMgr->RenderText( 1, ZoomRect, ui_font::h_left | ui_font::v_top,
+                             s_ShadowColor, m_WeaponZoomLevel, TRUE, TRUE );
+        ZoomRect.Translate( -s_ShadowOffsetX, -s_ShadowOffsetY );
+        g_UiMgr->RenderText( 1, ZoomRect, ui_font::h_left | ui_font::v_top,
+                             s_ZoomColor, m_WeaponZoomLevel, TRUE, TRUE );
+    }
+
+    {
+        irect ZoomRect;
+        vector3 DistanceTextPos( s_DistancePos );
+        ui_font* pFont = g_UiMgr->GetFont( "small" );
+        const s32 Count = m_WeaponZoomDistance.GetLength();
+        const s32 Width = pFont->TextWidth( m_WeaponZoomDistance, Count );
+        const s32 Height = pFont->TextHeight( m_WeaponZoomDistance, Count );
+
+        DistanceTextPos.GetX() = (f32)ui_viewport::CONTENT_WIDTH * 0.5f - Width * 0.5f;
+
+        ZoomRect.l = (s32)DistanceTextPos.GetX();
+        ZoomRect.r = (s32)(DistanceTextPos.GetX() + Width);
+        ZoomRect.t = (s32)(DistanceTextPos.GetY() - Height);
+        ZoomRect.b = (s32)(DistanceTextPos.GetY() + Height);
+
+        ZoomRect.Translate( s_ShadowOffsetX, s_ShadowOffsetY );
+        g_UiMgr->RenderText( 1, ZoomRect, ui_font::h_left | ui_font::v_top,
+                             s_ShadowColor, m_WeaponZoomDistance, TRUE, TRUE );
+        ZoomRect.Translate( -s_ShadowOffsetX, -s_ShadowOffsetY );
+        g_UiMgr->RenderText( 1, ZoomRect, ui_font::h_left | ui_font::v_top,
+                             s_ZoomColor, m_WeaponZoomDistance, TRUE, TRUE );
+    }
+#endif
+}
+
+//==============================================================================
+
+void hud_sniper::OnAdvanceSimulation( player* pPlayer, f32 DeltaTime )
 {
     (void)DeltaTime;
-    (void)pPlayer;
+
+    if( !pPlayer->RenderSniperZoom() )
+        return;
+
+    radian Pitch;
+    radian Yaw;
+    const vector3 ViewPos = pPlayer->GetEyesPosition();
+    pPlayer->GetEyesPitchYaw( Pitch, Yaw );
+
+    vector3 Dest( radian3( Pitch, Yaw, 0.0f ) );
+    Dest *= g_ZoomDistance;
+
+    g_CollisionMgr.AddToIgnoreList( pPlayer->GetGuid() );
+    g_CollisionMgr.RaySetup( pPlayer->GetGuid(), ViewPos, ViewPos + Dest );
+    g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES,
+                                    object::ATTR_COLLIDABLE,
+                                    object::ATTR_COLLISION_PERMEABLE );
+
+    if( g_CollisionMgr.m_nCollisions > 0 )
+    {
+        const f32 ZoomDistance = g_CollisionMgr.m_Collisions[0].T * g_ZoomDistance / 100.0f;
+        m_WeaponZoomDistance = xstring( xfs( "> %05.1f <", ZoomDistance ) );
+    }
+    else
+    {
+        m_WeaponZoomDistance = xstring( xfs( "> >%05.1f <", g_ZoomDistance / 100.0f ) );
+    }
+
+    new_weapon* pWeapon = pPlayer->GetCurrentWeaponPtr();
+    if( pWeapon )
+    {
+        weapon_sniper_rifle* pSniper = (weapon_sniper_rifle*)pWeapon;
+        m_WeaponZoomLevel = xstring( xfs( "%2dx", (s32)pSniper->GetZoomLevel() ) );
+    }
 }
 
 //==============================================================================
 
 xbool hud_sniper::OnProperty( prop_query& rPropQuery )
 {
-    (void)rPropQuery;
-
-    //----------------------------------------------------------------------
-    // Weapon hud overlay resources.
-    //----------------------------------------------------------------------
     if( rPropQuery.IsVar( "Hud\\Weapon Hud\\Sniper Main" ) )
     {
         if( rPropQuery.IsRead() )
-        {
             rPropQuery.SetVarExternal( m_SniperHud.GetName(), RESOURCE_NAME_SIZE );
-        }
-        else            
-        {
-            const char* pStr = rPropQuery.GetVarExternal();
-            m_SniperHud.SetName( pStr );
-        }
+        else
+            m_SniperHud.SetName( rPropQuery.GetVarExternal() );
         return TRUE;
     }
 
     if( rPropQuery.IsVar( "Hud\\Weapon Hud\\Sniper Stencil" ) )
     {
         if( rPropQuery.IsRead() )
-        {
             rPropQuery.SetVarExternal( m_SniperStencilHud.GetName(), RESOURCE_NAME_SIZE );
-        }
-        else            
-        {
-            const char* pStr = rPropQuery.GetVarExternal();
-            m_SniperStencilHud.SetName( pStr );
-        }
+        else
+            m_SniperStencilHud.SetName( rPropQuery.GetVarExternal() );
         return TRUE;
     }
 
     if( rPropQuery.IsVar( "Hud\\Weapon Hud\\Sniper Traker Line" ) )
     {
         if( rPropQuery.IsRead() )
-        {
             rPropQuery.SetVarExternal( m_SniperTrackerLine.GetName(), RESOURCE_NAME_SIZE );
-        }
-        else            
-        {
-            const char* pStr = rPropQuery.GetVarExternal();
-            m_SniperTrackerLine.SetName( pStr );
-        }
+        else
+            m_SniperTrackerLine.SetName( rPropQuery.GetVarExternal() );
         return TRUE;
     }
 
     if( rPropQuery.IsVar( "Hud\\Weapon Hud\\Sniper Scan Line" ) )
     {
         if( rPropQuery.IsRead() )
-        {
             rPropQuery.SetVarExternal( m_SniperScanLine.GetName(), RESOURCE_NAME_SIZE );
-        }
-        else            
-        {
-            const char* pStr = rPropQuery.GetVarExternal();
-            m_SniperScanLine.SetName( pStr );
-        }
+        else
+            m_SniperScanLine.SetName( rPropQuery.GetVarExternal() );
         return TRUE;
     }
 
     if( rPropQuery.IsVar( "Hud\\Weapon Hud\\Sniper Zoom Tracker" ) )
     {
         if( rPropQuery.IsRead() )
-        {
             rPropQuery.SetVarExternal( m_SniperZoomPitchTracker.GetName(), RESOURCE_NAME_SIZE );
-        }
-        else            
-        {
-            const char* pStr = rPropQuery.GetVarExternal();
-            m_SniperZoomPitchTracker.SetName( pStr );
-        }
+        else
+            m_SniperZoomPitchTracker.SetName( rPropQuery.GetVarExternal() );
         return TRUE;
     }
 
     if( rPropQuery.VarColor( "Hud\\Weapon Hud\\Sniper Hud Color", m_SniperHudColor ) )
         return TRUE;
-
     if( rPropQuery.VarColor( "Hud\\Weapon Hud\\Sniper Tracker Line Color", m_SniperTrackerLineColor ) )
         return TRUE;
-
-    if( rPropQuery.VarColor( "Hud\\Weapon Hud\\Sniper Scan Line Color", m_SniperScanLineColor  ) )
+    if( rPropQuery.VarColor( "Hud\\Weapon Hud\\Sniper Scan Line Color", m_SniperScanLineColor ) )
         return TRUE;
-
-    if( rPropQuery.VarColor( "Hud\\Weapon Hud\\Sniper Zoom Tracker Color", m_SniperZoomTrackerColor  ) )
+    if( rPropQuery.VarColor( "Hud\\Weapon Hud\\Sniper Zoom Tracker Color", m_SniperZoomTrackerColor ) )
         return TRUE;
 
     return FALSE;
@@ -733,21 +480,18 @@ xbool hud_sniper::OnProperty( prop_query& rPropQuery )
 
 //==============================================================================
 
-void hud_sniper::OnEnumProp( prop_enum&  List )
+void hud_sniper::OnEnumProp( prop_enum& List )
 {
-    //----------------------------------------------------------------------
-    // Weapon hud overlays.
-    //----------------------------------------------------------------------
     List.PropEnumHeader  ( "Hud\\Weapon Hud", "The bitmaps for the weapons that will be overlayed on the hud.", 0 );
-    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Main", "Resource\0xbmp\0","The main sniper rifle hud overlay.", 0 );
-    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Stencil", "Resource\0xbmp\0","The stencil sniper rifle hud overlay.", 0 );
-    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Traker Line", "Resource\0xbmp\0","The sniper rifle tracker line.", 0 );
-    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Scan Line", "Resource\0xbmp\0","The sniper rifle scan line.", 0 );
-    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Center Reticle", "Resource\0xbmp\0","The sniper rifle center reticle piece.", 0 );
-    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Zoom Tracker", "Resource\0xbmp\0","The sniper zoom pitch tracking piece.", 0 );
+    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Main", "Resource\0xbmp\0", "The main sniper rifle hud overlay.", 0 );
+    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Stencil", "Resource\0xbmp\0", "The stencil sniper rifle hud overlay.", 0 );
+    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Traker Line", "Resource\0xbmp\0", "The sniper rifle tracker line.", 0 );
+    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Scan Line", "Resource\0xbmp\0", "The sniper rifle scan line.", 0 );
+    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Center Reticle", "Resource\0xbmp\0", "The sniper rifle center reticle piece.", 0 );
+    List.PropEnumExternal( "Hud\\Weapon Hud\\Sniper Zoom Tracker", "Resource\0xbmp\0", "The sniper zoom pitch tracking piece.", 0 );
 
-    List.PropEnumColor   ( "Hud\\Weapon Hud\\Sniper Hud Color", "The color of the main sniper rifle hud.", 0 );
-    List.PropEnumColor   ( "Hud\\Weapon Hud\\Sniper Tracker Line Color", "The color of the main sniper rifle hud.", 0 );
-    List.PropEnumColor   ( "Hud\\Weapon Hud\\Sniper Scan Line Color", "The color of the main sniper rifle hud.", 0 );
-    List.PropEnumColor   ( "Hud\\Weapon Hud\\Sniper Zoom Tracker Color", "The color of the zoom tracker piece.", 0 );
+    List.PropEnumColor( "Hud\\Weapon Hud\\Sniper Hud Color", "The color of the main sniper rifle hud.", 0 );
+    List.PropEnumColor( "Hud\\Weapon Hud\\Sniper Tracker Line Color", "The color of the main sniper rifle hud.", 0 );
+    List.PropEnumColor( "Hud\\Weapon Hud\\Sniper Scan Line Color", "The color of the main sniper rifle hud.", 0 );
+    List.PropEnumColor( "Hud\\Weapon Hud\\Sniper Zoom Tracker Color", "The color of the zoom tracker piece.", 0 );
 }

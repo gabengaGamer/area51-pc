@@ -9,8 +9,8 @@
 //=========================================================================
 
 #include "condition_random_chance.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS

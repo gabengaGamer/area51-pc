@@ -5,9 +5,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "PhysicsMgr\PhysicsInst.hpp"
-#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "PhysicsMgr/PhysicsInst.hpp"
 
 //=========================================================================
 // DEFINITIONS
@@ -81,7 +80,7 @@ static      xbool           ReachedMaxActiveLimit   ( void );
     
     virtual void            OnRenderTransparent     ( void );
     virtual void            OnRenderShadowCast      ( u64 ProjMask );
-    virtual void            OnAdvanceLogic          ( f32 DeltaTime );  
+    virtual void            OnAdvanceSimulation          ( f32 DeltaTime );
     virtual void            OnActivate              ( xbool Flag );            
     virtual void            OnPain                  ( const pain& Pain );    
     virtual void            OnColCheck              ( void );
@@ -179,14 +178,6 @@ static  s32                     m_ActiveCount;          // # of active (moving) 
         
         // Audio
         f32                     m_ImpactSfxTimer;       // Timer count down since last impact
-        simple_anim_interp_cache m_RenderCache;
-
-    virtual void                CaptureRenderInterpState      ( void );
-    virtual void                UpdateRenderInterpState       ( f32 Alpha );
-    virtual void                ClearRenderInterpState        ( void );
-    virtual void                InvalidateRenderInterpState   ( void );
-    virtual void                SnapRenderInterpState         ( void );
-
 };
 
 //=========================================================================

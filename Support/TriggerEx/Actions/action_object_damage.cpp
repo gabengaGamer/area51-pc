@@ -8,13 +8,14 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_object_damage.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "objects\actor\actor.hpp"
-#include "painmgr\painmgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "PainMgr/PainMgr.hpp"
 
 static const xcolor s_DamageColor          (255,64,64);
 
@@ -97,16 +98,16 @@ void action_object_damage::OnDebugRender ( s32 Index )
     object* pObject = m_ObjectAffecter.GetObjectPtr();
     if (pObject)
     {
-        draw_Line( GetPositionOwner(), pObject->GetPosition(), s_DamageColor );
-        draw_BBox( pObject->GetBBox(), s_DamageColor );
+        render::debug::Line( GetPositionOwner(), pObject->GetPosition(), s_DamageColor );
+        render::debug::Box( pObject->GetBBox(), s_DamageColor );
 
         if (!GetElse())
         {
-            draw_Label( pObject->GetPosition(), s_DamageColor, xfs("[%d]Damage Object", Index) );
+            render::debug::Label( pObject->GetPosition(), s_DamageColor, xfs("[%d]Damage Object", Index) );
         }
         else
         {
-            draw_Label( pObject->GetPosition(), s_DamageColor, xfs("[Else %d]Damage Object", Index) );
+            render::debug::Label( pObject->GetPosition(), s_DamageColor, xfs("[Else %d]Damage Object", Index) );
         }
     }
 }

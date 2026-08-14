@@ -118,16 +118,11 @@ void element_mesh::Render( f32 T )
         GetL2WAtTime  ( T, L2W   );
         GetColorAtTime( T, Color );
 
-        // Set L2W
-        draw_SetL2W( L2W );
-
-        m_MeshViewer.Render( Color );
+        m_MeshViewer.Render( Color, L2W );
 
         // Render element bbox
         RenderBBox( T );
 
-        // Reset L2W
-        draw_ClearL2W();
     }
 
     // Render the translation path of the object

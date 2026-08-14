@@ -1,19 +1,20 @@
 // character_trigger_state : implementation file
 /////////////////////////////////////////////////////////////////////////////
 
-#include "character_trigger_state.hpp"
-#include "..\Support\TriggerEx\TriggerEx_Object.hpp"
-#include "..\Support\TriggerEx\Actions\action_ai_base.hpp"
-#include "..\Support\TriggerEx\Actions\action_ai_attack_guid.hpp"
-#include "..\Support\TriggerEx\Actions\action_ai_pathto_guid.hpp"
-#include "..\Support\TriggerEx\Actions\action_ai_lookat_guid.hpp"
-#include "..\Support\TriggerEx\Actions\action_ai_play_anim.hpp"
-#include "..\Support\TriggerEx\Actions\action_ai_dialog_line.hpp"
-#include "..\Support\TriggerEx\Actions\action_ai_searchto_guid.hpp"
-#include "..\Support\TriggerEx\Actions\action_ai_death.hpp"
-#include "..\Support\Characters\Character.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
-#include "Characters\TaskSystem\character_task_set.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Character_Trigger_State.hpp"
+#include "../Support/TriggerEx/TriggerEx_Object.hpp"
+#include "../Support/TriggerEx/Actions/action_ai_base.hpp"
+#include "../Support/TriggerEx/Actions/action_ai_attack_guid.hpp"
+#include "../Support/TriggerEx/Actions/action_ai_pathto_guid.hpp"
+#include "../Support/TriggerEx/Actions/action_ai_lookat_guid.hpp"
+#include "../Support/TriggerEx/Actions/action_ai_play_anim.hpp"
+#include "../Support/TriggerEx/Actions/action_ai_dialog_line.hpp"
+#include "../Support/TriggerEx/Actions/action_ai_searchto_guid.hpp"
+#include "../Support/TriggerEx/Actions/action_ai_death.hpp"
+#include "../Support/Characters/Character.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
+#include "Characters/TaskSystem/character_task_set.hpp"
 
 //=========================================================================
 // character_trigger_state class
@@ -307,7 +308,7 @@ void character_trigger_state::OnDebugRender()
 
     if( triggerSource )
     {
-        draw_Line( triggerSource->GetPosition(), m_CharacterBase.GetPositionWithOffset(character::OFFSET_CENTER), XCOLOR_BLUE );
+        render::debug::Line( triggerSource->GetPosition(), m_CharacterBase.GetPositionWithOffset(character::OFFSET_CENTER), XCOLOR_BLUE );
     }
 }
 #endif // X_RETAIL

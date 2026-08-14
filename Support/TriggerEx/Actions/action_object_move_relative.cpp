@@ -8,13 +8,14 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_object_move_relative.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "Objects\Actor\Actor.hpp"
-#include "Objects\Player.hpp"
-#include "Loco\Loco.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Loco/Loco.hpp"
 
 static const xcolor s_MoveColor             (255,0,255);
 
@@ -73,12 +74,32 @@ xbool action_object_move_relative::Execute ( f32 DeltaTime )
             // Update polycache around the object
             g_PolyCache.InvalidateCells( pObject->GetBBox(), pObject->GetGuid() );
 
-            //some objects require zones set first, some after, doing both to be safe
-            pObject->SetZone1( pDestMarker->GetZone1() );
-            pObject->SetZone2( pDestMarker->GetZone2() );   
-            pObject->OnTriggerTransform( M );
-            pObject->SetZone1( pDestMarker->GetZone1() );
-            pObject->SetZone2( pDestMarker->GetZone2() );
+            if( pObject->IsKindOf( player::GetRTTI() ) )
+            {
+                radian3 const Rotation = M.GetRotation();
+                static_cast<player*>( pObject )->Teleport(
+                    M.GetTranslation(),
+                    Rotation.Pitch,
+                    Rotation.Yaw,
+                    static_cast<zone_mgr::zone_id>( pDestMarker->GetZone1() ),
+                    static_cast<zone_mgr::zone_id>( pDestMarker->GetZone2() ),
+                    PlayerTeleportVelocityPolicy::Clear,
+                    FALSE,
+                    FALSE );
+            }
+            else
+            {
+                pObject->SetZone1( pDestMarker->GetZone1() );
+                pObject->SetZone2( pDestMarker->GetZone2() );
+                pObject->OnTriggerTransform( M );
+                pObject->SetZone1( pDestMarker->GetZone1() );
+                pObject->SetZone2( pDestMarker->GetZone2() );
+
+                if( pObject->IsKindOf( actor::GetRTTI() ) )
+                {
+                    static_cast<actor*>( pObject )->InitZoneTracking();
+                }
+            }
 
             // Update polycache around the object
             g_PolyCache.InvalidateCells( pObject->GetBBox(), pObject->GetGuid() );
@@ -99,15 +120,15 @@ void action_object_move_relative::OnDebugRender ( s32 Index )
     object* pObject = m_ObjectAffecter.GetObjectPtr();
     if (pObject)
     {
-        draw_Line( GetPositionOwner(), pObject->GetPosition(), s_MoveColor );
-        draw_BBox( bbox(pObject->GetPosition(), 100.0f), s_MoveColor );
+        render::debug::Line( GetPositionOwner(), pObject->GetPosition(), s_MoveColor );
+        render::debug::Box( bbox(pObject->GetPosition(), 100.0f), s_MoveColor );
         if (!GetElse())
         {
-            draw_Label( pObject->GetPosition(), s_MoveColor, xfs("[%d]Move Object", Index) );
+            render::debug::Label( pObject->GetPosition(), s_MoveColor, xfs("[%d]Move Object", Index) );
         }
         else
         {
-            draw_Label( pObject->GetPosition(), s_MoveColor, xfs("[Else %d]Move Object", Index) );
+            render::debug::Label( pObject->GetPosition(), s_MoveColor, xfs("[Else %d]Move Object", Index) );
         }
 
         if ((m_DestMarker != 0) && (m_RelativeMarker != 0))
@@ -116,29 +137,29 @@ void action_object_move_relative::OnDebugRender ( s32 Index )
             object *pRelMarker  = g_ObjMgr.GetObjectByGuid(m_RelativeMarker);
             if (pDestMarker)
             {
-                draw_Line( pObject->GetPosition(), pDestMarker->GetPosition(), XCOLOR_WHITE );
-                draw_BBox( bbox(pDestMarker->GetPosition(), 100.0f), XCOLOR_WHITE );
+                render::debug::Line( pObject->GetPosition(), pDestMarker->GetPosition(), XCOLOR_WHITE );
+                render::debug::Box( bbox(pDestMarker->GetPosition(), 100.0f), XCOLOR_WHITE );
                 if (!GetElse())
                 {
-                    draw_Label( pObject->GetPosition(), s_MoveColor, xfs("[%d]Move Here", Index) );
+                    render::debug::Label( pObject->GetPosition(), s_MoveColor, xfs("[%d]Move Here", Index) );
                 }
                 else
                 {
-                    draw_Label( pObject->GetPosition(), s_MoveColor, xfs("[Else %d]Move Here", Index) );
+                    render::debug::Label( pObject->GetPosition(), s_MoveColor, xfs("[Else %d]Move Here", Index) );
                 }
             }
 
             if (pRelMarker)
             {
-                draw_Line( pObject->GetPosition(), pRelMarker->GetPosition(), XCOLOR_WHITE );
-                draw_BBox( bbox(pRelMarker->GetPosition(), 100.0f), XCOLOR_WHITE );
+                render::debug::Line( pObject->GetPosition(), pRelMarker->GetPosition(), XCOLOR_WHITE );
+                render::debug::Box( bbox(pRelMarker->GetPosition(), 100.0f), XCOLOR_WHITE );
                 if (!GetElse())
                 {
-                    draw_Label( pObject->GetPosition(), s_MoveColor, xfs("[%d]Relative To Here", Index) );
+                    render::debug::Label( pObject->GetPosition(), s_MoveColor, xfs("[%d]Relative To Here", Index) );
                 }
                 else
                 {
-                    draw_Label( pObject->GetPosition(), s_MoveColor, xfs("[Else %d]Relative To Here", Index) );
+                    render::debug::Label( pObject->GetPosition(), s_MoveColor, xfs("[Else %d]Relative To Here", Index) );
                 }
             }
         }

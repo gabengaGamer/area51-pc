@@ -1,9 +1,9 @@
 #include "debris_frag_explosion.hpp"
-#include "NetworkMgr\Networkmgr.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "..\Objects\Player.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "Decals\DecalMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "../Objects/Player/Player.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Decals/DecalMgr.hpp"
 
 
 rhandle<decal_package> debris_frag_explosion::s_hDecalPkg;
@@ -70,13 +70,6 @@ void debris_frag_explosion::Create     ( const char*      pMeshName,
         return;
 
     SetZones( Zones );
-/*
-#ifdef TARGET_XBOX
-#   define USE_LOTS_OF_MEMORY
-#else
-#   define nUSE_LOTS_OF_MEMORY
-#endif
-*/
 
 // SH: Just using the define for now.  It can be removed later once 
 // we've verified that everything is ok.  For now, it's simpler

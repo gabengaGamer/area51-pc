@@ -9,7 +9,7 @@
 //=========================================================================
 
 #include "trigger_meta_base.hpp"
-#include "..\TriggerEx_Object.hpp"
+#include "../TriggerEx_Object.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS

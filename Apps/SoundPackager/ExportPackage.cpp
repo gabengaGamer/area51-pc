@@ -857,11 +857,6 @@ s32 CalculateAudioRam( s32 Target )
         {
             Footprint += s_Package.m_Files[i].CompressedSize[Target];
         }
-
-        if( s_Package.m_Files[i].Temperature == WARM )
-        {
-            // TODO: Put in warm sample contribution.
-        }
     }
 
     return Footprint;

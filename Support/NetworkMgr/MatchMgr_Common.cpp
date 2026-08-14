@@ -37,6 +37,7 @@ extern s32 g_Changelist;
 //=========================================================================
 
 match_mgr g_MatchMgr;
+const char* const MATCH_DOWNLOAD_LOCATION = "http://data.area51-game.com/Content";
 
 //------------------------------------------------------------------------------
 match_mgr::match_mgr( void )
@@ -58,14 +59,7 @@ match_mgr::match_mgr( void )
 
     m_pListHead                 = NULL;
 
-#if defined(ENABLE_XBOX_LIVE)
-#endif
     SetConnectStatus( MATCH_CONN_UNAVAILABLE );
-#ifdef TARGET_PS2
-    m_StatsState                = 0;
-    m_bIsWriting                = 0;
-    m_bIsReading                = 0;
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -168,23 +162,16 @@ void match_mgr::AppendToServerList( const server_info& Response )
 // server will have a unique ID # which will be used for the actual equivalence 
 // comparison. For now, we use the name and the IP as the uniqueness identifier.
 //------------------------------------------------------------------------------
+
 xbool operator == ( const server_info& Left, const server_info& Right )
 {
-#if defined(TARGET_PS2)
-    return ( Left.Remote == Right.Remote );
-#else
     return x_memcmp( &Left.SessionID, &Right.SessionID, sizeof(Left.SessionID) )==0;
-#endif
 }
 
 //------------------------------------------------------------------------------
 xbool operator != ( const server_info& Left, const server_info& Right )
 {
-#if defined(TARGET_PS2)
-    return( Left.Remote != Right.Remote );
-#else
     return x_memcmp( &Left.SessionID, &Right.SessionID, sizeof(Left.SessionID) )!=0;
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -637,4 +624,3 @@ void match_mgr::SetUserStatus( buddy_status Status )
 { 
     m_PendingUserStatus = Status;
 }
-

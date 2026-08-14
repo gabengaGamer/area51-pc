@@ -11,15 +11,15 @@
 /* std includes */
 
 #ifndef X_BITMAP_HPP
-#include "..\x_bitmap.hpp"
+#include "../x_bitmap.hpp"
 #endif
 
 #ifndef X_MEMORY_HPP
-#include "..\x_memory.hpp"
+#include "../x_memory.hpp"
 #endif
 
 #ifndef X_STRING_HPP
-#include "..\x_string.hpp"
+#include "../x_string.hpp"
 #endif
 
 //==============================================================================
@@ -107,7 +107,7 @@ xbool xbmp_Save( const xbitmap& Bitmap, X_FILE* pFile )
 xbool xbitmap::Save( X_FILE* pFile ) const
 {
     ASSERT( pFile );
-    ASSERT( m_Flags & FLAG_VALID );
+    ASSERT( m_flags & FLAG_VALID );
 
     #ifdef BIG_ENDIAN
     {
@@ -225,7 +225,7 @@ xbool xbitmap::Load( X_FILE* pFile )
     m_Width         = (s16)Buffer.Width;
     m_Height        = (s16)Buffer.Height;
     m_PW            = (s16)Buffer.PW;
-    m_Flags         = (u16)Buffer.Flags;
+    m_flags         = (u16)Buffer.Flags;
     m_NMips         =  (s8)Buffer.NMips;
     m_Format        =  (s8)Buffer.Format;
 
@@ -234,7 +234,7 @@ xbool xbitmap::Load( X_FILE* pFile )
         m_Data.pPixel = (byte*)x_malloc( m_DataSize );
         ASSERT( m_Data.pPixel );
 
-        m_Flags       |= FLAG_DATA_OWNED;
+        m_flags       |= FLAG_DATA_OWNED;
         BytesRead      = x_fread( m_Data.pPixel, 1, m_DataSize, pFile );
         if( BytesRead != m_DataSize )
             goto EXIT_FREE;
@@ -243,7 +243,7 @@ xbool xbitmap::Load( X_FILE* pFile )
         if( m_ClutSize )
         {
             m_pClut   = (byte*)x_malloc( m_ClutSize );
-            m_Flags  |= FLAG_CLUT_OWNED;
+            m_flags  |= FLAG_CLUT_OWNED;
             BytesRead = x_fread( m_pClut, 1, m_ClutSize, pFile );
             if( BytesRead != m_ClutSize )
                 goto EXIT_FREE;
@@ -481,7 +481,7 @@ xbool xbitmap::DumpSourceCode( const char* pFileName ) const
     x_fprintf( pFile, "// PW       : %6d pixels\n", (s32)m_PW       );
     x_fprintf( pFile, "// DataSize : %6d bytes\n",       DataSize   );
     x_fprintf( pFile, "// ClutSize : %6d bytes\n",       m_ClutSize );
-    x_fprintf( pFile, "// Flags    : 0x%04X\n",          m_Flags    );
+    x_fprintf( pFile, "// Flags    : 0x%04X\n",          m_flags    );
     x_fprintf( pFile, "\n" );
 
     if( m_ClutSize )
@@ -575,7 +575,7 @@ xbool xbitmap::SaveTGA( const char* pFileName ) const
     xbitmap Clone( *this );
     Clone.m_VRAMID = 0;
 
-    ASSERT( m_Flags & FLAG_VALID );
+    ASSERT( m_flags & FLAG_VALID );
     ASSERT( pFileName );
 
 #ifdef LITTLE_ENDIAN

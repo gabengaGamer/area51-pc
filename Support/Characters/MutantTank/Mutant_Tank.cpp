@@ -9,16 +9,16 @@
 //=========================================================================
 
 #include "Mutant_Tank.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Gamelib\StatsMgr.hpp"
-#include "Objects\Player.hpp"
-#include "Objects\SuperDestructible.hpp"
-#include "Objects\ProjectileMutantParasite2.hpp"
-#include "Objects\ProjectileMutantContagion.hpp"
-#include "Objects\ProjectileEnergy.hpp"
-#include "Objects\ParticleEventEmitter.hpp"
-#include "Objects\ParticleEmiter.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/SuperDestructible.hpp"
+#include "Objects/ProjectileMutantParasite2.hpp"
+#include "Objects/ProjectileMutantContagion.hpp"
+#include "Objects/ProjectileEnergy.hpp"
+#include "Objects/ParticleEventEmitter.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
 
 
 //=========================================================================
@@ -119,11 +119,6 @@ const object_desc& mutant_tank::GetObjectType( void )
 // MUTANT_TANK CHARACTER
 //=========================================================================
 
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( push )
-    #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
-#endif
-
 mutant_tank::mutant_tank():
     m_Idle              ( *this, character_state::STATE_IDLE    ),
     m_Alert             ( *this, character_state::STATE_ALERT   ),
@@ -192,10 +187,6 @@ mutant_tank::mutant_tank():
     m_Attack.LoadTweaks();
 }
 
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( pop )
-#endif
-
 //=========================================================================
 
 mutant_tank::~mutant_tank()
@@ -205,9 +196,9 @@ mutant_tank::~mutant_tank()
 
 //=========================================================================
 
-void mutant_tank::OnAdvanceLogic( f32 DeltaTime )
+void mutant_tank::OnAdvanceSimulation( f32 DeltaTime )
 {
-    character::OnAdvanceLogic( DeltaTime );
+    character::OnAdvanceSimulation( DeltaTime );
 }
 
 //=========================================================================

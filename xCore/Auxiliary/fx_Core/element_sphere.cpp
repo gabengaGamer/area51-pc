@@ -1,5 +1,6 @@
 #include "controller.hpp"
 #include "element_sphere.hpp"
+#include "PreviewRender.hpp"
 #include "effect.hpp"
 
 namespace fx_core
@@ -142,39 +143,15 @@ void element_sphere::Render( f32 T )
         GetL2WAtTime  ( T, L2W   );
         GetColorAtTime( T, Color );
 
-        // Determine blend mode
-        s32 DrawBlendMode = 0;
-        switch( m_CombineMode )
-        {
-            case COMBINEMODE_ADDITIVE:
-                DrawBlendMode = DRAW_BLEND_ADD;
-                break;
-            case COMBINEMODE_SUBTRACTIVE:
-                DrawBlendMode = DRAW_BLEND_SUB;
-                break;
-        }
-
-        // Set L2W
-        draw_SetL2W( L2W );
-
-        // draw flags
-        u32 DrawFlags = DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE | DrawBlendMode;
-
-        if ( (m_MappingTileV == 1.0f) && (m_MappingScrollV == 0.0f) )   { DrawFlags |= DRAW_V_CLAMP; }
-        //if ( DrawBlendMode != 0 )                                       { DrawFlags |= DRAW_NO_ZWRITE; }
-        if ( !m_ZRead )                                                 { DrawFlags |= DRAW_NO_ZBUFFER; }
-
-        // Start drawing
-        draw_Begin( DRAW_TRIANGLES, DrawFlags );
-
         // Setup bitmap
         if ( m_BitmapName.IsEmpty() )
             m_BitmapName = "fx_default.xbmp";
 
         g_pTextureMgr->ActivateBitmap( m_BitmapName );
-
-        // Draw the sphere
-        draw_Color( Color );
+        const xbool clampV = (m_MappingTileV == 1.0f) && (m_MappingScrollV == 0.0f);
+        const render::primitive_draw_desc material =
+            CreatePreviewMaterial( g_pTextureMgr->GetTexture( m_BitmapName ), m_CombineMode, m_ZRead, FALSE, clampV );
+        render::PrimitiveBatch batch( material );
 
         // Setup for drawing
         f32 RadiansPerSegmentU  = DEG_TO_RAD( 360.f / (f32)m_nSegmentsU );
@@ -340,14 +317,14 @@ void element_sphere::Render( f32 T )
                         v4  = MapScrollV + ( m_MappingTileV * ( z[3] + 0.5f ) );
                     }
 
-                    // Draw UV Quad
-                    draw_UV( u3, v1 );  draw_Color( VBlend1 );  draw_Vertex( x[0], y[0], z[0] ); // Top    Left
-                    draw_UV( u1, v3 );  draw_Color( VBlend2 );  draw_Vertex( x[2], y[1], z[2] ); // Bottom Left
-                    draw_UV( u4, v2 );  draw_Color( VBlend1 );  draw_Vertex( x[1], y[0], z[1] ); // Top    Right
-
-                    draw_UV( u4, v2 );  draw_Color( VBlend1 );  draw_Vertex( x[1], y[0], z[1] ); // Top    Right
-                    draw_UV( u1, v3 );  draw_Color( VBlend2 );  draw_Vertex( x[2], y[1], z[2] ); // Bottom Left
-                    draw_UV( u2, v4 );  draw_Color( VBlend2 );  draw_Vertex( x[3], y[1], z[3] ); // Bottom Right
+                    batch.AddTriangle(
+                        render::primitive_vertex( vector3( x[0], y[0], z[0] ), vector2( u3, v1 ), VBlend1 ),
+                        render::primitive_vertex( vector3( x[2], y[1], z[2] ), vector2( u1, v3 ), VBlend2 ),
+                        render::primitive_vertex( vector3( x[1], y[0], z[1] ), vector2( u4, v2 ), VBlend1 ) );
+                    batch.AddTriangle(
+                        render::primitive_vertex( vector3( x[1], y[0], z[1] ), vector2( u4, v2 ), VBlend1 ),
+                        render::primitive_vertex( vector3( x[2], y[1], z[2] ), vector2( u1, v3 ), VBlend2 ),
+                        render::primitive_vertex( vector3( x[3], y[1], z[3] ), vector2( u2, v4 ), VBlend2 ) );
 
                 }
                 else
@@ -376,26 +353,23 @@ void element_sphere::Render( f32 T )
                         v4  = MapScrollV + ( m_MappingTileV * ( z[3] + 0.5f ) );
                     }
 
-                    // Draw UV Quad
-                    draw_UV( u1, v1 );  draw_Color( VBlend1 );  draw_Vertex( x[0], y[0], z[0] ); // Top    Left
-                    draw_UV( u3, v3 );  draw_Color( VBlend2 );  draw_Vertex( x[2], y[1], z[2] ); // Bottom Left
-                    draw_UV( u4, v4 );  draw_Color( VBlend2 );  draw_Vertex( x[3], y[1], z[3] ); // Bottom Right
-                    
-                    draw_UV( u1, v1 );  draw_Color( VBlend1 );  draw_Vertex( x[0], y[0], z[0] ); // Top    Left
-                    draw_UV( u4, v4 );  draw_Color( VBlend2 );  draw_Vertex( x[3], y[1], z[3] ); // Bottom Right
-                    draw_UV( u2, v2 );  draw_Color( VBlend1 );  draw_Vertex( x[1], y[0], z[1] ); // Top    Right
+                    batch.AddTriangle(
+                        render::primitive_vertex( vector3( x[0], y[0], z[0] ), vector2( u1, v1 ), VBlend1 ),
+                        render::primitive_vertex( vector3( x[2], y[1], z[2] ), vector2( u3, v3 ), VBlend2 ),
+                        render::primitive_vertex( vector3( x[3], y[1], z[3] ), vector2( u4, v4 ), VBlend2 ) );
+                    batch.AddTriangle(
+                        render::primitive_vertex( vector3( x[0], y[0], z[0] ), vector2( u1, v1 ), VBlend1 ),
+                        render::primitive_vertex( vector3( x[3], y[1], z[3] ), vector2( u4, v4 ), VBlend2 ),
+                        render::primitive_vertex( vector3( x[1], y[0], z[1] ), vector2( u2, v2 ), VBlend1 ) );
                 }
             }
         }
 
-        // End drawing
-        draw_End();
+        batch.Submit( L2W );
 
         // Render element bbox
         RenderBBox( T );
 
-        // Reset L2W
-        draw_ClearL2W();
     }
 
     // Render the translation path of the object

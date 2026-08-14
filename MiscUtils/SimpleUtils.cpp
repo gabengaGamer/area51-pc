@@ -6,16 +6,17 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "Objects\Player.hpp"
-#include "Characters\Character.hpp"
-#include "objects\Turret.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Characters/Character.hpp"
+#include "objects/Turret.hpp"
 #include <x_stdio.hpp>
 #include "Entropy.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "NetworkMgr\Networkmgr.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "NetworkMgr/Networkmgr.hpp"
 
 //=============================================================================
 
@@ -54,57 +55,6 @@ xbool   SMP_UTIL_FileExist( const char* File )
 
 //=============================================================================
 
-void SMP_UTIL_draw_Polygon( 
-                                const vector3*    pPoint,
-                                s32               NPoints,
-                                xcolor            Color,
-                                xbool             DoWire )
-{
-    ( void ) DoWire;
-    
-    s32 P = NPoints-1;
-    draw_Begin(DRAW_LINES);
-    draw_Color(Color);
-    for( s32 i=0; i<NPoints; i++ )
-    {
-        draw_Vertex(pPoint[P]);
-        draw_Vertex(pPoint[i]);
-        P = i;
-    }
-    draw_End();
-}
-
-//=============================================================================
-
-void SMP_UTIL_draw_Cube(   const vector3&   Halves,
-                           const matrix4&   Matrix,
-                           xcolor           Color )
-{
-    const s32   NumPoints   = 8;
-    s16  Index[]     = {0,1,1,2,2,3,3,0,4,5,5,6,6,7,7,4,0,4,1,5,2,6,3,7};
-    vector3     vPoints[NumPoints];
-    
-    vPoints[0] = vector3(     Halves.GetX(),      Halves.GetY(),     Halves.GetZ());
-    vPoints[1] = vector3(     Halves.GetX(),     -Halves.GetY(),     Halves.GetZ());
-    vPoints[2] = vector3(    -Halves.GetX(),     -Halves.GetY(),     Halves.GetZ());
-    vPoints[3] = vector3(    -Halves.GetX(),      Halves.GetY(),     Halves.GetZ());
-    
-    vPoints[4] = vector3(     Halves.GetX(),      Halves.GetY(),     -Halves.GetZ());
-    vPoints[5] = vector3(     Halves.GetX(),     -Halves.GetY(),     -Halves.GetZ());
-    vPoints[6] = vector3(    -Halves.GetX(),     -Halves.GetY(),     -Halves.GetZ());
-    vPoints[7] = vector3(    -Halves.GetX(),      Halves.GetY(),     -Halves.GetZ());
-    
-    Matrix.Transform( vPoints, vPoints, NumPoints );
-    
-    draw_Begin( DRAW_LINES, DRAW_USE_ALPHA | DRAW_NO_ZWRITE );
-    draw_Color( Color   );
-    draw_Verts( vPoints, NumPoints );
-    draw_Execute( Index, sizeof(Index)/sizeof(s16) );
-    draw_End();
-}
-
-//=============================================================================
-
 void SMP_UTIL_PointObjectAt( 
                                  object*            pObject, 
                                  const vector3&     rDir, 
@@ -122,25 +72,6 @@ void SMP_UTIL_PointObjectAt(
     
     pObject->OnTransform( M );
 }
-
-//=============================================================================
-
-#if !defined( CONFIG_RETAIL )
-
-void SMP_UTIL_draw_MatrixAxis( const matrix4& rM )
-{
-    vector3 Pos = rM.GetTranslation();
-    
-    vector3 X = rM*vector3(100.0f,0.0f,0.0f);
-    vector3 Y = rM*vector3(0.0f,100.0f,0.0f);
-    vector3 Z = rM*vector3(0.0f,0.0f,100.0f);
-    
-    draw_Line( Pos, X, xcolor(255,0, 0) );
-    draw_Line( Pos, Y, xcolor(0,255, 0) );
-    draw_Line( Pos, Z, xcolor(0,0, 255) );
-}
-
-#endif // !defined( CONFIG_RETAIL )
 
 //=============================================================================
 
@@ -653,145 +584,6 @@ u16     SMP_UTIL_GetZoneForPosition  ( const vector3& vPosition, f32 DistToCheck
     }
 
     return pObject.m_pObject->GetZone1();
-}
-
-//=============================================================================
-
-#ifdef TARGET_PC
-
-// Draw arc of XZ circle
-void draw_Arc( const vector3& C, f32 R, radian Dir, radian FOV, xcolor Color, f32 PercentDraw )
-{
-    f32 Sin, Cos ;
-
-    s32    i          = 1 + (s32)(R * FOV * PercentDraw) ;
-    radian Angle      = Dir - (FOV * 0.5f) ;
-    radian DeltaAngle = FOV / i ;
-
-    draw_Begin(DRAW_LINE_STRIPS) ;
-    draw_Color(Color) ;
-    draw_Vertex( C ) ;
-    while(i--)
-    {
-        x_sincos(Angle, Sin, Cos) ;
-        draw_Vertex( C.GetX() + (R * Sin),
-                     C.GetY(),
-                     C.GetZ() + (R * Cos) ) ;
-
-        Angle += DeltaAngle ;
-    }
-    x_sincos(Angle, Sin, Cos) ;
-    draw_Vertex( C.GetX() + (R * Sin),
-                 C.GetY(),
-                 C.GetZ() + (R * Cos) ) ;
-    draw_Vertex( C ) ;
-    draw_End() ;
-}
-
-// Draw arc of XZ circle
-void draw_3DCircle( const vector3& C, f32 R, xcolor Color, const vector3& Up, f32 PercentDraw )
-{
-    s32     nSteps     = MAX(6,(s32)(R_360 / PercentDraw));
-    radian  Angle      = 0;
-    radian  DeltaAngle = R_360 / nSteps;
-
-    quaternion Q(Up,0);
-
-    vector3 Perp;
-    if (x_abs(Up.Dot(vector3(0,1,0))) > 0.001f)
-    {
-        Perp = Up.Cross(vector3(1,0,0));        
-    }
-    else
-    {
-        Perp = Up.Cross(vector3(0,1,0));        
-    }
-
-    Perp.NormalizeAndScale( R );
-    
-    draw_Begin(DRAW_LINE_STRIPS) ;
-    draw_Color(Color) ;
-
-    while(nSteps--)
-    {
-        quaternion Q(Up,Angle);
-
-        vector3 NewV = Q * Perp;
-
-        NewV += C;
-        draw_Vertex( NewV );
-        Angle += DeltaAngle ;
-    }    
-
-    draw_End() ;
-}
-#endif
-
-//=============================================================================
-
-void draw_Cylinder( const vector3& Center, f32 Radius, f32 Height, s32 nSteps, xcolor Color, xbool bCapped, const vector3& Up )
-{
-    (void)bCapped;
-
-    nSteps = MAX(5, nSteps);
-
-    radian      Angle = 0;
-    radian      DeltaAngle = R_360 / nSteps;
-
-    vector3 Vertical = Up;
-    Vertical.NormalizeAndScale( Height/2 );
-
-    //quaternion Q(Up,0);
-
-    vector3 Perp;
-    if (x_abs(Up.Dot(vector3(0,1,0))) > 0.001f)
-    {
-        Perp = Up.Cross(vector3(1,0,0));        
-    }
-    else
-    {
-        Perp = Up.Cross(vector3(0,1,0));        
-    }
-
-    Perp.NormalizeAndScale( Radius );
-
-    smem_StackPushMarker();
-    vector3*    pVert = (vector3*)smem_StackAlloc( sizeof(vector3)*nSteps*2 );
-    ASSERT(pVert);
-    
-    s32 i;
-    for (i=0;i<nSteps;i++)
-    {
-        quaternion Q(Up,Angle);
-
-        vector3 NewV = Q * Perp;
-
-        NewV += Center;
-
-        pVert[i*2+0] = NewV + Vertical;
-        pVert[i*2+1] = NewV - Vertical;
-           
-        Angle += DeltaAngle ;
-    }    
-
-    // Draw it
-    draw_Begin( DRAW_TRIANGLES, DRAW_USE_ALPHA | DRAW_CULL_NONE );
-    draw_Color( Color );
-
-    for (i=0;i<nSteps;i++)
-    {
-        draw_Vertex( pVert[((i+0)%nSteps)*2+0] );
-        draw_Vertex( pVert[((i+0)%nSteps)*2+1] );
-        draw_Vertex( pVert[((i+1)%nSteps)*2+1] );
-
-        draw_Vertex( pVert[((i+0)%nSteps)*2+0] );
-        draw_Vertex( pVert[((i+1)%nSteps)*2+1] );
-        draw_Vertex( pVert[((i+1)%nSteps)*2+0] );
-    }
-
-    draw_End();
-
-    smem_StackPopToMarker();
 }
 
 //=============================================================================

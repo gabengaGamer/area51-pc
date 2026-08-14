@@ -5,12 +5,12 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\Obj_mgr.hpp"
-#include "miscutils\PropertyEnum.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "MiscUtils/PropertyEnum.hpp"
 #include "Nav_Map.hpp"
-#include "inventory\inventory2.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "Characters\factions.hpp"
+#include "Inventory/Inventory2.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Characters/factions.hpp"
 
 //=========================================================================
 // AlarmNode
@@ -57,7 +57,7 @@ public:
             void                InvalidateNode  ( void );
             void                Activate        ( xbool AIActivated );
             void                Deactivate      ( void );
-    virtual void                OnAdvanceLogic  ( f32 DeltaTime );      
+    virtual void                OnAdvanceSimulation  ( f32 DeltaTime );      
             s32                 GetAlarmGroup   ( void )            { return m_AlarmGroup; }
             void                ReserveNode     ( guid NewUser, xbool AIReserved ) ;
             xbool               IsReserved      ( guid Requester ) ;

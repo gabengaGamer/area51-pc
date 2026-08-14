@@ -14,14 +14,14 @@
 //  INCLUDES
 //==============================================================================
 
-#include "..\x_types.hpp"
+#include "../x_types.hpp"
 
 #ifndef X_LOCALE_HPP
-#include "..\x_locale.hpp"
+#include "../x_locale.hpp"
 #endif
 
 #ifndef X_DEBUG_HPP
-#include "..\x_debug.hpp"
+#include "../x_debug.hpp"
 #endif
 
 //==============================================================================
@@ -56,7 +56,7 @@ x_language x_MapWindowsLanguage( LANGID const LangId )
         //case LANG_JAPANESE:    return XL_LANG_JAPANESE;   
         //case LANG_KOREAN:      return XL_LANG_KOREAN;   
         //case LANG_PORTUGUESE:  return XL_LANG_PORTUGUESE; 
-        //case LANG_RUSSIAN:     return XL_LANG_RUSSIAN;    
+        //case LANG_RUSSIAN:      return XL_LANG_RUSSIAN;
         //case LANG_CHINESE:
         //{
         //    WORD const SubLang = SUBLANGID( LangId );
@@ -78,6 +78,12 @@ x_language x_MapWindowsLanguage( LANGID const LangId )
 	
 	return XL_LANG_ENGLISH;
 }
+#endif
+
+//==============================================================================
+
+#ifdef TARGET_LINUX
+// TODO:
 #endif
 
 //==============================================================================
@@ -122,18 +128,18 @@ const char* const s_pLanguageStrISO639_1[] =
 
 //==============================================================================
 
-static 
-const char* x_GetLocaleStringInternal( x_language const lang, x_locale_code_format const format )
+static
+const char* x_GetLocaleStringInternal( x_language const Language, x_locale_code_format const Format )
 {
-    ASSERT( lang < XL_NUM_LANGUAGES );
-    ASSERT( format < XL_NUM_LOCALE_CODE_FORMATS );
+    ASSERT( (Language >= XL_LANG_ENGLISH) && (Language < XL_NUM_LANGUAGES) );
+    ASSERT( (Format >= XL_LOCALE_CODE_ISO_639_1) && (Format < XL_NUM_LOCALE_CODE_FORMATS) );
 
-    switch( format )
+    switch( Format )
     {
         case XL_LOCALE_CODE_ISO_639_1:
-            return s_pLanguageStrISO639_1[lang];
+            return s_pLanguageStrISO639_1[Language];
         case XL_LOCALE_CODE_ISO_639_2:
-            return s_pLanguageStrISO639_2[lang];
+            return s_pLanguageStrISO639_2[Language];
         default:
 		    ASSERT( 0 );
             break;
@@ -160,10 +166,13 @@ const char* x_GetLocaleStringInternal( x_language const lang, x_locale_code_form
 
 const x_language x_GetConsoleLanguage( void )
 {      
-#ifdef TARGET_PC
+#if defined( TARGET_PC )
     LANGID const LangId = GetUserDefaultLangID();
     x_language const Lang = x_MapWindowsLanguage( LangId );
     return Lang;
+#elif defined( TARGET_LINUX )
+    // TODO:
+    return XL_LANG_ENGLISH;
 #else
     return XL_LANG_ENGLISH;
 #endif
@@ -209,9 +218,9 @@ const x_console_territory x_GetConsoleRegion  ( void )
 //  in the case we have a menu), we set the system language here.
 //==============================================================================
 
-void x_SetLocale( const x_language lang )
+void x_SetLocale( x_language const Language )
 {
-    s_LocaleLang = lang;
+    s_LocaleLang = Language;
 }
 
 //==============================================================================
@@ -244,26 +253,16 @@ const x_language x_GetLocale( void )
 //  Use for filename manipulation to select localized assets.
 //==============================================================================
 
-const char * x_GetLocaleString( x_locale_code_format const format )
+const char* x_GetLocaleString( x_locale_code_format Format )
 {
-    return x_GetLocaleStringInternal( s_LocaleLang, format );
+    return x_GetLocaleStringInternal( s_LocaleLang, Format );
 }
 
 //==============================================================================
-// returns language code string for the requested language.
-//
-// Parameters:
-//
-// Returns:
-//  pointer to string code for requested language.
-//
-// Remarks:
-//  
-//==============================================================================
 
-const char * x_GetLocaleString( const x_language lang, x_locale_code_format const format )
+const char* x_GetLocaleString( x_language Language, x_locale_code_format Format )
 {
-    return x_GetLocaleStringInternal( lang, format );
+    return x_GetLocaleStringInternal( Language, Format );
 }
 
 //==============================================================================

@@ -11,14 +11,14 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
-#include "Characters\Character.hpp"
-#include "Characters\God.hpp"
+#include "Characters/Character.hpp"
+#include "Characters/God.hpp"
 #include "GruntLoco.hpp"
 
-#include "Characters\BaseStates\Character_Idle_State.hpp"
-#include "Characters\BaseStates\Character_Alert_State.hpp"
-#include "Characters\BaseStates\Character_Search_State.hpp"
-#include "Characters\BaseStates\Character_Death_State.hpp"
+#include "Characters/BaseStates/Character_Idle_State.hpp"
+#include "Characters/BaseStates/Character_Alert_State.hpp"
+#include "Characters/BaseStates/Character_Search_State.hpp"
+#include "Characters/BaseStates/Character_Death_State.hpp"
 #include "Grunt_Cover_State.hpp"
 #include "Grunt_Attack_State.hpp"
 #include "Leaper_Attack_State.hpp"

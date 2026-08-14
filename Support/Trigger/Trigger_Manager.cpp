@@ -10,8 +10,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "gamelib\StatsMgr.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "GameLib/StatsMgr.hpp"
 //=========================================================================
 // GLOBALS
 //=========================================================================
@@ -48,7 +48,7 @@ void trigger_mngr::OnUpdate ( f32 DeltaTime )
 {
     stat_logger temp(k_stats_TriggerSystem);
 
-    TRIGGER_CONTEXT( "trigger_mngr::OnUpdate" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "trigger_mngr::OnUpdate" );
 
     //note this must be const reference, as its possible in some situations for the list to become
     //empty due to all active triggers being removed...
@@ -118,7 +118,7 @@ void  trigger_mngr::RegisterTrigger ( trigger_object &  rTrigger )
     //TODO: implement a priority queue for the updating triggers much more effiecnt
     //  than iterating through all updateable triggers.... -ddn
 
-    TRIGGER_CONTEXT( "trigger_mngr::RegisterTrigger" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "trigger_mngr::RegisterTrigger" );
 
     //The list is cyclic.....
 
@@ -181,7 +181,7 @@ void  trigger_mngr::RegisterTrigger ( trigger_object &  rTrigger )
 
 void  trigger_mngr::UnregisterTrigger ( trigger_object &  rTrigger )
 {
-    TRIGGER_CONTEXT( "trigger_mngr::UnregisterTrigger" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "trigger_mngr::UnregisterTrigger" );
 
     //PDL::Delete the trigger from the list
     //The list is cyclic...

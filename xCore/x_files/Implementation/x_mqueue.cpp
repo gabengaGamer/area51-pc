@@ -1,7 +1,7 @@
-#include "..\x_types.hpp"
-#include "..\x_memory.hpp"
-#include "..\x_debug.hpp"
-#include "..\x_threads.hpp"
+#include "../x_types.hpp"
+#include "../x_memory.hpp"
+#include "../x_debug.hpp"
+#include "../x_threads.hpp"
 
 #ifdef DEBUG_THREADS
 static xmesgq*      s_MesgqBuffer[X_MAX_MESSAGE_QUEUES];

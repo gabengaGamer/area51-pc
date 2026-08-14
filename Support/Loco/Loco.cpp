@@ -8,12 +8,13 @@
 // INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Loco.hpp"
 #include "e_Engine.hpp"
-#include "Parsing\TextIn.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Objects\Render\SkinInst.hpp"
-#include "Objects\actor\actor.hpp"
+#include "Parsing/TextIn.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Objects/Render/SkinInst.hpp"
+#include "Objects/Actor/Actor.hpp"
 
 //==============================================================================
 // EXTERNS
@@ -1591,7 +1592,7 @@ void loco::OnInit( const geom* pGeom, const char* pAnimFileName, guid ObjectGuid
 
 void loco::OnAdvance( f32 DeltaTime )
 {
-    CONTEXT( "loco::OnAdvance" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "loco::OnAdvance" );
 
     // Nothing to do?
     if (DeltaTime == 0)
@@ -2714,7 +2715,7 @@ void loco::RenderInfo( xbool bRenderLoco     /*= TRUE*/,
         Yaw = m_Player.GetFacingYaw() ;
         P.Set(0,0,200);
         P.RotateY(Yaw);
-        draw_Line( m_Player.GetPosition() + vOffset, m_Player.GetPosition()+P + vOffset, XCOLOR_PURPLE );
+        render::debug::Line( m_Player.GetPosition() + vOffset, m_Player.GetPosition()+P + vOffset, XCOLOR_PURPLE );
 
         // Blending?
         if( m_Player.IsBlending() )
@@ -2723,24 +2724,24 @@ void loco::RenderInfo( xbool bRenderLoco     /*= TRUE*/,
             Yaw = m_Player.GetCurrAnimYaw();
             P.Set(0,0,200);
             P.RotateY(Yaw);
-            draw_Line( m_Player.GetPosition() + vOffset, m_Player.GetPosition()+P + vOffset, XCOLOR_WHITE );
+            render::debug::Line( m_Player.GetPosition() + vOffset, m_Player.GetPosition()+P + vOffset, XCOLOR_WHITE );
             
             // Blend yaw
             Yaw = m_Player.GetBlendAnimYaw();
             P.Set(0,0,200);
             P.RotateY(Yaw);
-            draw_Line( m_Player.GetPosition() + vOffset, m_Player.GetPosition()+P + vOffset, XCOLOR_RED );
+            render::debug::Line( m_Player.GetPosition() + vOffset, m_Player.GetPosition()+P + vOffset, XCOLOR_RED );
         }
                 
         // Horiz aim
         radian H = m_AimController.GetHorizAim() ;
         P.Set(0,0,300) ;
         P.RotateY(GetYaw() + H) ;
-        draw_Line( m_Player.GetPosition() + vOffset, m_Player.GetPosition()+P + vOffset, XCOLOR_GREEN );
+        render::debug::Line( m_Player.GetPosition() + vOffset, m_Player.GetPosition()+P + vOffset, XCOLOR_GREEN );
 
         // Render where move at
-        draw_Line( GetPosition() + vOffset, m_MoveAt + vOffset, XCOLOR_YELLOW );
-        draw_Sphere( m_MoveAt + vOffset, 25.f, XCOLOR_YELLOW);
+        render::debug::Line( GetPosition() + vOffset, m_MoveAt + vOffset, XCOLOR_YELLOW );
+        render::debug::Sphere( m_MoveAt + vOffset, 25.f, XCOLOR_YELLOW);
 
         // Draw relative mode?
         if( m_Player.GetCurrAnim().IsCinemaRelativeMode() || m_Player.GetCurrAnim().IsCoverRelativeMode() )
@@ -2760,33 +2761,33 @@ void loco::RenderInfo( xbool bRenderLoco     /*= TRUE*/,
             }
             
             // Draw location
-            draw_Sphere( RelPos + vOffset, 15.0f, XCOLOR_RED );
+            render::debug::Sphere( RelPos + vOffset, 15.0f, XCOLOR_RED );
 
             // Draw direction
             P.Set( 0,0, 250 ) ;
             P.RotateY( RelYaw ) ;
-            draw_Line( RelPos + vOffset , RelPos + P + vOffset, XCOLOR_RED );
+            render::debug::Line( RelPos + vOffset , RelPos + P + vOffset, XCOLOR_RED );
         }
                 
         // Render what they are looking at
-        draw_Line  ( Eye, m_HeadLookAt, XCOLOR_AQUA) ;
-        draw_Sphere( m_HeadLookAt, 25.f, XCOLOR_AQUA );
+        render::debug::Line  ( Eye, m_HeadLookAt, XCOLOR_AQUA) ;
+        render::debug::Sphere( m_HeadLookAt, 25.f, XCOLOR_AQUA );
         
         // Draw look at line on the ground
         vector3 LookAtFloor = m_HeadLookAt;
         LookAtFloor.GetY() = GetPosition().GetY();
-        draw_Line  ( GetPosition() + vOffset, LookAtFloor + vOffset, XCOLOR_AQUA ) ;
+        render::debug::Line  ( GetPosition() + vOffset, LookAtFloor + vOffset, XCOLOR_AQUA ) ;
 
         // Show labels
         if (bLabelLoco)
         {
-            draw_Label( m_MoveAt,       XCOLOR_WHITE, "Loco:MoveAt" );
-            draw_Label( m_HeadLookAt,   XCOLOR_WHITE, "Loco:HeadLookAt" );
+            render::debug::Label( m_MoveAt,       XCOLOR_WHITE, "Loco:MoveAt" );
+            render::debug::Label( m_HeadLookAt,   XCOLOR_WHITE, "Loco:HeadLookAt" );
             
             if( m_Player.GetCurrAnim().IsCinemaRelativeMode() )
-                draw_Label( m_CinemaRelativePos,  XCOLOR_WHITE, "Loco:CinRelPos" );
+                render::debug::Label( m_CinemaRelativePos,  XCOLOR_WHITE, "Loco:CinRelPos" );
             else if( m_Player.GetCurrAnim().IsCoverRelativeMode() )
-                draw_Label( m_CoverRelativePos,  XCOLOR_WHITE, "Loco:CovRelPos" );
+                render::debug::Label( m_CoverRelativePos,  XCOLOR_WHITE, "Loco:CovRelPos" );
         }
     }
 
@@ -2797,9 +2798,7 @@ void loco::RenderInfo( xbool bRenderLoco     /*= TRUE*/,
         // Show local bbox from anim player
         ASSERT( m_Player.GetAnimGroup() );
         const bbox& BBox = m_Player.GetAnimGroup()->GetBBox() ;
-        draw_SetL2W(GetL2W()) ;
-        draw_BBox(BBox, XCOLOR_WHITE) ;
-        draw_ClearL2W() ;
+        render::debug::Box( BBox, GetL2W(), XCOLOR_WHITE );
 
         // Show skeleton
         m_Player.RenderSkeleton(bLabelSkeleton) ;

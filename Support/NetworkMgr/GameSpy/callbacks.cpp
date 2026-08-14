@@ -10,8 +10,8 @@
 //
 //==============================================================================
 
-#if !defined(TARGET_PS2) && !defined(TARGET_PC)
-#error This should only be included for PS2 gamespy support.
+#if !defined(TARGET_PC)
+#error This should only be included for gamespy support.
 #endif
 
 #if !defined(bwatson)
@@ -23,7 +23,7 @@
 #include "e_Network.hpp"
 #include "Configuration/GameConfig.hpp"
 
-#include "NetworkMgr/GameSpy/Callbacks.hpp"
+#include "NetworkMgr/GameSpy/callbacks.hpp"
 #include "NetworkMgr/MatchMgr.hpp"
 #include "NetworkMgr/NetworkMgr.hpp"
 
@@ -1145,4 +1145,3 @@ void gamespy_security_complete( GPConnection* pConnection, GPProfileSearchRespon
         MatchMgr.m_SecurityChallengeReceived = TRUE;
     }
 }
-

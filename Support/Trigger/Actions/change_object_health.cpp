@@ -9,11 +9,12 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\change_object_health.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/change_object_health.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "..\Support\Objects\Pain.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "../Support/Objects/Pain.hpp"
 
 #include "Entropy.hpp"
 
@@ -33,7 +34,7 @@ m_ObjectGuid(NULL)
 
 void change_object_health::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * change_object_health::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * change_object_health::Execute" );
 
     (void) pParent;
     
@@ -72,9 +73,9 @@ void change_object_health::OnRender ( void )
         return;
 #ifdef TARGET_PC
     vector3 MyPosition = GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
-    draw_Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_ActivateColor );
-    draw_BBox( ObjectPtr.m_pObject->GetBBox(), s_ActivateColor );
-    draw_Label( ObjectPtr.m_pObject->GetPosition(), s_ActivateColor, GetTypeName() );
+    render::debug::Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_ActivateColor );
+    render::debug::Box( ObjectPtr.m_pObject->GetBBox(), s_ActivateColor );
+    render::debug::Label( ObjectPtr.m_pObject->GetPosition(), s_ActivateColor, GetTypeName() );
 #endif
 }
 

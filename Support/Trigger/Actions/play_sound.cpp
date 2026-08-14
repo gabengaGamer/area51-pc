@@ -9,12 +9,12 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\play_sound.hpp"
+#include "../Support/Trigger/Actions/play_sound.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 
-#include "..\Support\Sound\EventSoundEmitter.hpp"
+#include "../Support/Sound/EventSoundEmitter.hpp"
 
 #include "Entropy.hpp"
 
@@ -32,7 +32,7 @@ play_sound::play_sound ( guid ParentGuid ) : actions_base( ParentGuid )
 
 void play_sound::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * play_sound::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * play_sound::Execute" );
     
     (void) pParent;
     

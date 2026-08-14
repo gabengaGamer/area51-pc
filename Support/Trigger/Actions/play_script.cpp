@@ -9,10 +9,10 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\play_script.hpp"
+#include "../Support/Trigger/Actions/play_script.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 
 #include "Entropy.hpp"
 
@@ -29,7 +29,7 @@ m_ScriptID(0)
 
 void play_script::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * play_script::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * play_script::Execute" );
 
     (void) pParent;
 }

@@ -7,8 +7,8 @@
 #include "x_files/x_types.hpp"
 
 #include "SecretList.hpp"
-#include "stringmgr/stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 #include "StateMgr/StateMgr.hpp"
 
 //=========================================================================

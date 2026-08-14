@@ -4,7 +4,7 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 #include "ui_button.hpp"
 #include "ui_manager.hpp"
 #include "ui_font.hpp"
@@ -50,7 +50,6 @@ ui_button::ui_button( void )
 
 ui_button::~ui_button( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -72,6 +71,7 @@ xbool ui_button::Create( s32 UserID, ui_manager* pManager, const irect& Position
     m_bPulseUp       = FALSE;
     m_PulseRate      = 1024.0f;
     m_PulseValue     = 255.0f;
+    m_ButtonStyle    = BUTTON_STYLE_STANDARD;
 
     // Initialize bitmap ID
     m_BitmapID = -1;
@@ -86,14 +86,15 @@ xbool ui_button::Create( s32 UserID, ui_manager* pManager, const irect& Position
 
 void ui_button::Render( s32 ox, s32 oy )
 {
-    s32     State = ui_manager::CS_NORMAL;
     s32     FontID;
 
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
-        xcolor  TextColor1 = m_TextColorNormal;
-        xcolor  TextColor2 = m_TextColorShadow;
+        const xbool RenderHighlight = ShouldRenderHighlight();
+        const s32   State           = GetVisualState( IsActive() );
+        xcolor      TextColor1      = m_TextColorNormal;
+        xcolor      TextColor2      = m_TextColorShadow;
       
         // Calculate rectangle
         irect    r;
@@ -102,52 +103,52 @@ void ui_button::Render( s32 ox, s32 oy )
         // Render appropriate state
         if( m_Flags & WF_DISABLED )
         {
-            State = ui_manager::CS_DISABLED;
             TextColor1 = m_TextColorDisabled; 
             TextColor2 = xcolor(0,0,0,0);
         }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_HIGHLIGHT )
+        else if( RenderHighlight || IsActive() )
         {
-            State = ui_manager::CS_HIGHLIGHT;
-            TextColor1 = m_TextColorHighlight;
-            TextColor2 = m_TextColorShadow;   
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_SELECTED )
-        {
-            State = ui_manager::CS_SELECTED;
             TextColor1 = m_TextColorHighlight; 
-            TextColor2 = m_TextColorShadow;    
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == (WF_HIGHLIGHT|WF_SELECTED) )
-        {
-            State = ui_manager::CS_HIGHLIGHT_SELECTED;
-            TextColor1 = m_TextColorHighlight; 
-            TextColor2 = m_TextColorShadow;    
-        }
-        else						
-        {
-            State = ui_manager::CS_NORMAL;
-            TextColor1 = m_TextColorNormal;    
             TextColor2 = m_TextColorShadow;    
         }
 
-        // check to see if we should render the button artwork
-        if (m_Flags & WF_BORDER)
+        // Render the selected button style.
+        if( m_ButtonStyle == BUTTON_STYLE_FLAT )
+        {
+            xcolor FillColor   ( 25,  77, 18, 224 );
+            xcolor OutlineColor( 79, 214, 60, 224 );
+
+            if( m_Flags & WF_DISABLED )
+            {
+                FillColor    = xcolor( 19, 59, 14, 160 );
+                OutlineColor = xcolor( 45, 96, 38, 160 );
+            }
+            else if( IsPressed() )
+            {
+                FillColor    = xcolor( 79, 214, 60, 224 );
+                OutlineColor = xcolor( 154, 255, 136, 255 );
+            }
+            else if( RenderHighlight || IsActive() )
+            {
+                FillColor    = xcolor( 39, 117, 28, 255 );
+                OutlineColor = xcolor( 121, 236, 104, 255 );
+            }
+
+            m_pManager->RenderRect( r, FillColor,    FALSE );
+            m_pManager->RenderRect( r, OutlineColor, TRUE  );
+        }
+        else if( m_Flags & WF_BORDER )
         {
             m_pManager->RenderElement( m_iElement, r, State );
-
-            // Add Highlight to list
-            if( m_Flags & WF_HIGHLIGHT )
-                m_pManager->AddHighlight( m_UserID, r );
         }
         else if( m_useSmallText )
         {
-            if ( m_Flags & WF_HIGHLIGHT )
+            if( RenderHighlight )
             {
                 TextColor1 = xcolor(0,0,0,255);
                 TextColor2 = xcolor(0,0,0,0);
 
-                s32 alpha = 128 + (g_UiMgr->GetHighlightAlpha(8) * 8); // 64<->192
+                s32 alpha = 128 + (m_pManager->GetHighlightAlpha(8) * 8); // 64<->192
                 m_pManager->RenderRect( r, xcolor(79,214,60,alpha), FALSE );
             }
         }
@@ -155,7 +156,7 @@ void ui_button::Render( s32 ox, s32 oy )
         {
             if( m_BitmapID != -1 )
             {
-                if( m_Flags & WF_HIGHLIGHT )
+                if( RenderHighlight )
                 {
                     irect r2 = r;
                     r2.t -= 2;
@@ -191,11 +192,11 @@ void ui_button::Render( s32 ox, s32 oy )
         // Render Text
         if( m_useSmallText )
         {
-            FontID = g_UiMgr->FindFont("small");
+            FontID = m_pManager->FindFont("small");
         }
         else
         {
-            FontID = g_UiMgr->FindFont("large");
+            FontID = m_pManager->FindFont("large");
         }
 
         // check for pulsing
@@ -204,20 +205,10 @@ void ui_button::Render( s32 ox, s32 oy )
             TextColor1.A = (u8)m_PulseValue;
         }
 
-        if( m_Flags & WF_HIGHLIGHT )
-		{
-			r.Translate( 1, -1 );
-			m_pManager->RenderText( FontID, r, justFlags, TextColor2, m_Label );
-			r.Translate( -1, -1 );
-			m_pManager->RenderText( FontID, r, justFlags, TextColor1, m_Label );
-		}
-		else
-		{
-			r.Translate( 1, -1 );
-			m_pManager->RenderText( FontID, r, justFlags, TextColor2, m_Label );
-			r.Translate( -1, -1 );
-			m_pManager->RenderText( FontID, r, justFlags, TextColor1, m_Label );
-		}
+        r.Translate( 1, -1 );
+        m_pManager->RenderText( FontID, r, justFlags, TextColor2, m_Label );
+        r.Translate( -1, -1 );
+        m_pManager->RenderText( FontID, r, justFlags, TextColor1, m_Label );
 
 
         // Render children
@@ -230,9 +221,9 @@ void ui_button::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void ui_button::OnUpdate( f32 DeltaTime )
+void ui_button::OnUpdate( ui_win* pWin, f32 DeltaTime )
 {
-    (void)DeltaTime;
+    (void)pWin;
 
     // update color pulsing
     if( m_bPulseOn )

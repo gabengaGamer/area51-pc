@@ -13,21 +13,19 @@
 // INCLUDES
 //=========================================================================
  
-#include "NetworkMgr\NetObj.hpp"
-#include "NetworkMgr\UpdateMgr.hpp"
+#include "NetworkMgr/NetObj.hpp"
+#include "NetworkMgr/UpdateMgr.hpp"
 
-#include "Objects\CorpsePain.hpp"
-#include "Objects\NewWeapon.hpp"
-#include "Objects\Pickup.hpp"
-#include "Characters\factions.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
-#include "Inventory\Inventory2.hpp"
-#include "Characters\FloorProperties.hpp"
-#include "Loco\LocoAnimController.hpp"
-#include "Loco\Loco.hpp"
-#include "Decals\DecalPackage.hpp"
-#include "Objects\Interpolation\InterpolationCache.hpp"
-#include "Objects\Interpolation\SkinnedInterpolation.hpp"
+#include "Objects/CorpsePain.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "Objects/Pickup.hpp"
+#include "Characters/factions.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
+#include "Inventory/Inventory2.hpp"
+#include "Characters/FloorProperties.hpp"
+#include "Loco/LocoAnimController.hpp"
+#include "Loco/Loco.hpp"
+#include "Decals/DecalPackage.hpp"
 
 //==============================================================================
 
@@ -346,7 +344,7 @@ public:
     };
 
     // Locomotion character animation player controller mappings
-    enum anim_flags
+    enum anim_Flags
     {
         ANIM_FLAG_IMPACT_CONTROLLER = loco::ANIM_FLAG_CONTROLLER0,
         ANIM_FLAG_SHOOT_CONTROLLER  = loco::ANIM_FLAG_CONTROLLER1
@@ -449,29 +447,17 @@ virtual s32             OnValidateProperties    ( xstring&       ErrorMsg );
         // Object virtual functions
 virtual void            OnInit                  ( void );
 virtual void            OnKill                  ( void );
-virtual void            OnAdvanceLogic          ( f32 DeltaTime );
+virtual void            OnAdvanceSimulation          ( f32 DeltaTime );
 virtual void            OnAliveLogic            ( f32 DeltaTime );
 virtual void            OnDeathLogic            ( f32 DeltaTime );
 virtual void            OnRender                ( void );
 virtual void            OnRenderShadowCast      ( u64 ProjMask );
 virtual void            OnRenderTransparent     ( void );
 virtual void            OnRenderWeapon          ( void );
-virtual void            CaptureRenderInterpState      ( void );
-virtual void            UpdateRenderInterpState       ( f32 Alpha );
-virtual void            ClearRenderInterpState        ( void );
-virtual void            InvalidateRenderInterpState   ( void );
-virtual void            SnapRenderInterpState         ( void );
-        interp_capture_status CaptureActorRenderInterpState ( void );
-        void            UpdateActorRenderInterpState  ( f32 Alpha );
-        void            ClearActorRenderInterpState   ( void );
-virtual xbool           GetRenderWeaponL2W      ( matrix4& L2W,
-                                                   new_weapon::render_state RenderState = new_weapon::RENDER_STATE_NPC ) const;
-virtual const matrix4*  GetRenderWeaponBones    ( s32& nBones,
-                                                   new_weapon::render_state RenderState = new_weapon::RENDER_STATE_NPC ) const;
-virtual const vector3&  GetRenderWeaponCollisionOffset( new_weapon::render_state RenderState = new_weapon::RENDER_STATE_NPC ) const;
 virtual void            OnColCheck              ( void );    
 virtual void            OnMove                  ( const vector3& NewPos );
 virtual void            OnTransform             ( const matrix4& L2W );
+virtual void            OnRidingPlatformMove    ( const vector3& NewPos, radian DeltaYaw );
 virtual bbox            GetColBBox              ( void );     
 virtual bbox            GetLocalBBox            ( void ) const;
 virtual vector3         GetVelocity             ( void ) const;          
@@ -574,7 +560,6 @@ virtual void            Teleport                ( const vector3& Position, xbool
 virtual void            Teleport                ( const vector3& Position, radian Pitch, radian Yaw, xbool DoBlend = TRUE, xbool DoEffect = FALSE );
 virtual void            InitZoneTracking        ( void );
 virtual void            UpdateZoneTrack         ( void );
-        void            UpdateZone              ( u8 Zone );
         const zone_mgr::tracker& GetZoneTracker  ( void ) const { return m_ZoneTracker; }
 
 // Weapon functions
@@ -704,12 +689,9 @@ virtual void            OnAttachedMove          ( s32 iAttachPt, const matrix4& 
 
 // Rendering functions
 const   matrix4*        GetBonesForRender       ( u64 LODMask, s32& nActiveBones );
-const   matrix4&        GetActorRenderL2W      ( void ) const;
-        xbool           GetActorRenderBoneL2W  ( s32 iBone, matrix4& L2W ) const;
-        void            InvalidateActorRenderInterpState( void );
-        void            SnapActorRenderInterpState( void );
         void            RenderHitLocations      ( void );
-        f32             TimeSinceLastRender     ( void );
+        void            UpdateViewActivity      ( f32 DeltaTime, xbool IsVisible );
+        f32             TimeSinceVisible        ( void ) const;
 virtual skin_inst&      GetSkinInst             ( void ) { return m_SkinInst; }
         anim_group::handle& GetAnimGroupHandle  ( void );
 virtual void            SetSkinVMesh            ( xbool bMutant );
@@ -776,13 +758,6 @@ static  s32                     m_nActive;
         actor*                  m_pPrevActive;
 
 protected:
-        struct actor_interp_state
-        {
-            xbool                Valid;
-            skinned_interp_state Body;
-            weapon_interp_state  Weapon;
-        };
-
         // Active info
         xbool                   m_bIsActive ;           // TRUE if character is within active area
 
@@ -857,8 +832,7 @@ protected:
         floor_properties        m_FloorProperties;
         skin_inst               m_SkinInst ;            // Render instance
         anim_group::handle      m_hAnimGroup ;          // Animation group handle
-        interp_cache<actor_interp_state> m_ActorRenderCache;
-        f32                     m_TimeSinceLastRender;  // Last time character was rendered
+        f32                     m_TimeSinceVisible;
         f32                     m_LeanAmount;           // -1.0f to 1.0f indicates leaning all the way left
                                                         //       to all the way right, respectively
         lean_state              m_LeanState;            // Current lean state
@@ -908,7 +882,7 @@ protected:
         vector3                 m_AimOffset;
 
         u32                     m_WayPointFlags;
-        s32                     m_WayPointTimeOut;
+        f32                     m_WayPointTimeOut; // Elapsed seconds since the waypoint effect was received.
         vector3                 m_WayPoint[2];
 
         xbool                   m_bLockedDoors;
@@ -1206,10 +1180,18 @@ anim_group::handle& actor::GetAnimGroupHandle( void )
 
 //=========================================================================
 
-inline 
-f32 actor::TimeSinceLastRender( void )
-{ 
-    return m_TimeSinceLastRender; 
+inline
+void actor::UpdateViewActivity( f32 DeltaTime, xbool IsVisible )
+{
+    m_TimeSinceVisible = IsVisible ? 0.0f : (m_TimeSinceVisible + DeltaTime);
+}
+
+//===========================================================================
+
+inline
+f32 actor::TimeSinceVisible( void ) const
+{
+    return m_TimeSinceVisible;
 }
 
 //===========================================================================

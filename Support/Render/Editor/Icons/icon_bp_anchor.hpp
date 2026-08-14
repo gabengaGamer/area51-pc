@@ -566,5 +566,4 @@ static s16 s_iicon_bp_anchor[] =
 };
 
 
-#define DRAW_ICON_BP_ANCHOR() draw_icon( NUM_FACETS_ICON_BP_ANCHOR, NUM_VERTICES_ICON_BP_ANCHOR, s_vicon_bp_anchor, s_iicon_bp_anchor )
 

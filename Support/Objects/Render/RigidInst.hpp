@@ -5,8 +5,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "Render\RigidGeom.hpp"
-#include "Objects\Render\RenderInst.hpp"
+#include "Render/RigidGeom.hpp"
+#include "Render/RigidColor.hpp"
+#include "Objects/Render/RenderInst.hpp"
 
 //=========================================================================
 // CLASS
@@ -28,11 +29,11 @@ public:
 
     rigid_geom*         GetRigidGeom        ( void     ) const;
     s32                 GetNumColors        ( void     ) const;
-    const void*         GetColorTable       ( void     ) const;
-    const void*         GetColorTable       ( platform ) const;
+    const u32*          GetColorTable       ( void     ) const;
+    const u32*          GetColorTable       ( platform ) const;
     const char*         GetRigidGeomName    ( void     ) const;
 
-    void                SetColorTable       ( const void* pColorTable, s32 iColor, s32 nColors );
+    void                SetColorTable       ( const u32* pColorTable, s32 iColor, s32 nColors );
     virtual void        LoadColorTable      ( const char* pFileName );
     virtual void        RenderShadowCast    ( const matrix4* pL2W,
                                               u32            Flags,
@@ -46,7 +47,7 @@ public:
 protected:
 
     rhandle<rigid_geom>         m_hRigidGeom;       // Handle to the Rigid Geom
-    const void*                 m_pRigidColor;      // store pointer after resolve
+    const u32*                  m_pRigidColor;      // store pointer after resolve
 
     s32                         m_nColors;          // Number of colours used by instance
     s32                         m_iColor;           // Index into colour table
@@ -86,4 +87,3 @@ inline const char* rigid_inst::GetGeomName( void ) const
 //=========================================================================
 
 #endif
-

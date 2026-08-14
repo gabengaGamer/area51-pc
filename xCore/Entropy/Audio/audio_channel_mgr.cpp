@@ -1,35 +1,45 @@
-#include "audio_package.hpp"
-#include "audio_channel_mgr.hpp"
-#include "audio_voice_mgr.hpp"
-#include "audio_hardware.hpp"
-#include "audio_package.hpp"
-#include "audio_inline.hpp"
+//==============================================================================
+//
+//  audio_channel_mgr.cpp
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
+#include "Audio/audio_package.hpp"
+#include "Audio/audio_channel_mgr.hpp"
+#include "Audio/audio_runtime.hpp"
+#include "Audio/audio_voice_mgr.hpp"
+#include "Audio/backend/audio_backend.hpp"
+#include "Audio/audio_package.hpp"
+#include "Audio/audio_helpers.hpp"
 #include "e_ScratchMem.hpp"
 #include "x_log.hpp"
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 static xbool s_IsInitialized = FALSE;        // Sentinel
 
-//------------------------------------------------------------------------------
-
-audio_channel_mgr g_AudioChannelMgr;
-
-//------------------------------------------------------------------------------
+//==============================================================================
+//  IMPLEMENTATION
+//==============================================================================
 
 audio_channel_mgr::audio_channel_mgr( void )
 {
+    m_pRuntime = NULL;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 audio_channel_mgr::~audio_channel_mgr( void )
 {
 }
         
-//------------------------------------------------------------------------------
+//==============================================================================
 
-void audio_channel_mgr::Init( void )
+void audio_channel_mgr::Init( audio_runtime& AudioRuntime )
 {
     s32 i;
     s32 n;
@@ -38,13 +48,14 @@ void audio_channel_mgr::Init( void )
 
     // Error check.
     ASSERT( s_IsInitialized == FALSE );
+    m_pRuntime = &AudioRuntime;
 
     // Init previous.
     pPrev = FreeList();
 
     // Get first channel and number of channels.
-    pChannel = g_AudioHardware.GetChannelBuffer();
-    n        = g_AudioHardware.NumChannels();
+    pChannel = Runtime().Backend.GetChannelBuffer();
+    n        = Runtime().Backend.NumChannels();
 
     // For each hardware channel...
     for( i=0 ; i<n ; i++, pChannel++ )
@@ -65,7 +76,7 @@ void audio_channel_mgr::Init( void )
 
     // Initialize the free list.
     FreeList()->Link.pPrev = pChannel;
-    FreeList()->Link.pNext = g_AudioHardware.GetChannelBuffer();
+    FreeList()->Link.pNext = Runtime().Backend.GetChannelBuffer();
 
     // Initialize used list.
     UsedList()->Link.pPrev =
@@ -74,15 +85,11 @@ void audio_channel_mgr::Init( void )
     // Head/Tail is now lowest priority.
     UsedList()->Priority = -1;
 
-    // Set up fake hardware priority.
-    // TODO: This is GCN only!
-    g_AudioChannelMgr.UsedList()->Hardware.Priority = 1;
-
     // It's initialized!
     s_IsInitialized = TRUE;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::Kill( void )
 {
@@ -91,15 +98,16 @@ void audio_channel_mgr::Kill( void )
 
     // Not initialized anymore...
     s_IsInitialized = FALSE;
+    m_pRuntime = NULL;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 xbool DEBUG_ACQUIRE_CHANNEL_FAIL = 0;
 
 xbool audio_channel_mgr::Acquire( element* pElement )
 {
-    CONTEXT( "audio_channel_mgr::Acquire" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_channel_mgr::Acquire" );
 
     channel* pResult;
     channel* pHead;
@@ -107,9 +115,8 @@ xbool audio_channel_mgr::Acquire( element* pElement )
 
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_ELEMENT(pElement) );
+    ASSERT( Runtime().Voices.IsValidElement(pElement) );
 
-    g_AudioHardware.Lock();
 
     // Get head/tail of free list and first free channel.
     pHead    = FreeList();
@@ -135,15 +142,19 @@ xbool audio_channel_mgr::Acquire( element* pElement )
             }
 #endif // defined(rbrannon)
 
-            // Free the channel, don't put it in the free list, nuke the element.
-            Free( pChannel, FALSE, TRUE );
-
-            // Get outta my way!  I'm more important!
-            pResult = pChannel;
+            if( Free( pChannel, FALSE, TRUE ) )
+            {
+                // Get outta my way!  I'm more important!
+                pResult = pChannel;
+            }
+            else
+            {
+                pResult = NULL;
+            }
         }
         else
         {
-            // Cannot aquire a channel...
+            // Cannot acquire a channel...
             pResult = NULL;
         }
     }
@@ -156,7 +167,7 @@ xbool audio_channel_mgr::Acquire( element* pElement )
         pResult = pChannel;
     }
 
-    // Was a channel aquired?
+    // Was a channel acquired?
     if( pResult )
     {
         // Init state and dirty bits.
@@ -182,30 +193,24 @@ xbool audio_channel_mgr::Acquire( element* pElement )
         pResult->Pan2d      = pElement->Params.Pan2d;
         pResult->Pan3d      = pElement->Params.Pan3d;
 
-        // Clear the read stream flag.
-        pResult->StreamData.bReadStream= FALSE;
-
         // Insert it into the used list based on the priority/volume.
         UpdatePriorityList( pResult, FALSE );
 
-        // Fake the hardware priority (until callback runs, GCN only).
-        // Do this by using the priority of the next channel.
-        g_AudioHardware.DuplicatePriority( pResult, pResult->Link.pNext );
-
-        // Aquire the hardware channel, if we can...
-        if( g_AudioHardware.AcquireChannel( pResult ) )
+        // Acquire the hardware channel, if we can...
+        if( Runtime().Backend.AcquireChannel( pResult ) )
         {
             // Can initialize hot samples...
             if( pElement->Type == HOT_SAMPLE )
             {
                 // Now initilize the hardware channel.
-                g_AudioHardware.InitChannel( pResult );
+                Runtime().Backend.InitChannel( pResult );
             }
 
             // Set elements channel.
             pElement->pChannel = pResult;
+
         }
-        // DOH! Could not aquire a hardware channel...
+        // DOH! Could not acquire a hardware channel...
         else
         {
             // Take it out of the used list.
@@ -219,7 +224,6 @@ xbool audio_channel_mgr::Acquire( element* pElement )
         }
     }
 
-    g_AudioHardware.Unlock();
 
     #if !defined(X_RETAIL) || defined(X_QA)
     if( pResult == NULL && DEBUG_ACQUIRE_CHANNEL_FAIL )
@@ -229,96 +233,93 @@ xbool audio_channel_mgr::Acquire( element* pElement )
             x_DebugMsg( 7, "%s Failed to acquire hardware channel!", pElement->pVoice->pDescriptorName );
         }
     }
-    #endif // !defined(X_RETAIL)
+#endif // !defined(X_RETAIL)
 
     // Tell the world.
     return( pResult != NULL );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
-void audio_channel_mgr::Release( channel* pChannel )
+xbool audio_channel_mgr::Release( channel* pChannel )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
-    g_AudioHardware.Lock();
 
     // Free the channel, put it into the free channel list, Don't nuke the element.
-    Free( pChannel, TRUE, FALSE );
-
-    g_AudioHardware.Unlock();
+    return Free( pChannel, TRUE, FALSE );
 }
         
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::Start( channel* pChannel )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     // Set state to starting.
     pChannel->State = STATE_STARTING;
+
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::Pause( channel* pChannel )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     // Set the state to stopping
     pChannel->State = STATE_PAUSING;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::Resume( channel* pChannel )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     // Set the state to stopping.
     pChannel->State = STATE_RESUMING;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 xbool audio_channel_mgr::IsPlaying( channel* pChannel )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
-    return g_AudioHardware.IsChannelActive( pChannel );
+    return Runtime().Backend.IsChannelActive( pChannel );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 s32 audio_channel_mgr::GetPriority( channel* pChannel )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     return( pChannel->Priority );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::SetPriority( channel* pChannel, s32 Priority ) 
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
     ASSERT( (Priority >= 0) && (Priority <= 255) );
 
-    g_AudioHardware.Lock();
 
     // Set the channels priority.
     pChannel->Priority = Priority;
@@ -326,29 +327,27 @@ void audio_channel_mgr::SetPriority( channel* pChannel, s32 Priority )
     // Update the channels position in the used list.
     UpdatePriorityList( pChannel, TRUE );
     
-    g_AudioHardware.Unlock();
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 f32 audio_channel_mgr::GetVolume( channel* pChannel )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     return( pChannel->Volume );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::SetVolume( channel* pChannel, f32 Volume )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
-    g_AudioHardware.Lock();
 
     // Limit the volume.
     if( Volume < 0.0f )
@@ -374,27 +373,26 @@ void audio_channel_mgr::SetVolume( channel* pChannel, f32 Volume )
     // Set the dirty bit.
     pChannel->Dirty |= CHANNEL_DB_VOLUME;
 
-    g_AudioHardware.Unlock();
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::GetPan( channel* pChannel, vector4& Pan )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     Pan = pChannel->Pan3d;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::SetPan( channel* pChannel, vector4& Pan )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     // Set the pan
     pChannel->Pan3d = Pan;
@@ -403,24 +401,24 @@ void audio_channel_mgr::SetPan( channel* pChannel, vector4& Pan )
     pChannel->Dirty |= CHANNEL_DB_PAN;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 f32 audio_channel_mgr::GetPitch( channel* pChannel )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     return( pChannel->Pitch );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::SetPitch( channel* pChannel, f32 Pitch )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     if( Pitch > 2.0f )
     {
@@ -440,24 +438,24 @@ void audio_channel_mgr::SetPitch( channel* pChannel, f32 Pitch )
     pChannel->Dirty |= CHANNEL_DB_PITCH;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 f32 audio_channel_mgr::GetEffectSend( channel* pChannel )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     return( pChannel->EffectSend );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::SetEffectSend( channel* pChannel, f32 EffectSend )
 {
     // Error check.
     ASSERT( s_IsInitialized );
-    ASSERT( VALID_CHANNEL(pChannel) );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     // Limit the effect send.
     if( EffectSend < 0.0f )
@@ -481,18 +479,17 @@ void audio_channel_mgr::SetEffectSend( channel* pChannel, f32 EffectSend )
     pChannel->Dirty |= CHANNEL_DB_EFFECTSEND;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::Update( void )
 {
-    CONTEXT( "audio_channel_mgr::Update" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_channel_mgr::Update" );
 
     channel* pChannel;
     channel* pHead;
 
-    g_AudioHardware.Lock();
     {
-        CONTEXT( "audio_channel_mgr::UpdateLocked" );
+        X_PROFILE_SCOPE_CATEGORY( "Context", "audio_channel_mgr::Update" );
         // Get head/tail of used channel list and first member.
         pHead    = UsedList();
         pChannel = pHead->Link.pNext;
@@ -503,18 +500,17 @@ void audio_channel_mgr::Update( void )
             channel* pNext;
 
             // Error check.
-            ASSERT( VALID_CHANNEL(pChannel) );
+            ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
             // Get next used channel.
             pNext = pChannel->Link.pNext;
 
             // Was the hardware channel lost?
-            if( !g_AudioHardware.IsChannelActive( pChannel) )
+            if( !Runtime().Backend.IsChannelActive( pChannel) )
             {
                 element* pElement;
                 element* pStereo=NULL;
 
-                g_AudioVoiceMgr.Lock();
 
                 // Get the channels element.
                 pElement = pChannel->pElement;
@@ -524,24 +520,24 @@ void audio_channel_mgr::Update( void )
                     pStereo = pElement->pStereoElement;
 
                 // Free the channel, put it in the free channel list, nuke the element as well.
-                Free( pChannel, TRUE, TRUE );
+                (void)Free( pChannel, TRUE, TRUE );
 
                 // Did channel have an element?
                 if( pElement )
                 {
                     // Was the element stereo?
-                    ASSERT( VALID_ELEMENT(pElement) );
+                    ASSERT( Runtime().Voices.IsValidElement(pElement) );
                     if( pStereo )
                     {
                         // Get the stereo channel.
-                        ASSERT( VALID_ELEMENT(pStereo) );
+                        ASSERT( Runtime().Voices.IsValidElement(pStereo) );
                         pChannel = pStereo->pChannel;
 
                         // Only if the stereo channel is valid...
                         if( pChannel )
                         {
                             // Error check.
-                            ASSERT( VALID_CHANNEL(pChannel) );
+                            ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
                             // Are we about to nuke the next?
                             if( pChannel == pNext )
@@ -551,16 +547,15 @@ void audio_channel_mgr::Update( void )
                             }
 
                             // Stereo channel active?
-                            if( g_AudioHardware.IsChannelActive( pChannel) )
+                            if( Runtime().Backend.IsChannelActive( pChannel) )
                             {
                                 // Free the stereo channel, put it in the free channel list, nuke the element as well.
-                                Free( pChannel, TRUE, TRUE );
+                                (void)Free( pChannel, TRUE, TRUE );
                             }
                         }
                     }
                 }
 
-                g_AudioVoiceMgr.Unlock();
 
             }
 
@@ -569,25 +564,22 @@ void audio_channel_mgr::Update( void )
         }
     }
 
-    g_AudioHardware.Unlock();
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
-void audio_channel_mgr::Free( channel* pChannel, xbool PutInFreeList, xbool FreeParent )
+xbool audio_channel_mgr::Free( channel* pChannel, xbool PutInFreeList, xbool FreeParent )
 {
     element* pElement;
 
     // Error check.
-    ASSERT( VALID_CHANNEL(pChannel) );
-    ASSERT( g_AudioHardware.CanModifyChannelList() );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     // Nuke the hardware channel.
-    g_AudioHardware.Lock();
     
     ASSERT(pChannel->pElement->Type != (element_type)-1);
-    g_AudioHardware.ReleaseChannel( pChannel );
-    g_AudioHardware.Unlock();
+    if( !Runtime().Backend.ReleaseChannel( pChannel ) )
+        return FALSE;
 
     // Get the channels element.
     pElement = pChannel->pElement;
@@ -610,23 +602,21 @@ void audio_channel_mgr::Free( channel* pChannel, xbool PutInFreeList, xbool Free
     if( FreeParent && pElement )
     {
         // Release the element, don't recurse and release the channel..hehe...
-        ASSERT( VALID_ELEMENT(pElement) );
-        g_AudioVoiceMgr.ReleaseElement( pElement, FALSE );
+        ASSERT( Runtime().Voices.IsValidElement(pElement) );
+        (void)Runtime().Voices.ReleaseElement( pElement, FALSE );
     }
 
-   // Note the need to update the priorities in the audio callback.
-   g_AudioHardware.SetDirtyBit( CALLBACK_DB_PRIORITY );
+    return TRUE;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_channel_mgr::UpdatePriorityList( channel* pChannel, xbool RemoveFromList )
 {
     channel* pInsert;
 
     // Error check.
-    ASSERT( VALID_CHANNEL(pChannel) );
-    ASSERT( g_AudioHardware.CanModifyChannelList() );
+    ASSERT( Runtime().Backend.IsValidChannel(pChannel) );
 
     // Remove the channel from the used list?
     if( RemoveFromList )
@@ -648,6 +638,4 @@ void audio_channel_mgr::UpdatePriorityList( channel* pChannel, xbool RemoveFromL
     // Insert it into the used list.
     InsertChannelIntoList( pChannel, pInsert );
 
-    // Note the need to update the hardware priorities in the audio callback.
-    g_AudioHardware.SetDirtyBit( CALLBACK_DB_PRIORITY );
 }

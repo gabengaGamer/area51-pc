@@ -1,11 +1,12 @@
 //===========================================================================
 // INCLUDES
 //===========================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "Ladder_Field.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
-#include "entropy.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "CollisionMgr\PolyCache.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Entropy.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "CollisionMgr/PolyCache.hpp"
 
 
 //=============================================================================
@@ -204,17 +205,17 @@ void ladder_field::OnColRender( xbool bRenderHigh )
     // Render all collision
     ladder_field::collision Collision ;
     ComputeCollision(Collision, 30*2, 180) ;
-    draw_NGon(Collision.m_FrontQuad.m_Pos, 4, FrontCol, FALSE ) ;
-    draw_NGon(Collision.m_TopQuad.m_Pos,   4, TopCol,   FALSE ) ;
-    draw_NGon(Collision.m_BackQuad.m_Pos,  4, BackCol,  FALSE ) ;
-    draw_NGon(Collision.m_FrontQuad.m_Pos, 4, LineCol,  TRUE) ;
-    draw_NGon(Collision.m_TopQuad.m_Pos,   4, LineCol,  TRUE) ;
-    draw_NGon(Collision.m_BackQuad.m_Pos,  4, LineCol,  TRUE) ;
+    render::debug::Ngon(Collision.m_FrontQuad.m_Pos, 4, FrontCol, FALSE ) ;
+    render::debug::Ngon(Collision.m_TopQuad.m_Pos,   4, TopCol,   FALSE ) ;
+    render::debug::Ngon(Collision.m_BackQuad.m_Pos,  4, BackCol,  FALSE ) ;
+    render::debug::Ngon(Collision.m_FrontQuad.m_Pos, 4, LineCol,  TRUE) ;
+    render::debug::Ngon(Collision.m_TopQuad.m_Pos,   4, LineCol,  TRUE) ;
+    render::debug::Ngon(Collision.m_BackQuad.m_Pos,  4, LineCol,  TRUE) ;
 
     // Render the world bbox
     bbox WorldBBox = GetLocalBBox() ;
     WorldBBox.Transform(GetL2W()) ;
-    draw_BBox(WorldBBox, XCOLOR_GREEN) ;
+    render::debug::Box(WorldBBox, XCOLOR_GREEN) ;
 }
 #endif // X_RETAIL
 
@@ -240,10 +241,10 @@ void ladder_field::RenderLadderField( void )
     // Just render top and front collision
     ladder_field::collision Collision ;
     ComputeCollision(Collision, 180.0f, 180) ;
-    draw_NGon(Collision.m_FrontQuad.m_Pos, 4, FrontCol, FALSE ) ;
-    draw_NGon(Collision.m_TopQuad.m_Pos,   4, TopCol,   FALSE ) ;
-    draw_NGon(Collision.m_FrontQuad.m_Pos, 4, LineCol, TRUE) ;
-    draw_NGon(Collision.m_TopQuad.m_Pos,   4, LineCol, TRUE) ;
+    render::debug::Ngon(Collision.m_FrontQuad.m_Pos, 4, FrontCol, FALSE ) ;
+    render::debug::Ngon(Collision.m_TopQuad.m_Pos,   4, TopCol,   FALSE ) ;
+    render::debug::Ngon(Collision.m_FrontQuad.m_Pos, 4, LineCol, TRUE) ;
+    render::debug::Ngon(Collision.m_TopQuad.m_Pos,   4, LineCol, TRUE) ;
 
     // Draw a bbox if selected
     if( GetAttrBits() & ATTR_EDITOR_SELECTED )
@@ -256,7 +257,7 @@ void ladder_field::RenderLadderField( void )
         WorldBBox.Inflate(20,20,20) ;
 
         // Render
-        draw_BBox(WorldBBox, XCOLOR_RED) ;
+        render::debug::Box(WorldBBox, XCOLOR_RED) ;
     }
 }
 

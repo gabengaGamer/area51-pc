@@ -5,14 +5,14 @@
 //=============================================================================================
 // INCLUDES
 //=============================================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "ProjectileMesonSeeker.hpp"
-#include "Entropy\e_Draw.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "render\LightMgr.hpp"
-#include "..\Support\Tracers\TracerMgr.hpp"
-#include "Objects\actor\actor.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "../Support/Tracers/TracerMgr.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
 
 #define MAX_COLLISON_PER_BULLET  MAX_COLLISION_MGR_COLLISIONS
 
@@ -189,7 +189,7 @@ bbox mesonseeker_projectile::GetLocalBBox( void ) const
 
     if( pRigidGeom )
     {
-        return( pRigidGeom->m_Collision.BBox );
+        return( pRigidGeom->m_collision.BBox );
     }
     
     return( bbox( vector3( 10.0f, 10.0f, 10.0f),
@@ -228,11 +228,11 @@ void mesonseeker_projectile::UpdatePhysics( const f32& DeltaTime )
 
 //=============================================================================
 
-void mesonseeker_projectile::OnAdvanceLogic( f32 DeltaTime )
+void mesonseeker_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
     if( m_Exploded )
     {
-        net_proj::OnAdvanceLogic( DeltaTime );
+        net_proj::OnAdvanceSimulation( DeltaTime );
         return;
     }
 
@@ -293,7 +293,7 @@ void mesonseeker_projectile::OnAdvanceLogic( f32 DeltaTime )
     }
 
     // This is at the bottom because the projectile can be destroyed in the call
-    net_proj::OnAdvanceLogic( DeltaTime );
+    net_proj::OnAdvanceSimulation( DeltaTime );
 }
 
 //==============================================================================
@@ -412,7 +412,7 @@ void mesonseeker_projectile::OnRender( void )
     }
     else
     {
-//        draw_BBox( GetBBox(), XCOLOR_RED );
+//        render::debug::Box( GetBBox(), XCOLOR_RED );
     }
 }
 

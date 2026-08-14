@@ -21,7 +21,7 @@
 
 #define ENABLE_LOGGING
 
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 const s32   k_SAMPLE_HISTORY = 120;
 

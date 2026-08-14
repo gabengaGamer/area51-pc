@@ -10,13 +10,13 @@
 
 #include "GenericNPC.hpp"
 
-#include "objects\GrenadeProjectile.hpp"
-#include "objects\NewWeapon.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "..\MiscUtils\TrajectoryGenerator.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "Debris\debris_rigid.hpp"
-#include "gamelib\StatsMgr.hpp"
+#include "Objects/GrenadeProjectile.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "../MiscUtils/TrajectoryGenerator.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Debris/debris_rigid.hpp"
+#include "GameLib/StatsMgr.hpp"
 
 //=========================================================================
 // CONSTS DEFINTIONS and STATIC FUNCTIONS
@@ -134,11 +134,6 @@ const object_desc& genericNPC::GetObjectType( void )
 // GENERIC CHARACTER
 //=========================================================================
 
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( push )
-    #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
-#endif
-
 genericNPC::genericNPC() :
     character(),
     m_Idle              ( *this, character_state::STATE_IDLE    ),
@@ -157,10 +152,6 @@ genericNPC::genericNPC() :
     // set up the leave cover condition for us.
     m_Cover.SetLeaveCondition( character_cover_state::LEAVE_COVER_WHEN_BROKEN );
 }
-
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( pop )
-#endif
 
 //=========================================================================
 

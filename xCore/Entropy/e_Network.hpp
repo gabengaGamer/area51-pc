@@ -13,9 +13,9 @@
 
 #include "x_types.hpp"
 #include "x_time.hpp"
-#include "Network/netaddress.hpp"
-#include "Network/netsocket.hpp"
-#include "Network/netdefines.hpp"
+#include "Network/NetAddress.hpp"
+#include "Network/NetSocket.hpp"
+#include "Network/NetDefines.hpp"
 
 extern internet_settings    ISettings;
 extern net_stats            g_NetStats;

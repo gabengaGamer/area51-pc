@@ -5,11 +5,12 @@
 #include "x_files.hpp"
 #include "RawMesh2.hpp"
 #include "texinfo.hpp"
-#include "..\..\Render\Geom.hpp"
-#include "..\..\Render\CollisionVolume.hpp"
-#include "Auxiliary\MiscUtils\dictionary.hpp"
+#include "../../Render/geom.hpp"
+#include "../../Render/CollisionVolume.hpp"
+#include "Auxiliary/MiscUtils/dictionary.hpp"
 
 struct rawmesh2;
+struct rawanim;
 struct skin_geom;
 struct rigid_geom;
 class geom_rsc_desc;
@@ -26,31 +27,28 @@ public:
     };
 
             geom_compiler       ( void );
-            ~geom_compiler      ( void );
-
     void    SetUserInfo         ( const char* pUserName, const char* pComputerName );
     void    SetExportDate       ( s32 Month, s32 Day, s32 Year );
     void    ReportWarning       ( const char* pWarning );
     void    ReportError         ( const char* pError );
     void    ThrowError          ( const char* pError );
 
-    void    AddPlatform         ( platform Platform, const char* pFileName );
-    s32     GetPlatformIndex    ( platform Platform );
-    void    Export              ( const char* pFileName, comp_type Type, const char* pTexturePath );
+    void    Export              ( const char* pFileName,
+                                  const char* pOutputFile,
+                                  comp_type   Type,
+                                  const char* pTexturePath );
     void    AddFastCollision    ( const char* pFileName );
-    void    SetPhysicsMatx      ( const char* pFileName );
+    void    SetPhysicsSource    ( const char* pFileName );
     void    SetSettingsFile     ( const char* pFileName );
 
     void    CompileLowCollision ( rigid_geom&   RigidGeom, 
                                   rawmesh2&     LowMesh, 
-                                  rawmesh2&     HighMesh,
-                                  const char*   pFileName);
+                                  rawmesh2&     HighMesh );
    
     void    CompileLowCollisionFromBBox ( rigid_geom& RigidGeom, rawmesh2&   HighMesh );
 
-    void    CompileHighCollisionPC      ( rigid_geom& RigidGeom, collision_data::mat_info* pMatList, const char* pFileName );
-    void    CompileHighCollisionPS2     ( rigid_geom& RigidGeom, collision_data::mat_info* pMatList, const char* pFileName );
-    void    CompileHighCollisionXBOX    ( rigid_geom& RigidGeom, collision_data::mat_info* pMatList, const char* pFileName );
+    void    CompileHighCollisionFromGeometry( rigid_geom& RigidGeom,
+                                              collision_data::mat_info* pMatList );
 
 public:
 
@@ -73,48 +71,21 @@ public:
         NumMaps
     };
 
-    struct high_tri
-    {
-        high_tri*                   pNext;
-        s32                         I;
-        vector3                     P[3];
-        s32                         iBone;
-        s32                         iMesh;
-        s32                         iDList;
-        collision_data::mat_info    MatInfo;
-        xbool                       bFlipOrient;
-        plane                       Plane;
-        bbox                        BBox;
-    };
-
 protected:
 
-    struct info
-    {
-        char                FileName[256];
-        f32                 MinDistance;
-        xbool               BuildCollision;
-    };
-
-    struct plat_info
-    {
-        platform            Platform;
-        char                FileName[256];
-    };
-
-    struct dlist
+    struct surface
     {
         s32                 iMaterial;
         s32                 iBone;
-        xarray<s32>         lTri;
+        xarray<s32>         Facets;
     };
 
     struct sub_mesh
     {
-        char                        Name[32];
+        char                        Name[256];
         const rawmesh2*             pRawMesh;
         const rawmesh2::sub_mesh*   pRawSubMesh;
-        xharray<dlist>              lDList;
+        xarray<surface>             Surfaces;
     };
 
     struct map_info
@@ -123,7 +94,6 @@ protected:
         xstring InputBitmapName;
         xstring OutputBitmapName;
         xstring CompiledBitmapName;
-        xbool   bOutOfDate;
     };
 
     struct map_slot
@@ -142,12 +112,14 @@ protected:
     struct mesh
     {
         xarray<material>    Material;
-        xharray<sub_mesh>   SubMesh;
+        xarray<sub_mesh>    SubMesh;
     };
 
 protected:
     
     void    LoadResource        ( const char* pFileName, xbool bSkin );
+    void    LoadSourceMesh      ( const char* pFileName, rawmesh2& Mesh );
+    void    LoadSourceAnimation ( const char* pFileName, rawanim& Animation );
     
     void    BuildBone           ( geom::bone& Bone, const rawmesh2::bone& RawBone );
 
@@ -167,22 +139,15 @@ protected:
     xbool   IsSameMaterial      ( const rawmesh2::material& RawMatA,
                                   const rawmesh2::material& RawMatB,
                                   const rawmesh2&           RawMesh );
-    void    BuildBasicStruct    ( geom& Geom, const rawmesh2& RawMesh, mesh& Mesh, xbool IsRigid );
+    void    BuildCompileModel   ( geom& Geom, const rawmesh2& RawMesh, mesh& Mesh, xbool IsRigid );
 
     void    RemoveUnusedVMeshes ( rawmesh2& RawMesh );
 
     void    ExportRigidGeom     ( const char* pFileName );
-    void    ExportRigidGeomXbox ( mesh& Mesh, rigid_geom& RigidGeom, const char* pFileName );
-    void    ExportRigidGeomPS2  ( mesh& Mesh, rigid_geom& RigidGeom, const char* pFileName );
-    void    ExportRigidGeomPC   ( mesh& Mesh, rigid_geom& RigidGeom, const char* pFileName );
+    void    BuildRigidGeometry  ( mesh& Mesh, rigid_geom& RigidGeom );
 
     void    ExportSkinGeom      ( const char* pFileName );
-    void    ExportSkinGeomXbox  ( mesh& Mesh, skin_geom&  SkinGeom,  const char* pFileName );
-    void    ExportSkinGeomPS2   ( mesh& Mesh, skin_geom&  SkinGeom,  const char* pFileName );
-    void    ExportSkinGeomPC    ( mesh& Mesh, skin_geom&  SkinGeom,  const char* pFileName );
-
-    void    RecenterUVs         ( s16*                      pUVs,
-                                  s32                       nVerts );
+    void    BuildSkinGeometry   ( mesh& Mesh, skin_geom& SkinGeom );
     void    ExportUVAnimation   ( const rawmesh2::material& RawMat,
                                   const f32*                pParamKey,
                                   geom::material&           Material,
@@ -192,26 +157,16 @@ protected:
                                   s32                       MapType,
                                   u32                       CheckSum,
                                   pref_bpp                  PreferredBPP,
-                                  const char*               pInputFile,
-                                  platform                  PlatformId );
-    void    CheckTimeStamps     ( map_slot&                 Map,
-                                  const char*               pMixMap );
-    void    FillMapSlots        ( mesh&                     Mesh,
-                                  platform                  PlatformId );
-    void    ExportMaterial      ( mesh&                     Mesh,
-                                  geom&                     Geom,
-                                  s32                       PlatformID );
-    void    ExportVirtualMeshes ( mesh&                     Mesh,
-                                  geom&                     Geom,
-                                  s32                       PlatformID );
-    void    BuildTexturePath    ( char* pPath, const char* pName, s32 PlatformID );
-    void    ExportDiffuse       ( const xbitmap& Bitmap, const char* pName, pref_bpp BPP, s32 nMips, s32 PlatformID );
-    void    ExportEnvironment   ( const xbitmap& Bitmap, const char* pName, s32 PlatformID );
-    void    ExportDetail        ( const xbitmap& Bitmap, const char* pName, s32 PlatformID );
+                                  const char*               pInputFile );
+    void    FillMapSlots        ( mesh& Mesh );
+    void    ExportMaterial      ( mesh& Mesh, geom& Geom );
+    void    ExportVirtualMeshes ( mesh& Mesh, geom& Geom );
+    void    BuildTexturePath    ( char* pPath, const char* pName );
+    void    ExportDiffuse       ( const xbitmap& Bitmap, const char* pName, pref_bpp BPP, s32 nMips );
+    void    ExportEnvironment   ( const xbitmap& Bitmap, const char* pName );
+    void    ExportDetail        ( const xbitmap& Bitmap, const char* pName );
 
     void    ProcessPunchThruMap( map_info& DiffuseMap, const char* pPunchThruMap );
-
-    void    CompileHighCollision        ( rigid_geom& RigidGeom, high_tri* pTri, s32 nTris, const char* pFileName, platform PlatformID );
 
     void    CompileDictionary   ( geom& Geom );
 
@@ -219,14 +174,14 @@ protected:
 
 protected:
 
-    xarray<info>        m_InfoList;
-    xarray<plat_info>   m_PlatInfo;
+    char                m_OutputFile[X_MAX_PATH];
     char                m_TexturePath[X_MAX_PATH] ;
     char                m_FastCollision[X_MAX_PATH];
-    char                m_PhysicsMatx[X_MAX_PATH];
+    char                m_PhysicsSource[X_MAX_PATH];
     char                m_SettingsFile[X_MAX_PATH];
     geom_rsc_desc*      m_pGeomRscDesc;
     dictionary          m_Dictionary;
+    xarray<s32>         m_RawMeshToCompiled;
     char                m_UserName[256];
     char                m_ComputerName[256];
     s32                 m_ExportDate[3];

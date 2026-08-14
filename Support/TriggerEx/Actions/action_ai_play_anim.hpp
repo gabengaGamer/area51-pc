@@ -12,7 +12,7 @@
 //=========================================================================
 
 #include "action_ai_base.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 //=========================== ==============================================
 // action_ai_play_anim

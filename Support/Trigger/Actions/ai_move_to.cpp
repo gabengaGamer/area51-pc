@@ -9,11 +9,12 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\ai_move_to.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/ai_move_to.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "..\Support\Characters\Character.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "../Support/Characters/Character.hpp"
 
 #include "Entropy.hpp"
 
@@ -38,7 +39,7 @@ m_ModifyGroup( ONE_NPC )
 
 void ai_move_to::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * ai_move_to::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * ai_move_to::Execute" );
       
     (void) pParent;
     guid    ToTriggerGuid = NULL;
@@ -103,9 +104,9 @@ void ai_move_to::OnRender ( void )
         return;
 #ifdef TARGET_PC
     vector3 MyPosition =  GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
-    draw_Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_AIColor );
-    draw_BBox( ObjectPtr.m_pObject->GetBBox(), s_AIColor );
-    draw_Label( ObjectPtr.m_pObject->GetPosition(), s_AIColor, GetTypeName() );
+    render::debug::Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_AIColor );
+    render::debug::Box( ObjectPtr.m_pObject->GetBBox(), s_AIColor );
+    render::debug::Label( ObjectPtr.m_pObject->GetPosition(), s_AIColor, GetTypeName() );
 #endif
 }
 

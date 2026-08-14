@@ -9,9 +9,9 @@
 //=========================================================================
 
 #include "action_player_inventory.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Objects\Player.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 #include "Inventory/Inventory2.hpp"
 
 //=========================================================================

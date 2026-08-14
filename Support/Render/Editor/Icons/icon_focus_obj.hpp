@@ -844,5 +844,4 @@ static s16 s_iicon_focus_obj[] =
 };
 
 
-#define DRAW_ICON_FOCUS_OBJ() draw_icon( NUM_FACETS_ICON_FOCUS_OBJ, NUM_VERTICES_ICON_FOCUS_OBJ, s_vicon_focus_obj, s_iicon_focus_obj )
 

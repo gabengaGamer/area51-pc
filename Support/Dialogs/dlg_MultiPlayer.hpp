@@ -11,14 +11,14 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_blankbox.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_blankbox.hpp"
 #include "dlg_PopUp.hpp"
 
-#include "StateMgr\StateMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
 
 //==============================================================================
 //  DEFINES
@@ -32,7 +32,6 @@ enum multi_player_controls
     IDC_MULTI_PLAYER_TWO_COMBO,
     IDC_MULTI_PLAYER_ONE_TEXT,
     IDC_MULTI_PLAYER_TWO_TEXT,
-    IDC_MULTI_PLAYER_NAV_TEXT,
 };
 
 //==============================================================================
@@ -61,11 +60,11 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadNavigate       ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void        OnPadDelete         ( ui_win* pWin );
-    virtual void        OnPadActivate       ( ui_win* pWin );
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
+    virtual void        OnNavigate       ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void        OnDelete         ( ui_win* pWin );
+    virtual void        OnAlternate       ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
     void                RefreshProfileList  ( void );
@@ -85,17 +84,16 @@ protected:
     ui_text*            m_pPlayerOneText;
     ui_text*            m_pPlayerTwoText;
 
-    ui_text*            m_pNavText;
 
     s32                 m_CreatePlayerIndex;                // player who is creating the profile
     s32                 m_CreateIndex;                      // index in the list where the create profile option is located
-    s32                 m_iCard;                            // card slot in use for current memcard operation
 
     s32                 m_CurrHL;
 
     xwstring            m_ProfileName;
     xbool               m_ProfileEntered;
     xbool               m_ProfileOK;
+    xbool               m_PlayerProfileReady[2];
 
     dlg_popup*          m_PopUp;
     s32                 m_PopUpResult;

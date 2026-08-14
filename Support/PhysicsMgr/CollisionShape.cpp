@@ -8,6 +8,7 @@
 // INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Entropy.hpp"
 #include "CollisionShape.hpp"
 #include "PhysicsMgr.hpp"
@@ -178,6 +179,7 @@ void collision_shape::SetL2W( const matrix4& PrevL2W, const matrix4& NextL2W )
 }
 
 //==============================================================================
+
 // Render functions
 //==============================================================================
 
@@ -199,24 +201,21 @@ void collision_shape::DebugClearCollision( void )
 void collision_shape::DebugRender( const matrix4& L2W, xcolor Color )
 {
     // Render spheres
-    draw_ClearL2W();
     s32 nSpheres = GetNSpheres();
     for( s32 i = 0; i < nSpheres; i++ )
     {
         collision_shape::sphere& Sphere = GetSphere( i );
 
         if( Sphere.m_bCollision )
-            draw_Sphere( Sphere.m_CollFreePos, m_Radius, XCOLOR_RED );
+            render::debug::Sphere( Sphere.m_CurrPos, m_Radius, XCOLOR_RED );
         else
-            draw_Sphere( Sphere.m_CollFreePos, m_Radius, XCOLOR_YELLOW );
+            render::debug::Sphere( Sphere.m_CurrPos, m_Radius, XCOLOR_YELLOW );
 
-        draw_Sphere( Sphere.m_CurrPos, m_Radius, XCOLOR_GREEN );
+        render::debug::Sphere( Sphere.m_CurrPos, m_Radius, XCOLOR_GREEN );
     }
 
     // Render world bbox
-    draw_SetL2W( L2W );
-    draw_BBox( ComputeLocalBBox(), Color );
-    draw_ClearL2W();
+    render::debug::Box( ComputeLocalBBox(), L2W, Color );
 }
 
 #endif  //#ifdef ENABLE_PHYSICS_DEBUG

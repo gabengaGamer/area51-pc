@@ -6,10 +6,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "Objects\PlaySurface.hpp"
-#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
-#include "Animation\AnimPlayer.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "Animation/AnimPlayer.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
 
 //=========================================================================
 // CLASS
@@ -29,7 +28,7 @@ public:
 
     virtual void                OnMove          ( const vector3& NewPos   );      
     virtual void                OnTransform     ( const matrix4& L2W      );
-    virtual void                OnAdvanceLogic  ( f32 DeltaTime );
+    virtual void                OnAdvanceSimulation  ( f32 DeltaTime );
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
     virtual bbox                GetLocalBBox    ( void ) const;
@@ -53,15 +52,6 @@ public:
 
 protected:
 
-    virtual void                CaptureRenderInterpState ( void );
-    virtual void                UpdateRenderInterpState  ( f32 Alpha );
-    virtual void                ClearRenderInterpState   ( void );
-    virtual void                InvalidateRenderInterpState( void );
-    virtual void                SnapRenderInterpState    ( void );
-    void                        InvalidateRenderState( void );
-    const matrix4&              GetRenderL2W       ( void ) const;
-    xbool                       GetRenderBoneL2W   ( s32 iBone, matrix4& L2W );
-
     virtual void                OnRender        ( void );
     virtual void                OnColCheck      ( void );
 
@@ -70,6 +60,7 @@ protected:
 #endif // X_RETAIL
 
     virtual const matrix4*      GetBoneL2Ws     ( void );
+            void                UpdateSpatialState( const vector3& NewPos );
             void                UpdateZoneTrack ( void );
     
 
@@ -78,7 +69,6 @@ protected:
     anim_group::handle          m_hAnimGroup;
     rhandle<char>               m_hAudioPackage;
     simple_anim_player          m_AnimPlayer;
-    simple_anim_interp_cache    m_RenderCache;
     s16                         m_iBackupAnimString;
     zone_mgr::tracker           m_ZoneTracker;
 };

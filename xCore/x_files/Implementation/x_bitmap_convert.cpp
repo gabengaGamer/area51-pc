@@ -9,11 +9,11 @@
 //==============================================================================
 
 #ifndef X_BITMAP_HPP
-#include "..\x_bitmap.hpp"
+#include "../x_bitmap.hpp"
 #endif
 
 #ifndef X_MEMORY_HPP
-#include "..\x_memory.hpp"
+#include "../x_memory.hpp"
 #endif
 
 //==============================================================================
@@ -480,11 +480,11 @@ void xbitmap::ConvertFormat( xbitmap::format DestinationFormat )
     s32     PaletteBytes   = 0;
 
     // Unswizzle as needed.
-    if( m_Flags & FLAG_PS2_CLUT_SWIZZLED )
+    if( m_flags & FLAG_PS2_CLUT_SWIZZLED )
         PS2UnswizzleClut();
 
     // Unflip as needed
-    if ( m_Flags & FLAG_4BIT_NIBBLES_FLIPPED )
+    if ( m_flags & FLAG_4BIT_NIBBLES_FLIPPED )
         Unflip4BitNibbles() ;
 
     // There are four conversion paths:
@@ -667,28 +667,28 @@ void xbitmap::ConvertFormat( xbitmap::format DestinationFormat )
     // information.
     //
 
-    if( m_Flags & FLAG_DATA_OWNED )   
+    if( m_flags & FLAG_DATA_OWNED )   
         x_free( m_Data.pPixel );
 
-    if( (m_Flags & FLAG_CLUT_OWNED) && (m_pClut) )   
+    if( (m_flags & FLAG_CLUT_OWNED) && (m_pClut) )   
         x_free( m_pClut );
 
     m_Data.pPixel = pNewData;
     m_DataSize    = DataBytes;
     m_NMips       = 0;
-    m_Flags      |= FLAG_DATA_OWNED;
+    m_flags      |= FLAG_DATA_OWNED;
 
     if( NewFormat.ClutBased )
     {
         m_pClut    = pNewPalette;
         m_ClutSize = PaletteBytes;
-        m_Flags   |= FLAG_CLUT_OWNED;
+        m_flags   |= FLAG_CLUT_OWNED;
     }
     else
     {
         m_pClut    = NULL;
         m_ClutSize = 0;
-        m_Flags   &= ~FLAG_CLUT_OWNED;
+        m_flags   &= ~FLAG_CLUT_OWNED;
     }
 
     m_Format = (s8)DestinationFormat;
@@ -857,7 +857,7 @@ xcolor* xbmp_GenerateColorMipA1( const xcolor* pSource, s32 W, s32 H, s32 Mip )
 // #define DUMP_MIPS
 
 #ifdef DUMP_MIPS
-#include "..\x_string.hpp"
+#include "../x_string.hpp"
 static s32 GlobalMipCount = 0;
 #endif
 
@@ -926,12 +926,12 @@ void xbitmap::BuildMips( s32 Mips, xbool bForcePunchthrough )
             pNewData    = (byte*)x_malloc( NewDataSize );
             x_memcpy( pNewData, pOldData, NewDataSize );
 
-            if( m_Flags & FLAG_DATA_OWNED )
+            if( m_flags & FLAG_DATA_OWNED )
                 x_free( m_Data.pPixel );
 
             m_Data.pPixel = pNewData;
             m_DataSize    = NewDataSize;    
-            m_Flags      |= FLAG_DATA_OWNED;
+            m_flags      |= FLAG_DATA_OWNED;
             m_NMips       = 0;
         }
         return;
@@ -957,7 +957,7 @@ void xbitmap::BuildMips( s32 Mips, xbool bForcePunchthrough )
 
     // If PS2 swizzling is on, unswizzle.
     xbool DoPS2SwizzleClut = FALSE;
-    if( m_Flags & FLAG_PS2_CLUT_SWIZZLED )
+    if( m_flags & FLAG_PS2_CLUT_SWIZZLED )
     {
         DoPS2SwizzleClut = TRUE;
         PS2UnswizzleClut();
@@ -965,7 +965,7 @@ void xbitmap::BuildMips( s32 Mips, xbool bForcePunchthrough )
 
     // If nibbles are flipped, unflip them..
     xbool DoFlip4BitNibbles = FALSE ;
-    if ( m_Flags & FLAG_4BIT_NIBBLES_FLIPPED)
+    if ( m_flags & FLAG_4BIT_NIBBLES_FLIPPED)
     {
         DoFlip4BitNibbles = TRUE ;
         Unflip4BitNibbles() ;
@@ -1067,11 +1067,11 @@ void xbitmap::BuildMips( s32 Mips, xbool bForcePunchthrough )
     //
 
     // Install the new data.
-    if( m_Flags & FLAG_DATA_OWNED )
+    if( m_flags & FLAG_DATA_OWNED )
         x_free( m_Data.pPixel );
     m_Data.pPixel = pNewData;
     m_DataSize    = NewDataSize;    
-    m_Flags      |= FLAG_DATA_OWNED;
+    m_flags      |= FLAG_DATA_OWNED;
 
     // Install the mip table.
     for( i = 0; i <= Mips; i++ )

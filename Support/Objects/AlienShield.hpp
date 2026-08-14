@@ -8,9 +8,9 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
-#include "obj_mgr\obj_mgr.hpp"
-#include "..\Auxiliary\fx_RunTime\Fx_Mgr.hpp"
-#include "audiomgr\AudioMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "FX/fx_Mgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 
 //=============================================================================
 // DEFINES
@@ -19,7 +19,6 @@
 #define MAX_SHIELD_ORBS             8
 #define MAX_SHIELD_PAIN_FX          8
 
-//#define ALIEN_SHIELD_CAN_FIRE
 
 //=============================================================================
 class alien_shield: public object
@@ -37,7 +36,7 @@ public:
 
     virtual bbox        GetLocalBBox        ( void ) const;
 
-    virtual void        OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void        OnMove				( const vector3& rNewPos );
     virtual void        OnRender            ( void );
     virtual void        OnRenderTransparent ( void );
@@ -118,33 +117,6 @@ protected:
             void                PlayGrayAnim            ( gray_anim Anim );
             
 
-#ifdef ALIEN_SHIELD_CAN_FIRE
-protected:
-            struct combat_info
-            {
-                f32             m_AttackTime;           // How often attack checks are made
-                s32             m_AttackChance;         // [0-100] chance of firing every time the timer cycles
-                s32             m_AttackAccuracy;   
-            };
-
-            enum combat_mode
-            {
-                COMBAT_WITH_HOSTS   = 0,                // There are available orb hosts
-                COMBAT_NO_HOSTS     = 1,                // There are no available orb hosts
-            };
-
-            enum shot_state
-            {
-                SHOT_IDLE,
-                SHOT_CHARGING,
-                SHOT_FIRING,
-            };
-
-            void                SwitchShotState         ( shot_state State );
-            void                AcquireTarget           ( void );
-            void                Shoot                   ( xbool bAimToHit );
-
-#endif // ALIEN_SHIELD_CAN_FIRE        
 
 
     //
@@ -167,38 +139,6 @@ protected:
     fx_handle           m_hPainFX[ MAX_SHIELD_PAIN_FX ];
     u8                  m_iNextPainFX;
 
-#ifdef ALIEN_SHIELD_CAN_FIRE
-
-    //
-    //  Combat
-    //    
-    combat_mode         m_CurCombatMode;        // Used to determine which combat_info
-                                                // to use.
-    f32                 m_AttackTimer;          // Current value of attack timer
-    combat_info         m_CombatInfo[2];        // Data for each combat state
-    shot_state          m_ShotState;
-
-    rhandle<char>       m_hShotChargeup;    
-    fx_handle           m_hShotChargeupFX;
-    rhandle<char>       m_hShoot;    
-    fx_handle           m_hShootFX;
-
-    //
-    //  Last shot taken
-    //
-    vector3             m_LastShotStart;        // Origin of shot
-    vector3             m_LastShotEnd;          // End of shot
-    f32                 m_LastShotTimer;        // How much time is left on the fade
-    guid                m_gLastShotTarget;      // Who was the target    
-    vector3             m_RenderVert[ 18 ];
-
-    //
-    //  Audio for attack system
-    //
-    s32                 m_SoundIDChargeup;
-    s32                 m_SoundIDAttack;
-
-#endif // ALIEN_SHIELD_CAN_FIRE
 
 
     //

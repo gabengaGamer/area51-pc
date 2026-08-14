@@ -7,7 +7,8 @@
 #include "element.hpp"
 #include "element_spemitter.hpp"
 #include "effect.hpp"
-#include "x_context.hpp"
+#include "x_profile.hpp"
+#include "UI/ui_renderer.hpp"
 
 namespace fx_core
 {
@@ -224,23 +225,32 @@ void effect::AddController( controller* pController )
 
 void effect::RenderBackground( f32 T )
 {
-    CONTEXT( "effect::RenderBackground" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "effect::RenderBackground" );
 
     // Background name?
     if( !m_BackgroundName.IsEmpty() )
     {
-        // Start drawing
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER | DRAW_2D );
-        if ( g_pTextureMgr->ActivateBitmap( m_BackgroundName ) == FALSE )
+        if( g_pTextureMgr->ActivateBitmap( m_BackgroundName ) == FALSE )
             m_BackgroundName.Clear();
 
-        const view* pView = eng_GetView();
-        rect r;
-        pView->GetViewport( r );
-
-        draw_Sprite( vector3(0,0,0), vector2(r.Max.X,r.Max.Y), XCOLOR_WHITE );
-
-        draw_End();
+        const texture* pTexture = g_pTextureMgr->GetTexture( m_BackgroundName );
+        if( pTexture )
+        {
+            const view* pView = eng_GetView();
+            rect r;
+            pView->GetViewport( r );
+            g_UIRenderer.PushScreenSpace( irect( (s32)r.Min.X,
+                                                 (s32)r.Min.Y,
+                                                 (s32)r.Max.X,
+                                                 (s32)r.Max.Y ) );
+            VERIFY( g_UIRenderer.DrawImage( *pTexture,
+                                             vector2( r.Min.X, r.Min.Y ),
+                                             vector2( r.GetWidth(), r.GetHeight() ),
+                                             vector2( 0, 0 ),
+                                             vector2( 1, 1 ),
+                                             XCOLOR_WHITE ) );
+            g_UIRenderer.PopScreenSpace();
+        }
     }
 }
 
@@ -248,7 +258,7 @@ void effect::RenderBackground( f32 T )
 
 void effect::Render( f32 T )
 {
-    CONTEXT( "effect::Render" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "effect::Render" );
 
     s32 i, Count;
 

@@ -161,5 +161,4 @@ static s16 s_iicon_path[] =
 };
 
 
-#define DRAW_ICON_PATH() draw_icon( NUM_FACETS_ICON_PATH, NUM_VERTICES_ICON_PATH, s_vicon_path, s_iicon_path )
 

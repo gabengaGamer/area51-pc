@@ -11,12 +11,10 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_listbox.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_listbox.hpp"
 
-#include "dialogs\dlg_popup.hpp"
+#include "Dialogs/dlg_PopUp.hpp"
 
 #include "NetworkMgr/NetworkMgr.hpp"
 
@@ -28,28 +26,19 @@ enum connect_states
     CONNECT_IDLE = 0,
     CONNECT_INIT,
     CONNECT_WAIT,
-    SIGN_IN_INIT,
-    SIGN_IN_WAIT,
     CONFIG_INIT,
+    CONFIG_ONLINE_WAIT,
     CONNECT_AUTHENTICATE_MACHINE,
     CONNECT_SELECT_USER,
     ACTIVATE_INIT,
-    ACTIVATE_SELECT,
-    ACTIVATE_LOOP,
-    ACTIVATE_WAIT_DHCP,
     CONNECT_MATCH_INIT,
     CONNECT_AUTHENTICATE_USER,
     CONNECT_FAILED,
     CONNECT_FAILED_WAIT,
-    CONNECT_AUTO_UPDATE,
-    CONNECT_AUTO_UPDATE_WAIT,
-    CONNECT_REQUIRED_MESSAGE,
-    CONNECT_REQUIRED_MESSAGE_WAIT,
-    CONNECT_OPTIONAL_MESSAGE,
-    CONNECT_OPTIONAL_MESSAGE_WAIT,
     CONNECT_DONE,
     CONNECT_DONE_WAIT,
     CONNECT_DISCONNECT,
+    CONNECT_DISCONNECT_WAIT,
     CONNECT_CHECK_MOTD,
     CONNECT_DISPLAY_MOTD,
     NUM_CONNECT_STATES,
@@ -72,8 +61,6 @@ enum cancel_mode
 extern void     dlg_online_connect_register  ( ui_manager* pManager );
 extern ui_win*  dlg_online_connect_factory   ( s32 UserID, ui_manager* pManager, ui_manager::dialog_tem* pDialogTem, const irect& Position, ui_win* pParent, s32 Flags, void* pUserData );
 
-class ui_button;
-
 class dlg_online_connect : public ui_dialog
 {
 public:
@@ -91,8 +78,8 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
     void                RefreshUserList     ( void );
@@ -108,38 +95,21 @@ protected:
 
 
 
-    s32                 PopulateConfigurationList( void );
-
-    ui_frame*           m_pFrame1;
     ui_listbox*         m_pUserList;
-    xbool               m_AccountsHaveChanged;
-    ui_text*            m_pNavText;
-
-    ui_listbox*         m_pConfigList;
 
     connect_states      m_ConnectState;
     dlg_popup*          m_PopUp;
     s32                 m_PopUpResult;
 
-    dlg_popup*          m_PopUpConfirmPassword;
-    s32                 m_PopUpConfirmPasswordResult;
-    xbool               m_bAskForPassword;
-
-    // network config
+    // Network interface state.
     f32                 m_Timeout;
     interface_info      m_Info;
 
-    s32                 m_Status;
-    s32                 m_Error;
     char                m_LabelText[256];     // String ID of reason for failure.
-    xbool               m_Done;
-    net_address         m_Broadcast;
     irect               m_Position;
 
     s32                 m_NumUsers;
-    s32                 m_LastErrorSlot;
     s32                 m_LastErrorCode;
-    s32                 m_RenderDelay;
 
     cancel_mode         m_CancelMode;
     connect_states      m_RetryDestination; 

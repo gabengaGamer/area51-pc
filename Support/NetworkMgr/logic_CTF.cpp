@@ -30,7 +30,7 @@ NOTES:
 #include "Objects/Flag.hpp"
 #include "Objects/FlagBase.hpp"
 #include "Objects/GameProp.hpp"
-#include "Objects/Player.hpp"               // For class actor/player.
+#include "Objects/Player/Player.hpp"               // For class actor/player.
 
 //==============================================================================
 //  TYPES
@@ -242,7 +242,8 @@ void logic_ctf::AdvanceTime( f32 DeltaTime )
         {
             m_RespawnDelay[i] -= DeltaTime;
         }
-        else
+
+        if( m_RespawnDelay[i] <= 0.0f )
         {
             m_RespawnDelay[i] = 0.0f;
         }
@@ -687,7 +688,9 @@ void logic_ctf::BeginGame( void )
     }
     SlotIter.End();
 
+    #ifdef X_ASSERT
     ASSERT( Sanity == 0x0003 );
+    #endif
 
     // Update the player highlight.
     GameMgr.m_Score.HighLightMask = 0x00000000;

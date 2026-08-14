@@ -4,30 +4,29 @@
 //
 // Copyright (c) 2003 Inevitable Entertainment Inc. All rights reserved.
 //
-// Bomb object
-//
 //==============================================================================
-
 
 //=============================================================================
 // INCLUDES
 //=============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "bomb_object.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "audiomgr\audiomgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 
-#include "Render\Render.hpp"
-#include "Debris\Debris_mgr.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "objects\player.hpp"
+#include "Render/Render.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Objects/Player/Player.hpp"
 
 //=============================================================================
 // DEFINES
 //=============================================================================
+
 #define ON_ADVANCE_LOGIC_SECOND 1.0f 
 #define LEFT_DIGIT      0
 #define MIDDLE_DIGIT    1
@@ -195,12 +194,11 @@ s32 bomb_object::FindCorrectMesh(const char* pName )
 
 void bomb_object::OnRender( void )
 {
-    CONTEXT( "bomb_object::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "bomb_object::OnRender" );
 
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
     if( pRigidGeom )
     {
-        const matrix4& RenderL2W = GetRenderL2W();
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         
         if ( pRigidGeom->m_nBones > 1 )
@@ -210,13 +208,13 @@ void bomb_object::OnRender( void )
         else
         {
             DisplayBombCount(m_BombTimerMinutes, m_BombTimerSeconds);
-            m_Inst.Render( &RenderL2W, Flags | GetRenderMode(), m_MeshMask);
+            m_Inst.Render( &GetL2W(), Flags | GetRenderMode(), m_MeshMask);
         }
     }
     else
     {
 #ifdef X_EDITOR        
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif
     }
 }
@@ -251,7 +249,7 @@ xbool bomb_object::RenderDigit( s32 iMesh, u32 Digit )
 
     // Lookup uv anim
     render::tex_anim      Anim;
-    render::hgeom_inst    hInst = m_Inst.GetInst() ;
+    render::GeometryInstanceHandle    hInst = m_Inst.GetInst() ;
     render::htexanim_inst hTexInst = render::GetTexAnimData(hInst);
     if (render::GetUVAnim( hTexInst, iMesh, iMaterial, Anim ) )
     {
@@ -296,14 +294,14 @@ void bomb_object::OnActivate ( xbool Flag )
 
 //=============================================================================
 
-void bomb_object::OnAdvanceLogic( f32 DeltaTime )
+void bomb_object::OnAdvanceSimulation( f32 DeltaTime )
 {
     // Update states
     UpdateHUDBombStates    ( GetHUDEventState(), DeltaTime);
     UpdateBombStates       ( GetBombEventState(), DeltaTime );
 
     // Call base class
-    destructible_obj::OnAdvanceLogic( DeltaTime );
+    destructible_obj::OnAdvanceSimulation( DeltaTime );
 
 
     //see if bomb got shot and blew itself up
@@ -324,7 +322,7 @@ void bomb_object::OnAdvanceLogic( f32 DeltaTime )
             //lets keep getting onAdvance while bomb blinks          
             if(!m_BlinkDisarmFlag)
             {
-                if(!GetAttrBits() | object::ATTR_NEEDS_LOGIC_TIME)
+                if( !(GetAttrBits() & object::ATTR_NEEDS_LOGIC_TIME) )
                     SetAttrBits( GetAttrBits() | object::ATTR_NEEDS_LOGIC_TIME );
             }
  
@@ -334,7 +332,7 @@ void bomb_object::OnAdvanceLogic( f32 DeltaTime )
 
     default:
         //make sure destruct object doesn't take out attr_needs_logic_time bit
-       if(!GetAttrBits() | object::ATTR_NEEDS_LOGIC_TIME)
+       if( !(GetAttrBits() & object::ATTR_NEEDS_LOGIC_TIME) )
            SetAttrBits( GetAttrBits() | object::ATTR_NEEDS_LOGIC_TIME );
     }
 } 
@@ -686,11 +684,15 @@ xbool bomb_object::OnProperty( prop_query& I )
     return( FALSE );
 }
 
+//=============================================================================
 
 void bomb_object::TurnOnDigitMeshes(void)
 {
     m_MeshMask = 0xFFFFFFFFFFFFFFFF;
 }
+
+//=============================================================================
+
 void bomb_object::TurnOnBlankSreenMesh(void)
 {
         //Set screen to default to blank
@@ -703,6 +705,9 @@ void bomb_object::TurnOnBlankSreenMesh(void)
     m_MeshMask &= ~(1 << m_iMesh[SCREEN_COLON]);
     m_MeshMask |=  (1 << m_iMesh[SCREEN_BLANK]);
 }
+
+//=============================================================================
+
 void bomb_object::TurnOnAboutToExpoldeMesh(void)
 {
     m_MeshMask = 0xFFFFFFFFFFFFFFFF;
@@ -714,10 +719,4 @@ void bomb_object::TurnOnAboutToExpoldeMesh(void)
     m_MeshMask &= ~(1 << m_iMesh[SCREEN_COLON]);
     m_MeshMask |=  (1 << m_iMesh[SCREEN_COVER]);
 }
-
-//=============================================================================
-
-
-
-
 

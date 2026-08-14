@@ -12,6 +12,8 @@
 //==============================================================================
 
 #include "x_plus.hpp"
+#include "x_math.hpp"
+#include "x_log.hpp"
 
 //==============================================================================
 //  TYPES
@@ -23,9 +25,8 @@ class blender
     f32     m_DeltaToPop;
     f32     m_Current;
     f32     m_Target;
-    f32     m_Delta;
-    s32     m_Frames;
-    s32     m_FramesToBlend;
+    f32     m_RemainingSeconds;
+    f32     m_BlendDurationSeconds;
     xbool   m_IsAngular;
     xbool   m_Log;
 
@@ -36,29 +37,28 @@ public:
         m_DeltaToPop     = 1.0f;
         m_Current        = 0.0f;
         m_Target         = 0.0f;
-        m_Delta          = 0.0f;
-        m_Frames         = 0;
-        m_FramesToBlend  = 6;
+        m_RemainingSeconds     = 0.0f;
+        m_BlendDurationSeconds = 6.0f / 60.0f;
         m_IsAngular      = FALSE;
         m_Log            = FALSE;
     }
 
-    f32 GetValue( void )
+    f32 GetValue( void ) const
     {
         return( m_Current );
     }
 
-    void Init( f32 DeltaToRestart, f32 DeltaToPop, s32 FramesToBlend, xbool IsAngular )
+    void Init( f32 DeltaToRestart, f32 DeltaToPop, f32 BlendDurationSeconds, xbool IsAngular )
     {
         m_DeltaToRestart = DeltaToRestart;
         m_DeltaToPop     = DeltaToPop;
-        m_FramesToBlend  = FramesToBlend;
+        m_BlendDurationSeconds = MAX( 0.0f, BlendDurationSeconds );
         m_IsAngular      = IsAngular;
     }
 
-    void SetBlendFrames( s32 Frames )
+    void SetBlendDuration( f32 BlendDurationSeconds )
     {
-        m_FramesToBlend = Frames;
+        m_BlendDurationSeconds = MAX( 0.0f, BlendDurationSeconds );
     }
 
     xbool SetTarget( f32 Target )
@@ -91,20 +91,19 @@ public:
             }
         }
 
-        // Accept the new target but don't reset the number of blend frames
+        // Accept a small correction without restarting an in-flight blend.
         if( AbsDelta < m_DeltaToRestart )
         {
-            m_Frames = MAX(1,m_Frames);
             m_Target = Target;
-            m_Delta  = (m_Target - m_Current) / m_Frames;
+            if( m_RemainingSeconds <= 0.0f )
+                m_RemainingSeconds = MIN( 1.0f / 60.0f, m_BlendDurationSeconds );
         }
 
-        // Accept the new target and reset the number of blend frames
+        // Accept the new target and restart the correction window.
         else if( AbsDelta < m_DeltaToPop )
         {
-            m_Frames = m_FramesToBlend;
-            m_Target = Target;
-            m_Delta  = (m_Target - m_Current) / m_Frames;
+            m_RemainingSeconds = m_BlendDurationSeconds;
+            m_Target           = Target;
         }
 
         // Just pop to the new location and reset the number of blend frames
@@ -116,9 +115,9 @@ public:
 
 #if defined(X_LOGGING) && !defined(X_SUPPRESS_LOGS)
         CLOG_MESSAGE( m_Log, "blender::SetTarget",
-                      "%08X - Value:%d - Target:%d - Delta:%d - Frames:%d - PreviousTarget:%d",
-                      (u32)this, (s32)m_Current, (s32)m_Target, (s32)m_Delta, 
-                      m_Frames, (s32)Old ); 
+                      "%p - Value:%d - Target:%d - RemainingMs:%d - PreviousTarget:%d",
+                      (const void*)this, (s32)m_Current, (s32)m_Target,
+                      (s32)(m_RemainingSeconds * 1000.0f), (s32)Old );
 #endif
 
         return Popped;
@@ -129,30 +128,51 @@ public:
         #if defined(X_LOGGING) && !defined(X_SUPPRESS_LOGS)
         f32 Old   = m_Target;
         #endif
-        m_Frames  = m_FramesToBlend;
-        m_Target  = Target;
-        m_Current = Target;
-        m_Delta   = 0.0f;
+        m_RemainingSeconds = 0.0f;
+        m_Target           = Target;
+        m_Current          = Target;
 #if defined(X_LOGGING) && !defined(X_SUPPRESS_LOGS)
         CLOG_MESSAGE( m_Log, "blender::Teleport",
-                      "%08X - Value:%d - Target:%d - Delta:%d - Frames:%d - PreviousTarget:%d",
-                      (u32)this, (s32)m_Current, (s32)m_Target, (s32)m_Delta, 
-                      m_Frames, (s32)Old ); 
+                      "%p - Value:%d - Target:%d - RemainingMs:%d - PreviousTarget:%d",
+                      (const void*)this, (s32)m_Current, (s32)m_Target,
+                      (s32)(m_RemainingSeconds * 1000.0f), (s32)Old );
 #endif
     }       
 
-    f32 BlendLogic( void )
+    f32 Advance( f32 DeltaSeconds )
     {
-        if( m_Frames == 0 )
+        ASSERT( DeltaSeconds >= 0.0f );
+
+        if( m_RemainingSeconds <= 0.0f )
+        {
+            m_Current = m_Target;
+            return m_Current;
+        }
+
+        if( DeltaSeconds <= 0.0f )
             return m_Current;
 
-        m_Frames--;
-        m_Current += m_Delta;
+        #if defined(X_LOGGING) && !defined(X_SUPPRESS_LOGS)
+        const f32 Previous = m_Current;
+        #endif
+        if( DeltaSeconds >= m_RemainingSeconds )
+        {
+            m_Current          = m_Target;
+            m_RemainingSeconds = 0.0f;
+        }
+        else
+        {
+            const f32 Alpha = DeltaSeconds / m_RemainingSeconds;
+            m_Current          += (m_Target - m_Current) * Alpha;
+            m_RemainingSeconds -= DeltaSeconds;
+        }
 
-        CLOG_MESSAGE( m_Log, "blender::Logic",
-                      "%08X - Value:%d - Target:%d - Delta:%d - Frames:%d - PreviousValue:%d",
-                      (u32)this, (s32)m_Current, (s32)m_Target, (s32)m_Delta, 
-                      m_Frames, (s32)(m_Current-m_Delta) ); 
+        #if defined(X_LOGGING) && !defined(X_SUPPRESS_LOGS)
+        CLOG_MESSAGE( m_Log, "blender::Advance",
+                      "%p - Value:%d - Target:%d - RemainingMs:%d - PreviousValue:%d",
+                      (const void*)this, (s32)m_Current, (s32)m_Target,
+                      (s32)(m_RemainingSeconds * 1000.0f), (s32)Previous );
+        #endif
 
         return( m_Current );
     }

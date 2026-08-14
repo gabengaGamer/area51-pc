@@ -56,9 +56,9 @@ public:
         vector3 m_Offset;           // Local offset 
         
         // Computed members
-        vector3 m_CollFreePos; // Last world collision free pos
-        vector3 m_PrevPos;     // World start position
-        vector3 m_CurrPos;     // World end position
+        vector3 m_CollFreePos;     // Last world collision free pos
+        vector3 m_PrevPos;         // World start position
+        vector3 m_CurrPos;         // World end position
         
 #ifdef ENABLE_PHYSICS_DEBUG
         // Debug

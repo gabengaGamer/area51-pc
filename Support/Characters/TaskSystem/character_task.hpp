@@ -13,12 +13,12 @@
 // INCLUDES
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 //#include "character_sub_task.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
-#include "TriggerEx\Actions\action_ai_base.hpp"
-#include "TriggerEx\TriggerEX_Actions.hpp"
-#include "Characters\ResponseList.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
+#include "TriggerEx/Actions/action_ai_base.hpp"
+#include "TriggerEx/TriggerEx_Actions.hpp"
+#include "Characters/ResponseList.hpp"
 
 #define MAX_SUB_TASK_ARRAY_SIZE     48
 

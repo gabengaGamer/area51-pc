@@ -17,7 +17,7 @@
 //                                 
 //    - Variable length argument list support.
 //    - Integral value alignment.
-//    - Endian swapping for 16 and 32 bit values.
+//    - Endian conversion and unaligned little-endian memory access.
 //    - Mutex class for single entry critical sections.
 //    - Quick sort and binary search.
 //    - Pseudo random number generation.
@@ -39,10 +39,6 @@
 
 #ifndef X_MEMORY_HPP
 #include "x_memory.hpp"
-#endif
-
-#ifdef TARGET_PC
-#include <string.h>
 #endif
 
 // For variable length argument list support.
@@ -128,7 +124,163 @@
     #define BIG_ENDIAN_16(A)        A
     #define BIG_ENDIAN_32(A)        A
 #endif   
-    
+
+//==============================================================================
+//  Unaligned little-endian memory access
+//==============================================================================
+ 
+inline u16 x_load_le16( const void* pData )
+{
+    const u8* p = (const u8*)pData;
+    return (u16)((u16)p[0]  | 
+	      ((u16)p[1] << 8));
+}
+
+//==============================================================================
+
+inline u32 x_load_le32( const void* pData )
+{
+    const u8* p = (const u8*)pData;
+    return (u32)p[0]        |
+          ((u32)p[1] <<  8) |
+          ((u32)p[2] << 16) |
+          ((u32)p[3] << 24);
+}
+
+//==============================================================================
+
+inline u64 x_load_le64( const void* pData )
+{
+    const u8* p = (const u8*)pData;
+    return (u64)p[0]           |
+          ((u64)p[1] <<  8)    |
+          ((u64)p[2] << 16)    |
+          ((u64)p[3] << 24)    |
+          ((u64)p[4] << 32)    |
+          ((u64)p[5] << 40)    |
+          ((u64)p[6] << 48)    |
+          ((u64)p[7] << 56);
+}
+
+//==============================================================================
+
+inline void x_store_le16( void* pData, u16 Value )
+{
+    u8* p = (u8*)pData;
+    p[0] = (u8)(Value      );
+    p[1] = (u8)(Value >>  8);
+}
+
+//==============================================================================
+
+inline void x_store_le32( void* pData, u32 Value )
+{
+    u8* p = (u8*)pData;
+    p[0] = (u8)(Value      );
+    p[1] = (u8)(Value >>  8);
+    p[2] = (u8)(Value >> 16);
+    p[3] = (u8)(Value >> 24);
+}
+
+//==============================================================================
+
+inline void x_store_le64( void* pData, u64 Value )
+{
+    u8* p = (u8*)pData;
+    p[0] = (u8)(Value      );
+    p[1] = (u8)(Value >>  8);
+    p[2] = (u8)(Value >> 16);
+    p[3] = (u8)(Value >> 24);
+    p[4] = (u8)(Value >> 32);
+    p[5] = (u8)(Value >> 40);
+    p[6] = (u8)(Value >> 48);
+    p[7] = (u8)(Value >> 56);
+}
+
+//==============================================================================
+//  Unaligned big-endian memory access.
+//==============================================================================
+
+inline u16 x_load_be16( const void* pData )
+{
+    const u8* p = (const u8*)pData;
+    return (u16)(((u16)p[0] << 8) | 
+	       (u16)p[1]);
+}
+
+//==============================================================================
+ 
+inline u32 x_load_be32( const void* pData )
+{
+    const u8* p = (const u8*)pData;
+    return ((u32)p[0] << 24) |
+           ((u32)p[1] << 16) |
+           ((u32)p[2] <<  8) |
+            (u32)p[3];
+}
+
+//==============================================================================
+ 
+inline u64 x_load_be64( const void* pData )
+{
+    const u8* p = (const u8*)pData;
+    return ((u64)p[0] << 56) |
+           ((u64)p[1] << 48) |
+           ((u64)p[2] << 40) |
+           ((u64)p[3] << 32) |
+           ((u64)p[4] << 24) |
+           ((u64)p[5] << 16) |
+           ((u64)p[6] <<  8) |
+            (u64)p[7];
+}
+
+//==============================================================================
+
+inline void x_store_be16( void* pData, u16 Value )
+{
+    u8* p = (u8*)pData;
+    p[0] = (u8)(Value >> 8);
+    p[1] = (u8)(Value     );
+}
+
+//==============================================================================
+
+inline void x_store_be32( void* pData, u32 Value )
+{
+    u8* p = (u8*)pData;
+    p[0] = (u8)(Value >> 24);
+    p[1] = (u8)(Value >> 16);
+    p[2] = (u8)(Value >>  8);
+    p[3] = (u8)(Value      );
+}
+
+//==============================================================================
+
+inline void x_store_be64( void* pData, u64 Value )
+{
+    u8* p = (u8*)pData;
+    p[0] = (u8)(Value >> 56);
+    p[1] = (u8)(Value >> 48);
+    p[2] = (u8)(Value >> 40);
+    p[3] = (u8)(Value >> 32);
+    p[4] = (u8)(Value >> 24);
+    p[5] = (u8)(Value >> 16);
+    p[6] = (u8)(Value >>  8);
+    p[7] = (u8)(Value      );
+}
+
+//==============================================================================
+//  FourCC construction.
+//============================================================================== 
+
+inline u32 x_make_fourcc( char A, char B, char C, char D )
+{
+    return ((u32)(u8)A      ) |
+           ((u32)(u8)B <<  8) |
+           ((u32)(u8)C << 16) |
+           ((u32)(u8)D << 24);
+}
+
 //==============================================================================
 //  Variable length argument list support.
 //==============================================================================

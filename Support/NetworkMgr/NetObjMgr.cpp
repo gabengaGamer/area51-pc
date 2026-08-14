@@ -15,7 +15,7 @@
 #include "NetworkMgr.hpp"
 #include "NetObjMgr.hpp"
 #include "PainQueue.hpp"
-#include "Obj_Mgr/Obj_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "Objects/Pickup.hpp"
 #include "Objects/Flag.hpp"
 #include "Objects/FlagBase.hpp"
@@ -28,7 +28,7 @@
 #include "Objects/ProjectileMutantContagion.hpp"
 #include "Objects/ProjectileMutantTendril.hpp"
 #include "Objects/ProjectileMutantParasite2.hpp"
-#include "Debris/Debris_Meson_Lash.hpp"
+#include "Debris/debris_meson_lash.hpp"
 
 //==============================================================================
 //  STORAGE

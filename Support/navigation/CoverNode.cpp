@@ -1,16 +1,12 @@
+#include "Render/PrimitiveDebug.hpp"
 #include "CoverNode.hpp"
-#include "entropy\e_draw.hpp"
-#include "Entropy\e_ScratchMem.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Render\Editor\editor_icons.hpp"
+#include "Entropy/e_ScratchMem.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Render/Editor/EditorIcons.hpp"
 #include "ng_node2.hpp"
-#include "Characters\Character.hpp"
-#include "objects\SuperDestructible.hpp"
-#include "objects\DestructibleObj.hpp"
-
-#if defined(TARGET_PS2)
-#include "Entropy\PS2\ps2_misc.hpp"
-#endif
+#include "Characters/Character.hpp"
+#include "Objects/SuperDestructible.hpp"
+#include "Objects/DestructibleObj.hpp"
 
 const f32 k_MinPreferedReserveTime = 0.0f;
 const f32 k_MinReserveTime = 8.0f;
@@ -69,218 +65,50 @@ enum_table<cover_node::eCoverWeaponType>  s_CoverNodeWeaponEnumTable(s_CoverNode
 
 #ifdef X_EDITOR
 
-void PrepD3DForStencil( void )
-{
-	//g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
-	//g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
-    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
-    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
-	//
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_REPLACE  );
-	//
-    //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
-    //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
-    //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
-}
-
-void RenderFullScreenQuad( void )
-{
-    const view* pView = eng_GetView();
-    matrix4 L2W;
-    L2W.Identity();
-    L2W.Scale( vector3(1000,1000,50) );
-    L2W.RotateX( pView->GetViewZ().GetPitch() );
-    L2W.RotateY( pView->GetViewZ().GetYaw() );
-    L2W.Translate( pView->GetPosition() );
-    draw_SetL2W(L2W);
-    draw_Vertex(+1,+1,1);
-    draw_Vertex(+1,-1,1);
-    draw_Vertex(-1,+1,1);
-    draw_Vertex(-1,+1,1);
-    draw_Vertex(+1,-1,1);
-    draw_Vertex(-1,-1,1);
-    draw_End();
-    draw_ClearL2W();
-}
-
 void RenderFrustum( const vector3* pInnerFrame, const vector3* pOuterFrame, xbool bInside )
 {
-    s32 i,j;
+    (void)bInside;
 
-    vector3 PTA[4] = {pInnerFrame[0],pInnerFrame[1],pInnerFrame[2],pInnerFrame[3]};
-    vector3 PTB[4] = {pOuterFrame[0],pOuterFrame[1],pOuterFrame[2],pOuterFrame[3]};
-    vector3 CenterA = (PTA[0] + PTA[1] + PTA[2] + PTA[3]) / 4.0f;
-    vector3 CenterB = (PTB[0] + PTB[1] + PTB[2] + PTB[3]) / 4.0f;
+    vector3 const CenterA = ( pInnerFrame[0] + pInnerFrame[1] + pInnerFrame[2] + pInnerFrame[3] ) / 4.0f;
+    vector3 const CenterB = ( pOuterFrame[0] + pOuterFrame[1] + pOuterFrame[2] + pOuterFrame[3] ) / 4.0f;
 
-
-    // Setup the render arrays
-    //                           0      1      2      3      4      5      6      7
-    vector3 VertexList[8] = {PTA[3],PTA[2],PTA[1],PTA[0],PTB[3],PTB[2],PTB[1],PTB[0]};
-    s16     IndexList[] = {0,4,1, 1,4,5, 
-                           1,5,2, 2,5,6, 
-                           2,6,3, 3,6,7, 
-                           3,7,0, 0,7,4,
-                           0,1,2, 0,2,3, 
-                           4,7,6, 4,6,5 };
-
+    render::debug::Line( CenterA, CenterB, XCOLOR_GREEN );
+    for( s32 i = 0; i < 4; ++i )
     {
-        if( bInside )
-        {
-            // Clear stencil buffer
-            {
-                draw_Begin( DRAW_TRIANGLES );
-                draw_Color(xcolor(64,64,64,0));
-                PrepD3DForStencil();
-                //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0xFFFFFFFF );
-                //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
-                RenderFullScreenQuad();
-            }
-
-            // Render Frustum
-            {
-                draw_Begin( DRAW_TRIANGLES );
-                draw_Color(xcolor(64,64,64,0));
-                PrepD3DForStencil();
-               //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
-               //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
-                draw_Verts( (vector3*)VertexList, sizeof(VertexList)/sizeof(vector3) );
-                draw_Execute( IndexList, sizeof(IndexList)/sizeof(s16) );
-                draw_End();
-            }
-        }
-        else
-        {
-            // Clear stencil buffer
-            {
-                draw_Begin( DRAW_TRIANGLES );
-                draw_Color(xcolor(64,64,64,0));
-                PrepD3DForStencil();
-                //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
-                //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
-                RenderFullScreenQuad();
-            }
-
-            // Render Front
-            {
-                draw_Begin( DRAW_TRIANGLES );
-                draw_Color(xcolor(64,64,64,0));
-                PrepD3DForStencil();
-                //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0xFFFFFFFF );
-                //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
-                draw_Verts( (vector3*)VertexList, sizeof(VertexList)/sizeof(vector3) );
-                draw_Execute( IndexList, sizeof(IndexList)/sizeof(s16) );
-                draw_End();
-            }
-
-            // Clear Back
-            {
-                draw_Begin( DRAW_TRIANGLES );
-                draw_Color(xcolor(0,0,0,0));
-                PrepD3DForStencil();
-                //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
-                //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
-                draw_Verts( (vector3*)VertexList, sizeof(VertexList)/sizeof(vector3) );
-                draw_Execute( IndexList, sizeof(IndexList)/sizeof(s16) );
-                draw_End();
-            }
-        }
-
-        // Darken outside of frustum
-        {
-            draw_Begin( DRAW_TRIANGLES );
-            draw_Color(xcolor(64,64,64,255));
-    	    
-            PrepD3DForStencil();
-            //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
-            //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
-            //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
-            //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0 );
-            //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
-            //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ZERO );
-            //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_SRCCOLOR );
-            //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
-
-            RenderFullScreenQuad();
-        }
-
-        // Illuminate inside of frustum
-        {
-            draw_Begin( DRAW_TRIANGLES );
-            draw_Color(xcolor(45,45,45,255));
-    	    
-            PrepD3DForStencil();
-            //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
-            //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
-            //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
-            //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0xFFFFFFFF );
-            //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
-            //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ONE );
-            //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_ONE );
-            //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
-
-            RenderFullScreenQuad();
-        }
-
-        //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  FALSE );
-        //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, TRUE );
-        //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
-        //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-        //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0F );
+        render::debug::Line( pInnerFrame[i], pOuterFrame[i], XCOLOR_GREEN );
+        render::debug::Line( pOuterFrame[i], pOuterFrame[( i + 1 ) & 3], XCOLOR_GREEN );
     }
-    
-    // Render cage
+
+    f32 const Distance = ( CenterA - CenterB ).Length();
+    if( Distance <= 0.0001f )
+        return;
+
+    for( f32 StepDistance = 0.0f; StepDistance <= Distance; StepDistance += 200.0f )
     {
-        draw_Line( CenterA, CenterB, XCOLOR_GREEN );
-        for( i=0; i<4; i++ )
-        {
-            draw_Line( PTA[i], PTB[i], XCOLOR_GREEN );
-            draw_Line( PTB[i], PTB[(i+1)&3], XCOLOR_GREEN );
-        }
+        f32 const T = MIN( StepDistance, Distance ) / Distance;
+        vector3 Points[4];
+        for( s32 i = 0; i < 4; ++i )
+            Points[i] = pInnerFrame[i] + T * ( pOuterFrame[i] - pInnerFrame[i] );
 
-        f32 Dist = (CenterA - CenterB).Length();
-        //x_DebugMsg("----------------------\n%f\n",Dist);
-        f32 D = 0;
-        while( 1 )
-        {
-            x_DebugMsg("%f\n",D);
-            f32 T = D / Dist;
-            vector3 P[4];
-            for( j=0; j<4; j++ )
-                P[j] = PTA[j] + T*(PTB[j] - PTA[j]);
+        for( s32 i = 0; i < 4; ++i )
+            render::debug::Line( Points[i], Points[( i + 1 ) & 3], XCOLOR_GREEN );
 
-            for( s32 j=0; j<4; j++ )
-            {
-                draw_Line( P[j], P[(j+1)&3], XCOLOR_GREEN );
-            }
-
-            if( D==Dist )
-                break;
-
-            D += 200.0f;
-            if( D>Dist ) D = Dist;
-        }
+        if( StepDistance + 200.0f > Distance && StepDistance < Distance )
+            StepDistance = Distance - 200.0f;
     }
 }
 
+//=============================================================================
 // Draws a lit quad
-void draw_LitQuad( const vector3& A, 
-                   const vector3& B, 
-                   const vector3& C, 
-                   const vector3& D,
-                   const vector3& LightDir,
-                         f32      LightDirI,
-                         f32      LightAmbI,
-                         xcolor   LightColor ) 
+void AddLitQuad( render::PrimitiveBatch& Batch,
+                 const vector3& A,
+                 const vector3& B,
+                 const vector3& C,
+                 const vector3& D,
+                 const vector3& LightDir,
+                       f32      LightDirI,
+                       f32      LightAmbI,
+                       xcolor   LightColor )
 {
     // Compute lighting
     vector3 N  = (A - C).Cross(B - A) ;
@@ -297,19 +125,19 @@ void draw_LitQuad( const vector3& A,
     LightColor.G = (u8)((f32)LightColor.G * Dot) ;
     LightColor.B = (u8)((f32)LightColor.B * Dot) ;
 
-    // Draw quad
-    draw_Color( LightColor );
-    draw_Vertex(D) ;
-    draw_Vertex(C) ;
-    draw_Vertex(B) ;
-    draw_Vertex(A) ;
+    const render::primitive_vertex VertexA( A, vector2( 0.0f, 0.0f ), LightColor );
+    const render::primitive_vertex VertexB( B, vector2( 0.0f, 0.0f ), LightColor );
+    const render::primitive_vertex VertexC( C, vector2( 0.0f, 0.0f ), LightColor );
+    const render::primitive_vertex VertexD( D, vector2( 0.0f, 0.0f ), LightColor );
+    Batch.AddTriangle( VertexD, VertexC, VertexB );
+    Batch.AddTriangle( VertexD, VertexB, VertexA );
 }
 
 //=========================================================================
 
 // Draws a solid, lit, bbox
-void draw_LitSolidBBox( const bbox&    BBox,
-                        const matrix4& L2W,
+void RenderLitSolidBox( const bbox&    BBox,
+                        const matrix4& LocalToWorld,
                         const vector3& WorldLightDir,
                               f32      LightDirI,
                               f32      LightAmbI,
@@ -328,22 +156,28 @@ void draw_LitSolidBBox( const bbox&    BBox,
 
     // Setup light direction in local space
     matrix4 W2L ;
-    W2L = L2W ;
+    W2L = LocalToWorld ;
     W2L.InvertSRT() ;
     vector3 LightDir = W2L.RotateVector(WorldLightDir) ;
     LightDir.Normalize() ;
 
-    // Draw bbox
-    draw_SetL2W(L2W) ;
-    draw_Begin( DRAW_QUADS, (LightColor.A == 255) ? 0 : DRAW_USE_ALPHA );
-    draw_LitQuad(P[0], P[2], P[6], P[4], LightDir, LightDirI, LightAmbI, LightColor) ; // F
-    draw_LitQuad(P[1], P[5], P[7], P[3], LightDir, LightDirI, LightAmbI, LightColor) ; // B
-    draw_LitQuad(P[4], P[6], P[7], P[5], LightDir, LightDirI, LightAmbI, LightColor) ; // R
-    draw_LitQuad(P[0], P[1], P[3], P[2], LightDir, LightDirI, LightAmbI, LightColor) ; // L
-    draw_LitQuad(P[2], P[3], P[7], P[6], LightDir, LightDirI, LightAmbI, LightColor) ; // T
-    draw_LitQuad(P[0], P[4], P[5], P[1], LightDir, LightDirI, LightAmbI, LightColor) ; // B
-    draw_End();
-    draw_ClearL2W() ;
+    const xbool IsTransparent = LightColor.A != 255;
+    const render::primitive_draw_desc Material( NULL,
+                                                render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                IsTransparent ? render::PRIMITIVE_BLEND_ALPHA : render::PRIMITIVE_BLEND_OPAQUE,
+                                                render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                IsTransparent ? render::PRIMITIVE_LAYER_TRANSPARENT : render::PRIMITIVE_LAYER_SURFACE );
+    render::PrimitiveBatch Batch( Material );
+    Batch.Reserve( 36, 36 );
+    AddLitQuad( Batch, P[0], P[2], P[6], P[4], LightDir, LightDirI, LightAmbI, LightColor ) ; // F
+    AddLitQuad( Batch, P[1], P[5], P[7], P[3], LightDir, LightDirI, LightAmbI, LightColor ) ; // B
+    AddLitQuad( Batch, P[4], P[6], P[7], P[5], LightDir, LightDirI, LightAmbI, LightColor ) ; // R
+    AddLitQuad( Batch, P[0], P[1], P[3], P[2], LightDir, LightDirI, LightAmbI, LightColor ) ; // L
+    AddLitQuad( Batch, P[2], P[3], P[7], P[6], LightDir, LightDirI, LightAmbI, LightColor ) ; // T
+    AddLitQuad( Batch, P[0], P[4], P[5], P[1], LightDir, LightDirI, LightAmbI, LightColor ) ; // B
+    Batch.Submit( LocalToWorld );
 }
 
 //=========================================================================
@@ -386,7 +220,7 @@ void RenderBone ( const  vector3& A,
     BBox.Max.GetZ() = L ;
 
     // Render bbox
-    draw_LitSolidBBox(BBox, L2W, vector3(1,1,1), 0.8f, 0.3f, Color) ;
+    RenderLitSolidBox(BBox, L2W, vector3(1,1,1), 0.8f, 0.3f, Color) ;
 
     // Compute shadow matrix (just force Y to FloorY)
     L2W(0,1) = 0.0f ;
@@ -395,7 +229,7 @@ void RenderBone ( const  vector3& A,
     L2W(3,1) = FloorY ;
 
     // Render shadow
-    draw_LitSolidBBox(BBox, L2W, vector3(1,1,1), 0.0f, 1.0f, ShadowColor) ;
+    RenderLitSolidBox(BBox, L2W, vector3(1,1,1), 0.0f, 1.0f, ShadowColor) ;
 }
 
 //=========================================================================
@@ -517,7 +351,7 @@ void RenderAnim( const matrix4&             L2W,
     {
         // Render frame 0
         RenderFrame(L2W, AnimGroup, iAnim, 0, XCOLOR_GREEN) ;
-        draw_Label(L2W.GetTranslation(), XCOLOR_WHITE, "%s\n\n%s", hAnimGroup.GetName(), AnimInfo.GetName()) ;
+        render::debug::Label(L2W.GetTranslation(), XCOLOR_WHITE, "%s\n\n%s", hAnimGroup.GetName(), AnimInfo.GetName()) ;
 
         // Look for the 1st fire frame
         for (s32 i = 0 ; i < AnimInfo.GetNEvents() ; i++)
@@ -574,12 +408,12 @@ static struct cover_node_desc : public object_desc
         object_desc::OnEditorRender( Object );
         if( Object.IsActive() )
         {
-            EditorIcon_Draw( EDITOR_ICON_COVER_NODE, Object.GetL2W(), FALSE, XCOLOR_GREEN );
+            DrawEditorIcon( EditorIcon::CoverNode, Object.GetL2W(), FALSE, XCOLOR_GREEN );
             return -1;            
         }
         else
         {
-            EditorIcon_Draw( EDITOR_ICON_COVER_NODE, Object.GetL2W(), FALSE, XCOLOR_GREY );
+            DrawEditorIcon( EditorIcon::CoverNode, Object.GetL2W(), FALSE, XCOLOR_GREY );
             return -1;            
         }
     }
@@ -716,7 +550,7 @@ bbox cover_node::GetLocalBBox( void ) const
 
 //===============================================================================
 
-void cover_node::OnAdvanceLogic( f32 DeltaTime )
+void cover_node::OnAdvanceSimulation( f32 DeltaTime )
 {
     (void)DeltaTime;
     if( m_Destructable )
@@ -772,14 +606,13 @@ void cover_node::OnTransform( const matrix4& L2W )
 
 void cover_node::OnRender( void )
 {
-#ifdef X_EDITOR
-        
+#ifdef X_EDITOR   
     // Render line and bbox
     if(m_ReservedGuid && m_ReservedGuid != GetGuid())
     {
         object* pObject = g_ObjMgr.GetObjectByGuid(m_ReservedGuid);
         if(pObject)
-            draw_Line(pObject->GetBBox().GetCenter(), GetBBox().GetCenter(), XCOLOR_RED);
+            render::debug::Line(pObject->GetBBox().GetCenter(), GetBBox().GetCenter(), XCOLOR_RED);
     }
   
     // Render anims if selected
@@ -849,46 +682,6 @@ void cover_node::OnRender( void )
         }
     }
 #endif
-
-#if defined( TARGET_PS2 ) && (!defined ( X_RETAIL ) || defined(X_QA))
-
-    if(character::s_bDebugInGame)
-    {
-        // Without this, the debug drawing is corrupt
-        eng_WriteToBackBuffer();
-
-        // Compute cover node render bbox
-        bbox BBox ;
-        BBox.Min = GetPosition() - vector3(25.0f, 0.0f, 25.0f) ;
-        BBox.Max = GetPosition() + vector3(25.0f, 25.0f, 25.0f) ;
-        draw_ClearL2W();
-
-        // Is the cover node reserved?
-        xcolor Color = XCOLOR_GREEN;
-        if( GetGuid() != m_ReservedGuid )
-        {
-            // Is cover reserver using the cover node?
-            object* pObject = g_ObjMgr.GetObjectByGuid( m_ReservedGuid );
-            if( ( pObject ) && ( pObject->IsKindOf( character::GetRTTI() ) ) )
-            {
-                // Is character using this cover node?
-                character* pCharacter = (character*)pObject;
-                if( pCharacter->GetCurrentCover() == GetGuid() )
-                {
-                    // Draw a line from player to cover node            
-                    draw_Line( BBox.GetCenter(), pCharacter->GetBBox().GetCenter(), XCOLOR_RED );
-
-                    // Draw bbox in red
-                    Color = XCOLOR_RED;
-                }
-            }
-        }
-
-        // Draw cover node
-        draw_BBox( BBox, Color );
-    }
-#endif  //TARGET_PS2 && (!X_RETAIL || X_QA)
-
 }
 
 //===============================================================================
@@ -908,7 +701,7 @@ void cover_node::OnDebugRender( void )
 
     vector3 vDebugDirection( 0.f , 10.f , 300.f );
     vDebugDirection.RotateY( GetL2W().GetRotation().Yaw );
-    draw_Line( GetPosition() + vector3( 0.f , 10.f , 0.f ) , GetPosition() + vDebugDirection , XCOLOR_GREEN );
+    render::debug::Line( GetPosition() + vector3( 0.f , 10.f , 0.f ) , GetPosition() + vDebugDirection , XCOLOR_GREEN );
 
     //
     // Render frustum
@@ -1773,4 +1566,3 @@ void cover_node::SetYFOV( radian YFOV)
 }
 
 //=============================================================================
-

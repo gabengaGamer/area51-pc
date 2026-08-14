@@ -9,7 +9,7 @@
 //=========================================================================
 
 #include "action_affect_global.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS

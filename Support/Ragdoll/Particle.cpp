@@ -7,6 +7,7 @@
 //==============================================================================
 // INCLUDES
 //==============================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "Particle.hpp"
 #include "Entropy.hpp"
 
@@ -92,13 +93,12 @@ void particle::Render( f32 Radius )
         return ;
 
     // Draw current position
-    draw_ClearL2W() ;
-    draw_Sphere(m_Pos, Radius, m_Color) ;
-    draw_Point(m_Pos, m_Color) ;
+    render::debug::Sphere(m_Pos, Radius, m_Color) ;
+    render::debug::Point(m_Pos, m_Color) ;
 
     // Draw last collision
-    draw_Sphere(m_LastCollPos, Radius, XCOLOR_WHITE) ;
-    draw_Point(m_LastCollPos, m_Color) ;
+    render::debug::Sphere(m_LastCollPos, Radius, XCOLOR_WHITE) ;
+    render::debug::Point(m_LastCollPos, m_Color) ;
 }
 
 #endif

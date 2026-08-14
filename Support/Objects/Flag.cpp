@@ -8,15 +8,15 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Flag.hpp"
 #include "GameLib/RenderContext.hpp"
 #include "TemplateMgr/TemplateMgr.hpp"
-#include "Entropy/e_Draw.hpp"
 #include "Objects/Actor/Actor.hpp"
-#include "Objects/Player.hpp"
-#include "Objects\BaseProjectile.hpp"
-#include "Objects\HudObject.hpp"
-#include "NetworkMgr\logic_ctf.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/BaseProjectile.hpp"
+#include "Objects/HudObject.hpp"
+#include "NetworkMgr/logic_CTF.hpp"
 #include "FlagBase.hpp"
 #include "Objects/ClothObject.hpp"
 
@@ -52,6 +52,8 @@ static struct flag_desc : public object_desc
         object::ATTR_DAMAGEABLE           |
         object::ATTR_RENDERABLE           |
         object::ATTR_TRANSPARENT          |
+        object::ATTR_CAST_SHADOWS         |
+        object::ATTR_RECEIVE_SHADOWS      |
         object::ATTR_SPACIAL_ENTRY        |
         object::ATTR_NO_RUNTIME_SAVE,
         FLAGS_GENERIC_EDITOR_CREATE | 
@@ -97,10 +99,8 @@ flag::flag( void )
     m_Attached    = FALSE;
     m_Player      = -1;
     m_Bone        =  1;
-    m_Holes       =  0;
     m_IgnoreBits  = 0x00000000;
     m_IgnoreTimer = 0.0f;
-    m_bRendered   = TRUE;
     m_IconOpacity = 0.0f;
     m_BaseAlpha   = 0.0f;
 
@@ -116,7 +116,7 @@ flag::flag( void )
     }
 
     // Reset cloth.
-    m_Cloth.Reset();
+    m_ClothSim.Reset();
     m_ActiveTimer = 0.0f;
 }
 
@@ -124,7 +124,8 @@ flag::flag( void )
 
 flag::~flag( void )
 {
-    m_Cloth.Kill();
+    m_ClothRender.Kill();
+    m_ClothSim.Kill();
 
     for( s32 i = 0; i < NUM_FLAG_EFFECTS; i++ )
     {
@@ -180,7 +181,7 @@ void flag::InitGeometry( u32 TeamBits )
 void flag::InitCloth( void )
 {
     // Reset cloth
-    m_Cloth.SetL2W( GetL2W(), TRUE );
+    m_ClothSim.SetL2W( GetL2W(), TRUE );
 
     // Force flag object bounds to update
     SetFlagBits( GetFlagBits() | FLAG_DIRTY_TRANSFORM );
@@ -308,9 +309,9 @@ void flag::SetYaw( radian Yaw )
 
 //==============================================================================
 
-bbox flag::GetLocalBBox( void ) const 
-{ 
-    return m_Cloth.GetLocalBBox();
+bbox flag::GetLocalBBox( void ) const
+{
+    return m_ClothSim.GetLocalBBox();
 }
 
 //==============================================================================
@@ -319,27 +320,37 @@ void flag::OnEnumProp( prop_enum& rPropList )
 {
     object::OnEnumProp( rPropList );
 
-    m_Cloth.OnEnumProp( rPropList );
+    // Order matters: geometry counts, then RenderInst (triggers geometry load),
+    // then the rest of the cloth properties (see cloth::OnEnumProp)
+    m_ClothSim.OnEnumPropGeometry( rPropList );
+    m_ClothRender.OnEnumProp( rPropList );
+    m_ClothSim.OnEnumProp( rPropList );
 }
 
 //==============================================================================
 
 xbool flag::OnProperty( prop_query& rPropQuery )
-{       
+{
     if( object::OnProperty( rPropQuery ) )
         return( TRUE );
 
-    // Check cloth properties
-    if( m_Cloth.OnProperty( rPropQuery ) )
+    // Check render (RenderInst) properties
+    if( m_ClothRender.OnProperty( rPropQuery, m_ClothSim ) )
     {
         // Was cloth just initialized from geometry?
         if( ( rPropQuery.IsRead() == FALSE ) && ( rPropQuery.IsVar( "RenderInst\\File" ) ) )
         {
             // Setup cloth guid and force bounds of flag to be recomputed
-            m_Cloth.SetObjectGuid( GetGuid() );
+            m_ClothSim.SetObjectGuid( GetGuid() );
             SetFlagBits( GetFlagBits() | object::FLAG_DIRTY_TRANSFORM );
         }
 
+        return TRUE;
+    }
+
+    // Check cloth simulation properties
+    if( m_ClothSim.OnProperty( rPropQuery ) )
+    {
         return TRUE;
     }
 
@@ -384,61 +395,43 @@ s32 flag::GetVTexture( void )
 
 void flag::OnRender( void )
 {
-    m_bRendered = TRUE;
-
     // Don't render the flag for the attached player.
     if( m_Attached && (m_Player == g_RenderContext.NetPlayerSlot) )
         return;
 
-    // Trigger cloth to be active.
-    m_ActiveTimer = 5.0f;
-
     // Must have geometry.
-    if( m_Cloth.GetRigidInst().GetGeom() == NULL )
+    if( m_ClothRender.GetRigidInst().GetGeom() == NULL )
         return;
 
     // Compute render flags
     u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
     Flags |= GetRenderMode();
 
-#ifdef TARGET_XBOX
-
-    // Just render the rigid geometry now - the cloth part will get rendered later so fog works
-    m_Cloth.RenderRigidGeometry( Flags );
-
-#else
-
     // Render rigid geometry and cloth geometry
-    m_Cloth.RenderRigidGeometry( Flags );
-    m_Cloth.RenderClothGeometry( GetVTexture() );
-
-#endif
+    m_ClothRender.RenderRigidGeometry( m_ClothSim, Flags );
+    m_ClothRender.RenderClothGeometry( m_ClothSim, GetVTexture(), Flags );
 
 #ifdef X_EDITOR
-    
+
     // Draw debug info
     if( GetAttrBits() & ATTR_EDITOR_SELECTED )
     {
-        m_Cloth.RenderSkeleton() ;
-    }        
-    
+        m_ClothRender.RenderSkeleton( m_ClothSim ) ;
+    }
+
 #endif // X_EDITOR
 }
 
 //==============================================================================
 
-#ifdef TARGET_XBOX    
-
-void flag::OnRenderCloth( void )
+void flag::OnRenderShadowCast( u64 ProjMask )
 {
-    // Don't render the flag for the attached player.
-    if( m_Attached && (m_Player == g_RenderContext.NetPlayerSlot) )
+    if( m_Attached && ( m_Player == g_RenderContext.NetPlayerSlot ) )
         return;
 
-    m_Cloth.RenderClothGeometry( GetVTexture() );
+    if( m_ClothRender.GetRigidInst().GetGeom() )
+        m_ClothRender.RenderShadowCast( m_ClothSim, GetVTexture(), ProjMask );
 }
-
-#endif    
 
 //==============================================================================
 
@@ -448,9 +441,9 @@ void flag::OnRenderTransparent( void )
     {
         bbox BBox( vector3(-50,25,-50), vector3(50,200,50) );
         BBox.Translate( GetPosition() );
-        draw_BBox( BBox, XCOLOR_WHITE );
-        draw_BBox( GetBBox(), XCOLOR_YELLOW );
-        draw_BBox( m_Cloth.GetWorldBBox(), XCOLOR_BLUE );
+        render::debug::Box( BBox, XCOLOR_WHITE );
+        render::debug::Box( GetBBox(), XCOLOR_YELLOW );
+        render::debug::Box( m_ClothSim.GetWorldBBox(), XCOLOR_BLUE );
     }
     */
 
@@ -480,7 +473,7 @@ void flag::OnRenderTransparent( void )
     }
 
     // Draw away.
-    //draw_Marker( GetPosition(), Color );
+    //render::debug::Marker( GetPosition(), Color );
 
     //--------------------------------------------------------------------------
     #endif // X_EDITOR
@@ -539,8 +532,15 @@ void flag::PlayEffect( flag_effect Effect )
 
 //==============================================================================
 
-void flag::OnAdvanceLogic( f32 DeltaTime )
+void flag::OnAdvanceSimulation( f32 DeltaTime )
 {
+    player* pViewingPlayer = SMP_UTIL_GetActivePlayer();
+    if( pViewingPlayer &&
+        (pViewingPlayer->GetSimulationView().BBoxInView( GetBBox() ) != view::VISIBLE_NONE) )
+    {
+        m_ActiveTimer = 5.0f;
+    }
+
     // Fall logic.
     if( !m_bIsSettled && !m_Attached && m_TimeOut )
     {
@@ -580,7 +580,7 @@ void flag::OnAdvanceLogic( f32 DeltaTime )
             // Skip over collisions with unidentifiable objects.
             if( Coll.ObjectHitGuid == 0 )
             {
-                LOG_WARNING( "net_proj::OnAdvanceLogic",
+                LOG_WARNING( "net_proj::OnAdvanceSimulation",
                     "Collision with 'unidentifiable' object." );
                 continue;
             }
@@ -589,7 +589,7 @@ void flag::OnAdvanceLogic( f32 DeltaTime )
             object* pObject = g_ObjMgr.GetObjectByGuid( Coll.ObjectHitGuid );
             if( !pObject )
             {
-                LOG_WARNING( "net_proj::OnAdvanceLogic",
+                LOG_WARNING( "net_proj::OnAdvanceSimulation",
                     "Collision with 'unretrievable' object." );
                 continue;
             }
@@ -660,7 +660,7 @@ void flag::OnAdvanceLogic( f32 DeltaTime )
         actor* pAttachActor = NULL;
         if( m_Attached )
         {
-            actor* pAttachActor = (actor*)NetObjMgr.GetObjFromSlot( m_Player );
+            pAttachActor = (actor*)NetObjMgr.GetObjFromSlot( m_Player );
             if( pAttachActor )
             {
                 vector3 Temp;
@@ -705,9 +705,6 @@ void flag::OnAdvanceLogic( f32 DeltaTime )
             xbool bHasLOS = (g_CollisionMgr.m_nCollisions == 0);
 
 
-            // Clear this so it's ready for the next render pass to set.
-            m_bRendered = FALSE;
-
             // Increment the opacity if you can't see it, otherwise decrement it.
             m_IconOpacity += (2.0f * DeltaTime) * (bHasLOS ? -1.0f : 1.0f);
             m_IconOpacity = MINMAX( 0.0f, m_IconOpacity, 1.0f );
@@ -736,7 +733,7 @@ void flag::OnAdvanceLogic( f32 DeltaTime )
                 // If it is NOT attached to the active player, add an icon for the flag.
                 if( !(m_Attached && (m_Player == pPlayer->net_GetSlot())) )
                 {
-                    Hud.GetPlayerHud( 0 ).m_Icon.AddIcon( ICON_FLAG_INNER, FlagPos, FlagPos, FALSE, TRUE, GUTTER_NONE, InnerColor, NULL, FALSE, FALSE, m_IconOpacity );
+                    Hud.GetPlayerHud( 0 ).m_Icon.SubmitIcon( ICON_FLAG_INNER, FlagPos, FlagPos, TRUE, GUTTER_NONE, InnerColor, NULL, FALSE, FALSE, m_IconOpacity );
                 }
 
                 if( m_TimeOut || m_Attached )
@@ -754,7 +751,7 @@ void flag::OnAdvanceLogic( f32 DeltaTime )
                 {
                     if( !(m_Attached && (m_Player == pPlayer->net_GetSlot())) )
                     {
-                        Hud.GetPlayerHud( 0 ).m_Icon.AddIcon( ICON_FLAG_OUTER, FlagPos, FlagPos, FALSE, TRUE, GUTTER_NONE, OuterColor, NULL, FALSE, FALSE, m_IconOpacity );
+                        Hud.GetPlayerHud( 0 ).m_Icon.SubmitIcon( ICON_FLAG_OUTER, FlagPos, FlagPos, TRUE, GUTTER_NONE, OuterColor, NULL, FALSE, FALSE, m_IconOpacity );
                     }
                 }
             }
@@ -809,7 +806,7 @@ void flag::OnAdvanceLogic( f32 DeltaTime )
                 }
 
                 BasePos.GetY() += 200.0f;
-                Hud.GetPlayerHud( 0 ).m_Icon.AddIcon( ICON_FLAG_OUTER, BasePos, BasePos, FALSE, TRUE, GUTTER_NONE, InnerColor, NULL, FALSE, FALSE, m_BaseAlpha ); 
+                Hud.GetPlayerHud( 0 ).m_Icon.SubmitIcon( ICON_FLAG_OUTER, BasePos, BasePos, TRUE, GUTTER_NONE, InnerColor, NULL, FALSE, FALSE, m_BaseAlpha );
             }
         }
     } // Icon stuff.
@@ -858,9 +855,9 @@ void flag::OnAdvanceLogic( f32 DeltaTime )
     }
 
     // Override cloth properties to make flags look heavier and less stretchy
-    m_Cloth.m_Gravity.Set( 0.0f, -9.8f * 100.0f * 1.0f, 0.0f );
-    m_Cloth.m_Dampen      = 0.1f;
-    m_Cloth.m_nIterations = 3;
+    m_ClothSim.SetGravity( vector3( 0.0f, -9.8f * 100.0f * 1.0f, 0.0f ) );
+    m_ClothSim.SetDampen( 0.1f );
+    m_ClothSim.SetIterations( 3 );
 
     // Selects all objects whose bbox intersects the cloth object.
     g_ObjMgr.SelectBBox( object::ATTR_LIVING, GetBBox(), object::TYPE_ALL_TYPES );
@@ -891,7 +888,7 @@ void flag::OnAdvanceLogic( f32 DeltaTime )
                 Top.GetY() += Physics.GetColHeight();
 
                 // Collide with the cloth.
-                m_Cloth.ApplyCappedCylinderColl( Bottom, Top, Radius );
+                m_ClothSim.ApplyCappedCylinderColl( Bottom, Top, Radius );
             }
         }
 
@@ -902,7 +899,7 @@ void flag::OnAdvanceLogic( f32 DeltaTime )
     g_ObjMgr.EndLoop();
 
     // Update the cloth simulation.
-    m_Cloth.Advance( DeltaTime );
+    m_ClothSim.Advance( DeltaTime );
 
     // Force flag object bounds to update
     SetFlagBits( GetFlagBits() | FLAG_DIRTY_TRANSFORM );
@@ -916,7 +913,7 @@ void flag::OnPain( const pain& Pain )
     Pain.ComputeDamageAndForce( "COKE_CAN", GetGuid(), GetBBox().GetCenter() );
 
     // Let cloth handle it
-    m_Cloth.OnPain( Pain );
+    m_ClothSim.OnPain( Pain );
 }
 
 //==============================================================================
@@ -928,16 +925,7 @@ void flag::OnProjectileImpact( const object&  Projectile,
                                      xbool    PunchDamageHole,       
                                      f32      ManualImpactForce )                                                                                                   
 {
-    // Only 100 holes allowed in a flag.
-    if( PunchDamageHole )
-    {
-        if( m_Holes < 100 )
-            m_Holes++;
-        else
-            PunchDamageHole = FALSE;
-    }
-
-    m_Cloth.OnProjectileImpact( Projectile, 
+    m_ClothSim.OnProjectileImpact( Projectile,
                                 Velocity,
                                 CollPrimKey, 
                                 CollPoint, 
@@ -975,7 +963,7 @@ void flag::OnColCheck( void )
     if( g_CollisionMgr.IsEditorSelectRay() )
     {
         // Let the cloth do it's thing...
-        m_Cloth.OnColCheck( GetGuid(), GetMaterial() );
+        m_ClothSim.OnColCheck( GetGuid(), GetMaterial() );
         return;
     }
 #endif // X_EDITOR
@@ -992,7 +980,7 @@ void flag::OnColCheck( void )
 
     {
         // Let the cloth do it's thing...
-        m_Cloth.OnColCheck( GetGuid(), GetMaterial() ) ;
+        m_ClothSim.OnColCheck( GetGuid(), GetMaterial() ) ;
     }
 }
 
@@ -1008,7 +996,7 @@ void flag::OnMove( const vector3& NewPos )
     object::OnMove( NewPos );
 
     // Update cloth (reset if moving more than 5 meters).
-    m_Cloth.SetL2W( GetL2W(), ( DeltaDistSqr > x_sqr( 500.0f ) ), FLAG_OBJECT_AIR_RESISTANCE );
+    m_ClothSim.SetL2W( GetL2W(), ( DeltaDistSqr > x_sqr( 500.0f ) ), FLAG_OBJECT_AIR_RESISTANCE );
 }
 
 //==============================================================================
@@ -1023,7 +1011,7 @@ void flag::OnTransform( const matrix4& L2W )
     object::OnTransform( L2W );
 
     // Update cloth (reset if moving more than 5 meters).
-    m_Cloth.SetL2W( GetL2W(), ( DeltaDistSqr > x_sqr( 500.0f ) ), FLAG_OBJECT_AIR_RESISTANCE );
+    m_ClothSim.SetL2W( GetL2W(), ( DeltaDistSqr > x_sqr( 500.0f ) ), FLAG_OBJECT_AIR_RESISTANCE );
 }
 
 //==============================================================================

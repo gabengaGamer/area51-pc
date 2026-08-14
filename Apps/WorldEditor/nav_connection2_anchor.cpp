@@ -13,7 +13,7 @@
 #include "transaction_layer_data.hpp"
 #include "transaction_object_data.hpp"
 #include "transaction_entry.hpp"
-#include "Render\Editor\editor_icons.hpp"
+#include "Render\Editor\EditorIcons.hpp"
 
 #include "EditorAIView.h"
 #include "EditorFrame.h"
@@ -52,7 +52,7 @@ static struct nav_connection2_anchor_desc : public object_desc
     virtual s32  OnEditorRender( object& Object ) const
     {
         object_desc::OnEditorRender( Object );
-        return EDITOR_ICON_NAV_NODE;
+        return static_cast<s32>( EditorIcon::NavigationNode );
     }
 
 
@@ -105,7 +105,7 @@ void    nav_connection2_anchor::OnInit( void)
 void    nav_connection2_anchor::Reset  ( void )
 {
     m_Connection = 0;
-    m_Flags      = 0;
+    m_flags      = 0;
     m_FirstUpdate = true;
 }
 
@@ -153,7 +153,7 @@ xbool   nav_connection2_anchor::OnProperty ( prop_query& I )
 //========================================================================
 void    nav_connection2_anchor::OnMove  ( const vector3& NewPos )
 {
-    m_Flags |= FLAG_MOVING;
+    m_flags |= FLAG_MOVING;
 
     object::OnMove( NewPos ); 
 
@@ -182,7 +182,7 @@ void    nav_connection2_anchor::OnMove  ( const vector3& NewPos )
         }
     }
 
-    m_Flags &= (~FLAG_MOVING);
+    m_flags &= (~FLAG_MOVING);
 }
 
 //========================================================================
@@ -214,7 +214,7 @@ void    nav_connection2_anchor::OnDebugRender ( void )
 {
     if ( GetAttrBits() & ATTR_EDITOR_PLACEMENT_OBJECT )
     {
-        EditorIcon_Draw(EDITOR_ICON_NAV_NODE, GetL2W(), !!(GetAttrBits() & object::ATTR_EDITOR_SELECTED), xcolor(255, 255, 0, 100));
+        DrawEditorIcon(EditorIcon::NavigationNode, GetL2W(), !!(GetAttrBits() & object::ATTR_EDITOR_SELECTED), xcolor(255, 255, 0, 100));
     }
 }
 #endif // X_RETAIL
@@ -223,7 +223,7 @@ void    nav_connection2_anchor::OnDebugRender ( void )
 
 void nav_connection2_anchor::OnRender( void )
 {
-    CONTEXT( "nav_connection2_anchor::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "nav_connection2_anchor::OnRender" );
 }
 
 //========================================================================
@@ -239,7 +239,7 @@ void nav_connection2_anchor::OnKill( void )
 {
     //ValidateConnections();
 
-    m_Flags |= FLAG_DYING;
+    m_flags |= FLAG_DYING;
     /*
     object* tempObject = g_ObjMgr.GetObjectByGuid( m_Connection );
     if(tempObject)

@@ -13,9 +13,9 @@
 // INCLUDES
 //==============================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "x_bitmap.hpp"
-#include "Objects\Player.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
+#include "Objects/Player/Player.hpp"
 
 #include "hud_Renderable.hpp"
 
@@ -63,7 +63,7 @@ public:
     virtual        ~hud_scanner      ( void ) {};
 
     virtual void    OnRender        ( player* pPlayer );
-    virtual void    OnAdvanceLogic  ( player* pPlayer, f32 DeltaTime );
+    virtual void    OnAdvanceSimulation  ( player* pPlayer, f32 DeltaTime );
     virtual xbool   OnProperty      ( prop_query& rPropQuery );
     virtual void    OnEnumProp      ( prop_enum&  List );
                         
@@ -89,17 +89,20 @@ protected:
 //------------------------------------------------------------------------------
 // Public Storage
 public:
-    static rhandle<xbitmap>     m_OuterBmp;
-    static rhandle<xbitmap>     m_OuterBmpFlipped;
-    static rhandle<xbitmap>     m_InnerBmp;
+    static rhandle<texture>     m_OuterBmp;
+    static rhandle<texture>     m_OuterBmpFlipped;
+    static rhandle<texture>     m_InnerBmp;
 
-    rhandle<xbitmap>            m_ScannerBarBmp;
+    rhandle<texture>            m_ScannerBarBmp;
     s32                         m_ScannerBmpAlpha;
     s32                         m_ScanPeak;
     xbool                       m_ScanPeakUpdate;
     f32                         m_ScanPeakUpdateTime;
 
     xbool                       m_LoreDetected;
+    s32                         m_LoreBarAmount;
+    f32                         m_LoreDistance;
+    f32                         m_LoreMaxDistance;
 
     scanner_bar                 m_Bar;
 
@@ -110,3 +113,5 @@ public:
 };
 
 #endif
+
+

@@ -10,9 +10,9 @@
 //=========================================================================
 
 #include "ProjectileHoming.hpp"
-#include "e_audio.hpp"
+#include "e_Audio.hpp"
 #include "Objects/NetProjectile.hpp"
-#include "..\Auxiliary\fx_RunTime\Fx_Mgr.hpp"
+#include "FX/fx_Mgr.hpp"
 
 //=========================================================================
 
@@ -48,7 +48,7 @@ public:
     
 //=========================================================================
 
-    virtual void    OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void    OnAdvanceSimulation      ( f32 DeltaTime );
 	virtual	void	OnRender			( void );
     virtual	void	OnRenderTransparent ( void );
 

@@ -1,8 +1,8 @@
 #include "BlackOp_Attack_State.hpp"
-#include "Characters\Character.hpp"
-#include "Characters\god.hpp"
-#include "navigation\CoverNode.hpp"
-#include "soldier.hpp"
+#include "Characters/Character.hpp"
+#include "Characters/God.hpp"
+#include "Navigation/CoverNode.hpp"
+#include "Soldier.hpp"
 
 //=========================================================================
 // CONSTs

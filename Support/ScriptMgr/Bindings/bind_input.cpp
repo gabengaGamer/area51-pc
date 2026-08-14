@@ -34,7 +34,7 @@ static
 s32 bind_input_waspressed( script_context& ctx )
 {
     input_gadget G = ArgGadget( ctx, 0 );
-    ctx.PushBool( G != INPUT_UNDEFINED ? g_Input.WasPressed(G) : FALSE );
+    ctx.PushBool( G != INPUT_UNDEFINED ? g_Input.GetFrameSnapshot().WasPressed( G ) : FALSE );
     return 1;
 }
 
@@ -44,7 +44,7 @@ static
 s32 bind_input_ispressed( script_context& ctx )
 {
     input_gadget G = ArgGadget( ctx, 0 );
-    ctx.PushBool( G != INPUT_UNDEFINED ? g_Input.IsPressed(G) : FALSE );
+    ctx.PushBool( G != INPUT_UNDEFINED ? g_Input.GetFrameSnapshot().IsPressed( G ) : FALSE );
     return 1;
 }
 
@@ -54,7 +54,7 @@ static
 s32 bind_input_getvalue( script_context& ctx )
 {
     input_gadget G = ArgGadget( ctx, 0 );
-    ctx.PushFloat( G != INPUT_UNDEFINED ? g_Input.GetValue(G) : 0.0f );
+    ctx.PushFloat( G != INPUT_UNDEFINED ? g_Input.GetFrameSnapshot().GetValue( G ) : 0.0f );
     return 1;
 }
 
@@ -64,7 +64,7 @@ static
 s32 bind_input_ispresent( script_context& ctx )
 {
     input_gadget G = ArgGadget( ctx, 0 );
-    ctx.PushBool( G != INPUT_UNDEFINED ? g_Input.IsPresent(G) : FALSE );
+    ctx.PushBool( G != INPUT_UNDEFINED ? g_Input.GetFrameSnapshot().IsPresent( G ) : FALSE );
     return 1;
 }
 

@@ -38,8 +38,7 @@ public:
 
     virtual void    Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void    OnPadSelect         ( ui_win* pWin );
-    virtual void    OnLBDown            ( ui_win* pWin );
+    virtual void    OnAccept            ( ui_win* pWin );
 
     void            SetChecked          ( xbool State );
     xbool           IsChecked           ( void ) const;

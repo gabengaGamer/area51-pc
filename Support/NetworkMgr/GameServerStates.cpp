@@ -67,7 +67,7 @@ void game_server::EnterState( server_state NewState )
         // XBox requires the voice manager to be initialized differently because
         // Headset must be usable during the frontend menus for voice attachments.
         #ifndef TARGET_XBOX
-        g_VoiceMgr.Init( TRUE, (m_MaxClients > 0) );
+        g_VoiceMgr.Init( (m_MaxClients > 0) );
         #endif
 
         SetExitReason( GAME_EXIT_CONTINUE );
@@ -250,8 +250,8 @@ void game_server::ExitState(server_state OldState)
         // Now that the server has started up, we can update its game manager's
         // voice peripheral status directly.
         ASSERT( g_NetworkMgr.IsServer() == TRUE );
-        GameMgr.SetVoiceAllowed( 0, !g_VoiceMgr.IsVoiceBanned()  );
-        GameMgr.SetVoiceCapable( 0,  g_VoiceMgr.IsVoiceCapable() );
+        GameMgr.SetVoiceAllowed( m_LocalPlayerSlot[0], !g_VoiceMgr.IsVoiceBanned()  );
+        GameMgr.SetVoiceCapable( m_LocalPlayerSlot[0],  g_VoiceMgr.IsVoiceCapable() );
         break;
 
     //-------------------------------------------------
@@ -474,4 +474,3 @@ void game_server::SetExitReason( exit_reason Reason )
         SetState(STATE_SERVER_COOLDOWN);
     }
 }
-

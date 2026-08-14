@@ -1,9 +1,8 @@
 #include "AlarmNode.hpp"
-#include "entropy\e_draw.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Render\Editor\editor_icons.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Render/Editor/EditorIcons.hpp"
 #include "ng_node2.hpp"
-#include "Loco\LocoUtil.hpp"
+#include "Loco/LocoUtil.hpp"
 
 const f32 k_MinPreferedReserveTime = 0.0f;
 const f32 k_MinReserveTime = 2.0f;
@@ -33,8 +32,8 @@ static struct alarm_node_desc : public object_desc
     virtual s32  OnEditorRender( object& Object ) const
     {
         object_desc::OnEditorRender( Object );
-        EditorIcon_Draw( EDITOR_ICON_COVER_NODE, Object.GetL2W(), FALSE, XCOLOR_RED );
-        EditorIcon_Draw( EDITOR_ICON_MARKER, Object.GetL2W(), FALSE, XCOLOR_RED );
+        DrawEditorIcon( EditorIcon::CoverNode, Object.GetL2W(), FALSE, XCOLOR_RED );
+        DrawEditorIcon( EditorIcon::Marker, Object.GetL2W(), FALSE, XCOLOR_RED );
         return -1;
     }
 
@@ -213,7 +212,7 @@ xbool alarm_node::IsReserved( guid Requester )
 
 //=============================================================================
 
-void alarm_node::OnAdvanceLogic( f32 DeltaTime )
+void alarm_node::OnAdvanceSimulation( f32 DeltaTime )
 {
     m_CountDownTimer += DeltaTime;
     if( m_CountDownTimer >= m_TurnOffTime )

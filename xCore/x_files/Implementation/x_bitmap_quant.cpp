@@ -9,19 +9,19 @@
 //==============================================================================
 
 #ifndef X_BITMAP_HPP
-#include "..\x_bitmap.hpp"
+#include "../x_bitmap.hpp"
 #endif
 
 #ifndef X_MEMORY_HPP
-#include "..\x_memory.hpp"
+#include "../x_memory.hpp"
 #endif
 
 #ifndef X_TIME_HPP
-#include "..\x_time.hpp"
+#include "../x_time.hpp"
 #endif
 
 #ifndef X_STRING_HPP
-#include "..\x_string.hpp"
+#include "../x_string.hpp"
 #endif
 
 //==============================================================================

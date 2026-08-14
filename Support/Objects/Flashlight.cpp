@@ -10,8 +10,8 @@
 
 #include "Flashlight.hpp"
 
-#include "Player.hpp"
-#include "Render\\LightMgr.hpp"
+#include "Player/Player.hpp"
+#include "Render/LightMgr.hpp"
 
 //==============================================================================
 //  CONSTANTS

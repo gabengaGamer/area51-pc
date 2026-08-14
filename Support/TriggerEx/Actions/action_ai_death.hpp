@@ -12,8 +12,8 @@
 //=========================================================================
 
 #include "action_ai_base.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "Characters\Character.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Characters/Character.hpp"
 
 //=========================== ==============================================
 // action_ai_death

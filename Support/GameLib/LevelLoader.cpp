@@ -1,72 +1,69 @@
 #include "Entropy.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Render\Render.hpp"
-#include "Objects\Player.hpp"
-#include "Objects\Corpse.hpp"
-#include "Objects\LevelSettings.hpp"
-#include "Objects\PlaySurface.hpp"
-#include "Objects\Render\PostEffectMgr.hpp"
-#include "Gamelib\Level.hpp"
-#include "Gamelib\binLevel.hpp"
-#include "Gamelib\Link.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "IOManager\io_mgr.hpp"
-#include "Audio\audio_stream_mgr.hpp"
-#include "Audio\audio_hardware.hpp"
-#include "x_files\x_context.hpp"
-#include "Auxiliary\Bitmap\aux_Bitmap.hpp"
-#include "..\Support\TriggerEx\TriggerEx_Manager.hpp"
-#include "..\Support\Tracers\TracerMgr.hpp"
-#include "..\Support\Render\LightMgr.hpp"
-#include "navigation\nav_map.hpp"
-#include "navigation\ng_connection2.hpp"
-#include "navigation\ng_node2.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
-#include "PlaySurfaceMgr\PlaySurfaceMgr.hpp"
-#include "gamelib\StatsMgr.hpp" 
-#include "objects\ParticleEmiter.hpp"
-#include "Menu\DebugMenu2.hpp"
-#include "Music_Mgr\Music_mgr.hpp"
-#include "MusicStateMgr\MusicStateMgr.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
-#include "StringMgr\StringMgr.hpp"
-#include "GameTextMgr\GameTextMgr.hpp"
-#include "Objects\SpawnPoint.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "Templatemgr\TemplateMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "DataVault\DataVault.hpp"
-#include "TweakMgr\TweakMgr.hpp"
-#include "PainMgr\PainMgr.hpp"
-#include "PhysicsMgr\PhysicsMgr.hpp"
-#include "Objects\AlienGlob.hpp"
-#include "NetworkMgr\MsgMgr.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "Audio\audio_voice_mgr.hpp"
-#include "PerceptionMgr\PerceptionMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Render.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Objects/Corpse.hpp"
+#include "Objects/LevelSettings.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "Objects/Render/PostEffectMgr.hpp"
+#include "GameLib/Level.hpp"
+#include "GameLib/BinLevel.hpp"
+#include "GameLib/Link.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "IOManager/io_mgr.hpp"
+#include "Audio/audio_stream_mgr.hpp"
+#include "Audio/backend/audio_backend.hpp"
+#include "x_files/x_profile.hpp"
+#include "Auxiliary/Bitmap/aux_Bitmap.hpp"
+#include "../Support/TriggerEx/TriggerEx_Manager.hpp"
+#include "../Support/Tracers/TracerMgr.hpp"
+#include "../Support/Render/LightMgr.hpp"
+#include "../Support/Render/RigidColor.hpp"
+#include "Navigation/Nav_Map.hpp"
+#include "Navigation/ng_connection2.hpp"
+#include "Navigation/ng_node2.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
+#include "PlaySurfaceMgr/PlaySurfaceMgr.hpp"
+#include "GameLib/StatsMgr.hpp" 
+#include "Objects/ParticleEmiter.hpp"
+#include "Menu/DebugMenu2.hpp"
+#include "Music_mgr/music_mgr.hpp"
+#include "MusicStateMgr/MusicStateMgr.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "GameTextMgr/GameTextMgr.hpp"
+#include "Objects/SpawnPoint.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "DataVault/DataVault.hpp"
+#include "TweakMgr/TweakMgr.hpp"
+#include "PainMgr/PainMgr.hpp"
+#include "PhysicsMgr/PhysicsMgr.hpp"
+#include "Objects/AlienGlob.hpp"
+#include "NetworkMgr/MsgMgr.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Audio/audio_voice_mgr.hpp"
+#include "PerceptionMgr/PerceptionMgr.hpp"
 #include "LevelLoader.hpp"
-#include "UI\ui_manager.hpp"
-#include "UI\ui_Font.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "MemCardMgr/MemCardMgr.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_font.hpp"
+#include "StateMgr/StateMgr.hpp"
 #include "Configuration/GameConfig.hpp"
 #include "OccluderMgr/OccluderMgr.hpp"
-#include "Dialogs/dlg_download.hpp"
 #include "Dialogs/dlg_LoadGame.hpp"
 
-#include "e_Memcard.hpp"
-#include "StateMgr/maplist.hpp"
-#include "NetworkMgr/Downloader/Archive.hpp"
+#include "StateMgr/MapList.hpp"
 
 //=============================================================================
 
 level_loader  g_LevelLoader;
 xbool         g_level_loading  = FALSE;
-extern char   g_FullPath [ 256 ];
 #ifndef CONFIG_VIEWER
 extern u32    g_nLogicFramesAfterLoad;
 #endif
@@ -75,17 +72,31 @@ extern u32    g_nLogicFramesAfterLoad;
 void* g_pBallast = NULL;
 #endif
 
-static archive* s_pArchive = NULL;
+static const f32 LEVEL_LOAD_OBJECT_TIME_BUDGET = 0.004f;
 //=============================================================================
 
 level_loader::level_loader( void )
 {
+    m_LevelLoadStage         = LEVEL_LOAD_IDLE;
+    m_pMapEntry              = NULL;
+    m_pLoadScript            = NULL;
+    m_LoadScriptCommand      = 0;
+    m_LoadScriptCommandCount = 0;
+    m_ScriptDFSFileSystem    = -1;
+    m_ScriptDFSFile          = 0;
+    m_ScriptDFSFileCount     = 0;
+    m_NextPlayerSlot         = SLOT_NULL;
+    m_VoiceID                = 0;
+    m_bFullLoad              = FALSE;
+    m_SlideshowPrepared      = FALSE;
+    m_LevelFileSystemMounted = FALSE;
 }
 
 //=============================================================================
 
 level_loader::~level_loader( void )
 {
+    ASSERT( m_pLoadScript == NULL );
 }
 
 //=============================================================================
@@ -133,7 +144,20 @@ void level_loader::LoadInfo( const char* pPath )
 
 void level_loader::LoadDFS( const char* pDFS )
 {
-    char* Ext[] = 
+    s32 iFileSystem = g_IOFSMgr.GetFileSystemIndex( pDFS );
+    s32 nFiles      = g_IOFSMgr.GetNFilesInFileSystem( iFileSystem );
+
+    for( s32 i=0; i<nFiles; i++ )
+    {
+        LoadDFSResource( iFileSystem, i );
+    }
+}
+
+//=============================================================================
+
+void level_loader::LoadDFSResource( s32 FileSystem, s32 FileIndex )
+{
+    static const char* s_SupportedExtensions[] =
     {
         ".xbmp",
         ".rigidgeom",
@@ -148,35 +172,24 @@ void level_loader::LoadDFS( const char* pDFS )
         ".font"
     };
 
-    s32 iFileSystem = g_IOFSMgr.GetFileSystemIndex( pDFS );
-    s32 nFiles      = g_IOFSMgr.GetNFilesInFileSystem( iFileSystem );
-    xtimer DeltaTime;
+    char FilePath[256];
+    char Extension[32];
+    char FileName[128];
+    char ResourceName[128];
 
-    DeltaTime.Start();
+    g_IOFSMgr.GetFileNameInFileSystem( FileSystem, FileIndex, FilePath );
+    x_splitpath( FilePath, NULL, NULL, FileName, Extension );
 
-    for( s32 i=0; i<nFiles; i++ )
+    for( s32 i = 0; i < (s32)(sizeof(s_SupportedExtensions) / sizeof(s_SupportedExtensions[0])); i++ )
     {
-        char FilePath[256];
-
-        g_IOFSMgr.GetFileNameInFileSystem( iFileSystem, i, FilePath );
-
-        char FExt[32];
-        char FName[128];
-        char RscName[128];
-        x_splitpath(FilePath,NULL,NULL,FName,FExt);
-        x_sprintf(RscName,"%s%s",FName,FExt);
-
-        for( s32 j=0 ; (j<sizeof(Ext)/sizeof(char*)) ; j++ )
+        if( x_stricmp( Extension, s_SupportedExtensions[i] ) == 0 )
         {
-            // Is it a supported type?
-            if( x_stricmp( FExt, Ext[j] ) == 0 )
-            {
-                // Force resource mgr to load resource
-                rhandle_base Handle;
-                Handle.SetName( RscName );
-                Handle.GetPointer();
-                j = sizeof(Ext)/sizeof(char*);
-            }
+            x_sprintf( ResourceName, "%s%s", FileName, Extension );
+
+            rhandle_base Handle;
+            Handle.SetName( ResourceName );
+            Handle.GetPointer();
+            return;
         }
     }
 }
@@ -185,30 +198,20 @@ void level_loader::LoadDFS( const char* pDFS )
 
 void RedirectTextureAllocator( void )
 {
-#ifdef TARGET_XBOX
-    g_TextureFactory.GhostGeneralIntoTemp( true );
-    extern void IncrementQHGuid(void);
-    IncrementQHGuid();
-#endif
 }
 
 //=============================================================================
 
 void RestoreTextureAllocator( void )
 {
-#ifdef TARGET_XBOX
-    g_TextureFactory.GhostGeneralIntoTemp( false );
-    extern void IncrementQHGuid(void);
-    extern void DeleteAllQHGuid(void);
-    DeleteAllQHGuid(); // Kill all of the current guid
-    IncrementQHGuid();
-#endif
 }
 
 //=============================================================================
 
-void level_loader::InitSlideShow( const char* pSlideShowScriptFile )
+void level_loader::PrepareSlideshow( const char* pSlideShowScriptFile )
 {
+    ASSERT( !m_SlideshowPrepared );
+
     // if we need to do a slide show for the campaign mode, handle that now
     if( g_StateMgr.GetState() == SM_SINGLE_PLAYER_LOAD_MISSION )
     {
@@ -271,382 +274,556 @@ void level_loader::InitSlideShow( const char* pSlideShowScriptFile )
         Handle.GetPointer();
         m_VoiceID = 0;
 
-        // kick off the audio
+        // prepare the voice
         g_AudioMgr.ReleaseAll();
-        m_VoiceID = g_AudioMgr.Play( AudioDescriptor );
+        m_VoiceID = g_AudioMgr.Play( AudioDescriptor, FALSE );
 
         global_settings& Settings = g_StateMgr.GetActiveSettings();
         g_AudioMgr.SetVoiceVolume( Settings.GetVolume( VOLUME_SPEECH ) / 100.0f );
 
         pLoadScreen->SetVoiceID( m_VoiceID );
-
-        // NOTE FOR ROB: If I don't do this delay thread, the audio never
-        // gets kicked off. Is it an IO priority issue, or something else?
-        // NOTE FROM HAPGOOD: Because of the crappy Xbox scheduler, you
-        // won't start new thread unless you yield the current context.
-        // A sleep of 1 should suffice.
-        g_AudioMgr.Update( 0.33f );
-        x_DelayThread( 500 );
-        g_AudioMgr.Update( 0.33f );
-
-        // start the slide show
-        pLoadScreen->StartSlideshow();
+        m_SlideshowPrepared = TRUE;
     }
-    // start rendering the slide show or other loading screen in the background
-    g_StateMgr.StartBackgroundRendering();
 }
 
 //=============================================================================
 
-void level_loader::KillSlideShow( void )
+void level_loader::StartSlideshow( void )
 {
-    // Setting the state will cause us to get stuck in a while loop until
-    // the text actually fades out. (Should only take a second.)
-    g_StateMgr.StopBackgroundRendering();
-}
-
-//=============================================================================
-
-void level_loader::LoadLevel( xbool bFullLoad )
-{
-    //g_MatchMgr.StartDelayedStatsRead();
-
-    // On with the show .......................................................
-    if (bFullLoad)
+    if( !m_SlideshowPrepared )
     {
-        // Reset the static player member variable that indicates death state.
-        // this is used by the state manager to determine if any pre-level
-        // cinematics can be played.
-        player::s_bPlayerDied = FALSE;
-    }
-
-    m_VoiceID   = 0;
-    m_bFullLoad = bFullLoad;
-
-    ASSERT( g_StateMgr.IsBackgroundThreadRunning() == FALSE );
-    // Reset the perception mgr.
-    g_PerceptionMgr.Init();
-
-    g_level_loading = TRUE;
-
-    MEMORY_OWNER( "LOADLEVEL" );
-    char pPath  [ 256 ];
-    char pPath2 [ 256 ];
-    char pPath3 [ 256 ];
-    slot_id SlotID;
-
-    const map_entry* pMapEntry = g_MapList.Find( g_ActiveConfig.GetLevelID(), g_ActiveConfig.GetGameTypeID() );
-    if( pMapEntry == NULL )
-    {
-        FetchManifest();
-        pMapEntry = g_MapList.Find( g_ActiveConfig.GetLevelID(), g_ActiveConfig.GetGameTypeID() );
-    }
-
-    if( pMapEntry == NULL )
-    {
-        g_ActiveConfig.SetExitReason( GAME_EXIT_INVALID_MISSION );
         return;
     }
 
-    GameMgr.SetZoneMinimum( pMapEntry->GetMinPlayers() );
+    dlg_load_game* pLoadScreen = (dlg_load_game*)g_UiMgr->GetTopmostDialog( g_UiUserID );
+    ASSERT( pLoadScreen );
 
-    xfs LevelDFS( "levels/%s/level", g_ActiveConfig.GetLevelPath() );
+    if( g_AudioMgr.IsValidVoiceId( m_VoiceID ) )
+    {
+        g_AudioMgr.Start( m_VoiceID );
+    }
 
-#ifndef X_RETAIL
+    pLoadScreen->StartSlideshow();
+    m_SlideshowPrepared = FALSE;
+}
+
+//=============================================================================
+
+void level_loader::BeginLevelLoad( xbool bFullLoad )
+{
+    ASSERT( (m_LevelLoadStage == LEVEL_LOAD_IDLE) ||
+            (m_LevelLoadStage == LEVEL_LOAD_COMPLETE) ||
+            (m_LevelLoadStage == LEVEL_LOAD_FAILED) );
+    ASSERT( m_pLoadScript == NULL );
+
     if( bFullLoad )
     {
-        extern s32 GetMemoryBallastForLevel( const char* pLevelName );
-        g_pBallast = x_malloc( GetMemoryBallastForLevel( g_ActiveConfig.GetLevelPath() ) );
+        player::s_bPlayerDied = FALSE;
     }
-#endif
 
-    LOG_MESSAGE( "LoadLevel", "BEGIN! Level:%s, Memory Free:%d bytes",pMapEntry->GetDisplayName(),x_MemGetFree() );
+    m_LevelLoadStage         = LEVEL_LOAD_FIND_MAP;
+    m_pMapEntry              = NULL;
+    m_LevelFileSystem        = xfs( "levels/%s/level", g_ActiveConfig.GetLevelPath() );
+    m_ScriptDFS              = "";
+    m_LoadScriptCommand      = 0;
+    m_LoadScriptCommandCount = 0;
+    m_ScriptDFSFileSystem    = -1;
+    m_ScriptDFSFile          = 0;
+    m_ScriptDFSFileCount     = 0;
+    m_NextPlayerSlot         = SLOT_NULL;
+    m_VoiceID                = 0;
+    m_bFullLoad              = bFullLoad;
+    m_SlideshowPrepared      = FALSE;
+    m_LevelFileSystemMounted = FALSE;
 
-    if( pMapEntry->GetFlags() & MF_DOWNLOAD_MAP )
+    g_PerceptionMgr.Init();
+    g_level_loading = TRUE;
+}
+
+//=============================================================================
+
+xbool level_loader::IsLevelLoadComplete( void ) const
+{
+    return (m_LevelLoadStage == LEVEL_LOAD_COMPLETE) ||
+           (m_LevelLoadStage == LEVEL_LOAD_FAILED);
+}
+
+//=============================================================================
+
+void level_loader::CloseLoadScript( void )
+{
+    if( m_pLoadScript )
     {
-        // Ok, the map is on the memory card so we need to load it now. This WILL eventually have been 
-        // pre-loaded by the front end as map loading really needs to have some sort of indication that
-        // it is in progress. But for now, we just brute force load it and assume only the first memory 
-        // card slot.
-        if( LoadContent( *pMapEntry ) == FALSE )
+        m_pLoadScript->CloseFile();
+        delete m_pLoadScript;
+        m_pLoadScript = NULL;
+    }
+}
+
+//=============================================================================
+
+void level_loader::FailLevelLoad( void )
+{
+    CloseLoadScript();
+
+    if( m_ScriptDFS.GetLength() > 0 )
+    {
+        g_IOFSMgr.UnmountFileSystem( m_ScriptDFS );
+        m_ScriptDFS = "";
+    }
+
+    if( m_LevelFileSystemMounted )
+    {
+        g_IOFSMgr.UnmountFileSystem( m_LevelFileSystem );
+        m_LevelFileSystemMounted = FALSE;
+    }
+
+    if( g_AudioMgr.IsValidVoiceId( m_VoiceID ) )
+    {
+        g_AudioMgr.Release( m_VoiceID, 0.0f );
+    }
+
+    m_SlideshowPrepared = FALSE;
+    g_level_loading = FALSE;
+    g_ActiveConfig.SetExitReason(
+        (g_StateMgr.GetState() == SM_SINGLE_PLAYER_LOAD_MISSION)
+            ? GAME_EXIT_INVALID_CAMPAIGN_MISSION
+            : GAME_EXIT_INVALID_MISSION );
+    m_LevelLoadStage = LEVEL_LOAD_FAILED;
+}
+
+//=============================================================================
+
+void level_loader::BeginScriptDFSLoad( const char* pDFS )
+{
+    ASSERT( m_ScriptDFS.GetLength() == 0 );
+
+    if( !g_IOFSMgr.MountFileSystem( pDFS, 3 ) )
+    {
+        // load_dfs is a preload hint. Some PC data sets use resources from an
+        // already mounted default filesystem and do not contain the original
+        // platform-specific preload DFS (for example STRINGS\STRINGS).
+        LOG_MESSAGE( "LoadLevel",
+                     "Optional preload filesystem '%s' is unavailable; continuing.",
+                     pDFS );
+        m_LevelLoadStage = LEVEL_LOAD_EXECUTE_SCRIPT;
+        return;
+    }
+
+    m_ScriptDFSFileSystem = g_IOFSMgr.GetFileSystemIndex( pDFS );
+    if( m_ScriptDFSFileSystem < 0 )
+    {
+        g_IOFSMgr.UnmountFileSystem( pDFS );
+        LOG_WARNING( "LoadLevel",
+                     "Mounted preload filesystem '%s' could not be enumerated; continuing.",
+                     pDFS );
+        m_LevelLoadStage = LEVEL_LOAD_EXECUTE_SCRIPT;
+        return;
+    }
+
+    m_ScriptDFS          = pDFS;
+    m_ScriptDFSFile      = 0;
+    m_ScriptDFSFileCount = g_IOFSMgr.GetNFilesInFileSystem( m_ScriptDFSFileSystem );
+    m_LevelLoadStage     = LEVEL_LOAD_SCRIPT_DFS;
+}
+
+//=============================================================================
+
+void level_loader::UpdateScriptDFSLoad( void )
+{
+    ASSERT( m_ScriptDFS.GetLength() > 0 );
+
+    if( m_ScriptDFSFile < m_ScriptDFSFileCount )
+    {
+        LoadDFSResource( m_ScriptDFSFileSystem, m_ScriptDFSFile );
+        m_ScriptDFSFile++;
+        return;
+    }
+
+    g_IOFSMgr.UnmountFileSystem( m_ScriptDFS );
+    m_ScriptDFS           = "";
+    m_ScriptDFSFileSystem = -1;
+    m_LevelLoadStage      = LEVEL_LOAD_EXECUTE_SCRIPT;
+}
+
+//=============================================================================
+
+void level_loader::UpdateLevelLoad( f32 TimeBudgetSeconds )
+{
+    MEMORY_OWNER( "LOADLEVEL" );
+    ASSERT( TimeBudgetSeconds >= 0.0f );
+
+    char Path [256];
+    char Path2[256];
+    xtimer TimeBudget;
+    TimeBudget.Start();
+
+    do
+    {
+        switch( m_LevelLoadStage )
         {
-            g_ActiveConfig.SetExitReason( GAME_EXIT_INVALID_MISSION );
+        case LEVEL_LOAD_IDLE:
+        case LEVEL_LOAD_COMPLETE:
+        case LEVEL_LOAD_FAILED:
+            return;
+
+    case LEVEL_LOAD_FIND_MAP:
+        m_pMapEntry = g_MapList.Find( g_ActiveConfig.GetLevelID(),
+                                     g_ActiveConfig.GetGameTypeID() );
+        if( !m_pMapEntry )
+        {
+            FailLevelLoad();
             return;
         }
-    }
-    else
-    {
-        // Mount the level.dfs file.
-        g_IOFSMgr.MountFileSystem( (const char*)LevelDFS, 2 );
-    }
+        m_LevelLoadStage = LEVEL_LOAD_MOUNT_FILESYSTEM;
+        break;
 
-    if( bFullLoad )
-    {      
-        // Initialize animation system
-        // NOTE: This must be done BEFORE any data is loaded.
-        anim_event::Init();
+    case LEVEL_LOAD_MOUNT_FILESYSTEM:
+        ASSERT( m_pMapEntry );
 
-        // Multiplayer: hasa to be here because BeginSession is creating render targets
-        // and clearing them. If another thread is active during the Clear() BOOM!
-        render::BeginSession( g_NetworkMgr.GetLocalPlayerCount() );
+        GameMgr.SetZoneMinimum( m_pMapEntry->GetMinPlayers() );
 
-        // Load the slide show script.
-        //InitSlideShow( xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "SlideShowScript.txt") );
-		InitSlideShow( "SlideShowScript.txt" );
-
-        // Open the load script.
-        text_in TextIn;
-        //TextIn.OpenFile( xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "LoadScript.txt") );
-        TextIn.OpenFile( "LoadScript.txt" );		
-        TextIn.ReadHeader();
-
-        // Execute the load script.
-        s32  nCommands = TextIn.GetHeaderCount();
-        xtimer DeltaTime;
-
-        DeltaTime.Reset();
-        DeltaTime.Start();
-
-        for( s32 i=0; i < nCommands; i++ )
+    #ifndef X_RETAIL
+        if( m_bFullLoad )
         {
-            char command[256];
-            char arguments[256];
-            char hddargs[256];
-
-            TextIn.ReadFields();
-            TextIn.GetString( "command",   command );
-            TextIn.GetString( "arguments", arguments );
-
-            x_strcpy( hddargs, arguments );
-            if( x_strncmp( (const char*)LevelDFS, "HDD:",4 ) == 0 )
-            {
-                x_sprintf( hddargs, "HDD:%s", arguments );
-            }
-
-            if( x_strcmp( command, "load_dfs" ) == 0 )
-            {
-                g_IOFSMgr.MountFileSystem( hddargs, 3 );
-                LoadDFS( hddargs );
-                g_IOFSMgr.UnmountFileSystem( hddargs );
-            }
-            else if( x_strcmp( command, "load_resource" ) == 0 )
-            {
-                rhandle_base Handle;
-                Handle.SetName( arguments );
-                Handle.GetPointer();
-            }
-            else if( x_strcmp( command, "mount_dfs" ) == 0 )
-            {
-                g_IOFSMgr.MountFileSystem( hddargs, 3 );
-            }
-            else if( x_strcmp( command, "unmount_dfs" ) == 0 )
-            {
-                g_IOFSMgr.UnmountFileSystem( hddargs );
-            }
-
+            extern s32 GetMemoryBallastForLevel( const char* pLevelName );
+            g_pBallast = x_malloc( GetMemoryBallastForLevel( g_ActiveConfig.GetLevelPath() ) );
         }
-
-        TextIn.CloseFile();
-
-        g_DataVault.Init();
-        LoadTweaks( "" );  //LoadTweaks( g_FullPath );
-        LoadPain( "" );    //LoadPain( g_FullPath ); 
-
-        // Create permanent objects
-        g_ObjMgr.CreateObject("god") ;
-
-        // Load the NavMap
-        x_makepath( pPath, NULL, "", "level_data", ".nmp" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".nmp" );
-        g_NavMap.Load( pPath );
-
-        // Load Globals Variables...
-        x_makepath( pPath, NULL, "", "level_data", ".glb" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".glb" );
-        {
-            MEMORY_OWNER( "GLOBAL VARIABLE DATA" );
-            g_VarMgr.LoadGlobals( pPath );
-        }
-
-        // Setup resource handles to rigid color table
-        x_makepath( pPath, NULL, "", "level_data", ".rigidcolor" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".rigidcolor" );
-
-        // Force the rigid color instance to be loaded prior to level init
-        // since it requires a large allocation
-
-        {
-            rhandle_base Handle;
-            Handle.SetName(pPath);
-            Handle.GetPointer();
-        }
-    #if 0
-        // Force the ordered files to load
-        x_makepath( pPath, NULL, "", "level_data", ".load" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".load" );
-        ForceLoad(pPath);
-
-        x_makepath( pPath, NULL, "", "level_data", ".load_extra" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".load_extra" );
-        ForceLoad(pPath);
     #endif
 
-        x_makepath( pPath, NULL, "", "level_data", ".info" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".info" );
-        LoadInfo( pPath );
-    }
+        LOG_MESSAGE( "LoadLevel",
+                     "BEGIN! Level:%s, Memory Free:%d bytes",
+                     m_pMapEntry->GetDisplayName(),
+                     x_MemGetFree() );
 
-    // Create god, proxy play surface, load the globals.
-    if( !bFullLoad )
-    {
-        g_ObjMgr.CreateObject("god");
-        g_PlaySurfaceMgr.CreateProxyPlaySurfaceObject();
+        if( !g_IOFSMgr.MountFileSystem( m_LevelFileSystem, 2 ) )
+        {
+            FailLevelLoad();
+            return;
+        }
 
-        // Load the NavMap
-        x_makepath( pPath, NULL, "", "level_data", ".nmp" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".nmp" );
-        g_NavMap.Load( pPath );
+        m_LevelFileSystemMounted = TRUE;
+        m_LevelLoadStage = m_bFullLoad ? LEVEL_LOAD_INITIALIZE_RENDER
+                                           : LEVEL_LOAD_CREATE_OBJECTS;
+        break;
 
-        // Load Globals Variables...
-        x_makepath( pPath, NULL, "", "level_data", ".glb" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".glb" );
+    case LEVEL_LOAD_INITIALIZE_RENDER:
+        anim_event::Init();
+        render::BeginSession( g_NetworkMgr.GetLocalPlayerCount() );
+        PrepareSlideshow( "SlideShowScript.txt" );
+        StartSlideshow();
+        m_LevelLoadStage = LEVEL_LOAD_OPEN_SCRIPT;
+        break;
+
+    case LEVEL_LOAD_OPEN_SCRIPT:
+        ASSERT( m_pLoadScript == NULL );
+        m_pLoadScript = new text_in;
+        if( !m_pLoadScript->OpenFile( "LoadScript.txt" ) ||
+            !m_pLoadScript->ReadHeader() )
+        {
+            FailLevelLoad();
+            return;
+        }
+
+        m_LoadScriptCommand      = 0;
+        m_LoadScriptCommandCount = m_pLoadScript->GetHeaderCount();
+        m_LevelLoadStage         = LEVEL_LOAD_EXECUTE_SCRIPT;
+        break;
+
+    case LEVEL_LOAD_EXECUTE_SCRIPT:
+        if( m_LoadScriptCommand >= m_LoadScriptCommandCount )
+        {
+            CloseLoadScript();
+            m_LevelLoadStage = LEVEL_LOAD_INITIALIZE_DATA;
+            break;
+        }
+        else
+        {
+            char Command[256];
+            char Arguments[256];
+            char FileSystem[256];
+
+            if( !m_pLoadScript->ReadFields() )
+            {
+                FailLevelLoad();
+                return;
+            }
+
+            m_pLoadScript->GetString( "command",   Command );
+            m_pLoadScript->GetString( "arguments", Arguments );
+            m_LoadScriptCommand++;
+
+            x_strcpy( FileSystem, Arguments );
+            if( x_strncmp( m_LevelFileSystem, "HDD:", 4 ) == 0 )
+            {
+                x_sprintf( FileSystem, "HDD:%s", Arguments );
+            }
+
+            if( x_strcmp( Command, "load_dfs" ) == 0 )
+            {
+                BeginScriptDFSLoad( FileSystem );
+            }
+            else if( x_strcmp( Command, "load_resource" ) == 0 )
+            {
+                rhandle_base Handle;
+                Handle.SetName( Arguments );
+                Handle.GetPointer();
+            }
+            else if( x_strcmp( Command, "mount_dfs" ) == 0 )
+            {
+                if( !g_IOFSMgr.MountFileSystem( FileSystem, 3 ) )
+                {
+                    FailLevelLoad();
+                    return;
+                }
+            }
+            else if( x_strcmp( Command, "unmount_dfs" ) == 0 )
+            {
+                g_IOFSMgr.UnmountFileSystem( FileSystem );
+            }
+            else
+            {
+                x_DebugMsg( "Unknown level load command '%s'.\n", Command );
+            }
+        }
+        break;
+
+    case LEVEL_LOAD_SCRIPT_DFS:
+        UpdateScriptDFSLoad();
+        break;
+
+    case LEVEL_LOAD_INITIALIZE_DATA:
+        g_DataVault.Init();
+        m_LevelLoadStage = LEVEL_LOAD_LOAD_TWEAKS;
+        break;
+
+    case LEVEL_LOAD_LOAD_TWEAKS:
+        LoadTweaks( "" );
+        m_LevelLoadStage = LEVEL_LOAD_LOAD_PAIN;
+        break;
+
+    case LEVEL_LOAD_LOAD_PAIN:
+        LoadPain( "" );
+        m_LevelLoadStage = LEVEL_LOAD_CREATE_OBJECTS;
+        break;
+
+    case LEVEL_LOAD_CREATE_OBJECTS:
+        g_ObjMgr.CreateObject( "god" );
+        if( !m_bFullLoad )
+        {
+            g_PlaySurfaceMgr.CreateProxyPlaySurfaceObject();
+        }
+        m_LevelLoadStage = LEVEL_LOAD_NAV_MAP;
+        break;
+
+    case LEVEL_LOAD_NAV_MAP:
+        x_makepath( Path, NULL, "", "level_data", ".nmp" );
+        g_NavMap.Load( Path );
+        m_LevelLoadStage = LEVEL_LOAD_GLOBALS;
+        break;
+
+    case LEVEL_LOAD_GLOBALS:
+        x_makepath( Path, NULL, "", "level_data", ".glb" );
         {
             MEMORY_OWNER( "GLOBAL VARIABLE DATA" );
-            g_VarMgr.LoadGlobals( pPath );
+            g_VarMgr.LoadGlobals( Path );
         }
-    }
+        m_LevelLoadStage = m_bFullLoad ? LEVEL_LOAD_PRELOAD_RIGID_COLORS
+                                           : LEVEL_LOAD_BEGIN_BINARY_LEVEL;
+        break;
 
-    // Load the level
-    x_makepath( pPath,      NULL, "", "level_data", ".bin_level" ); //x_makepath( pPath,      NULL, g_FullPath, "level_data", ".bin_level" );
-    x_makepath( pPath2,     NULL, "", "level_data", ".lev_dict" );  //x_makepath( pPath2,     NULL, g_FullPath, "level_data", ".lev_dict" );
-    x_makepath( pPath3,     NULL, "", "level_data", ".load" );      //x_makepath( pPath3,     NULL, g_FullPath, "level_data", ".load" );
-
-    g_BinLevelMgr.LoadLevel( pPath, pPath2, pPath3 );
-
-    if( bFullLoad )
-    {
+    case LEVEL_LOAD_PRELOAD_RIGID_COLORS:
+        x_makepath( Path, NULL, "", "level_data", ".rigidcolor" );
         {
-            // load the rigid colors...they will be assigned to the
-            // geometry in a moment
-            rhandle<color_info> hRigidColor;
-            x_makepath( pPath, NULL, "", "level_data", ".rigidcolor" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".rigidcolor" );
-            hRigidColor.SetName( pPath );
-            hRigidColor.GetPointer();
+            rhandle_base Handle;
+            Handle.SetName( Path );
+            Handle.GetPointer();
         }
+        m_LevelLoadStage = LEVEL_LOAD_INFO;
+        break;
 
-        {   
-            MEMORY_OWNER("TEMPLATE DATA");
-            //load templates
-            x_makepath( pPath, NULL, "", "level_data", ".templates" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".templates" );
-            x_makepath( pPath2, NULL, "", "level_data", ".tmpl_dct" ); //x_makepath( pPath2, NULL, g_FullPath, "level_data", ".tmpl_dct" );
-            g_TemplateMgr.LoadData(pPath, pPath2);
-        }
+    case LEVEL_LOAD_INFO:
+        x_makepath( Path, NULL, "", "level_data", ".info" );
+        LoadInfo( Path );
+        m_LevelLoadStage = LEVEL_LOAD_BEGIN_BINARY_LEVEL;
+        break;
 
+    case LEVEL_LOAD_BEGIN_BINARY_LEVEL:
+        x_makepath( Path,  NULL, "", "level_data", ".bin_level" );
+        x_makepath( Path2, NULL, "", "level_data", ".lev_dict" );
+        if( !g_BinLevelMgr.BeginLevelLoad( Path, Path2 ) )
         {
-            MEMORY_OWNER("ZONE DATA");
-            //load portal/zone list
-            x_makepath( pPath, NULL, "", "level_data", ".zone" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".zone" );
-            g_ZoneMgr.Load(pPath);
+            FailLevelLoad();
+            return;
+        }
+        m_LevelLoadStage = LEVEL_LOAD_BINARY_LEVEL;
+        break;
+
+    case LEVEL_LOAD_BINARY_LEVEL:
+        if( !g_BinLevelMgr.IsLevelLoadComplete() )
+        {
+            g_BinLevelMgr.UpdateLevelLoad( LEVEL_LOAD_OBJECT_TIME_BUDGET );
         }
 
+        if( !g_BinLevelMgr.IsLevelLoadComplete() )
+            break;
+
+        if( m_bFullLoad )
         {
-            MEMORY_OWNER("PLAYSURFACE DATA");
-            //load playsurfaces
-            x_makepath( pPath, NULL, "", "level_data", ".playsurface" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".playsurface" );
-            g_PlaySurfaceMgr.OpenFile(pPath, TRUE);
-            g_PlaySurfaceMgr.LoadAllZones();
+            m_LevelLoadStage = LEVEL_LOAD_RIGID_COLORS;
+        }
+        else
+        {
+            m_NextPlayerSlot = g_ObjMgr.GetFirst( object::TYPE_PLAYER );
+            m_LevelLoadStage = LEVEL_LOAD_PLAYER_ZONES;
+        }
+        break;
+
+    case LEVEL_LOAD_RIGID_COLORS:
+        x_makepath( Path, NULL, "", "level_data", ".rigidcolor" );
+        {
+            rhandle<RigidColorData> RigidColors;
+            RigidColors.SetName( Path );
+            RigidColors.GetPointer();
+        }
+        m_LevelLoadStage = LEVEL_LOAD_TEMPLATES;
+        break;
+
+    case LEVEL_LOAD_TEMPLATES:
+        {
+            MEMORY_OWNER( "TEMPLATE DATA" );
+            x_makepath( Path,  NULL, "", "level_data", ".templates" );
+            x_makepath( Path2, NULL, "", "level_data", ".tmpl_dct" );
+            g_TemplateMgr.LoadData( Path, Path2 );
+        }
+        m_LevelLoadStage = LEVEL_LOAD_ZONES;
+        break;
+
+    case LEVEL_LOAD_ZONES:
+        {
+            MEMORY_OWNER( "ZONE DATA" );
+            x_makepath( Path, NULL, "", "level_data", ".zone" );
+            g_ZoneMgr.Load( Path );
+        }
+        m_LevelLoadStage = LEVEL_LOAD_BEGIN_PLAY_SURFACES;
+        break;
+
+    case LEVEL_LOAD_BEGIN_PLAY_SURFACES:
+        {
+            MEMORY_OWNER( "PLAYSURFACE DATA" );
+            x_makepath( Path, NULL, "", "level_data", ".playsurface" );
+            g_PlaySurfaceMgr.OpenFile( Path, TRUE );
+            g_PlaySurfaceMgr.BeginLoadAllZones();
+        }
+        m_LevelLoadStage = LEVEL_LOAD_PLAY_SURFACES;
+        break;
+
+    case LEVEL_LOAD_PLAY_SURFACES:
+        {
+            MEMORY_OWNER( "PLAYSURFACE DATA" );
+            if( !g_PlaySurfaceMgr.UpdateLoadAllZones() )
+                break;
+
             g_PlaySurfaceMgr.CloseFile();
         }
+        m_LevelLoadStage = LEVEL_LOAD_DECALS;
+        break;
 
+    case LEVEL_LOAD_DECALS:
         {
-            MEMORY_OWNER("STATIC DECAL DATA");
-            //load static decals
-            x_makepath( pPath, NULL, "", "level_data", ".decals" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".decals" );
-            g_DecalMgr.LoadStaticDecals( pPath );
+            MEMORY_OWNER( "STATIC DECAL DATA" );
+            x_makepath( Path, NULL, "", "level_data", ".decals" );
+            g_DecalMgr.LoadStaticDecals( Path );
         }
-    }
+        m_NextPlayerSlot = g_ObjMgr.GetFirst( object::TYPE_PLAYER );
+        m_LevelLoadStage = LEVEL_LOAD_PLAYER_ZONES;
+        break;
 
-    //initialize player tracker
-    SlotID = g_ObjMgr.GetFirst( object::TYPE_PLAYER );
-
-    while(SlotID != SLOT_NULL)
-    {
-        object_ptr<player> PlayerObj( g_ObjMgr.GetObjectBySlot( SlotID ) );
-
-        if (PlayerObj.IsValid())
+    case LEVEL_LOAD_PLAYER_ZONES:
+        if( m_NextPlayerSlot == SLOT_NULL )
         {
-            PlayerObj.m_pObject->InitZoneTracking();
+            // Zone data is loaded after the binary level objects. Players
+            // used to be the only objects that needed an explicit rebase,
+            // but actors also have a zone tracker now.
+            for( s32 Type = 0; Type < object::TYPE_END_OF_LIST; Type++ )
+            {
+                slot_id Slot = g_ObjMgr.GetFirst( (object::type)Type );
+                while( Slot != SLOT_NULL )
+                {
+                    object* pObject = g_ObjMgr.GetObjectBySlot( Slot );
+                    Slot = g_ObjMgr.GetNext( Slot );
+
+                    if( pObject &&
+                        (pObject->GetType() != object::TYPE_PLAYER) &&
+                        pObject->IsKindOf( actor::GetRTTI() ) )
+                    {
+                        static_cast<actor*>( pObject )->InitZoneTracking();
+                    }
+                }
+            }
+
+            m_LevelLoadStage = LEVEL_LOAD_FINALIZE_CORE;
         }
+        else
+        {
+            const slot_id PlayerSlot = m_NextPlayerSlot;
+            m_NextPlayerSlot = g_ObjMgr.GetNext( PlayerSlot );
 
-        SlotID = g_ObjMgr.GetNext( SlotID );
-    }
+            object_ptr<player> PlayerObject( g_ObjMgr.GetObjectBySlot( PlayerSlot ) );
+            if( PlayerObject.IsValid() )
+            {
+                PlayerObject.m_pObject->InitZoneTracking();
+            }
+        }
+        break;
 
+    case LEVEL_LOAD_FINALIZE_CORE:
+        g_PolyCache.InvalidateAllCells();
+        x_makepath( Path, NULL, "", "level_data", ".rigidcolor" );
+        g_BinLevelMgr.SetRigidColor( Path );
+        g_PostEffectMgr.StartScreenFade( xcolor(0,0,0,0), 0.0f );
+        g_AudioMgr.SetMasterVolume( 1.0f );
+        m_LevelLoadStage = LEVEL_LOAD_FINALIZE_RUNTIME;
+        break;
 
-    // Clear the polycache
-    g_PolyCache.InvalidateAllCells();
-
-    g_level_loading = FALSE;
-
-    // reset the rigid color pointers
-    x_makepath( pPath, NULL, "", "level_data", ".rigidcolor" ); //x_makepath( pPath, NULL, g_FullPath, "level_data", ".rigidcolor" );
-    g_BinLevelMgr.SetRigidColor( pPath );
-
-    // reset any screen fades we might've had on
-    g_PostEffectMgr.StartScreenFade( xcolor(0,0,0,0), 0.0f );
-
-    // reset the audio that may have been faded at some point
-    g_AudioMgr.SetMasterVolume( 1.0f );
-
-    MsgMgr.Init();
-    g_MusicMgr.Init();
-
-    // Setup OccluderMgr and search invis walls for occluders
-    g_OccluderMgr.Init();
-    g_OccluderMgr.GatherOccluders();
-
-    // Reset DecalMgr
-    g_DecalMgr.ResetDynamicDecals();
-
-    // inflate the world bounds a bit
-    g_ObjMgr.InflateSafeBBox( 1000.0f );
-
+    case LEVEL_LOAD_FINALIZE_RUNTIME:
+        MsgMgr.Init();
+        g_MusicMgr.Init();
+        g_DecalMgr.ResetDynamicDecals();
+        g_ObjMgr.InflateSafeBBox( 1000.0f );
     #ifndef CONFIG_VIEWER
-    // reset the frame count to 0
-    g_nLogicFramesAfterLoad = 0;
-	#endif
+        g_nLogicFramesAfterLoad = 0;
+    #endif
+        m_LevelLoadStage = LEVEL_LOAD_FINALIZE_OCCLUDERS;
+        break;
 
-    if( bFullLoad )
-    {
-        KillSlideShow();
-    }
+    case LEVEL_LOAD_FINALIZE_OCCLUDERS:
+        g_OccluderMgr.Init();
+        g_OccluderMgr.GatherOccluders();
+        m_LevelLoadStage = LEVEL_LOAD_UNMOUNT_FILESYSTEM;
+        break;
 
-    // Unmount the level.dfs file.
-    if( pMapEntry->GetFlags() & MF_DOWNLOAD_MAP )
-    {
-        UnloadContent();
+        case LEVEL_LOAD_UNMOUNT_FILESYSTEM:
+            ASSERT( m_LevelFileSystemMounted );
+            g_IOFSMgr.UnmountFileSystem( m_LevelFileSystem );
+            m_LevelFileSystemMounted = FALSE;
+            g_level_loading = FALSE;
+            m_LevelLoadStage = LEVEL_LOAD_COMPLETE;
+            break;
+        }
     }
-    else
-    {
-        g_IOFSMgr.UnmountFileSystem( (const char*)LevelDFS );
-    }
+    while( !IsLevelLoadComplete() && (TimeBudget.ReadSec() < TimeBudgetSeconds) );
 }
 
 void level_loader::LoadLevelFinish( void )
 {
-#if defined(TARGET_PS2) && defined( TARGET_DEV )
-    xtimer CorpseTimer ;
-#endif;
-
     // kill the slideshow audio
     if( m_bFullLoad && g_AudioMgr.IsValidVoiceId( m_VoiceID ) )
     {
         g_AudioMgr.Release( m_VoiceID, 0.0f );
-        g_AudioMgr.Update( 0.033f );
-        x_DelayThread( 100 );
-        g_AudioMgr.Update( 0.033f );
     }
 
-    // Initialize ragdolls now that all geometry and collision is loaded
-    // NOTE: This must be done AFTER the slide show has been killed because
-    // that will render on a separate thread and both the collision code
-    // and page flip will use scratchmem, which is NOT thread-safe.
-#if defined(TARGET_PS2) && defined( TARGET_DEV )
-    x_DebugMsg("\n\nInitializing %d dead bodies...\n", g_ObjMgr.GetNumInstances(object::TYPE_CORPSE)) ;
-    CorpseTimer.Reset() ;
-    CorpseTimer.Start() ;
-#endif
+    // Initialize ragdolls now that all geometry and collision is loaded.
 
     slot_id SlotID = g_ObjMgr.GetFirst(object::TYPE_CORPSE);
     while (SlotID != SLOT_NULL)
@@ -662,20 +839,11 @@ void level_loader::LoadLevelFinish( void )
         SlotID = g_ObjMgr.GetNext(SlotID);
     }
 
-#if defined(TARGET_PS2) && defined(TARGET_DEV)
-    CorpseTimer.Stop() ;
-    x_DebugMsg("Took %f secs\n\n", CorpseTimer.ReadSec()) ;
-#endif
-
     // initialize audio volumes from global settings
     global_settings& Settings = g_StateMgr.GetActiveSettings();
     Settings.CommitAudio();
 
     LOG_MESSAGE( "LoadLevel", "Done!" );
-
-#ifdef TARGET_XBOX
-__asm wbinvd
-#endif
 }
 
 //=============================================================================
@@ -685,23 +853,6 @@ void level_loader::UnloadLevel( xbool bFullUnload )
     g_GameTextMgr.Reset();
     g_MusicStateMgr.Init();
     g_MusicMgr.Kill();
-
-    #ifdef TARGET_XBOX
-    {
-        for( s32 i=0;i<2;i++ )
-        {
-            g_pd3dDevice->Clear( 0,0,D3DCLEAR_TARGET,0,0.0f,0 );
-            g_pd3dDevice->Present( 0,0,0,0 );
-        }
-
-        g_pd3dDevice->BlockUntilIdle();
-        g_pd3dDevice->SetStreamSource( 0,NULL,0 );
-        g_pd3dDevice->SetStreamSource( 1,NULL,0 );
-
-        for( s32 i=0;i<4;i++ )
-            g_Input.EnableFeedback( false,i );
-    }
-    #endif
 
     // The show must go on ....................................................
 
@@ -820,7 +971,6 @@ void level_loader::UnloadLevel( xbool bFullUnload )
     // Move the identifier tables down low in memory.
     g_AudioMgr.ReMergeIdentifierTables();
 
-#if defined(TARGET_XBOX) || defined(TARGET_PS2)
     // If its an online game, then save out the stats.
     if( GameMgr.IsGameOnline() )
     {
@@ -836,14 +986,9 @@ void level_loader::UnloadLevel( xbool bFullUnload )
         // Reset stats so they don't get sent again on clients.
         GameMgr.ResetPlayerStats();
 
-        #ifdef TARGET_XBOX
-        g_MatchMgr.PostGameStatsToLive();
-        #else
         g_MatchMgr.UpdateCareerStatsWithGameStats();
         g_MatchMgr.InitiateCareerStatsWrite();
-        #endif // TARGET_XBOX
     }
-#endif // defined(TARGET_XBOX) || defined(TARGET_PS2)
 
     LOG_MESSAGE( "level_loader::UnloadLevel", "Unload complete. Memory Free:%d bytes, took %2.02fms",x_MemGetFree(), t.ReadMs() );
     x_DebugMsg("Unload level tool %2.02fms", t.ReadMs() );
@@ -881,131 +1026,4 @@ void level_loader::UnmountDefaultFilesystems( void )
     g_IOFSMgr.UnmountFileSystem( "AUDIO\\MUSIC" );
     g_IOFSMgr.UnmountFileSystem( "PRELOAD" );
     g_IOFSMgr.UnmountFileSystem( "BOOT" );
-}
-
-//=========================================================================
-void level_loader::OnPollReturn( void )
-{
-    s32 card;
-    s32 i;
-    g_MapList.RemoveByFlags( MF_DOWNLOAD_MAP );
-    for( card=0; card<2; card++ )
-    {
-        map_list& Manifest = g_UIMemCardMgr.GetManifest(card);
-        for( i=0; i< Manifest.GetCount(); i++ )
-        {
-            g_MapList.Append( Manifest[i], &Manifest );
-        }
-    }
-}
-
-//=========================================================================
-void level_loader::FetchManifest( void )
-{
-
-    g_UIMemCardMgr.PollContent( TRUE, this, &level_loader::OnPollReturn );
-    g_StateMgr.StartBackgroundRendering();
-    do 
-    {
-        x_DelayThread(32);
-    } while( g_UIMemCardMgr.IsActionDone() == FALSE );
-    g_StateMgr.StopBackgroundRendering();
-}
-
-//=============================================================================
-void level_loader::LoadContentComplete( void )
-{
-    m_LoadInProgress = FALSE;
-}
-
-//=============================================================================
-xbool level_loader::LoadContent( const map_entry& MapEntry )
-{
-#if defined(TARGET_PS2)
-    s32     i;
-
-    m_LoadInProgress = TRUE;
-    g_UIMemCardMgr.LoadContent( MapEntry, this, &level_loader::LoadContentComplete );
-    g_StateMgr.StartBackgroundRendering();
-    //
-    // Note: We can whirl around in this loop as the background renderer should currently
-    // be running and that will deal with updating the display and slideshow.
-    while( m_LoadInProgress && (g_ActiveConfig.GetExitReason() == GAME_EXIT_CONTINUE) )
-    {
-        x_DelayThread( 32 );
-    }
-    g_StateMgr.StopBackgroundRendering();
-
-    s32 Checksum;
-    if( g_ActiveConfig.GetExitReason() != GAME_EXIT_CONTINUE )
-    {
-        return FALSE;
-    }
-
-    Checksum = x_chksum( g_UIMemCardMgr.GetBuffer(), (g_UIMemCardMgr.GetBufferLength() &~3) );
-    g_ActiveConfig.SetLevelChecksum( Checksum );
-
-    ASSERT( s_pArchive == NULL );
-    s_pArchive = new archive;
-
-    x_MemSanity();
-    ASSERT( s_pArchive );
-    s_pArchive->Init( (byte*)g_UIMemCardMgr.GetBuffer(), g_UIMemCardMgr.GetBufferLength() );
-
-    x_MemSanity();
-    for( i=0; i<s_pArchive->GetMemberCount(); i++ )
-    {
-        LOG_MESSAGE( "PerformMemoryCardLoad", "Archive member %s, length:%d", s_pArchive->GetMemberFilename(i), s_pArchive->GetMemberLength(i) );
-    }
-    LOG_FLUSH();
-
-    x_MemSanity();
-    g_UIMemCardMgr.FreeBuffer();
-    x_MemSanity();
-    // Should always have an even number of archive members.
-    ASSERT( (s_pArchive->GetMemberCount() & 1)==0 );
-    s32 DfsCount = s_pArchive->GetMemberCount() / 2;
-    for( i=0; i<DfsCount; i++ )
-    {
-        // Make sure we have the files in the order we expect. The first should be the .dfs file, the
-        // second should have the .000 extension.
-        ASSERT( x_stristr( s_pArchive->GetMemberFilename(i*2  ), ".dfs" ) != NULL );
-        ASSERT( x_stristr( s_pArchive->GetMemberFilename(i*2+1), ".000" ) != NULL );
-        xbool Result;
-
-        Result = g_IOFSMgr.MountFileSystemRAM( s_pArchive->GetMemberFilename(i*2), (void*)s_pArchive->GetMemberData(i*2), s_pArchive->GetMemberLength(i*2), (void*)s_pArchive->GetMemberData(i*2+1) );
-        ASSERT( Result );
-    }
-    x_MemSanity();
-    return TRUE;
-#else
-    (void)MapEntry;
-    return FALSE;
-#endif
-}
-
-//=============================================================================
-void level_loader::UnloadContent( void )
-{
-    s32 DfsCount;
-    s32 i;
-
-    ASSERT( s_pArchive );
-    DfsCount = s_pArchive->GetMemberCount() / 2;
-    x_MemSanity();
-
-    for( i=0; i<DfsCount; i++ )
-    {
-        xbool Result;
-
-        Result = g_IOFSMgr.UnmountFileSystem( s_pArchive->GetMemberFilename(i*2) );
-        x_MemSanity();
-        ASSERT( Result );
-    }
-    x_MemSanity();
-    s_pArchive->Kill();
-    x_MemSanity();
-    delete s_pArchive;
-    x_MemSanity();
-    s_pArchive = NULL;
 }

@@ -1,7 +1,9 @@
+#include "Render\PrimitiveDebug.hpp"
 #include "controller.hpp"
 #include "element_spemitter.hpp"
+#include "PreviewRender.hpp"
 #include "effect.hpp"
-#include "x_context.hpp"
+#include "x_profile.hpp"
 #include "convex_hull.hpp"
 
 namespace fx_core
@@ -1392,7 +1394,7 @@ xbool element_spemitter::GetWorldStaticBBox( bbox& aBBox ) const
 
 void element_spemitter::Render( f32 T )
 {
-    CONTEXT( "element_spemitter::Render" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "element_spemitter::Render" );
     
     if ( m_Hide )
         return;
@@ -1450,35 +1452,13 @@ void element_spemitter::Render( f32 T )
     // Set the particle positions for the time to be rendered
     SetParticlePositions( T );
 
-    // Determine blend mode
-    s32 DrawBlendMode = 0;
-    switch( m_CombineMode )
-    {
-    case COMBINEMODE_ADDITIVE:
-    case COMBINEMODE_GLOW_ADD:
-        DrawBlendMode = DRAW_BLEND_ADD;
-        break;
-    case COMBINEMODE_SUBTRACTIVE:
-    case COMBINEMODE_GLOW_SUB:
-        DrawBlendMode = DRAW_BLEND_SUB;
-        break;
-    }
-
-    // Clear L2W
-    draw_ClearL2W();
-
-    // draw flags
-    u32 DrawFlags   = DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DrawBlendMode;
-    if( !m_ZRead )  { DrawFlags |= DRAW_NO_ZBUFFER; }
-
-    // Start drawing
-    if( m_Oriented )        { draw_Begin( DRAW_TRIANGLES, DrawFlags ); }
-    else                    { draw_Begin( DRAW_SPRITES,   DrawFlags ); }
-
     if ( m_BitmapName.IsEmpty() )
         m_BitmapName = "fx_default.xbmp";
     
     g_pTextureMgr->ActivateBitmap( m_BitmapName );
+    const render::primitive_draw_desc material =
+        CreatePreviewMaterial( g_pTextureMgr->GetTexture( m_BitmapName ), m_CombineMode, m_ZRead, TRUE, TRUE );
+    render::PrimitiveBatch orientedBatch( material );
 
     // Setup UVs
     vector2 UV0(0.0f,0.0f);
@@ -1541,16 +1521,11 @@ void element_spemitter::Render( f32 T )
                 Start     = Center + Dir;
                 End       = Center - Dir;
 
-                // Draw Quad
-                draw_Color( RenderColor );
-
-                draw_UV( 1.0f, 0.0f ); draw_Vertex( Start - CrossDir );
-                draw_UV( 0.0f, 0.0f ); draw_Vertex( End   - CrossDir );
-                draw_UV( 0.0f, 1.0f ); draw_Vertex( End   + CrossDir );
-
-                draw_UV( 1.0f, 0.0f ); draw_Vertex( Start - CrossDir );
-                draw_UV( 0.0f, 1.0f ); draw_Vertex( End   + CrossDir );
-                draw_UV( 1.0f, 1.0f ); draw_Vertex( Start + CrossDir );
+                const vector3 positions[4] = { Start - CrossDir, End - CrossDir, End + CrossDir, Start + CrossDir };
+                const vector2 uvs[4] = { vector2( 1.0f, 0.0f ), vector2( 0.0f, 0.0f ),
+                                         vector2( 0.0f, 1.0f ), vector2( 1.0f, 1.0f ) };
+                const xcolor colors[4] = { RenderColor, RenderColor, RenderColor, RenderColor };
+                orientedBatch.AddQuad( positions, uvs, colors );
             }
             else
             {
@@ -1559,13 +1534,13 @@ void element_spemitter::Render( f32 T )
                 if( m_WorldSpace )
                 {
                     // Draw in world space
-                    draw_SpriteUV( p->Position, WH, UV0, UV1, RenderColor, p->Rotation );
+                    render::SubmitPrimitiveSprite( material, p->Position, WH, UV0, UV1, RenderColor, p->Rotation );
                 }
                 else
                 {
                     // Transform to world space and render
                     vector3 Position = L2W.Transform( p->Position );
-                    draw_SpriteUV( Position, WH, UV0, UV1, RenderColor, p->Rotation );
+                    render::SubmitPrimitiveSprite( material, Position, WH, UV0, UV1, RenderColor, p->Rotation );
                 }
             }
         }
@@ -1574,13 +1549,15 @@ void element_spemitter::Render( f32 T )
         i = (i+1) % m_nAllocatedParticles;
     } while( i != iEnd );
 
-    // End drawing
-    draw_End();
+    if( m_Oriented )
+    {
+        matrix4 identity;
+        identity.Identity();
+        orientedBatch.Submit( identity );
+    }
 
     // Render element bbox
-    draw_SetL2W( L2W );
     RenderBBox( T );
-    draw_ClearL2W();
 
     // Render the velocity representation
     RenderVelocity( T, L2W );
@@ -1592,7 +1569,7 @@ void element_spemitter::Render( f32 T )
     // Render the world static BBox
     bbox BBox;
     if( GetWorldStaticBBox( BBox ) )
-        draw_BBox( BBox, XCOLOR_GREEN );
+        render::debug::Box( BBox, XCOLOR_GREEN );
 #endif
 }
 

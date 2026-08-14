@@ -11,7 +11,6 @@
 #include "FlagBase.hpp"
 #include "GameLib/RenderContext.hpp"
 #include "TemplateMgr/TemplateMgr.hpp"
-#include "Entropy/e_Draw.hpp"
 #include "Objects/Actor/Actor.hpp"
 
 #ifndef X_EDITOR
@@ -71,7 +70,7 @@ const object_desc& flag_base::GetObjectType( void )
 
 flag_base::flag_base( void )
 {
-    m_bInitialized = FALSE;
+    m_isInitialized = FALSE;
 
     #ifndef X_EDITOR
     m_NetTeamBits = 0x00000000;
@@ -91,7 +90,7 @@ void flag_base::Init( s32 BaseCircuit, const matrix4& L2W )
 
     SetTransform( L2W );
 
-    if( !m_bInitialized )
+    if( !m_isInitialized )
     {
         m_BaseGuid    = g_ObjMgr.CreateObject( team_prop::GetObjectType() );
         object* pBase = g_ObjMgr.GetObjectByGuid( m_BaseGuid );
@@ -104,7 +103,7 @@ void flag_base::Init( s32 BaseCircuit, const matrix4& L2W )
         }
     }
 
-    m_bInitialized = TRUE;
+    m_isInitialized = TRUE;
 }
 
 //==============================================================================

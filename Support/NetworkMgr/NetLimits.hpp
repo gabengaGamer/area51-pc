@@ -9,17 +9,7 @@
 
 //==============================================================================
 
-#ifdef TARGET_XBOX
-const s32   NET_MAX_PER_CLIENT          =     4;        // Up to 4 player split screen.
-const s32   NET_MAX_LOCAL_CLIENTS       =    15;        // Xbox servers can host 15 clients.
-#endif
-
-#ifdef TARGET_PS2
-const s32   NET_MAX_PER_CLIENT          =     2;        // Up to 2 player split screen.
-const s32   NET_MAX_LOCAL_CLIENTS       =    15;        // PS2 servers can host 15 clients.
-#endif
-
-#ifdef TARGET_PC
+#ifdef TARGET_DESKTOP
 const s32   NET_MAX_PER_CLIENT          =     1;        // No split screen on PC.
 const s32   NET_MAX_LOCAL_CLIENTS       =    31;        // PC servers can host 31 clients.
 #endif
@@ -27,7 +17,6 @@ const s32   NET_MAX_LOCAL_CLIENTS       =    31;        // PC servers can host 3
 #ifdef DEDICATED_SERVER
 const s32   NET_MAX_LOCAL_CLIENTS       =    32;        // Dedicated servers host 32 clients.
 #endif
-
 
 const s32   NET_NAME_LENGTH             =    16;        // Player names.
 const s32   NET_MAX_TOTAL_CLIENTS       =    32;        // Absolute maximum clients.

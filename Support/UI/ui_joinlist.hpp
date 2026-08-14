@@ -16,7 +16,7 @@
 #include "x_math.hpp"
 #endif
 
-#include "ui\ui_listbox.hpp"
+#include "UI/ui_listbox.hpp"
 
 //==============================================================================
 //  defines
@@ -43,11 +43,16 @@ public:
                     ui_joinlist             ( void );
     virtual        ~ui_joinlist             ( void );
 
-    virtual void    Render                  ( s32 ox=0, s32 oy=0 );
+    xbool          Create                   ( s32           UserID,
+                                              ui_manager*   pManager,
+                                              const irect&  Position,
+                                              ui_win*       pParent,
+                                              s32           Flags );
 
     void            RenderString            ( irect r, u32 Flags, const xcolor& c1, const xcolor& c2, const char* pString );
     void            RenderString            ( irect r, u32 Flags, const xcolor& c1, const xcolor& c2, const xwchar* pString );
     void            RenderTitle             ( irect r, u32 Flags, const xwchar* pString );
+    virtual void    RenderHeader            ( irect r );
     virtual void    RenderItem              ( irect r, const item& Item, const xcolor& c1, const xcolor& c2 );
 
 private:

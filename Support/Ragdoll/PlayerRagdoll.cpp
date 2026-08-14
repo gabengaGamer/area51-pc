@@ -15,8 +15,8 @@
 
 // Storage for the Player ragdoll definition
 // (rules and geom bones are filled in at runtime)
-static dist_rule   PlayerDistRules[ragdoll::MAX_DIST_RULES] PS2_ALIGNMENT(64);
-static geom_bone   PlayerGeomBones[ragdoll::MAX_GEOM_BONES] PS2_ALIGNMENT(64);
+static dist_rule   PlayerDistRules[ragdoll::MAX_DIST_RULES];
+static geom_bone   PlayerGeomBones[ragdoll::MAX_GEOM_BONES];
 
 
 //==============================================================================
@@ -473,7 +473,7 @@ static constraint_def ConstraintDefs[] =
 
 ragdoll_def PlayerRagdoll =
 {    
-    // m_bInitialized
+    // m_isInitialized
     FALSE,
 
     // Name

@@ -3,6 +3,8 @@
 
 #include "stdafx.h"
 #include "ManipTranslate.h"
+#include "Render/PrimitiveBatch.hpp"
+#include "Render/PrimitiveDebug.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -105,52 +107,44 @@ void CManipTranslate::RenderPlane( const vector3& Origin, const vector3& Axis1, 
         cFill       = xcolor(255,255,255,32);
     }
 
-    // Reset transform
-    draw_ClearL2W();
+    const render::primitive_draw_desc fillMaterial( NULL,
+                                                    render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                    render::PRIMITIVE_BLEND_ALPHA,
+                                                    render::PRIMITIVE_DEPTH_DISABLED,
+                                                    render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                    render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                    render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch fillBatch( fillMaterial );
+    const vector2 uv( 0.0f, 0.0f );
+    fillBatch.AddTriangle( render::primitive_vertex( Origin,           uv, cFill ),
+                           render::primitive_vertex( Origin + v1,      uv, cFill ),
+                           render::primitive_vertex( Origin + v1 + v2, uv, cFill ) );
+    fillBatch.AddTriangle( render::primitive_vertex( Origin + v1 + v2, uv, cFill ),
+                           render::primitive_vertex( Origin + v2,      uv, cFill ),
+                           render::primitive_vertex( Origin,           uv, cFill ) );
+    matrix4 identity;
+    identity.Identity();
+    fillBatch.Submit( identity );
 
-    // Draw alpha blended plane
-    draw_Begin( DRAW_TRIANGLES, DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_NO_ZWRITE );
-
-    draw_Color( cFill );
-    
-    draw_Vertex( Origin );
-    draw_Vertex( Origin+v1 );
-    draw_Vertex( Origin+v1+v2 );
-
-    draw_Vertex( Origin );
-    draw_Vertex( Origin+v1+v2 );
-    draw_Vertex( Origin+v1 );
-
-    draw_Vertex( Origin+v1+v2 );
-    draw_Vertex( Origin+v2 );
-    draw_Vertex( Origin );
-
-    draw_Vertex( Origin+v2 );
-    draw_Vertex( Origin+v1+v2 );
-    draw_Vertex( Origin );
-
-    draw_End();
-
-    // Draw lines for outline
-    draw_Begin( DRAW_LINES, DRAW_NO_ZBUFFER|DRAW_NO_ZWRITE );
-    draw_Color( cOutline );
-
-    draw_Vertex( Origin+v1 );
-    draw_Vertex( Origin+v1+v2 );
-
-    draw_Vertex( Origin+v1+v2 );
-    draw_Vertex( Origin+v2 );
-
-    draw_End();
+    const render::primitive_draw_desc lineMaterial( NULL,
+                                                    render::PRIMITIVE_TOPOLOGY_LINE_LIST,
+                                                    render::PRIMITIVE_BLEND_OPAQUE,
+                                                    render::PRIMITIVE_DEPTH_DISABLED,
+                                                    render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                    render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                    render::PRIMITIVE_LAYER_SURFACE );
+    render::PrimitiveBatch lineBatch( lineMaterial );
+    lineBatch.AddLine( Origin + v1, Origin + v1 + v2, cOutline, cOutline );
+    lineBatch.AddLine( Origin + v1 + v2, Origin + v2, cOutline, cOutline );
+    lineBatch.Submit( identity );
 }
 
 //============================================================================
 
 void CManipTranslate::RenderArrow( const vector3& Origin, const vector3& Direction, f32 Size, xcolor Color, xbool Highlight )
 {
-    static vector3  s_Verts  [6*ARROW_NSEGMENTS];
-    static xcolor   s_Colors [6*ARROW_NSEGMENTS];
-    static s16      s_Indices[6*ARROW_NSEGMENTS];
+    render::primitive_vertex vertices[6*ARROW_NSEGMENTS];
+    u16 indices[6*ARROW_NSEGMENTS];
 
     f32 Length      = Size * ARROW_LENGTH;
     f32 HeadRadius  = Size * ARROW_HEAD_RADIUS;
@@ -179,40 +173,33 @@ void CManipTranslate::RenderArrow( const vector3& Origin, const vector3& Directi
         f32 s2 = x_sin( (f32)(i+1)/(ARROW_NSEGMENTS) * R_360 );
         f32 c2 = x_cos( (f32)(i+1)/(ARROW_NSEGMENTS) * R_360 );
 
-        s_Verts[0+i*6] = vector3( 0,0,Length );
-        s_Verts[1+i*6] = vector3( s2*HeadRadius,c2*HeadRadius,Length-HeadLength );
-        s_Verts[2+i*6] = vector3( s1*HeadRadius,c1*HeadRadius,Length-HeadLength );
-        s_Verts[3+i*6] = vector3( 0,0,Length-HeadLength );
-        s_Verts[4+i*6] = vector3( s1*HeadRadius,c1*HeadRadius,Length-HeadLength );
-        s_Verts[5+i*6] = vector3( s2*HeadRadius,c2*HeadRadius,Length-HeadLength );
-
-        s_Colors[0+i*6] = Color1;
-        s_Colors[1+i*6] = Color1;
-        s_Colors[2+i*6] = Color1;
-        s_Colors[3+i*6] = Color2;
-        s_Colors[4+i*6] = Color2;
-        s_Colors[5+i*6] = Color2;
+        const vector2 uv( 0.0f, 0.0f );
+        vertices[0+i*6] = render::primitive_vertex( vector3( 0,0,Length ),                                  uv, Color1 );
+        vertices[1+i*6] = render::primitive_vertex( vector3( s2*HeadRadius,c2*HeadRadius,Length-HeadLength ), uv, Color1 );
+        vertices[2+i*6] = render::primitive_vertex( vector3( s1*HeadRadius,c1*HeadRadius,Length-HeadLength ), uv, Color1 );
+        vertices[3+i*6] = render::primitive_vertex( vector3( 0,0,Length-HeadLength ),                       uv, Color2 );
+        vertices[4+i*6] = render::primitive_vertex( vector3( s1*HeadRadius,c1*HeadRadius,Length-HeadLength ), uv, Color2 );
+        vertices[5+i*6] = render::primitive_vertex( vector3( s2*HeadRadius,c2*HeadRadius,Length-HeadLength ), uv, Color2 );
     }
 
     // Build indicies
-    for( i=0 ; i<(ARROW_NSEGMENTS*6) ; i++ )
+    for( s32 i=0 ; i<(ARROW_NSEGMENTS*6) ; i++ )
     {
-        s_Indices[i] = i;
+        indices[i] = (u16)i;
     }
 
-    // Render it
-    draw_Begin( DRAW_LINES, DRAW_NO_ZBUFFER );
-    draw_SetL2W( m );
-    draw_Color( Highlight ? XCOLOR_YELLOW : Color );
-    draw_Vertex( vector3(0,0,0) );
-    draw_Vertex( vector3(0,0,1) * (ARROW_LENGTH - ARROW_HEAD_LENGTH/2) * Size );
-    draw_End();
-    draw_Begin( DRAW_TRIANGLES, DRAW_NO_ZBUFFER );
-    draw_SetL2W( m );
-    draw_Colors ( &s_Colors [0], 6*ARROW_NSEGMENTS, sizeof(xcolor) );
-    draw_Verts  ( &s_Verts  [0], 6*ARROW_NSEGMENTS, sizeof(vector3) );
-    draw_Execute( &s_Indices[0], 6*ARROW_NSEGMENTS );
-    draw_End();
+    render::debug::Line( Origin,
+                         Origin + Direction * ( ARROW_LENGTH - ARROW_HEAD_LENGTH / 2.0f ) * Size,
+                         Highlight ? XCOLOR_YELLOW : Color, render::PRIMITIVE_DEPTH_DISABLED );
+
+    const render::primitive_draw_desc material( NULL,
+                                                render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                render::PRIMITIVE_BLEND_OPAQUE,
+                                                render::PRIMITIVE_DEPTH_DISABLED,
+                                                render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                render::PRIMITIVE_LAYER_SURFACE );
+    render::SubmitPrimitives( material, m, vertices, ARRAYSIZE( vertices ), indices, ARRAYSIZE( indices ) );
 }
 
 //============================================================================

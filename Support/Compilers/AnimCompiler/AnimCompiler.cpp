@@ -15,11 +15,11 @@
 
 #include <windows.h>
 #include <stdio.h>
-#include "animcompiler.hpp"
-#include "parsing/tokenizer.hpp"
+#include "AnimCompiler.hpp"
+#include "Parsing/tokenizer.hpp"
 #include "x_bitstream.hpp"
-#include "meshutil/rawanim.hpp"
-#include "meshutil/rawanim.hpp"
+#include "MeshUtil/RawAnim.hpp"
+#include "MeshUtil/RawAnim.hpp"
 
 #define DELETE_DUMMY_BONES
 

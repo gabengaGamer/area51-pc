@@ -2,6 +2,8 @@
 //  
 //  e_VRAM.hpp
 //
+//  Texture resource API for explicit PSO render backends.
+//
 //==============================================================================
 
 #ifndef E_VRAM_HPP
@@ -13,69 +15,215 @@
 
 #include "x_bitmap.hpp"
 
-//==============================================================================
-//  FUNCTIONS
-//==============================================================================
-
-s32         vram_Register       ( const xbitmap& Bitmap  );
-void        vram_Unregister     ( const xbitmap& Bitmap  );
-void        vram_Unregister     (       s32      VRAM_ID );
-
-void        vram_Activate       ( const xbitmap& Bitmap  )  X_SECTION(render);
-void        vram_Activate       (       s32      VRAM_ID )  X_SECTION(render);
-void        vram_Activate       ( void );
-
-xbool       vram_IsActive       ( const xbitmap& Bitmap )   X_SECTION(render);
-
-void        vram_Flush          ( void );
+struct shader_resource;
 
 //==============================================================================
-//  Debugging functions
+//  TYPES
 //==============================================================================
 
-s32         vram_GetNRegistered ( void );
-s32         vram_GetRegistered  ( s32 ID );
+enum vram_texture_type
+{
+    VRAM_TEXTURE_TYPE_2D = 0,
+    VRAM_TEXTURE_TYPE_2D_ARRAY,
+    VRAM_TEXTURE_TYPE_3D,
+    VRAM_TEXTURE_TYPE_CUBE,
+    VRAM_TEXTURE_TYPE_CUBE_ARRAY
+};
 
-void        vram_PrintStats     ( void );
-void        vram_SanityCheck    ( void );
+//------------------------------------------------------------------------------
+
+enum vram_texture_format
+{
+    VRAM_TEXTURE_FORMAT_RGBA8 = 0,
+    VRAM_TEXTURE_FORMAT_BGRA8,
+    VRAM_TEXTURE_FORMAT_RGB10A2,
+    VRAM_TEXTURE_FORMAT_RGBA16F,
+    VRAM_TEXTURE_FORMAT_RGBA32F,
+    VRAM_TEXTURE_FORMAT_R8,
+    VRAM_TEXTURE_FORMAT_RG16F,
+    VRAM_TEXTURE_FORMAT_R32F,
+    VRAM_TEXTURE_FORMAT_B5G6R5,
+    VRAM_TEXTURE_FORMAT_B5G5R5A1,
+    VRAM_TEXTURE_FORMAT_B4G4R4A4,
+    VRAM_TEXTURE_FORMAT_BC1_RGBA,
+    VRAM_TEXTURE_FORMAT_BC2_RGBA,
+    VRAM_TEXTURE_FORMAT_BC3_RGBA,
+    VRAM_TEXTURE_FORMAT_DEPTH24_STENCIL8,
+    VRAM_TEXTURE_FORMAT_DEPTH32F,
+    VRAM_TEXTURE_FORMAT_COUNT
+};
+
+//------------------------------------------------------------------------------
+
+enum vram_texture_usage_flags
+{
+    VRAM_TEXTURE_USAGE_SAMPLED                         = (1 << 0),
+    VRAM_TEXTURE_USAGE_COLOR_TARGET                    = (1 << 1),
+    VRAM_TEXTURE_USAGE_DEPTH_STENCIL_TARGET            = (1 << 2),
+    VRAM_TEXTURE_USAGE_GRAPHICS_STORAGE_READ           = (1 << 3),
+    VRAM_TEXTURE_USAGE_COMPUTE_STORAGE_READ            = (1 << 4),
+    VRAM_TEXTURE_USAGE_COMPUTE_STORAGE_WRITE           = (1 << 5),
+    VRAM_TEXTURE_USAGE_COMPUTE_STORAGE_READ_WRITE      = (1 << 6)
+};
+
+//------------------------------------------------------------------------------
+
+struct vram_texture_backend;
+
+//------------------------------------------------------------------------------
+
+struct vram_texture_desc
+{
+    vram_texture_type   Type;
+    u32                 Width;
+    u32                 Height;
+    u32                 Depth;
+    u32                 LayerCount;
+    u32                 MipCount;
+    vram_texture_format Format;
+    u32                 UsageFlags;
+    u32                 SampleCount;
+    const char*         pDebugName;
+
+    vram_texture_desc( void ) :
+        Type       ( VRAM_TEXTURE_TYPE_2D ),
+        Width      ( 0 ),
+        Height     ( 0 ),
+        Depth      ( 1 ),
+        LayerCount ( 1 ),
+        MipCount   ( 1 ),
+        Format     ( VRAM_TEXTURE_FORMAT_RGBA8 ),
+        UsageFlags ( VRAM_TEXTURE_USAGE_SAMPLED ),
+        SampleCount( 1 ),
+        pDebugName ( NULL )
+    {
+    }
+};
+
+//------------------------------------------------------------------------------
+
+struct vram_texture_region
+{
+    u32 MipLevel;
+    u32 Layer;
+    u32 X;
+    u32 Y;
+    u32 Z;
+    u32 Width;
+    u32 Height;
+    u32 Depth;
+
+    vram_texture_region( void ) :
+        MipLevel( 0 ),
+        Layer   ( 0 ),
+        X       ( 0 ),
+        Y       ( 0 ),
+        Z       ( 0 ),
+        Width   ( 0 ),
+        Height  ( 0 ),
+        Depth   ( 1 )
+    {
+    }
+};
+
+//------------------------------------------------------------------------------
+
+struct vram_texture_upload_desc
+{
+    vram_texture_region Region;
+    const void*         pData;
+    u32                 Size;
+    u32                 RowPitch;
+    u32                 SlicePitch;
+    xbool               bCycle;
+    xbool               bGenerateMips;
+
+    vram_texture_upload_desc( void ) :
+        Region       (),
+        pData        ( NULL ),
+        Size         ( 0 ),
+        RowPitch     ( 0 ),
+        SlicePitch   ( 0 ),
+        bCycle       ( FALSE ),
+        bGenerateMips( FALSE )
+    {
+    }
+};
+
+//------------------------------------------------------------------------------
+
+struct vram_texture
+{
+    vram_texture_desc     Desc;
+    vram_texture_backend* pBackend;
+
+    vram_texture( void ) :
+        Desc    (),
+        pBackend( NULL )
+    {
+    }
+
+    operator xbool( void ) const { return pBackend != NULL; }
+};
 
 //==============================================================================
-//  Private functions
+//  SYSTEM FUNCTIONS
 //==============================================================================
 
-void        vram_Init           ( void );
-void        vram_Kill           ( void );
+void                    vram_Init               ( void );
+void                    vram_Kill               ( void );
 
 //==============================================================================
-//  PC specific functions
+//  TEXTURE OBJECTS
 //==============================================================================
 
-#ifdef TARGET_PC
+xbool                   vram_CreateTexture      ( vram_texture&            Texture,
+                                                  const vram_texture_desc& Desc );
+xbool                   vram_CreateTexture      ( vram_texture& Texture,
+                                                  const xbitmap& Bitmap,
+                                                  xbool bGenerateMips = FALSE,
+                                                  const char* pDebugName = NULL );
+xbool                   vram_CreateTextureCube  ( vram_texture& Texture,
+                                                  const xbitmap* pFaces,
+                                                  s32 nFaces,
+                                                  xbool bGenerateMips = FALSE,
+                                                  const char* pDebugName = NULL );
+void                    vram_DestroyTexture     ( vram_texture& Texture );
 
-#include "D3DEngine\d3deng_private.hpp"
+//==============================================================================
+//  UPLOADS
+//==============================================================================
 
-s32                         vram_LoadTexture    ( const char*    pFileName  );
-s32                         vram_Register       ( ID3D11Texture1D* pTexture );
-s32                         vram_Register       ( ID3D11Texture2D* pTexture );
-s32                         vram_Register       ( ID3D11Texture3D* pTexture );
-s32                         vram_Register       ( const xbitmap* pBitmaps, s32 nBitmaps );
+xbool                   vram_UploadTexture      ( vram_texture& Texture,
+                                                  const vram_texture_upload_desc& Upload );
+xbool                   vram_UploadTexture      ( vram_texture& Texture,
+                                                  const xbitmap& Bitmap,
+                                                  xbool bGenerateMips = FALSE );
+xbool                   vram_UploadTextureCube  ( vram_texture& Texture,
+                                                  const xbitmap* pFaces,
+                                                  s32 nFaces,
+                                                  xbool bGenerateMips = FALSE );
+xbool                   vram_GenerateMipmaps    ( vram_texture& Texture );
 
-ID3D11ShaderResourceView*   vram_GetSRV         ( const xbitmap& Bitmap    );
-ID3D11ShaderResourceView*   vram_GetSRV         (       s32      VRAM_ID   );
-                                                                           
-ID3D11Texture1D*            vram_GetTexture1D   (       s32      VRAM_ID   );
-ID3D11Texture2D*            vram_GetTexture2D   ( const xbitmap& Bitmap    );
-ID3D11Texture2D*            vram_GetTexture2D   (       s32      VRAM_ID   );
-ID3D11Texture3D*            vram_GetTexture3D   (       s32      VRAM_ID   );
-ID3D11Texture2D*            vram_GetTextureCube (       s32      VRAM_ID   );
-                                                                           
-ID3D11UnorderedAccessView*  vram_GetUAV         ( s32 VRAM_ID              );
+//==============================================================================
+//  RESOURCE ACCESS
+//==============================================================================
 
-// Register bitmap as a dudv bump map (bitmap should be grey scale height)
-// Until xbitmap supports such formats, the conversion happens when creating the D3D texture 
-s32                         vram_RegisterDuDv   ( const xbitmap& Bitmap ) ;
+xbool                   vram_IsValid            ( const vram_texture& Texture );
+const vram_texture_desc*
+                        vram_GetDesc            ( const vram_texture& Texture );
+const shader_resource*  vram_GetShaderResource  ( const vram_texture& Texture );
 
-#endif
+//==============================================================================
+//  UTILITY
+//==============================================================================
+
+u32                     vram_CalcMipCount       ( u32 Width,
+                                                  u32 Height,
+                                                  u32 Depth = 1 );
+u32                     vram_GetNTextures       ( void );
+void                    vram_PrintStats         ( void );
+void                    vram_SanityCheck        ( void );
 
 //==============================================================================
 #endif // E_VRAM_HPP

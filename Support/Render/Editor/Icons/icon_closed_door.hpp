@@ -310,5 +310,4 @@ static s16 s_iicon_closed_door[] =
 };
 
 
-#define DRAW_ICON_CLOSED_DOOR() draw_icon( NUM_FACETS_ICON_CLOSED_DOOR, NUM_VERTICES_ICON_CLOSED_DOOR, s_vicon_closed_door, s_iicon_closed_door )
 

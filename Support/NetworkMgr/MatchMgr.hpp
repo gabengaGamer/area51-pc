@@ -10,18 +10,17 @@
 #include "downloader/Downloader.hpp"
 #include "NetLimits.hpp"
 
+// Shared endpoint for platform matchmaking patch downloads.
+extern const char* const MATCH_DOWNLOAD_LOCATION;
+
 //
 // Define which provider we are using for matchmaking services
 //
 // NOTE: If the provider is not defined, then only local network lookups will be performed.
 //
 //
-#if defined(TARGET_PS2)||defined(TARGET_PC)
+#if defined(TARGET_PC)
 #define ENABLE_GAMESPY
-#endif
-    
-#if defined(TARGET_XBOX)
-#define ENABLE_XBOX_LIVE
 #endif
 
 #if defined(ENABLE_GAMESPY)
@@ -838,7 +837,7 @@ private:
 
 #endif
 
-#if defined(TARGET_PS2) || defined(TARGET_PC)
+#if defined(TARGET_PC)
 
 enum 
 {
@@ -865,7 +864,7 @@ enum
         void                StatsUpdateConnect          ( void );
         void                StatsUpdateRead             ( void );
         void                StatsUpdateWrite            ( void );
-#endif // defined(TARGET_PS2) || defined(TARGET_PC)
+#endif // defined(TARGET_PC)
 
 private:
         void                UpdateState                 ( f32 DeltaTime );
@@ -890,7 +889,7 @@ private:
         void                ParseMessageOfTheDay        ( const char* pBuffer );
 
         xbool               m_Initialized;
-        xbool               m_ForceShutdown;
+        volatile xbool      m_ForceShutdown;
         f32                 m_AccumulatedTime;
         match_mgr_state     m_State;
         match_mgr_state     m_PendingState;
@@ -985,7 +984,7 @@ private:
         s32                 m_ConnectErrorCode;
         match_acquire       m_AcquisitionMode;
         match_acquire       m_PendingAcquisitionMode;
-        xthread*            m_pThread;
+        x_worker_service    m_WorkerService;
         xmutex              m_ListMutex;
         xmutex              m_BrowserMutex;
         downloader*         m_pDownloader;
@@ -1010,7 +1009,7 @@ private:
         s32                 m_SessionID;
 
 #define FRIEND friend
-#include "NetworkMgr/GameSpy/CallbackPrototypes.hpp"
+#include "NetworkMgr/GameSpy/callbackprototypes.hpp"
 #undef FRIEND
 
 #endif
@@ -1084,7 +1083,7 @@ private:
 
 #endif
 
-        friend void         s_MatchPeriodicUpdater( s32, char** );
+        friend void         s_MatchPeriodicUpdater( void* );
         friend class        game_config;
 };
 

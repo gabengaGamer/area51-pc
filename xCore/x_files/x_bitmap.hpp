@@ -278,8 +278,8 @@ const   format_info&    GetFormatInfo   ( format Format );
 
         void            XboxSwizzleData ( void );
 
-        void            Preregistered   ( void ){ m_Flags |= FLAG_XBOX_PRE_REGISTERED; }
-        void            DePreregister   ( void ){ m_Flags &=~FLAG_XBOX_PRE_REGISTERED; }
+        void            Preregistered   ( void ){ m_flags |= FLAG_XBOX_PRE_REGISTERED; }
+        void            DePreregister   ( void ){ m_flags &=~FLAG_XBOX_PRE_REGISTERED; }
 
 //------------------------------------------------------------------------------
 //  Protected types
@@ -347,7 +347,7 @@ mutable s32         m_VRAMID;       // 20 : ID for use by the VRAM Manager
         s16         m_Width;        // 22 : Width  in pixels
         s16         m_Height;       // 24 : Height in pixels
         s16         m_PW;           // 26 : Physical width in pixels
-mutable u16         m_Flags;        // 28 : Flags
+mutable u16         m_flags;        // 28 : Flags
         s8          m_NMips;        // 29 : Number of mips present in pixel data
         s8          m_Format;       // 30 : Data format, comes from enumeration
 

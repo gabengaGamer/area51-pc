@@ -238,5 +238,4 @@ static s16 s_iicon_spawn_point[] =
 };
 
 
-#define DRAW_ICON_SPAWN_POINT() draw_icon( NUM_FACETS_ICON_SPAWN_POINT, NUM_VERTICES_ICON_SPAWN_POINT, s_vicon_spawn_point, s_iicon_spawn_point )
 

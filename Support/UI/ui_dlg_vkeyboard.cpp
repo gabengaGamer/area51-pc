@@ -4,20 +4,16 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
-#include "..\AudioMgr\audioMgr.hpp"
+#include "Entropy.hpp"
+#include "../AudioMgr/AudioMgr.hpp"
 #include "StateMgr/StateMgr.hpp"
-#include "StringMgr\StringMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
 
 #include "ui_dlg_vkeyboard.hpp"
 #include "ui_manager.hpp"
 #include "ui_control.hpp"
 #include "ui_font.hpp"
 #include "ui_frame.hpp"
-
-#if defined(TARGET_PS2)
-#include "Entropy\PS2\ps2_misc.hpp"
-#endif
 
 //=========================================================================
 //  Defines
@@ -28,11 +24,9 @@
 #define NCOLS   17
 #define NROWS   5
 
-enum notifications
-{
-    WN_CHARACTER    = ui_win::WN_USER,
-    WN_REFRESH,
-};
+static const s32 VKEYBOARD_WIDTH           = 270;
+static const s32 VKEYBOARD_GAMEPAD_HEIGHT  = 188;
+static const s32 VKEYBOARD_KEYBOARD_HEIGHT = 62;
 
 static u8 Keys[17*5] =
 {
@@ -64,10 +58,10 @@ enum controls
 
 ui_manager::control_tem vkeyboardControls[] =
 {
-//  { IDC_CANCEL,   "IDS_CANCEL", "button",     9, 162+22, 100,  24, 0, 8, 9, 1, ui_win::WF_VISIBLE|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-//  { IDC_ACCEPT,   "IDS_OK",     "button",   162, 162+22, 100,  24, 9, 8, 8, 1, ui_win::WF_VISIBLE|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
+//  { IDC_CANCEL,   "IDS_CANCEL", "button",     9, 162+22, 100,  24, 0, 8, 9, 1, ui_win::WF_VISIBLE },
+//  { IDC_ACCEPT,   "IDS_OK",     "button",   162, 162+22, 100,  24, 9, 8, 8, 1, ui_win::WF_VISIBLE },
 
-    { IDC_FRAME,    "IDS_NULL",   "frame",      8,  36+22, 254, 122, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
+    { IDC_FRAME,    "IDS_NULL",   "frame",      8,  36+22, 254, 122, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
 };
 
 ui_manager::dialog_tem vkeyboardDialog =
@@ -87,10 +81,8 @@ class ui_vkey : public ui_control
 {
 public:
     virtual void    Render              ( s32 ox=0, s32 oy=0 );
-    virtual void    OnPadSelect         ( ui_win* pWin );
-    virtual void    OnLBDown            ( ui_win* pWin );
-    virtual void    OnFocusGained       ( ui_win* pWin );
-protected:
+    virtual void    OnAccept         ( ui_win* pWin );
+    virtual void    OnPointerDown       ( ui_win* pWin, s32 x, s32 y );
 };
 
 //=========================================================================
@@ -100,11 +92,9 @@ void ui_vkey::Render( s32 ox, s32 oy )
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
-        // Render placeholder rectangle
         xcolor  Color       = XCOLOR_BLACK;
         xcolor  TextColor1  = XCOLOR_WHITE;
         xcolor  TextColor2  = XCOLOR_BLACK;
-        //xbool   ForceRect   = FALSE;
 
         // Calculate rectangle
         irect    r;
@@ -117,19 +107,15 @@ void ui_vkey::Render( s32 ox, s32 oy )
         switch( Char )
         {
         case '\010':
-            //ForceRect = TRUE;
             Label = g_StringTableMgr( "ui", "IDS_DELETE" );
             break;
         case '\020':
-            //ForceRect = TRUE;
             Label = g_StringTableMgr( "ui", "IDS_SPACE" );
             break;
         case '\030':
-            //ForceRect = TRUE;
             Label = g_StringTableMgr( "ui", "IDS_CANCEL" );
             break;
         case '\040':
-            //ForceRect = TRUE;
             Label = g_StringTableMgr( "ui", "IDS_OK" );
             break;
         }
@@ -141,14 +127,13 @@ void ui_vkey::Render( s32 ox, s32 oy )
             TextColor1 = XCOLOR_GREY;
             TextColor2 = xcolor(0,0,0,0);
         }
-        else if( m_Flags & (WF_HIGHLIGHT|WF_SELECTED) )
+        else if( ShouldRenderHighlight() || IsActive() )
         {
-            s32 alpha = 128 + (g_UiMgr->GetHighlightAlpha(8) * 8); // 128<->192
+            s32 alpha = 128 + (m_pManager->GetHighlightAlpha(8) * 8); // 128<->192
             Color      = xcolor(79,214,60,alpha); //xcolor( 121, 199, 213 );
             TextColor1 = xcolor(0,0,0,255);
             TextColor2 = xcolor(0,0,0,0);
 
-            m_pManager->AddHighlight( m_UserID, r );
         }
         else
         {
@@ -156,9 +141,6 @@ void ui_vkey::Render( s32 ox, s32 oy )
             TextColor1 = xcolor(255,252,204,255); //XCOLOR_WHITE;
             TextColor2 = XCOLOR_BLACK;
         }
-
-        //if( ForceRect )
-        //    Color = xcolor(79,214,60,255); //xcolor( 121, 199, 213 );
 
         r.Inflate( 1, 1 );
         m_pManager->RenderRect( r, Color, FALSE );
@@ -172,29 +154,32 @@ void ui_vkey::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void ui_vkey::OnPadSelect( ui_win* pWin )
+void ui_vkey::OnAccept( ui_win* pWin )
 {
-    (void)pWin;
-    m_pParent->OnNotify( m_pParent, this, WN_CHARACTER, &m_Label );
-    g_AudioMgr.Play( "Select_VKB" );
+    if( m_pManager->GetInputDevice( m_UserID ) == ui_input_device::Gamepad )
+    {
+        Notify( ui_notification_type::TextInput, m_Label );
+        g_AudioMgr.Play( "Select_VKB" );
+    }
+    else
+    {
+        ui_control::OnAccept( pWin );
+    }
 }
 
 //=========================================================================
 
-void ui_vkey::OnLBDown( ui_win* pWin )
+void ui_vkey::OnPointerDown( ui_win* pWin, s32 x, s32 y )
 {
     (void)pWin;
-    m_pParent->OnNotify( m_pParent, this, WN_CHARACTER, &m_Label );
-    g_AudioMgr.Play( "Select_VKB" );
-}
+    (void)x;
+    (void)y;
 
-//=========================================================================
-
-void ui_vkey::OnFocusGained( ui_win* pWin )
-{
-    (void)pWin;
-    m_Flags |= WF_HIGHLIGHT;
-    //g_AudioMgr.Play( "Cursor_VKB" );
+    if( m_pManager->GetInputDevice( m_UserID ) == ui_input_device::Gamepad )
+    {
+        Notify( ui_notification_type::TextInput, m_Label );
+        g_AudioMgr.Play( "Select_VKB" );
+    }
 }
 
 //=========================================================================
@@ -208,9 +193,9 @@ class ui_vkString : public ui_control
 public:
     xbool           Create              ( s32 UserID, ui_manager* pManager, const irect& Position, ui_win* pParent, s32 Flags );
     virtual void    Render              ( s32 ox=0, s32 oy=0 );
-    virtual void    OnPadNavigate       ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void    OnPadShoulder       ( ui_win* pWin, s32 Direction );
-    virtual void    OnPadDelete         ( ui_win* pWin );
+    virtual void    OnNavigate       ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void    OnPage       ( ui_win* pWin, s32 Direction );
+    virtual void    OnDelete         ( ui_win* pWin );
 
     void            Backspace           ( void );
     void            Character           ( const xwstring& String );
@@ -241,7 +226,8 @@ xbool ui_vkString::Create( s32 UserID, ui_manager* pManager, const irect& Positi
 
 //=========================================================================
 
-static s32 s_CursorFrame = 0;
+static const f32 s_CursorBlinkPeriod = 0.5f;
+static       f32 s_CursorBlinkTime   = 0.0f;
 
 void ui_vkString::Render( s32 ox, s32 oy )
 {
@@ -264,7 +250,7 @@ void ui_vkString::Render( s32 ox, s32 oy )
             TextColor1 = XCOLOR_GREY;
             TextColor2 = xcolor(0,0,0,0);
         }
-        else if( m_Flags & (WF_HIGHLIGHT|WF_SELECTED) )
+        else if( ShouldRenderHighlight() || IsActive() )
         {
             Color      = xcolor (39,117,28,128);//xcolor( 121, 199, 213 );
             TextColor1 = XCOLOR_BLACK;
@@ -287,41 +273,13 @@ void ui_vkString::Render( s32 ox, s32 oy )
         rb.Deflate( 4, 1 );
 
         // render highlight if selected
-        if ( m_Flags & (WF_HIGHLIGHT|WF_SELECTED) )
+        if( ShouldRenderHighlight() || IsActive() )
         {
-            s32 alpha = 128 + (g_UiMgr->GetHighlightAlpha(8) * 8); // 64<->192
+            s32 alpha = 128 + (m_pManager->GetHighlightAlpha(8) * 8); // 64<->192
             m_pManager->RenderRect( rb, xcolor(79,214,60,alpha), FALSE );
         }
 
-        if (g_UiMgr->IsWipeActive())
-        {
-            irect wipePos;
-            g_UiMgr->GetWipePos(wipePos);
-
-            if ( wipePos.b > rb.t )
-            {
-                if ( wipePos.b > rb.b )
-                {
-#ifdef TARGET_PS2
-                    gsreg_Begin( 1 );
-                    gsreg_SetScissor( rb.l, rb.t, rb.r, rb.b );
-                    gsreg_End();
-#endif
-                }
-                else
-                {
-#ifdef TARGET_PS2
-                    gsreg_Begin( 1 );
-                    gsreg_SetScissor( rb.l, rb.t, rb.r, wipePos.b );
-                    gsreg_End();
-#endif
-                }
-            }
-        }
-        else
-        {
-            m_pManager->PushClipWindow( rb );
-        }
+        m_pManager->PushClipWindow( rb );
 
         // Render Text
         irect rt = rb;
@@ -339,45 +297,36 @@ void ui_vkString::Render( s32 ox, s32 oy )
         rb.r = rb.l + 1;
         rb.Deflate( 0, 2 );
 
-        if( !(s_CursorFrame & 0x10) )
+        if( s_CursorBlinkTime < (s_CursorBlinkPeriod * 0.5f) )
             m_pManager->RenderRect( rb, TextColor1, TRUE );
-        s_CursorFrame++;
 
         // Clear the clip window
-        if (g_UiMgr->IsWipeActive())
-        {
-#ifdef TARGET_PS2
-            // restore correct scissor
-            irect wipePos;
-            g_UiMgr->GetWipePos(wipePos);
-
-            irect screen;
-            g_UiMgr->GetScreenSize(screen);
-            
-            gsreg_Begin( 1 );
-            gsreg_SetScissor( screen.l, screen.t, screen.r, wipePos.b );
-            gsreg_End();
-#endif
-        }
-        else
-        {
-            m_pManager->PopClipWindow();
-        }
+        m_pManager->PopClipWindow();
     }
 }
 
 //=========================================================================
 
-void ui_vkString::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void ui_vkString::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
+    ui_dlg_vkeyboard* pKeyboard = (ui_dlg_vkeyboard*)m_pParent;
+    ASSERT( pKeyboard );
+
+    if( (m_pManager->GetInputDevice( m_UserID ) == ui_input_device::Gamepad) &&
+        !pKeyboard->IsGamepadLayout() )
+    {
+        ui_control::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+        return;
+    }
+
     // Which way are we moving
     switch( Code )
     {
-    case ui_manager::NAV_LEFT:
+    case ui_navigation::Left:
         if( m_Cursor > 0 )
         {
             m_Cursor--;
-            s_CursorFrame = 0;
+            s_CursorBlinkTime = 0.0f;
             g_AudioMgr.Play( "Cursor_VKB" );
         }
         else
@@ -385,11 +334,11 @@ void ui_vkString::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeat
             g_AudioMgr.Play( "InvalidEntry" );
         }
         break;
-    case ui_manager::NAV_RIGHT:
+    case ui_navigation::Right:
         if( m_Cursor < m_Label.GetLength() )
         {
             m_Cursor++;
-            s_CursorFrame = 0;
+            s_CursorBlinkTime = 0.0f;
             g_AudioMgr.Play( "Cursor_VKB" );
         }
         else
@@ -397,20 +346,19 @@ void ui_vkString::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeat
             g_AudioMgr.Play( "InvalidEntry" );
         }
         break;
-    case ui_manager::NAV_UP:
-        ui_control::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+    case ui_navigation::Up:
+        ui_control::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
         g_AudioMgr.Play( "InvalidEntry" );
         break;
     default:
-        ui_control::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
-        //g_AudioMgr.Play( "Cursor_VKB" );
+        ui_control::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
         break;
     }
 }
 
 //=========================================================================
 
-void ui_vkString::OnPadShoulder( ui_win* pWin, s32 Direction )
+void ui_vkString::OnPage( ui_win* pWin, s32 Direction )
 {
     // Which way are we moving
     switch( Direction )
@@ -419,7 +367,7 @@ void ui_vkString::OnPadShoulder( ui_win* pWin, s32 Direction )
         if( m_Cursor > 0 )
         {
             m_Cursor--;
-            s_CursorFrame = 0;
+            s_CursorBlinkTime = 0.0f;
             g_AudioMgr.Play( "Cursor_VKB" );
         }
         else
@@ -431,7 +379,7 @@ void ui_vkString::OnPadShoulder( ui_win* pWin, s32 Direction )
         if( m_Cursor < m_Label.GetLength() )
         {
             m_Cursor++;
-            s_CursorFrame = 0;
+            s_CursorBlinkTime = 0.0f;
             g_AudioMgr.Play( "Cursor_VKB" );
         }
         else
@@ -440,19 +388,19 @@ void ui_vkString::OnPadShoulder( ui_win* pWin, s32 Direction )
         }
         break;
     default:
-        ui_control::OnPadShoulder( pWin, Direction );
+        ui_control::OnPage( pWin, Direction );
     }
 }
 
 //=========================================================================
 
-void ui_vkString::OnPadDelete( ui_win* pWin )
+void ui_vkString::OnDelete( ui_win* pWin )
 {
     (void)pWin;
     if( m_Cursor > 0 )
     {
         Backspace();
-        m_pParent->OnNotify( m_pParent, this, WN_REFRESH, NULL );
+        Notify( ui_notification_type::TextRefresh );
         g_AudioMgr.Play( "Delete_VKB" );
     }
     else
@@ -472,7 +420,7 @@ void ui_vkString::Backspace( void )
     NewString += m_Label.Right( m_Label.GetLength()-m_Cursor );
     m_Label = NewString;
     m_Cursor--;
-    s_CursorFrame = 0;
+    s_CursorBlinkTime = 0.0f;
 }
 
 void ui_vkString::Character( const xwstring& String )
@@ -483,7 +431,7 @@ void ui_vkString::Character( const xwstring& String )
     NewString += m_Label.Right( m_Label.GetLength()-m_Cursor );
     m_Label = NewString;
     m_Cursor++;
-    s_CursorFrame = 0;
+    s_CursorBlinkTime = 0.0f;
 }
 
 s32 ui_vkString::GetCursorPos( void )
@@ -522,18 +470,18 @@ ui_dlg_vkeyboard::ui_dlg_vkeyboard( void )
     m_pResultOk   = NULL;
     m_bName       = TRUE;
     m_pPopUp      = NULL;
-#ifdef TARGET_PC
-    m_bGamepadMode   = TRUE;
+    m_pGamepadDefault = NULL;
+    m_LayoutDevice    = ui_input_device::None;
+    m_LayoutCenterX   = 0;
+    m_LayoutCenterY   = 0;
     m_RepeatKeyIdx   = -1;
     m_KeyRepeatTimer = 0.0f;
-#endif
 }
 
 //=========================================================================
 
 ui_dlg_vkeyboard::~ui_dlg_vkeyboard( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -555,24 +503,26 @@ xbool ui_dlg_vkeyboard::Create( s32                        UserID,
 
     ASSERT( pManager );
 
-    // Set Size of window
-    irect r( 0, 0, 270, 166+22 );
+    if( pParent )
+    {
+        m_LayoutCenterX = pParent->GetWidth () / 2;
+        m_LayoutCenterY = pParent->GetHeight() / 2;
+    }
+    else
+    {
+        m_LayoutCenterX = Position.l + Position.GetWidth () / 2;
+        m_LayoutCenterY = Position.t + Position.GetHeight() / 2;
+    }
 
-    // scale x pos and x size
-    r.l = (s32)( (f32)r.l * g_UiMgr->GetScaleX() );
-    r.r = (s32)( (f32)r.r * g_UiMgr->GetScaleX() );
-    r.t = (s32)( (f32)r.t * g_UiMgr->GetScaleY() );
-    r.b = (s32)( (f32)r.b * g_UiMgr->GetScaleY() );
-
-    // center it
-    r.Translate( Position.GetWidth()/2-r.GetWidth()/2, Position.GetHeight()/2-r.GetHeight()/2 );
+    // Set the initial window size. ApplyInputLayout selects the final height
+    // once all controls exist.
+    irect r( m_LayoutCenterX - VKEYBOARD_WIDTH / 2,
+             m_LayoutCenterY - VKEYBOARD_GAMEPAD_HEIGHT / 2,
+             m_LayoutCenterX + VKEYBOARD_WIDTH / 2,
+             m_LayoutCenterY + VKEYBOARD_GAMEPAD_HEIGHT / 2 );
 
     // Do dialog creation
     Success = ui_dialog::Create( UserID, pManager, &vkeyboardDialog, r, pParent, Flags );
-#ifdef TARGET_PC
-    m_FullPositionB = m_Position.b;
-#endif
-
     // Setup Frame
     ((ui_frame*)m_Children[0])->SetBackgroundColor( xcolor (39,117,28,128) ); //xcolor(25,79,103,255) );
     ((ui_frame*)m_Children[0])->ChangeElement("frame2");
@@ -588,15 +538,11 @@ xbool ui_dlg_vkeyboard::Create( s32                        UserID,
                 irect Pos;
                 Pos.Set( 16+x*KEYW, 22+42+y*KEYH, 16+x*KEYW+KEYW, 22+42+y*KEYH+KEYH );
 
-                // scale x pos and x size
-                Pos.l = (s32)( (f32)Pos.l * g_UiMgr->GetScaleX() );
-                Pos.r = (s32)( (f32)Pos.r * g_UiMgr->GetScaleX() );
-                Pos.t = (s32)( (f32)Pos.t * g_UiMgr->GetScaleY() );
-                Pos.b = (s32)( (f32)Pos.b * g_UiMgr->GetScaleY() );
-
                 ui_vkey* pVKey = new ui_vkey;
                 ASSERT( pVKey );
                 pVKey->Create( m_UserID, m_pManager, Pos, this, ui_win::WF_VISIBLE );
+                if( m_pGamepadDefault == NULL )
+                    m_pGamepadDefault = pVKey;
 
                 // Configure the control
                 pVKey->SetLabel( xwstring(xfs("%c",Keys[i])) );
@@ -637,14 +583,7 @@ xbool ui_dlg_vkeyboard::Create( s32                        UserID,
         s32 x=0;
         s32 y=5;
         irect Pos;
-        //Pos.Set( 16+x*KEYW, 22+4+42+y*KEYH, 16+(x+6)*KEYW+KEYW, 22+4+42+y*KEYH+KEYH );
         Pos.Set( 16, 22+4+42+y*KEYH, 16+ui_button_width[0], 22+4+42+y*KEYH+KEYH );
-
-        // scale x pos and x size
-        Pos.l = (s32)( (f32)Pos.l * g_UiMgr->GetScaleX() );
-        Pos.r = (s32)( (f32)Pos.r * g_UiMgr->GetScaleX() );
-        Pos.t = (s32)( (f32)Pos.t * g_UiMgr->GetScaleY() );
-        Pos.b = (s32)( (f32)Pos.b * g_UiMgr->GetScaleY() );
 
         ui_vkey* pVKey = new ui_vkey;
         ASSERT( pVKey );
@@ -660,14 +599,7 @@ xbool ui_dlg_vkeyboard::Create( s32                        UserID,
         s32 x=4;
         s32 y=5;
         irect Pos;
-        //Pos.Set( 16+x*KEYW, 22+4+42+y*KEYH, 16+(x+6)*KEYW+KEYW, 22+4+42+y*KEYH+KEYH );
         Pos.Set( 16+ui_button_width[0]+2, 22+4+42+y*KEYH, 16+ui_button_width[0]+2+ui_button_width[1], 22+4+42+y*KEYH+KEYH );
-
-        // scale x pos and x size
-        Pos.l = (s32)( (f32)Pos.l * g_UiMgr->GetScaleX() );
-        Pos.r = (s32)( (f32)Pos.r * g_UiMgr->GetScaleX() );
-        Pos.t = (s32)( (f32)Pos.t * g_UiMgr->GetScaleY() );
-        Pos.b = (s32)( (f32)Pos.b * g_UiMgr->GetScaleY() );
 
         ui_vkey* pVKey = new ui_vkey;
         ASSERT( pVKey );
@@ -685,12 +617,6 @@ xbool ui_dlg_vkeyboard::Create( s32                        UserID,
         irect Pos;
         Pos.Set( 16+ui_button_width[0]+2+ui_button_width[1]+2, 22+4+42+y*KEYH, 16+ui_button_width[0]+2+ui_button_width[1]+2+ui_button_width[2], 22+4+42+y*KEYH+KEYH );
 
-        // scale x pos and x size
-        Pos.l = (s32)( (f32)Pos.l * g_UiMgr->GetScaleX() );
-        Pos.r = (s32)( (f32)Pos.r * g_UiMgr->GetScaleX() );
-        Pos.t = (s32)( (f32)Pos.t * g_UiMgr->GetScaleY() );
-        Pos.b = (s32)( (f32)Pos.b * g_UiMgr->GetScaleY() );
-
         ui_vkey* pVKey = new ui_vkey;
         ASSERT( pVKey );
         pVKey->Create( m_UserID, m_pManager, Pos, this, ui_win::WF_VISIBLE );
@@ -707,12 +633,6 @@ xbool ui_dlg_vkeyboard::Create( s32                        UserID,
         irect Pos;
         Pos.Set( 16+ui_button_width[0]+2+ui_button_width[1]+2+ui_button_width[2]+2, 22+4+42+y*KEYH, 16+ui_button_width[0]+2+ui_button_width[1]+2+ui_button_width[2]+2+ui_button_width[3], 22+4+42+y*KEYH+KEYH );
 
-        // scale x pos and x size
-        Pos.l = (s32)( (f32)Pos.l * g_UiMgr->GetScaleX() );
-        Pos.r = (s32)( (f32)Pos.r * g_UiMgr->GetScaleX() );
-        Pos.t = (s32)( (f32)Pos.t * g_UiMgr->GetScaleY() );
-        Pos.b = (s32)( (f32)Pos.b * g_UiMgr->GetScaleY() );
-
         ui_vkey* pVKey = new ui_vkey;
         ASSERT( pVKey );
         pVKey->Create( m_UserID, m_pManager, Pos, this, ui_win::WF_VISIBLE );
@@ -720,20 +640,12 @@ xbool ui_dlg_vkeyboard::Create( s32                        UserID,
         pVKey->SetNavPos( irect( x, y+1, x+5, y+2 ) );
         for( x=12 ; x<17 ; x++ )
             m_NavGraph[x+(y+1)*NCOLS] = pVKey;
-
-        GotoControl((ui_control*)pVKey);
     }
 
     // Add String control to dialog
     m_pStringCtrl = new ui_vkString;
     ASSERT( m_pStringCtrl );
     irect Pos( 8, 22+8, 8+254, 22+8+24 );
-
-    // scale x pos and x size
-    Pos.l = (s32)( (f32)Pos.l * g_UiMgr->GetScaleX() );
-    Pos.r = (s32)( (f32)Pos.r * g_UiMgr->GetScaleX() );
-    Pos.t = (s32)( (f32)Pos.t * g_UiMgr->GetScaleY() );
-    Pos.b = (s32)( (f32)Pos.b * g_UiMgr->GetScaleY() );
 
     m_pStringCtrl->Create( m_UserID, m_pManager, Pos, this, ui_win::WF_VISIBLE );
     for( x=0 ; x<m_NavW ; x++ )
@@ -746,6 +658,8 @@ xbool ui_dlg_vkeyboard::Create( s32                        UserID,
     m_pString       = NULL;
     m_MaxCharacters = -1;
 
+    ApplyInputLayout( m_pManager->GetInputDevice( m_UserID ) );
+
     // play create sound
     g_AudioMgr.Play( "Select_VKB" );
 
@@ -755,19 +669,45 @@ xbool ui_dlg_vkeyboard::Create( s32                        UserID,
 
 //=========================================================================
 
+void ui_dlg_vkeyboard::ApplyInputLayout( ui_input_device Device )
+{
+    const ui_input_device LayoutDevice = (Device == ui_input_device::Gamepad)
+                                       ? ui_input_device::Gamepad
+                                       : ui_input_device::Keyboard;
+
+    if( LayoutDevice == m_LayoutDevice )
+        return;
+
+    m_LayoutDevice = LayoutDevice;
+
+    const xbool ShowGamepad = (m_LayoutDevice == ui_input_device::Gamepad);
+    const s32 Height = ShowGamepad ? VKEYBOARD_GAMEPAD_HEIGHT
+                                   : VKEYBOARD_KEYBOARD_HEIGHT;
+
+    SetPosition( irect( m_LayoutCenterX - VKEYBOARD_WIDTH / 2,
+                        m_LayoutCenterY - Height / 2,
+                        m_LayoutCenterX + VKEYBOARD_WIDTH / 2,
+                        m_LayoutCenterY + Height / 2 ) );
+
+    for( s32 i = 0; i < m_Children.GetCount(); i++ )
+    {
+        ui_win* pChild = m_Children[i];
+        pChild->SetFlag( WF_VISIBLE, (pChild == m_pStringCtrl) || ShowGamepad );
+    }
+
+    if( ShowGamepad )
+        GotoControl( m_pGamepadDefault );
+    else
+        GotoControl( m_pStringCtrl );
+}
+
+//=========================================================================
+
 void ui_dlg_vkeyboard::Render( s32 ox, s32 oy )
 {
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
-        xcolor  Color       = XCOLOR_WHITE;
-
-        // Set color if highlighted or selected or disabled
-        if( m_Flags & WF_DISABLED )
-            Color = XCOLOR_GREY;
-        if( m_Flags & (WF_HIGHLIGHT|WF_SELECTED) )
-            Color = XCOLOR_RED;
-
         // Get window rectangle
         irect   r;
         r.Set( m_Position.l+ox, m_Position.t+oy, m_Position.r+ox, m_Position.b+oy );
@@ -778,23 +718,6 @@ void ui_dlg_vkeyboard::Render( s32 ox, s32 oy )
             irect   rb = r;
             rb.Deflate( 1, 1 );
             m_pManager->RenderRect( rb, m_BackgroundColor, FALSE );
-/*
-            irect   r1 = rb;
-            irect   r2 = rb;
-            irect   r3 = rb;
-            s32     s = MIN( 128, r1.GetHeight()/2 );
-            r1.b = r1.t + s;
-            r2.t = r1.b;
-            r3.t = r3.b - s;
-            r2.b = r3.t;
-            xcolor  c1 = m_BackgroundColor;
-            xcolor  c2 = m_BackgroundColor;
-            c1.A = 224;
-            c2.A = 128;
-            m_pManager->RenderGouraudRect( r1, c1,c2,c2,c1, FALSE );
-            m_pManager->RenderGouraudRect( r2, c2,c2,c2,c2, FALSE );
-            m_pManager->RenderGouraudRect( r3, c2,c1,c1,c2, FALSE );
-*/
         }
 
         // Render Title
@@ -823,8 +746,6 @@ void ui_dlg_vkeyboard::Render( s32 ox, s32 oy )
 }
 
 //=========================================================================
-#ifdef TARGET_PC
-
 //-------------------------------------------------------------------------
 // Physical keyboard key map
 //-------------------------------------------------------------------------
@@ -872,13 +793,21 @@ static const pc_key_entry s_PCKeyMap[] =
 //-------------------------------------------------------------------------
 
 static const s32 s_PCKeyMapCount = sizeof(s_PCKeyMap) / sizeof(s_PCKeyMap[0]);
-#endif // TARGET_PC
 
 //=========================================================================
 
 void ui_dlg_vkeyboard::OnUpdate( ui_win* pWin, f32 DeltaTime )
 {
     (void)pWin;
+
+    if( DeltaTime > 0.0f )
+    {
+        s_CursorBlinkTime += DeltaTime;
+        if( s_CursorBlinkTime >= s_CursorBlinkPeriod )
+            s_CursorBlinkTime = x_fmod( s_CursorBlinkTime, s_CursorBlinkPeriod );
+    }
+
+    ApplyInputLayout( m_pManager->GetInputDevice( m_UserID ) );
 
     if( m_pPopUp )
     {
@@ -888,29 +817,29 @@ void ui_dlg_vkeyboard::OnUpdate( ui_win* pWin, f32 DeltaTime )
         }
     }
 
-#ifdef TARGET_PC
-    // In keyboard mode, feed physical keyboard characters directly into the string control.
-    if( !m_bGamepadMode && !m_pPopUp )
+    // Physical text entry belongs to the compact keyboard layout.
+    if( (m_LayoutDevice == ui_input_device::Keyboard) && !m_pPopUp )
     {
-        // Determine which character key is held.
-        // Backspace repeat is handled by ui_manager via PadDelete + SetupRepeat.
-        s32 heldKey = -1;
+        // Determine which character key is held or was pressed this frame.
+        // Backspace repeat is handled by ui_manager through the Delete action.
+        s32 activeKey = -1;
         for( s32 k = 0; k < s_PCKeyMapCount; k++ )
         {
-            if( g_Input.IsPressed( s_PCKeyMap[k].Key ) )
+            if( g_Input.GetFrameSnapshot().IsPressed( s_PCKeyMap[k].Key ) ||
+                g_Input.GetFrameSnapshot().WasPressed( s_PCKeyMap[k].Key ) )
             {
-                heldKey = k;
+                activeKey = k;
                 break;
             }
         }
 
         // Hold-to-repeat for character keys
         xbool bFire = FALSE;
-        if( heldKey >= 0 )
+        if( activeKey >= 0 )
         {
-            if( m_RepeatKeyIdx != heldKey )
+            if( m_RepeatKeyIdx != activeKey )
             {
-                m_RepeatKeyIdx   = heldKey;
+                m_RepeatKeyIdx   = activeKey;
                 m_KeyRepeatTimer = 0.4f;
                 bFire = TRUE;
             }
@@ -919,7 +848,7 @@ void ui_dlg_vkeyboard::OnUpdate( ui_win* pWin, f32 DeltaTime )
                 m_KeyRepeatTimer -= DeltaTime;
                 if( m_KeyRepeatTimer <= 0.0f )
                 {
-                    m_KeyRepeatTimer = 0.05f;
+                    m_KeyRepeatTimer += 0.05f;
                     bFire = TRUE;
                 }
             }
@@ -931,8 +860,11 @@ void ui_dlg_vkeyboard::OnUpdate( ui_win* pWin, f32 DeltaTime )
 
         if( bFire )
         {
-            xbool bShift = g_Input.IsPressed( INPUT_KBD_LSHIFT ) || g_Input.IsPressed( INPUT_KBD_RSHIFT );
-            char c = bShift ? s_PCKeyMap[heldKey].Shifted : s_PCKeyMap[heldKey].Normal;
+            xbool bShift = g_Input.GetFrameSnapshot().IsPressed( INPUT_KBD_LSHIFT ) ||
+                           g_Input.GetFrameSnapshot().WasPressed( INPUT_KBD_LSHIFT ) ||
+                           g_Input.GetFrameSnapshot().IsPressed( INPUT_KBD_RSHIFT ) ||
+                           g_Input.GetFrameSnapshot().WasPressed( INPUT_KBD_RSHIFT );
+            char c = bShift ? s_PCKeyMap[activeKey].Shifted : s_PCKeyMap[activeKey].Normal;
             if( c && ( (m_MaxCharacters == -1) ||
                         (m_pStringCtrl->GetLabel().GetLength() < m_MaxCharacters) ) )
             {
@@ -947,62 +879,66 @@ void ui_dlg_vkeyboard::OnUpdate( ui_win* pWin, f32 DeltaTime )
             }
         }
     }
-#else
-    (void)DeltaTime;
-#endif // TARGET_PC
 }
 
 //=========================================================================
 
-void ui_dlg_vkeyboard::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void ui_dlg_vkeyboard::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
+    ApplyInputLayout( m_pManager->GetInputDevice( m_UserID ) );
+
+    if( m_LayoutDevice == ui_input_device::Keyboard )
+    {
+        if( (Code == ui_navigation::Left) || (Code == ui_navigation::Right) )
+            m_pStringCtrl->OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+        return;
+    }
+
     (void)WrapX;
     (void)WrapY;
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, TRUE, FALSE );
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, TRUE, FALSE );
     g_AudioMgr.Play( "Cursor_VKB" );
 }
 
 //=========================================================================
 
-void ui_dlg_vkeyboard::OnPadShoulder( ui_win* pWin, s32 Direction )
+void ui_dlg_vkeyboard::OnPage( ui_win* pWin, s32 Direction )
 {
-    m_pStringCtrl->OnPadShoulder( pWin, Direction );
+    m_pStringCtrl->OnPage( pWin, Direction );
 }
 
 //=========================================================================
 
-void ui_dlg_vkeyboard::OnPadDelete( ui_win* pWin )
+void ui_dlg_vkeyboard::OnDelete( ui_win* pWin )
 {
     if( m_pPopUp )
         return;
 
-    m_pStringCtrl->OnPadDelete( pWin );
+    m_pStringCtrl->OnDelete( pWin );
 }
 
 //=========================================================================
 
-void ui_dlg_vkeyboard::OnPadSelect( ui_win* pWin )
+void ui_dlg_vkeyboard::OnAccept( ui_win* pWin )
 {
-#ifdef TARGET_PC
-    // In keyboard mode, Enter triggers the accept (OK) action.
-    // Delegate to OnNotify by faking a click on the OK virtual key
-    // ('\040' is the OK sentinel used throughout this dialog).
-    if( !m_bGamepadMode )
+    (void)pWin;
+
+    // Keyboard Enter confirms the string. Gamepad Accept is handled by the
+    // focused on-screen key instead.
+    if( m_pManager->GetInputDevice( m_UserID ) == ui_input_device::Keyboard )
     {
         if( m_pPopUp )
             return;
 
         xwstring okLabel( "\040" );
-        OnNotify( pWin, this, WN_CHARACTER, &okLabel );
+        ui_notification const Event = { ui_notification_type::TextInput, this, 0, &okLabel };
+        OnNotify( Event );
     }
-#else
-    (void)pWin;
-#endif // TARGET_PC
 }
 
 //=========================================================================
 
-void ui_dlg_vkeyboard::OnPadBack( ui_win* pWin )
+void ui_dlg_vkeyboard::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -1054,7 +990,6 @@ s32 ui_dlg_vkeyboard::IsValid( const xwstring* pString, xbool bIsName )
         //
         // Obscenity Filter.
         //
-        //g_StringTableMgr.LoadTable( "Obscenities", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_obscenities.stringbin" ) );
         g_StringTableMgr.LoadTable( "Obscenities", "ENG_obscenities.stringbin" );
         xwstring Words[ 100 ];
 
@@ -1173,20 +1108,18 @@ s32 ui_dlg_vkeyboard::IsValid( const xwstring* pString, xbool bIsName )
 
 //=========================================================================
 
-void ui_dlg_vkeyboard::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void ui_dlg_vkeyboard::OnNotify( ui_notification const& Event )
 {
-    (void)pWin;
-    (void)pSender;
+    (void)Event.m_pSender;
 
-    switch( Command )
+    switch( Event.m_Type )
     {
-    case WN_CHARACTER:
+    case ui_notification_type::TextInput:
         {
-            ASSERT( pData );
+            ASSERT( Event.m_pText );
 
-            // Update String
-            xwstring*   pString = (xwstring*)pData;
-            if( pString->GetAt(0) == '\010' )
+            xwstring const& Text = *Event.m_pText;
+            if( Text.GetAt(0) == '\010' )
             {
                 // backspace
                 if( m_pStringCtrl->GetCursorPos() > 0 )
@@ -1199,7 +1132,7 @@ void ui_dlg_vkeyboard::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, voi
                     g_AudioMgr.Play( "InvalidEntry" );
                 }
             }
-            else if( pString->GetAt(0) == '\020' )
+            else if( Text.GetAt(0) == '\020' )
             {
                 // space
                 if( (m_MaxCharacters == -1) || (m_pStringCtrl->GetLabel().GetLength() < m_MaxCharacters) )
@@ -1211,15 +1144,15 @@ void ui_dlg_vkeyboard::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, voi
                     g_AudioMgr.Play( "InvalidEntry" );
                 }
             }
-            else if( pString->GetAt(0) == '\030' )
+            else if( Text.GetAt(0) == '\030' )
             {
                 // cancel
                 if( m_pResultOk )
                     *m_pResultOk = FALSE;
-                OnPadBack( pWin );
+                OnCancel( Event.m_pSender );
                 break;
             }
-            else if( pString->GetAt(0) == '\040' )
+            else if( Text.GetAt(0) == '\040' )
             {
                 // accept
                 ASSERT( m_pString );
@@ -1228,8 +1161,8 @@ void ui_dlg_vkeyboard::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, voi
                 {
                     g_AudioMgr.Play( "InvalidEntry" );
 
-                    irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                    m_pPopUp = (dlg_popup*)g_UiMgr->OpenDialog( m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                    irect r = m_pManager->GetUserBounds( m_UserID );
+                    m_pPopUp = (dlg_popup*)m_pManager->OpenDialog( m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
                     // set nav text
                     xwstring navText( g_StringTableMgr( "ui", "IDS_NAV_OK" ) );
@@ -1274,7 +1207,7 @@ void ui_dlg_vkeyboard::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, voi
             {
                 if( (m_MaxCharacters == -1) || (m_pStringCtrl->GetLabel().GetLength() < m_MaxCharacters) )
                 {
-                    m_pStringCtrl->Character( *pString );
+                    m_pStringCtrl->Character( Text );
                 }
                 else
                 {
@@ -1287,7 +1220,7 @@ void ui_dlg_vkeyboard::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, voi
                 *m_pString = m_pStringCtrl->GetLabel();
         }
         break;
-    case WN_REFRESH:
+    case ui_notification_type::TextRefresh:
         {
             // Update connected string
             if( m_pString )
@@ -1319,36 +1252,3 @@ void ui_dlg_vkeyboard::SetReturn( xbool* pDone, xbool* pOk )
 }
 
 //=========================================================================
-#ifdef TARGET_PC
-void ui_dlg_vkeyboard::SetGamepadMode( xbool bGamepad )
-{
-    m_bGamepadMode = bGamepad;
-
-    if( !m_bGamepadMode )
-    {
-        // Hide all children except the string control
-        for( s32 i = 0; i < m_Children.GetCount(); i++ )
-        {
-            ui_win* pChild = m_Children[i];
-            if( pChild != (ui_win*)m_pStringCtrl )
-                pChild->SetFlags( pChild->GetFlags() & ~WF_VISIBLE );
-        }
-
-        // Clear nav graph slots (redirect all to string control)
-        for( s32 i = 0; i < m_NavH * m_NavW; i++ )
-        {
-            if( m_NavGraph[i] != (ui_win*)m_pStringCtrl )
-                m_NavGraph[i] = m_pStringCtrl;
-        }
-
-        GotoControl( m_pStringCtrl );
-
-        // Compact dialog: title bar + string control + bottom padding
-        m_Position.b = m_Position.t + m_pStringCtrl->GetPosition().b + (s32)( 8.0f * g_UiMgr->GetScaleY() );
-    }
-    else
-    {
-        m_Position.b = m_FullPositionB;
-    }
-}
-#endif // TARGET_PC

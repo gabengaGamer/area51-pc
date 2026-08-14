@@ -1,6 +1,6 @@
 # Area 51 (2005) Source Code
 
-Welcome to the Area 51 (2005) video game source code page! This project aims to resurrect and preserve a piece of early 2000s video game history for enthusiasts, historians, and developers alike. Below is a brief overview of the source code details, its origin, and guidance on how the community can help bring this game into the modern era.
+Welcome to the unofficial release of the Area 51 (2005) video game source code! This project aims to resurrect and preserve a piece of early 2000s video game history for enthusiasts, historians, and developers alike. Below is a brief overview of the source code details, its origin, and guidance on how the community can help bring this game into the modern era.
 
 ## How to Contribute 
 
@@ -21,6 +21,10 @@ The following prerequisites are required to build the source tree for PC:
 
 1. **Visual Studio 2022**
 2. [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/)
+
+The modern CMake build supports the migrated Windows targets and the Linux
+portability graph. See [Building with CMake](docs/BUILDING_CMAKE.md) for the
+supported platforms, architectures, presets, toolchains, and target list.
 
 ## Running PC Build
 

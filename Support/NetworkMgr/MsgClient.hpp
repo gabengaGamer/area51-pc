@@ -14,8 +14,8 @@
 
 #include "Msg.hpp"
 #include "Messages.hpp"
-#include "Objects\WeaponSMP.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Objects/WeaponSMP.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 //==============================================================================
 //==============================================================================

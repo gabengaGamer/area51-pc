@@ -11,6 +11,7 @@
 #ifdef TARGET_DEV
 //#define DEBUG_THREADS
 #endif
+
 //==============================================================================
 //  
 //  This file provides basic, cross platform multithreading capability. It requires
@@ -18,11 +19,11 @@
 //  following function sets:
 //
 //      x_BeginAtomic()
-//          - Locks out all context switching. Between the BeginAtomic and EndAtomic
-//            code blocks, we can be assured that no context switch in this process
-//            tree will occur.
+//          - Enters the platform's x_files critical section. On non PC
+//            targets this may map to an interrupt/context-switch mask; on PC it is
+//            a process-local lock for x_files internal state.
 //      x_EndAtomic()
-//          - Re-enables context switching.
+//          - Leaves the platform's x_files critical section.
 //      xthread::Suspend()
 //          -  Suspends the current thread. Moves it from the system running queue
 //             to the system suspended queue. These queues are independent from those
@@ -42,15 +43,82 @@
 #include "implementation/x_threads_private.hpp"
 
 #define X_MAX_THREADS           16
+#if defined(TARGET_PC)
 #define THREAD_BASE_PRIORITY    THREAD_PRIORITY_NORMAL
+#else
+#define THREAD_BASE_PRIORITY    0
+#endif
 
 #define X_TH_NOBLOCK           (0<<0)
 #define X_TH_BLOCK             (1<<0)
 #define X_TH_JAM               (1<<1)
 #define X_TH_INTERRUPT         (1<<7)
 
-
 class xthread;
+class xmutex;
+
+// Thread snapshots are diagnostic-only. Keep them out of the default API.
+#ifndef X_THREADS_DEBUG
+#define X_THREADS_DEBUG        1
+#endif
+
+#if X_THREADS_DEBUG
+#define X_THREAD_DEBUG_MAX_THREADS X_MAX_THREADS
+
+enum x_thread_debug_failure_type
+{
+    X_THREAD_DEBUG_FAILURE_NONE = 0,
+    X_THREAD_DEBUG_FAILURE_MUTEX_CURRENT_THREAD,
+    X_THREAD_DEBUG_FAILURE_MUTEX_ENTER,
+    X_THREAD_DEBUG_FAILURE_MUTEX_EXIT_OWNER,
+    X_THREAD_DEBUG_FAILURE_MUTEX_SEMAPHORE_RELEASE,
+};
+
+struct x_thread_debug_failure
+{
+    x_thread_debug_failure_type Type;
+    u32                         Sequence;
+    xmutex*                     pMutex;
+    xthread*                    pOwner;
+    xthread*                    pCurrent;
+    xthread*                    pCachedThread;
+    s32                         OwnerThreadId;
+    s32                         OwnerSystemId;
+    s32                         CurrentThreadId;
+    s32                         CurrentSystemId;
+    s32                         ActualSystemId;
+    s32                         CachedSystemId;
+    s32                         EnterCount;
+    const char*                 pOwnerName;
+    const char*                 pCurrentName;
+};
+
+struct x_thread_diagnostics
+{
+    u32                     Sequence;
+    x_thread_debug_failure  FirstFailure;
+};
+
+extern x_thread_diagnostics g_ThreadDiagnostics;
+
+struct x_thread_debug_info
+{
+    s32             ThreadId;
+    s32             SystemId;
+    s32             Priority;
+    s32             Status;
+    xbool           NeedToTerminate;
+    const char*     pName;
+};
+
+struct x_thread_debug_snapshot
+{
+    xbool               IsInitialized;
+    s32                 ActiveThreadId;
+    s32                 nThreads;
+    x_thread_debug_info Threads[X_THREAD_DEBUG_MAX_THREADS];
+};
+#endif
 
 //==============================================================================
 // THREAD LISTS
@@ -177,11 +245,14 @@ volatile    state               m_Status;
                 char**              argv;
             } m_Startup;
 
-friend      void                x_thread_Root( void * pParams );
+friend      X_THREAD_BOOT_DECL  x_thread_Root( void * pParams );
 friend      class               xthreadlist;
 friend      class               xmesgq;
 friend      class               xsema;
 friend      void                x_KillThreads( void );
+#if X_THREADS_DEBUG
+friend      void                x_GetThreadDebugSnapshot( x_thread_debug_snapshot& Snapshot );
+#endif
 protected:
 #ifdef DEBUG_THREADS
 static      xarray<xthread*> m_MasterThreadList;
@@ -215,6 +286,16 @@ static      xarray<xthread*> m_MasterThreadList;
 
             void        x_QueueDebugDump    (void);
             void        x_DumpThreads       (void);
+#if X_THREADS_DEBUG
+            void        x_GetThreadDebugSnapshot( x_thread_debug_snapshot& Snapshot );
+            const char* x_GetThreadStateName( s32 State );
+            void        x_ResetThreadDiagnostics( void );
+            void        x_RecordThreadDebugFailure( x_thread_debug_failure_type Type,
+                                                    xmutex* pMutex,
+                                                    xthread* pOwner,
+                                                    xthread* pCurrent,
+                                                    s32 EnterCount );
+#endif
             f32         x_GetCPUUtilization (void);
             s64         x_GetIdleTicks      (void);
             void        x_SetCurrentThread  (xthread* pThread);

@@ -1,9 +1,9 @@
 #include "debris_alien_grenade_explosion.hpp"
-#include "NetworkMgr\Networkmgr.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "..\Objects\Player.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "Tracers\TracerMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "../Objects/Player/Player.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Tracers/TracerMgr.hpp"
 
 //=============================================================================
 //  CONSTANTS
@@ -243,7 +243,7 @@ void debris_alien_grenade_explosion::Create   ( const char*      pMeshName,
 
 //=============================================================================================
 
-void debris_alien_grenade_explosion::OnAdvanceLogic( f32 DeltaTime )
+void debris_alien_grenade_explosion::OnAdvanceSimulation( f32 DeltaTime )
 {
     s32 i;
 
@@ -260,7 +260,7 @@ void debris_alien_grenade_explosion::OnAdvanceLogic( f32 DeltaTime )
 
     if (m_Mode == MODE_EXPLODE)
     {
-        debris_cannon::OnAdvanceLogic( DeltaTime );
+        debris_cannon::OnAdvanceSimulation( DeltaTime );
         return;
     }
 
@@ -467,7 +467,7 @@ void debris_alien_grenade_explosion::OnAdvanceLogic( f32 DeltaTime )
     }
 
 
-    debris_cannon::OnAdvanceLogic( DeltaTime );
+    debris_cannon::OnAdvanceSimulation( DeltaTime );
 }
 
 //=============================================================================================

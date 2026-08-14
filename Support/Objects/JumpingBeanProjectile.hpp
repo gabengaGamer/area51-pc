@@ -10,7 +10,7 @@
 //=========================================================================
 
 #include "NetProjectile.hpp"
-#include "objects\ParticleEmiter.hpp"
+#include "Objects/ParticleEmiter.hpp"
 
 enum grenade_mode
 {
@@ -49,7 +49,7 @@ virtual         void            SetStart            ( const vector3& Position,
                                                      f32      Gravity = 0.0f );
 
 virtual         bbox            GetLocalBBox        ( void ) const;
-virtual         void            OnAdvanceLogic      ( f32 DeltaTime );
+virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
 virtual         void            OnRender            ( void );
 
 virtual         void            OnExplode           ( void );

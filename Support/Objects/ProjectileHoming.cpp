@@ -5,13 +5,13 @@
 //=============================================================================================
 // INCLUDES
 //=============================================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "ProjectileHoming.hpp"
-#include "Entropy\e_Draw.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "render\LightMgr.hpp"
-#include "Objects\actor\actor.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "Characters\GenericNPC\GenericNPC.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "Characters/GenericNPC/GenericNPC.hpp"
 
 //=============================================================================================
 // STATICS & CONSTANTS
@@ -173,7 +173,7 @@ void homing_projectile::UpdatePhysics( const f32& DeltaTime )
 
 //=============================================================================
 
-void homing_projectile::OnAdvanceLogic( f32 DeltaTime )
+void homing_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
     m_AliveTime += DeltaTime;
     m_TimeSinceLastBroadcast += DeltaTime;
@@ -228,7 +228,7 @@ void homing_projectile::OnRender( void )
     base_projectile::OnRender();
 
 #ifdef X_EDITOR
-    //draw_Line( GetPosition() , GetPosition() + m_Velocity , XCOLOR_BLUE );
+    //render::debug::Line( GetPosition() , GetPosition() + m_Velocity , XCOLOR_BLUE );
 #endif // X_EDITOR
 }
 

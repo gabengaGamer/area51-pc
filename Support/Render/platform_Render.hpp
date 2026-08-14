@@ -1,6 +1,6 @@
 //=============================================================================
-//  
-//  platform_Render.hpp  
+//
+//  platform_Render.hpp
 //
 //=============================================================================
 
@@ -11,15 +11,11 @@
 //  includes
 //=============================================================================
 
-#include "Render\Render.hpp"
-
-//=============================================================================
-//=============================================================================
-// Struct functions
-//=============================================================================
-//=============================================================================
-
-    struct render_instance;
+#include "Render/Render.hpp"
+#include "Render/DecalBatch.hpp"
+#include "Render/PrimitiveBatch.hpp"
+#include "Render/GeometryDraw.hpp"
+#include "x_array.hpp"
 
 //=============================================================================
 
@@ -29,230 +25,94 @@
 //=============================================================================
 // init/kill functions
 //=============================================================================
-static void     platform_Init                       ( void )                        X_SECTION( init );
-static void     platform_Kill                       ( void )                        X_SECTION( init );
-static void     platform_BeginSession               ( u32 nPlayers )                X_SECTION( init );
-static void     platform_EndSession                 ( void )                        X_SECTION( init );
-static void     platform_RegisterMaterial           ( material&          Mat   )    X_SECTION( init );
-static void     platform_RegisterSkinGeom           ( skin_geom&         Geom  )    X_SECTION( init );
-static void     platform_RegisterRigidGeom          ( rigid_geom&        Geom  )    X_SECTION( init );
-static void     platform_UnregisterSkinGeom         ( skin_geom&         Geom  )    X_SECTION( init );
-static void     platform_UnregisterRigidGeom        ( rigid_geom&        Geom  )    X_SECTION( init );
-static void     platform_RegisterRigidInstance      ( rigid_geom&        Geom,
-                                                      render::hgeom_inst hInst )    X_SECTION( init );
-static void     platform_RegisterSkinInstance       ( skin_geom&         Geom,
-                                                      render::hgeom_inst hInst )    X_SECTION( init );
-static void     platform_UnregisterRigidInstance    ( render::hgeom_inst hInst )    X_SECTION( init );
-static void     platform_UnregisterSkinInstance     ( render::hgeom_inst hInst )    X_SECTION( init );
+static void    platform_Init( void ) X_SECTION( init );
+static void    platform_Kill( void ) X_SECTION( init );
+static void    platform_BeginSession( u32 nPlayers ) X_SECTION( init );
+static void    platform_EndSession( void ) X_SECTION( init );
+static xhandle platform_RegisterSkinGeom( skin_geom const& geom ) X_SECTION( init );
+static xhandle platform_RegisterRigidGeom( rigid_geom const& geom ) X_SECTION( init );
+static void    platform_UnregisterSkinGeom( xhandle hGeom ) X_SECTION( init );
+static void    platform_UnregisterRigidGeom( xhandle hGeom ) X_SECTION( init );
 
 //=============================================================================
-// functions for rendering raw data
+// Forward primitive submission
 //=============================================================================
-static void     platform_StartRawDataMode           ( void )                        X_SECTION( render_raw );
-static void     platform_EndRawDataMode             ( void )                        X_SECTION( render_raw );
-static void     platform_RenderRawStrips            ( s32               nVerts,
-                                                      const matrix4&    L2W,
-                                                      const vector4*    pPos,
-                                                      const s16*        pUV,
-                                                      const u32*        pColor )    X_SECTION( render_raw );
-static void     platform_Render3dSprites            ( s32               nSprites,
-                                                      f32               UniScale,
-                                                      const matrix4*    pL2W,
-                                                      const vector4*    pPositions,
-                                                      const vector2*    pRotScales,
-                                                      const u32*        pColors )   X_SECTION( render_raw );
-static void     platform_RenderVelocitySprites      ( s32               nSprites,
-                                                      f32               UniScale,
-                                                      const matrix4*    pL2W,
-                                                      const matrix4*    pVelMatrix,
-                                                      const vector4*    pPositions,
-                                                      const vector4*    pVelocities,
-                                                      const u32*        pColors )   X_SECTION( render_raw );
-static void     platform_RenderHeatHazeSprites      ( s32               nSprites,
-                                                      f32               UniScale,
-                                                      const matrix4*    pL2W,
-                                                      const vector4*    pPositions,
-                                                      const vector2*    pRotScales,
-                                                      const u32*        pColors )   X_SECTION( render_raw );
-static void     platform_SetDiffuseMaterial         ( const xbitmap&    Bitmap,
-                                                      s32               BlendMode,
-                                                      xbool             ZTestEnabled )  X_SECTION( render_raw );
-static void     platform_SetGlowMaterial            ( const xbitmap&    Bitmap,
-                                                      s32               BlendMode,
-                                                      xbool             ZTestEnabled )  X_SECTION( render_raw );
-static void     platform_SetEnvMapMaterial          ( const xbitmap&    Bitmap,
-                                                      s32               BlendMode,
-                                                      xbool             ZTestEnabled )  X_SECTION( render_raw );
-static void     platform_SetDistortionMaterial      ( s32               BlendMode,
-                                                      xbool             ZTestEnabled )  X_SECTION( render_raw );
-
-//=============================================================================
-// material functions
-//=============================================================================
-static void     platform_ActivateMaterial           ( const material& Material  )   X_SECTION( render_deferred );
-static void     platform_ActivateDistortionMaterial ( const material* pMaterial,
-                                                      const radian3&  NormalRot )   X_SECTION( render_infrequent );
-static void     platform_ActivateZPrimeMaterial     ( void                      )   X_SECTION( render_infrequent );
-
+static xbool platform_SubmitPrimitives( render::primitive_draw_desc const& desc, matrix4 const& localToWorld,
+                                        render::primitive_vertex const* pVertices, s32 nVertices,
+                                        u16 const* pIndices, s32 nIndices )
+    X_SECTION( render_primitives );
+static xbool platform_SetDepthRect( irect const& rect, f32 depth ) X_SECTION( render_primitives );
+static xbool platform_BeginPrimitiveRender( void ) X_SECTION( render_primitives );
+static void  platform_EndPrimitiveRender( void ) X_SECTION( render_primitives );
+static void  platform_ExecuteForwardRender( render::forward_render_stage stage ) X_SECTION( render_primitives );
+static xbool platform_SubmitDecalBatch( render::decal_draw_desc const& desc, cubemap const* pCubeMap,
+                                        render::decal_vertex const* pVertices, s32 nVertices,
+                                        u16 const* pIndices, s32 nIndices )
+    X_SECTION( render_primitives );
+static void platform_ReserveDecalSubmissionCapacity( s32 nVertices, s32 nIndices, s32 nDraws )
+    X_SECTION( render_infrequent );
+static void  platform_ResetAfterException( void ) X_SECTION( render_infrequent );
 //=============================================================================
 // runtime lighting functions
 //=============================================================================
-static void*    platform_CalculateRigidLighting     ( const matrix4&   L2W,
-                                                      const bbox&      WorldBBox )  X_SECTION( render_add );
-static void*    platform_CalculateSkinLighting      ( u32              Flags,
-                                                      const matrix4&   L2W,
-                                                      const bbox&      BBox,
-                                                      xcolor           Ambient )    X_SECTION( render_add );
+static void* platform_CalculateRigidLighting( matrix4 const& l2W, bbox const& worldBBox ) X_SECTION( render_add );
+static void* platform_CalculateSkinLighting( u32 flags, matrix4 const& l2W, bbox const& bBox, xcolor ambient )
+    X_SECTION( render_add );
 
 //=============================================================================
-// rendering functions
+// geometry submission
 //=============================================================================
-static void     platform_BeginRigidGeom             ( geom*            pGeom,
-                                                      s32              iSubMesh )   X_SECTION( render_deferred );
-static void     platform_RenderRigidInstance        ( render_instance& Inst     )   X_SECTION( render_deferred );
-static void     platform_EndRigidGeom               ( void                      )   X_SECTION( render_deferred );
-static void     platform_BeginSkinGeom              ( geom*            pGeom,
-                                                      s32              iSubMesh )   X_SECTION( render_deferred );
-static void     platform_RenderSkinInstance         ( render_instance& Inst )       X_SECTION( render_deferred );
-static void     platform_EndSkinGeom                ( void )                        X_SECTION( render_deferred );
-
-
-
-//=============================================================================
-// shader/render setup functions
-//=============================================================================
-static void     platform_BeginShaders               ( void )    X_SECTION( render_infrequent );
-static void     platform_EndShaders                 ( void )    X_SECTION( render_infrequent );
-static void     platform_CreateEnvTexture           ( void )    X_SECTION( render_infrequent );
-static void     platform_BeginDistortion            ( void )    X_SECTION( render_infrequent );
-static void     platform_EndDistortion              ( void )    X_SECTION( render_infrequent );
-
-//=============================================================================
-// projected textures and shadow setup
-//=============================================================================
-static void     platform_SetProjectedTexture        ( texture::handle           Texture )       X_SECTION( render_infrequent );
-static void     platform_ComputeProjTextureMatrix   ( matrix4&                  Matrix,
-                                                      view&                     View,
-                                                      const texture_projection& Projection  )   X_SECTION( render_infrequent );
-static void     platform_SetTextureProjection       ( const texture_projection& Projection  )   X_SECTION( render_infrequent );
-static void     platform_SetTextureProjectionMatrix ( const matrix4&            Matrix      )   X_SECTION( render_infrequent );
-static void     platform_SetProjectedShadowTexture  ( s32                       Index,
-                                                      texture::handle           Texture     )   X_SECTION( render_infrequent );
-static void     platform_ComputeProjShadowMatrix    ( matrix4&                  Matrix,
-                                                      view&                     View,
-                                                      const texture_projection& Projection  )   X_SECTION( render_infrequent );
-static void     platform_SetShadowProjectionMatrix  ( s32                       Index,
-                                                      const matrix4&            Matrix      )   X_SECTION( render_infrequent );
+static void platform_SubmitGeometry( xarray<geometry_draw_item> const& draws,
+                                     xarray<dynamic_geometry_draw> const& dynamicDraws,
+                                     cubemap const* pCubeMap )
+    X_SECTION( render_deferred );
 
 //=============================================================================
 // dynamic shadow-map sources
 //=============================================================================
 
-static void     platform_ClearShadowSourceList      ( void )                            X_SECTION( render_infrequent );
-static void     platform_FinalizeShadowSourceList   ( void )                            X_SECTION( render_infrequent );
-static void     platform_AddPointShadowMapSource    ( const matrix4&         L2W,
-                                                      radian                 FOV,
-                                                      f32                    LightRadius,
-                                                      f32                    LightFalloff,
-                                                      s32                    ShadowMapResolution,
-                                                      s32                    ShadowPriority,
-                                                      f32                    ShadowScore ) X_SECTION( render_add_shadow );
-static void     platform_AddSpotShadowMapSource     ( const matrix4&         L2W,
-                                                      radian                 FOV,
-                                                      f32                    LightRadius,
-                                                      f32                    LightFalloff,
-                                                      s32                    ShadowMapResolution,
-                                                      s32                    ShadowPriority,
-                                                      f32                    ShadowScore ) X_SECTION( render_add_shadow );
-static void     platform_BeginShadowShaders         ( void )                            X_SECTION( render_infrequent );
-static void     platform_EndShadowShaders           ( void )                            X_SECTION( render_infrequent );
-static void     platform_StartShadowCast            ( void )                            X_SECTION( render_infrequent );
-static void     platform_EndShadowCast              ( void )                            X_SECTION( render_infrequent );
-static void     platform_StartShadowReceive         ( void )                            X_SECTION( render_infrequent );
-static void     platform_EndShadowReceive           ( void )                            X_SECTION( render_infrequent );
-static void     platform_BeginShadowCastRigid       ( geom*            pGeom,
-                                                      s32              iSubMesh )       X_SECTION( render_deferred_shadow );
-static void     platform_RenderShadowCastRigid      ( render_instance& Inst     )       X_SECTION( render_deferred_shadow );
-static void     platform_EndShadowCastRigid         ( void )                            X_SECTION( render_deferred_shadow );
-static void     platform_BeginShadowCastSkin        ( geom*            pGeom,
-                                                      s32              iSubMesh )       X_SECTION( render_deferred_shadow );
-static void     platform_RenderShadowCastSkin       ( render_instance& Inst,
-                                                      s32              iShadowSource )  X_SECTION( render_deferred_shadow );
-static void     platform_EndShadowCastSkin          ( void )                            X_SECTION( render_deferred_shadow );
-static void     platform_BeginShadowReceiveRigid    ( geom*            pGeom,
-                                                      s32              iSubMesh )       X_SECTION( render_deferred_shadow );
-static void     platform_RenderShadowReceiveRigid   ( render_instance& Inst,
-                                                      s32              iShadowSource )  X_SECTION( render_deferred_shadow );
-static void     platform_EndShadowReceiveRigid      ( void )                            X_SECTION( render_deferred_shadow );
-static void     platform_BeginShadowReceiveSkin     ( geom*            pGeom,
-                                                      s32              iSubMesh )       X_SECTION( render_deferred_shadow );
-static void     platform_RenderShadowReceiveSkin    ( render_instance& Inst     )       X_SECTION( render_deferred_shadow );
-static void     platform_EndShadowReceiveSkin       ( void )                            X_SECTION( render_deferred_shadow );
+static void platform_ClearShadowSourceList( void ) X_SECTION( render_infrequent );
+static void platform_FinalizeShadowSourceList( void ) X_SECTION( render_infrequent );
+static void platform_AddPointShadowMapSource( matrix4 const& l2W, radian fov, f32 lightRadius, f32 lightFalloff,
+                                              s32 shadowMapResolution, s32 shadowPriority, f32 shadowScore,
+                                              s32 dynamicLightIndex ) X_SECTION( render_add_shadow );
+static void platform_AddSpotShadowMapSource( matrix4 const& l2W, radian fov, f32 lightRadius, f32 lightFalloff,
+                                             s32 shadowMapResolution, s32 shadowPriority, f32 shadowScore,
+                                             s32 dynamicLightIndex ) X_SECTION( render_add_shadow );
+static void platform_BeginShadowShaders( void ) X_SECTION( render_infrequent );
+static void platform_EndShadowShaders( void ) X_SECTION( render_infrequent );
+static void platform_RenderShadowCasters( xarray<geometry_draw_item const*> const& draws,
+                                          xarray<dynamic_geometry_shadow_draw> const& dynamicDraws )
+    X_SECTION( render_deferred_shadow );
 
 //=============================================================================
 // post effects
 //=============================================================================
-static void     platform_SetCustomFogPalette        ( const texture::handle&    Texture,
-                                                      xbool                     ImmediateSwitch,
-                                                      s32                       PaletteIndex )  X_SECTION( render_post );
-static xcolor   platform_GetFogValue                ( const vector3&            WorldPos,
-                                                      s32                       PaletteIndex )  X_SECTION( render_infrequent );
-static void     platform_InitPostEffects            ( void )                                    X_SECTION( init );
-static void     platform_KillPostEffects            ( void )                                    X_SECTION( init );
-static void     platform_BeginPostEffects           ( void )                                    X_SECTION( render_post );
-static void     platform_AddScreenWarp              ( const vector3&            WorldPos,
-                                                      f32                       Radius,
-                                                      f32                       WarpAmount )    X_SECTION( render_post );
-static void     platform_MotionBlur                 ( f32                       Intensity  )    X_SECTION( render_post );
-static void     platform_ApplySelfIllumGlows        ( f32                       MotionBlurIntensity,
-                                                      s32                       GlowCutoff )    X_SECTION( render_post );
-static void     platform_MultScreen                 ( xcolor                    MultColor,
-                                                      render::post_screen_blend FinalBlend )    X_SECTION( render_post );
-static void     platform_RadialBlur                 ( f32                       Zoom,
-                                                      radian                    Angle,
-                                                      f32                       AlphaSub,
-                                                      f32                       AlphaScale )    X_SECTION( render_post );
-static void     platform_ZFogFilter                 ( render::post_falloff_fn   Fn,
-                                                      xcolor                    Color,
-                                                      f32                       Param1,
-                                                      f32                       Param2     )    X_SECTION( render_post );
-static void     platform_ZFogFilter                 ( render::post_falloff_fn   Fn,
-                                                      s32                       PaletteIndex )  X_SECTION( render_post );
-static void     platform_MipFilter                  ( s32                       nFilters,
-                                                      f32                       Offset,
-                                                      render::post_falloff_fn   Fn,
-                                                      xcolor                    Color,
-                                                      f32                       Param1,
-                                                      f32                       Param2,
-                                                      s32                       PaletteIndex )  X_SECTION( render_post );
-static void     platform_MipFilter                  ( s32                       nFilters,
-                                                      f32                       Offset,
-                                                      render::post_falloff_fn   Fn,
-                                                      const texture::handle&    Texture,
-                                                      s32                       PaletteIndex )  X_SECTION( render_post );
-static void     platform_NoiseFilter                ( xcolor                    Color      )    X_SECTION( render_post );
-static void     platform_EndPostEffects             ( void )                                    X_SECTION( render_deferred_post );
-
-//=============================================================================
-// compilation/export functions
-//=============================================================================
-#if defined(X_EDITOR) || defined(CONFIG_VIEWER)
-static void*    platform_LockRigidDListVertex       ( render::hgeom_inst hInst,
-                                                      s32                iSubMesh     );
-static void     platform_UnlockRigidDListVertex     ( render::hgeom_inst hInst,
-                                                      s32                iSubMesh     );
-static void*    platform_LockRigidDListIndex        ( render::hgeom_inst hInst,
-                                                      s32                iSubMesh,
-                                                      s32&               VertexOffset );
-static void     platform_UnlockRigidDListIndex      ( render::hgeom_inst hInst,
-                                                      s32                iSubMesh     );
-#endif
+static void platform_SetCustomFogPalette( texture::handle const& texture, xbool immediateSwitch, s32 paletteIndex )
+    X_SECTION( render_post );
+static xcolor platform_GetFogValue( vector3 const& worldPos, s32 paletteIndex ) X_SECTION( render_infrequent );
+static void   platform_InitPostEffects( void ) X_SECTION( init );
+static void   platform_KillPostEffects( void ) X_SECTION( init );
+static void   platform_UpdatePostEffects( f32 deltaTime ) X_SECTION( update );
+static void   platform_BeginPostEffects( void ) X_SECTION( render_post );
+static void   platform_AddScreenWarp( vector3 const& worldPos, f32 radius, f32 warpAmount ) X_SECTION( render_post );
+static void   platform_MotionBlur( f32 intensity ) X_SECTION( render_post );
+static void   platform_ApplySelfIllumGlows( f32 motionBlurIntensity, s32 glowCutoff ) X_SECTION( render_post );
+static void   platform_MultScreen( xcolor multColor, render::post_screen_blend finalBlend ) X_SECTION( render_post );
+static void   platform_RadialBlur( f32 zoom, radian angle, f32 alphaSub, f32 alphaScale ) X_SECTION( render_post );
+static void   platform_ZFogFilter( render::post_falloff_fn fn, xcolor color, f32 param1, f32 param2 )
+    X_SECTION( render_post );
+static void platform_ZFogFilter( render::post_falloff_fn fn, s32 paletteIndex ) X_SECTION( render_post );
+static void platform_MipFilter( s32 nFilters, f32 offset, render::post_falloff_fn fn, xcolor color, f32 param1,
+                                f32 param2, s32 paletteIndex ) X_SECTION( render_post );
+static void platform_MipFilter( s32 nFilters, f32 offset, render::post_falloff_fn fn, texture::handle const& texture,
+                                s32 paletteIndex ) X_SECTION( render_post );
+static void platform_NoiseFilter( xcolor color ) X_SECTION( render_post );
+static void platform_EndPostEffects( void ) X_SECTION( render_deferred_post );
 
 //=============================================================================
 
-#ifdef TARGET_PC
-static void     platform_BeginNormalRender               ( void );
-static void     platform_EndNormalRender                 ( void );
-#endif
+static void platform_BeginNormalRender( void );
+static void platform_EndNormalRender( void );
 
 #endif

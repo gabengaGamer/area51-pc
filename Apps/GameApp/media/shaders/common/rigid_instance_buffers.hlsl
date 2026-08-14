@@ -9,29 +9,48 @@
 #ifndef RIGID_INSTANCE_BUFFERS_HLSL
 #define RIGID_INSTANCE_BUFFERS_HLSL
 
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
+#include "shader_bindings.hlsl"
+
+//==============================================================================
+//  TYPES
+//==============================================================================
+
 struct RigidInstanceData
 {
     float4x4 World;
-    float4   LightVec[MAX_GEOM_LIGHTS];
-    float4   LightCol[MAX_GEOM_LIGHTS];
-    float4   LightDir[MAX_GEOM_LIGHTS];
-    float4   LightCone[MAX_GEOM_LIGHTS];
-    float4   LightCookieU[MAX_GEOM_LIGHTS];
-    float4   LightCookieV[MAX_GEOM_LIGHTS];
-    float4   LightAmbCol;
     uint     ShaderFlags;
     uint     ColorOffset;
-    uint     BaseVertex;
-    uint     LightCount;
+    uint     LightingIndex;
     float    FadeAlpha;
-    float3   Padding;
 };
 
 //==============================================================================
 
-StructuredBuffer<RigidInstanceData> RigidInstances    : register(t22);
-StructuredBuffer<uint>              RigidVertexColors : register(t23);
+#if defined(A51_SHADER_BINDING_SDL) && defined(A51_SHADER_STAGE_PIXEL)
+    #define A51_RIGID_INSTANCES_BINDING     8
+    #define A51_RIGID_VERTEX_COLORS_BINDING 9
+#else
+    #define A51_RIGID_INSTANCES_BINDING     0
+    #define A51_RIGID_VERTEX_COLORS_BINDING 1
+#endif
 
+//==============================================================================
+//  RESOURCES
+//==============================================================================
+
+A51_STORAGE_BUFFER_ATTR(22, A51_RIGID_INSTANCES_BINDING)
+StructuredBuffer<RigidInstanceData> RigidInstances
+    A51_STORAGE_BUFFER_BIND(22, A51_RIGID_INSTANCES_BINDING);
+A51_STORAGE_BUFFER_ATTR(23, A51_RIGID_VERTEX_COLORS_BINDING)
+StructuredBuffer<uint> RigidVertexColors
+    A51_STORAGE_BUFFER_BIND(23, A51_RIGID_VERTEX_COLORS_BINDING);
+
+//==============================================================================
+//  FUNCTIONS
 //==============================================================================
 
 float4 DecodeRigidVertexColor( uint packedColor )

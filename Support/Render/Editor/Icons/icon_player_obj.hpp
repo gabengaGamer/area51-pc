@@ -636,5 +636,4 @@ static s16 s_iicon_player_obj[] =
 };
 
 
-#define DRAW_ICON_PLAYER_OBJ() draw_icon( NUM_FACETS_ICON_PLAYER_OBJ, NUM_VERTICES_ICON_PLAYER_OBJ, s_vicon_player_obj, s_iicon_player_obj )
 

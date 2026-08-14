@@ -7,8 +7,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Animation\AnimPlayer.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Animation/AnimPlayer.hpp"
 
 //=========================================================================
 // CLASS

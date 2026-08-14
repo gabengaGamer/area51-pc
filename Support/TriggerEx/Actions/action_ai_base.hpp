@@ -11,9 +11,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\TriggerEx_Actions.hpp"
-#include "..\Affecters\object_affecter.hpp"
-#include "Characters\ResponseList.hpp"
+#include "../TriggerEx_Actions.hpp"
+#include "../Affecters/object_affecter.hpp"
+#include "Characters/ResponseList.hpp"
 
 //=========================================================================
 // Check Property

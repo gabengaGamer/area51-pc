@@ -8,10 +8,10 @@
 //==============================================================================
 
 #include "DebugMenu2.hpp"
-#include "objects\player.hpp"
-#include "Objects\Actor\Actor.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "Gamelib/DebugCheats.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "GameLib/DebugCheats.hpp"
 
 //==============================================================================
 

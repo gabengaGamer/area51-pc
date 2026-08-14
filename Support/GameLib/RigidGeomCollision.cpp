@@ -8,10 +8,10 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "RigidGeomCollision.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "e_Draw.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
 
 #define INDEX_MASK  0x7FFF
 
@@ -48,7 +48,7 @@ xbool RigidGeom_GetTriangle( const rigid_geom*          pRigidGeom,
     if( pRigidGeom==NULL )
         return FALSE;
 
-    ASSERT( pRigidGeom->m_Collision.nHighClusters );
+    ASSERT( pRigidGeom->m_collision.nHighClusters );
     
     xbool bUseHighPoly;
     s32 iCluster;
@@ -56,107 +56,40 @@ xbool RigidGeom_GetTriangle( const rigid_geom*          pRigidGeom,
 
     RigidGeom_GetPrimKey(Key,bUseHighPoly,iCluster,iTriangle);
         
-    if( !IN_RANGE( 0, iCluster, pRigidGeom->m_Collision.nHighClusters-1 ) )
+    if( !IN_RANGE( 0, iCluster, pRigidGeom->m_collision.nHighClusters-1 ) )
         return( FALSE );
 
-    #ifdef TARGET_XBOX
     {
-        collision_data::high_cluster& Cluster = pRigidGeom->m_Collision.pHighCluster [iCluster];
-        rigid_geom::dlist_xbox      & DList   = pRigidGeom->m_System.pXbox[Cluster.iDList];
-        ASSERT( DList.iColor <= pRigidGeom->m_nVertices );
+        collision_data::high_cluster& Cluster = pRigidGeom->m_collision.pHighCluster [iCluster];
+        const rigid_geom::section& Section = pRigidGeom->m_pSection[Cluster.iSection];
         if( !IN_RANGE( 0, iTriangle, Cluster.nTris-1 ) )
             return( FALSE );
 
-        s32 Index = pRigidGeom->m_Collision.pHighIndexToVert0[ Cluster.iOffset + iTriangle ];
+        s32 Index = pRigidGeom->m_collision.pHighIndexToVert0[ Cluster.iOffset + iTriangle ];
 
         // We have arrived.  Fill out the information.
 
-        P0 = DList.pVert[ DList.pIndices[Index+0] ].Pos;
-        P1 = DList.pVert[ DList.pIndices[Index+1] ].Pos;
-        P2 = DList.pVert[ DList.pIndices[Index+2] ].Pos;
+        P0 = pRigidGeom->m_pVertex[pRigidGeom->m_pIndex[Section.FirstIndex + Index+0]].Pos;
+        P1 = pRigidGeom->m_pVertex[pRigidGeom->m_pIndex[Section.FirstIndex + Index+1]].Pos;
+        P2 = pRigidGeom->m_pVertex[pRigidGeom->m_pIndex[Section.FirstIndex + Index+2]].Pos;
 
         return( TRUE );
     }
-    #endif
-
-    #ifdef TARGET_PC
-    {
-        collision_data::high_cluster& Cluster = pRigidGeom->m_Collision.pHighCluster [iCluster];
-        rigid_geom::dlist_pc        & DList   = pRigidGeom->m_System.pPC[Cluster.iDList];
-        ASSERT( DList.iColor <= pRigidGeom->m_nVertices );
-        if( !IN_RANGE( 0, iTriangle, Cluster.nTris-1 ) )
-            return( FALSE );
-
-        s32 Index = pRigidGeom->m_Collision.pHighIndexToVert0[ Cluster.iOffset + iTriangle ];
-
-        // We have arrived.  Fill out the information.
-
-        P0 = DList.pVert[ DList.pIndices[Index+0] ].Pos;
-        P1 = DList.pVert[ DList.pIndices[Index+1] ].Pos;
-        P2 = DList.pVert[ DList.pIndices[Index+2] ].Pos;
-
-        return( TRUE );
-    }
-    #endif
-
-    #ifdef TARGET_PS2
-    {
-        collision_data::high_cluster& Cluster = pRigidGeom->m_Collision.pHighCluster[iCluster];
-        rigid_geom::dlist_ps2&   DList   = pRigidGeom->m_System.pPS2[Cluster.iDList];
-
-        if( !IN_RANGE( 0, iTriangle, Cluster.nTris-1 ) )
-            return( FALSE );
-
-        u16 Index =  pRigidGeom->m_Collision.pHighIndexToVert0[ Cluster.iOffset + iTriangle ];
-
-        if( Index & 0x8000 )
-        {
-            Index &= 0x7FFF;
-            P0 = *((vector3*)(DList.pPosition + (Index+0)));
-            P1 = *((vector3*)(DList.pPosition + (Index+2)));
-            P2 = *((vector3*)(DList.pPosition + (Index+1)));
-        }
-        else
-        {
-            P0 = *((vector3*)(DList.pPosition + (Index+0)));
-            P1 = *((vector3*)(DList.pPosition + (Index+1)));
-            P2 = *((vector3*)(DList.pPosition + (Index+2)));
-        }
-
-        return( TRUE );
-    }
-    #endif
-
     return( FALSE );
 
 }
 
 //===========================================================================
-#ifdef TARGET_XBOX
-static vector3 UnpackNormal( u32 PackedNormal )
-{
-    return vector3( f32((PackedNormal>> 0L) &~0x7ff)/1023.0f,
-                    f32((PackedNormal>>11L) &~0x7ff)/1023.0f,
-                    f32((PackedNormal>>22L) &~0x3ff) /511.0f );
-}
-#endif
-
-//===========================================================================
 
 xbool RigidGeom_GetColDetails(const rigid_geom*     pRigidGeom,
                               const matrix4*        pL2W,
-                              const void*           pColorIn,
+                              const u32*            pColor,
                               s32                   Key,
                               object::detail_tri&   Tri )
 {
-#if ( defined TARGET_PC ) || ( defined TARGET_XBOX )
-    const u32* pColor=( u32* )pColorIn;
-#else
-    const u16* pColor=( u16* )pColorIn;
-#endif
     ASSERT( pRigidGeom );
-    ASSERT( pRigidGeom->m_Collision.nHighClusters );
-    const collision_data& Coll = pRigidGeom->m_Collision;
+    ASSERT( pRigidGeom->m_collision.nHighClusters );
+    const collision_data& Coll = pRigidGeom->m_collision;
 
     xbool   bUseHighPoly;
     s32     iCluster;
@@ -167,11 +100,9 @@ xbool RigidGeom_GetColDetails(const rigid_geom*     pRigidGeom,
     if( !IN_RANGE( 0, iCluster, Coll.nHighClusters-1 ) )
         return( FALSE );
 
-    #ifdef TARGET_XBOX
     {
         collision_data::high_cluster& Cluster = Coll.pHighCluster[iCluster];
-        rigid_geom::dlist_xbox      & DList   = pRigidGeom->m_System.pXbox[Cluster.iDList];
-        ASSERT( DList.iColor <= pRigidGeom->m_nVertices );
+        const rigid_geom::section& Section = pRigidGeom->m_pSection[Cluster.iSection];
 
         if( !IN_RANGE( 0, iTriangle, Cluster.nTris-1 ) )
             return( FALSE );
@@ -181,9 +112,12 @@ xbool RigidGeom_GetColDetails(const rigid_geom*     pRigidGeom,
         // We have arrived.  Fill out the information.
         const matrix4& L2W = *pL2W;
 
-        Tri.Vertex[0] = DList.pVert[ DList.pIndices[Index+0] ].Pos;
-        Tri.Vertex[1] = DList.pVert[ DList.pIndices[Index+1] ].Pos;
-        Tri.Vertex[2] = DList.pVert[ DList.pIndices[Index+2] ].Pos;
+        const u32 I0 = pRigidGeom->m_pIndex[Section.FirstIndex + Index+0];
+        const u32 I1 = pRigidGeom->m_pIndex[Section.FirstIndex + Index+1];
+        const u32 I2 = pRigidGeom->m_pIndex[Section.FirstIndex + Index+2];
+        Tri.Vertex[0] = pRigidGeom->m_pVertex[I0].Pos;
+        Tri.Vertex[1] = pRigidGeom->m_pVertex[I1].Pos;
+        Tri.Vertex[2] = pRigidGeom->m_pVertex[I2].Pos;
         L2W.Transform( Tri.Vertex, Tri.Vertex, 3 );
 
         if( !pColor )
@@ -194,190 +128,27 @@ xbool RigidGeom_GetColDetails(const rigid_geom*     pRigidGeom,
         }
         else
         {
-            Tri.Color [0] = pColor[ DList.pIndices[Index+0]+DList.iColor ];
-            Tri.Color [1] = pColor[ DList.pIndices[Index+1]+DList.iColor ];
-            Tri.Color [2] = pColor[ DList.pIndices[Index+2]+DList.iColor ];
+            Tri.Color [0] = pColor[ Section.iColor + I0 - Section.FirstVertex ];
+            Tri.Color [1] = pColor[ Section.iColor + I1 - Section.FirstVertex ];
+            Tri.Color [2] = pColor[ Section.iColor + I2 - Section.FirstVertex ];
         }
 
-        Tri.Normal[0] = UnpackNormal( DList.pVert[ DList.pIndices[Index+0] ].PackedNormal );
-        Tri.Normal[1] = UnpackNormal( DList.pVert[ DList.pIndices[Index+1] ].PackedNormal );
-        Tri.Normal[2] = UnpackNormal( DList.pVert[ DList.pIndices[Index+2] ].PackedNormal );
+        Tri.Normal[0] = pRigidGeom->m_pVertex[I0].Normal;
+        Tri.Normal[1] = pRigidGeom->m_pVertex[I1].Normal;
+        Tri.Normal[2] = pRigidGeom->m_pVertex[I2].Normal;
         L2W.Transform( Tri.Normal, Tri.Normal, 3 );
         Tri.Normal[0] -= L2W.GetTranslation();
         Tri.Normal[1] -= L2W.GetTranslation();
         Tri.Normal[2] -= L2W.GetTranslation();
 
-        Tri.UV    [0] = DList.pVert[ DList.pIndices[Index+0] ].UV;
-        Tri.UV    [1] = DList.pVert[ DList.pIndices[Index+1] ].UV;
-        Tri.UV    [2] = DList.pVert[ DList.pIndices[Index+2] ].UV;
+        Tri.UV    [0] = pRigidGeom->m_pVertex[I0].UV;
+        Tri.UV    [1] = pRigidGeom->m_pVertex[I1].UV;
+        Tri.UV    [2] = pRigidGeom->m_pVertex[I2].UV;
 
         Tri.MaterialInfo = Cluster.MaterialInfo;
 
         return( TRUE );
     }
-    #endif
-
-    #ifdef TARGET_PC
-    {
-        collision_data::high_cluster& Cluster = Coll.pHighCluster[iCluster];
-        rigid_geom::dlist_pc&    DList   = pRigidGeom->m_System.pPC[Cluster.iDList];
-
-        if( !IN_RANGE( 0, iTriangle, Cluster.nTris-1 ) )
-            return( FALSE );
-
-        s32 Index  = Coll.pHighIndexToVert0[ Cluster.iOffset + iTriangle ] & INDEX_MASK;
-
-        // We have arrived.  Fill out the information.
-        const matrix4& L2W = *pL2W;
-
-        Tri.Vertex[0] = DList.pVert[ DList.pIndices[Index+0] ].Pos;
-        Tri.Vertex[1] = DList.pVert[ DList.pIndices[Index+1] ].Pos;
-        Tri.Vertex[2] = DList.pVert[ DList.pIndices[Index+2] ].Pos;
-        L2W.Transform( Tri.Vertex, Tri.Vertex, 3 );
-
-        if( !pColor )
-        {
-            Tri.Color [0] = 0xFFFFFFFF;
-            Tri.Color [1] = 0xFFFFFFFF;
-            Tri.Color [2] = 0xFFFFFFFF;
-        }
-        else
-        {
-            Tri.Color [0] = pColor[ DList.pIndices[Index+0]+DList.iColor ];
-            Tri.Color [1] = pColor[ DList.pIndices[Index+1]+DList.iColor ];
-            Tri.Color [2] = pColor[ DList.pIndices[Index+2]+DList.iColor ];
-        }
-
-        Tri.Normal[0] = DList.pVert[ DList.pIndices[Index+0] ].Normal;
-        Tri.Normal[1] = DList.pVert[ DList.pIndices[Index+1] ].Normal;
-        Tri.Normal[2] = DList.pVert[ DList.pIndices[Index+2] ].Normal;
-        L2W.Transform( Tri.Normal, Tri.Normal, 3 );
-        Tri.Normal[0] -= L2W.GetTranslation();
-        Tri.Normal[1] -= L2W.GetTranslation();
-        Tri.Normal[2] -= L2W.GetTranslation();
-
-        Tri.UV    [0] = DList.pVert[ DList.pIndices[Index+0] ].UV;
-        Tri.UV    [1] = DList.pVert[ DList.pIndices[Index+1] ].UV;
-        Tri.UV    [2] = DList.pVert[ DList.pIndices[Index+2] ].UV;
-
-        Tri.MaterialInfo = Cluster.MaterialInfo;
-
-        return( TRUE );
-    }
-    #endif
-
-    #ifdef TARGET_PS2
-    {
-        f32                      Factor;
-        collision_data::high_cluster& Cluster = Coll.pHighCluster[iCluster];
-        rigid_geom::dlist_ps2&   DList   = pRigidGeom->m_System.pPS2[Cluster.iDList];
-
-        if( !IN_RANGE( 0, iTriangle, Cluster.nTris-1 ) )
-            return( FALSE );
-
-        u16 Index  = Coll.pHighIndexToVert0[ Cluster.iOffset + iTriangle ] & INDEX_MASK;
-        
-        // We have arrived.  Fill out the information.
-        const matrix4& L2W = *pL2W;
-
-        Tri.Vertex[0] = *((vector3*)(DList.pPosition + (Index+0)));
-        Tri.Vertex[1] = *((vector3*)(DList.pPosition + (Index+1)));
-        Tri.Vertex[2] = *((vector3*)(DList.pPosition + (Index+2)));
-        L2W.Transform( Tri.Vertex, Tri.Vertex, 3 );
-
-        if( pColor )
-        {
-            pColor += DList.iColor;
-            pColor += Index;
-
-            //
-            // Assuming the color uses its 16 bits as follows:
-            //
-            //   1111:1111:1111:1111
-            //   ABBB:BBGG:GGGR:RRRR
-            //
-            //   1000:0000:0000:0000 = 0x8000
-            //   0111:1100:0000:0000 = 0x7C00
-            //   0000:0011:1110:0000 = 0x03E0
-            //   0000:0000:0001:1111 = 0x001F
-            //
-            //  For RGB, since there are only 5 bits present, the top 3 bits of
-            //  the original 5 are used again for the lower 3 bits to give best 
-            //  possible results.  
-            //
-            //  Thus, for the 8 bits of R...
-            //  Take the original data:         abbb:bbgg:gggR:RRRR  
-            //  Mask out all but R data:        0000:0000:000R:RRRR
-            //  Shift left by 3:                0000:0000:RRRR:R000
-            //  Also shift RIGHT by 2:          0000:0000:0000:0RRR.rr
-            //  Combine last two:               0000:0000:RRRR:RRRR
-            //
-            //  Since the A channel has only 1 bit, we just result in 0 or 255.
-            //
-
-            Tri.Color[0].R = ((*pColor & 0x001F) <<  3) | ((*pColor & 0x001F) >>  2);
-            Tri.Color[0].G = ((*pColor & 0x03E0) >>  2) | ((*pColor & 0x03E0) >>  7);
-            Tri.Color[0].B = ((*pColor & 0x7C00) >>  7) | ((*pColor & 0x7C00) >> 12);
-            Tri.Color[0].A =  (*pColor & 0x8000) ? 255 : 0;
-            
-            pColor += 1;
-
-            Tri.Color[1].R = ((*pColor & 0x001F) <<  3) | ((*pColor & 0x001F) >>  2);
-            Tri.Color[1].G = ((*pColor & 0x03E0) >>  2) | ((*pColor & 0x03E0) >>  7);
-            Tri.Color[1].B = ((*pColor & 0x7C00) >>  7) | ((*pColor & 0x7C00) >> 12);
-            Tri.Color[1].A =  (*pColor & 0x8000) ? 255 : 0;
-            
-            pColor += 1;
-
-            Tri.Color[2].R = ((*pColor & 0x001F) <<  3) | ((*pColor & 0x001F) >>  2);
-            Tri.Color[2].G = ((*pColor & 0x03E0) >>  2) | ((*pColor & 0x03E0) >>  7);
-            Tri.Color[2].B = ((*pColor & 0x7C00) >>  7) | ((*pColor & 0x7C00) >> 12);
-            Tri.Color[2].A =  (*pColor & 0x8000) ? 255 : 0;
-        }
-        else
-        {
-            Tri.Color [0] = XCOLOR_WHITE;
-            Tri.Color [1] = XCOLOR_WHITE;
-            Tri.Color [2] = XCOLOR_WHITE;
-        } 
-
-        // Normals are fixed point as S0.7
-        Factor = 1.0f / 128.0f;
-
-        Tri.Normal[0].Set( ((f32)(DList.pNormal[ ((Index+0)*3)+0 ])) * Factor,
-                           ((f32)(DList.pNormal[ ((Index+0)*3)+1 ])) * Factor,
-                           ((f32)(DList.pNormal[ ((Index+0)*3)+2 ])) * Factor );
-        Tri.Normal[1].Set( ((f32)(DList.pNormal[ ((Index+1)*3)+0 ])) * Factor,
-                           ((f32)(DList.pNormal[ ((Index+1)*3)+1 ])) * Factor,
-                           ((f32)(DList.pNormal[ ((Index+1)*3)+2 ])) * Factor );
-                                                          
-        Tri.Normal[2].Set( ((f32)(DList.pNormal[ ((Index+2)*3)+0 ])) * Factor,
-                           ((f32)(DList.pNormal[ ((Index+2)*3)+1 ])) * Factor,
-                           ((f32)(DList.pNormal[ ((Index+2)*3)+2 ])) * Factor );
-        
-        Tri.Normal[0] = L2W.RotateVector( Tri.Normal[0] );
-        Tri.Normal[1] = L2W.RotateVector( Tri.Normal[1] );
-        Tri.Normal[2] = L2W.RotateVector( Tri.Normal[2] );
-
-        // UVs are fixed point as S3.12
-        Factor = 1.0f / 4096.0f;
-
-        Tri.UV[0].X = ((f32)(DList.pUV[ ((Index+0)*2)+0 ])) * Factor;
-        Tri.UV[0].Y = ((f32)(DList.pUV[ ((Index+0)*2)+1 ])) * Factor;
-
-        Tri.UV[1].X = ((f32)(DList.pUV[ ((Index+1)*2)+0 ])) * Factor;
-        Tri.UV[1].Y = ((f32)(DList.pUV[ ((Index+1)*2)+1 ])) * Factor;
-
-        Tri.UV[2].X = ((f32)(DList.pUV[ ((Index+2)*2)+0 ])) * Factor;
-        Tri.UV[2].Y = ((f32)(DList.pUV[ ((Index+2)*2)+1 ])) * Factor;
-
-        // And let's not forget the material.
-        Tri.MaterialInfo = Cluster.MaterialInfo;
-
-        return( TRUE );
-    }
-    #endif
-
     (void)Tri;
     return( FALSE );
 }
@@ -493,274 +264,6 @@ xbool IsPointInsideTri( const vector3& P, const vector3& TriP0, const vector3& T
 
 //==============================================================================
 
-void RigidGeom_RayVsPS2HiPoly(      guid        Guid, 
-                               const bbox&      WorldBBox,
-                               const u64         MeshMask,
-                               const matrix4*    pL2W, 
-                               const rigid_geom& RigidGeom )
-{
-    s32 k;
-
-#ifndef X_RETAIL
-    xtimer Timer;
-    if( bDISPLAY_TIME )
-        Timer.Start();
-    TRI_STATS[0]++;
-#endif // X_RETAIL
-    
-    //
-    // Dig out Ray and clip to world bbox
-    //
-    vector3 WorldRayStart;
-    vector3 WorldRayEnd;
-    f32     LocalRayT0;
-    f32     LocalRayT1;
-    {
-
-        const collision_mgr::dynamic_ray& Ray = g_CollisionMgr.GetDynamicRay();
-        if( !ClipLineToBBoxWithSafeSpace( WorldBBox, Ray.Start, Ray.End, LocalRayT0, LocalRayT1 ) )
-            return;
-
-        vector3 Direction = Ray.End - Ray.Start;
-        WorldRayStart = Ray.Start + LocalRayT0*(Direction);
-        WorldRayEnd   = Ray.Start + LocalRayT1*(Direction);
-    }
-
-    // Which collision resolution to use?
-    ASSERT( g_CollisionMgr.IsUsingHighPoly() );
-    ASSERT( RigidGeom.m_Collision.nHighClusters );
-
-    const collision_data& Coll = RigidGeom.m_Collision;
-
-    // For every bone...
-    s32 iCurrentBone = -1;
-    const matrix4* pCurrentL2W = NULL;
-    vector3 LocalRayStart;
-    vector3 LocalRayEnd;
-    vector3 LocalRayDelta;
-    bbox    LocalRayBBox;
-    vector3 ClusterRayStart;
-    vector3 ClusterRayEnd;
-    vector3 ClusterRayDelta;
-    bbox    ClusterRayBBox;
-    f32     ClusterRayT0;
-    f32     ClusterRayT1;
-
-    // Loop thru the clusters and apply them if:
-    //  - mesh is active
-    //  - cluster uses the current bone
-    for( s32 iC = 0; iC < Coll.nHighClusters; iC++ )
-    {
-        const collision_data::high_cluster& Cluster = Coll.pHighCluster[iC];
-
-        //
-        // Do quick checks to see if we should be skipping this mesh or material
-        //
-        {
-            u64 Bit = 1 << Cluster.iMesh;
-            if( !(MeshMask & Bit) )
-                continue;
-
-            if( (Cluster.MaterialInfo.SoundType == object::MAT_TYPE_GLASS) && 
-                (g_CollisionMgr.IsIgnoringGlass()) )
-                continue;
-        }
-
-        xbool bDoubleSided = !!(Cluster.MaterialInfo.Flags & collision_data::mat_info::FLAG_DOUBLESIDED);
-
-        //
-        // Update local ray info
-        //
-        if( Cluster.iBone != iCurrentBone )
-        {
-            iCurrentBone = Cluster.iBone;
-
-            // Get ptr to the current matrix
-            pCurrentL2W = &pL2W[iCurrentBone];
-
-            // Transform ray into space of bone.  Rather than InvertRT the matrix
-            // we're just going to use InvRotateVector
-            vector3 Translation = pCurrentL2W->GetTranslation();
-            LocalRayStart = pCurrentL2W->InvRotateVector( WorldRayStart - Translation );
-            LocalRayEnd   = pCurrentL2W->InvRotateVector( WorldRayEnd   - Translation );
-
-            LocalRayDelta = LocalRayEnd - LocalRayStart;
-            LocalRayBBox.Set(LocalRayStart,LocalRayEnd);
-            LocalRayBBox.Inflate(1,1,1);
-        }
-
-        //
-        // Check if local ray bbox intersects cluster bbox and if ray intersects
-        //
-        {
-            if( !LocalRayBBox.Intersect( Cluster.BBox ) )
-                continue;
-        
-            if( !ClipLineToBBoxWithSafeSpace( Cluster.BBox, LocalRayStart, LocalRayEnd, ClusterRayT0, ClusterRayT1 ) )
-                continue;
-
-            ClusterRayStart = LocalRayStart + ClusterRayT0*LocalRayDelta;
-            ClusterRayEnd   = LocalRayStart + ClusterRayT1*LocalRayDelta;
-            ClusterRayDelta = ClusterRayEnd - ClusterRayStart;
-            ClusterRayBBox.Set(ClusterRayStart,ClusterRayEnd);
-        }
-
-        //
-        // Apply the cluster to the collision manager.
-        //
-        const rigid_geom::dlist_ps2& DList = RigidGeom.m_System.pPS2[Cluster.iDList];
-
-        for( k = 0; k < Cluster.nTris; k++ )
-        {
-            u32 Offset  = Coll.pHighIndexToVert0[ Cluster.iOffset + k ];
-
-            //
-            // Setup ptrs to positions
-            //
-            const vector3* P0;
-            const vector3* P1;
-            const vector3* P2;
-            if( Offset & 0x8000 )
-            {
-                Offset &= INDEX_MASK;
-                P0 = (vector3*)(&DList.pPosition[Offset+2]);
-                P1 = (vector3*)(&DList.pPosition[Offset+1]);
-                P2 = (vector3*)(&DList.pPosition[Offset+0]);
-            }
-            else
-            {
-                P0 = (vector3*)(&DList.pPosition[Offset+0]);
-                P1 = (vector3*)(&DList.pPosition[Offset+1]);
-                P2 = (vector3*)(&DList.pPosition[Offset+2]);
-            }
-
-            if( ClusterRayBBox.IntersectTriBBox( *P0, *P1, *P2 ) )
-            {
-                vector3 PlaneNormal;
-                f32     PlaneD;
-
-                vector3 P1MinusP0 = (*P1)-(*P0);
-                vector3 P2MinusP0 = (*P2)-(*P0);
-
-                // Calculate non-normalized normal vector
-                PlaneNormal = v3_Cross( P1MinusP0, P2MinusP0 );
-
-                f32 PlaneNormalDotClusterRayStartPlusPlaneD;
-                f32 PlaneNormalDotClusterRayDelta;
-                f32 PlaneIntersectT;
-
-                if (!bDoubleSided)
-                {
-                    // Check if we are moving away from the triangle
-                    PlaneNormalDotClusterRayDelta = PlaneNormal.Dot( ClusterRayDelta );
-                    if( PlaneNormalDotClusterRayDelta >= 0 )
-                        continue;
-
-                    // Compute PlaneD
-                    PlaneD = -PlaneNormal.Dot( *P0 );
-
-                    // Check if ray end is in front of triangle
-                    if( PlaneNormal.Dot(ClusterRayEnd)+PlaneD > 0 )
-                        continue;
-
-                    // Check if ray start is behind triangle
-                    PlaneNormalDotClusterRayStartPlusPlaneD = PlaneNormal.Dot(ClusterRayStart) + PlaneD;
-                    if( PlaneNormalDotClusterRayStartPlusPlaneD < 0 )
-                        continue;
-
-                    // SB: 2/22/05
-                    // NOTE: Due to float precision from almost degenerate tris (we are using the artists render 
-                    //       tris afterall) this intersect value may still be less than 0 or greater than 1, so a 
-                    //       final interval test must still be performed
-                    PlaneIntersectT = -PlaneNormalDotClusterRayStartPlusPlaneD / PlaneNormalDotClusterRayDelta;
-                }
-                else
-                {
-                    PlaneNormalDotClusterRayDelta = PlaneNormal.Dot( ClusterRayDelta );
-                    PlaneD = -PlaneNormal.Dot( *P0 );
-                    PlaneNormalDotClusterRayStartPlusPlaneD = PlaneNormal.Dot(ClusterRayStart) + PlaneD;
-                    PlaneIntersectT = -PlaneNormalDotClusterRayStartPlusPlaneD / PlaneNormalDotClusterRayDelta;
-                }
-
-                // Check if intersection is not in the interval of the test
-                if( ( PlaneIntersectT < 0.0f ) || ( PlaneIntersectT > 1.0f ) )
-                    continue;
-
-                // Compute intersect point between ClusterRay and triangle plane               
-                vector3 HP = ClusterRayStart + PlaneIntersectT*ClusterRayDelta;
-
-                // Confirm that intersection point is inside triangle bounds.  The order 
-                // of testing is a bit twisted to make use of data already available.
-                // For the first two edgenormals we are also testing the intersection point
-                // against the opposite point boundary.
-                f32 HPDist;
-                vector3 EdgeNormal;
-                vector3 HPMinusP0 = HP - (*P0);
-
-                // Test P0->P1 edge
-                EdgeNormal = PlaneNormal.Cross( P1MinusP0 );
-                HPDist = EdgeNormal.Dot( HPMinusP0 );
-                if( (HPDist < 0.0f) || (HPDist > EdgeNormal.Dot(P2MinusP0)) )
-                    continue;
-
-                // Test P0->P2 edge
-                EdgeNormal = PlaneNormal.Cross( P2MinusP0 );
-                HPDist = EdgeNormal.Dot( HPMinusP0 );
-                if( (HPDist > 0.0f) || (HPDist < EdgeNormal.Dot(P1MinusP0)) )
-                    continue;
-
-                // Test P1->P2 edge
-                EdgeNormal = PlaneNormal.Cross( (*P2) - (*P1) );
-                if( EdgeNormal.Dot( HP - (*P1) ) < 0.0f )
-                    continue;
-
-                {
-                    // Compute the Primitive Key
-                    s32 PrimKey;
-                    RigidGeom_SetPrimKey( PrimKey, TRUE, iC, k );
-
-                    // Transform back into worldspace
-                    plane TrianglePlane( *P0, *P1, *P2 );
-                    TrianglePlane.Transform( *pCurrentL2W );
-                    HP = *pCurrentL2W * HP;
-
-                    // KSS -- make sure there is some amount of error allowance
-                    ASSERT( (PlaneIntersectT >= -0.001f) && (PlaneIntersectT <= 1.001f) );
-
-                    f32 T = PlaneIntersectT;
-                        T = ClusterRayT0 + T*(ClusterRayT1-ClusterRayT0);
-                        T = LocalRayT0 + T*(LocalRayT1-LocalRayT0);
-
-                    if( T<0 ) T = 0;
-                    if( T>1 ) T = 1;
-
-                    // Build collision entry
-                    collision_mgr::collision TempCollision(
-                        T,
-                        HP,
-                        TrianglePlane,
-                        TrianglePlane,
-                        Guid,
-                        PrimKey,
-                        PRIMITIVE_STATIC_TRIANGLE,
-                        FALSE,
-                        MAX( P0->GetY(), MAX( P1->GetY(), P2->GetY() ) ),
-                        Cluster.MaterialInfo.SoundType );
-
-                    // Handle it off to the collision mgr
-                    g_CollisionMgr.RecordCollision( TempCollision );
-
-                    // If we are doing LOS then we are done!
-                    if( g_CollisionMgr.IsStopOnFirstCollision() )
-                        return;
-                }
-            }
-        }
-    }
-}
-
-//==============================================================================
-
 #ifdef TARGET_PC
 s32 RPC_COUNT=0;
 void RigidGeom_RayVsPCHiPoly(      guid        Guid, 
@@ -774,13 +277,13 @@ void RigidGeom_RayVsPCHiPoly(      guid        Guid,
 #ifndef X_RETAIL
     TRI_STATS[0]++;
 #endif
-                    extern xbool COLL_DISPLAY_OBJECTS;
-                    if( COLL_DISPLAY_OBJECTS)
-                    {
-                        RPC_COUNT++;
-                        if( RPC_COUNT == 800*5*2 )
-                            BREAK;
-                    }
+    extern xbool COLL_DISPLAY_OBJECTS;
+    if( COLL_DISPLAY_OBJECTS)
+    {
+        RPC_COUNT++;
+        if( RPC_COUNT == 800*5*2 )
+            BREAK;
+    }
 
     //
     // Dig out Ray and clip to world bbox
@@ -802,9 +305,9 @@ void RigidGeom_RayVsPCHiPoly(      guid        Guid,
 
     // Which collision resolution to use?
     ASSERT( g_CollisionMgr.IsUsingHighPoly() );
-    ASSERT( RigidGeom.m_Collision.nHighClusters );
+    ASSERT( RigidGeom.m_collision.nHighClusters );
 
-    const collision_data& Coll = RigidGeom.m_Collision;
+    const collision_data& Coll = RigidGeom.m_collision;
 
     // For every bone...
     s32 iCurrentBone = -1;
@@ -910,10 +413,16 @@ void RigidGeom_RayVsPCHiPoly(      guid        Guid,
 #endif
 
         // Apply the cluster to the collision manager.
-        const rigid_geom::dlist_pc& DList = RigidGeom.m_System.pPC[Cluster.iDList];
+        const rigid_geom::section& Section = RigidGeom.m_pSection[Cluster.iSection];
 //        extern xbool COLL_DISPLAY_OBJECTS;
 //        if( COLL_DISPLAY_OBJECTS )
 //            x_DebugMsg("CLUSTER %4d\n",Cluster.nTris);
+
+        ASSERT( RigidGeom.m_pIndex );
+        ASSERT( RigidGeom.m_pVertex );
+        if( (RigidGeom.m_pIndex == NULL) || (RigidGeom.m_pVertex == NULL) ||
+            (Section.nIndices < 3) || (Section.nVertices <= 0) )
+            continue;
 
         // 0.133
         for( k = 0; k < Cluster.nTris; k++ )
@@ -923,17 +432,31 @@ void RigidGeom_RayVsPCHiPoly(      guid        Guid,
 #endif
 
             const u32 Offset  = Coll.pHighIndexToVert0[ Cluster.iOffset + k ] & INDEX_MASK;
-            //
-            // Setup ptrs to positions
-            //
-            const vector3* P0;
-            const vector3* P1;
-            const vector3* P2;
-            P0 = (vector3*)(&DList.pVert[ DList.pIndices[Offset+0] ].Pos);
-            P1 = (vector3*)(&DList.pVert[ DList.pIndices[Offset+1] ].Pos);
-            P2 = (vector3*)(&DList.pVert[ DList.pIndices[Offset+2] ].Pos);
 
-            if( ClusterRayBBox.IntersectTriBBox( *P0, *P1, *P2 ) )
+            ASSERT( (Offset + 2) < (u32)Section.nIndices );
+            if( (Offset + 2) >= (u32)Section.nIndices )
+                continue;
+
+            const u32 I0 = RigidGeom.m_pIndex[Section.FirstIndex + Offset+0];
+            const u32 I1 = RigidGeom.m_pIndex[Section.FirstIndex + Offset+1];
+            const u32 I2 = RigidGeom.m_pIndex[Section.FirstIndex + Offset+2];
+
+            ASSERT( I0 >= (u32)Section.FirstVertex && I0 < (u32)(Section.FirstVertex + Section.nVertices) );
+            ASSERT( I1 >= (u32)Section.FirstVertex && I1 < (u32)(Section.FirstVertex + Section.nVertices) );
+            ASSERT( I2 >= (u32)Section.FirstVertex && I2 < (u32)(Section.FirstVertex + Section.nVertices) );
+            if( (I0 < (u32)Section.FirstVertex) || (I0 >= (u32)(Section.FirstVertex + Section.nVertices)) ||
+                (I1 < (u32)Section.FirstVertex) || (I1 >= (u32)(Section.FirstVertex + Section.nVertices)) ||
+                (I2 < (u32)Section.FirstVertex) || (I2 >= (u32)(Section.FirstVertex + Section.nVertices)) )
+                continue;
+
+            //
+            // Setup positions
+            //
+            const vector3 P0 = RigidGeom.m_pVertex[I0].Pos;
+            const vector3 P1 = RigidGeom.m_pVertex[I1].Pos;
+            const vector3 P2 = RigidGeom.m_pVertex[I2].Pos;
+
+            if( ClusterRayBBox.IntersectTriBBox( P0, P1, P2 ) )
             {
 #ifndef X_RETAIL
                 TRI_STATS[8]++;
@@ -942,8 +465,8 @@ void RigidGeom_RayVsPCHiPoly(      guid        Guid,
                 vector3 PlaneNormal;
                 f32     PlaneD;
 
-                vector3 P1MinusP0 = (*P1)-(*P0);
-                vector3 P2MinusP0 = (*P2)-(*P0);
+                vector3 P1MinusP0 = P1-P0;
+                vector3 P2MinusP0 = P2-P0;
 
                 // Calculate non-normalized normal vector
                 PlaneNormal = v3_Cross( P1MinusP0, P2MinusP0 );
@@ -968,7 +491,7 @@ void RigidGeom_RayVsPCHiPoly(      guid        Guid,
                         continue;
 
                     // Compute PlaneD
-                    PlaneD = -PlaneNormal.Dot( *P0 );
+                    PlaneD = -PlaneNormal.Dot( P0 );
 
                     // Check if ray end is in front of triangle
                     if( PlaneNormal.Dot(ClusterRayEnd)+PlaneD > 0 )
@@ -984,7 +507,7 @@ void RigidGeom_RayVsPCHiPoly(      guid        Guid,
                 else
                 {
                     PlaneNormalDotClusterRayDelta = PlaneNormal.Dot( ClusterRayDelta );
-                    PlaneD = -PlaneNormal.Dot( *P0 );
+                    PlaneD = -PlaneNormal.Dot( P0 );
                     PlaneNormalDotClusterRayStartPlusPlaneD = PlaneNormal.Dot(ClusterRayStart) + PlaneD;
                     PlaneIntersectT = -PlaneNormalDotClusterRayStartPlusPlaneD / PlaneNormalDotClusterRayDelta;
 
@@ -1001,7 +524,7 @@ void RigidGeom_RayVsPCHiPoly(      guid        Guid,
                 // against the opposite point boundary.
                 f32 HPDist;
                 vector3 EdgeNormal;
-                vector3 HPMinusP0 = HP - (*P0);
+                vector3 HPMinusP0 = HP - P0;
 
                 // Test P0->P1 edge
                 EdgeNormal = PlaneNormal.Cross( P1MinusP0 );
@@ -1026,8 +549,8 @@ void RigidGeom_RayVsPCHiPoly(      guid        Guid,
                 }
 
                 // Test P1->P2 edge
-                EdgeNormal = PlaneNormal.Cross( (*P2) - (*P1) );
-                if( EdgeNormal.Dot( HP - (*P1) ) < 0.0f )
+                EdgeNormal = PlaneNormal.Cross( P2 - P1 );
+                if( EdgeNormal.Dot( HP - P1 ) < 0.0f )
                 {
 #ifndef X_RETAIL
                     TRI_STATS[15]++;    
@@ -1044,7 +567,7 @@ void RigidGeom_RayVsPCHiPoly(      guid        Guid,
                     RigidGeom_SetPrimKey( PrimKey, TRUE, iC, k );
 
                     // Transform back into worldspace
-                    plane TrianglePlane( *P0, *P1, *P2 );
+                    plane TrianglePlane( P0, P1, P2 );
                     TrianglePlane.Transform( *pCurrentL2W );
                     HP = *pCurrentL2W * HP;
 
@@ -1063,7 +586,7 @@ void RigidGeom_RayVsPCHiPoly(      guid        Guid,
                         PrimKey,
                         PRIMITIVE_STATIC_TRIANGLE,
                         FALSE,
-                        MAX( P0->GetY(), MAX( P1->GetY(), P2->GetY() ) ),
+                        MAX( P0.GetY(), MAX( P1.GetY(), P2.GetY() ) ),
                         Cluster.MaterialInfo.SoundType );
 
                     // Handle it off to the collision mgr
@@ -1109,24 +632,10 @@ void RigidGeom_ApplyCollision(       guid        Guid,
     //
     // Did we compile high poly collision?
     //
-    if( RigidGeom.m_Collision.nHighClusters == 0 )
+    if( RigidGeom.m_collision.nHighClusters == 0 )
     {
         return;
     }
-
-    #ifdef TARGET_PS2
-    //
-    // Check for Ray vs. PS2 High poly
-    //
-    if( g_CollisionMgr.IsUsingHighPoly() &&
-        ((g_CollisionMgr.GetDynamicPrimitive()==PRIMITIVE_DYNAMIC_RAY) ||
-         (g_CollisionMgr.GetDynamicPrimitive()==PRIMITIVE_DYNAMIC_LOS))
-      )
-    {
-        RigidGeom_RayVsPS2HiPoly( Guid, BBox, MeshMask, pL2W, *pRigidGeom );
-        return;
-    }
-    #endif
 
     #ifdef TARGET_PC
     //
@@ -1145,8 +654,8 @@ void RigidGeom_ApplyCollision(       guid        Guid,
     // Which collision resolution to use?
     if( g_CollisionMgr.IsUsingHighPoly() )
     {
-        ASSERT( RigidGeom.m_Collision.nHighClusters );
-        const collision_data& Coll = RigidGeom.m_Collision;
+        ASSERT( RigidGeom.m_collision.nHighClusters );
+        const collision_data& Coll = RigidGeom.m_collision;
 
         // For every bone...
         for( i = 0; i < RigidGeom.m_nBones; i++ )
@@ -1178,23 +687,24 @@ void RigidGeom_ApplyCollision(       guid        Guid,
                 if( !(MeshMask & Bit) )
                     continue;
 
-                #ifdef TARGET_XBOX
                 {
                     // Apply the cluster to the collision manager.
-                    const rigid_geom::dlist_xbox& DList = RigidGeom.m_System.pXbox[Cluster.iDList];
-                    ASSERT( DList.iColor <= RigidGeom.m_nVertices );
+                    const rigid_geom::section& Section = RigidGeom.m_pSection[Cluster.iSection];
 
                     for( k = 0; k < Cluster.nTris; k++ )
                     {
                         const u32 Offset  = Coll.pHighIndexToVert0[ Cluster.iOffset + k ] & INDEX_MASK;
+                        const u32 I0 = RigidGeom.m_pIndex[Section.FirstIndex + Offset+0];
+                        const u32 I1 = RigidGeom.m_pIndex[Section.FirstIndex + Offset+1];
+                        const u32 I2 = RigidGeom.m_pIndex[Section.FirstIndex + Offset+2];
 
                         s32 PrimKey;
                         RigidGeom_SetPrimKey( PrimKey, TRUE, j, k );
 
                         g_CollisionMgr.ApplyTriangle(
-                            DList.pVert[ DList.pIndices[Offset+0] ].Pos, 
-                            DList.pVert[ DList.pIndices[Offset+1] ].Pos, 
-                            DList.pVert[ DList.pIndices[Offset+2] ].Pos, 
+                            RigidGeom.m_pVertex[I0].Pos,
+                            RigidGeom.m_pVertex[I1].Pos,
+                            RigidGeom.m_pVertex[I2].Pos,
                             Cluster.MaterialInfo.SoundType,
                             PrimKey );
 
@@ -1202,104 +712,14 @@ void RigidGeom_ApplyCollision(       guid        Guid,
                         if ( bDoubleSided )
                         {
                             g_CollisionMgr.ApplyTriangle(
-                                DList.pVert[ DList.pIndices[Offset+2] ].Pos, 
-                                DList.pVert[ DList.pIndices[Offset+1] ].Pos, 
-                                DList.pVert[ DList.pIndices[Offset+0] ].Pos, 
+                                RigidGeom.m_pVertex[I2].Pos,
+                                RigidGeom.m_pVertex[I1].Pos,
+                                RigidGeom.m_pVertex[I0].Pos,
                                 Cluster.MaterialInfo.SoundType,
                                 PrimKey );
                         }
                     }
                 }
-                #endif
-
-                #ifdef TARGET_PC
-                {
-                    // Apply the cluster to the collision manager.
-                    const rigid_geom::dlist_pc& DList = RigidGeom.m_System.pPC[Cluster.iDList];
-
-                    for( k = 0; k < Cluster.nTris; k++ )
-                    {
-                        const u32 Offset  = Coll.pHighIndexToVert0[ Cluster.iOffset + k ] & INDEX_MASK;
-
-                        s32 PrimKey;
-                        RigidGeom_SetPrimKey( PrimKey, TRUE, j, k );
-
-                        g_CollisionMgr.ApplyTriangle(
-                            DList.pVert[ DList.pIndices[Offset+0] ].Pos, 
-                            DList.pVert[ DList.pIndices[Offset+1] ].Pos, 
-                            DList.pVert[ DList.pIndices[Offset+2] ].Pos, 
-                            Cluster.MaterialInfo.SoundType,
-                            PrimKey );
-
-                        // Double Sided single plane so apply collision for both sides!
-                        if ( bDoubleSided )
-                        {
-                            g_CollisionMgr.ApplyTriangle(
-                                DList.pVert[ DList.pIndices[Offset+2] ].Pos, 
-                                DList.pVert[ DList.pIndices[Offset+1] ].Pos, 
-                                DList.pVert[ DList.pIndices[Offset+0] ].Pos, 
-                                Cluster.MaterialInfo.SoundType,
-                                PrimKey );
-                        }
-                    }
-                }
-                #endif
-
-                #ifdef TARGET_PS2
-                {
-                    // Apply the cluster to the collision manager.
-                    const rigid_geom::dlist_ps2& DList = RigidGeom.m_System.pPS2[Cluster.iDList];
-
-                    for( k = 0; k < Cluster.nTris; k++ )
-                    {
-                        u32 Offset  = Coll.pHighIndexToVert0[ Cluster.iOffset + k ];
-
-                        s32 PrimKey;
-                        RigidGeom_SetPrimKey( PrimKey, TRUE, j, k );
-
-                        if( Offset & 0x8000 )
-                        {
-                            Offset &= INDEX_MASK;
-
-                            g_CollisionMgr.ApplyTriangle(
-                                *((vector3*)(&DList.pPosition[Offset+2])),
-                                *((vector3*)(&DList.pPosition[Offset+1])),
-                                *((vector3*)(&DList.pPosition[Offset+0])),
-                                Cluster.MaterialInfo.SoundType,
-                                 PrimKey );
-                            if (bDoubleSided)
-                            {
-                                g_CollisionMgr.ApplyTriangle(
-                                    *((vector3*)(&DList.pPosition[Offset+0])),
-                                    *((vector3*)(&DList.pPosition[Offset+1])),
-                                    *((vector3*)(&DList.pPosition[Offset+2])),
-                                    Cluster.MaterialInfo.SoundType,
-                                    PrimKey );
-                            }
-                        }
-                        else
-                        {
-                            g_CollisionMgr.ApplyTriangle(
-                                *((vector3*)(&DList.pPosition[Offset+0])),
-                                *((vector3*)(&DList.pPosition[Offset+1])),
-                                *((vector3*)(&DList.pPosition[Offset+2])),
-                                Cluster.MaterialInfo.SoundType,
-                                 PrimKey );
-
-                            if (bDoubleSided)
-                            {
-                                g_CollisionMgr.ApplyTriangle(
-                                    *((vector3*)(&DList.pPosition[Offset+2])),
-                                    *((vector3*)(&DList.pPosition[Offset+1])),
-                                    *((vector3*)(&DList.pPosition[Offset+0])),
-                                    Cluster.MaterialInfo.SoundType,
-                                    PrimKey );
-                            }
-                        }
-                    }
-                }
-                #endif
-
             }
 
             g_CollisionMgr.EndApply();    
@@ -1321,16 +741,15 @@ void RigidGeom_RenderCollision( const matrix4*  pBone,
     if( pRigidGeom == NULL )
         return;
 
-    s32         ZBIAS = 5;
     s32         i, j;
     random      R;
     R.srand( ((u32)(uaddr)(pRigidGeom)) & 0x0000FFFF );
 
     if( bRenderHigh )
     {
-        if( pRigidGeom->m_Collision.nHighClusters )
+        if( pRigidGeom->m_collision.nHighClusters )
         {
-            const collision_data& Coll = pRigidGeom->m_Collision;
+            const collision_data& Coll = pRigidGeom->m_collision;
 
             for( i = 0; i < Coll.nHighClusters; i++ )
             {      
@@ -1340,92 +759,20 @@ void RigidGeom_RenderCollision( const matrix4*  pBone,
                 if( !(LODMask & Bit) )
                     continue;
 
-                if( 1 )
-                {
-                    draw_SetL2W( pBone[ Cluster.iBone ] );
-
-                    xcolor C = xcolor( R.irand( LO_COLOR, HI_COLOR ),
-                                       R.irand( LO_COLOR, HI_COLOR ),
-                                       R.irand( LO_COLOR, HI_COLOR ) );
-
-                    draw_BBox( Cluster.BBox, C );
-                }
-
-                if( 0 )
-                {
-                    draw_SetL2W( pBone[ Cluster.iBone ] );
-
-                    // Draw all faces in a solid color based on cluster / display list.
-                    draw_Begin( DRAW_TRIANGLES, DRAW_USE_ALPHA );
-                    draw_SetZBias( ZBIAS );
-
-                    #ifdef TARGET_XBOX
-                    {
-                        rigid_geom::dlist_xbox& DList = pRigidGeom->m_System.pXbox[Cluster.iDList];
-                        ASSERT( DList.iColor <= pRigidGeom->m_nVertices );
-
-                        for( j = 0; j < Cluster.nTris; j++ )
-                        {
-                            draw_Color( xcolor( R.irand( LO_COLOR, HI_COLOR ), 
-                                                R.irand( LO_COLOR, HI_COLOR ), 
-                                                R.irand( LO_COLOR, HI_COLOR ), 255 ) );
-
-                            s32 Offset = Coll.pHighIndexToVert0[ Cluster.iOffset + j ] & INDEX_MASK;
-                            draw_Vertex( DList.pVert[ DList.pIndices[Offset+0] ].Pos );
-                            draw_Vertex( DList.pVert[ DList.pIndices[Offset+1] ].Pos );
-                            draw_Vertex( DList.pVert[ DList.pIndices[Offset+2] ].Pos );
-                        }
-                    }
-                    #endif
-
-                    #ifdef TARGET_PC
-                    {
-                        rigid_geom::dlist_pc& DList = pRigidGeom->m_System.pPC[Cluster.iDList];
-
-                        for( j = 0; j < Cluster.nTris; j++ )
-                        {
-                            draw_Color( xcolor( R.irand( LO_COLOR, HI_COLOR ), 
-                                                R.irand( LO_COLOR, HI_COLOR ), 
-                                                R.irand( LO_COLOR, HI_COLOR ), 255 ) );
-
-                            s32 Offset = Coll.pHighIndexToVert0[ Cluster.iOffset + j ] & INDEX_MASK;
-                            draw_Vertex( DList.pVert[ DList.pIndices[Offset+0] ].Pos );
-                            draw_Vertex( DList.pVert[ DList.pIndices[Offset+1] ].Pos );
-                            draw_Vertex( DList.pVert[ DList.pIndices[Offset+2] ].Pos );
-                        }
-                    }
-                    #endif
-
-                    #ifdef TARGET_PS2
-                    {
-                        rigid_geom::dlist_ps2& DList = pRigidGeom->m_System.pPS2[Cluster.iDList];
-
-                        for( j = 0; j < Cluster.nTris; j++ )
-                        {
-                            draw_Color( xcolor( R.irand( LO_COLOR, HI_COLOR ), 
-                                                R.irand( LO_COLOR, HI_COLOR ), 
-                                                R.irand( LO_COLOR, HI_COLOR ), 255 ) );
-
-                            s32 Offset = Coll.pHighIndexToVert0[ Cluster.iOffset + j ] & INDEX_MASK;
-                            draw_Vertex( *((vector3*)(DList.pPosition + (Offset+0))) );
-                            draw_Vertex( *((vector3*)(DList.pPosition + (Offset+1))) );
-                            draw_Vertex( *((vector3*)(DList.pPosition + (Offset+2))) );
-                        }
-                    }
-                    #endif
-
-                    draw_End();
-                    draw_ClearL2W();
-                    draw_SetZBias( 0 );
-                }
+                xcolor C = xcolor( R.irand( LO_COLOR, HI_COLOR ),
+                                   R.irand( LO_COLOR, HI_COLOR ),
+                                   R.irand( LO_COLOR, HI_COLOR ) );
+                render::debug::Box( Cluster.BBox, pBone[Cluster.iBone], C,
+                                    render::PRIMITIVE_DEPTH_READ_ONLY,
+                                    render::PRIMITIVE_RASTER_COLLISION_BIASED );
             }  
         }
     }
     else
     {
-        if( pRigidGeom->m_Collision.nLowClusters )
+        if( pRigidGeom->m_collision.nLowClusters )
         {
-            const collision_data& Coll = pRigidGeom->m_Collision;
+            const collision_data& Coll = pRigidGeom->m_collision;
 
             random R;
             R.srand( ((u32)(uaddr)(pRigidGeom)) & 0x0000FFFF );
@@ -1434,11 +781,14 @@ void RigidGeom_RenderCollision( const matrix4*  pBone,
             {
                 collision_data::low_cluster& CL = Coll.pLowCluster[i];
 
-                draw_SetL2W( pBone[ CL.iBone ] );
-
-                // Draw all faces in a solid color based on cluster / display list.
-                draw_Begin( DRAW_TRIANGLES );
-                draw_SetZBias( ZBIAS );
+                const render::primitive_draw_desc Material( NULL,
+                                                            render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                            render::PRIMITIVE_BLEND_OPAQUE,
+                                                            render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                            render::PRIMITIVE_RASTER_COLLISION_BIASED,
+                                                            render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                            render::PRIMITIVE_LAYER_SURFACE );
+                render::PrimitiveBatch Batch( Material );
 
                 xcolor CC = xcolor( R.irand( LO_COLOR, HI_COLOR ),
                                     R.irand( LO_COLOR, HI_COLOR ),
@@ -1461,31 +811,26 @@ void RigidGeom_RenderCollision( const matrix4*  pBone,
                     C.B = (u8)( CC.B * I );
                     C.A = 255;
 
-                    draw_Color( C );
-
-                    draw_Vertex( *P0 );
-                    draw_Vertex( *P1 );
-                    draw_Vertex( *P2 );
+                    const render::primitive_vertex V0( *P0, vector2( 0.0f, 0.0f ), C );
+                    const render::primitive_vertex V1( *P1, vector2( 0.0f, 0.0f ), C );
+                    const render::primitive_vertex V2( *P2, vector2( 0.0f, 0.0f ), C );
+                    Batch.AddTriangle( V0, V1, V2 );
 
                     if( QD.Flags )
                     {
-                        draw_Vertex( *P0 );
-                        draw_Vertex( *P2 );
-                        draw_Vertex( *P3 );
+                        const render::primitive_vertex V3( *P3, vector2( 0.0f, 0.0f ), C );
+                        Batch.AddTriangle( V0, V2, V3 );
                     }
                 }
 
-                draw_End();
-                draw_ClearL2W();
-                draw_SetZBias( 0 );
+                Batch.Submit( pBone[CL.iBone] );
             }
         }
         else
         {
-            bbox BBox = pRigidGeom->m_Collision.BBox;
+            bbox BBox = pRigidGeom->m_collision.BBox;
             BBox.Transform( *pBone );
-            draw_ClearL2W();
-            draw_BBox( BBox, XCOLOR_YELLOW );
+            render::debug::Box( BBox, XCOLOR_YELLOW );
         }
     }
 }
@@ -1500,10 +845,10 @@ void RigidGeom_GatherToPolyCache(       guid        Guid,
                                const rigid_geom* pRigidGeom )
 {
     (void)BBox;
-    if( (pRigidGeom==NULL) || (pRigidGeom->m_Collision.nLowClusters==0) )
+    if( (pRigidGeom==NULL) || (pRigidGeom->m_collision.nLowClusters==0) )
         return;
 
-    g_PolyCache.GatherCluster( pRigidGeom->m_Collision, pL2W, MeshMask, Guid );
+    g_PolyCache.GatherCluster( pRigidGeom->m_collision, pL2W, MeshMask, Guid );
 }
 
 //==============================================================================

@@ -26,7 +26,7 @@
 #include "PainMgr/PainTypes.hpp"
 
 #include "Objects/Actor/Actor.hpp"
-#include "Objects/Player.hpp"   // - For spawn_point.
+#include "Objects/Player/Player.hpp"   // - For spawn_point.
 
 //==============================================================================
 //  TYPES
@@ -266,6 +266,11 @@ void logic_tag::AdvanceTime( f32 DeltaTime )
     // Are we "IT-less"?
     if( (m_It == -1) && (GameMgr.m_Score.NPlayers > 0) )
     {
+        if( m_ItTimer > 0.0f )
+        {
+            m_ItTimer -= DeltaTime;
+        }
+
         if( m_ItTimer <= 0.0f )
         {
             // Pick a new IT at random.
@@ -287,10 +292,6 @@ void logic_tag::AdvanceTime( f32 DeltaTime )
                              m_It, GameMgr.m_Score.Player[m_It].NName );
             }
         }
-        else
-        {
-            m_ItTimer -= DeltaTime;
-        }
     }
 
     for( s32 i = 0; i < 32; i++ )
@@ -301,7 +302,8 @@ void logic_tag::AdvanceTime( f32 DeltaTime )
             {
                 m_RespawnDelay[i] -= DeltaTime;
             }
-            else
+
+            if( m_RespawnDelay[i] <= 0.0f )
             {
                 m_RespawnDelay[i] = 0.0f;
                 if( GameMgr.m_Score.Player[i].IsInGame )

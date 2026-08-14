@@ -4,7 +4,7 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 #include "ui_manager.hpp"
 #include "ui_win.hpp"
 #include "ui_font.hpp"
@@ -28,14 +28,15 @@
 #include "ui_dlg_vkeyboard.hpp"
 #include "ui_tabbed_dialog.hpp"
 #include "ui_dlg_list.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "ui_renderer.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 #include "StateMgr/StateMgr.hpp"
 #include "InputMgr/GamePad.hpp"
 
-#include "bitmap\aux_bitmap.hpp"
+#include "Bitmap/aux_Bitmap.hpp"
 
-#include "stringmgr\stringmgr.hpp"
-#include "AudioMgr\AudioMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 
 static const char*  m_ButtonTexturesNames[] = {
 PRELOAD_XBOX_FILE("UI_ButtonsXBOX_A.xbmp"),
@@ -74,17 +75,124 @@ PRELOAD_PS2_FILE("UI_ButtonsPS2_R1.xbmp"),
 PRELOAD_PS2_FILE("UI_ButtonsPS2_R2.xbmp"),
 PRELOAD_PS2_FILE("UI_ButtonsPS2_start.xbmp"),
 
-PRELOAD_FILE("UI_KillsIcon.xbmp"),
-PRELOAD_FILE("UI_TeamKillsIcon.xbmp"),
-PRELOAD_FILE("UI_DeathIcon.xbmp"),
-PRELOAD_FILE("UI_FlagsIcon.xbmp"),
-PRELOAD_FILE("UI_VotesIcon.xbmp"),
-PRELOAD_FILE("UI_FlagsIcon.xbmp"),  // DUMMY
-PRELOAD_FILE("UI_FlagsIcon.xbmp"),  // DUMMY
-PRELOAD_FILE("UI_FlagsIcon.xbmp")   // DUMMY
+PRELOAD_FILE("UI_Kills.xbmp"),
+PRELOAD_FILE("UI_TeamKills.xbmp"),
+PRELOAD_FILE("UI_Deaths.xbmp"),
+PRELOAD_FILE("UI_Flags.xbmp"),
+PRELOAD_FILE("UI_Votes.xbmp"),
+PRELOAD_FILE("UI_Flags.xbmp"),  // DUMMY
+PRELOAD_FILE("UI_Flags.xbmp"),  // DUMMY
+PRELOAD_FILE("UI_Flags.xbmp")   // DUMMY
 };
 
+// TexelsPerUIUnit describes asset density, independently of on-screen UI scale.
+// A 2x atlas contains two source texels for each logical UI unit.
+static const ui_manager::element_desc s_ElementDescs[] =
+{
+//   Name               Bitmap                                      States  Columns  Rows  TexelsPerUIUnit
+    { "frame",          PRELOAD_FILE("UI_FRAME_PIECES.xbmp"),          2,      3,      3,          2.0f },
+    { "frame2",         PRELOAD_FILE("UI_INNER_FRAME.xbmp"),           1,      3,      3,          2.0f },
+    { "glow",           PRELOAD_FILE("UI_BARGLOW.xbmp"),               1,      1,      1,          2.0f },
+    { "highlight",      PRELOAD_FILE("UI_SELECTION_GLOW.xbmp"),        1,      3,      3,          2.0f },
+    { "screenglow",     PRELOAD_FILE("UI_SCREEN_GLOW.xbmp"),           1,      3,      3,          2.0f },
+    { "button",         PRELOAD_FILE("UI_UIBUTTON.xbmp"),              5,      3,      1,          2.0f },
+    { "button_check",   PRELOAD_FILE("UI_CHECKBOX.xbmp"),              5,      1,      1,          2.0f },
+    { "sb_frame",       PRELOAD_FILE("UI_INNER_FRAME.xbmp"),           1,      3,      3,          2.0f },
+    { "sb_arrowdown",   PRELOAD_FILE("UI_DOWNARROW.xbmp"),             5,      1,      1,          2.0f },
+    { "sb_arrowup",     PRELOAD_FILE("UI_UPARROW.xbmp"),               5,      1,      1,          2.0f },
+    { "sb_container",   PRELOAD_FILE("UI_CONTAINER.xbmp"),             5,      3,      3,          2.0f },
+    { "sb_thumb",       PRELOAD_FILE("UI_THUMB.xbmp"),                 5,      1,      3,          2.0f },
+    { "slider_bar",     PRELOAD_FILE("UI_SLIDER_CONTAINER.xbmp"),      1,      3,      1,          2.0f },
+    { "slider_thumb",   PRELOAD_FILE("UI_SLIDER_THUMB.xbmp"),          5,      1,      1,          2.0f },
+    { "button_combo1",  PRELOAD_FILE("UI_COMBO_BOX.xbmp"),             5,      3,      1,          2.0f },
+    { "button_combo2",  PRELOAD_FILE("UI_COMBO_BOX_128.xbmp"),         1,      3,      1,          2.0f },
+    { "button_edit",    PRELOAD_FILE("UI_TEXT_BOX.xbmp"),              5,      3,      1,          2.0f },
+};
+
+static const s32 s_nElementDescs = sizeof(s_ElementDescs) / sizeof(s_ElementDescs[0]);
+
 #define NUM_BUTTON_CODES        58
+
+static const f32 SCREEN_WIPE_TRAIL_LENGTH  = 512.0f;
+static const f32 SCREEN_WIPE_HEAD_HEIGHT   = 32.0f;
+static const f32 SCREEN_WIPE_SPEED         = 960.0f;
+static const f32 SCREEN_WIPE_FADE_DURATION = 16.0f / 30.0f;
+
+namespace
+{
+    struct ui_nine_slice_layout
+    {
+        f32 X[4];
+        f32 Y[4];
+    };
+
+    static xbool ui_CalculateNineSliceLayout( const ui_manager::element& Element,
+                                               const irect& Position,
+                                               s32 State,
+                                               ui_nine_slice_layout& Layout )
+    {
+        if( (State < 0) || (State >= Element.nStates) )
+        {
+            return FALSE;
+        }
+
+        const s32 BaseIndex = State * Element.cx * Element.cy;
+
+        if( Element.cx == 1 )
+        {
+            const f32 Width = (f32)Element.LayoutRects[BaseIndex].GetWidth();
+            Layout.X[0] = (f32)Position.l + ((f32)Position.GetWidth() - Width) * 0.5f;
+            Layout.X[1] = Layout.X[0] + Width;
+        }
+        else
+        {
+            ASSERT( Element.cx == 3 );
+            const f32 AvailableWidth = (f32)MAX( Position.GetWidth(), 0 );
+            f32 LeftWidth  = (f32)Element.LayoutRects[BaseIndex].GetWidth();
+            f32 RightWidth = (f32)Element.LayoutRects[BaseIndex + 2].GetWidth();
+            const f32 FixedWidth = LeftWidth + RightWidth;
+            if( FixedWidth > AvailableWidth )
+            {
+                const f32 BorderScale = (FixedWidth > 0.0f) ? AvailableWidth / FixedWidth : 0.0f;
+                LeftWidth  *= BorderScale;
+                RightWidth  = AvailableWidth - LeftWidth;
+            }
+
+            Layout.X[0] = (f32)Position.l;
+            Layout.X[1] = Layout.X[0] + LeftWidth;
+            Layout.X[2] = (f32)Position.r - RightWidth;
+            Layout.X[3] = (f32)Position.r;
+        }
+
+        if( Element.cy == 1 )
+        {
+            const f32 Height = (f32)Element.LayoutRects[BaseIndex].GetHeight();
+            Layout.Y[0] = (f32)Position.t + ((f32)Position.GetHeight() - Height) * 0.5f;
+            Layout.Y[1] = Layout.Y[0] + Height;
+        }
+        else
+        {
+            ASSERT( Element.cy == 3 );
+            const f32 AvailableHeight = (f32)MAX( Position.GetHeight(), 0 );
+            f32 TopHeight    = (f32)Element.LayoutRects[BaseIndex].GetHeight();
+            f32 BottomHeight = (f32)Element.LayoutRects[BaseIndex + (Element.cy - 1) * Element.cx].GetHeight();
+            const f32 FixedHeight = TopHeight + BottomHeight;
+            if( FixedHeight > AvailableHeight )
+            {
+                const f32 BorderScale = (FixedHeight > 0.0f) ? AvailableHeight / FixedHeight : 0.0f;
+                TopHeight    *= BorderScale;
+                BottomHeight = AvailableHeight - TopHeight;
+            }
+
+            Layout.Y[0] = (f32)Position.t;
+            Layout.Y[1] = Layout.Y[0] + TopHeight;
+            Layout.Y[2] = (f32)Position.b - BottomHeight;
+            Layout.Y[3] = (f32)Position.b;
+        }
+
+        return TRUE;
+    }
+}
 
 //==========================================================================
 //  button code table entry
@@ -235,7 +343,9 @@ const button_code* GetButtonCodeTable( input_platform Platform )
     if( Platform == INPUT_PLATFORM_XBOX )
         return s_XboxButtonCodeTable;
 
-    return s_XboxButtonCodeTable; //TODO PC or something
+    // Keyboard/mouse do not have embedded controller glyphs. Use the Xbox
+    // glyph set as the established fallback for unknown controller layouts.
+    return s_XboxButtonCodeTable;
 }
 
 //=========================================================================
@@ -271,7 +381,7 @@ xbool UseLocalizedXboxButtonTexture( s32 ButtonCode )
 //=========================================================================
 
 static
-void SetButtonTextureName( rhandle<xbitmap>& Texture, s32 ButtonCode )
+void SetButtonTextureName( rhandle<texture>& Texture, s32 ButtonCode )
 {
     if( UseLocalizedXboxButtonTexture( ButtonCode ) )
     {
@@ -305,70 +415,25 @@ static const f32 s_PercentBetweenUpdates = 5.0f;
 //  Data
 //=========================================================================
 
-static xbool ScaleText = FALSE;
-
 ui_manager* g_UiMgr    = NULL;
 s32         g_UiUserID = -1;
 
-s32 g_uiLastSelectController = 0;
-static s32 s_EndDialogCount;
-
-//=========================================================================
-//  PC target manager
-//=========================================================================
-
-#ifdef TARGET_PC
-#include "Entropy/D3DEngine/d3deng_rtarget.hpp"
-#include "Entropy/D3DEngine/d3deng_composite.hpp"
-#include "Entropy/D3DEngine/d3deng_draw_rt.hpp"
-#endif
-
-#ifdef TARGET_PC
-static void UIStage_OnBeginFrame( void )
-{
-    const rtarget* pUITarget = draw_GetUITarget();
-    if( !pUITarget )
-        return;
-
-    if( !rtarget_PushTargets() )
-        return;
-
-    rtarget_SetTargets( pUITarget, 1, NULL );
-
-    f32 clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    rtarget_Clear( RTARGET_CLEAR_COLOR, clearColor, 1.0f, 0 );
-
-    rtarget_PopTargets();
-}
-
-static void UIStage_OnBeforePresent( void )
-{
-    const rtarget* pUITarget = draw_GetUITarget();
-    if( !pUITarget )
-        return;
-
-    rtarget_SetBackBuffer();
-    composite_Blit( *pUITarget, COMPOSITE_BLEND_ALPHA );
-}
-
-static const eng_frame_stage s_UIFrameStage =
-{
-    UIStage_OnBeginFrame,
-    UIStage_OnBeforePresent
-};
-#endif
+static_assert( ui_manager::MAX_INPUT_CONTROLLERS == frontend_input::MAX_CONTROLLERS,
+               "UI and frontend input controller counts must match" );
 
 //=========================================================================
 //  Helpers
 //=========================================================================
 
-static 
-xbool IsUILogicalDown( s32 ControllerID, ingame_pad::logical_id LogicalID )
+static
+xbool IsUILogicalDown( s32 ControllerID, frontend_pad::logical_id LogicalID )
 {
     ASSERT( ControllerID >= 0 );
     ASSERT( ControllerID < MAX_LOCAL_PLAYERS );
 
-    return( g_IngamePad[ControllerID].GetLogical( LogicalID ).GetIsValue() > 0.25f );
+    const frontend_pad::logical& Logical = g_FrontendInput.GetPad( ControllerID ).GetFrameLogical( LogicalID );
+    return( (Logical.GetIsValue() > 0.25f) ||
+            (Logical.GetWasValue() > 0.25f) );
 }
 
 //=========================================================================
@@ -464,68 +529,6 @@ void ui_manager::UpdateButton( ui_manager::button& Button, xbool State, f32 Delt
 
 //=========================================================================
 
-void ui_manager::UpdateAnalog( ui_manager::button& Button, f32 Value, f32 DeltaTime )
-{
-    xbool State = Button.State;
-
-    ASSERT( Button.AnalogDisengage < 1.0f );
-
-    // Clear number of presses, repeats and releases
-    Button.nPresses  = 0;
-    Button.nRepeats  = 0;
-    Button.nReleases = 0;
-
-    if( m_EnableUserInput )
-    {
-        // Do Analog mapping to a pressed button
-        Value *= Button.AnalogScaler;
-        if( Value > Button.AnalogEngage )
-            State = TRUE;
-        if( Value < Button.AnalogDisengage )
-            State = FALSE;
-
-        // Make time scaler from Value
-        //Value = 1.0f + (Value - Button.AnalogDisengage) / (1.0f - Button.AnalogDisengage) * 3;
-        if (Value < 0.0f)
-            Value *= -1.0f;
-
-        // Check for press
-        if( !Button.State && State )
-        {
-            Button.nPresses++;
-            Button.RepeatTimer = Button.RepeatDelay;
-        }
-
-        // Check for repeat
-        if( Button.State && State )
-        {
-            // If repeat interval is 0 then repeat is disabled
-            if( Button.RepeatInterval > 0.0f )
-            {
-                Button.RepeatTimer -= DeltaTime * Value;
-                while( Button.RepeatTimer < 0.0f )
-                {
-                    Button.nRepeats++;
-                    Button.RepeatTimer += Button.RepeatInterval;
-                }
-            }
-        }
-
-        // Check for release
-        if( Button.State && !State )
-        {
-            Button.nReleases++;
-        }
-    }
-    else
-    {
-        State = 0;
-    }
-
-    // Set new state
-    Button.State = State;
-}
-
 //=========================================================================
 //  ui_manager
 //=========================================================================
@@ -533,11 +536,20 @@ void ui_manager::UpdateAnalog( ui_manager::button& Button, f32 Value, f32 DeltaT
 ui_manager::ui_manager( void )
 {
     m_AlphaTime             = 0.0f;
-    m_WipeStepAccumulator   = 0.0f;
+    m_wipeActive            = FALSE;
+    m_wipeFading            = FALSE;
+    m_pWipeOwner            = NULL;
+    m_wipeBounds.Clear();
+    m_wipeRevealY           = 0;
+    m_wipeSpeed             = 0.0f;
+    m_wipeHeadY             = 0.0f;
+    m_wipeFade              = 0.0f;
     m_RefreshStepAccumulator= 0.0f;
     m_GlowStepAccumulator   = 0.0f;
+    m_CallbackDepth         = 0;
     m_EnableUserInput       = 0;
     m_log                   = 0;
+    m_isInitialized          = FALSE;
 }
 
 //=========================================================================
@@ -549,8 +561,33 @@ ui_manager::~ui_manager( void )
 
 //=========================================================================
 
+void ui_manager::UpdateViewport( void )
+{
+    g_UIRenderer.RefreshViewport();
+    irect const Bounds = g_UIRenderer.GetViewport().GetLogicalClipBounds();
+
+    for( s32 i = 0; i < m_Users.GetCount(); i++ )
+    {
+        user* pUser = m_Users[i];
+        pUser->Bounds = Bounds;
+        pUser->MouseX = x_clamp( pUser->MouseX, (f32)Bounds.l, (f32)(Bounds.r - 1) );
+        pUser->MouseY = x_clamp( pUser->MouseY, (f32)Bounds.t, (f32)(Bounds.b - 1) );
+    }
+}
+
+//=========================================================================
+
 s32 ui_manager::Init( void )
 {
+    if( m_isInitialized )
+        return 0;
+
+    if( !g_UIRenderer.Init() )
+    {
+        ASSERTS( FALSE, "Failed to initialize UI renderer" );
+        return -1;
+    }
+
     MEMORY_OWNER( "UI DATA" );
     // Register the default window classes
     RegisterWinClass( "button",     &ui_button_factory      );
@@ -576,7 +613,6 @@ s32 ui_manager::Init( void )
 
 
 //=--  Register the default dialog classes
-    //RegisterDialogClass( "ui_combolist",     (dialog_tem*)0, &ui_dlg_combolist_factory );
     RegisterDialogClass( "ui_vkeyboard",     (dialog_tem*)0, &ui_dlg_vkeyboard_factory );
     RegisterDialogClass( "ui_tabbed_dialog", (dialog_tem*)0, &ui_tabbed_dialog_factory );
     ui_dlg_list_register( this );
@@ -612,68 +648,39 @@ s32 ui_manager::Init( void )
     LoadFont        ( "hudnum",         PRELOAD_FILE("UI_A51FontHUD.xbmp"    ) ); // PRELOAD_FILE("UI_A51FontHUD.font"    )
     LoadFont        ( "loadscr",        PRELOAD_FILE("UI_A51FontLoadscr.xbmp") ); // PRELOAD_FILE("UI_A51FontLoadscr.font")
 
-    //-- Frame
-    LoadElement     ( "frame",          PRELOAD_FILE("UI_frame1.xbmp"),                2, 3, 3 );
-    LoadElement     ( "frame2",         PRELOAD_FILE("UI_frame2.xbmp"),                1, 3, 3 );
-    LoadElement     ( "glow",           PRELOAD_FILE("UI_barglow.xbmp"),               1, 1, 1 );
-    //-- Highlight
-    LoadElement     ( "highlight",      PRELOAD_FILE("UI_highlight.xbmp"),             1, 3, 3 );
-    LoadElement     ( "screenglow",     PRELOAD_FILE("UI_screenglow.xbmp"),            1, 3, 3 );
-    //-- Button
-    LoadElement     ( "button",         PRELOAD_FILE("UI_uibutton.xbmp"),              5, 3, 1 );
-    //-- Check Box
-    LoadElement     ( "button_check",   PRELOAD_FILE("UI_checkbox.xbmp"),              5, 1, 1 );
-    //-- Listbox
-    LoadElement     ( "sb_frame",       PRELOAD_FILE("UI_frame2.xbmp"),                1, 3, 3 );
-    LoadElement     ( "sb_arrowdown",   PRELOAD_FILE("UI_downarrow.xbmp"),             5, 1, 1 );
-    LoadElement     ( "sb_arrowup",     PRELOAD_FILE("UI_uparrow.xbmp"),               5, 1, 1 );
-    LoadElement     ( "sb_container",   PRELOAD_FILE("UI_container.xbmp"),             5, 3, 3 );
-    LoadElement     ( "sb_thumb",       PRELOAD_FILE("UI_thumb.xbmp"),                 5, 1, 3 );
-    //-- Slider
-    LoadElement     ( "slider_bar",     PRELOAD_FILE("UI_slidercontainer.xbmp"),       1, 3, 1 );
-    LoadElement     ( "slider_thumb",   PRELOAD_FILE("UI_sliderthumb.xbmp"),           5, 1, 1 );
-    //-- Combo Box
-    LoadElement     ( "button_combo1",  PRELOAD_FILE("UI_combobox.xbmp"),              5, 3, 1 );
-    LoadElement     ( "button_combo2",  PRELOAD_FILE("UI_combobox_128.xbmp"),          1, 3, 1 );
-    //-- Edit Box
-    LoadElement     ( "button_edit",    PRELOAD_FILE("UI_editbox.xbmp"),               5, 3, 1 );
+    for( s32 i=0; i<s_nElementDescs; i++ )
+    {
+        LoadElement( s_ElementDescs[i] );
+    }
+
+    LoadBitmap      ( "a51_logo",               PRELOAD_FILE("UI_A51_Logo.xbmp"                        ) );
 
     //-- Presence Icons
-#ifdef TARGET_PC //DUMMY
-    LoadBitmap      ( "icon_friend",            PRELOAD_PS2_FILE("UI_PS2_Icon_Friend.xbmp"              ) );
-    LoadBitmap      ( "icon_voice_on",          PRELOAD_PS2_FILE("UI_PS2_Icon_Voice_On.xbmp"            ) );
-    LoadBitmap      ( "icon_voice_muted",       PRELOAD_PS2_FILE("UI_PS2_Icon_Voice_Muted.xbmp"         ) );
-    LoadBitmap      ( "icon_voice_thru_tv",     PRELOAD_PS2_FILE("UI_PS2_Icon_Voice_Thru_TV.xbmp"       ) );
-    LoadBitmap      ( "icon_friend_req_sent",   PRELOAD_PS2_FILE("UI_PS2_Icon_Friend_Req_Sent.xbmp"     ) );
-    LoadBitmap      ( "icon_friend_req_rcvd",   PRELOAD_PS2_FILE("UI_PS2_Icon_Friend_Req_Rcvd.xbmp"     ) );
-    LoadBitmap      ( "icon_invite_sent",       PRELOAD_PS2_FILE("UI_PS2_Icon_Invite_Sent.xbmp"         ) );
-    LoadBitmap      ( "icon_invite_rcvd",       PRELOAD_PS2_FILE("UI_PS2_Icon_Invite_Rcvd.xbmp"         ) );
-    LoadBitmap      ( "icon_voice_speaking",    PRELOAD_PS2_FILE("UI_PS2_Icon_Voice_Speaking.xbmp"      ) );
+    LoadBitmap      ( "icon_friend",            PRELOAD_PS2_FILE("UI_PS2_Friend.xbmp"                   ) );
+    LoadBitmap      ( "icon_voice_on",          PRELOAD_PS2_FILE("UI_PS2_Voice_On.xbmp"                 ) );
+    LoadBitmap      ( "icon_voice_muted",       PRELOAD_PS2_FILE("UI_PS2_Voice_Muted.xbmp"              ) );
+    LoadBitmap      ( "icon_voice_thru_tv",     PRELOAD_PS2_FILE("UI_PS2_Voice_Thru_TV.xbmp"            ) );
+    LoadBitmap      ( "icon_friend_req_sent",   PRELOAD_PS2_FILE("UI_PS2_Friend_Sent.xbmp"              ) );
+    LoadBitmap      ( "icon_friend_req_rcvd",   PRELOAD_PS2_FILE("UI_PS2_Friend_Rec.xbmp"               ) );
+    LoadBitmap      ( "icon_invite_sent",       PRELOAD_PS2_FILE("UI_Invite_Sent.xbmp"                  ) );
+    LoadBitmap      ( "icon_invite_rcvd",       PRELOAD_PS2_FILE("UI_Invite_Received.xbmp"              ) );
+    LoadBitmap      ( "icon_voice_speaking",    PRELOAD_PS2_FILE("UI_Voice_Speaking.xbmp"               ) );
     LoadBitmap      ( "gamespy_logo",           PRELOAD_PS2_FILE("UI_PS2_GameSpy_Logo.xbmp"             ) );
-#else
-#endif
 
-#ifdef TARGET_PC //DUMMY
     for (s32 i=0;i<NUM_BUTTON_TEXTURES;i++)
     {
         SetButtonTextureName( m_ButtonTextures[i], i );
     }    
-#endif
 
     s32 MemoryBudget = MemoryStart - x_MemGetFree();
 
-    //-- Create a user
-    irect r;
-    s32 width,height;
-    eng_GetRes(width,height);
-    r.Set( 0, 0, width,height );
+    //-- Create a user in the resolution-independent UI coordinate space.
+    g_UIRenderer.RefreshViewport();
+    irect const r = g_UIRenderer.GetViewport().GetLogicalClipBounds();
 
     g_UiUserID = CreateUser( -1, r );
     EnableUser(g_UiUserID,FALSE);
     ASSERT( g_UiUserID );
-
-    // set scaling factors based on resolution
-    SetRes();
 
     // Allow processing of user input
     m_EnableUserInput = TRUE;
@@ -692,15 +699,9 @@ s32 ui_manager::Init( void )
     // initialize screen highlight
     InitScreenHighlight();
 
-    // Init ClipStack
-    m_ClipStack.SetCapacity( 32 );
-    m_ClipStack.SetLocked( TRUE );
-
     m_GlowID = -255;
 
-#ifdef TARGET_PC
-    d3deng_RegisterFrameStage( s_UIFrameStage );
-#endif
+    m_isInitialized = TRUE;
 
     return( MemoryBudget );
 }
@@ -709,9 +710,12 @@ s32 ui_manager::Init( void )
 
 void ui_manager::Kill( void )
 {
-#ifdef TARGET_PC
-    d3deng_UnregisterFrameStage( s_UIFrameStage );
-#endif
+
+    if( !m_isInitialized )
+        return;
+
+    ASSERT( m_CallbackDepth == 0 );
+    DestroyDeferredDialogs();
 	
     //-- Destroy Strings
     g_StringTableMgr.UnloadTable( "ui" );
@@ -732,7 +736,6 @@ void ui_manager::Kill( void )
         {
             ui_dialog* pDialog = pUser->DialogStack[0];
 
-            pDialog->Destroy();
             delete pDialog;
             pUser->DialogStack.Delete( 0 );
         }
@@ -755,7 +758,6 @@ void ui_manager::Kill( void )
     // Destroy Elements
     while( m_Elements.GetCount() > 0 )
     {
-        //vram_Unregister( m_Elements[0]->Bitmap );
         m_Elements[0]->Bitmap.Destroy();
         delete m_Elements[0];
         m_Elements.Delete( 0 );
@@ -764,17 +766,29 @@ void ui_manager::Kill( void )
     // Destroy Backgrounds
     while( m_Backgrounds.GetCount() > 0 )
     {
-        //vram_Unregister( m_Backgrounds[0]->Bitmap );
         m_Backgrounds[0]->Bitmap.Destroy();
         delete m_Backgrounds[0];
         m_Backgrounds.Delete( 0 );
     }
+
+    while( m_Bitmaps.GetCount() > 0 )
+    {
+        m_Bitmaps[0]->Bitmap.Destroy();
+        delete m_Bitmaps[0];
+        m_Bitmaps.Delete( 0 );
+    }
+
+    for( s32 i = 0; i < NUM_BUTTON_TEXTURES; i++ )
+        m_ButtonTextures[i].Destroy();
 
     // Destroy Window Classes
     m_WindowClasses.Delete( 0, m_WindowClasses.GetCount() );
 
     // Destroy Dialog Classes
     m_DialogClasses.Delete( 0, m_DialogClasses.GetCount() );
+
+    g_UIRenderer.Kill();
+    m_isInitialized = FALSE;
 }
 
 //=========================================================================
@@ -844,16 +858,12 @@ s32 ui_manager::FindBackground( const char* pName ) const
 
 void ui_manager::RenderBackground( const char* pName ) const
 {
-    s32 Width, Height;
-    eng_GetRes(Width, Height);
+    rect const& Bounds = g_UIRenderer.GetViewport().GetLogicalBounds();
 
     // if we're not to show the background, then render a rectangle
     if( m_EnableBackground==FALSE )
     {
-        irect r;
-
-        r.Set( 0, 0, Width, Height );
-        RenderRect( r, XCOLOR_BLACK, FALSE );
+        RenderRect( g_UIRenderer.GetViewport().GetLogicalClipBounds(), XCOLOR_BLACK, FALSE );
         return;
     }
     s32 iBackground = FindBackground( pName );
@@ -863,22 +873,14 @@ void ui_manager::RenderBackground( const char* pName ) const
     background* pBackground = m_Backgrounds[iBackground];
     ASSERT( pBackground );
 
-    xbitmap *pBitmap;
-
-    eng_GetRes(Width, Height);
-
-    pBitmap = pBackground->Bitmap.GetPointer();
-    if( pBitmap )
+    texture* pTexture = pBackground->Bitmap.GetPointer();
+    if( pTexture )
     {
-        draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_TEXTURED|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP|DRAW_CULL_NONE|DRAW_UI_RTARGET );
-        draw_SetTexture( *pBitmap );
-
-        f32 S = 1.0f;
-        f32 T = 1.0f;
-        f32 Y = 0.0f;
-
-        draw_SpriteUV(vector3(0.0f,Y,0.0f),vector2((f32)Width, (f32)Height), vector2(0,0), vector2( S,T ), XCOLOR_WHITE );
-        draw_End();
+        g_UIRenderer.DrawImage( *pTexture,
+                                Bounds.Min,
+                                Bounds.GetSize(),
+                                vector2( 0.0f, 0.0f ),
+                                vector2( 1.0f, 1.0f ) );
     }
 }
 
@@ -950,22 +952,22 @@ void ui_manager::RenderBitmap( s32 iBitmap, const irect& Position, xcolor Color 
 {
     bitmap* pBitmap = m_Bitmaps[iBitmap];
     ASSERT( pBitmap );
-    xbitmap *pXBitmap = pBitmap->Bitmap.GetPointer();
-
-    vector3     p(0.0f, 0.0f, 0.5f );
-    p.GetX() = (f32)Position.l;
-    p.GetY() = (f32)Position.t;
-
+    texture* pTexture = pBitmap->Bitmap.GetPointer();
+    const vector2 p( (f32)Position.l, (f32)Position.t );
     vector2     wh( (f32)(Position.r - Position.l), (f32)(Position.b - Position.t));
 
     // If we have a bitmap, render it. If not, just render a gouraud rect.
-    if( pXBitmap )
+    if( pTexture )
     {
-        draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_TEXTURED|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP|DRAW_CULL_NONE|DRAW_UI_RTARGET );
-        draw_SetTexture( *pXBitmap );   
-        draw_DisableBilinear(); 
-        draw_SpriteUV( p, wh, vector2(0,0), vector2( 1.0f, 1.0f ), Color );
-        draw_End();
+        g_UIRenderer.DrawImage( *pTexture,
+                                p,
+                                wh,
+                                vector2( 0.0f, 0.0f ),
+                                vector2( 1.0f, 1.0f ),
+                                Color,
+                                0.0f,
+                                UI_BLEND_ALPHA,
+                                UI_SAMPLER_LINEAR_CLAMP );
     }
     else
     {
@@ -988,41 +990,27 @@ void ui_manager::RenderBitmapUV( s32 iBitmap, const irect& Position, const vecto
 
     bitmap* pBitmap = m_Bitmaps[iBitmap];
     ASSERT( pBitmap );
-    xbitmap *pXBitmap = pBitmap->Bitmap.GetPointer();
-    if( !pXBitmap )
+    texture* pTexture = pBitmap->Bitmap.GetPointer();
+    if( !pTexture )
         return;
 
-    vector3 p(0.0f, 0.0f, 0.5f );
-    p.GetX() = (f32)Position.l;
-    p.GetY() = (f32)Position.t;
-
+    const vector2 p( (f32)Position.l, (f32)Position.t );
     vector2 wh( (f32)(Position.r - Position.l), (f32)(Position.b - Position.t));
 
-    // If we have a bitmap, render it. If not, just render a gouraud rect.
-    if( pXBitmap )
-    {
-        draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_TEXTURED|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP|DRAW_CULL_NONE|DRAW_UI_RTARGET );
-        draw_SetTexture( *pXBitmap );   
-        draw_DisableBilinear(); 
-        draw_SpriteUV( p, wh, UV0, UV1, Color );
-        draw_End();
-    }
-    else
-    {
-        static xcolor c1 (146, 226, 100,  64);
-        static xcolor c2 (146, 226, 100,   0);
-
-        irect rb;
-
-        rb = Position;
-
-        RenderGouraudRect( Position, c1, c2, c2, c1, FALSE );
-    }
+    g_UIRenderer.DrawImage( *pTexture,
+                            p,
+                            wh,
+                            UV0,
+                            UV1,
+                            Color,
+                            0.0f,
+                            UI_BLEND_ALPHA,
+                            UI_SAMPLER_LINEAR_CLAMP );
 }
 
 //=========================================================================
 
-s32 ui_manager::LoadElement( const char* pName, const char* pPathName, s32 nStates, s32 cx, s32 cy )
+s32 ui_manager::LoadElement( const element_desc& Desc )
 {
     element*    pElement;
     xarray<s32> x;
@@ -1031,11 +1019,23 @@ s32 ui_manager::LoadElement( const char* pName, const char* pPathName, s32 nStat
     s32         ix;
     s32         iy;
     xcolor      RegColor;
+    texture*    pTexture;
     xbitmap*    pBitmap;
+
+    const xbool IsValidDesc = Desc.pName &&
+                              Desc.pBitmapName &&
+                              (Desc.nStates > 0) &&
+                              ((Desc.cx == 1) || (Desc.cx == 3)) &&
+                              ((Desc.cy == 1) || (Desc.cy == 3)) &&
+                              x_isvalid( Desc.TexelsPerUIUnit ) &&
+                              (Desc.TexelsPerUIUnit > 0.0f);
+    ASSERT( IsValidDesc );
+    if( !IsValidDesc )
+        return -1;
 
     // Check if element already exists
     {
-        s32 ID = FindElement( pName );
+        s32 ID = FindElement( Desc.pName );
         if( ID != -1 )
             return ID;
     }
@@ -1045,55 +1045,66 @@ s32 ui_manager::LoadElement( const char* pName, const char* pPathName, s32 nStat
     ASSERT( pElement );
 
     // Set data
-    pElement->Name      = pName;
-    pElement->nStates   = nStates;
-    pElement->cx        = cx;
-    pElement->cy        = cy;
+    pElement->Name    = Desc.pName;
+    pElement->nStates = Desc.nStates;
+    pElement->cx      = Desc.cx;
+    pElement->cy      = Desc.cy;
 
     // Load the bitmap
-    //VERIFYS( pElement->Bitmap.Load( pPathName ),xfs("%s",pPathName) );
-    pElement->Bitmap.SetName(pPathName);
-    pBitmap = pElement->Bitmap.GetPointer();
-
-    if( (nStates > 0) && (cx > 0) && (cy > 0) )
+    pElement->Bitmap.SetName( Desc.pBitmapName );
+    pTexture = pElement->Bitmap.GetPointer();
+    ASSERT( pTexture );
+    if( !pTexture )
     {
-        ASSERT( (cx==1) || (cx==3) );
-        ASSERT( (cy==1) || (cy==3) );
+        delete pElement;
+        return -1;
+    }
+    pBitmap = &pTexture->m_bitmap;
 
-        // Pick out registration mark color
-        RegColor = pBitmap->GetPixelColor( 0, 0 );
+    // Pick out registration mark color
+    RegColor = pBitmap->GetPixelColor( 0, 0 );
 
-        // Find the registration markers
-        x.SetCapacity( cx+1 );
-        y.SetCapacity( (cy*nStates)+1 );
-        for( i=0 ; i<pBitmap->GetWidth() ; i++ )
+    // Find the registration markers
+    x.SetCapacity( Desc.cx+1 );
+    y.SetCapacity( (Desc.cy*Desc.nStates)+1 );
+    for( i=0 ; i<pBitmap->GetWidth() ; i++ )
+    {
+        if( pBitmap->GetPixelColor( i, 0 ) == RegColor )
+            x.Append() = i;
+    }
+    for( i=0 ; i<pBitmap->GetHeight() ; i++ )
+    {
+        if( pBitmap->GetPixelColor( 0, i ) == RegColor )
+            y.Append() = i;
+    }
+
+    const xbool MarkersAreValid = (x.GetCount() == (Desc.cx+1)) &&
+                                  (y.GetCount() == ((Desc.cy*Desc.nStates)+1));
+    ASSERT( MarkersAreValid );
+    if( !MarkersAreValid )
+    {
+        delete pElement;
+        return -1;
+    }
+
+    // Texture rectangles remain in physical texels. Layout rectangles are
+    // converted once to resolution-independent UI units.
+    pElement->TextureRects.SetCapacity( Desc.cx*Desc.cy*Desc.nStates );
+    pElement->LayoutRects.SetCapacity ( Desc.cx*Desc.cy*Desc.nStates );
+    for( iy=0 ; iy<(Desc.cy*Desc.nStates) ; iy++ )
+    {
+        for( ix=0 ; ix<Desc.cx ; ix++ )
         {
-            if( pBitmap->GetPixelColor( i, 0 ) == RegColor )
-                x.Append() = i;
-        }
-        for( i=0 ; i<pBitmap->GetHeight() ; i++ )
-        {
-            if( pBitmap->GetPixelColor( 0, i ) == RegColor )
-                y.Append() = i;
-        }
+            irect& TextureRect = pElement->TextureRects.Append();
+            TextureRect.Set( x[ix]+1, y[iy]+1, x[ix+1], y[iy+1] );
 
-        ASSERT( x.GetCount() == (cx+1) );
-        ASSERT( y.GetCount() == ((cy*nStates)+1) );
-
-        // Setup the rectangles
-        pElement->r.SetCapacity( cx*cy*nStates );
-        for( iy=0 ; iy<(cy*nStates) ; iy++ )
-        {
-            for( ix=0 ; ix<cx ; ix++ )
-            {
-                pElement->r.Append().Set( x[ix]+1, y[iy]+1, (x[ix+1]), (y[iy+1]) );
-            }
+            s32 const LogicalWidth  = MAX( 1, (s32)x_floor( (f32)TextureRect.GetWidth()  / Desc.TexelsPerUIUnit + 0.5f ) );
+            s32 const LogicalHeight = MAX( 1, (s32)x_floor( (f32)TextureRect.GetHeight() / Desc.TexelsPerUIUnit + 0.5f ) );
+            pElement->LayoutRects.Append().Set( 0, 0, LogicalWidth, LogicalHeight );
         }
     }
 
     // Register the bitmap for VRAM
-    //vram_Register( pElement->Bitmap );
-
     // Add element to array and return ID
     m_Elements.Append() = pElement;
     return m_Elements.GetCount()-1;
@@ -1120,225 +1131,141 @@ s32 ui_manager::FindElement( const char* pName ) const
 
 void ui_manager::RenderElement( s32 iElement, const irect& Position, s32 State, const xcolor& Color, xbool IsAdditive ) const
 {
-    xbool       ScaleX = FALSE;                                                       
-    xbool       ScaleY = FALSE;
-    s32         ix;
-    s32         iy;
-    s32         ie;
-    vector2     p(0.0f, 0.0f);
-    vector2     wh;
-    vector2     uv0;
-    vector2     uv1;
-    element*    pElement;
-    xbitmap*    pBitmap;
+    const element* pElement;
+    texture*       pTexture;
+    const xbitmap* pBitmap;
 
     ASSERT( (iElement >= 0) && (iElement < m_Elements.GetCount()) );
 
     // Get Element pointer
     pElement = m_Elements[iElement];
 
-    // Use passed color instead of forced white
-    xcolor RenderColor = Color;
-
     // Validate arguments
     ASSERT( (State >= 0) && (State < pElement->nStates) );
 
-    // Determine what type we are, scaled horizontal, vertical, or both
-    if( Position.GetWidth()  != 0 ) ScaleX = TRUE;
-    if( Position.GetHeight() != 0 ) ScaleY = TRUE;
-
-    // Setup draw flags
-    u32 Flags = DRAW_2D|DRAW_TEXTURED|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP|DRAW_CULL_NONE|DRAW_UI_RTARGET;
-    
-    // Add blend mode if needed
-    if( IsAdditive )
-        Flags |= DRAW_BLEND_ADD;
-
-    // Begin drawing with proper flags
-    draw_Begin( DRAW_SPRITES, Flags );
-
-    // get a pointer to the texture
-    pBitmap = pElement->Bitmap.GetPointer();
-    draw_SetTexture( *pBitmap );
-
-    // Disable Bilinear
-    draw_DisableBilinear(); 
-
-    // Render all the parts of the element
-    ie  = State * (pElement->cx*pElement->cy);
-
-    // Center single-tile elements within postion
-    if( pElement->cy == 1 )
-        p.Y = (f32)Position.t + (f32)(Position.GetHeight() - pElement->r[ie].GetHeight()) / 2.0f;
-    else
-        p.Y = (f32)Position.t;
-
-    // Loop on y
-    for( iy=0 ; iy<pElement->cy ; iy++ )
+    ui_nine_slice_layout Layout;
+    if( !ui_CalculateNineSliceLayout( *pElement, Position, State, Layout ) )
     {
-        // Reset x position
-        if( pElement->cx == 1 )
-            p.X = (f32)Position.l + (f32)(Position.GetWidth() - pElement->r[ie].GetWidth()) / 2.0f;
-        else
-            p.X = (f32)Position.l;
-
-        // Set Height
-        if( (pElement->cy == 3) && (iy == 1) )
-        {
-            wh.Y = (f32)Position.GetHeight() - ((f32)pElement->r[2*pElement->cx].GetHeight() + (f32)pElement->r[0].GetHeight());
-        }
-        else
-        {
-            wh.Y = (f32)pElement->r[ie].GetHeight();
-        }
-
-        // Loop on x
-        for( ix=0 ; ix<pElement->cx ; ix++ )
-        {
-            // Calculate UVs
-            uv0.X = ((f32)pElement->r[ie].l + 0.5f) / pBitmap->GetWidth();
-            uv0.Y = ((f32)pElement->r[ie].t + 0.5f) / pBitmap->GetHeight();
-            uv1.X = ((f32)pElement->r[ie].r - 0.5f) / pBitmap->GetWidth();
-            uv1.Y = ((f32)pElement->r[ie].b - 0.5f) / pBitmap->GetHeight();
-
-            // Set Width
-            if( (pElement->cx == 3) && (ix == 1) )
-            {
-                wh.X = (f32)Position.GetWidth() - ((f32)pElement->r[2].GetWidth() + (f32)pElement->r[0].GetWidth());
-            }
-            else
-            {
-                wh.X = (f32)pElement->r[ie].GetWidth();
-            }
-
-            // Draw sprite
-            draw_SpriteUV( vector3( p.X, p.Y, 0.0f ), wh, uv0, uv1, RenderColor );
-
-            // Advance position on x
-            p.X += wh.X;
-            // Advance index to element
-            ie++;
-        }
-        // Advance position on y
-        p.Y += wh.Y;
+        return;
     }
 
-    // End drawing
-    draw_End();
+    pTexture = pElement->Bitmap.GetPointer();
+    if( !pTexture )
+        return;
+    pBitmap = &pTexture->m_bitmap;
+    const ui_blend_mode Blend = IsAdditive ? UI_BLEND_ADDITIVE : UI_BLEND_ALPHA;
 
-    // Enable Bilinear
-    draw_EnableBilinear();  
+    const s32 BaseIndex = State * pElement->cx * pElement->cy;
+    for( s32 YIndex = 0; YIndex < pElement->cy; YIndex++ )
+    {
+        for( s32 XIndex = 0; XIndex < pElement->cx; XIndex++ )
+        {
+            const s32 ElementIndex = BaseIndex + XIndex + YIndex * pElement->cx;
+            vector2 UV0;
+            vector2 UV1;
+            ui_GetTextureRectUV( pElement->TextureRects[ElementIndex],
+                                 pBitmap->GetWidth(),
+                                 pBitmap->GetHeight(),
+                                 UV0,
+                                 UV1 );
+
+            const vector2 DrawPosition( Layout.X[XIndex], Layout.Y[YIndex] );
+            const vector2 DrawSize( Layout.X[XIndex + 1] - Layout.X[XIndex],
+                                    Layout.Y[YIndex + 1] - Layout.Y[YIndex] );
+            g_UIRenderer.DrawImage( *pTexture,
+                                    DrawPosition,
+                                    DrawSize,
+                                    UV0,
+                                    UV1,
+                                    Color,
+                                    0.0f,
+                                    Blend,
+                                    UI_SAMPLER_LINEAR_CLAMP_ATLAS );
+        }
+    }
 }
 
 //=========================================================================
 
 void ui_manager::RenderElementUV( s32 iElement, const irect& Position, const irect& UV, const xcolor& Color, xbool IsAdditive ) const
 {
-    vector3     p(0.0f, 0.0f, 0.5f );
+    vector2     p(0.0f, 0.0f );
     vector2     wh;
     vector2     uv0;
     vector2     uv1;
     element*    pElement;
-    xbitmap*    pBitmap;
+    texture*    pTexture;
+    const xbitmap* pBitmap;
 
     ASSERT( (iElement >= 0) && (iElement < m_Elements.GetCount()) );
 
     // Get Element pointer
     pElement = m_Elements[iElement];
 
-    // Setup draw flags
-    u32 Flags = DRAW_2D|DRAW_TEXTURED|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_CULL_NONE|DRAW_UI_RTARGET;
-    
-    // Add blend mode if needed
-    if( IsAdditive )
-        Flags |= DRAW_BLEND_ADD;
-
-    // Begin drawing
-    draw_Begin( DRAW_SPRITES, Flags );
-
-    // Get bitmap pointer
-    pBitmap = pElement->Bitmap.GetPointer();
-    draw_SetTexture( *pBitmap );
-
-    // Disable Bilinear
-    draw_DisableBilinear(); 
+    pTexture = pElement->Bitmap.GetPointer();
+    if( !pTexture )
+        return;
+    pBitmap = &pTexture->m_bitmap;
 
     // Calculate Position and Size
-    p.GetX() = (f32)Position.l;
-    p.GetY() = (f32)Position.t;
+    p.X      = (f32)Position.l;
+    p.Y      = (f32)Position.t;
     wh.X     = (f32)Position.GetWidth();
     wh.Y     = (f32)Position.GetHeight();
 
     // Calculate UVs
-    uv0.X = (UV.l + 0.5f) / pBitmap->GetWidth();
-    uv0.Y = (UV.t + 0.5f) / pBitmap->GetHeight();
-    uv1.X = (UV.r + 0.5f) / pBitmap->GetWidth();
-    uv1.Y = (UV.b + 0.5f) / pBitmap->GetHeight();
+    ui_GetTextureRectUV( UV,
+                         pBitmap->GetWidth(),
+                         pBitmap->GetHeight(),
+                         uv0,
+                         uv1 );
 
     // Draw sprite
-    draw_SpriteUV( p, wh, uv0, uv1, Color );
-
-    // End drawing
-    draw_End();
-
-    // Enable Bilinear
-    draw_EnableBilinear();  
+    g_UIRenderer.DrawImage( *pTexture,
+                            p,
+                            wh,
+                            uv0,
+                            uv1,
+                            Color,
+                            0.0f,
+                            IsAdditive ? UI_BLEND_ADDITIVE : UI_BLEND_ALPHA,
+                            UI_SAMPLER_LINEAR_CLAMP_ATLAS );
 }
 
 //=========================================================================
 
 void ui_manager::RenderElementUV( s32 iElement, const irect& Position, const vector2& UV0, const vector2& UV1, const xcolor& Color, xbool IsAdditive ) const
 {
-    vector3     p(0.0f, 0.0f, 0.5f );
+    vector2     p(0.0f, 0.0f );
     vector2     wh;
     element*    pElement;
-    xbitmap*    pBitmap;
+    texture*    pTexture;
 
     ASSERT( (iElement >= 0) && (iElement < m_Elements.GetCount()) );
 
     // Get Element pointer
     pElement = m_Elements[iElement];
 
-    // Setup draw flags
-    u32 Flags = DRAW_2D|DRAW_TEXTURED|DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP|DRAW_CULL_NONE|DRAW_UI_RTARGET;
-    
-    // Add blend mode if needed
-    if( IsAdditive )
-        Flags |= DRAW_BLEND_ADD;
-
-    // Begin drawing
-    draw_Begin( DRAW_SPRITES, Flags );
-
-    // Get bitmap pointer
-    pBitmap = pElement->Bitmap.GetPointer();
-    draw_SetTexture( *pBitmap );
-
-    // Disable Bilinear
-    draw_DisableBilinear(); 
+    pTexture = pElement->Bitmap.GetPointer();
+    if( !pTexture )
+        return;
 
     // Calculate Position and Size
-    p.GetX() = (f32)Position.l;
-    p.GetY() = (f32)Position.t;
+    p.X      = (f32)Position.l;
+    p.Y      = (f32)Position.t;
     wh.X     = (f32)Position.GetWidth();
     wh.Y     = (f32)Position.GetHeight();
 
     // Draw sprite
-    draw_SpriteUV( p, wh, UV0, UV1, Color );
-
-    // End drawing
-    draw_End();
-
-    // Enable Bilinear
-    draw_EnableBilinear();  
-}
-
-//=========================================================================
-
-const ui_manager::element* ui_manager::GetElement( s32 iElement ) const
-{
-    ASSERT( (iElement >= 0) && (iElement < m_Elements.GetCount()) );
-
-    return m_Elements[iElement];
+    g_UIRenderer.DrawImage( *pTexture,
+                            p,
+                            wh,
+                            UV0,
+                            UV1,
+                            Color,
+                            0.0f,
+                            IsAdditive ? UI_BLEND_ADDITIVE : UI_BLEND_ALPHA,
+                            UI_SAMPLER_LINEAR_CLAMP_ATLAS );
 }
 
 //=========================================================================
@@ -1362,7 +1289,7 @@ s32 ui_manager::LoadFont( const char* pName, const char* pPathName )
     // Create and load font
     pFont->pFont = new ui_font;
     ASSERT( pFont->pFont );
-    VERIFY( pFont->pFont->Load( pPathName ) );
+    VERIFY( pFont->pFont->Load( this, pPathName ) );
 
     // Add to array of fonts
     m_Fonts.Append() = pFont;
@@ -1432,6 +1359,17 @@ void ui_manager::RenderText( s32 iFont, const irect& Position, s32 Flags, const 
 }
 
 //=========================================================================
+
+void ui_manager::RenderInputText( s32 iFont, const irect& Position, s32 Flags, const xcolor& Color, const xwchar* pString, input_platform Platform ) const
+{
+    ASSERT( (iFont >= 0) && (iFont < m_Fonts.GetCount()) );
+
+    ui_font* pFont = m_Fonts[iFont]->pFont;
+    pFont->RenderInputText( Position, Flags, Color, pString, Platform );
+}
+
+//=========================================================================
+
 void ui_manager::RenderText_Wrap( s32 iFont, const irect& Position, s32 Flags, const xcolor& Color,  const xwstring& Text, xbool IgnoreEmbeddedColor,  xbool UseGradient, f32 FlareAmount )
 {
     ASSERT( (iFont >= 0) && (iFont < m_Fonts.GetCount()) );
@@ -1492,15 +1430,20 @@ s32 ui_manager::GetLineHeight( s32 iFont ) const
 
 void ui_manager::RenderRect( const irect& r, const xcolor& Color, xbool IsWire ) const
 {
-    draw_Rect( r, Color, IsWire, DRAW_UI_RTARGET );
+    g_UIRenderer.DrawRect( r, Color, IsWire );
 }
 
 //=========================================================================
 
 void ui_manager::RenderGouraudRect( const irect& r, const xcolor& c1, const xcolor& c2, const xcolor& c3, const xcolor& c4, xbool IsWire, xbool IsAdditive ) const
 {
-    s32 drawFlags = DRAW_UI_RTARGET | (IsAdditive ? DRAW_BLEND_ADD : 0);
-    draw_GouraudRect( r, c1, c2, c3, c4, IsWire, drawFlags );
+    g_UIRenderer.DrawGradientRect( r,
+                                   c1,
+                                   c4,
+                                   c3,
+                                   c2,
+                                   IsWire,
+                                   IsAdditive ? UI_BLEND_ADDITIVE : UI_BLEND_ALPHA );
 }
 
 //=========================================================================
@@ -1573,37 +1516,38 @@ s32 ui_manager::CreateUser( s32 ControllerID, const irect& Bounds, s32 Data )
 
         // Fill out the struct
         pUser->Enabled                  = TRUE;
-        pUser->ControllerID             = ControllerID;
+        ASSERT( (ControllerID >= -1) && (ControllerID < MAX_INPUT_CONTROLLERS) );
+        pUser->ControllerID             = ((ControllerID >= 0) && (ControllerID < MAX_INPUT_CONTROLLERS))
+                                        ? ControllerID
+                                        : -1;
         pUser->Bounds                   = Bounds;
         pUser->Data                     = Data;
         pUser->Height                   = 0;
         pUser->pCaptureWindow           = 0;
+        pUser->pPressedWindow           = 0;
         pUser->pFocusedWindow           = 0;
         pUser->pHoveredWindow           = 0;
-        pUser->iHighlightElement        = FindElement( "highlight" );
-        ASSERT( pUser->iHighlightElement );
+        pUser->InputDevice              = ui_input_device::None;
+        pUser->InputPlatform            = INPUT_PLATFORM_NONE;
 
-        pUser->bMouseMode               = FALSE;
-        pUser->MouseVisible             = TRUE;
+        pUser->MouseVisible             = FALSE;
         pUser->MouseX                   = Bounds.GetWidth()/2  + Bounds.l;
         pUser->MouseY                   = Bounds.GetHeight()/2 + Bounds.t;
         pUser->LastMouseX               = Bounds.GetWidth()/2  + Bounds.l;
         pUser->LastMouseY               = Bounds.GetHeight()/2 + Bounds.t;
 
         // Set Analog Scalers
-        for( i=0 ; i<SM_MAX_PLAYERS ; i++ ) // This may not be the best define for this, but it's better than hard numbers! 
+        for( i=0 ; i<MAX_INPUT_CONTROLLERS ; i++ )
         {
-            pUser->DPadUp[i]       .SetupRepeat( 0.200f, 0.060f );
-            pUser->DPadDown[i]     .SetupRepeat( 0.200f, 0.060f );
-            pUser->DPadLeft[i]     .SetupRepeat( 0.200f, 0.060f );
-            pUser->DPadRight[i]    .SetupRepeat( 0.200f, 0.060f );
-            //pUser->PadSelect[i]    .SetupRepeat( 0.200f, 0.060f );
-            //pUser->PadBack[i]      .SetupRepeat( 0.200f, 0.060f );
-            pUser->PadDelete[i]    .SetupRepeat( 0.400f, 0.050f );
-            //pUser->PadActivate[i]  .SetupRepeat( 0.200f, 0.060f );
+            pUser->NavigateUp[i]   .SetupRepeat( 0.200f, 0.060f );
+            pUser->NavigateDown[i] .SetupRepeat( 0.200f, 0.060f );
+            pUser->NavigateLeft[i] .SetupRepeat( 0.200f, 0.060f );
+            pUser->NavigateRight[i].SetupRepeat( 0.200f, 0.060f );
+            pUser->Delete[i]       .SetupRepeat( 0.400f, 0.050f );
         }
         static const s32 MAX_DIALOGS_EVER = 20;
         pUser->DialogStack.SetCapacity( MAX_DIALOGS_EVER ); // Plenty of room
+        pUser->DialogRevision = 0;
 
         // Assign a stable id (handle) and add to the users list
         static s32 s_NextUserId = 0;
@@ -1630,6 +1574,8 @@ void ui_manager::DeleteUser( s32 UserID )
 {
     s32     Index;
 
+    ASSERT( m_CallbackDepth == 0 );
+
     ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
     // Find the users index
@@ -1640,7 +1586,7 @@ void ui_manager::DeleteUser( s32 UserID )
     while( m_Users[Index]->DialogStack.GetCount() > 0 )
     {
         s32 i = m_Users[Index]->DialogStack.GetCount()-1;
-        m_Users[Index]->DialogStack[i]->Destroy();
+        delete m_Users[Index]->DialogStack[i];
         m_Users[Index]->DialogStack.Delete( i );
     }
     m_Users[Index]->DialogStack.FreeExtra();
@@ -1676,8 +1622,12 @@ void ui_manager::SetUserController( s32 UserID, s32 ControllerID )
 {
     ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
-    user*   pUser = GetUserById( UserID );
-    pUser->ControllerID = ControllerID;
+    ASSERT( (ControllerID >= -1) && (ControllerID < MAX_INPUT_CONTROLLERS) );
+
+    user* pUser = GetUserById( UserID );
+    pUser->ControllerID = ((ControllerID >= 0) && (ControllerID < MAX_INPUT_CONTROLLERS))
+                        ? ControllerID
+                        : -1;
 }
 
 //=========================================================================
@@ -1702,12 +1652,112 @@ ui_win* ui_manager::GetFocusedWindow( s32 UserID ) const
 
 //=========================================================================
 
+ui_input_device ui_manager::GetInputDevice( s32 UserID ) const
+{
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
+    return GetUserById( UserID )->InputDevice;
+}
+
+//=========================================================================
+
+input_platform ui_manager::GetInputPlatform( s32 UserID ) const
+{
+    ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
+    return GetUserById( UserID )->InputPlatform;
+}
+
+//=========================================================================
+
+xbool ui_manager::DispatchInput( ui_win* pTarget, ui_input_event& Event )
+{
+    if( !pTarget )
+    {
+        return FALSE;
+    }
+
+    Event.m_pTarget = pTarget;
+    m_CallbackDepth++;
+    xbool const Handled = pTarget->OnInput( Event );
+    m_CallbackDepth--;
+
+    if( m_CallbackDepth == 0 )
+    {
+        DestroyDeferredDialogs();
+    }
+
+    return Handled;
+}
+
+//=========================================================================
+
+void ui_manager::DestroyDeferredDialogs( void )
+{
+    while( m_DeferredDialogs.GetCount() > 0 )
+    {
+        ui_dialog* pDialog = m_DeferredDialogs[0];
+        m_DeferredDialogs.Delete( 0 );
+        delete pDialog;
+    }
+}
+
+//=========================================================================
+
+void ui_manager::SetHoveredWindow( user* pUser, ui_win* pWin )
+{
+    ASSERT( pUser );
+
+    if( pUser->pHoveredWindow == pWin )
+    {
+        return;
+    }
+
+    if( pUser->pHoveredWindow )
+    {
+        pUser->pHoveredWindow->OnPointerLeave( pUser->pHoveredWindow );
+        pUser->pHoveredWindow->m_IsHovered = FALSE;
+    }
+
+    pUser->pHoveredWindow = pWin;
+
+    if( pUser->pHoveredWindow )
+    {
+        pUser->pHoveredWindow->m_IsHovered = TRUE;
+    }
+}
+
+//=========================================================================
+
+void ui_manager::SetInputMode( user* pUser, ui_input_device Device, input_platform Platform )
+{
+    ASSERT( pUser );
+
+    pUser->InputDevice   = Device;
+    pUser->InputPlatform = Platform;
+
+    if( Device == ui_input_device::Mouse )
+    {
+        pUser->MouseVisible = TRUE;
+    }
+    else if( (Device == ui_input_device::Keyboard) ||
+             (Device == ui_input_device::Gamepad) )
+    {
+        pUser->MouseVisible = FALSE;
+        SetHoveredWindow( pUser, NULL );
+    }
+}
+
+//=========================================================================
+
 void ui_manager::SetMouseVisible( s32 UserID, xbool State )
 {
     ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
     user*   pUser = GetUserById( UserID );
     pUser->MouseVisible = State;
+    if( !State )
+    {
+        SetHoveredWindow( pUser, NULL );
+    }
 }
 
 //=========================================================================
@@ -1722,20 +1772,13 @@ xbool ui_manager::GetMouseVisible( s32 UserID ) const
 
 //=========================================================================
 
-xbool ui_manager::IsGamepadActiveInput( void ) const
-{
-    return( g_Input.GetCurrentInputDevice() == INPUT_DEVICE_GAMEPAD );
-}
-
-//=========================================================================
-
 void ui_manager::SetMousePos( s32 UserID, s32 x, s32 y )
 {
     ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
     user*   pUser = GetUserById( UserID );
-    pUser->MouseX = x;
-    pUser->MouseY = y;
+    pUser->MouseX = (f32)x;
+    pUser->MouseY = (f32)y;
 }
 
 //=========================================================================
@@ -1745,8 +1788,8 @@ void ui_manager::GetMousePos( s32 UserID, s32& x, s32& y ) const
     ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
 
     user*   pUser = GetUserById( UserID );
-    x = pUser->MouseX;
-    y = pUser->MouseY;
+    x = (s32)x_floor( pUser->MouseX + 0.5f );
+    y = (s32)x_floor( pUser->MouseY + 0.5f );
 }
 
 //=========================================================================
@@ -1767,7 +1810,16 @@ void ui_manager::SetFocusWindow( s32 UserID, ui_win* pWin )
     pUser->pFocusedWindow = pWin;
 
     if( pUser->pFocusedWindow )
+    {
         pUser->pFocusedWindow->OnFocusGained( pUser->pFocusedWindow );
+
+        for( ui_win* pAncestor = pUser->pFocusedWindow->GetParent();
+             pAncestor;
+             pAncestor = pAncestor->GetParent() )
+        {
+            pAncestor->OnFocusWithin( pUser->pFocusedWindow );
+        }
+    }
 }
 
 //=========================================================================
@@ -1816,6 +1868,21 @@ const irect& ui_manager::GetUserBounds( s32 UserID ) const
 
 //=========================================================================
 
+void ui_manager::SetUserScale( f32 Scale )
+{
+    g_UIRenderer.SetUserScale( Scale );
+    UpdateViewport();
+}
+
+//=========================================================================
+
+f32 ui_manager::GetUserScale( void ) const
+{
+    return g_UIRenderer.GetViewport().GetUserScale();
+}
+
+//=========================================================================
+
 void ui_manager::EnableUser( s32 UserID, xbool State )
 {
     ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
@@ -1832,15 +1899,6 @@ xbool ui_manager::IsUserEnabled( s32 UserID ) const
 
     user*   pUser = GetUserById( UserID );
     return pUser->Enabled;
-}
-
-//=========================================================================
-
-void ui_manager::AddHighlight( s32 UserID, irect& r, xbool Flash )
-{
-    (void)UserID;
-    (void)r;
-    (void)Flash;
 }
 
 //=========================================================================
@@ -1885,8 +1943,10 @@ ui_win* ui_manager::GetWindowAtXY( user* pUser, s32 x, s32 y )
         while( (pWindow == NULL) && (i >= 0) )
         {
             ui_dialog* pDialog = pUser->DialogStack[i];
-            pDialog->ScreenToLocal( x, y );
-            pWindow = pDialog->GetWindowAtXY( x, y );
+            s32 LocalX = x;
+            s32 LocalY = y;
+            pDialog->ScreenToLocal( LocalX, LocalY );
+            pWindow = pDialog->GetWindowAtXY( LocalX, LocalY );
 
             // Don't select a disabled window
             if( pWindow && (pWindow->GetFlags() & ui_win::WF_DISABLED) )
@@ -1910,26 +1970,25 @@ ui_win* ui_manager::GetWindowAtXY( user* pUser, s32 x, s32 y )
 
 //=========================================================================
 
-#if !defined(X_RETAIL)
-xbool   bInProcessInput;
-#endif
-
 xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
 {
-    xbool   Iterate         = FALSE;
-    s32     IterateCount    = 0;
-    s32     StartController = 0;
-    s32     EndController   = 0;
-
-#if !defined(X_RETAIL)
-    bInProcessInput = FALSE;
-#endif
+    xbool   Iterate             = FALSE;
+    xbool   MouseWheelProcessed = FALSE;
+    s32     IterateCount        = 0;
 
     ASSERT( (m_Users.Find( GetUserById( UserID ) )) != -1 );
     user*   pUser = GetUserById( UserID );
+    m_CallbackDepth++;
+    u32     DialogRevision = pUser->DialogRevision;
+    s32 const StartController = (pUser->ControllerID >= 0) ? pUser->ControllerID : 0;
+    s32 const EndController   = (pUser->ControllerID >= 0) ? pUser->ControllerID : MAX_INPUT_CONTROLLERS - 1;
+    ASSERT( (StartController >= 0) && (EndController < MAX_INPUT_CONTROLLERS) );
+    UpdateViewport();
 
     do
     {
+        xbool HoverTargetChanged = FALSE;
+
         // Don't iterate unless set later
         if( Iterate )
         {
@@ -1937,256 +1996,388 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
             Iterate = FALSE;
         }
 
-        // Get pointer to window to receive input
-        ui_win* pWin = pUser->pCaptureWindow;
+        s32 const MouseWheelDelta = MouseWheelProcessed
+                                  ? 0
+                                  : static_cast<s32>( g_Input.GetFrameSnapshot().GetValue( INPUT_MOUSE_WHEEL_REL ) );
+
+        // Semantic navigation is routed through focus. Pointer capture is a
+        // separate concern and must not redirect keyboard/gamepad actions.
+        ui_win* pWin = pUser->pFocusedWindow;
+
+        // Character keys are not semantic UI actions, but they still switch
+        // the active input mode and hide the mouse cursor.
+        if( g_Input.WasFrameDeviceButtonPressed( INPUT_DEVICE_KEYBOARD ) )
+        {
+            SetInputMode( pUser, ui_input_device::Keyboard, INPUT_PLATFORM_PC );
+        }
 
         // Update mouse position and switch to mouse mode if it moved
         {
-            s32 dx = g_Input.GetMouseDeltaX();
-            s32 dy = g_Input.GetMouseDeltaY();
+            s32 const ScreenDeltaX = g_Input.GetFrameMouseDeltaX();
+            s32 const ScreenDeltaY = g_Input.GetFrameMouseDeltaY();
 
-            if( g_Input.GetCurrentInputDevice() == INPUT_DEVICE_MOUSE )
+            if( ScreenDeltaX || ScreenDeltaY )
             {
-                pUser->bMouseMode   = TRUE;
-                pUser->MouseVisible = TRUE;
-            }
-
-            if( dx || dy )
-            {
-                pUser->MouseX += dx;
-                pUser->MouseY += dy;
+                vector2 const LogicalDelta = g_UIRenderer.GetViewport().ScreenDeltaToLogical(
+                    vector2( (f32)ScreenDeltaX, (f32)ScreenDeltaY ) );
+                pUser->MouseX += LogicalDelta.X;
+                pUser->MouseY += LogicalDelta.Y;
 
                 // Clamp to screen bounds
-                pUser->MouseX = MAX( pUser->MouseX, 0 );
-                pUser->MouseX = MIN( pUser->MouseX, (pUser->Bounds.GetWidth()-1) );
-                pUser->MouseY = MAX( pUser->MouseY, 0 );
-                pUser->MouseY = MIN( pUser->MouseY, (pUser->Bounds.GetHeight()-1) );
+                pUser->MouseX = MAX( pUser->MouseX, (f32)pUser->Bounds.l );
+                pUser->MouseX = MIN( pUser->MouseX, (f32)(pUser->Bounds.r - 1) );
+                pUser->MouseY = MAX( pUser->MouseY, (f32)pUser->Bounds.t );
+                pUser->MouseY = MIN( pUser->MouseY, (f32)(pUser->Bounds.b - 1) );
+            }
 
-                // Switch to mouse mode and show cursor
-                pUser->bMouseMode   = TRUE;
-                pUser->MouseVisible = TRUE;
+            const xbool HasMouseInput =
+                   ScreenDeltaX
+                || ScreenDeltaY
+                || MouseWheelDelta
+                || g_Input.GetFrameSnapshot().WasPressed( INPUT_MOUSE_BTN_L );
 
-                // Update hover and focus
-                ui_win* pWindowUnderMouse = GetWindowAtXY( pUser, pUser->MouseX, pUser->MouseY );
+            if( HasMouseInput )
+            {
+                SetInputMode( pUser, ui_input_device::Mouse, INPUT_PLATFORM_PC );
+            }
 
-                // Track which window is under the mouse
-                if( pWindowUnderMouse != pUser->pHoveredWindow )
-                    pUser->pHoveredWindow = pWindowUnderMouse;
-
-                // Only steal focus when the mouse is actually over a control.
-                // Hovering over empty background leaves the current focus intact
-                if( pWindowUnderMouse )
-                    SetFocusWindow( pUser->Id, pWindowUnderMouse );
+            // Hover and keyboard/gamepad focus are independent. A pointer move
+            // must never silently change the focused control.
+            if( pUser->InputDevice == ui_input_device::Mouse )
+            {
+                s32 const MouseX = (s32)x_floor( pUser->MouseX + 0.5f );
+                s32 const MouseY = (s32)x_floor( pUser->MouseY + 0.5f );
+                ui_win* const pPreviousHover = pUser->pHoveredWindow;
+                SetHoveredWindow( pUser, GetWindowAtXY( pUser, MouseX, MouseY ) );
+                HoverTargetChanged = (pPreviousHover != pUser->pHoveredWindow);
             }
         }
 
         // Determine which window receives input this frame
         if( pWin == NULL )
         {
-            pWin = pUser->pFocusedWindow;
-
             // If nothing has focus (e.g. mouse is over background), fall back to
             // the topmost dialog so pad navigation always has somewhere to go
-            if( pWin == NULL && pUser->DialogStack.GetCount() > 0 )
+            if( pUser->DialogStack.GetCount() > 0 )
                 pWin = pUser->DialogStack[pUser->DialogStack.GetCount()-1];
         }
+
+        auto RefreshInputTarget = [&]() -> xbool
+        {
+            if( DialogRevision == pUser->DialogRevision )
+            {
+                return FALSE;
+            }
+
+            DialogRevision = pUser->DialogRevision;
+            pWin = pUser->pFocusedWindow;
+            if( !pWin && (pUser->DialogStack.GetCount() > 0) )
+            {
+                pWin = pUser->DialogStack[pUser->DialogStack.GetCount()-1];
+            }
+            return TRUE;
+        };
 
         for( s32 i=StartController ; i<=EndController ; i++ )
         {
             {
-                UpdateButton( pUser->DPadUp[i],        IsUILogicalDown( i, ingame_pad::UI_UP ),          DeltaTime );
-                UpdateButton( pUser->DPadDown[i],      IsUILogicalDown( i, ingame_pad::UI_DOWN ),        DeltaTime );
-                UpdateButton( pUser->DPadLeft[i],      IsUILogicalDown( i, ingame_pad::UI_LEFT ),        DeltaTime );
-                UpdateButton( pUser->DPadRight[i],     IsUILogicalDown( i, ingame_pad::UI_RIGHT ),       DeltaTime );
-                UpdateButton( pUser->PadSelect[i],     IsUILogicalDown( i, ingame_pad::UI_SELECT ),      DeltaTime );
-                UpdateButton( pUser->PadBack[i],       IsUILogicalDown( i, ingame_pad::UI_BACK ),        DeltaTime );
-                UpdateButton( pUser->PadDelete[i],     IsUILogicalDown( i, ingame_pad::UI_DELETE ),      DeltaTime );
-                UpdateButton( pUser->PadActivate[i],   IsUILogicalDown( i, ingame_pad::UI_ACTIVATE ),    DeltaTime );
-                UpdateButton( pUser->PadShoulderL[i],  IsUILogicalDown( i, ingame_pad::UI_SHOULDER_L ),  DeltaTime );
-                UpdateButton( pUser->PadShoulderR[i],  IsUILogicalDown( i, ingame_pad::UI_SHOULDER_R ),  DeltaTime );
-                UpdateButton( pUser->PadShoulderL2[i], IsUILogicalDown( i, ingame_pad::UI_SHOULDER_L2 ), DeltaTime );
-                UpdateButton( pUser->PadShoulderR2[i], IsUILogicalDown( i, ingame_pad::UI_SHOULDER_R2 ), DeltaTime );
-                UpdateButton( pUser->PadHelp[i],       IsUILogicalDown( i, ingame_pad::UI_HELP ),        DeltaTime );
-            }
-            // Keep index of last controller that pressed a select button so we can hack
-            // the controller number into the players controller for 1 player games
-            if( pUser->PadSelect[i].nPresses > 0 )
-            {
-                g_uiLastSelectController = i;
+                UpdateButton( pUser->NavigateUp[i],   IsUILogicalDown( i, frontend_pad::UI_UP ),          DeltaTime );
+                UpdateButton( pUser->NavigateDown[i], IsUILogicalDown( i, frontend_pad::UI_DOWN ),        DeltaTime );
+                UpdateButton( pUser->NavigateLeft[i], IsUILogicalDown( i, frontend_pad::UI_LEFT ),        DeltaTime );
+                UpdateButton( pUser->NavigateRight[i],IsUILogicalDown( i, frontend_pad::UI_RIGHT ),       DeltaTime );
+                UpdateButton( pUser->Accept[i],       IsUILogicalDown( i, frontend_pad::UI_SELECT ),      DeltaTime );
+                UpdateButton( pUser->Cancel[i],       IsUILogicalDown( i, frontend_pad::UI_BACK ),        DeltaTime );
+                UpdateButton( pUser->Delete[i],       IsUILogicalDown( i, frontend_pad::UI_DELETE ),      DeltaTime );
+                UpdateButton( pUser->Alternate[i],    IsUILogicalDown( i, frontend_pad::UI_ACTIVATE ),    DeltaTime );
+                UpdateButton( pUser->PagePrevious[i], IsUILogicalDown( i, frontend_pad::UI_SHOULDER_L ),  DeltaTime );
+                UpdateButton( pUser->PageNext[i],     IsUILogicalDown( i, frontend_pad::UI_SHOULDER_R ),  DeltaTime );
+                UpdateButton( pUser->First[i],        IsUILogicalDown( i, frontend_pad::UI_SHOULDER_L2 ), DeltaTime );
+                UpdateButton( pUser->Last[i],         IsUILogicalDown( i, frontend_pad::UI_SHOULDER_R2 ), DeltaTime );
+                UpdateButton( pUser->Help[i],         IsUILogicalDown( i, frontend_pad::UI_HELP ),        DeltaTime );
             }
         }
 
         // Update mouse buttons
-        UpdateButton( pUser->ButtonLB, g_Input.IsPressed( INPUT_MOUSE_BTN_L ), DeltaTime );
-        UpdateButton( pUser->ButtonMB, g_Input.IsPressed( INPUT_MOUSE_BTN_C ), DeltaTime );
-        UpdateButton( pUser->ButtonRB, g_Input.IsPressed( INPUT_MOUSE_BTN_R ), DeltaTime );
+        UpdateButton( pUser->PointerPrimary,
+                      g_Input.GetFrameSnapshot().IsPressed( INPUT_MOUSE_BTN_L ) ||
+                      g_Input.GetFrameSnapshot().WasPressed( INPUT_MOUSE_BTN_L ),
+                      DeltaTime );
 
-        // Only do this if there is a target window
+        // Route pointer input to the captured control, or to the control under
+        // the cursor. Semantic input continues to use the focused control.
+        ui_win* pPointerWin = pUser->pCaptureWindow
+                            ? pUser->pCaptureWindow
+                            : pUser->pHoveredWindow;
+        s32 const MouseX = (s32)x_floor( pUser->MouseX + 0.5f );
+        s32 const MouseY = (s32)x_floor( pUser->MouseY + 0.5f );
+
+        if( pPointerWin )
+        {
+            if( HoverTargetChanged ||
+                (pUser->LastMouseX != pUser->MouseX) ||
+                (pUser->LastMouseY != pUser->MouseY) )
+            {
+                ui_input_event Event;
+                Event.m_Type   = ui_input_event_type::PointerMove;
+                Event.m_Device = ui_input_device::Mouse;
+                Event.m_X      = MouseX;
+                Event.m_Y      = MouseY;
+                DispatchInput( pPointerWin, Event );
+
+                if( RefreshInputTarget() )
+                {
+                    pPointerWin = NULL;
+                }
+            }
+
+            if( pPointerWin && pUser->PointerPrimary.nPresses )
+            {
+                ui_win* pFocusWin = pPointerWin;
+                while( pFocusWin && !pFocusWin->CanFocus() )
+                {
+                    pFocusWin = pFocusWin->GetParent();
+                }
+
+                if( pFocusWin )
+                {
+                    SetFocusWindow( pUser->Id, pFocusWin );
+                }
+
+                pPointerWin->m_IsPressed = TRUE;
+                pUser->pPressedWindow = pPointerWin;
+
+                ui_input_event Event;
+                Event.m_Type          = ui_input_event_type::PointerDown;
+                Event.m_Device        = ui_input_device::Mouse;
+                Event.m_PointerButton = ui_pointer_button::Primary;
+                Event.m_X             = MouseX;
+                Event.m_Y             = MouseY;
+                Event.m_Presses       = pUser->PointerPrimary.nPresses;
+                DispatchInput( pPointerWin, Event );
+
+                if( RefreshInputTarget() )
+                {
+                    pPointerWin = NULL;
+                }
+            }
+
+            if( pPointerWin && MouseWheelDelta )
+            {
+                ui_input_event Event;
+                Event.m_Type   = ui_input_event_type::PointerWheel;
+                Event.m_Device = ui_input_device::Mouse;
+                Event.m_X      = MouseX;
+                Event.m_Y      = MouseY;
+                Event.m_Delta  = MouseWheelDelta;
+                DispatchInput( pPointerWin, Event );
+                MouseWheelProcessed = TRUE;
+                if( RefreshInputTarget() )
+                {
+                    pPointerWin = NULL;
+                }
+            }
+        }
+
+        if( pUser->PointerPrimary.nReleases )
+        {
+            ui_win* pReleaseWin = pUser->pCaptureWindow
+                                ? pUser->pCaptureWindow
+                                : pUser->pPressedWindow;
+            pUser->pPressedWindow = NULL;
+
+            if( pReleaseWin )
+            {
+                pReleaseWin->m_IsPressed = FALSE;
+
+                ui_input_event Event;
+                Event.m_Type          = ui_input_event_type::PointerUp;
+                Event.m_Device        = ui_input_device::Mouse;
+                Event.m_PointerButton = ui_pointer_button::Primary;
+                Event.m_X             = MouseX;
+                Event.m_Y             = MouseY;
+                DispatchInput( pReleaseWin, Event );
+                RefreshInputTarget();
+            }
+        }
+
+        // Only do this if there is a semantic input target.
         if( pWin )
         {
-            // Fire OnMouseMove only when the mouse actually moved
-            if( pUser->bMouseMode )
-            {
-                if( (pUser->LastMouseX != pUser->MouseX) || (pUser->LastMouseY != pUser->MouseY) )
-                    pWin->OnMouseMove( pWin, pUser->MouseX, pUser->MouseY );
-            }
-            if( pUser->ButtonLB.nPresses  ) pWin->OnLBDown( pWin );
-            if( pUser->ButtonLB.nReleases ) pWin->OnLBUp  ( pWin );
-            if( pUser->ButtonMB.nPresses  ) pWin->OnMBDown( pWin );
-            if( pUser->ButtonMB.nReleases ) pWin->OnMBUp  ( pWin );
-            if( pUser->ButtonRB.nPresses  ) pWin->OnRBDown( pWin );
-            if( pUser->ButtonRB.nReleases ) pWin->OnRBUp  ( pWin );
-
             // Sum up button presses
-            s32 pDPadUp         = 0;
-            s32 pDPadDown       = 0;
-            s32 pDPadLeft       = 0;
-            s32 pDPadRight      = 0;
-            s32 rDPadUp         = 0;
-            s32 rDPadDown       = 0;
-            s32 rDPadLeft       = 0;
-            s32 rDPadRight      = 0;
-            s32 tDPadUp         = 0;
-            s32 tDPadDown       = 0;
-            s32 tDPadLeft       = 0;
-            s32 tDPadRight      = 0;
-            s32 PadSelect       = 0;
-            s32 PadBack         = 0;
-            s32 PadDelete       = 0;
-            s32 PadActivate     = 0;            
-            s32 PadShoulderL    = 0;
-            s32 PadShoulderR    = 0;
-            s32 PadShoulderL2   = 0;
-            s32 PadShoulderR2   = 0;        
-            s32 PadHelp         = 0;               
+            s32 UpPresses       = 0;
+            s32 DownPresses     = 0;
+            s32 LeftPresses     = 0;
+            s32 RightPresses    = 0;
+            s32 UpRepeats       = 0;
+            s32 DownRepeats     = 0;
+            s32 LeftRepeats     = 0;
+            s32 RightRepeats    = 0;
+            s32 UpCount         = 0;
+            s32 DownCount       = 0;
+            s32 LeftCount       = 0;
+            s32 RightCount      = 0;
+            s32 Accept          = 0;
+            s32 Cancel          = 0;
+            s32 Delete          = 0;
+            s32 Alternate       = 0;
+            s32 PagePrevious    = 0;
+            s32 PageNext        = 0;
+            s32 First           = 0;
+            s32 Last            = 0;
+            s32 Help            = 0;
             {
-#if !defined(X_RETAIL)
-                bInProcessInput = TRUE;
-#endif
                 s32 i;
                 for( i=StartController ; i<=EndController ; i++ )
                 {
-                    // set active controller
-                    m_ActiveController = i;
-
                     // check input for each controller
-                    pDPadUp         = pUser->DPadUp[i].nPresses;
-                    pDPadDown       = pUser->DPadDown[i].nPresses;
-                    pDPadLeft       = pUser->DPadLeft[i].nPresses;
-                    pDPadRight      = pUser->DPadRight[i].nPresses;
-                    rDPadUp         = pUser->DPadUp[i].nRepeats;
-                    rDPadDown       = pUser->DPadDown[i].nRepeats;
-                    rDPadLeft       = pUser->DPadLeft[i].nRepeats;
-                    rDPadRight      = pUser->DPadRight[i].nRepeats;
-                    tDPadUp         = pUser->DPadUp[i].nPresses       + pUser->DPadUp[i].nRepeats;
-                    tDPadDown       = pUser->DPadDown[i].nPresses     + pUser->DPadDown[i].nRepeats;
-                    tDPadLeft       = pUser->DPadLeft[i].nPresses     + pUser->DPadLeft[i].nRepeats;
-                    tDPadRight      = pUser->DPadRight[i].nPresses    + pUser->DPadRight[i].nRepeats;
-                    PadSelect       = pUser->PadSelect[i].nPresses;
-                    PadBack         = pUser->PadBack[i].nPresses;
-                    PadDelete       = pUser->PadDelete[i].nPresses + pUser->PadDelete[i].nRepeats;
-                    PadActivate     = pUser->PadActivate[i].nPresses;               
-                    PadShoulderL    = pUser->PadShoulderL[i].nPresses + pUser->PadShoulderL[i].nRepeats;
-                    PadShoulderR    = pUser->PadShoulderR[i].nPresses + pUser->PadShoulderR[i].nRepeats;
-                    PadShoulderL2   = pUser->PadShoulderL2[i].nPresses + pUser->PadShoulderL2[i].nRepeats;
-                    PadShoulderR2   = pUser->PadShoulderR2[i].nPresses + pUser->PadShoulderR2[i].nRepeats;
+                    UpPresses       = pUser->NavigateUp[i].nPresses;
+                    DownPresses     = pUser->NavigateDown[i].nPresses;
+                    LeftPresses     = pUser->NavigateLeft[i].nPresses;
+                    RightPresses    = pUser->NavigateRight[i].nPresses;
+                    UpRepeats       = pUser->NavigateUp[i].nRepeats;
+                    DownRepeats     = pUser->NavigateDown[i].nRepeats;
+                    LeftRepeats     = pUser->NavigateLeft[i].nRepeats;
+                    RightRepeats    = pUser->NavigateRight[i].nRepeats;
+                    UpCount         = UpPresses + UpRepeats;
+                    DownCount       = DownPresses + DownRepeats;
+                    LeftCount       = LeftPresses + LeftRepeats;
+                    RightCount      = RightPresses + RightRepeats;
+                    Accept          = pUser->Accept[i].nPresses;
+                    Cancel          = pUser->Cancel[i].nPresses;
+                    Delete          = pUser->Delete[i].nPresses + pUser->Delete[i].nRepeats;
+                    Alternate       = pUser->Alternate[i].nPresses;
+                    PagePrevious    = pUser->PagePrevious[i].nPresses + pUser->PagePrevious[i].nRepeats;
+                    PageNext        = pUser->PageNext[i].nPresses + pUser->PageNext[i].nRepeats;
+                    First           = pUser->First[i].nPresses + pUser->First[i].nRepeats;
+                    Last            = pUser->Last[i].nPresses + pUser->Last[i].nRepeats;
+                    Help            = pUser->Help[i].nPresses;
 					
-                    PadHelp         = pUser->PadHelp[i].nPresses;
-					
-                    pDPadUp         += pUser->LStickUp[i].nPresses;
-                    pDPadDown       += pUser->LStickDown[i].nPresses;
-                    pDPadLeft       += pUser->LStickLeft[i].nPresses;
-                    pDPadRight      += pUser->LStickRight[i].nPresses;
-                    rDPadUp         += pUser->LStickUp[i].nRepeats;
-                    rDPadDown       += pUser->LStickDown[i].nRepeats;
-                    rDPadLeft       += pUser->LStickLeft[i].nRepeats;
-                    rDPadRight      += pUser->LStickRight[i].nRepeats;
-                    tDPadUp         += pUser->LStickUp[i].nPresses    + pUser->LStickUp[i].nRepeats;
-                    tDPadDown       += pUser->LStickDown[i].nPresses  + pUser->LStickDown[i].nRepeats;
-                    tDPadLeft       += pUser->LStickLeft[i].nPresses  + pUser->LStickLeft[i].nRepeats;
-                    tDPadRight      += pUser->LStickRight[i].nPresses + pUser->LStickRight[i].nRepeats;
+                    xbool const HasSemanticInput =
+                           UpCount || DownCount || LeftCount || RightCount
+                        || Accept || Cancel || Delete || Alternate || Help
+                        || PagePrevious || PageNext || First || Last;
 
-                    // Gamepad input hides the mouse cursor. Keyboard navigation remains a PC input mode.
-                    if(   (g_Input.GetCurrentInputDevice() == INPUT_DEVICE_GAMEPAD)
-                       && (   tDPadUp || tDPadDown || tDPadLeft || tDPadRight
-                           || PadSelect || PadBack || PadDelete || PadActivate || PadHelp
-                           || PadShoulderL || PadShoulderR || PadShoulderL2 || PadShoulderR2 ) )
+                    ui_input_device const SemanticDevice =
+                        (g_Input.GetCurrentInputDevice() == INPUT_DEVICE_GAMEPAD)
+                        ? ui_input_device::Gamepad
+                        : ui_input_device::Keyboard;
+
+                    if( HasSemanticInput )
                     {
-                        pUser->bMouseMode   = FALSE;
-                        pUser->MouseVisible = FALSE;
+                        m_ActiveController = i;
+                        const input_platform SemanticPlatform =
+                            (SemanticDevice == ui_input_device::Gamepad)
+                            ? g_Input.GetCurrentInputPlatform()
+                            : INPUT_PLATFORM_PC;
+                        SetInputMode( pUser, SemanticDevice, SemanticPlatform );
                     }
 
-                    // send commands for each controller
-                    s_EndDialogCount=0;
-                    // Issue window calls for pad navigation
-                    if( tDPadUp    )
+                    auto SendNavigation = [&]( ui_navigation Navigation,
+                                               s32 Presses,
+                                               s32 Repeats,
+                                               xbool WrapX,
+                                               xbool WrapY )
                     {
-                        Iterate = TRUE; pWin->OnPadNavigate( pWin, NAV_UP,    pDPadUp,    rDPadUp,   FALSE,  TRUE );
-                    }
-                    
-                    if( tDPadDown  ) 
-                    { 
-                        Iterate = TRUE; pWin->OnPadNavigate( pWin, NAV_DOWN,  pDPadDown,  rDPadDown, FALSE,  TRUE ); 
-                    }
-
-                    if( tDPadLeft  ) 
-                    { 
-                        Iterate = TRUE; pWin->OnPadNavigate( pWin, NAV_LEFT,  pDPadLeft,  rDPadLeft  ); 
-                    }
-                    
-                    if( tDPadRight ) 
-                    {
-                        Iterate = TRUE; pWin->OnPadNavigate( pWin, NAV_RIGHT, pDPadRight, rDPadRight ); 
-                    }
-
-                    // Issue window calls for pad select / back / help
-                    if( !Iterate && PadSelect   && !s_EndDialogCount ) 
-                    { 
-                        Iterate = TRUE; pWin->OnPadSelect  ( pWin ); 
-                    }
-
-                    if( !Iterate && PadBack     && !s_EndDialogCount ) 
-                    { 
-                        Iterate = TRUE; pWin->OnPadBack    ( pWin ); 
-                    }
-
-                    if( !Iterate && PadDelete   && !s_EndDialogCount ) 
-                    { 
-                        Iterate = TRUE; pWin->OnPadDelete  ( pWin ); 
-                    }
-
-                    if( !Iterate && PadActivate && !s_EndDialogCount ) 
-                    { 
-                        Iterate = TRUE; pWin->OnPadActivate( pWin ); 
-                    }                
-                    if( !Iterate && PadHelp     && !s_EndDialogCount ) 
-                    { 
-                        Iterate = TRUE; pWin->OnPadHelp    ( pWin ); 
-                    }
-					
-                    // Issue window calls for pad shoulders
-                    if( PadShoulderL && !s_EndDialogCount ) 
-                    { 
-                        pWin->OnPadShoulder ( pWin, -1 ); 
-                    }
-                    else if( PadShoulderR && !s_EndDialogCount ) 
-                    { 
-                        pWin->OnPadShoulder ( pWin,  1 ); 
+                        ui_input_event Event;
+                        Event.m_Type       = ui_input_event_type::Navigate;
+                        Event.m_Device     = SemanticDevice;
+                        Event.m_Navigation = Navigation;
+                        Event.m_Presses    = Presses;
+                        Event.m_Repeats    = Repeats;
+                        Event.m_WrapX      = WrapX;
+                        Event.m_WrapY      = WrapY;
+                        DispatchInput( pWin, Event );
+                        RefreshInputTarget();
                     };
-					
-                    if( PadShoulderL2 && !s_EndDialogCount ) 
-                    { 
-                        pWin->OnPadShoulder2( pWin, -1 ); 
+
+                    auto SendAction = [&]( ui_input_event_type Type )
+                    {
+                        ui_input_event Event;
+                        Event.m_Type   = Type;
+                        Event.m_Device = SemanticDevice;
+                        DispatchInput( pWin, Event );
+                        RefreshInputTarget();
+                    };
+
+                    u32 const EventDialogRevision = DialogRevision;
+
+                    if( UpCount && (EventDialogRevision == DialogRevision) )
+                    {
+                        Iterate = TRUE;
+                        SendNavigation( ui_navigation::Up, UpPresses, UpRepeats, FALSE, TRUE );
                     }
-                    else if( PadShoulderR2 && !s_EndDialogCount )
-                    { 
-                        pWin->OnPadShoulder2( pWin,  1 ); 
+
+                    if( DownCount && (EventDialogRevision == DialogRevision) )
+                    {
+                        Iterate = TRUE;
+                        SendNavigation( ui_navigation::Down, DownPresses, DownRepeats, FALSE, TRUE );
                     }
-                    s_EndDialogCount=0;
+
+                    if( LeftCount && (EventDialogRevision == DialogRevision) )
+                    {
+                        Iterate = TRUE;
+                        SendNavigation( ui_navigation::Left, LeftPresses, LeftRepeats, FALSE, FALSE );
+                    }
+
+                    if( RightCount && (EventDialogRevision == DialogRevision) )
+                    {
+                        Iterate = TRUE;
+                        SendNavigation( ui_navigation::Right, RightPresses, RightRepeats, FALSE, FALSE );
+                    }
+
+                    if( !Iterate && Accept && (EventDialogRevision == DialogRevision) )
+                    {
+                        Iterate = TRUE;
+                        SendAction( ui_input_event_type::Accept );
+                    }
+
+                    if( !Iterate && Cancel && (EventDialogRevision == DialogRevision) )
+                    {
+                        Iterate = TRUE;
+                        SendAction( ui_input_event_type::Cancel );
+                    }
+
+                    if( !Iterate && Delete && (EventDialogRevision == DialogRevision) )
+                    {
+                        Iterate = TRUE;
+                        SendAction( ui_input_event_type::Delete );
+                    }
+
+                    if( !Iterate && Alternate && (EventDialogRevision == DialogRevision) )
+                    {
+                        Iterate = TRUE;
+                        SendAction( ui_input_event_type::Alternate );
+                    }
+
+                    if( !Iterate && Help && (EventDialogRevision == DialogRevision) )
+                    {
+                        Iterate = TRUE;
+                        SendAction( ui_input_event_type::Help );
+                    }
+
+                    if( PagePrevious && (EventDialogRevision == DialogRevision) )
+                    {
+                        SendNavigation( ui_navigation::PagePrevious, PagePrevious, 0, FALSE, FALSE );
+                    }
+                    else if( PageNext && (EventDialogRevision == DialogRevision) )
+                    {
+                        SendNavigation( ui_navigation::PageNext, PageNext, 0, FALSE, FALSE );
+                    }
+
+                    if( First && (EventDialogRevision == DialogRevision) )
+                    {
+                        SendNavigation( ui_navigation::First, First, 0, FALSE, FALSE );
+                    }
+                    else if( Last && (EventDialogRevision == DialogRevision) )
+                    {
+                        SendNavigation( ui_navigation::Last, Last, 0, FALSE, FALSE );
+                    }
+
+                    if( EventDialogRevision != DialogRevision )
+                    {
+                        break;
+                    }
                 }
-#if !defined(X_RETAIL)
-            bInProcessInput = FALSE;
-#endif
             }
         }
 
@@ -2199,14 +2390,15 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
 
     } while( Iterate && !IterateCount );
 
-    // Do Global inputs
-#ifdef TARGET_PC
-    if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
-        return FALSE;
-#endif
+    xbool const Continue = !g_Input.GetFrameSnapshot().IsPressed( INPUT_MSG_EXIT );
 
-    // Return TRUE if not exiting
-    return TRUE;
+    m_CallbackDepth--;
+    if( m_CallbackDepth == 0 )
+    {
+        DestroyDeferredDialogs();
+    }
+
+    return Continue;
 }
 
 //=========================================================================
@@ -2227,20 +2419,21 @@ void ui_manager::DisableUserInput( void )
         user* pUser = m_Users[i];
         ASSERT( pUser );
 
-        for( s32 j=0 ; j<INPUT_MAX_CONTROLLER_COUNT ; j++ )
+        for( s32 j=0 ; j<MAX_INPUT_CONTROLLERS ; j++ )
         {
-            pUser->DPadDown[j]    .Clear();
-            pUser->DPadLeft[j]    .Clear();
-            pUser->DPadRight[j]   .Clear();
-            pUser->DPadUp[j]      .Clear();
-            pUser->PadSelect[j]   .Clear();
-            pUser->PadBack[j]     .Clear();   
-            pUser->LStickDown[j]  .Clear();
-            pUser->LStickLeft[j]  .Clear();
-            pUser->LStickRight[j] .Clear();
-            pUser->LStickUp[j]    .Clear();
-            pUser->PadShoulderL[j].Clear();
-            pUser->PadShoulderR[j].Clear();         
+            pUser->NavigateUp[j]   .Clear();
+            pUser->NavigateDown[j] .Clear();
+            pUser->NavigateLeft[j] .Clear();
+            pUser->NavigateRight[j].Clear();
+            pUser->Accept[j]       .Clear();
+            pUser->Cancel[j]       .Clear();
+            pUser->Delete[j]       .Clear();
+            pUser->Alternate[j]    .Clear();
+            pUser->Help[j]         .Clear();
+            pUser->PagePrevious[j] .Clear();
+            pUser->PageNext[j]     .Clear();
+            pUser->First[j]        .Clear();
+            pUser->Last[j]         .Clear();
         }
     }
 }
@@ -2281,6 +2474,8 @@ void ui_manager::Update( f32 DeltaTime )
     // update the refresh bar
     UpdateRefreshBar(DeltaTime);
 
+    m_CallbackDepth++;
+
     // Loop through each user
     for( s32 i=0 ; i<m_Users.GetCount() ; i++ )
     {
@@ -2293,10 +2488,51 @@ void ui_manager::Update( f32 DeltaTime )
             // Update all Dialogs on Stack
             for( s32 j=0 ; j<pUser->DialogStack.GetCount() ; j++ )
             {
-                pUser->DialogStack[j]->OnUpdate( pUser->DialogStack[j], DeltaTime );
+                pUser->DialogStack[j]->UpdateTree( DeltaTime );
             }
         }
     }
+
+    m_CallbackDepth--;
+    if( m_CallbackDepth == 0 )
+    {
+        DestroyDeferredDialogs();
+    }
+}
+
+//=========================================================================
+
+void ui_manager::RenderNavText( const user* pUser ) const
+{
+    ASSERT( pUser );
+
+    if( !pUser || (pUser->InputDevice != ui_input_device::Gamepad) )
+    {
+        return;
+    }
+
+    if( pUser->DialogStack.GetCount() == 0 )
+    {
+        return;
+    }
+
+    const ui_dialog* pDialog = pUser->DialogStack[pUser->DialogStack.GetCount() - 1];
+    if( !pDialog->IsNavTextVisible() || (pDialog->GetNavText().GetLength() == 0) )
+    {
+        return;
+    }
+
+    irect Position = pUser->Bounds;
+    Position.t = Position.b - 48;
+    Position.b -= 8;
+
+    const s32 FontID = FindFont( "small" );
+    RenderInputText( FontID,
+                     Position,
+                     ui_font::h_center | ui_font::v_top,
+                     XCOLOR_WHITE,
+                     pDialog->GetNavText(),
+                     pUser->InputPlatform );
 }
 
 //=========================================================================
@@ -2304,13 +2540,11 @@ void ui_manager::Update( f32 DeltaTime )
 void ui_manager::Render( void )
 {
     s32 i;
+    UpdateViewport();
 
     if( eng_Begin( "UI" ) )
     {
-#ifdef TARGET_PC
-        CheckRes();
         xbool RenderCursor = FALSE;
-#endif
 
         // Loop through each user to render
         for( i=0 ; i<m_Users.GetCount() ; i++ )
@@ -2321,11 +2555,9 @@ void ui_manager::Render( void )
             // Only render enabled users
             if( pUser->Enabled )
             {
-#ifdef TARGET_PC
                 // If there are visible dialogs, render the stack
                 if (pUser->DialogStack.GetCount())
                     RenderCursor = TRUE;
-#endif            
                 // Render Background
                 RenderBackground( pUser->Background );
 
@@ -2340,44 +2572,33 @@ void ui_manager::Render( void )
                 // Render all Dialogs from the Render Modal one
                 for( ; j<pUser->DialogStack.GetCount() ; j++ )
                 {
-                    pUser->DialogStack[j]->Render( pUser->Bounds.l, pUser->Bounds.t );
+                    pUser->DialogStack[j]->Render( 0, 0 );
                 }
+
+                RenderNavText( pUser );
             }
         }
 
-#ifdef TARGET_PC
+        RenderRefreshBar();
+
         // Only render the mouse cursor in mouse mode when dialogs are visible.
         if( RenderCursor )
         {
-            irect r;
-            POINT   Pos;
-
             // Get the last user.
             user* pUser = m_Users[m_Users.GetCount()-1];
 
-            if( !pUser->bMouseMode || !pUser->MouseVisible )
-                goto skip_cursor;
-
-            Pos.x = pUser->MouseX;
-            Pos.y = pUser->MouseY;
-            
-            // Set position to draw the sprite.
-            r.Set( Pos.x, Pos.y, Pos.x+m_Mouse.GetWidth(), Pos.y+m_Mouse.GetHeight() );
- 
-            draw_ClearL2W();
-            draw_Begin( DRAW_LINES, DRAW_2D|DRAW_NO_ZBUFFER|DRAW_CULL_NONE|DRAW_UI_RTARGET );
-            draw_Color( XCOLOR_WHITE );
-
-            draw_Vertex( vector3(r.l-3,r.t-3,0) );
-            draw_Vertex( vector3(r.l+4,r.t+4,0) );
-            draw_Vertex( vector3(r.l-3,r.t+3,0) );
-            draw_Vertex( vector3(r.l+4,r.t-4,0) );
-
-            draw_End();
-
-            skip_cursor:;
+            if( pUser->MouseVisible )
+            {
+                const f32 CursorX = (f32)pUser->MouseX;
+                const f32 CursorY = (f32)pUser->MouseY;
+                g_UIRenderer.DrawLine( vector2( CursorX - 3.0f, CursorY - 3.0f ),
+                                       vector2( CursorX + 4.0f, CursorY + 4.0f ),
+                                       XCOLOR_WHITE );
+                g_UIRenderer.DrawLine( vector2( CursorX - 3.0f, CursorY + 4.0f ),
+                                       vector2( CursorX + 4.0f, CursorY - 3.0f ),
+                                       XCOLOR_WHITE );
+            }
         }
-#endif
 
         // render safe area
         if ( m_RenderSafeArea )
@@ -2444,91 +2665,55 @@ ui_dialog* ui_manager::OpenDialog( s32 UserID, const char* ClassName, irect Posi
     // If Found
     if( pFactory )
     {
-        // Check for centering the dialog
+        // Dialog positions are always expressed in logical UI coordinates.
         if( Flags & ui_win::WF_DLG_CENTER )
         {
-#ifdef TARGET_PC
-//            irect    b(0,0,640,448);
-            irect    b(0,0,800,600);
-            Position.Translate( b.l + (b.GetWidth ()-Position.GetWidth ())/2 - Position.l,
-                                b.t + (b.GetHeight()-Position.GetHeight())/2 - Position.t );
-#else
             irect b = GetUserBounds( UserID );
-            
-            if (b.GetWidth() > Position.GetWidth())
+            if( (b.GetWidth()  >= Position.GetWidth()) &&
+                (b.GetHeight() >= Position.GetHeight()) )
             {
-                b.Translate( -b.l, -b.t );
                 Position.Translate( b.l + (b.GetWidth ()-Position.GetWidth ())/2 - Position.l,
-                                b.t + (b.GetHeight()-Position.GetHeight())/2 - Position.t );
+                                    b.t + (b.GetHeight()-Position.GetHeight())/2 - Position.t );
             }
-#endif
         }
 
-        // get screen resolution
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-
-        if (!(Flags & ui_win::WF_USE_ABSOLUTE))
-        {
-            // scale the width of the dialog
-            s32 X = Position.r - Position.l;
-            X = (s32)( (f32)X * m_ScaleX );
-
-            // center it
-            Position.l = ( XRes - X ) / 2;
-            Position.r = Position.l + X;
-
-            // scale height of dialog
-            s32 Y = Position.b - Position.t;
-            Y = (s32)( (f32)Y * m_ScaleY );
-            
-            // Position it
-            Position.t = (s32)((f32)Position.t * m_ScaleY);
-            Position.t += SAFE_ZONE;
-            Position.b = Position.t + Y;
-            //s32 midY = YRes>>1;
-            //s32 dy = midY - 224;
-            //Position.Translate( 0, dy );
-        }
-
-        // Old version, repositions without scaling
-        //if (!(Flags & ui_win::WF_USE_ABSOLUTE))
-        //{
-        //    // Adjust the position of the dialogs according to the resolution.
-        //    if( (pParent == NULL)  )
-        //    {
-        //        s32 midX = XRes>>1;
-        //        s32 midY = YRes>>1;
-        //
-        //        s32 dx = midX - 256;
-        //        s32 dy = midY - 224;
-        //
-        //        Position.Translate( dx, dy );
-        //    }
-        //}
-
-        irect CreatePosition = Position;        
-                                    
         // Create the Dialog Window
         pDialog = (ui_dialog*)pFactory( UserID, this, pDialogTem, Position, pParent, Flags, pUserData );
         ASSERT( pDialog );
 
-        pDialog->m_CreatePosition = CreatePosition;
-        pDialog->m_XRes = XRes;
-        pDialog->m_YRes = YRes;
-
-        LOG_MESSAGE( "ui_manager::OpenDialog", "New dialog opened. ID:0x%08x, Name:%s, Position:(%d,%d,%d,%d)", pDialog, ClassName, CreatePosition.l, CreatePosition.t, CreatePosition.r, CreatePosition.b );
+        LOG_MESSAGE( "ui_manager::OpenDialog", "New dialog opened. ID:0x%08x, Name:%s, Position:(%d,%d,%d,%d)", pDialog, ClassName, Position.l, Position.t, Position.r, Position.b );
 
         // If this is not a TAB dialog page
         if( !(pDialog->GetFlags() & ui_win::WF_TAB) )
         {
             // Add to the Dialog Stack
             if( pParent == NULL )
+            {
                 pUser->DialogStack.Append() = pDialog;
+                pUser->DialogRevision++;
+            }
 
             // Activate the dialog if it has controls
             if( !(Flags & ui_win::WF_NO_ACTIVATE) && (pDialog->m_Children.GetCount() > 0) )
-                pDialog->GotoControl( (s32)0 );
+            {
+                ui_control* pFocusedControl = NULL;
+                if( pDialogTem &&
+                    (pDialogTem->FocusControl >= 0) &&
+                    (pDialogTem->FocusControl < pDialog->GetNumControls()) )
+                {
+                    pFocusedControl = pDialog->GotoControl( pDialogTem->FocusControl );
+                }
+
+                for( s32 i = 0; !pFocusedControl && (i < pDialog->GetNumControls()); i++ )
+                {
+                    pFocusedControl = pDialog->GotoControl( i );
+                }
+
+                if( !pFocusedControl && (Flags & ui_win::WF_INPUTMODAL) )
+                {
+                    SetFocusWindow( UserID, pDialog );
+                }
+            }
         }
     }
 
@@ -2547,9 +2732,6 @@ void ui_manager::EndDialog( s32 UserID, xbool ResetCursor )
     // Check if there are any dialogs to end
     if( Count > 0 )
     {
-        // Store the dialog to a kill stack, which will get released after the input has been processed.
-//        m_KillDialogStack.Append() = pUser->DialogStack[Count-1];
-
         // Get dialog pointer
         ui_dialog* pDialog = pUser->DialogStack[Count-1];
 
@@ -2561,8 +2743,7 @@ void ui_manager::EndDialog( s32 UserID, xbool ResetCursor )
             if( (pUser->pFocusedWindow == (ui_win*)pDialog) ||
                 (pUser->pFocusedWindow->IsChildOf( pDialog )) )
             {
-                pUser->pFocusedWindow->OnFocusLost( pUser->pFocusedWindow );
-                pUser->pFocusedWindow = NULL;
+                SetFocusWindow( UserID, NULL );
             }
         }
 
@@ -2572,16 +2753,65 @@ void ui_manager::EndDialog( s32 UserID, xbool ResetCursor )
             if( (pUser->pHoveredWindow == (ui_win*)pDialog) ||
                 (pUser->pHoveredWindow->IsChildOf( pDialog )) )
             {
-                pUser->pHoveredWindow = NULL;
+                SetHoveredWindow( pUser, NULL );
+            }
+        }
+
+        // Clear capture if it was owned by this dialog
+        if( pUser->pCaptureWindow )
+        {
+            if( (pUser->pCaptureWindow == static_cast<ui_win*>( pDialog )) ||
+                (pUser->pCaptureWindow->IsChildOf( pDialog )) )
+            {
+                pUser->pCaptureWindow->m_IsPressed = FALSE;
+                ReleaseCapture( UserID );
+            }
+        }
+
+        if( pUser->pPressedWindow )
+        {
+            if( (pUser->pPressedWindow == static_cast<ui_win*>( pDialog )) ||
+                (pUser->pPressedWindow->IsChildOf( pDialog )) )
+            {
+                pUser->pPressedWindow->m_IsPressed = FALSE;
+                pUser->pPressedWindow = NULL;
             }
         }
 
         // End the dialog
         pUser->DialogStack.Delete( Count-1 );
+        pUser->DialogRevision++;
+
+        if( pUser->DialogStack.GetCount() > 0 )
+        {
+            ui_dialog* pPreviousDialog = pUser->DialogStack[pUser->DialogStack.GetCount()-1];
+            ui_control* pFocusedControl = NULL;
+            if( (pPreviousDialog->GetControl() >= 0) &&
+                (pPreviousDialog->GetControl() < pPreviousDialog->GetNumControls()) )
+            {
+                pFocusedControl = pPreviousDialog->GotoControl( pPreviousDialog->GetControl() );
+            }
+
+            for( s32 i = 0; !pFocusedControl && (i < pPreviousDialog->GetNumControls()); i++ )
+            {
+                pFocusedControl = pPreviousDialog->GotoControl( i );
+            }
+
+            if( !pFocusedControl )
+            {
+                SetFocusWindow( UserID, pPreviousDialog );
+            }
+        }
+
         LOG_MESSAGE( "ui_manager::EndDialog", "Dialog closed. ID:0x%08x", pDialog );
-        pDialog->Destroy();
-        delete pDialog;
-        s_EndDialogCount++;
+        if( m_CallbackDepth > 0 )
+        {
+            m_DeferredDialogs.Append() = pDialog;
+        }
+        else
+        {
+            delete pDialog;
+        }
     }
 }
 
@@ -2625,28 +2855,14 @@ ui_dialog* ui_manager::GetTopmostDialog( s32 UserID )
 
 void ui_manager::PushClipWindow( const irect &r )
 {
-    s32 X0,Y0,X1,Y1;
-
-    // Read View
-    const view& v = *eng_GetView();
-
-    // Save current viewport
-    cliprecord& cr = m_ClipStack.Append();
-    v.GetViewport( X0, Y0, X1, Y1 );
-    cr.r.Set( X0, Y0, X1, Y1 );
+    g_UIRenderer.PushClipRect( r );
 }
 
 //=========================================================================
 
 void ui_manager::PopClipWindow( void )
 {
-    ASSERT( m_ClipStack.GetCount() > 0 );
-
-    // Read previous viewport from stack
-    irect& r = m_ClipStack[m_ClipStack.GetCount()-1].r;
-
-    // Delete from stack
-    m_ClipStack.Delete( m_ClipStack.GetCount()-1 );
+    g_UIRenderer.PopClipRect();
 }
 
 //=========================================================================
@@ -2739,23 +2955,11 @@ void ui_manager::WordWrapString( s32 iFont, const irect& r, const xwstring& Stri
     s32 cPrev       = 0;
     s32 c;
     s32 w;
-    f32 ScaleX=1;
-    f32 ScaleY=1;
-
     RetVal.Clear();
     RetVal.FreeExtra();
 
     ASSERT( (iFont >= 0) && (iFont < m_Fonts.GetCount()) );
     ui_font* pFont = m_Fonts[iFont]->pFont;
-
-    // check for text scaling
-    if( ScaleText )
-    {
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        ScaleX = (f32)XRes / 512.0f;
-        ScaleY = (f32)YRes / 448.0f;
-    }
 
     // Word Wrap Text
     while( String[iString] )
@@ -2780,14 +2984,7 @@ void ui_manager::WordWrapString( s32 iFont, const irect& r, const xwstring& Stri
             cPrev = c;
 
             // Advance cursor before checking wrap
-            if( ScaleText )
-            {
-                w = (u32)((f32)pFont->GetCharacter(c).W * ScaleX );
-            }
-            else
-            {
-                w = pFont->GetCharacter(c).W;
-            }
+            w = pFont->GetCharacter(c).W;
 			
             x += w+1;
 
@@ -2806,9 +3003,7 @@ void ui_manager::WordWrapString( s32 iFont, const irect& r, const xwstring& Stri
             }
             else if( x > r.GetWidth() )
             {
-                //ASSERT( iStringWrap != -1 );
-                // In case of REALLY REALLY REALLY long lines, we still need to
-                // break somewhere, so let's do it at the end of the line.
+                // Break overlong words when no earlier wrap point exists.
                 if (iStringWrap == -1)
                     iStringWrap = iString-1;
 
@@ -2840,7 +3035,7 @@ void ui_manager::WordWrapString( s32 iFont, const irect& r, const xwstring& Stri
 
 //=========================================================================
 
-xbitmap* ui_manager::GetButtonTexture( s32 buttonCode )      
+texture* ui_manager::GetButtonTexture( s32 buttonCode )
 {
     return (m_ButtonTextures[buttonCode].GetPointer());
 }
@@ -2866,10 +3061,10 @@ xbool ReadButtonCodeString( const xwchar* pString, s32 iStart, xwstring& CodeStr
 //=========================================================================
 
 
-s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart ) const
+s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart, input_device Device, input_platform Platform ) const
 {
     xwstring codeString;
-    xbool    IsGamepadActive = IsGamepadActiveInput();
+    const xbool IsGamepad = (Device == INPUT_DEVICE_GAMEPAD);
 
     if( !pString )
         return -1;
@@ -2877,9 +3072,9 @@ s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart ) const
     while( pString[iStart] == 0xAB )
         iStart++;
  
-    if( IsGamepadActive )
+    if( IsGamepad )
     {
-        input_gadget GadgetID = ingame_pad::GetInputPromptGadget( pString + iStart );
+        input_gadget GadgetID = input_GetPromptGadget( pString + iStart, Platform );
         if( GadgetID != INPUT_UNDEFINED )
         {
             s32 ButtonCode = GetButtonCodeForGadget( GadgetID );
@@ -2891,7 +3086,7 @@ s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart ) const
     if( !ReadButtonCodeString( pString, iStart, codeString ) )
         return -1;
  
-    const button_code* pButtonCodeTable = GetButtonCodeTable( g_Input.GetCurrentInputPlatform() );
+    const button_code* pButtonCodeTable = GetButtonCodeTable( Platform );
  
     for( s32 i = 0; i < NUM_BUTTON_CODES; i++ )
     {
@@ -2899,7 +3094,7 @@ s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart ) const
         {
             s32 ButtonCode = pButtonCodeTable[i].ButtonCode;
 
-            if( !IsGamepadActive && IsControllerButtonCode( ButtonCode ) )
+            if( !IsGamepad && IsControllerButtonCode( ButtonCode ) )
                 return -1;
 
             return ButtonCode;
@@ -2911,84 +3106,20 @@ s32 ui_manager::LookUpButtonCode( const xwchar* pString, s32 iStart ) const
 
 //=========================================================================
 
-void ui_manager::SetRes( void )
+void ui_manager::InitScreenWipe( ui_dialog* pOwner )
 {
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-
-#if defined(TARGET_PC) && !defined(X_EDITOR)
-    m_ScaleX = (f32)XRes / 512.0f;
-    m_ScaleY = (f32)YRes / 448.0f;
-#else   // is editor
-    m_ScaleX = 1.0f;
-    m_ScaleY = 1.0f;
-#endif
-}
-
-//=========================================================================
-
-void ui_manager::CheckRes( void )
-{
-    // Adjust the position of the dialogs according to the resolution.
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-    s32 midX = XRes>>1;
-    s32 midY = YRes>>1;
-
-    s32 dx = midX - 256;
-    s32 dy = midY - 256;
-
-    for( s32 i = 0; i < m_Users.GetCount(); i++)
-    {
-        user* pUser = m_Users[i];
-        
-        // Render all Dialogs from the Render Modal one
-        for( s32 j = 0; j<pUser->DialogStack.GetCount(); j++)
-        {
-            // If the resolution of the Dialog don't then we have to reposition them.
-            if( pUser->DialogStack[j]->m_XRes != XRes && pUser->DialogStack[j]->m_YRes != YRes )
-            {
-                pUser->DialogStack[j]->m_Position = pUser->DialogStack[j]->m_CreatePosition;
-                pUser->DialogStack[j]->m_Position.Translate( dx, dy );
-                pUser->DialogStack[j]->m_XRes = XRes;
-               pUser->DialogStack[j]->m_YRes = YRes;
-            }
-        }        
-    }
-}
-
-//=========================================================================
-
-void ui_manager::InitScreenWipe ( void )
-{
-    // Set up the screen wipe data
-    m_wipeActive    = TRUE;
-    m_wipeDown      = TRUE;
-    m_wipeWidth     = 32;
-    m_wipeSpeed     = 960.0f;
-    m_WipeStepAccumulator = 0.0f;
-
-    m_wipeStartY    = m_CurrScreenSize.t + 8;
-    m_wipeEndY      = m_CurrScreenSize.b - 8;
-
-    m_wipePos.l     = m_CurrScreenSize.l + 21;
-    m_wipePos.t     = m_CurrScreenSize.t + 8;
-    m_wipePos.r     = m_CurrScreenSize.r - 23;
-    m_wipePos.b     = m_wipePos.t + m_wipeWidth; 
-
-    m_wipeCount     = 16;
-
-    // initialize trail
-    m_wipeTrail[0].Active = TRUE;
-    m_wipeTrail[0].Position = m_wipePos;
-
-    for (s32 i=1; i<16; i++)
-    {
-        m_wipeTrail[i].Active = FALSE;
-        m_wipeTrail[i].Position = m_wipeTrail[i-1].Position;
-        m_wipeTrail[i].Position.t -= m_wipeWidth;
-        m_wipeTrail[i].Position.b -= m_wipeWidth;
-    }
+    m_wipeActive = TRUE;
+    m_wipeFading = FALSE;
+    m_wipeBounds.l = m_CurrScreenSize.l + 21;
+    m_wipeBounds.t = m_CurrScreenSize.t + 8;
+    m_wipeBounds.r = m_CurrScreenSize.r - 23;
+    m_wipeBounds.b = m_CurrScreenSize.b - 8;
+    m_pWipeOwner = pOwner;
+    m_wipeRevealY = m_wipeBounds.t;
+    m_wipeSpeed  = SCREEN_WIPE_SPEED;
+    m_wipeHeadY  = MIN( (f32)m_wipeBounds.t + SCREEN_WIPE_HEAD_HEIGHT,
+                        (f32)m_wipeBounds.b );
+    m_wipeFade   = 1.0f;
 
     // play wipe sound effect
     g_AudioMgr.Play( "ScreenWipe" );
@@ -2996,120 +3127,112 @@ void ui_manager::InitScreenWipe ( void )
 
 //=========================================================================
 
-void ui_manager::RenderScreenWipe( void )
+void ui_manager::RenderScreenWipe( const ui_dialog* pOwner )
 {
-    u8 val;
-    xcolor col, col2;
-
-    if (!m_wipeActive)
+    if( !IsWipeActiveFor( pOwner ) )
         return;
 
-    for (s32 i=0; i<16; i++)
-    {
-        if (m_wipeTrail[i].Active)
-        {
-            val  = 256-(i*16);
-    
-            //col.R = (134 * val) / 256;
-            //col.G = (239 * val) / 256;
-            //col.B = ( 51 * val) / 256;
-            col.R = (146 * val) / 256;
-            col.G = (226 * val) / 256;
-            col.B = (100 * val) / 256;
-            col.A = val;
+    const f32 Fade        = x_clamp( m_wipeFade, 0.0f, 1.0f );
+    const f32 TrailLength = SCREEN_WIPE_TRAIL_LENGTH * Fade;
+    if( TrailLength <= 0.0f )
+        return;
 
-            val = 256-((i+1)*16);
+    const f32 GradientTop = m_wipeHeadY - TrailLength;
+    irect Gradient = m_wipeBounds;
+    Gradient.t = MAX( Gradient.t, (s32)x_floor( GradientTop ) );
+    Gradient.b = MIN( Gradient.b, (s32)x_floor( m_wipeHeadY + 0.5f ) );
+    if( Gradient.b <= Gradient.t )
+        return;
 
-            //col2.R = (134 * val) / 256;
-            //col2.G = (239 * val) / 256;
-            //col2.B = ( 51 * val) / 256;
-            col2.R = (146 * val) / 256;
-            col2.G = (226 * val) / 256;
-            col2.B = (100 * val) / 256;
-            col2.A = val;
+    // Keep the geometry inside the frame, as the original segmented wipe did.
+    // Recalculate the endpoint colors so clipping does not alter the gradient.
+    const f32 TopFactor = x_clamp( ((f32)Gradient.t - GradientTop) / TrailLength, 0.0f, 1.0f );
+    const f32 BottomFactor = x_clamp( ((f32)Gradient.b - GradientTop) / TrailLength, 0.0f, 1.0f );
+    const u8 TopIntensity = (u8)(255.0f * Fade * TopFactor + 0.5f);
+    const u8 BottomIntensity = (u8)(255.0f * Fade * BottomFactor + 0.5f);
+    const xcolor TopColor( (u8)((146 * TopIntensity) / 255),
+                           (u8)((226 * TopIntensity) / 255),
+                           (u8)((100 * TopIntensity) / 255),
+                           TopIntensity );
+    const xcolor BottomColor( (u8)((146 * BottomIntensity) / 255),
+                              (u8)((226 * BottomIntensity) / 255),
+                              (u8)((100 * BottomIntensity) / 255),
+                              BottomIntensity );
 
-            RenderGouraudRect(m_wipeTrail[i].Position, col2, col, col, col2, FALSE, TRUE);
-        }
-    }
+    RenderGouraudRect( Gradient,
+                       TopColor,
+                       BottomColor,
+                       BottomColor,
+                       TopColor,
+                       FALSE,
+                       TRUE );
 }
 
 //=========================================================================
 
 void ui_manager::UpdateScreenWipe( f32 DeltaTime )
 {
-    const f32 VisualStep = 1.0f / 30.0f;
-
-    if (!m_wipeActive)
+    if( !m_wipeActive || (DeltaTime <= 0.0f) )
         return;
 
-#ifdef TARGET_PC
-    DeltaTime = DeltaTime * m_ScaleY;
-#endif
-
-    m_WipeStepAccumulator += DeltaTime;
-
-    while( (m_WipeStepAccumulator >= VisualStep) && m_wipeActive )
+    f32 RemainingTime = DeltaTime;
+    if( !m_wipeFading )
     {
-        const s32 deltaPos = (s32)(m_wipeSpeed * VisualStep);
-        m_WipeStepAccumulator -= VisualStep;
-
-        if (m_wipeDown)
+        const f32 Distance = (f32)m_wipeBounds.b - m_wipeHeadY;
+        const f32 SweepTime = (m_wipeSpeed > 0.0f) ? MAX( 0.0f, Distance ) / m_wipeSpeed : 0.0f;
+        if( RemainingTime < SweepTime )
         {
-            m_wipePos.b += deltaPos;
-
-            if (m_wipePos.b >= m_wipeEndY)
-            {
-                m_wipePos.b = m_wipeEndY;
-                m_wipePos.t = m_wipePos.b - m_wipeWidth;
-                m_wipeDown = FALSE;
-            }
-            else
-            {
-                m_wipePos.t = m_wipePos.b - m_wipeWidth;
-            }
+            m_wipeHeadY += m_wipeSpeed * RemainingTime;
+            RemainingTime = 0.0f;
         }
         else
         {
-            //m_wipePos.t = -1;
-            if (--m_wipeCount == 0)
-                m_wipeActive = FALSE;
-
-            if( m_wipePos.t < m_wipeEndY )
-            {
-                m_wipePos.t += deltaPos;
-
-                if( m_wipePos.t > m_wipeEndY )
-                {
-                    m_wipePos.t = m_wipeEndY;
-                }
-            }
+            m_wipeHeadY  = (f32)m_wipeBounds.b;
+            m_wipeFading = TRUE;
+            RemainingTime -= SweepTime;
         }
-
-        for (s32 i=15; i>0; i--)
-        {
-            m_wipeTrail[i].Position = m_wipeTrail[i-1].Position;
-            m_wipeTrail[i].Active = m_wipeTrail[i-1].Active;
-        }
-        m_wipeTrail[0].Position = m_wipePos;
-
-        if (m_wipeCount == 15)
-            m_wipeTrail[0].Active = FALSE;
     }
 
+    if( m_wipeFading && (RemainingTime > 0.0f) )
+    {
+        m_wipeFade -= RemainingTime / SCREEN_WIPE_FADE_DURATION;
+        if( m_wipeFade <= 0.0f )
+        {
+            ResetScreenWipe();
+            return;
+        }
+    }
+
+    if( m_wipeFading )
+    {
+        m_wipeRevealY = m_wipeBounds.b;
+    }
+    else
+    {
+        m_wipeRevealY = MIN( m_wipeBounds.b,
+                             MAX( m_wipeBounds.t,
+                                  (s32)(m_wipeHeadY - SCREEN_WIPE_HEAD_HEIGHT + 0.5f) ) );
+    }
+}
+
+//=========================================================================
+
+xbool ui_manager::IsWipeActiveFor( const ui_dialog* pOwner ) const
+{
+    return m_wipeActive && (m_pWipeOwner == pOwner);
 }
 
 //=========================================================================
 void ui_manager::ResetScreenWipe( void )
 {
-    // reset flag
-    m_wipeActive    = FALSE;
-    m_WipeStepAccumulator = 0.0f;
-
-    // reset trail
-    for (s32 i=0; i<16; i++)
-    {
-        m_wipeTrail[i].Active = FALSE;
-    }
+    m_wipeActive = FALSE;
+    m_wipeFading = FALSE;
+    m_pWipeOwner = NULL;
+    m_wipeSpeed  = 0.0f;
+    m_wipeHeadY  = 0.0f;
+    m_wipeFade   = 0.0f;
+    m_wipeBounds.Clear();
+    m_wipeRevealY = 0;
 }
 
 //=============================================================================
@@ -3129,10 +3252,7 @@ void ui_manager::InitRefreshBar( void )
 
 void ui_manager::RenderRefreshBar( void )
 {
-    //xcolor c1 (146, 226, 100,  64);
-    //xcolor c2 (146, 226, 100,   0);
 
-    //RenderGouraudRect( m_RefreshPos, c1, c2, c2, c1, FALSE, TRUE );
 }
 
 //=============================================================================
@@ -3140,10 +3260,6 @@ void ui_manager::RenderRefreshBar( void )
 void ui_manager::UpdateRefreshBar( f32 deltaTime )
 {
     const f32 VisualStep = 1.0f / 30.0f;
-
-#ifdef TARGET_PC
-    deltaTime = deltaTime * m_ScaleY;
-#endif
 
     m_RefreshStepAccumulator += deltaTime;
 
@@ -3175,8 +3291,8 @@ void ui_manager::SetScreenSize ( const irect& size )
 
 void ui_manager::InitScreenHighlight( void )
 {
-    m_ScreenHighlightID      = g_UiMgr->FindElement( "highlight" );
-    m_ScreenGlowID           = g_UiMgr->FindElement( "screenglow" );
+    m_ScreenHighlightID      = FindElement( "highlight" );
+    m_ScreenGlowID           = FindElement( "screenglow" );
     m_HighlightAlpha         = 0.0f;
     m_ScreenHighlightEnabled = FALSE;
     m_HighlightFadeUp        = TRUE;
@@ -3208,7 +3324,7 @@ void ui_manager::RenderScreenHighlight( void )
 
     // render the background highlight
     u32 val = 64 + (m_HighlightAlpha * 1);
-    g_UiMgr->RenderElement( m_ScreenHighlightID, m_ScreenHighlightPos, 0, xcolor(val,val,val,val), TRUE );
+    RenderElement( m_ScreenHighlightID, m_ScreenHighlightPos, 0, xcolor(val,val,val,val), TRUE );
 }
 
 //=========================================================================
@@ -3255,7 +3371,7 @@ void ui_manager::RenderScreenGlow( void )
     pos.l -= 4;
     pos.r += 4;
     u32 val = 128 + (m_HighlightAlpha * 2);
-    g_UiMgr->RenderElement( m_ScreenGlowID, pos, 0, xcolor(val,val,val,val), TRUE );
+    RenderElement( m_ScreenGlowID, pos, 0, xcolor(val,val,val,val), TRUE );
 }
 
 //=========================================================================
@@ -3263,7 +3379,7 @@ void ui_manager::RenderScreenGlow( void )
 void ui_manager::InitGlowBar ( void )
 {
     // Set up the glow bar data
-    m_GlowID = g_UiMgr->FindElement( "glow" );
+    m_GlowID = FindElement( "glow" );
 
     m_GlowStartX    = m_CurrScreenSize.l + 46;
     m_GlowEndX      = m_CurrScreenSize.r - 46 - 16;
@@ -3298,7 +3414,7 @@ void ui_manager::RenderGlowBar( void )
         if (m_GlowTrail[i].l != -1)
         {
             val = 255-(i*32);
-            g_UiMgr->RenderElement(m_GlowID, m_GlowTrail[i], 0, xcolor(val,val,val,val), TRUE );
+            RenderElement(m_GlowID, m_GlowTrail[i], 0, xcolor(val,val,val,val), TRUE );
         }
     }
 }
@@ -3311,10 +3427,6 @@ void ui_manager::UpdateGlowBar( f32 deltaTime )
 
     if (!m_ScreenIsOn)
         return;
-
-#ifdef TARGET_PC
-    deltaTime = deltaTime * m_ScaleX;
-#endif
 
     m_GlowStepAccumulator += deltaTime;
 
@@ -3400,15 +3512,20 @@ void ui_manager::RenderProgressBar( xbool mustDraw )
 
     m_LastProgressUpdatePercent = m_PercentLoaded;
 
-    // calculate the translation based on the resolution
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-                
-    s32 midX = XRes>>1;
-    s32 midY = YRes>>1;
+    if( !eng_BeginFrame() )
+    {
+        return;
+    }
 
-    s32 dx = midX - 256;
-    s32 dy = midY - 224;
+    rtarget_backbuffer_pass_desc PassDesc;
+    PassDesc.bUseDepth = FALSE;
+    if( !rtarget_BeginBackBufferPass( PassDesc ) )
+    {
+        x_DebugMsg( "UI: failed to begin progress backbuffer pass\n" );
+        eng_ResetAfterException();
+        return;
+    }
+    rtarget_EndPass();
 
     if( eng_Begin("Progress Bar") )
     {
@@ -3417,24 +3534,13 @@ void ui_manager::RenderProgressBar( xbool mustDraw )
 
         // render text
         irect rb( 196, 308, 316, 338 );
-        rb.Translate( dx, dy );
         RenderText( FindFont( "large" ), rb, ui_font::h_center, TextColor, g_StringTableMgr( "ui", "IDS_LOADING_MSG" ));
-
-        // calculate scale factors
-        f32 ScaleX = (f32)XRes / 512.0f;
-        f32 ScaleY = (f32)YRes / 448.0f;
 
         // render the inner bar
         rb.l = 58;
         rb.t = 270;
         rb.b = 278;
         rb.r = rb.l + (s32)(s_ProgressBarScale * m_PercentLoaded);
-
-        // scale it for screen resolution
-        rb.l = (u32)((f32)rb.l * ScaleX);
-        rb.r = (u32)((f32)rb.r * ScaleX);
-        rb.t = (u32)((f32)rb.t * ScaleY);
-        rb.b = (u32)((f32)rb.b * ScaleY);
 
         RenderRect(rb, xcolor(199,236,249,255), FALSE);
 
@@ -3444,19 +3550,11 @@ void ui_manager::RenderProgressBar( xbool mustDraw )
         rb.t = 262;
         rb.b = 286;
 
-        // scale it for screen resolution
-        rb.l = (u32)((f32)rb.l * ScaleX);
-        rb.r = (u32)((f32)rb.r * ScaleX);
-        rb.t = (u32)((f32)rb.t * ScaleY);
-        rb.b = (u32)((f32)rb.b * ScaleY);
-        //RenderElementUV( g_UiMgr->FindElement( "loadbar" ), rb, vector2( 0.0f, 0.0f ), vector2( 0.8f, 1.0f ) );
 
         rb.l = 151;
         rb.t = 360;
         rb.r = 361;
         rb.b = 400;
-        rb.Translate( dx, dy );
-
 #ifndef X_RETAIL
         RenderText( FindFont( "small" ), rb, ui_font::h_left, TextColor, "Memory used:" );
         xwstring memString  = (const char *)xfs( "%dk",  (x_MemGetUsed() / 1024) );
@@ -3482,7 +3580,10 @@ void ui_manager::RenderProgressBar( xbool mustDraw )
         eng_End();
     }
 
-    eng_PageFlip();
+    if( !eng_EndFrame() )
+    {
+        x_DebugMsg( "UI: failed to submit progress frame\n" );
+    }
 }
 
 //=========================================================================

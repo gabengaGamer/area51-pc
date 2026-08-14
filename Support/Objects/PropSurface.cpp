@@ -8,14 +8,15 @@
 // INCLUDES
 //=============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "PropSurface.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "Render\Render.hpp"
-#include "Debris\Debris_mgr.hpp"
-#include "Objects\ParticleEmiter.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "Render/Render.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
 
 //=============================================================================
 // OBJECT DESCRIPTION
@@ -200,9 +201,9 @@ void prop_surface::OnPain ( const pain& Pain )   // Tells object to receive pain
 
 //=============================================================================
 
-void prop_surface::OnAdvanceLogic( f32 DeltaTime )
+void prop_surface::OnAdvanceSimulation( f32 DeltaTime )
 {
-    m_Inst.OnAdvanceLogic( DeltaTime );
+    m_Inst.OnAdvanceSimulation( DeltaTime );
 }
 
 //=============================================================================
@@ -423,13 +424,12 @@ xbool prop_surface::OnProperty( prop_query&   I    )
 
 void prop_surface::OnRender( void )
 {
-    CONTEXT( "prop_surface::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "prop_surface::OnRender" );
 
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
     
     if( pRigidGeom && !(m_PropFlags & PROP_FLAG_BBOX_ONLY) )
     {
-        const matrix4& RenderL2W = GetRenderL2W();
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         
         if ( pRigidGeom->m_nBones > 1 )
@@ -439,13 +439,13 @@ void prop_surface::OnRender( void )
         }
         else
         {
-            m_Inst.Render( &RenderL2W, Flags | GetRenderMode() );
+            m_Inst.Render( &GetL2W(), Flags | GetRenderMode() );
         }
     }
     else
     {
 #ifdef X_EDITOR
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif // X_EDITOR
     }
 }
@@ -490,7 +490,7 @@ void prop_surface::OnMove( const vector3& NewPos )
     BBox += GetBBox() ;
 
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
-    if( pRigidGeom && pRigidGeom->m_Collision.nLowClusters > 0 )
+    if( pRigidGeom && pRigidGeom->m_collision.nLowClusters > 0 )
         g_PolyCache.InvalidateCells( BBox, GetGuid() );
 }
 
@@ -506,7 +506,7 @@ void prop_surface::OnTransform( const matrix4& L2W )
     BBox += GetBBox() ;
 
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
-    if( pRigidGeom && pRigidGeom->m_Collision.nLowClusters > 0 )
+    if( pRigidGeom && pRigidGeom->m_collision.nLowClusters > 0 )
         g_PolyCache.InvalidateCells( BBox, GetGuid() );
 }
 

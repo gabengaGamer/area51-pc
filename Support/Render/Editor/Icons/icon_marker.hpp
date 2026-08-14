@@ -238,5 +238,4 @@ static s16 s_iicon_marker[] =
 };
 
 
-#define DRAW_ICON_MARKER() draw_icon( NUM_FACETS_ICON_MARKER, NUM_VERTICES_ICON_MARKER, s_vicon_marker, s_iicon_marker )
 

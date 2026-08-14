@@ -4,47 +4,33 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_text.hpp"
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_listbox.hpp"
-#include "ui\ui_dlg_vkeyboard.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_listbox.hpp"
+#include "UI/ui_dlg_vkeyboard.hpp"
 
 #include "dlg_OnlineLogin.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\MatchMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/MatchMgr.hpp"
 #include "NetworkMgr/GameClient.hpp"
-#include "AudioMgr\AudioMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 #include "Configuration/GameConfig.hpp"
 
-#if defined(TARGET_PS2)
-#include "IOManager\Device_DVD\io_device_cache.hpp"
-#endif
 //=========================================================================
 //  Main Menu Dialog
 //=========================================================================
-enum login_controls
-{
-    IDC_LOGIN_NAV_TEXT,
-};
-
-ui_manager::control_tem LoginControls[] = 
-{
-    { IDC_LOGIN_NAV_TEXT,    "IDS_NULL",             "text",      0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-};
-
-
 ui_manager::dialog_tem LoginDialog =
 {
     "IDS_ONLINE_LOGIN_TITLE",
     2, 1,
-    sizeof(LoginControls)/sizeof(ui_manager::control_tem),
-    &LoginControls[0],
+    0,
+    NULL,
     0
 };
 
@@ -116,17 +102,13 @@ xbool dlg_online_login::Create( s32                        UserID,
 	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // find controls
-    m_pNavText              = (ui_text*)    FindChildByID( IDC_LOGIN_NAV_TEXT );
 
     // hide them
-    m_pNavText   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_OK" ));
    
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // set initial focus
     m_pPopup = NULL;
@@ -183,16 +165,7 @@ void dlg_online_login::Render( s32 ox, s32 oy )
     static s32 width    =  4;
 
 	irect   rb;
-	s32     XRes;
-    s32     YRes;
-
-    eng_GetRes( XRes, YRes );
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+	rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect( rb, xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
@@ -245,14 +218,14 @@ void dlg_online_login::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_online_login::OnPadSelect( ui_win* pWin )
+void dlg_online_login::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 }
 
 //=========================================================================
 
-void dlg_online_login::OnPadBack( ui_win* pWin )
+void dlg_online_login::OnCancel( ui_win* pWin )
 {
     (void)pWin;
     if( m_State == DIALOG_STATE_ACTIVE )
@@ -349,11 +322,11 @@ void dlg_online_login::EnterState( dlg_login_state State )
         {
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
 
-            m_pNavText   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
             if( m_pPopup == NULL )
             {
                 m_pPopup = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-                    ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+                    ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
             }
 
             r.Set( 0, 0, 300, 160 );
@@ -410,7 +383,7 @@ void dlg_online_login::UpdateState( f32 DeltaTime )
     case LOGIN_IDLE:
         if( m_PopUpResult != DLG_POPUP_IDLE )
         {
-            //m_pNavText   ->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            //SetNavTextVisible( TRUE );
         }
         break;
         //---------------------------------------------
@@ -459,11 +432,11 @@ void dlg_online_login::OkDialog( const char* pString, const char* pButton )
 {
     irect r = g_UiMgr->GetUserBounds( g_UiUserID );
 
-    m_pNavText   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
+    SetNavTextVisible( FALSE );
     if( m_pPopup == NULL )
     {
         m_pPopup = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-            ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+            ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
     }
     
     r.Set( 0, 0, 300, 160 );
@@ -486,7 +459,7 @@ void dlg_online_login::CloseDialog( void )
     {
         ASSERT( g_UiMgr->GetTopmostDialog(m_UserID) == m_pPopup );
         g_UiMgr->EndDialog( m_UserID, TRUE );
-        m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+        SetNavTextVisible( TRUE );
         m_pPopup = NULL;
     }
 }
@@ -497,13 +470,13 @@ void dlg_online_login::ProgressDialog( const char* pString, xbool AllowBackout )
 {
     irect r = g_UiMgr->GetUserBounds( g_UiUserID );
 
-    m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+    SetNavTextVisible( FALSE );
 
 
     if( m_pPopup == NULL )
     {
         m_pPopup = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, 
-            ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|WF_INPUTMODAL );
+            ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
     }
 
     r.Set( 0, 0, 380, 160 );

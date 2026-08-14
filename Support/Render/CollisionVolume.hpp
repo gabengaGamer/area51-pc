@@ -1,6 +1,6 @@
 //=========================================================================
-//  
-//  CollisionVolume.hpp  
+//
+//  CollisionVolume.hpp
 //
 //=========================================================================
 
@@ -12,43 +12,36 @@
 //=========================================================================
 
 #include "x_math.hpp"
-#include "Auxiliary\MiscUtils\Fileio.hpp"
 
 //=========================================================================
-// class
+// COLLISION DATA CLASS
 //=========================================================================
 
 struct collision_data
 {
-    void FileIO   ( fileio& FileIO );
-    collision_data( fileio& FileIO );
     collision_data( void );
 
     struct mat_info
     {
-        enum 
+        enum
         {
-            FLAG_DOUBLESIDED        = ( 1 <<  0 ),  // Material is double sided
-            FLAG_TRANSPARENT        = ( 1 <<  1 ),  // Material is transparent
+            FLAG_DOUBLESIDED = ( 1 << 0 ), // Material is double sided
+            FLAG_TRANSPARENT = ( 1 << 1 ), // Material is transparent
         };
 
-        u16         SoundType;
-        u16         Flags;
-
-        void FileIO( fileio& FileIO );
+        u16 SoundType;
+        u16 Flags;
     };
 
     struct high_cluster
     {
-        bbox        BBox;
-        s16         nTris;
-        s16         iMesh;
-        s16         iBone;
-        s16         iDList;
-        s32         iOffset;
-        mat_info    MaterialInfo;
-
-        void FileIO( fileio& FileIO );
+        bbox     BBox;
+        s32      nTris;
+        s32      iMesh;
+        s32      iBone;
+        s32      iSection;
+        s32      iOffset;
+        mat_info MaterialInfo;
     };
 
     struct low_quad
@@ -56,38 +49,33 @@ struct collision_data
         byte iP[4];
         byte iN;
         byte Flags;
-        void FileIO( fileio& FileIO );
     };
 
     struct low_cluster
     {
-        bbox    BBox;
-        s16     iVectorOffset;
-        s16     nPoints;
-        s16     nNormals;
-        s16     iQuadOffset;
-        s16     nQuads;
-        s16     iMesh;
-        s16     iBone;
-        void FileIO( fileio& FileIO );
+        bbox BBox;
+        s32  iVectorOffset;
+        s32  nPoints;
+        s32  nNormals;
+        s32  iQuadOffset;
+        s32  nQuads;
+        s32  iMesh;
+        s32  iBone;
     };
 
-//=========================================================================
-
-    bbox            BBox;           // Only valid for "zero pose".
-    s32             nHighClusters;
-    high_cluster*   pHighCluster;
-    s32             nHighIndices;
-    u16*            pHighIndexToVert0;
-    s16             nLowClusters;
-    s16             nLowVectors;
-    s16             nLowQuads;
-    low_cluster*    pLowCluster;
-    vector3*        pLowVector;
-    low_quad*       pLowQuad;
+    bbox          BBox; // Only valid for "zero pose".
+    s32           nHighClusters;
+    high_cluster* pHighCluster;
+    s32           nHighIndices;
+    u16*          pHighIndexToVert0;
+    s32           nLowClusters;
+    s32           nLowVectors;
+    s32           nLowQuads;
+    low_cluster*  pLowCluster;
+    vector3*      pLowVector;
+    low_quad*     pLowQuad;
 };
 
-
 //=========================================================================
-#endif
+#endif // COLLISION_VOLUME_HPP
 //=========================================================================

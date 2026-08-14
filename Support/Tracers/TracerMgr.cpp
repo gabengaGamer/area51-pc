@@ -1,7 +1,7 @@
 #include "x_string.hpp"
-#include "entropy.hpp"
-#include "e_draw.hpp"
+#include "Entropy.hpp"
 #include "TracerMgr.hpp"
+#include "Render/PrimitiveBatch.hpp"
 
 //=========================================================================
 
@@ -34,17 +34,17 @@ void tracer_mgr::Init( void )
         x_memset( m_pTracers[i], 0, sizeof(tracer)*MAX_TRACERS_PER_TYPE );
     }
 
-    // load up the bitmaps
-    m_Bitmaps[TRACER_BMP_BULLET].SetName( PRELOAD_FILE("tracer_Bullet.xbmp") );
-    if ( m_Bitmaps[TRACER_BMP_BULLET].GetPointer() == NULL )
+    // Load the renderer textures.
+    m_Textures[TRACER_BMP_BULLET].SetName( PRELOAD_FILE("tracer_Bullet.xbmp") );
+    if ( m_Textures[TRACER_BMP_BULLET].GetPointer() == NULL )
     {
-        ASSERTS( 0, xfs( "Unable to load %s", m_Bitmaps[TRACER_BMP_BULLET].GetName() ) );
+        ASSERTS( 0, xfs( "Unable to load %s", m_Textures[TRACER_BMP_BULLET].GetName() ) );
     }
 
-    m_Bitmaps[TRACER_BMP_SWOOSH].SetName( PRELOAD_FILE("tracer_Bullet.xbmp") );
-    if ( m_Bitmaps[TRACER_BMP_SWOOSH].GetPointer() == NULL )
+    m_Textures[TRACER_BMP_SWOOSH].SetName( PRELOAD_FILE("tracer_Bullet.xbmp") );
+    if ( m_Textures[TRACER_BMP_SWOOSH].GetPointer() == NULL )
     {
-        ASSERTS( 0, xfs( "Unable to load %s", m_Bitmaps[TRACER_BMP_SWOOSH].GetName() ) );
+        ASSERTS( 0, xfs( "Unable to load %s", m_Textures[TRACER_BMP_SWOOSH].GetName() ) );
     }
 
     m_Sequence = 0;
@@ -151,56 +151,61 @@ void tracer_mgr::OnUpdate( f32 DeltaTime )
 
 void tracer_mgr::Render( void )
 {
-    CONTEXT( "tracer_mgr::Render" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "tracer_mgr::Render" );
 
-    draw_ClearL2W();
+    const view* pView = eng_GetView();
+    if( !pView )
+        return;
 
-    // render the bullets
-    if( m_Bitmaps[TRACER_BMP_BULLET].GetPointer() )
+    const tracer_bmp_types Textures[NUM_TRACER_TYPES] =
     {
-        draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_BLEND_ADD | DRAW_CULL_NONE | DRAW_USE_GDEPTH);
-        draw_SetTexture( *m_Bitmaps[TRACER_BMP_BULLET].GetPointer() );
-        for ( s32 i = 0; i < MAX_TRACERS_PER_TYPE; i++ )
-        {
-            tracer& Tracer = m_pTracers[TRACER_TYPE_BULLET][i];
-            if ( Tracer.IsAlive )
-            {
-                xcolor C = Tracer.Color;
-                s32 Alpha = (Tracer.FadeTime == 0.0f) ?
-                            255 :
-                            (s32)(255.0f* (1.0f - Tracer.ElapsedTime/Tracer.FadeTime));
-                C.A = (u8)Alpha;
-                draw_OrientedQuad( Tracer.StartPos, Tracer.EndPos,
-                                   vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
-                                   C, C,
-                                   10.0f, 10.0f );
-            }
-        }
-        draw_End();
-    }
+        TRACER_BMP_BULLET,
+        TRACER_BMP_SWOOSH
+    };
+    const f32 Radii[NUM_TRACER_TYPES] = { 10.0f, 20.0f };
 
-    // ENERGY SWOOSHES
-    if( m_Bitmaps[TRACER_BMP_SWOOSH].GetPointer() )
+    matrix4 Identity;
+    Identity.Identity();
+
+    for( s32 Type = 0; Type < NUM_TRACER_TYPES; Type++ )
     {
-        draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_BLEND_ADD | DRAW_CULL_NONE | DRAW_USE_GDEPTH );
-        draw_SetTexture( *m_Bitmaps[TRACER_BMP_SWOOSH].GetPointer() );
-        for ( s32 i = 0; i < MAX_TRACERS_PER_TYPE; i++ )
+        const texture* pTexture = m_Textures[Textures[Type]].GetPointer();
+        if( !pTexture )
+            continue;
+
+        const render::primitive_draw_desc Material( pTexture,
+                                                    render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                    render::PRIMITIVE_BLEND_ADDITIVE,
+                                                    render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                    render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                    render::PRIMITIVE_SAMPLER_ANISOTROPIC_WRAP,
+                                                    render::PRIMITIVE_LAYER_ADDITIVE );
+        render::PrimitiveBatch Batch( Material );
+        Batch.Reserve( MAX_TRACERS_PER_TYPE * 4, MAX_TRACERS_PER_TYPE * 6 );
+
+        for( s32 i = 0; i < MAX_TRACERS_PER_TYPE; i++ )
         {
-            tracer& Tracer = m_pTracers[TRACER_BMP_SWOOSH][i];
-            if ( Tracer.IsAlive )
-            {
-                xcolor C = Tracer.Color;
-                s32 Alpha = (Tracer.FadeTime == 0.0f) ?
-                    255 :
-                (s32)(255.0f* (1.0f - Tracer.ElapsedTime/Tracer.FadeTime));
-                C.A = (u8)Alpha;
-                draw_OrientedQuad( Tracer.StartPos, Tracer.EndPos,
-                    vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
-                    C, C,
-                    20.0f, 20.0f );
-            }
+            const tracer& Tracer = m_pTracers[Type][i];
+            if( !Tracer.IsAlive )
+                continue;
+
+            xcolor Color = Tracer.Color;
+            Color.A = (Tracer.FadeTime == 0.0f)
+                    ? 255
+                    : (u8)(255.0f * (1.0f - Tracer.ElapsedTime / Tracer.FadeTime));
+
+            Batch.AddViewOrientedQuad( Tracer.StartPos,
+                                       Tracer.EndPos,
+                                       pView->GetPosition(),
+                                       vector2( 0.0f, 0.0f ),
+                                       vector2( 1.0f, 1.0f ),
+                                       Color,
+                                       Color,
+                                       Radii[Type],
+                                       Radii[Type] );
         }
-        draw_End();
+
+        Batch.Submit( Identity );
     }
 }
 

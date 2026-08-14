@@ -12,9 +12,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Trigger\Trigger_Object.hpp"
-#include "Trigger\Trigger_Spatial_Object.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Trigger/Trigger_Object.hpp"
+#include "Trigger/Trigger_Spatial_Object.hpp"
 
 //=========================================================================
 // SPATIAL_TRIGGER_OBJECT : helps door by waking them when a player or npc gets close..

@@ -7,8 +7,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Trigger_Actions.hpp"
-#include "..\Support\Objects\Player.hpp"
+#include "../Support/Trigger/Trigger_Actions.hpp"
+#include "../Support/Objects/Player/Player.hpp"
 
 //=========================================================================
 // CHANGE_PLAYER_STRAIN

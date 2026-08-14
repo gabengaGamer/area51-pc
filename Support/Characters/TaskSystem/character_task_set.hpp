@@ -13,10 +13,10 @@
 // INCLUDES
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
 #include "character_task.hpp"
-#include "..\Support\TriggerEx\Affecters\object_affecter.hpp"
+#include "../Support/TriggerEx/Affecters/object_affecter.hpp"
 
 #define MAX_TASK_ARRAY_SIZE     16
 
@@ -76,7 +76,7 @@ public:
                     void        ResetIndexPtrs          ( xbool bOnlySubTasks );
 
                     void        MarkForDeletion         ( void );
-    virtual         void        OnAdvanceLogic          ( f32 DeltaTime );
+    virtual         void        OnAdvanceSimulation          ( f32 DeltaTime );
                     object_affecter GetObjectAffecter   ( void )                { return m_TaskAffecter; }
     
 

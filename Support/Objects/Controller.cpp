@@ -2,8 +2,8 @@
 // INCLUDES
 //=========================================================================
 #include "Controller.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Path.hpp"
 
 
@@ -32,7 +32,7 @@ static struct controller_desc : public object_desc
     { 
         object_desc::OnEditorRender( Object );
 
-        return EDITOR_ICON_CONTROLLER;
+        return static_cast<s32>( EditorIcon::Controller );
     }
 
 #endif // X_EDITOR
@@ -255,12 +255,12 @@ void controller::OnInit( void )
 
 //=========================================================================
 
-void controller::OnAdvanceLogic( f32 DeltaTime )
+void controller::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "controller::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "controller::OnAdvanceSimulation" );
 
     // Call base class for controller position
-    tracker::OnAdvanceLogic(DeltaTime) ;
+    tracker::OnAdvanceSimulation(DeltaTime) ;
 }
 
 //=========================================================================

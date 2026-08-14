@@ -6,23 +6,23 @@
 
 #include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_listbox.hpp"
-#include "ui\ui_blankbox.hpp"
-#include "ui\ui_joinlist.hpp"
-#include "ui\ui_dlg_vkeyboard.hpp"
-#include "ui\ui_bitmap.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_listbox.hpp"
+#include "UI/ui_blankbox.hpp"
+#include "UI/ui_joinlist.hpp"
+#include "UI/ui_dlg_vkeyboard.hpp"
+#include "UI/ui_bitmap.hpp"
 
 #include "dlg_OnlineJoin.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "StringMgr\StringMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "Parsing/textin.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Configuration/GameConfig.hpp"
 
 #ifdef CONFIG_VIEWER
@@ -62,7 +62,6 @@ enum controls
 
     IDC_STATUS_BOX,
     IDC_STATUS_TEXT,
-    IDC_NAV_TEXT,
 };
 
 enum sort_keys
@@ -74,35 +73,34 @@ enum sort_keys
     SORT_BY_PW_PROTECTED,
     SORT_BY_BUDDIES,
 
-    SORT_NUM_TYPES,         // Must be last!
+    SORT_NUm_TypeS,         // Must be last!
 };
 
 
 ui_manager::control_tem OnlineJoinControls[] = 
 {
     // Frames.
-    { IDC_MATCHLIST,        "IDS_NULL",             "joinlist",    35,  40, 432, 190, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_SERVER_DETAILS,   "IDS_NULL",             "blankbox",    35, 238, 432,  76, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_MATCHLIST,        "IDS_NULL",             "joinlist",    35,  40, 432, 190, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SERVER_DETAILS,   "IDS_NULL",             "blankbox",    35, 238, 432,  76, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_FRIEND_TEXT,      "IDS_JOIN_FRIEND_TEXT", "text",        43, 260, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_HEADSET_TEXT,     "IDS_JOIN_HEADSET",     "text",        43, 276, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PASSWORD_TEXT,    "IDS_JOIN_PASSWORD",    "text",        43, 292, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PCTCOMPLETE_TEXT, "IDS_JOIN_PCTCOMPLETE", "text",       209, 260, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_MUTATION_TEXT,    "IDS_JOIN_MUTATION",    "text",       209, 276, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CONNECTION_TEXT,  "IDS_JOIN_CONNECTION",  "text",       209, 292, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_FRIEND_TEXT,      "IDS_JOIN_FRIEND_TEXT", "text",        43, 260, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_HEADSET_TEXT,     "IDS_JOIN_HEADSET",     "text",        43, 276, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PASSWORD_TEXT,    "IDS_JOIN_PASSWORD",    "text",        43, 292, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PCTCOMPLETE_TEXT, "IDS_JOIN_PCTCOMPLETE", "text",       209, 260, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_MUTATION_TEXT,    "IDS_JOIN_MUTATION",    "text",       209, 276, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_CONNECTION_TEXT,  "IDS_JOIN_CONNECTION",  "text",       209, 292, 110,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_INFO_FRIEND,      "IDS_NULL",             "text",       155, 260,  55,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_INFO_HEADSET,     "IDS_NULL",             "text",       155, 276,  55,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_INFO_PASSWORD,    "IDS_NULL",             "text",       155, 292,  55,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_INFO_PCTCOMPLETE, "IDS_NULL",             "text",       321, 260, 180,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_INFO_MUTATION,    "IDS_NULL",             "text",       321, 276, 180,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_INFO_CONNECTION,  "IDS_NULL",             "text",       321, 292, 180,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_INFO_FRIEND,      "IDS_NULL",             "text",       155, 260,  55,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_INFO_HEADSET,     "IDS_NULL",             "text",       155, 276,  55,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_INFO_PASSWORD,    "IDS_NULL",             "text",       155, 292,  55,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_INFO_PCTCOMPLETE, "IDS_NULL",             "text",       321, 260, 180,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_INFO_MUTATION,    "IDS_NULL",             "text",       321, 276, 180,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_INFO_CONNECTION,  "IDS_NULL",             "text",       321, 292, 180,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_STATUS_BOX,       "IDS_NULL",             "bitmap",     176, 315, 200,  30, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_STATUS_TEXT,      "IDS_NULL",             "text",       241, 320,  90,  22, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-//  { IDC_STATUS_TEXT,      "IDS_NULL",             "text",       430, 242, 100,  22, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_STATUS_BOX,       "IDS_NULL",             "bitmap",     176, 315, 200,  30, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_STATUS_TEXT,      "IDS_NULL",             "text",       241, 320,  90,  22, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+//  { IDC_STATUS_TEXT,      "IDS_NULL",             "text",       430, 242, 100,  22, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_NAV_TEXT,         "IDS_NULL",             "text",         0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 ui_manager::dialog_tem OnlineJoinDialog =
@@ -228,7 +226,7 @@ xbool dlg_online_join::Create( s32                        UserID,
     
     GotoControl( (ui_control*)m_pMatchList );
 
-    m_pMatchList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pMatchList->SetActive( TRUE );
     m_pMatchList->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pMatchList->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pMatchList->EnableHeaderBar();
@@ -240,13 +238,8 @@ xbool dlg_online_join::Create( s32                        UserID,
     m_CurrHL = 0;
 
     // set up nav text 
-    m_pNavText = (ui_text*) FindChildByID( IDC_NAV_TEXT );
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_BACK" ));
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);    
-
+    SetNavText( navText );
     // set up status box
     m_pStatusBox = (ui_bitmap*) FindChildByID( IDC_STATUS_BOX );
     m_pStatusBox->SetBitmap( g_UiMgr->FindElement( "button_combo1" ), TRUE, 0 );
@@ -513,34 +506,24 @@ void dlg_online_join::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_online_join::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_online_join::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    (void)pWin;
-    (void)pSender;
-    (void)Command;
-    (void)pData;
-}
-
-//=========================================================================
-
-void dlg_online_join::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
-{
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
         // check for changing sort key
         switch( Code )
         {
-            case ui_manager::NAV_LEFT:
+            case ui_navigation::Left:
                 if( --s_SortKey < 0 )
                 {
-                    s_SortKey = SORT_NUM_TYPES - 1;
+                    s_SortKey = SORT_NUm_TypeS - 1;
                 }                
                 break;
 
-            case ui_manager::NAV_RIGHT:
-                if( ++s_SortKey == SORT_NUM_TYPES )
+            case ui_navigation::Right:
+                if( ++s_SortKey == SORT_NUm_TypeS )
                 {
                     s_SortKey = 0;
                 }                
@@ -551,7 +534,7 @@ void dlg_online_join::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Re
 
 //=========================================================================
 
-void dlg_online_join::OnPadSelect( ui_win* pWin )
+void dlg_online_join::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -580,7 +563,7 @@ void dlg_online_join::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_online_join::OnPadBack( ui_win* pWin )
+void dlg_online_join::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -598,7 +581,7 @@ void dlg_online_join::OnPadBack( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_online_join::OnPadDelete( ui_win* pWin )
+void dlg_online_join::OnDelete( ui_win* pWin )
 {
     if ( CONFIG_IS_AUTOCLIENT )
         return;
@@ -617,7 +600,7 @@ void dlg_online_join::OnPadDelete( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_online_join::OnPadActivate( ui_win* pWin )
+void dlg_online_join::OnAlternate( ui_win* pWin )
 {
     (void)pWin;
 
@@ -673,7 +656,6 @@ void dlg_online_join::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pInfoMutationMode     ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pInfoPctComplete      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pInfoConnectionSpeed  ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText              ->SetFlag(ui_win::WF_VISIBLE, TRUE);
         }
     }
 
@@ -919,18 +901,6 @@ void dlg_online_join::FillMatchList( void )
                     iSel = i;
                 }
                 m_pMatchList->AddItem( pInfo->Name, m_SortList[i] );
-#if defined(TARGET_DEV)
-                if ( ( CONFIG_IS_AUTOCLIENT ) && ( s_AutoServerIndex == -1 ) )
-                {
-                    extern const char* DEFAULT_NAME;
-                    // check for OUR server (server name matched devkit server name)
-                    if( x_wstricmp( pInfo->Name, xwstring(DEFAULT_NAME) ) == 0 )
-                    {
-                        // store the index to our server
-                        s_AutoServerIndex = m_SortList[i];
-                    }
-                } 
-#endif
             }
         }
     }
@@ -1025,7 +995,7 @@ void dlg_online_join::FillMatchList( void )
         m_pStatusText->SetLabel( statusText );
     }
 
-    m_pNavText->SetLabel( navText );
+    SetNavText( navText );
 
     g_MatchMgr.UnlockLists();
 #endif

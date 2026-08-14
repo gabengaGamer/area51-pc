@@ -6,26 +6,23 @@
 // INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "FocusObject.hpp"
-#include "e_Draw.hpp"
 #include "e_View.hpp"
 #include "Entropy.hpp"
 #include "x_math.hpp"
-#include "..\Support\TriggerEx\triggerex_object.hpp"
+#include "../Support/TriggerEx/TriggerEx_Object.hpp"
 
-#include "InputMgr\GamePad.hpp"
-#include "Objects\HudObject.hpp"
+#include "InputMgr/GamePad.hpp"
+#include "Objects/HudObject.hpp"
+#include "UI/ui_renderer.hpp"
 
-#include "GameTextMgr\GameTextMgr.hpp"
-#include "StringMgr\StringMgr.hpp"
+#include "GameTextMgr/GameTextMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
 
 #ifndef X_EDITOR
-#include "GameLib\RenderContext.hpp"
-#include "NetworkMgr\MsgMgr.hpp"
-#endif
-
-#ifdef TARGET_XBOX
-extern void xbox_GetRes( s32& XRes,s32& YRes );
+#include "GameLib/RenderContext.hpp"
+#include "NetworkMgr/MsgMgr.hpp"
 #endif
 
 //=========================================================================
@@ -38,7 +35,7 @@ xbool g_bDrawFODebug = FALSE;
 
 f32 g_FO_OffsetY = 5.0f;
 
-rhandle<xbitmap>            focus_object::m_Bracket;
+rhandle<texture>            focus_object::m_Bracket;
 
 //=========================================================================
 // OBJECT DESCRIPTION
@@ -57,7 +54,7 @@ static struct focus_object_desc : public object_desc
 
             FLAGS_GENERIC_EDITOR_CREATE | 
             FLAGS_IS_DYNAMIC            |
-            FLAGS_TARGETS_OBJS ) {}         
+            FLAGS_TARGETS_OBJS          ) {}
 
     //---------------------------------------------------------------------
 
@@ -76,17 +73,17 @@ static struct focus_object_desc : public object_desc
         {             
             bbox BBox = FO.m_PosState.m_FocusBox;
             BBox.Translate( Object.GetPosition() );
-            draw_BBox( BBox, XCOLOR_GREEN );
+            render::debug::Box( BBox, XCOLOR_GREEN );
         }
         {   
             bbox BBox = FO.m_NegState.m_FocusBox;
             BBox.Translate( Object.GetPosition() );
-            draw_BBox( BBox, XCOLOR_RED );
+            render::debug::Box( BBox, XCOLOR_RED );
         }
-        draw_Marker( Object.GetPosition() );
+        render::debug::Marker( Object.GetPosition() );
 
         object_desc::OnEditorRender( Object );
-        return EDITOR_ICON_FOCUS_OBJECT; 
+        return static_cast<s32>( EditorIcon::FocusObject );
     }
 
 #endif // X_EDITOR
@@ -132,7 +129,7 @@ focus_object::focus_object( void )
     m_State     = 0;
     m_bActive   = TRUE;
     m_bActivationChanged = FALSE;
-    m_ActivationFrameDelay = 0;
+    m_ActivationTickDelay = 0;
 
     m_pCurrState = &m_PosState;
 
@@ -213,21 +210,16 @@ focus_object::focus_object( void )
     m_CircleFocusObj[1].BMP.SetName(PRELOAD_FILE("HUD_Campaign_lorereticle_2.xbmp"));
     m_CircleFocusObj[2].BMP.SetName(PRELOAD_FILE("HUD_Campaign_lorereticle_3.xbmp"));
 
-    m_CircleFocusObj[0].Position = vector3(0,0,0.01f);
-    m_CircleFocusObj[1].Position = vector3(0,0,0.01f);
-    m_CircleFocusObj[2].Position = vector3(0,0,0.01f);
-
     m_CircleFocusObj[0].Rotation = 0.0f;
     m_CircleFocusObj[1].Rotation = 0.0f;
     m_CircleFocusObj[2].Rotation = 0.0f;
 
+    m_CircleFocusColorAlpha = 0.0f;
     m_CircleFocusFadeIN = FALSE;
     m_CircleFocusFadeOUT = FALSE;
     m_CircleFocusFadeStep = 0.0f;
     m_CircleFocusFadeStepIndex = 0;
-    m_CircleFocusColorAlpha = 0;
 
-    m_PrevCircleFocusObjPos = vector3( 0,0,0 );
 }
 
 //=========================================================================
@@ -250,20 +242,20 @@ void focus_object::OnDebugRender( void )
 
 void focus_object::OnRender( void )
 {
-    CONTEXT( "focus_object::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "focus_object::OnRender" );
 
     if( !m_bActive || (m_AnimState == 1.0f) )
     {
         return;
     }
-    m_bRendered = TRUE;
-
     bbox BBox = m_pCurrState->m_FocusBox;
     player* pPlayer = SMP_UTIL_GetActivePlayer();
     if( !pPlayer )
         return;
 
-    f32 DistToBox = (GetPosition() - pPlayer->GetEyesPosition()).Length();
+    const view& rView = pPlayer->GetRenderView();
+    const vector3 RenderPosition = GetL2W().GetTranslation();
+    f32 DistToBox = (RenderPosition - rView.GetPosition()).Length();
 
     // Get the longest dimension of the bbox.
     f32 LongestDim = 1;
@@ -277,19 +269,24 @@ void focus_object::OnRender( void )
 
     vector3 scale( ScaleFactor, ScaleFactor, ScaleFactor );
     radian3 rotation(0.0f, 0.0f, 0.0f);
-    vector3 translation = GetPosition();
+    vector3 translation = RenderPosition;
     BBox.Transform( matrix4( scale, rotation, translation ) );
 
     rect ViewDimensions;
 
-    // If we have FOs in SS then this will have to be looked at! 
-
-    view& rView = pPlayer->GetInterpView();
     rView.GetViewport( ViewDimensions );
 
     // Draw the FO
-    if( rView.PointToScreen( GetPosition() ).GetZ() < 1.0f )
+    const vector3 CenterOnScreen = rView.PointToScreen( GetBBox().GetCenter() );
+    if( CenterOnScreen.GetZ() <= 0.001f )
         return;
+
+    const irect ScreenViewport( (s32)ViewDimensions.Min.X,
+                                (s32)ViewDimensions.Min.Y,
+                                (s32)ViewDimensions.Max.X,
+                                (s32)ViewDimensions.Max.Y );
+    const rect HudViewDimensions = g_UIRenderer.GetViewport().GetHudBounds( ScreenViewport );
+    g_UIRenderer.PushHudSpace( ScreenViewport );
 
     //
     // Brackets.
@@ -298,63 +295,50 @@ void focus_object::OnRender( void )
     {
     case VIEW_CIRCLE:
         {
+            const vector2 CirclePosition = g_UIRenderer.GetViewport().ScreenToHud(
+                vector2( CenterOnScreen.GetX(), CenterOnScreen.GetY() ),
+                ScreenViewport );
+
             if( (m_bHasLOS && m_bInViewRange) || m_CircleFocusColorAlpha > 0 )
             {
-                draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_NO_ZWRITE );
-                xbitmap* pBitmap = NULL;
-
                 // render all of the 3 circle pc of art to make up the FO
                 for( s32 circle = 0 ; circle < NUM_CIRCLE_SECTIONS ; circle++ )
                 {
-                    pBitmap = NULL;
+                    texture* pTexture = NULL;
 
                     if( circle != CIRCLE_FLOATER ) // FLOATER not rendered
-                        pBitmap = m_CircleFocusObj[circle].BMP.GetPointer();
+                        pTexture = m_CircleFocusObj[circle].BMP.GetPointer();
 
-                    if( pBitmap )
+                    if( pTexture )
                     {
-                        vector3 Position = m_CircleFocusObj[circle].Position;
+                        const xbitmap& Bitmap = pTexture->m_bitmap;
 
-                        f32 H = f32( pBitmap->GetHeight() );
-                        f32 W = f32( pBitmap->GetWidth () );
+                        f32 H = f32( Bitmap.GetHeight() );
+                        f32 W = f32( Bitmap.GetWidth () );
 
                         vector2 UV0(0,0);
                         vector2 UV1(1,1);  
                         vector2 WH (W,H);
-
-                        draw_SetTexture( *pBitmap );            
 
                         xcolor FO_Color = m_pCurrState->m_SelectedColor2;
 
                         if( HasFocus() )
                             FO_Color = m_pCurrState->m_SelectedColor1;
 
-                        FO_Color.A = pPlayer->IsMutated() ? m_CircleFocusColorAlpha : 255;
+                        FO_Color.A = pPlayer->IsMutated()
+                                   ? (u8)x_clamp( m_CircleFocusColorAlpha, 0.0f, 255.0f )
+                                   : 255;
 
-                        draw_SpriteUV( Position, WH, UV0, UV1, FO_Color, DEG_TO_RAD(m_CircleFocusObj[circle].Rotation));
+                        g_UIRenderer.DrawImage( *pTexture,
+                                                CirclePosition,
+                                                WH,
+                                                UV0,
+                                                UV1,
+                                                FO_Color,
+                                                DEG_TO_RAD(m_CircleFocusObj[circle].Rotation) );
 
-                        if( circle == CIRCLE_FLOATER ) // Floater not rendered
-                        {
-                            m_CircleFocusObj[circle].Rotation-=2.2f;               
-                        }
-                        else if ( circle == CIRCLE_INNER )
-                        {
-                            if( HasFocus() )
-                                m_CircleFocusObj[circle].Rotation+=8.4f;               
-                            else
-                                m_CircleFocusObj[circle].Rotation+=2.2f;  
-                        }
-                        else
-                        {
-                            m_CircleFocusObj[circle].Rotation+=1.4f;               
-                        }
                     }
                 }
-                draw_End();
-            }
-            else
-            {
-                m_bLocked = FALSE;
             }
         }
         break;
@@ -389,61 +373,30 @@ void focus_object::OnRender( void )
                 MinY = x_min( MinY, P2D.GetY() );
             }
 
-#ifdef TARGET_XBOX
-            // dstewart HACK - Because of the wacky screen scaling that goes on the xbox, rView
-            // does not report accurate screen coordinates. This is a problem all over the game,
-            // but it is too late in the project to try to do a proper fix, so here's another
-            // hack. This won't work in split-screen, but we shouldn't have lore objects in
-            // split screen anyway.
-            s32 OptW, OptH;
-            xbox_GetRes( OptW, OptH );
-            MinX *= ( (f32)OptW / (f32)ViewDimensions.GetWidth() );
-            MaxX *= ( (f32)OptW / (f32)ViewDimensions.GetWidth() );
-            MinY *= ( (f32)OptH / (f32)ViewDimensions.GetHeight() );
-            MaxY *= ( (f32)OptH / (f32)ViewDimensions.GetHeight() );
-#endif
+            const vector2 HudMin = g_UIRenderer.GetViewport().ScreenToHud(
+                vector2( MinX, MinY ), ScreenViewport );
+            const vector2 HudMax = g_UIRenderer.GetViewport().ScreenToHud(
+                vector2( MaxX, MaxY ), ScreenViewport );
+            MinX = HudMin.X;
+            MinY = HudMin.Y;
+            MaxX = HudMax.X;
+            MaxY = HudMax.Y;
 
-            // Figure out if the player is looking at the FO
-            // real quick while we have the appropriate data.
-            {
-                if( IN_RANGE( MinX, ViewDimensions.GetCenter().X, MaxX ) && 
-                    IN_RANGE( MinY, ViewDimensions.GetCenter().Y, MaxY ) )
-                {
-                    m_bLookingAt = TRUE;
-                }
-                else
-                {
-                    m_bLookingAt = FALSE;
-                }
-            }
             vector3 P3D[4];
             P3D[ 0 ].Set( MinX, MinY, 0.0f );
             P3D[ 1 ].Set( MaxX, MinY, 0.0f );
             P3D[ 2 ].Set( MaxX, MaxY, 0.0f );
             P3D[ 3 ].Set( MinX, MaxY, 0.0f );
-
 #ifndef CONFIG_RETAIL 
             if( g_bDrawFODebug )
             {
-                //draw_BBox( BBox, XCOLOR_AQUA );
+                g_UIRenderer.DrawRect( rect( MinX, MinY, MaxX, MaxY ), XCOLOR_GREEN, TRUE );
 
-                draw_Begin( DRAW_LINES, DRAW_2D  );
-
-                xcolor RectColor = XCOLOR_GREEN;
-                draw_Color( RectColor );
-                for( i = 0; i < 4; i++ )
-                {
-                    draw_Vertex( P3D[ i % 4 ] );
-                    draw_Vertex( P3D[ (i + 1) % 4 ] );
-                }
-
-                draw_End();
-
-                draw_Marker( GetPosition(), XCOLOR_BLUE );
+                render::debug::Marker( GetPosition(), XCOLOR_BLUE );
                 s32 u;
                 for( u = 0; u < 8; u++ )
                 {
-                    draw_Marker( P[ u ], XCOLOR_RED );
+                    render::debug::Marker( P[ u ], XCOLOR_RED );
                 }
             }
 #endif
@@ -471,13 +424,13 @@ void focus_object::OnRender( void )
             f32 BracketSize = x_sqrt( x_min( MaxX - MinX, MaxY - MinY ) ) / 30.0f;
             f32 CornerOffset = 100.0f;
 
-            xbitmap* pBitmap = m_Bracket.GetPointer();
-            vector2 WH( (f32)pBitmap->GetWidth(), (f32)pBitmap->GetHeight() );
+            texture* pTexture = m_Bracket.GetPointer();
+            if( !pTexture )
+                break;
+            const xbitmap& Bitmap = pTexture->m_bitmap;
+            vector2 WH( (f32)Bitmap.GetWidth(), (f32)Bitmap.GetHeight() );
 
             WH.Scale( BracketSize );
-
-            draw_Begin( DRAW_SPRITES, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_NO_ZWRITE );
-            draw_SetTexture( *pBitmap );
 
             vector3 Displacement[ 4 ] = { P3D[ 0 ] + m_AnimState * CornerOffset * (-RightOne + UpOne),
                 P3D[ 1 ] + m_AnimState * CornerOffset * (UpOne + RightOne),
@@ -489,16 +442,24 @@ void focus_object::OnRender( void )
             for( s32 i = 0; i < 4; i++ )
             {
                 // Check to make sure it's actually on the screen so we don't get any weird wrap around glitches.
-                if( IN_RANGE( -pBitmap->GetWidth(),  Displacement[ i ].GetX(), ViewDimensions.GetWidth()  + pBitmap->GetWidth()  ) && 
-                    IN_RANGE( -pBitmap->GetHeight(), Displacement[ i ].GetY(), ViewDimensions.GetHeight() + pBitmap->GetHeight() ) )
+                if( IN_RANGE( HudViewDimensions.Min.X - Bitmap.GetWidth(),
+                              Displacement[i].GetX(),
+                              HudViewDimensions.Max.X + Bitmap.GetWidth() ) &&
+                    IN_RANGE( HudViewDimensions.Min.Y - Bitmap.GetHeight(),
+                              Displacement[i].GetY(),
+                              HudViewDimensions.Max.Y + Bitmap.GetHeight() ) )
                 {
-                    draw_SpriteUV( Displacement[ i ], WH, TL, BR, RenderColor, Rotation );
+                    g_UIRenderer.DrawImage( *pTexture,
+                                            vector2( Displacement[i].GetX(), Displacement[i].GetY() ),
+                                            WH,
+                                            TL,
+                                            BR,
+                                            RenderColor,
+                                            Rotation );
                 }
 
                 Rotation -= R_90;
             }
-
-            draw_End();
 
             // Draw the Label.
 #ifndef X_EDITOR
@@ -518,8 +479,12 @@ void focus_object::OnRender( void )
                 }
 #endif
 
-                if( IN_RANGE( -ViewDimensions.GetWidth(),  LabelPos.GetCenter().X, 2.0f * ViewDimensions.GetWidth()  ) && 
-                    IN_RANGE( -ViewDimensions.GetHeight(), LabelPos.GetCenter().Y, 2.0f * ViewDimensions.GetHeight() ) )
+                if( IN_RANGE( HudViewDimensions.Min.X - HudViewDimensions.GetWidth(),
+                              LabelPos.GetCenter().X,
+                              HudViewDimensions.Max.X + HudViewDimensions.GetWidth() ) &&
+                    IN_RANGE( HudViewDimensions.Min.Y - HudViewDimensions.GetHeight(),
+                              LabelPos.GetCenter().Y,
+                              HudViewDimensions.Max.Y + HudViewDimensions.GetHeight() ) )
                 {
                     RenderLine( pDisplayStr, LabelPos, (u8)(255 * m_TextAlphaState), White, 1, ui_font::h_center|ui_font::v_bottom, TRUE );
                 }
@@ -533,26 +498,28 @@ void focus_object::OnRender( void )
     default:
         break;
     }
+
+    g_UIRenderer.PopHudSpace();
 }
 
 //=========================================================================
 
-void focus_object::OnAdvanceLogic( f32 DeltaTime )
+void focus_object::OnAdvanceSimulation( f32 DeltaTime )
 {
     // this will fix the activate on same frame and execute trigger bug
     // if it was activated, set the real flag and return, skipping a frame for sure
     if( m_bActivationChanged )
     {
-        if( m_ActivationFrameDelay < 3 )
+        if( m_ActivationTickDelay < 3 )
         {
-            m_ActivationFrameDelay++;
+            m_ActivationTickDelay++;
             return;
         }
         else
         {
             m_bActive            = TRUE;
             m_bActivationChanged = FALSE;
-            m_ActivationFrameDelay = 0;
+            m_ActivationTickDelay = 0;
         }        
     }
 
@@ -562,20 +529,6 @@ void focus_object::OnAdvanceLogic( f32 DeltaTime )
         return;
     }
 
-    //
-    // This deals with the fact that the FO will not run OnRenderTransparent 
-    // when off screen, which meant that if you walked through it, 
-    // m_bLookingAt would stay true until the FO again entered the screen.
-    // This code assumes that if you haven't rendered (where m_bRendered is 
-    // set to true) since the last logic pass, then you must not be looking
-    // at the FO.
-    //
-    if( !m_bRendered )
-    {
-        m_bLookingAt = FALSE;
-    }
-    m_bRendered = FALSE;
-    
     // Set the current state.
     if( m_State == 1 )
     {
@@ -608,33 +561,31 @@ void focus_object::OnAdvanceLogic( f32 DeltaTime )
             Dist = (GetPosition() - pPlayer->GetEyesPosition()).Length();
         }
         else
-        {
             Dist = (GetPosition() - pPlayer->GetPosition()).Length();
-        }
 
         m_bInViewRange     = (Dist < m_pCurrState->m_ViewDist);
         m_bInTextRange     = (Dist < m_pCurrState->m_TextDist);
         m_bInInteractRange = (Dist < m_pCurrState->m_InteractDist);
-
-        m_bStandingIn = FALSE;
+        m_bStandingIn      = FALSE;
 
         // Only check collision with trigger and LOS if we're within viewable distance.
         if( m_bInViewRange )
         {
-            // rather then pop the FO in lets fade it over 10 frames.
+            // Rather than pop the FO in, fade it over 10 simulation updates.
             if( m_CircleFocusFadeIN == FALSE )
             {
                 m_CircleFocusFadeStep = (m_pCurrState->m_SelectedColor1.A / 10.0f);
                 m_CircleFocusFadeStepIndex = 0;
-                m_CircleFocusColorAlpha = 0;
+                m_CircleFocusColorAlpha = 0.0f;
                 m_CircleFocusFadeIN = TRUE;
                 m_CircleFocusFadeOUT = FALSE;
             }
-            else if ( m_CircleFocusFadeStepIndex < 10 )
+            else if( m_CircleFocusFadeStepIndex < 10 )
             {
-                m_CircleFocusColorAlpha += (s32)m_CircleFocusFadeStep;
+                m_CircleFocusColorAlpha += m_CircleFocusFadeStep;
                 m_CircleFocusFadeStepIndex++;
             }
+
             //
             // Check the spatial trigger, if any.
             //
@@ -692,116 +643,101 @@ void focus_object::OnAdvanceLogic( f32 DeltaTime )
         {
             m_bHasLOS = FALSE;
 
-            // just like the fade in.. lets fade out..
+            // Fade the circle out when it leaves the view range.
             if( m_CircleFocusFadeOUT == FALSE )
             {
                 m_CircleFocusFadeOUT = TRUE;
                 m_CircleFocusFadeIN = FALSE;
                 m_CircleFocusFadeStepIndex = 0;
             }
-            else if ( m_CircleFocusFadeStepIndex < 10 )
+            else if( m_CircleFocusFadeStepIndex < 10 )
             {
-                m_CircleFocusColorAlpha -= (s32)m_CircleFocusFadeStep;
+                m_CircleFocusColorAlpha -= m_CircleFocusFadeStep;
                 m_CircleFocusFadeStepIndex++;
             }
         }
     }
-    //
-    // Pulse the color.
-    //
+
+    m_CircleFocusColorAlpha = x_clamp( m_CircleFocusColorAlpha, 0.0f, 255.0f );
+
+    // Pulse the focus color using simulation time.
+    m_ColorPhase += 2.0f * DeltaTime;
+    if( m_ColorPhase > 2.0f )
     {
-        m_ColorPhase += 2.0f * DeltaTime;
-        if( m_ColorPhase > 2.0f )
-            m_ColorPhase = 0.0f;
-    }
-    //
-    // Update the animation state.
-    //
-    {
-        // Bracket displacement.
-        if( m_bHasLOS && m_bInViewRange )
-        {
-            m_AnimState -= 3.0f * DeltaTime;
-        }
-        else
-        {
-            m_AnimState += 3.0f * DeltaTime;
-        }
-
-        // Text opacity.
-        if( (m_AnimState < 0.1f) && m_bInTextRange )
-        {
-            m_TextAlphaState += DeltaTime * 3.0f;
-        }
-        else
-        {
-            m_TextAlphaState -= DeltaTime * 3.0f;
-        }
-
-        // Bound them both.
-        m_AnimState      = MINMAX( 0.0f, m_AnimState,      1.0f );
-        m_TextAlphaState = MINMAX( 0.0f, m_TextAlphaState, 1.0f );
-
-        // Have to map this piecewise function which makes the 
-        // last 30% of transition fully opaque onto the alpha.
-        m_MaxAlpha = (s32)(255 * ((m_AnimState <= 0.3f) ? 
-            (1.0f) : 
-            (1.0f - ((m_AnimState - 0.3f) / 0.7f))));
+        m_ColorPhase = 0.0f;
     }
 
-    //
-    // update the circle type frame
-    //
-    if(  m_pCurrState->m_ViewType == VIEW_CIRCLE )
+    // Update bracket displacement and text opacity.
+    if( m_bHasLOS && m_bInViewRange )
     {
-        // Reticle Pos
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        view& rView = pPlayer->GetInterpView();
+        m_AnimState -= 3.0f * DeltaTime;
+    }
+    else
+    {
+        m_AnimState += 3.0f * DeltaTime;
+    }
 
-        // Reticle Position
-        vector3 RP = vector3( (f32)XRes/2.0f, (f32)YRes/2.0f, 0.01f );
-        
-        // Pos of the FO Reticle
-        vector3 CenterOfFO = rView.PointToScreen( GetBBox().GetCenter() );
-        CenterOfFO.GetZ() = 0.01f;
+    if( (m_AnimState < 0.1f) && m_bInTextRange )
+    {
+        m_TextAlphaState += DeltaTime * 3.0f;
+    }
+    else
+    {
+        m_TextAlphaState -= DeltaTime * 3.0f;
+    }
 
-        vector3 FOP = CenterOfFO;            
-        
-        m_CircleFocusObj[CIRCLE_INNER].Position = FOP;
-        m_CircleFocusObj[CIRCLE_OUTTER].Position = FOP;
+    m_AnimState      = MINMAX( 0.0f, m_AnimState,      1.0f );
+    m_TextAlphaState = MINMAX( 0.0f, m_TextAlphaState, 1.0f );
+    m_MaxAlpha       = (u8)(255 * ((m_AnimState <= 0.3f) ?
+        1.0f :
+        (1.0f - ((m_AnimState - 0.3f) / 0.7f))));
 
-        static f32 STATIC_FO_LOCK_DIST = 125.0f;
+    if( (m_pCurrState->m_ViewType == VIEW_CIRCLE) ||
+        (m_pCurrState->m_ViewType == VIEW_BRACKETS) )
+    {
+        bbox FocusBBox = m_pCurrState->m_FocusBox;
+        const f32 LongestDim = MAX( 1.0f,
+                                    MAX( x_abs( FocusBBox.Max.GetX() - FocusBBox.Min.GetX() ),
+                                         MAX( x_abs( FocusBBox.Max.GetY() - FocusBBox.Min.GetY() ),
+                                              x_abs( FocusBBox.Max.GetZ() - FocusBBox.Min.GetZ() ) ) ) );
+        const f32 Distance = (GetPosition() - pPlayer->GetEyesPosition()).Length();
+        const f32 ScaleFactor = MIN( 1.0f, Distance / (LongestDim * 2.0f) );
+        FocusBBox.Transform( matrix4( vector3( ScaleFactor, ScaleFactor, ScaleFactor ),
+                                      radian3( 0.0f, 0.0f, 0.0f ),
+                                      GetPosition() ) );
 
-        if( 
-            FOP.GetX() > RP.GetX()-STATIC_FO_LOCK_DIST &&
-            FOP.GetX() < RP.GetX()+STATIC_FO_LOCK_DIST &&
-            FOP.GetY() > RP.GetY()-STATIC_FO_LOCK_DIST &&
-            FOP.GetY() < RP.GetY()+STATIC_FO_LOCK_DIST &&
-            m_bInInteractRange  &&
-            m_bHasLOS && 
-            m_bInViewRange && 
-            m_bStandingIn
-            )
+        const view& SimulationView = pPlayer->GetSimulationView();
+        const vector3 RayStart = SimulationView.GetPosition();
+        const vector3 RayEnd   = RayStart + SimulationView.GetViewZ() * m_pCurrState->m_ViewDist;
+        f32 HitTime;
+        m_bLookingAt = FocusBBox.Intersect( HitTime, RayStart, RayEnd );
+
+        if( m_pCurrState->m_ViewType == VIEW_CIRCLE )
         {
-            if( m_bLocked == FALSE  )
-            {
-                // Play a sound here.. DING your locked on.
-                // jhowa need to add sound effect for locking.
-            }
+            m_bLookingAt = m_bLookingAt &&
+                           m_bInInteractRange &&
+                           m_bHasLOS &&
+                           m_bInViewRange &&
+                           m_bStandingIn;
+            m_bLocked = m_bLookingAt;
+        }
+    }
+    else
+    {
+        m_bLookingAt = FALSE;
+        m_bLocked = FALSE;
+    }
 
-            m_bLocked = TRUE;
-            m_bLookingAt = TRUE;
-        }
-        else
-        {
-            m_bLookingAt = FALSE;
-            if( m_bLocked == TRUE  )
-            {   
-                // Play sound now that we are losing the lock on.
-                // jhowa add sound for non lock
-            }
-        }
+    const f32 RotationScale = DeltaTime * 60.0f;
+    m_CircleFocusObj[CIRCLE_INNER].Rotation -= 2.2f * RotationScale;
+    m_CircleFocusObj[CIRCLE_FLOATER].Rotation += 1.4f * RotationScale;
+    if( m_bLookingAt )
+    {
+        m_CircleFocusObj[CIRCLE_OUTTER].Rotation += 8.4f * RotationScale;
+    }
+    else
+    {
+        m_CircleFocusObj[CIRCLE_OUTTER].Rotation += 2.2f * RotationScale;
     }
 }
 

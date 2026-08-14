@@ -114,5 +114,4 @@ static s16 s_iicon_arrow[] =
 };
 
 
-#define DRAW_ICON_ARROW() draw_icon( NUM_FACETS_ICON_ARROW, NUM_VERTICES_ICON_ARROW, s_vicon_arrow, s_iicon_arrow )
 

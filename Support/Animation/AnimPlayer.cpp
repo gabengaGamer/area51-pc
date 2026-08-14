@@ -8,8 +8,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "animdata.hpp"
-#include "animplayer.hpp"
+#include "AnimData.hpp"
+#include "AnimPlayer.hpp"
 #include "e_ScratchMem.hpp"
 
 
@@ -189,7 +189,7 @@ void simple_anim_player::Advance( f32 nSeconds )
     if( m_Rate == 0.0f )
         return;
             
-    CONTEXT( "simple_anim_player::Advance" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "simple_anim_player::Advance" );
 
     //
     // Remember previous frame and cycle
@@ -504,14 +504,11 @@ const matrix4* simple_anim_player::UpdateCachedL2W( xbool bApplyTheBindPose )
     GetInterpKeys( MixBuffer );
 
     // Mix in any additional track controllers
-    if (m_pTrackController[0])
-        m_pTrackController[0]->MixKeys( MixBuffer );
-    if (m_pTrackController[1])
-        m_pTrackController[1]->MixKeys( MixBuffer );
-    if (m_pTrackController[2])
-        m_pTrackController[2]->MixKeys( MixBuffer );
-    if (m_pTrackController[3])
-        m_pTrackController[4]->MixKeys( MixBuffer );
+    for( s32 i = 0; i < 4; ++i )
+    {
+        if( m_pTrackController[i] )
+            m_pTrackController[i]->MixKeys( MixBuffer );
+    }
 
     // Setup matrices
     pGroup->ComputeBonesL2W( m_L2W, MixBuffer, pGroup->GetNBones(), pMatrices , bApplyTheBindPose);

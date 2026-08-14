@@ -1,11 +1,11 @@
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "ProjectileBullett.hpp"
 #include "WeaponDualShotgun.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "Objects\Projector.hpp"
-#include "render\LightMgr.hpp"
-#include "Objects\Player.hpp"
-#include "Objects\ParticleEmiter.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Objects/Projector.hpp"
+#include "Render/LightMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/ParticleEmiter.hpp"
 
 
 //=========================================================================

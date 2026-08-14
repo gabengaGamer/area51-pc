@@ -11,8 +11,8 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Auxiliary\fx_RunTime\Fx_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "FX/fx_Mgr.hpp"
 
 //==============================================================================
 //  TYPES
@@ -38,7 +38,7 @@ virtual         s32             GetMaterial             ( void ) const;
 virtual         void            OnMove                  ( const vector3& NewPos   );      
 virtual         void            OnMoveRel               ( const vector3& DeltaPos );    
 virtual         void            OnTransform             ( const matrix4& L2W      );
-virtual         void            OnAdvanceLogic          ( f32 DeltaTime );
+virtual         void            OnAdvanceSimulation          ( f32 DeltaTime );
 virtual         void            OnRender                ( void );
 virtual         void            OnRenderTransparent     ( void );
 

@@ -37,8 +37,8 @@ enum dialog_states
     DIALOG_STATE_EXIT,
     DIALOG_STATE_EDIT,
     DIALOG_STATE_CREATE,
-    DIALOG_STATE_WAIT_FOR_MEMCARD,
-    DIALOG_STATE_MEMCARD_ERROR,
+    DIALOG_STATE_WAIT_FOR_SAVE_DATA,
+    DIALOG_STATE_SAVE_DATA_ERROR,
     DIALOG_STATE_POPUP,
     NUM_DIALOG_STATES
 };
@@ -48,17 +48,7 @@ enum dialog_states
 // Macros
 //
 
-// "frame2" Macros to put a frame2 around a irect...
-#define FRAME_TO_L(a) ((int)((a)-21))
-#define FRAME_TO_T(a) ((int)((a)-21))
-#define FRAME_TO_R(a) ((int)((a)+14))
-#define FRAME_TO_B(a) ((int)((a)+14))
-
-#ifdef TARGET_XBOX
-#define SAFE_ZONE   5
-#else
-#define SAFE_ZONE   0
-#endif
+static s32 const SAFE_ZONE = 0;
 
 
 //==============================================================================
@@ -85,9 +75,8 @@ public:
 
     virtual void            Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual const irect&    GetCreatePosition   ( void ) const;
-
-    virtual void            OnPadNavigate       ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE);
+    virtual void            OnNavigate       ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE);
+    virtual void            OnFocusWithin        ( ui_win* pWin );
                             
     void                    SetBackgroundColor  ( xcolor Color );
     xcolor                  GetBackgroundColor  ( void ) const;
@@ -98,6 +87,12 @@ public:
     s32                     GetNumControls      ( void ) const;
 
     ui_manager::dialog_tem* GetTemplate         ( void );
+
+    void                    SetNavText          ( const xwstring& Text );
+    void                    SetNavText          ( const xwchar* pText );
+    void                    SetNavTextVisible   ( xbool IsVisible );
+    const xwstring&         GetNavText          ( void ) const;
+    xbool                   IsNavTextVisible    ( void ) const;
 
     void                    SetState            ( dialog_states State)      { m_State = State; }
     dialog_states           GetState            ( void )                    { return m_State; }
@@ -120,11 +115,12 @@ protected:
     s32                     m_NavY;
     xarray<ui_win*>         m_NavGraph;
     xcolor                  m_BackgroundColor;
-    s32                     m_XRes,m_YRes;
     xbool                   m_InputEnabled;
     void*                   m_pUserData;
     dialog_states           m_State;
     s32                     m_CurrentControl;
+    xwstring                m_NavText;
+    xbool                   m_IsNavTextVisible;
 
     // set once for all dialogs
     static xcolor           m_TextColorNormal;
@@ -140,12 +136,6 @@ protected:
     f32                     m_scaleCount;
     f32                     m_scaleAngle;
 
-#ifdef TARGET_XBOX
-    s16                     m_XBOXNotificationOffsetX;
-    s16                     m_XBOXNotificationOffsetY;
-    u8                      m_bIsPopup:1,
-                            m_bUseTopmost:1;
-#endif // TARGET_XBOX
 };
 
 extern xcolor   m_TextColorNormal;

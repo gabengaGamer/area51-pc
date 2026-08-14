@@ -6,9 +6,10 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Cloth\Cloth.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Objects/Cloth.hpp"
+#include "Objects/Render/ClothInst.hpp"
 
 //=========================================================================
 // DEFINES
@@ -36,8 +37,9 @@ public:
     virtual void            OnEnumProp          ( prop_enum&    List );
     virtual xbool           OnProperty          ( prop_query&   I    );
     virtual void            OnPain              ( const pain& Pain ) ;
+    virtual void            OnRenderShadowCast  ( u64 ProjMask );
 
-    rigid_inst&             GetRigidInst        ( void ) { return ( m_Cloth.GetRigidInst() ) ; }
+    rigid_inst&             GetRigidInst        ( void ) { return ( m_ClothRender.GetRigidInst() ) ; }
     
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
@@ -57,13 +59,9 @@ public:
 protected:
 
     virtual void            OnImport            ( text_in& TIn );
-    virtual void            OnAdvanceLogic	    ( f32 DeltaTime );
+    virtual void            OnAdvanceSimulation	    ( f32 DeltaTime );
     virtual void            OnRender            ( void );
 
-#ifdef TARGET_XBOX    
-    virtual void            OnRenderCloth       ( void );
-#endif    
-    
     virtual void            OnColCheck          ( void );
     virtual void            OnPolyCacheGather   ( void );
     virtual xbool           GetColDetails       ( s32 Key, detail_tri& Tri );
@@ -77,8 +75,9 @@ protected:
     
 protected:
 
-    cloth   m_Cloth ;       // Cloth object
-    f32     m_ActiveTimer ; // If >0, cloth is updated   
+    cloth       m_ClothSim ;     // Cloth simulation
+    cloth_inst  m_ClothRender ;  // Cloth rendering (rigid inst + dynamic cloth mesh)
+    f32         m_ActiveTimer ;  // If >0, cloth is updated
 
 #ifdef X_EDITOR    
     xbool   m_bDrawDebug;   // Draw debug info

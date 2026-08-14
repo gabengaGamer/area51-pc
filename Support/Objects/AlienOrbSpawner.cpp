@@ -1,24 +1,25 @@
 
+#include "Render/PrimitiveDebug.hpp"
 #include "AlienOrbSpawner.hpp"
 #include "AlienOrb.hpp"
 #include "AlienSpotter.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "Render\Render.hpp"
-#include "EventMgr\EventMgr.hpp"
-#include "render\LightMgr.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "Objects\ParticleEmiter.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Characters\Soldiers\soldier.hpp"
-#include "navigation\CoverNode.hpp"
-#include "objects\Group.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "Render/Render.hpp"
+#include "EventMgr/EventMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Characters/Soldiers/Soldier.hpp"
+#include "Navigation/CoverNode.hpp"
+#include "Objects/Group.hpp"
 
 //=============================================================================
 // CONSTANTS
@@ -425,9 +426,9 @@ xbool alien_orb_spawner::OnProperty( prop_query&   I    )
 
 //=============================================================================
 
-void alien_orb_spawner::OnAdvanceLogic  ( f32 DeltaTime )
+void alien_orb_spawner::OnAdvanceSimulation  ( f32 DeltaTime )
 {
-    turret::OnAdvanceLogic( DeltaTime );
+    turret::OnAdvanceSimulation( DeltaTime );
 
     if (IsDestroyed())
         return;
@@ -1196,11 +1197,11 @@ void alien_orb_spawner::OnDebugRender( void )
     vector3 Vel = m_Velocity;
     Vel.NormalizeAndScale(500.0f);
 
-    draw_Line( MyPos, MyPos + Vel, XCOLOR_WHITE );
-    draw_Label( MyPos + Vel, XCOLOR_WHITE, "VEL" );
+    render::debug::Line( MyPos, MyPos + Vel, XCOLOR_WHITE );
+    render::debug::Label( MyPos + Vel, XCOLOR_WHITE, "VEL" );
 
-    draw_Line( MyPos, m_CoverPosition, XCOLOR_GREEN );
-    draw_Label( m_CoverPosition, XCOLOR_GREEN, "TARGET" );
+    render::debug::Line( MyPos, m_CoverPosition, XCOLOR_GREEN );
+    render::debug::Label( m_CoverPosition, XCOLOR_GREEN, "TARGET" );
 
     if (m_AOSState == AOS_STATE_OFFENSIVE)
     {
@@ -1216,7 +1217,7 @@ void alien_orb_spawner::OnDebugRender( void )
                 Facing.RotateY( Yaw );
                 DesiredPos += Facing;
 
-                draw_Sphere( DesiredPos, 5, XCOLOR_RED );
+                render::debug::Sphere( DesiredPos, 5, XCOLOR_RED );
             }
         }        
     }

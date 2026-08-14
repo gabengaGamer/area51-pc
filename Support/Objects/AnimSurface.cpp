@@ -1,13 +1,14 @@
 
+#include "Render/PrimitiveDebug.hpp"
 #include "AnimSurface.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "Render\Render.hpp"
-#include "EventMgr\EventMgr.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "Render/Render.hpp"
+#include "EventMgr/EventMgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 #include "Event.hpp"
 
 xstring g_AnimSurfaceStringList;
@@ -17,6 +18,7 @@ xstring g_AnimSurfaceStringList;
 //=============================================================================
 
 #define ANIMSURFACE_DATA_VERSION 100
+
 //=============================================================================
 
 static struct anim_surface_desc : public object_desc
@@ -85,7 +87,6 @@ const object_desc& anim_surface::GetObjectType( void )
 
 anim_surface::anim_surface( void )
 {
-    InvalidateRenderState();
     m_iBackupAnimString = g_StringMgr.Add( "None" );
 }
 
@@ -97,81 +98,24 @@ anim_surface::~anim_surface( void )
 
 //=============================================================================
 
-void anim_surface::InvalidateRenderState( void )
-{
-    InitSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=============================================================================
-
-void anim_surface::CaptureRenderInterpState( void )
-{
-    if( CaptureSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer ) == INTERP_CAPTURE_CHANGED )
-        RegisterRenderInterpUpdate();
-}
-
-//=============================================================================
-
-void anim_surface::UpdateRenderInterpState( f32 Alpha )
-{
-    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
-}
-
-//=============================================================================
-
-void anim_surface::ClearRenderInterpState( void )
-{
-    ClearSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=============================================================================
-
-void anim_surface::InvalidateRenderInterpState( void )
-{
-    play_surface::InvalidateRenderInterpState();
-    InvalidateSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=============================================================================
-
-void anim_surface::SnapRenderInterpState( void )
-{
-    play_surface::SnapRenderInterpState();
-    SnapSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer );
-}
-
-//=============================================================================
-
-const matrix4& anim_surface::GetRenderL2W( void ) const
-{
-    return GetSimpleAnimInterpCacheL2W( m_RenderCache, GetL2W() );
-}
-
-//=============================================================================
-
-xbool anim_surface::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
-{
-    if( GetSimpleAnimInterpCacheBoneL2W( m_RenderCache, iBone, L2W ) )
-        return TRUE;
-
-    const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
-    if( !pBone )
-        return FALSE;
-
-    L2W = *pBone;
-    return TRUE;
-}
-
-//=============================================================================
-
 void anim_surface::UpdateZoneTrack ( void )
 { 
-    g_ZoneMgr.UpdateZoneTracking( *this, m_ZoneTracker, GetPosition() );
+    g_ZoneMgr.AdvanceZoneTracking( *this, m_ZoneTracker, GetPosition() );
 }
 
 //=============================================================================
 
 void anim_surface::OnMove( const vector3& NewPos )
+{
+    UpdateSpatialState( NewPos );
+
+    // Make sure to track the object across zones
+    UpdateZoneTrack();
+}
+
+//=============================================================================
+
+void anim_surface::UpdateSpatialState( const vector3& NewPos )
 {
     bbox BBox = GetBBox() ;
  
@@ -181,11 +125,8 @@ void anim_surface::OnMove( const vector3& NewPos )
     BBox += GetBBox() ;
 
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
-    if( pRigidGeom && pRigidGeom->m_Collision.nLowClusters > 0 )
+    if( pRigidGeom && pRigidGeom->m_collision.nLowClusters > 0 )
         g_PolyCache.InvalidateCells( BBox, GetGuid() );
-
-    // Make sure to track the object across zones
-    UpdateZoneTrack();
 }
  
 //=============================================================================
@@ -199,7 +140,7 @@ void anim_surface::OnTransform( const matrix4& L2W )
  
     BBox += GetBBox() ;
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
-    if( pRigidGeom && pRigidGeom->m_Collision.nLowClusters > 0 )
+    if( pRigidGeom && pRigidGeom->m_collision.nLowClusters > 0 )
         g_PolyCache.InvalidateCells( BBox, GetGuid() );
 
     // Make sure to track the object across zones
@@ -207,11 +148,12 @@ void anim_surface::OnTransform( const matrix4& L2W )
 }
 
 //=============================================================================
+
 xbool g_RunAnimSurfaceLogic = TRUE;
 
-void anim_surface::OnAdvanceLogic( f32 DeltaTime )
+void anim_surface::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "anim_surface::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "anim_surface::OnAdvanceSimulation" );
     
     if( !g_RunAnimSurfaceLogic )
         return;
@@ -232,13 +174,13 @@ void anim_surface::OnAdvanceLogic( f32 DeltaTime )
                 (m_AnimPlayer.GetCycle() != m_AnimPlayer.GetPrevCycle()) )
             {
                 rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
-                if( pRigidGeom && pRigidGeom->m_Collision.nLowClusters > 0 )
+                if( pRigidGeom && pRigidGeom->m_collision.nLowClusters > 0 )
                     g_PolyCache.InvalidateCells( GetBBox(), GetGuid() );
             }
         }
     }
 
-    m_Inst.OnAdvanceLogic( DeltaTime );
+    m_Inst.OnAdvanceSimulation( DeltaTime );
 }
 
 //=============================================================================
@@ -249,7 +191,7 @@ xbool g_DoAnimSurfaceRender = TRUE;
 
 void anim_surface::OnRender( void )
 {
-    CONTEXT( "anim_surface::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "anim_surface::OnRender" );
     
 #ifndef X_RETAIL
     if( !g_DoAnimSurfaceRender )
@@ -272,7 +214,7 @@ void anim_surface::OnRender( void )
     else
     {
 #ifdef X_EDITOR
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif // X_EDITOR
     }
 }
@@ -281,7 +223,7 @@ void anim_surface::OnRender( void )
 
 void anim_surface::OnColCheck ( void )
 {
-    CONTEXT("anim_surface::OnColCheck");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "anim_surface::OnColCheck");
     
     // Compute the bone matrices, then let the play_surface code handle it.
 
@@ -335,15 +277,6 @@ void anim_surface::OnColRender( xbool bRenderHigh )
 
 const matrix4* anim_surface::GetBoneL2Ws( void )
 {
-    if( m_hAnimGroup.GetPointer() )
-    {
-        const matrix4* pMatrices = BuildSimpleAnimInterpCacheMatrices( m_RenderCache,
-                                                                       *m_hAnimGroup.GetPointer(),
-                                                                       m_hAnimGroup.GetPointer()->GetNBones() );
-        if( pMatrices )
-            return pMatrices;
-    }
-
     return m_AnimPlayer.GetBoneL2Ws() ;
 }
 
@@ -403,9 +336,15 @@ xbool anim_surface::OnProperty( prop_query& I )
     if( play_surface::OnProperty( I ) )
     {
         // Iniitialize the tracker
-        if( I.IsVar( "Base\\Position" )) 
+        if( I.IsVar( "Base\\Position" ) ||
+            I.IsVar( "Base\\ZoneInfo" ) )
         {
-            g_ZoneMgr.InitZoneTracking( *this, m_ZoneTracker );
+            g_ZoneMgr.RebaseZoneTracking( *this,
+                                          m_ZoneTracker,
+                                          GetPosition(),
+                                          GetZone1(),
+                                          GetZone2(),
+                                          zone_mgr::SeedSource::Object );
         }
 
         return( TRUE );
@@ -682,89 +621,88 @@ xstring anim_surface::GetAttachPointNameByID( s32 iAttachPt ) const
 
 //=============================================================================
 
-void anim_surface::OnAttachedMove( s32             iAttachPt,
-                                   const matrix4&  L2W )
-{
-    if (iAttachPt == 0)
-    {                
-        OnTransform( L2W );
-    }
-    else
-    if ( m_hAnimGroup.IsLoaded() )
-    {          
-        const anim_group* pGroup = m_hAnimGroup.GetPointer();
-        if (NULL != pGroup)
-        {                 
-            // Decrement by one to bring it into the range [0,nbones)
-            iAttachPt -= 1;
-            s32 nBones = pGroup->GetNBones();
-            if ( (iAttachPt >= 0) &&
-                 (iAttachPt < nBones ))
-            {
-                const matrix4* pTempL2W = m_AnimPlayer.GetBoneL2W( iAttachPt );
-                if (pTempL2W)
-                {
-                    matrix4 BoneL2W = *pTempL2W;
-                    BoneL2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
-
-                    vector3 BonePos = BoneL2W.GetTranslation();
-                    BonePos -= GetPosition();
-
-                    matrix4 NewL2W = L2W;
-                    NewL2W.Translate( -BonePos );
-
-                    OnTransform( NewL2W );
-                }
-            }        
-        }
-    }
-}
-
-
-
-//=============================================================================
-
-xbool anim_surface::GetAttachPointData( s32      iAttachPt,
-                                        matrix4& L2W,
-                                        u32      Flags )
+void anim_surface::OnAttachedMove(s32             iAttachPt,
+    const matrix4& L2W)
 {
     if (iAttachPt == 0)
     {
-        L2W = GetRenderL2W();
+        OnTransform(L2W);
+    }
+    else
+        if (m_hAnimGroup.IsLoaded())
+        {
+            const anim_group* pGroup = m_hAnimGroup.GetPointer();
+            if (NULL != pGroup)
+            {
+                // Decrement by one to bring it into the range [0,nbones)
+                iAttachPt -= 1;
+                s32 nBones = pGroup->GetNBones();
+                if ((iAttachPt >= 0) &&
+                    (iAttachPt < nBones))
+                {
+                    const matrix4* pTempL2W = m_AnimPlayer.GetBoneL2W(iAttachPt);
+                    if (pTempL2W)
+                    {
+                        matrix4 BoneL2W = *pTempL2W;
+                        BoneL2W.PreTranslate(m_AnimPlayer.GetBoneBindPosition(iAttachPt));
+
+                        vector3 BonePos = BoneL2W.GetTranslation();
+                        BonePos -= GetPosition();
+
+                        matrix4 NewL2W = L2W;
+                        NewL2W.Translate(-BonePos);
+
+                        OnTransform(NewL2W);
+                    }
+                }
+            }
+        }
+}
+
+//=============================================================================
+
+xbool anim_surface::GetAttachPointData(s32      iAttachPt,
+    matrix4& L2W,
+    u32      Flags)
+{
+    if (iAttachPt == 0)
+    {
+        L2W = GetL2W();
         return TRUE;
     }
 
-    if ( m_hAnimGroup.IsLoaded() )
-    {          
+    if (m_hAnimGroup.IsLoaded())
+    {
         const anim_group* pGroup = m_hAnimGroup.GetPointer();
         if (NULL != pGroup)
-        {   
+        {
             // Decrement by one to bring it into the range [0,nbones)
             iAttachPt -= 1;
             s32 nBones = pGroup->GetNBones();
-            if ( (iAttachPt >= 0) &&
-                 (iAttachPt < nBones ))
+            if ((iAttachPt >= 0) &&
+                (iAttachPt < nBones))
             {
-                if( HasSimpleAnimInterpCache( m_RenderCache ) && GetRenderBoneL2W( iAttachPt, L2W ) )
-                {
-                    if( !(Flags & ATTACH_USE_WORLDSPACE) )
-                        L2W = L2W * pGroup->GetBoneBindInvMatrix( iAttachPt );
-                }
-                else
-                {
-                    const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iAttachPt, TRUE );
-                    if ( NULL != pL2W )
-                        L2W = *pL2W;
-                    else
-                        L2W.Identity();
+                const matrix4* pL2W = m_AnimPlayer.GetBoneL2W(iAttachPt, TRUE);
 
-                    if (Flags & ATTACH_USE_WORLDSPACE)
-                        L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
-                }
-                
-        
+                if (NULL != pL2W)
+                    L2W = *pL2W;
+                else
+                    L2W.Identity();
+                /*
+                                const matrix4*    pBindInvMtx = m_AnimPlayer.GetBoneBindInvMtx( iAttachPt );
+                                if (pBindInvMtx)
+                                {
+                                    matrix4 InvInv = *pBindInvMtx;
+                                    //InvInv.Invert();
+                                    L2W = InvInv * L2W;
+                                }
+                  */
+                if (Flags & ATTACH_USE_WORLDSPACE)
+                    L2W.PreTranslate(m_AnimPlayer.GetBoneBindPosition(iAttachPt));
+
+
                 return TRUE;
-            }        
+            }
         }
     }
 
@@ -773,72 +711,7 @@ xbool anim_surface::GetAttachPointData( s32      iAttachPt,
 
 //=============================================================================
 
-//temp hardcoded values
-#define ENVIRO_DAMAGE       100.0f
-#define ENVIRO_FORCE        15.f
-#define MAX_ENVIRO_TARGETS  8
-
 void anim_surface::OnEvent( const event& Event )
 {
     (void)Event;
-/*
-    if( Event.Type == event::EVENT_PAIN )
-    {
-        //below is a HACK'd in, hardcoded pain until we get the new pain system online where
-        //the pain event itself passes type, which gives damage, force, etc...
-        const pain_event& PainEvent = pain_event::GetSafeType( Event );  
-        pain Pain;
-        Pain.Type           = pain::TYPE_GENERIC;
-        Pain.Center         = PainEvent.Position;
-        Pain.Origin         = GetGuid();
-        Pain.PainEventID    = PainEvent.PainEventID;
-        Pain.RadiusR0       = PainEvent.PainRadius;
-        Pain.RadiusR1       = PainEvent.PainRadius;        
-        Pain.DamageR0       = 1000.0f;
-        Pain.DamageR1       = 1000.0f;
-        Pain.ForceR0        = 25.0f;
-        Pain.ForceR1        = 10.0f;                    
-
-        //copied behavior from character, when we do new pain system we might
-        //consider changing the pain delivery method also
-        object *pObject;
-        slot_id slotArray[MAX_ENVIRO_TARGETS];
-
-        bbox PainBBox( Pain.Center, Pain.RadiusR0 );
-        g_ObjMgr.SelectBBox( object::ATTR_DAMAGEABLE, PainBBox, object::TYPE_ALL_TYPES );    
-        s32 slotCounter = 0;
-        slot_id objectID = g_ObjMgr.StartLoop();    
-        while( objectID != SLOT_NULL && slotCounter < MAX_ENVIRO_TARGETS )
-        {
-            slotArray[slotCounter] = objectID;
-            slotCounter++;
-            objectID = g_ObjMgr.GetNextResult( objectID );
-        }
-        g_ObjMgr.EndLoop();
-
-        s32 c;
-        for(c=0;c<slotCounter;c++)
-        {    
-            pObject = g_ObjMgr.GetObjectBySlot( slotArray[c] );
-            // don't process pain to self.
-            if( pObject && pObject != this )
-            {
-                // Get the closest point projection to the target.
-                vector3 ClosestPoint;
-                g_EventMgr.ClosestPointToAABox( Pain.Center, pObject->GetBBox(), ClosestPoint );
-
-                //
-                // Create the pain info specific to the target.
-                //
-                Pain.PtOfImpact = ClosestPoint;
-                Pain.Direction  = pObject->GetBBox().GetCenter() - Pain.Center;
-                Pain.Direction.Normalize();
-
-                pObject->OnPain( Pain ); 
-            }
-        }
-    }
-    */
 }
-
-//=============================================================================

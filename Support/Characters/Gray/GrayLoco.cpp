@@ -70,11 +70,6 @@ void gray_loco_move::OnEnter( void )
 
 //==============================================================================
 
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( push )
-    #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
-#endif
-
 gray_loco::gray_loco( void ) :
     loco(),
     m_PlayAnim( *this ),
@@ -82,10 +77,6 @@ gray_loco::gray_loco( void ) :
     m_Move    ( *this )
 {
 }
-
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( pop )
-#endif
 
 //==============================================================================
 

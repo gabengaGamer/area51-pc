@@ -1,8 +1,8 @@
 #ifndef _CHARACTER_FOLLOW_STATE_HPP_
 #define _CHARACTER_FOLLOW_STATE_HPP_
 
-#include "Characters\CharacterState.hpp"
-#include "Characters\ResponseList.hpp"
+#include "Characters/CharacterState.hpp"
+#include "Characters/ResponseList.hpp"
 
 class character_follow_state : public character_state
 {

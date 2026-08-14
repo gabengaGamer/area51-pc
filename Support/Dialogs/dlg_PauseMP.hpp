@@ -11,15 +11,15 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
 
 #include "dlg_PopUp.hpp"
 
 #ifdef TARGET_XBOX
-#include "ui\ui_bitmap.hpp"
+#include "UI/ui_bitmap.hpp"
 #endif
 
 //==============================================================================
@@ -35,7 +35,6 @@ enum pause_mp_controls
 #ifdef TARGET_XBOX
     IDC_PAUSE_MP_FRIENDS,
 #endif
-    IDC_PAUSE_MP_NAV_TEXT,
 
 #ifdef TARGET_XBOX
     IDC_PAUSE_MP_FRIEND_INV, // friend invitation
@@ -71,8 +70,8 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
 protected:
@@ -84,7 +83,6 @@ protected:
 #ifdef TARGET_XBOX
     ui_button*          m_pButtonFriends;
 #endif
-    ui_text*            m_pNavText;
     s32                 m_CurrHL;
 
     dlg_popup*          m_PopUp;

@@ -14,8 +14,8 @@
 #include "x_types.hpp"
 #include "x_array.hpp"
 
-#include "MiscUtils\Property.hpp"
-#include "..\Support\TriggerEx\TriggerEx_Object.hpp"
+#include "MiscUtils/Property.hpp"
+#include "../Support/TriggerEx/TriggerEx_Object.hpp"
 
 //=========================================================================
 // TRIGGER_EX_MNGR

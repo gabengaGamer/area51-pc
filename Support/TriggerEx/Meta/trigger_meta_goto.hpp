@@ -12,7 +12,7 @@
 //=========================================================================
 
 #include "trigger_meta_base.hpp"
-#include "..\Affecters\conditional_affecter.hpp"
+#include "../Affecters/conditional_affecter.hpp"
 
 //=========================== ==============================================
 // trigger_meta_goto

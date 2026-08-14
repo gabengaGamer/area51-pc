@@ -9,12 +9,14 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\move_object.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/move_object.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 
 #include "Entropy.hpp"
+#include "Objects/Player/Player.hpp"
 
 static const xcolor s_MoveColor             (255,0,255);
 
@@ -33,7 +35,7 @@ m_Orientation(0.0f,0.0f,0.0f)
 
 void move_object::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * move_object::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * move_object::Execute" );
 
     (void) pParent;
 
@@ -48,12 +50,33 @@ void move_object::Execute ( trigger_object* pParent )
     
     M.Setup( vector3(1.0f,1.0f,1.0f), m_Orientation, m_Position );
 
-    //some objects require zones set first, some after, doing both
-    ObjectPtr.m_pObject->SetZone1( pParent->GetZone1() );
-    ObjectPtr.m_pObject->SetZone2( pParent->GetZone2() );   
-    ObjectPtr.m_pObject->OnTriggerTransform( M );
-    ObjectPtr.m_pObject->SetZone1( pParent->GetZone1() );
-    ObjectPtr.m_pObject->SetZone2( pParent->GetZone2() );
+    object* pObject = ObjectPtr.m_pObject;
+    if( pObject->GetType() == object::TYPE_PLAYER )
+    {
+        player* pPlayer = static_cast<player*>( pObject );
+        pPlayer->Teleport(
+            m_Position,
+            m_Orientation.Pitch,
+            m_Orientation.Yaw,
+            static_cast<zone_mgr::zone_id>( pParent->GetZone1() ),
+            static_cast<zone_mgr::zone_id>( pParent->GetZone2() ),
+            PlayerTeleportVelocityPolicy::Clear,
+            FALSE,
+            FALSE );
+    }
+    else
+    {
+        pObject->SetZone1( pParent->GetZone1() );
+        pObject->SetZone2( pParent->GetZone2() );
+        pObject->OnTriggerTransform( M );
+        pObject->SetZone1( pParent->GetZone1() );
+        pObject->SetZone2( pParent->GetZone2() );
+
+        if( pObject->IsKindOf( actor::GetRTTI() ) )
+        {
+            static_cast<actor*>( pObject )->InitZoneTracking();
+        }
+    }
 }
 
 //=============================================================================
@@ -67,9 +90,9 @@ void move_object::OnRender ( void )
 
 #ifdef TARGET_PC
     vector3 MyPosition =  GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
-    draw_Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_MoveColor );
-    draw_BBox( ObjectPtr.m_pObject->GetBBox(), s_MoveColor );
-    draw_Label( ObjectPtr.m_pObject->GetPosition(), s_MoveColor, GetTypeName() );
+    render::debug::Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_MoveColor );
+    render::debug::Box( ObjectPtr.m_pObject->GetBBox(), s_MoveColor );
+    render::debug::Label( ObjectPtr.m_pObject->GetPosition(), s_MoveColor, GetTypeName() );
 #endif
 }
 

@@ -1,9 +1,13 @@
 //==============================================================================
-//  
-//  a51_skin_simple.hlsl
-//  
-//  Simple skindgeom uber-shader for A51.
 //
+//  a51_skin_simple.hlsl
+//
+//  Simple skinned geometry shader for A51.
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
 //==============================================================================
 
 #include "common/material_flags.hlsl"
@@ -19,14 +23,17 @@
 #include "common/shadow_buffers.hlsl"
 #include "common/skin_instance_buffers.hlsl"
 
-//------------------------------------------------------------------------------
+//==============================================================================
+//  TYPES
+//==============================================================================
 
 struct VS_INPUT
 {
-    float4 PosIndex  : POSITION;
-    float4 NormIndex : NORMAL;
-    float4 UVWeights : TEXCOORD0;
-    uint   InstanceID : SV_InstanceID;
+    float4 PosIndex  : TEXCOORD0;
+    float4 NormIndex : TEXCOORD1;
+    float4 UVWeights : TEXCOORD2;
+    uint   InstanceIndex : TEXCOORD3;
+    uint   BoneRemapOffset : TEXCOORD4;
 };
 
 //------------------------------------------------------------------------------
@@ -50,20 +57,22 @@ struct GEOM_PIXEL_INPUT
 #include "common/geom_local_shadow_maps.hlsl"
 
 //==============================================================================
-//  VERTEX SHADER
+//  SHADERS
 //==============================================================================
 
-GEOM_PIXEL_INPUT VSMain(VS_INPUT input)
+GEOM_PIXEL_INPUT VSMain( VS_INPUT input )
 {
     GEOM_PIXEL_INPUT output;
+    const uint instanceID = input.InstanceIndex;
+    const uint boneRemapOffset = input.BoneRemapOffset;
 
     uint  index1  = (uint)input.PosIndex.w;
     uint  index2  = (uint)input.NormIndex.w;
     float weight1 = input.UVWeights.z;
     float weight2 = input.UVWeights.w;
 
-    float4x4 bone1 = SkinGetBoneL2W( input.InstanceID, index1 );
-    float4x4 bone2 = SkinGetBoneL2W( input.InstanceID, index2 );
+    float4x4 bone1 = SkinGetBoneL2W( instanceID, boneRemapOffset, index1 );
+    float4x4 bone2 = SkinGetBoneL2W( instanceID, boneRemapOffset, index2 );
 
     float3 pos1 = mul( bone1, float4( input.PosIndex.xyz, 1.0f ) ).xyz;
     float3 pos2 = mul( bone2, float4( input.PosIndex.xyz, 1.0f ) ).xyz;
@@ -83,16 +92,22 @@ GEOM_PIXEL_INPUT VSMain(VS_INPUT input)
     output.ViewNormal = viewNormal;
     output.ViewVector = worldPos.xyz - CameraPosition.xyz;
     output.UV         = input.UVWeights.xy + UVAnim.xy;
-    output.InstanceID = input.InstanceID;
+    output.InstanceID = instanceID;
 
     return output;
 }
 
 //==============================================================================
-//  PIXEL SHADER
+
+GEOM_PIXEL_OUTPUT PSMain( GEOM_PIXEL_INPUT input, bool isFrontFace : SV_IsFrontFace )
+{
+    return ShadeGeometryPixel( input, isFrontFace );
+}
+
 //==============================================================================
 
-GEOM_PIXEL_OUTPUT PSMain( GEOM_PIXEL_INPUT input )
+float4 PSScene( GEOM_PIXEL_INPUT input, bool isFrontFace : SV_IsFrontFace ) : SV_Target0
 {
-    return ShadeGeometryPixel( input );
+    const GEOM_PIXEL_OUTPUT shaded = ShadeGeometryPixel( input, isFrontFace );
+    return GeomApplyForwardFog( shaded.FinalColor, input );
 }

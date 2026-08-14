@@ -8,10 +8,10 @@
 //==============================================================================
 
 #include "DebugMenu2.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "Gamelib\statsmgr.hpp"
-#include "Render\Render.hpp"
-#include "fx_RunTime\fx_Mgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "Render/Render.hpp"
+#include "FX/fx_Mgr.hpp"
 
 //==============================================================================
 

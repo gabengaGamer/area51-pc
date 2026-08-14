@@ -65,7 +65,7 @@ protected:
  
     virtual void                OnRender		( void );
     virtual void                OnColNotify		( object& Object );
-    virtual void                OnAdvanceLogic	( f32 DelaTime );
+    virtual void                OnAdvanceSimulation	( f32 DelaTime );
     virtual void                OnInit          ( void );     
     virtual void                OnColCheck      ( void );
 

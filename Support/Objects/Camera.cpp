@@ -1,26 +1,27 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "Camera.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Path.hpp"
-#include "Characters\Character.hpp"
-#include "Objects\Player.hpp"
-#include "Objects\HudObject.hpp"
-#include "TriggerEx\TriggerEx_Object.hpp"
-#include "TriggerEx\Actions\action_set_property.hpp"
-
-#if defined(TARGET_PS2)
-#include "Entropy\PS2\ps2_misc.hpp"
-#endif
-
+#include "Characters/Character.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/HudObject.hpp"
+#include "UI/ui_renderer.hpp"
+#include "TriggerEx/TriggerEx_Object.hpp"
+#include "TriggerEx/Actions/action_set_property.hpp"
 
 //=========================================================================
 // GLOBALS
 //=========================================================================
 
 extern xbool g_first_person;
+
+#ifdef X_EDITOR
+static const char* s_PlayerCinemaCameraProperty = "Player\\Cinema\\CinemaCameraGuid";
+#endif
 
 
 //=========================================================================
@@ -54,7 +55,7 @@ static struct camera_desc : public object_desc
     { 
         object_desc::OnEditorRender( Object );
 
-        return EDITOR_ICON_CAMERA;
+        return static_cast<s32>( EditorIcon::Camera );
     }
 
 #endif // X_EDITOR
@@ -87,6 +88,7 @@ camera::camera( void ) : tracker()
     m_PipEarVolume   = 1.0f ;
     m_PipEarNearClip = 1.0f ;
     m_PipEarFarClip  = 1.0f ;
+    m_TargetPos.Zero();
 }
 
 //=============================================================================
@@ -244,10 +246,17 @@ void camera::OnTransform( const matrix4& L2W )
     {
         // Setup rotation
         vector3 DeltaTarget = m_TargetPos - NewPos;
-        LookL2W.Identity();
-        LookL2W.RotateX( DeltaTarget.GetPitch() );
-        LookL2W.RotateY( DeltaTarget.GetYaw() );
-        LookL2W.PreRotateZ( m_CurrentKey.m_Roll );
+        if( DeltaTarget.LengthSquared() > F32_MIN )
+        {
+            LookL2W.Identity();
+            LookL2W.RotateX( DeltaTarget.GetPitch() );
+            LookL2W.RotateY( DeltaTarget.GetYaw() );
+            LookL2W.PreRotateZ( m_CurrentKey.m_Roll );
+        }
+        else
+        {
+            LookL2W = L2W;
+        }
 
         // Setup translation
         LookL2W.SetTranslation( NewPos );
@@ -264,6 +273,13 @@ void camera::OnTransform( const matrix4& L2W )
     // Call base class with final LookL2W!
     tracker::OnTransform( LookL2W );
 }
+
+//=========================================================================
+
+zone_mgr::TrackingMode camera::GetZoneTrackingMode( void ) const
+{
+    return zone_mgr::TrackingMode::CameraPath;
+}
     
 //=========================================================================
 
@@ -279,15 +295,14 @@ void camera::OnInit( void )
 void camera::OnDebugRender  ( void )
 {
 #ifdef X_EDITOR
-    CONTEXT("camera::OnDebugRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "camera::OnDebugRender" );
 
     // Make sure view is updated!
-    Update(FALSE) ;
+    UpdateTrackedTransform(FALSE) ;
 
     // Draw frustrum where view is
-    draw_ClearL2W() ;
-    draw_Frustum(m_View, XCOLOR_RED, 100.0f) ;
-    draw_Line(m_View.GetPosition(), m_TargetPos, XCOLOR_RED) ;
+    render::debug::Frustum(m_View, XCOLOR_RED, 100.0f) ;
+    render::debug::Line(m_View.GetPosition(), m_TargetPos, XCOLOR_RED) ;
 #endif // X_EDITOR
 }
 #endif // X_RETAIL
@@ -297,24 +312,23 @@ void camera::OnDebugRender  ( void )
 void camera::OnRender  ( void )
 {
 #ifdef X_EDITOR
-    CONTEXT("camera::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "camera::OnRender" );
 
     // Make sure view is updated!
-    Update(FALSE) ;
+    UpdateTrackedTransform(FALSE) ;
 
     // Draw frustrum where view is
-    draw_ClearL2W() ;
-    draw_Frustum(m_View, XCOLOR_RED, 100.0f) ;
-    draw_Line(m_View.GetPosition(), m_TargetPos, XCOLOR_RED) ;
+    render::debug::Frustum(m_View, XCOLOR_RED, 100.0f) ;
+    render::debug::Line(m_View.GetPosition(), m_TargetPos, XCOLOR_RED) ;
 #endif // X_EDITOR
 }
 
 //=========================================================================
 
-void camera::Update( xbool bSendKeyEvents )
+void camera::UpdateTrackedTransform( xbool bSendKeyEvents )
 {
     // Call base class which will update L2W
-    tracker::Update(bSendKeyEvents) ;
+    tracker::UpdateTrackedTransform(bSendKeyEvents) ;
 
     // If the camera is not on a path, then we need to call an OnTransform
     // so that the look direction is updated!
@@ -326,408 +340,62 @@ void camera::Update( xbool bSendKeyEvents )
     if (pPath)
     {
         if (pPath->GetFlags() & path::FLAG_KEY_FIELD_OF_VIEW)
+        {
             m_FieldOfView = m_CurrentKey.m_FieldOfView ;
-    }
-}
-
-//=========================================================================
-
-static
-s32 ps2_TexLog( s32 Dimension )
-{
-    switch (Dimension)
-    {
-    case 8:     return 3;
-    case 16:    return 4;
-    case 32:    return 5;
-    case 64:    return 6;
-    case 128:   return 7;
-    case 256:   return 8;
-    case 512:   return 9;
-    default:
-        ASSERT( FALSE );
-        return 1;
-    }
-}
-
-//=========================================================================
-
-void camera::RenderViewBegin( const irect& Viewport, s32 VramID )
-{
-    CONTEXT( "camera::RenderViewBegin" );
-
-
-#ifdef TARGET_PS2
-    if( eng_Begin("camera::RenderViewBegin") )
-    {
-        // Set the scissor region
-        gsreg_Begin( 4 );
-        
-        // Set context0
-        eng_PushGSContext( 0 );
-        gsreg_SetScissor( Viewport.l, Viewport.t, Viewport.r, Viewport.b );
-        gsreg_SetAlphaAndZBufferTests( FALSE, ALPHA_TEST_GEQUAL, 1, ALPHA_TEST_FAIL_KEEP,
-                                    FALSE, DEST_ALPHA_TEST_0, TRUE, ZBUFFER_TEST_GEQUAL );
-        eng_PopGSContext();
-
-        // Set context1
-        eng_PushGSContext( 1 );
-        gsreg_SetScissor( Viewport.l, Viewport.t, Viewport.r, Viewport.b );
-        gsreg_SetAlphaAndZBufferTests( FALSE, ALPHA_TEST_GEQUAL, 1, ALPHA_TEST_FAIL_KEEP,
-                                    FALSE, DEST_ALPHA_TEST_0, TRUE, ZBUFFER_TEST_GEQUAL );
-        eng_PopGSContext();
-        
-        gsreg_End();
-
-        (void)VramID ;
-/*
-        // Flush bank 0 where we will be sticking the pip texture
-        vram_FlushBank(0);
-
-        // Reserve vram for pip texture
-        if (VramID != -1)
-        {
-            eng_PushGSContext(0) ;
-            vram_Activate(VramID) ;
-            eng_PopGSContext() ;
+            m_View.SetXFOV( m_FieldOfView );
         }
-*/
-
-        eng_End();
     }
-	
-#elif defined(TARGET_PC)
+}
 
-    (void)Viewport;
-    (void)VramID;
-	
-#else
-    
-    // Not implemented...
-    (void)Viewport ;
-    (void)VramID ;
+//=========================================================================
 
-#endif  // #ifdef TARGET_PS2
+void camera::RenderView( const irect& Viewport )
+{
+    X_PROFILE_SCOPE_CATEGORY( "Context", "camera::RenderView" );
+
+    // Keep a copy of the current view.
+    view View = *eng_GetView();
+
+    // Make sure the view is up to date with position and target.
+    UpdateTrackedTransform( FALSE );
+
+    // Set and activate the camera view.
+    m_View.SetViewport( Viewport.l, Viewport.t, Viewport.r, Viewport.b );
+    eng_SetView( m_View );
+    eng_SetViewport( m_View );
 
 #ifdef X_EDITOR
-    // Since in the editor, the camera view is drawn after the normal render,
-    // we need to clear rect and reset the z buffer so the camera will draw
-    if( eng_Begin("camera::RenderViewBegin") )
+    // The editor draws the camera view after the normal render.
+    if( eng_Begin( "camera::RenderViewEditorClear" ) )
     {
-        draw_ClearZBuffer(Viewport) ; 
-        draw_Rect(Viewport, XCOLOR_BLACK, FALSE, DRAW_UI_RTARGET) ;
-        eng_End() ;
+        render::BeginPrimitiveRender();
+        render::SetDepthRect( Viewport, 1.0f );
+        g_UIRenderer.DrawRect( Viewport, XCOLOR_BLACK );
+        render::EndPrimitiveRender();
+        render::ExecuteForwardRender();
+        eng_End();
     }
 #endif // X_EDITOR
 
-}
-
-//=========================================================================
-
-#ifdef TARGET_PS2
-
-void ps2_ClearScreenAndZBuffer( const irect& Rect, xcolor Color, u32 Z )
-{
-    s32 Width  = Rect.r - Rect.l ;
-    s32 Height = Rect.b - Rect.t ;
-
-    // Copy the screen in vertical strips (this will reduce texture/frame cache misses, and
-    // give us a much nicer fill rate), using page-width (64 pixels) columns is sufficient when bilinear is
-    // off, but we need half page-width columns when bilinear is on.
-    s32 nColumns = Width / 64 ;
-
-    #define GS_X_OFFSET    (2048-(VRAM_FRAME_BUFFER_WIDTH/2))
-    #define GS_Y_OFFSET     (2048-(VRAM_FRAME_BUFFER_HEIGHT/2))
-
-    s32 DstDW = Width / nColumns;
-    ASSERT( (DstDW % nColumns) == 0 );
-    DstDW = DstDW<<4;
-    s32 X0      = (GS_X_OFFSET + Rect.l) << 4 ;
-    s32 X1      = X0 + DstDW;
-    s32 Y0      = (GS_Y_OFFSET + Rect.t) << 4 ;
-    s32 Y1      = Y0 + (Height<<4);
-
-    gsreg_Begin( 4 + nColumns*2 ) ;
-    gsreg_SetZBufferUpdate(TRUE) ;
-    gsreg_SetZBufferTest(ZBUFFER_TEST_ALWAYS) ;
-    gsreg_Set( SCE_GS_RGBAQ,  SCE_GS_SET_RGBAQ( Color.R, Color.G, Color.B, Color.A, 0x3f800000 ) );
-    gsreg_Set( SCE_GS_PRIM,   SCE_GS_SET_PRIM( GIF_PRIM_SPRITE, 
-                                               1,   // 0=flat
-                                               0,   // 0=tex map
-                                               0,   // 0=fog off
-                                               0,   // 0=alpha blend off
-                                               0,   // 0=anti-alias off
-                                               1,   // 1=2D UVs
-                                               0,   // 0=Context0
-                                               0    // 0=normal fragment ctrl
-                                               ) );
-    for ( s32 i = 0; i < nColumns; i++ )
-    {
-        // Render quad
-        gsreg_Set( SCE_GS_XYZ2,   SCE_GS_SET_XYZ2( X0, Y0, Z ) );
-        gsreg_Set( SCE_GS_XYZ2,   SCE_GS_SET_XYZ2( X1, Y1, Z ) );
-
-        // Next quad
-        X0 += DstDW;
-        X1 += DstDW;
-    }
-    gsreg_End() ;
-
-}
-
-#endif  //#ifdef TARGET_PS2
-
-//=========================================================================
-
-void camera::RenderViewEnd( const irect& Viewport, s32 VramID, s32 TexWidth, s32 TexHeight )
-
-{
-    CONTEXT( "camera::RenderViewEnd" );
-
-#ifdef TARGET_PS2
-
-    // Grab frame buffer?
-    if (VramID != -1)
-    {
-        // Must be valid!
-        ASSERT(VramID != -1) ;
-        ASSERT(TexWidth  > 0) ;
-        ASSERT(TexHeight > 0) ;
-
-        // Flush bank 0 where we will be sticking the pip texture
-        vram_FlushBank(0);
-
-        // Begin
-        if( eng_Begin("Copy camera pip view to vram") )
-        {
-            eng_PushGSContext(0) ;
-
-            // Allocate vram for this texture and reserve it!
-            vram_Activate(VramID) ;
-
-            // Lookup back buffer and texture vram addresses
-            s32 ScrPageAddr  = eng_GetFrameBufferAddr(0) / 2048;
-            s32 TexBlockAddr = vram_GetPixelBaseAddr(VramID) ;
-            s32 TexPageAddr  = TexBlockAddr / 32 ;
-        
-            // Texture must be page aligned!
-            ASSERT((TexBlockAddr & 0x1F) == 0) ;
-
-            // Copy the screen in vertical strips (this will reduce texture/frame cache misses, and
-            // give us a much nicer fill rate), using page-width (64 pixels) columns is sufficient when bilinear is
-            // off, but we need half page-width columns when bilinear is on.
-            s32 nColumns = TexWidth / 64 ;
-
-            // Wait for drawing to finish...
-            gsreg_Begin( 12 + nColumns*4 );
-            gsreg_Set( SCE_GS_TEXFLUSH, 0 );
-
-            // Turn off z buffer
-            gsreg_SetAlphaAndZBufferTests( FALSE, ALPHA_TEST_GEQUAL, 0, ALPHA_TEST_FAIL_KEEP,
-                                        FALSE, DEST_ALPHA_TEST_0, 
-                                        TRUE, ZBUFFER_TEST_ALWAYS );
-
-            // Turn off mipping and bilinear
-            gsreg_Set( SCE_GS_TEX1_1, 
-                    SCE_GS_SET_TEX1( 1,      // LOD method (1=fixed K)
-                                        0,      // Max pip level
-                                        0,      // Filter when tex expanded (0=nearest)
-                                        1,      // Filter when tex reduced  (0=nearest)
-                                        0,      // BaseAddr of Mipmap texture
-                                        0,      // L
-                                        0 ) );  // K
-
-            // Setup destination (texture)
-            gsreg_Set( SCE_GS_FRAME_1, SCE_GS_SET_FRAME( TexPageAddr, TexWidth/64, SCE_GS_PSMCT32, 0x00000000 ) );
-        
-            // Setup source (screen)
-            gsreg_Set( SCE_GS_TEX0_1,  SCE_GS_SET_TEX0 ( ScrPageAddr*32,                       // TexBase (WordAddr/64)
-                                                        VRAM_FRAME_BUFFER_WIDTH/64,           // PixelWidth/64
-                                                        SCE_GS_PSMCT32,                       // Format
-                                                        ps2_TexLog(VRAM_FRAME_BUFFER_WIDTH),   // TW
-                                                        ps2_TexLog(VRAM_FRAME_BUFFER_HEIGHT),  // TH
-                                                        0,                      // 0=RGB (alpha from vert color), 1=RGBA from tex
-                                                        0,                      // 0=MODULATE
-                                                        0,                      // ClutBase (WordAddr/64)
-                                                        0,                      // ClutFormat
-                                                        0,                      // ClutStorage mode
-                                                        0,                      // ClutEntryOffset
-                                                        0 ) );                  // ClutBufferLoadCtrl
-
-            gsreg_SetScissor(Viewport.l,Viewport.t,Viewport.r,Viewport.b);  // Set scissor
-            gsreg_Set( SCE_GS_ALPHA_1, (u64)(-1)) ; // Off
-            gsreg_Set( SCE_GS_CLAMP_1, SCE_GS_SET_CLAMP( 1,                 // ClampH
-                                                        1,                 // ClampV
-                                                        Viewport.l,        // MinU
-                                                        Viewport.r-1,      // MaxU
-                                                        Viewport.t,        // MinV
-                                                        Viewport.b-1 ) );  // MaxV
-
-        #define GS_X_OFFSET    (2048-(VRAM_FRAME_BUFFER_WIDTH/2))
-        #define GS_Y_OFFSET     (2048-(VRAM_FRAME_BUFFER_HEIGHT/2))
-
-            s32 SrcDW = TexWidth / nColumns;
-            s32 DstDW = TexWidth / nColumns;
-            ASSERT( (SrcDW % nColumns) == 0 );
-            ASSERT( (DstDW % nColumns) == 0 );
-            SrcDW = SrcDW<<4;
-            DstDW = DstDW<<4;
-            s32 XOffset = (s32)(0*16.0f);
-            s32 YOffset = (s32)(0*16.0f);
-            s32 X0      = (GS_X_OFFSET<<4) - (1<<3) + XOffset;
-            s32 X1      = X0 + DstDW;
-            s32 Y0      = (GS_Y_OFFSET<<4) - (1<<3) + YOffset;
-            s32 Y1      = Y0 + (TexHeight<<4);
-            s32 U0      = 0;
-            s32 U1      = SrcDW;
-            s32 V0      = 0;
-            s32 V1      = (TexHeight<<4);
-
-            gsreg_Set( SCE_GS_RGBAQ,  SCE_GS_SET_RGBAQ( 128, 128, 128, 0, 0x3f800000 ) );
-            gsreg_Set( SCE_GS_PRIM,   SCE_GS_SET_PRIM( GIF_PRIM_SPRITE, 
-                                                    1,   // 0=flat
-                                                    1,   // 1=tex map
-                                                    0,   // 0=fog off
-                                                    0,   // 0=alpha blend off
-                                                    0,   // 0=anti-alias off
-                                                    1,   // 1=2D UVs
-                                                    0,   // 0=Context0
-                                                    0    // 0=normal fragment ctrl
-                                                    ) );
-            for ( s32 i = 0; i < nColumns; i++ )
-            {
-                // Render quad
-                gsreg_Set( SCE_GS_UV,     SCE_GS_SET_UV  ( U0, V0    ) );
-                gsreg_Set( SCE_GS_XYZ2,   SCE_GS_SET_XYZ2( X0, Y0, 0 ) );
-                gsreg_Set( SCE_GS_UV,     SCE_GS_SET_UV  ( U1, V1    ) );
-                gsreg_Set( SCE_GS_XYZ2,   SCE_GS_SET_XYZ2( X1, Y1, 0 ) );
-
-                // Next quad
-                X0 += DstDW;
-                X1 += DstDW;
-                U0 += SrcDW;
-                U1 += SrcDW;
-            }
-
-            // Reset states
-            gsreg_SetClamping( FALSE, FALSE );
-            gsreg_SetFBMASK(0); // Also sets frame buffer address!
-
-            // End
-            gsreg_End();
-            eng_PopGSContext() ;
-            eng_End() ;
-        }
-    }
-
-    // Restore frame buffers as if nothing was ever drawn...
-    if( eng_Begin("Clear camera pip view") )
-    {
-        // Clear front buffer alpha
-        eng_ClearFrontBuffer();
-        eng_WriteToBackBuffer();
-
-        // Clear back buffer and Z buffer fast
-        ps2_ClearScreenAndZBuffer(Viewport, xcolor(0,0,0,0), 0) ;
-
-        // Reset the viewport and z buffer test
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-        gsreg_Begin( 4 );
-
-        // Restore context0
-        eng_PushGSContext(0) ;
-        gsreg_SetScissor(0,0,XRes,YRes);
-        gsreg_SetAlphaAndZBufferTests( FALSE, ALPHA_TEST_GEQUAL, 1, ALPHA_TEST_FAIL_KEEP,
-                                    FALSE, DEST_ALPHA_TEST_0, TRUE, ZBUFFER_TEST_GEQUAL );
-        eng_PopGSContext() ;
-
-        // Restore context1
-        eng_PushGSContext(1) ;
-        gsreg_SetScissor(0,0,XRes,YRes);
-        gsreg_SetAlphaAndZBufferTests( FALSE, ALPHA_TEST_GEQUAL, 1, ALPHA_TEST_FAIL_KEEP,
-                                    FALSE, DEST_ALPHA_TEST_0, TRUE, ZBUFFER_TEST_GEQUAL );
-        eng_PopGSContext() ;
-
-        gsreg_End();
-        eng_End();
-    }
-
-#elif defined(TARGET_PC)
-
-    // Not implemented... (pip render handled separately)
-    (void)Viewport;
-    (void)VramID;
-    (void)TexWidth;
-    (void)TexHeight;
-
-#else
-
-    // Not implemented...
-    (void)Viewport ;
-    (void)VramID ;
-    (void)TexWidth ;
-    (void)TexHeight ;
-
-#endif  //#ifdef TARGET_PS2
+    // Render the world.
+    g_ObjMgr.Render3dObjects( TRUE, m_View, m_ZoneTracker.GetMainZone() );
+    render::ExecuteForwardRender();
 
 #ifdef X_EDITOR
-    // Fill z buffer so nothing is drawn over the top in editor
-    if( eng_Begin("Fill camera viewport Z buffer") )
+    // Fill the camera viewport depth buffer in the editor.
+    if( eng_Begin( "Fill camera viewport Z buffer" ) )
     {
-        draw_FillZBuffer(Viewport) ;
-        eng_End() ;
+        render::BeginPrimitiveRender();
+        render::SetDepthRect( Viewport, 0.0f );
+        render::EndPrimitiveRender();
+        render::ExecuteForwardRender();
+        eng_End();
     }
 #endif // X_EDITOR
 
-}
-
-//=========================================================================
-
-void camera::RenderView( const irect& Viewport,
-                               s32    VramID,
-                               s32    TexWidth,
-                               s32    TexHeight )
-{
-    // Keep copy of current view
-    view View = *eng_GetView() ;
-
-    // Make sure view is up to date with position and target
-    Update(FALSE) ;
-
-    // Set viewport
-    m_View.SetViewport(Viewport.l, Viewport.t, Viewport.r, Viewport.b) ;
-
-#ifdef X_EDITOR
-    // TEMP to refresh cached values so I can see them in the debugger
-    f32 Temp;
-    Temp = View.GetXFOV();
-    Temp = View.GetYFOV();
-    Temp = View.GetScreenDist();
-    View.GetV2C();
-    
-    Temp = m_View.GetXFOV();
-    Temp = m_View.GetYFOV();
-    m_View.GetV2C();
-    m_View.GetScreenDist();
-#endif
-
-    // Activate camera view
-    eng_SetView     (m_View) ;
-    eng_SetViewport (m_View) ;
-
-    // Platform specific stuff
-    RenderViewBegin(Viewport, VramID) ;
-
-    // Render world
-    g_ObjMgr.Render3dObjects( TRUE, m_View, m_ZoneTracker.GetMainZone() ) ;
-
-    // Platform specific stuff
-    RenderViewEnd( Viewport, VramID, TexWidth, TexHeight ) ;
-    
-    // Restore view
-    eng_SetView     (View) ;
-    eng_SetViewport (View) ;
+    // Restore the previous view.
+    eng_SetView( View );
+    eng_SetViewport( View );
 }
 
 //=========================================================================
@@ -769,6 +437,9 @@ xbool camera::IsEditorSelected( void )
 static
 xbool IsCinemaCameraAction( actions_ex_base* pAction, guid CameraGuid )
 {
+    if( !pAction )
+        return FALSE;
+
     // Must be set property action
     if( pAction->GetType() == actions_ex_base::TYPE_ACTION_AFFECT_PROPERTY )
     {
@@ -778,14 +449,14 @@ xbool IsCinemaCameraAction( actions_ex_base* pAction, guid CameraGuid )
         if(         ( pSetProperty->GetCode() == action_set_property::PMOD_CODE_SET )
                 &&  ( ( pSetProperty->GetPropertyType() & PROP_TYPE_BASIC_MASK ) == PROP_TYPE_GUID )
                 &&  ( pSetProperty->GetPropertyGuid() == CameraGuid )
-                &&  ( x_strcmp( pSetProperty->GetPropertyName(), "Player\\Cinema\\CinemaCameraGuid" ) == 0 ) )
+                &&  ( x_strcmp( pSetProperty->GetPropertyName(), s_PlayerCinemaCameraProperty ) == 0 ) )
         {                
             return TRUE; 
         }
     }
         
     // Not found
-    return NULL;        
+    return FALSE;
 }
 
 //=========================================================================
@@ -865,14 +536,14 @@ void camera::RenderEditorView( void )
     xbool bIsCinemaCamera = IsCinemaCamera( GetGuid() );
     if( bIsCinemaCamera )
     {
-        // PS2 cinema display
-        W          = PS2_VIEWPORT_WIDTH / 2;
-        H          = PS2_VIEWPORT_HEIGHT / 2;
-        PixelScale = PS2_PIXEL_SCALE;
+        // Cinema display.
+        W          = 256;
+        H          = 224;
+        PixelScale = DEFAULT_PIXEL_SCALE;
     }
     else
     {
-        // Pip display
+        // PIP display.
         W          = 256;
         H          = 128;
         PixelScale = DEFAULT_PIXEL_SCALE;
@@ -908,7 +579,7 @@ void camera::RenderEditorView( void )
     // Render red border
     if( eng_Begin() )    
     {
-        draw_Rect( Viewport, XCOLOR_RED, TRUE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( Viewport, XCOLOR_RED, TRUE );
         eng_End();
     }
 }
@@ -917,10 +588,10 @@ void camera::RenderEditorView( void )
 
 //=========================================================================
 
-void camera::OnAdvanceLogic( f32 DeltaTime )
+void camera::OnAdvanceSimulation( f32 DeltaTime )
 {
     // Call base class for camera position
-    tracker::OnAdvanceLogic(DeltaTime) ;
+    tracker::OnAdvanceSimulation(DeltaTime) ;
 }
 
 //=========================================================================

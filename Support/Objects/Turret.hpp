@@ -12,7 +12,6 @@
 //==============================================================================
 
 #include "Objects\PlaySurface.hpp"
-#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
 #include "Animation\AnimPlayer.hpp"
 #include "Characters\Factions.hpp"
 #include "Objects\Event.hpp"
@@ -103,7 +102,7 @@ public:
 
     virtual void                OnMove          ( const vector3& NewPos   );      
     virtual void                OnTransform     ( const matrix4& L2W      );
-    virtual void                OnAdvanceLogic  ( f32 DeltaTime );
+    virtual void                OnAdvanceSimulation  ( f32 DeltaTime );
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
     virtual bbox                GetLocalBBox    ( void ) const;
@@ -274,14 +273,6 @@ virtual anim_group::handle* GetAnimGroupHandlePtr ( void ) { return &m_hAnimGrou
 
 protected:
     virtual void                TryToFireAtTarget( void );
-    virtual void                CaptureRenderInterpState ( void );
-    virtual void                UpdateRenderInterpState  ( f32 Alpha );
-    virtual void                ClearRenderInterpState   ( void );
-    virtual void                InvalidateRenderInterpState( void );
-    virtual void                SnapRenderInterpState    ( void );
-            void                InvalidateRenderState( void );
-    const   matrix4&            GetRenderL2W      ( void ) const;
-            xbool               GetRenderBoneL2W  ( s32 iBone, matrix4& L2W );
 
 //------------------------------------------------------------------------------
 //  Private Data
@@ -291,7 +282,6 @@ protected:
     anim_group::handle          m_hAnimGroup;
     rhandle<char>               m_hAudioPackage;
     simple_anim_player          m_AnimPlayer;
-    simple_anim_interp_cache    m_RenderCache;
     anim_track_controller       m_TrackController[2];
     s32                         m_ProjectileTemplateID;
     s32                         m_AimingSoundID;

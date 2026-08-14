@@ -11,10 +11,10 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
 
 //==============================================================================
 //  DEFINES
@@ -25,7 +25,6 @@ enum demo_main_menu_controls
 	IDC_DEMO_MAIN_MENU_LEVEL_ONE,
 	IDC_DEMO_MAIN_MENU_LEVEL_TWO,
     IDC_DEMO_MAIN_MENU_LEVEL_THREE,
-    IDC_DEMO_MAIN_MENU_NAV_TEXT,
 };
 
 
@@ -55,7 +54,7 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
 protected:
@@ -63,7 +62,6 @@ protected:
 	ui_button*			m_pButtonLevelOne;
 	ui_button*			m_pButtonLevelTwo; 		
 	ui_button*			m_pButtonLevelThree; 		
-    ui_text*            m_pNavText;
 
     s32                 m_CurrHL;
 };

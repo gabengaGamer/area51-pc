@@ -9,8 +9,8 @@
 //=========================================================================
 
 #include "action_screen_fade.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Objects\Render\PostEffectMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Render/PostEffectMgr.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS

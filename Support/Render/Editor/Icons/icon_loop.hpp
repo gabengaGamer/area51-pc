@@ -170,5 +170,4 @@ static s16 s_iicon_loop[] =
 };
 
 
-#define DRAW_ICON_LOOP() draw_icon( NUM_FACETS_ICON_LOOP, NUM_VERTICES_ICON_LOOP, s_vicon_loop, s_iicon_loop )
 

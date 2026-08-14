@@ -5,16 +5,16 @@
 // INCLUDES
 //=============================================================================
 
-#include "Debris\debris_mgr.hpp"
-#include "Objects\PropSurface.hpp"
-#include "Debris\debris_rigid.hpp"
-#include "Debris\debris_glass_cluster.hpp"
-#include "Debris\debris_frag_explosion.hpp"
-#include "Debris\debris_alien_grenade_explosion.hpp"
-#include "Debris\debris_meson_lash.hpp"
-#include "audiomgr\AudioMgr.hpp"
-#include "..\Support\GameLib\StatsMgr.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Objects/PropSurface.hpp"
+#include "Debris/debris_rigid.hpp"
+#include "Debris/debris_glass_cluster.hpp"
+#include "Debris/debris_frag_explosion.hpp"
+#include "Debris/debris_alien_grenade_explosion.hpp"
+#include "Debris/debris_meson_lash.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "../Support/GameLib/StatsMgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 //=============================================================================
 // CONSTANTS

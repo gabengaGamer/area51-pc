@@ -5,7 +5,6 @@
 //  Copyright (c) 2002-2004 Inevitable Entertainment Inc.  All rights reserved.
 //
 //==============================================================================
-
 //==============================================================================
 //  INCLUDES
 //==============================================================================
@@ -13,14 +12,11 @@
 #include "hud_Text.hpp"
 #include "HudObject.hpp"
 
-#include "Ui/ui_font.hpp"
-#include "stringmgr\stringmgr.hpp"
+#include "UI/ui_font.hpp"
+#include "StringMgr/StringMgr.hpp"
 #ifndef X_EDITOR
-#include "Ui/ui_manager.hpp"
-#endif
-
-#if defined(TARGET_PS2)
-#include "Entropy\PS2\ps2_misc.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_renderer.hpp"
 #endif
 
 // These must be positive and in increasing order.  Shouldn't overlap,
@@ -67,7 +63,7 @@ hud_text::hud_text( void )
     m_TopLine               =  0;
     m_NumGoals              =  0;
 
-    m_MaxTextWidth          = 100;
+    m_MaxTextWidth          = 0;
 
     m_TopGoal               = 0;
 
@@ -96,7 +92,6 @@ hud_text::hud_text( void )
 
     m_TextBoxRectState = TEXT_BOX_STATE_CLOSED;
     m_PercentOpen = 0.0f;
-    //m_IncomingBmp.SetName(PRELOAD_FILE("HUD_Campaign_incoming.xbmp"));
 }
 
 //==============================================================================
@@ -184,7 +179,7 @@ void hud_text::OnRender( player* pPlayer )
         if( m_Goals[ iGoal ].InUse )
         {
             f32 PercentOnScreen     = 0.0f;
-            xwchar* pLine           = m_Goals[ iGoal ].Text;
+            const xwchar* pLine     = m_Goals[ iGoal ].WrappedText;
             
             PercentOnScreen = 1.0f;
 
@@ -201,28 +196,8 @@ void hud_text::OnRender( player* pPlayer )
 
             if( m_Goals[iGoal].KeyingPos < 400 )
             {
-                m_Goals[iGoal].KeyingPos+=10;
-
                 // scissor region
-#ifdef TARGET_PS2
-                gsreg_Begin( 1 );
-                gsreg_SetScissor(   
-                    /*iRect.l*/0, 
-                    iRect.t,
-                    iRect.l+(s32)m_Goals[iGoal].KeyingPos, 
-                    iRect.b
-                    );
-                gsreg_End();
-#endif
-
-#ifdef TARGET_XBOX
-                D3DRECT Rects[1];
-                Rects[0].x1 = /*iRect.l*/0;
-                Rects[0].y1 = iRect.t;
-                Rects[0].x2 = iRect.l+(s32)m_Goals[iGoal].KeyingPos;
-                Rects[0].y2 = iRect.b;
-                g_pd3dDevice->SetScissors( 1,FALSE,Rects );
-#endif
+				// TODO: ?
             }
 
             xcolor TextColor = XCOLOR_WHITE;
@@ -236,7 +211,7 @@ void hud_text::OnRender( player* pPlayer )
             greenColor = CHAT_RECT_COLOR_GREEN;
             greenColor.A = RectAlpha;
 
-            draw_Rect( iRect, greenColor, FALSE, DRAW_UI_RTARGET);
+            g_UIRenderer.DrawRect( iRect, greenColor );
 
             // blended end
             irect iFadeOut;
@@ -244,7 +219,7 @@ void hud_text::OnRender( player* pPlayer )
             iFadeOut.r = iFadeOut.l+8;
             iFadeOut.t = iRect.t;
             iFadeOut.b = iRect.b;
-            draw_GouraudRect(iFadeOut,greenColor,greenColor,xcolor(0,31,0,0),xcolor(0,31,0,0),FALSE,DRAW_UI_RTARGET);
+            g_UIRenderer.DrawGradientRect( iFadeOut, greenColor, greenColor, xcolor(0,31,0,0), xcolor(0,31,0,0) );
 
             // blended start
             irect iFadeIn;
@@ -252,12 +227,12 @@ void hud_text::OnRender( player* pPlayer )
             iFadeIn.r = iRect.l;
             iFadeIn.t = iRect.t;
             iFadeIn.b = iRect.b;
-            draw_GouraudRect(iFadeIn,xcolor(0,180,0,80),xcolor(0,180,0,80),greenColor,greenColor,FALSE,DRAW_UI_RTARGET);
+            g_UIRenderer.DrawGradientRect( iFadeIn, xcolor(0,180,0,80), xcolor(0,180,0,80), greenColor, greenColor );
 
             // Bright side line.
             irect rLine;
             rLine.Set(iRect.l-8,iRect.t,iRect.l-7,iRect.b);
-            draw_Rect(rLine,g_HudColor,TRUE,DRAW_UI_RTARGET);
+            g_UIRenderer.DrawRect( rLine, g_HudColor, TRUE );
 
             // text
             iRect.t-=1;
@@ -265,16 +240,7 @@ void hud_text::OnRender( player* pPlayer )
             RenderLine( pLine, iRect, Alpha, TextColor, 1, ui_font::h_left|ui_font::v_top, CHAT_DROP_SHADOW );
 
             // restore scissor region
-#ifdef TARGET_PS2
-            gsreg_Begin( 1 );
-            gsreg_SetScissor( 0, 0, XRes, YRes );
-            gsreg_End();
-#endif
-
-#ifdef TARGET_XBOX
-            // ensure we're not using a shrunken viewport
-            g_pd3dDevice->SetViewport( NULL );
-#endif
+            // TODO ?
         }
     }
 
@@ -287,7 +253,7 @@ void hud_text::OnRender( player* pPlayer )
     if( Offset > 0.0f )
     {
         i               += 1;
-        CurrentOffset   -= (1.0f - Offset) * pFont->TextHeight( m_Lines[ i % MAX_QUEUE ].Text );
+        CurrentOffset   -= (1.0f - Offset) * pFont->TextHeight( m_Lines[ i % MAX_QUEUE ].WrappedText );
     }
 
 
@@ -300,7 +266,7 @@ void hud_text::OnRender( player* pPlayer )
     {
         s32 QueueIndex = i % MAX_QUEUE;
 
-        const xwchar* pLine = m_Lines[ QueueIndex ].Text;
+        const xwchar* pLine = m_Lines[ QueueIndex ].WrappedText;
 
         iRect.t = (s32)CurrentOffset;
         iRect.b = iRect.t + pFont->TextHeight(pLine);//CHAT_BOX_LINEFEED;    
@@ -353,7 +319,7 @@ void hud_text::OnRender( player* pPlayer )
             greenColor.A = RectAlpha;
 
             // full rect area
-            draw_Rect( iRect, greenColor, FALSE, DRAW_UI_RTARGET);
+            g_UIRenderer.DrawRect( iRect, greenColor );
 
             // blended end
             irect iFadeOut;
@@ -361,7 +327,7 @@ void hud_text::OnRender( player* pPlayer )
             iFadeOut.r = iFadeOut.l+8;
             iFadeOut.t = iRect.t;
             iFadeOut.b = iRect.b;
-            draw_GouraudRect(iFadeOut,greenColor,greenColor,xcolor(0,31,0,0),xcolor(0,31,0,0),FALSE,DRAW_UI_RTARGET);
+            g_UIRenderer.DrawGradientRect( iFadeOut, greenColor, greenColor, xcolor(0,31,0,0), xcolor(0,31,0,0) );
 
             // blended Start
             irect iFadeIn;
@@ -369,12 +335,12 @@ void hud_text::OnRender( player* pPlayer )
             iFadeIn.r = iRect.l;
             iFadeIn.t = iRect.t;
             iFadeIn.b = iRect.b;
-            draw_GouraudRect(iFadeIn,xcolor(0,180,0,80),xcolor(0,180,0,80),greenColor,greenColor,FALSE,DRAW_UI_RTARGET);
+            g_UIRenderer.DrawGradientRect( iFadeIn, xcolor(0,180,0,80), xcolor(0,180,0,80), greenColor, greenColor );
 
             // Bright side line.
             irect rLine;
             rLine.Set(iRect.l-8,iRect.t,iRect.l-7,iRect.b);
-            draw_Rect(rLine,g_HudColor,TRUE,DRAW_UI_RTARGET);
+            g_UIRenderer.DrawRect( rLine, g_HudColor, TRUE );
 
             // text
             iRect.t-=1;
@@ -388,16 +354,13 @@ void hud_text::OnRender( player* pPlayer )
     //
     if( m_Bonus.InUse )
     {
-        static irect BonusRect = irect(0,148,512,448);
-
-        rect ViewDimensions;
-        view& rView = pPlayer->GetInterpView();
-        rView.GetViewport( ViewDimensions );
-        BonusRect.r = (s32)ViewDimensions.GetWidth();
-        BonusRect.b = (s32)ViewDimensions.GetHeight();
+        static irect BonusRect = irect( 0,
+                                        148,
+                                        ui_viewport::CONTENT_WIDTH,
+                                        ui_viewport::CONTENT_HEIGHT );
         
         xcolor TextColor = XCOLOR_YELLOW;
-        RenderLine( m_Bonus.Text, BonusRect, 255, TextColor, 1, ui_font::h_center|ui_font::v_top, TRUE );
+        RenderLine( m_Bonus.SourceText, BonusRect, 255, TextColor, 1, ui_font::h_center|ui_font::v_top, TRUE );
     }
 
     // Render Weapon Info Text
@@ -409,7 +372,7 @@ void hud_text::OnRender( player* pPlayer )
         iRect.r = s_wi_r; // 500
 
         xcolor TextColor = XCOLOR_BLUE;
-        RenderLine( m_WeaponInfo.Text, iRect, 255, TextColor, 0, ui_font::h_left|ui_font::v_bottom, TRUE );
+        RenderLine( m_WeaponInfo.SourceText, iRect, 255, TextColor, 0, ui_font::h_left|ui_font::v_bottom, TRUE );
     }
 
 #endif
@@ -417,7 +380,7 @@ void hud_text::OnRender( player* pPlayer )
 
 //==============================================================================
 
-inline void hud_text::AddLinesAndChars( s32& NumLines, s32& NumChars, xwchar* pLine )
+inline void hud_text::AddLinesAndChars( s32& NumLines, s32& NumChars, const xwchar* pLine )
 {
     if( *pLine == 0 )
         return;
@@ -472,191 +435,159 @@ static s32  TEXT_BOX_POS_R = 350;
 static s32  TEXT_BOX_LINE_HEIGHT = CHAT_BOX_LINEFEED;
 static f32  TEXT_BOX_OPEN_SPEED = 6.0f;
 
-void hud_text::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
+void hud_text::OnAdvanceSimulation( player* pPlayer, f32 DeltaTime )
 {
     (void)pPlayer;
 
-    s32 LinesDisplayed  = 0; // How many lines we're potentially displaying on the screen.
-    s32 CharsDisplayed  = 0; // How many characters we're displaying on the screen.
-
-    s32 textWidth = 0;
+    s32 LinesDisplayed = 0;
+    s32 CharsDisplayed = 0;
+    s32 TextWidth = 0;
 
 #ifndef X_EDITOR
-    ui_font* pFont      = g_UiMgr->GetFont( "small" ); 
+    ui_font* pFont = g_UiMgr->GetFont( "small" );
 #endif
 
-    //
-    // Do all goal sliding here
-    //
+    // Advance and expire objective entries.
     for( s32 i = 0; i < MAX_GOALS; i++ )
     {
-        // Is this goal currently active?
-        if( m_Goals[ i ].InUse )
-        {
-            AddLinesAndChars( LinesDisplayed, CharsDisplayed, m_Goals[ i ].Text );
-#ifndef X_EDITOR   
-            textWidth = MAX(textWidth, pFont->TextWidth(m_Goals[i].Text));
-#endif
-            m_Goals[ i ].Time -= DeltaTime;
+        if( !m_Goals[ i ].InUse )
+            continue;
 
+        AddLinesAndChars( LinesDisplayed, CharsDisplayed, m_Goals[ i ].WrappedText );
+#ifndef X_EDITOR
+        TextWidth = MAX( TextWidth, pFont->TextWidth( m_Goals[ i ].WrappedText ) );
+#endif
+
+        if( m_Goals[ i ].Time >= 0.0f )
+        {
+            m_Goals[ i ].Time -= DeltaTime;
             if( m_Goals[ i ].Time <= 0.0f )
             {
                 m_Goals[ i ].Reset();
-                m_NumGoals--;
+                m_NumGoals = MAX( 0, m_NumGoals - 1 );
             }
         }
     }
 
-    //
-    // Do normal message logic here.
-    //
+    // Advance the normal message queue and remove expired/hidden lines.
     {
-        // Scroll the messages some if they need scrolling.
         const f32 ScrollSpeed = 0.8f;
         if( m_CursorPos < m_TopLine )
         {
-            f32 Scroll = (5.0f + (m_TopLine - m_CursorPos)) * DeltaTime * ScrollSpeed;
-
+            const f32 Scroll = (5.0f + (m_TopLine - m_CursorPos)) * DeltaTime * ScrollSpeed;
             m_CursorPos += Scroll;
-
             if( m_CursorPos > m_TopLine )
-            {
                 m_CursorPos = (f32)m_TopLine;
-            }
         }
 
-        // This makes sure that only m_NumDisplay messages are ever visible.
-        // I'm using m_CursorPos because that allows an extra message to be on the screen
-        // a new one is in the process of scrolling in.
         ClearAllBelow( (s32)m_CursorPos - m_NumDisplay );
 
-        // Loop through all the messages and make sure we never have too much text 
-        // on the screen or take up too much space, and time out the last visible message.
         for( s32 i = m_TopLine; i >= 0; i-- )
         {
-            // Add this line to the current running tally of messages.
-            AddLinesAndChars( LinesDisplayed, CharsDisplayed, m_Lines[ i  % MAX_QUEUE ].Text );
+            AddLinesAndChars( LinesDisplayed, CharsDisplayed, m_Lines[ i % MAX_QUEUE ].WrappedText );
 
-#ifndef X_EDITOR   
-            textWidth = MAX(textWidth, pFont->TextWidth(m_Lines[ i  % MAX_QUEUE ].Text));
+#ifndef X_EDITOR
+            TextWidth = MAX( TextWidth, pFont->TextWidth( m_Lines[ i % MAX_QUEUE ].WrappedText ) );
 #endif
 
-            // Have we gone over the hard limit?  Then immediately remove this line.
-            if( (LinesDisplayed > MAX_LINES_HARD) ||
-                (CharsDisplayed > MAX_CHARS_HARD ) )
+            if( (LinesDisplayed > MAX_LINES_HARD) || (CharsDisplayed > MAX_CHARS_HARD) )
             {
-                m_Lines[ i % MAX_QUEUE ].Time  = 0.0f;
+                m_Lines[ i % MAX_QUEUE ].Time = 0.0f;
                 ClearAllBelow( i );
                 break;
             }
-            // If we've gone over the soft limit, tell this line to hurry up and die.
-            else if(    (LinesDisplayed > MAX_LINES_SOFT) ||
-                (CharsDisplayed > MAX_CHARS_SOFT) )
+
+            if( (LinesDisplayed > MAX_LINES_SOFT) || (CharsDisplayed > MAX_CHARS_SOFT) )
             {
                 m_Lines[ i % MAX_QUEUE ].Time = x_min( 0.25f, m_Lines[ i % MAX_QUEUE ].Time );
                 ClearAllBelow( i - 1 );
             }
 
-            // If the next one is dead, this one should be dying.
-            if( (!m_Lines[ (i - 1) % MAX_QUEUE ].InUse) )
+            // The oldest visible line is the one that controls queue expiry.
+            // Do not index the circular buffer with -1 on the first line.
+            if( (i == 0) || !m_Lines[ (i - 1) % MAX_QUEUE ].InUse )
             {
                 m_Lines[ i % MAX_QUEUE ].Time -= DeltaTime;
-
                 if( m_Lines[ i % MAX_QUEUE ].Time <= 0.0f )
-                {
                     ClearAllBelow( i );
-                }
                 break;
-            } 
+            }
         }
     }
 
-    //
-    // Bonus logic
-    //
     if( m_Bonus.InUse )
     {
         m_Bonus.Time -= DeltaTime;
-        if( m_Bonus.Time < 0 )
-        {
+        if( m_Bonus.Time < 0.0f )
             m_Bonus.InUse = FALSE;
-        }
     }
 
     if( m_WeaponInfo.InUse )
     {
         m_WeaponInfo.Time -= DeltaTime;
-        if( m_WeaponInfo.Time < 0 )
-        {
+        if( m_WeaponInfo.Time < 0.0f )
             m_WeaponInfo.InUse = FALSE;
-        }
     }
 
-    // setup the text box rect that draws around the text lines.
+    // Keep the text-box animation state driven by the same update callback as
+    // the message timers.
     m_TextBoxRect.l = TEXT_BOX_POS_L;
     m_TextBoxRect.t = TEXT_BOX_POS_T;
 
-    if( LinesDisplayed )
+    if( LinesDisplayed > 0 )
     {
-        m_TextBoxRect.b = (TEXT_BOX_LINE_HEIGHT * (LinesDisplayed+1));
+        m_TextBoxRect.b = TEXT_BOX_LINE_HEIGHT * (LinesDisplayed + 1);
         m_TextBoxRect.r = TEXT_BOX_POS_R;
         m_RenderTextBoxRect = TRUE;
 
         switch( m_TextBoxRectState )
         {
             case TEXT_BOX_STATE_CLOSED:
-                // Text box is closed so start to open it.
                 m_TextBoxRectState = TEXT_BOX_STATE_OPENING;
                 m_PercentOpen = 0.0f;
-            break;
+                break;
 
             case TEXT_BOX_STATE_OPENING:
-                // Calc the irect here for opening.
-                m_PercentOpen += (DeltaTime * TEXT_BOX_OPEN_SPEED);
-
+                m_PercentOpen += DeltaTime * TEXT_BOX_OPEN_SPEED;
                 if( m_PercentOpen >= 1.0f )
                     m_TextBoxRectState = TEXT_BOX_STATE_OPEN;
-            break;
+                break;
 
             case TEXT_BOX_STATE_OPEN:
-                // do nothing but render the box open.
                 m_PercentOpen = 1.0f;
-            break;
+                break;
 
             case TEXT_BOX_STATE_CLOSEING:
-                // If closeing then set to open again.
                 m_TextBoxRectState = TEXT_BOX_STATE_OPENING;
-            break;
-
+                break;
         }
     }
     else
     {
         m_RenderTextBoxRect = FALSE;
-        
+
         switch( m_TextBoxRectState )
         {
             case TEXT_BOX_STATE_OPEN:
             case TEXT_BOX_STATE_OPENING:
                 m_TextBoxRectState = TEXT_BOX_STATE_CLOSEING;
-            break;
+                break;
 
             case TEXT_BOX_STATE_CLOSEING:
-                // Start Closing the box
-                m_PercentOpen -= (DeltaTime * TEXT_BOX_OPEN_SPEED);
-                if( m_PercentOpen <= 0 )
+                m_PercentOpen -= DeltaTime * TEXT_BOX_OPEN_SPEED;
+                if( m_PercentOpen <= 0.0f )
                     m_TextBoxRectState = TEXT_BOX_STATE_CLOSED;
-            break;
+                break;
 
             case TEXT_BOX_STATE_CLOSED:
-                // Do nothing we are closed.
                 m_PercentOpen = 0.0f;
-            break;
+                break;
         }
     }
 
-    m_TextBoxRect.b = MAX( (s32)(m_TextBoxRect.b * m_PercentOpen), TEXT_BOX_POS_T)+8;
-    m_TextBoxRect.r = (s32)((textWidth+8+16) * m_PercentOpen)+TEXT_BOX_POS_L;
+    m_PercentOpen = MINMAX( 0.0f, m_PercentOpen, 1.0f );
+    m_TextBoxRect.b = MAX( (s32)(m_TextBoxRect.b * m_PercentOpen), TEXT_BOX_POS_T ) + 8;
+    m_TextBoxRect.r = (s32)((TextWidth + 8 + 16) * m_PercentOpen) + TEXT_BOX_POS_L;
 
     if( m_TextBoxRect.l > m_TextBoxRect.r )
         m_TextBoxRect.l = m_TextBoxRect.r;
@@ -668,38 +599,93 @@ void hud_text::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
         m_TextBoxRect.b = m_TextBoxRect.t;
 }
 
+void hud_text::SetMaxWidth( s32 MaxWidth )
+{
+    if( MaxWidth < 0 || MaxWidth == m_MaxTextWidth )
+        return;
+
+    m_MaxTextWidth = MaxWidth;
+
+    for( s32 i = 0; i < MAX_QUEUE; i++ )
+    {
+        if( m_Lines[ i ].InUse )
+            RewrapDisplayText( m_Lines[ i ] );
+    }
+
+    for( s32 i = 0; i < MAX_GOALS; i++ )
+    {
+        if( m_Goals[ i ].InUse )
+            RewrapDisplayText( m_Goals[ i ] );
+    }
+}
+
+//==============================================================================
+
+void hud_text::SetDisplayText( text_display& Display, const xwchar* pText )
+{
+    if( pText == NULL )
+    {
+        Display.SourceText[ 0 ] = 0;
+    }
+    else
+    {
+        x_wstrncpy( Display.SourceText, pText, MAX_DISPLAY_LENGTH - 1 );
+        Display.SourceText[ MAX_DISPLAY_LENGTH - 1 ] = 0;
+    }
+
+    RewrapDisplayText( Display );
+}
+
+//==============================================================================
+
+void hud_text::RewrapDisplayText( text_display& Display )
+{
+#ifndef X_EDITOR
+    if( m_MaxTextWidth > 0 )
+    {
+        irect TextRect( 0, 0, m_MaxTextWidth, 400 );
+
+        ui_font* pFont = g_UiMgr->GetFont( "small" );
+        xwstring WrappedLine;
+        pFont->TextWrap( Display.SourceText, TextRect, WrappedLine );
+
+        x_wstrncpy( Display.WrappedText,
+                    (const xwchar*)WrappedLine,
+                    MAX_DISPLAY_LENGTH - 1 );
+        Display.WrappedText[ MAX_DISPLAY_LENGTH - 1 ] = 0;
+        return;
+    }
+#endif
+
+    x_wstrncpy( Display.WrappedText,
+                Display.SourceText,
+                MAX_DISPLAY_LENGTH - 1 );
+    Display.WrappedText[ MAX_DISPLAY_LENGTH - 1 ] = 0;
+}
+
 //==============================================================================
 
 void hud_text::AddLine( const xwchar* pLine )
 {
-(void)pLine;
 #ifndef X_EDITOR
     m_TopLine++;
 
-    irect iRect(0, 0, m_MaxTextWidth, 400);
+    text_display& Display = m_Lines[ m_TopLine % MAX_QUEUE ];
+    Display.Reset();
+    SetDisplayText( Display, pLine );
 
-    ui_font* pFont      = g_UiMgr->GetFont( "small" );
-    xwstring WrappedLine;
-    pFont->TextWrap( pLine, iRect, WrappedLine );
-    const xwchar* pWrappedLine = (const xwchar*)WrappedLine;
+    s32 NumChars = 0;
+    while( Display.WrappedText[ NumChars ] != 0 )
+        NumChars++;
 
-    s32 i = -1;
-    do {
-        i++;
-        m_Lines[ m_TopLine % MAX_QUEUE ].Text[ i ] = pWrappedLine[ i ];
-    } while( pWrappedLine[ i ] != 0 );
-    
-    m_Lines[ m_TopLine % MAX_QUEUE ].InUse = FALSE;
-
-    f32 StayTime = BASE_MSG_STAY + (i * MSG_STAY_PER_CHAR);
-
+    f32 StayTime = BASE_MSG_STAY + (NumChars * MSG_STAY_PER_CHAR);
     if( StayTime > MAX_MSG_STAY )
-    {
         StayTime = MAX_MSG_STAY;
-    }
 
-    m_Lines[ m_TopLine % MAX_QUEUE ].InUse = TRUE;
-    m_Lines[ m_TopLine % MAX_QUEUE ].Time  = StayTime;
+    Display.InUse = TRUE;
+    Display.Time  = StayTime;
+#else
+    (void)pLine;
 #endif
 }
 
@@ -707,28 +693,12 @@ void hud_text::AddLine( const xwchar* pLine )
 
 void hud_text::AddGoal( s32 GoalID, const xwchar* pGoal, f32 Time )
 {
-    (void)GoalID;
-    (void)pGoal;
-    (void)Time;
 #ifndef X_EDITOR
-    s32 i;
-
-    irect iRect(0, 0, m_MaxTextWidth, 400);
-
-    ui_font* pFont      = g_UiMgr->GetFont( "small" );
-    xwstring WrappedLine;
-    pFont->TextWrap( pGoal, iRect, WrappedLine );
-    const xwchar* pWrappedLine = (const xwchar*)WrappedLine;
-
-    for( i = 0; i < MAX_GOALS; i++ )
+    for( s32 i = 0; i < MAX_GOALS; i++ )
     {
         if( !m_Goals[ i ].InUse )
         {
-            s32 j = -1;
-            do {
-                j++;
-                m_Goals[ i ].Text[ j ] = pWrappedLine[ j ];
-            } while( pWrappedLine[ j ] != 0 );
+            SetDisplayText( m_Goals[ i ], pGoal );
 
             // Play Sound here?
             g_AudioMgr.Play("HUD_Text_Alert", TRUE );
@@ -745,6 +715,10 @@ void hud_text::AddGoal( s32 GoalID, const xwchar* pGoal, f32 Time )
             return;
         }
     }
+#else
+    (void)GoalID;
+    (void)pGoal;
+    (void)Time;
 #endif
 }
 
@@ -778,12 +752,8 @@ void hud_text::UpdateGoal( s32 GoalID, xbool Enabled, const xwchar* pGoal, f32 T
                 m_Goals[ i ].Time = Time;
             }
             
-            // Copy the new text over
-            s32 j = -1;
-            do {
-                j++;
-                m_Goals[ i ].Text[ j ] = pGoal[ j ];
-            } while( pGoal[ j ] != 0 );
+            // Copy the new source text and refresh its wrapped display cache.
+            SetDisplayText( m_Goals[ i ], pGoal );
 
             //if( m_Goals[ i ].ScrollState > FLARE_START )
             //{
@@ -815,12 +785,8 @@ void hud_text::SetBonus( const xwchar* pBonus, f32 Time )
 {
     m_Bonus.Time  = Time;
     m_Bonus.InUse = TRUE;
-    
-    s32 j = -1;
-    do {
-        j++;
-        m_Bonus.Text[ j ] = pBonus[ j ];
-    } while( pBonus[ j ] != 0 );
+
+    SetDisplayText( m_Bonus, pBonus );
 }
 
 //==============================================================================
@@ -830,11 +796,7 @@ void hud_text::SetWeaponInfo( const xwchar* pWeaponInfo, f32 Time )
     m_WeaponInfo.Time  = Time;
     m_WeaponInfo.InUse = TRUE;
 
-    s32 j = -1;
-    do {
-        j++;
-        m_WeaponInfo.Text[ j ] = pWeaponInfo[ j ];
-    } while( pWeaponInfo[ j ] != 0 );
+    SetDisplayText( m_WeaponInfo, pWeaponInfo );
 
 }
 

@@ -1,9 +1,9 @@
 //==============================================================================
 //
 //  VoiceMgr.hpp
-// On the game server, this handles arbitration and distribution of voice data to
-// all game clients. On the client, it will handle distribution to the local
-// machine.
+//
+//  On the game server, this handles arbitration and distribution of voice data to
+//  all game clients. On the client, it will handle distribution to the local machine.
 //
 //==============================================================================
 
@@ -19,11 +19,7 @@
 #include "Headset.hpp"
 #include "NetworkMgr/netlimits.hpp"
 
-//==============================================================================
-//  DEFINES
-//==============================================================================
-#define VOICE_CHANNELS 2
-
+static_assert( NET_MAX_PLAYERS <= (sizeof( u32 ) * 8), "Voice player masks require at least one bit per player." );
 
 //==============================================================================
 //  TYPES
@@ -37,25 +33,30 @@ enum desired_talk_mode
     TALK_NONE,
 };
 
-enum actual_talk_mode {
-    TALK_NEW_TEAM,     
-    TALK_POT_TEAM,     
-    TALK_OLD_TEAM,     
+//------------------------------------------------------------------------------
 
-    TALK_NEW_LOCAL,    
-    TALK_POT_LOCAL,    
-    TALK_OLD_LOCAL,    
+enum actual_talk_mode
+{
+    TALK_NEW_TEAM,
+    TALK_POT_TEAM,
+    TALK_OLD_TEAM,
 
-    TALK_NEW_GLOBAL,   
-    TALK_POT_GLOBAL,   
-    TALK_OLD_GLOBAL,   
+    TALK_NEW_LOCAL,
+    TALK_POT_LOCAL,
+    TALK_OLD_LOCAL,
 
-    TALK_NOT_TALKING,         
-    TALK_MODE_FIRST = TALK_NEW_TEAM,   
-    TALK_MODE_LAST  = TALK_OLD_GLOBAL,    
+    TALK_NEW_GLOBAL,
+    TALK_POT_GLOBAL,
+    TALK_OLD_GLOBAL,
+
+    TALK_NOT_TALKING,
+    TALK_MODE_FIRST = TALK_NEW_TEAM,
+    TALK_MODE_LAST  = TALK_OLD_GLOBAL,
 };
 
-struct speaker 
+//------------------------------------------------------------------------------
+
+struct speaker
 {
     s32                 PlayerNum;
     f32                 TalkTime;
@@ -63,11 +64,10 @@ struct speaker
     actual_talk_mode    ActualTalkMode;
 };
 
-struct listener
-{
-    s32 PlayerNum;
-    s32 ListeningTo[ 4 ];
-};
+//==============================================================================
+//  VOICE MGR
+//==============================================================================
+
 
 class voice_mgr
 {
@@ -75,16 +75,15 @@ public:
                             voice_mgr               ( void );
                            ~voice_mgr               ( void );
 
-        void                Init                    ( xbool LocalIsServer, xbool EnableHeadset );
+        void                Init                    ( xbool EnableHeadset );
         void                Kill                    ( void );
         void                Update                  ( f32 DeltaTime );
         xbool               IsTalking               ( void )                                                    { return m_Headset.IsTalking();             }
         void                SetTalking              ( xbool bTalking );
-        void                Distribute              ( s32 TalkerIndex, const byte* pBuffer, s32 Length, s32 TalkMode );
-        
+        void                Distribute              ( s32 TalkerIndex, const byte* pBuffer, s32 Length );
+
         xbool               IsValidTarget           ( s32 Speaker, s32 Listener, actual_talk_mode TalkMode );
         void                DoArbitration           ( f32 DeltaTime );
-        void                Arbitrate               ( s32 DesiredOwner, s32 TalkMode );
         void                AcceptUpdate            ( netstream& BitStream );
         void                ProvideUpdate           ( netstream& BitStream );
 
@@ -96,7 +95,6 @@ public:
         actual_talk_mode    GetLocalVoiceTalkType   ( void )                                                    { return m_LocalVoiceTalkType;              }
         xbool               IsSpeaking              ( s32 Speaker );
         void                AgeSpeaker              ( s32 Speaker,  f32 DeltaTime );
-        void                SetSpeaking             ( s32 Speaker,  u32 Listeners );
         void                SetVoiceOwner           ( s32 Listener, s32 Speaker, actual_talk_mode TalkMode );
         desired_talk_mode   GetDesiredTalkMode      ( s32 PlayerIndex );
         void                ToggleTalkMode          ( void );
@@ -119,33 +117,48 @@ public:
         void                SetVolume               ( f32 Head, f32 Mic )                                       { m_Headset.SetVolume( Head, Mic );         }
         void                GetVolume               ( f32& Head, f32& Mic )                                     { m_Headset.GetVolume( Head, Mic );         }
 
-        xbool               GetLocallyMuted         ( s32 PlayerIndex )                                         { return !!(m_LocalMutedPlayers & (1 << PlayerIndex)); }
-        void                SetLocallyMuted         ( s32 PlayerIndex, xbool bMuted )                           { 
-                                                                                                                  m_LocalDirtyMutedPlayers = TRUE; 
-                                                                                                                  m_LocalMutedPlayers = 
-                                                                                                                      (m_LocalMutedPlayers & ~(1 << PlayerIndex)); 
-                                                                                                                  if( bMuted )
-                                                                                                                  {
-                                                                                                                      m_LocalMutedPlayers = m_LocalMutedPlayers | (1 << PlayerIndex);
-                                                                                                                  }
-                                                                                                                }
+        xbool               GetLocallyMuted         ( s32 PlayerIndex )
+        {
+            ASSERT( IN_RANGE( 0, PlayerIndex, NET_MAX_PLAYERS - 1 ) );
+            if( !IN_RANGE( 0, PlayerIndex, NET_MAX_PLAYERS - 1 ) )
+            {
+                return FALSE;
+            }
+
+            return !!( m_LocalMutedPlayers & (u32( 1 ) << PlayerIndex) );
+        }
+
+        void                SetLocallyMuted         ( s32 PlayerIndex, xbool bMuted )
+        {
+            ASSERT( IN_RANGE( 0, PlayerIndex, NET_MAX_PLAYERS - 1 ) );
+            if( !IN_RANGE( 0, PlayerIndex, NET_MAX_PLAYERS - 1 ) )
+            {
+                return;
+            }
+
+            m_LocalDirtyMutedPlayers = TRUE;
+            m_LocalMutedPlayers &= ~(u32( 1 ) << PlayerIndex);
+            if( bMuted )
+            {
+                m_LocalMutedPlayers |= (u32( 1 ) << PlayerIndex);
+            }
+        }
+
         u32                 GetLocallyMutedBits     ( void )                                                    { return m_LocalMutedPlayers; }
-        u32                 GetSpeakingBits         ( void )                                                    { return ((m_LocalVoiceOwner >= 0) ? ( 1 << m_LocalVoiceOwner ) : 0); }
+        u32                 GetSpeakingBits         ( void )                                                    { return ( (m_LocalVoiceOwner >= 0) ? (u32( 1 ) << m_LocalVoiceOwner) : 0 ); }
 
         headset&            GetHeadset              ( void );
-        
-        void                SetIsGameVoiceEnabled   ( xbool Enabled )                                           { m_bGameIsVoiceEnabled = Enabled; }
+
+        void                SetIsGameVoiceEnabled   ( xbool Enabled );
         xbool               IsGameVoiceEnabled      ( void )                                                    { return m_bGameIsVoiceEnabled; }
 
 private:
         xbool               m_bGameIsVoiceEnabled;
         xbool               m_Initialized;
-        xbool               m_LocalIsServer;
         xbool               m_HeadsetEnabled;
         headset             m_Headset;
         desired_talk_mode   m_CurrentTalkType;
         desired_talk_mode   m_LocalDesiredTalkMode;
-        s32                 m_PlayerNetSlot;
 
         s32                 m_LocalVoiceOwner;
         actual_talk_mode    m_LocalVoiceTalkType;
@@ -157,7 +170,6 @@ private:
 
         speaker             m_Speakers      [ NET_MAX_PLAYERS ];
         speaker*            m_SpeakerQueue  [ NET_MAX_PLAYERS ];
-        listener            m_Listeners     [ NET_MAX_PLAYERS ];
 };
 
 extern voice_mgr g_VoiceMgr;
@@ -165,6 +177,7 @@ extern voice_mgr g_VoiceMgr;
 #if defined(X_DEBUG)
 extern const char* GetTalkModeName( s32 Mode );
 #endif
+
 //==============================================================================
 #endif // VOICEMGR_HPP
 //==============================================================================

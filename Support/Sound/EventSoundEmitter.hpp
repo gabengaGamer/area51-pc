@@ -1,3 +1,9 @@
+//==============================================================================
+// 
+// EventSoundEmitter.hpp
+//
+//==============================================================================
+
 #ifndef EVENT_SOUND_EMITTER_HPP
 #define EVENT_SOUND_EMITTER_HPP
 
@@ -5,11 +11,12 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 //=========================================================================
 // CLASS
 //=========================================================================
+
 class event_sound_emitter : public object
 {
 public:
@@ -28,7 +35,7 @@ public:
 
                             event_sound_emitter                ( void );
     virtual s32             GetMaterial                         ( void ) const { return MAT_TYPE_NULL; }
-    virtual void            OnAdvanceLogic                      ( f32 DeltaTime );      
+    virtual void            OnAdvanceSimulation                      ( f32 DeltaTime );      
     virtual void            OnMove                              ( const vector3& NewPos   );      
     virtual bbox            GetLocalBBox                        ( void ) const;      
 
@@ -73,7 +80,7 @@ protected:
         
 // Make friends here
 };
+
 //=========================================================================
-// END
+#endif // EVENT_SOUND_EMITTER_HPP
 //=========================================================================
-#endif

@@ -46,11 +46,11 @@ public:
 
     virtual guid            GetConnection                       ( void );
 
-    virtual u32             GetFlags            ( void )         { return m_Flags;    }
-    virtual void            SetFlags            ( u32 flags)     { m_Flags = flags;   }
+    virtual u32             GetFlags            ( void )         { return m_flags;    }
+    virtual void            SetFlags            ( u32 flags)     { m_flags = flags;   }
     
-    xbool                   IsDying             ( void )        { return m_Flags & FLAG_DYING; }
-    xbool                   IsMoving            ( void )        { return m_Flags & FLAG_MOVING; }
+    xbool                   IsDying             ( void )        { return m_flags & FLAG_DYING; }
+    xbool                   IsMoving            ( void )        { return m_flags & FLAG_MOVING; }
 
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
@@ -85,7 +85,7 @@ protected:
     sphere                  m_Sphere;
     xbool                   m_FirstUpdate;   
     s32                     m_IndexInSavedList;
-    u32                     m_Flags;
+    u32                     m_flags;
 };
 
 //=========================================================================

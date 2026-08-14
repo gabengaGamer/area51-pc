@@ -12,8 +12,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Trigger_Actions.hpp"
-#include "..\Support\Characters\Character.hpp"
+#include "../Support/Trigger/Trigger_Actions.hpp"
+#include "../Support/Characters/Character.hpp"
 
 //=========================================================================
 // AI_MODIFY_BEHAVIOR_TARGETED : modifies a specific AI behavior upon entering a spatial trigger

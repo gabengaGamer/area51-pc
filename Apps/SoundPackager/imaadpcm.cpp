@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <wtypes.h>
 #include <assert.h>
+#include <algorithm>
 #include "imaadpcm.h"
 
 // Finds the size of the input array
@@ -1156,7 +1157,7 @@ CImaAdpcmCodec::EncodeS16
             dwLeft = 0;
             dwRight = 0;
 
-            cSubSamples = min(cSamples, 8);
+            cSubSamples = std::min(cSamples, static_cast<UINT>( 8 ));
 
             for(i = 0; i < cSubSamples; i++)
             {
@@ -1433,7 +1434,7 @@ CImaAdpcmCodec::DecodeS16
             dwRight = *(LPDWORD)pbBlock;
             pbBlock += sizeof(DWORD);
 
-            cSubSamples = min(cSamples, 8);
+            cSubSamples = std::min(cSamples, static_cast<UINT>( 8 ));
             
             for(i = 0; i < cSubSamples; i++)
             {
@@ -1482,5 +1483,3 @@ CImaAdpcmCodec::DecodeS16
 
     return fSuccess;
 }
-
-

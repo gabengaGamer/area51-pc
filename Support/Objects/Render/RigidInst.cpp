@@ -5,52 +5,8 @@
 //=============================================================================
 
 #include "Entropy.hpp"
-#include "Objects\\Render\\RigidInst.hpp"
-#include "ResourceMgr\\ResourceMgr.hpp"
-
-//=============================================================================
-// LOADER FOR THE RIGID GEOM RESOURCE
-//=============================================================================
-
-static struct rigid_loader : public rsc_loader
-{
-    //-------------------------------------------------------------------------
-
-    rigid_loader( void ) : rsc_loader( "RIGID GEOM", ".rigidgeom" ) {}
-
-    //-------------------------------------------------------------------------
-
-    virtual void* PreLoad ( X_FILE* FP )
-    {
-        MEMORY_OWNER( "RIGID GEOM DATA" );
-
-        fileio File;
-        return( File.PreLoad( FP ) );
-    }
-
-    //-------------------------------------------------------------------------
-
-    virtual void* Resolve ( void* pData )
-    {
-        fileio      File;
-        rigid_geom* pRigidGeom = NULL;
-
-        File.Resolved( (fileio::resolve*)pData, pRigidGeom );
-
-        return( pRigidGeom );
-    }
-
-    //-------------------------------------------------------------------------
-
-    virtual void Unload( void* pData )
-    {
-        rigid_geom* pRigidGeom = (rigid_geom*)pData;
-        ASSERT( pRigidGeom );
-
-        delete pRigidGeom;
-    }
-
-} s_Rigid_Geom_Loader;
+#include "Objects/Render/RigidInst.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 //=============================================================================
 // LOADER FOR THE RIGID COLOR RESOURCE
@@ -67,33 +23,33 @@ static struct rigid_color : public rsc_loader
     virtual void* PreLoad( X_FILE* FP )
     {
         MEMORY_OWNER( "RIGID COLOR DATA" );
-        fileio File;
-        return( File.PreLoad( FP ) );
+
+        RigidColorData* pData = new RigidColorData;
+        xstring           Error;
+        if( !rigid_color_file::Load( FP, *pData, Error ) )
+        {
+            delete pData;
+            x_DebugMsg( "RIGIDCOLOR: load failed: %s\n",
+                        (const char*)Error );
+            x_throw( (const char*)Error );
+        }
+
+        return( pData );
     }
 
     //-------------------------------------------------------------------------
 
     virtual void* Resolve( void* pData )
     {
-        fileio              File;
-        color_info*   pRigidColor = NULL;
-
-        File.Resolved( (fileio::resolve*)pData, pRigidColor );
-        // The XBOX and PC uses 32 bit color and PS2 is using 16 bit.
-
-        return( pRigidColor );
+        return( pData );
     }
 
     //-------------------------------------------------------------------------
 
     virtual void Unload( void* pData )
     {
-        color_info* pRigidColor=( color_info* )pData;
-    #ifdef TARGET_XBOX
-        delete pRigidColor->m_hColors;
-    #elif defined(TARGET_PC)
-        delete[] pRigidColor->m_hColors;
-    #endif
+        RigidColorData* pRigidColor = (RigidColorData*)pData;
+        ASSERT( pRigidColor );
         delete pRigidColor;
     }
 
@@ -130,43 +86,37 @@ s32 rigid_inst::GetNumColors( void ) const
 
 //=============================================================================
 
-const void* rigid_inst::GetColorTable( platform PlatformType ) const
+const u32* rigid_inst::GetColorTable( platform PlatformType ) const
 {
-    if( m_pRigidColor )
+    ASSERT( (PlatformType == PLATFORM_XBOX) ||
+            (PlatformType == PLATFORM_PC) );
+
+    if( (PlatformType != PLATFORM_XBOX) &&
+        (PlatformType != PLATFORM_PC) )
     {
-        if( PlatformType == PLATFORM_XBOX || PlatformType == PLATFORM_PC )
-            return(( u32* )m_pRigidColor )+m_iColor;
-        else if ( PlatformType == PLATFORM_PS2 )
-            return(( u16* )m_pRigidColor )+m_iColor;
-        else
-            ASSERT(FALSE);
+        return( NULL );
     }
-    return NULL;
+
+    return( GetColorTable() );
 }
 
 //=============================================================================
 
-const void* rigid_inst::GetColorTable( void ) const
+const u32* rigid_inst::GetColorTable( void ) const
 {
     if( !m_pRigidColor )
-        return NULL;
+        return( NULL );
 
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
-    u32* pCol=( u32* )m_pRigidColor;
-#elif defined(TARGET_PS2)
-    u16* pCol=( u16* )m_pRigidColor;
-#else
-    ASSERT(FALSE);
-    return(0);
-#endif
-
-    return( pCol+m_iColor );
+    return( m_pRigidColor + m_iColor );
 }
 
 //=============================================================================
 
-void rigid_inst::SetColorTable( const void* pColorTable, s32 iColor, s32 nColors )
+void rigid_inst::SetColorTable( const u32* pColorTable, s32 iColor, s32 nColors )
 {
+    ASSERT( iColor >= 0 );
+    ASSERT( nColors >= 0 );
+
     m_pRigidColor = pColorTable;
     m_iColor      = iColor;
     m_nColors     = nColors;
@@ -176,14 +126,30 @@ void rigid_inst::SetColorTable( const void* pColorTable, s32 iColor, s32 nColors
 
 void rigid_inst::LoadColorTable( const char* pFileName )
 {
-    rhandle<color_info> hRigidColor;
+    rhandle<RigidColorData> hRigidColor;
     hRigidColor.SetName( pFileName );
 
-    color_info* pInfo = hRigidColor.GetPointer();
-    if ( pInfo )
-        m_pRigidColor = *pInfo;
-    else
+    RigidColorData* pInfo = hRigidColor.GetPointer();
+    if( !pInfo )
+    {
         m_pRigidColor = NULL;
+        return;
+    }
+
+    const s32 TableCount = pInfo->Colors.GetCount();
+    if( (m_iColor < 0) ||
+        (m_nColors < 0) ||
+        (m_iColor > TableCount) ||
+        (m_nColors > (TableCount - m_iColor)) )
+    {
+        m_pRigidColor = NULL;
+        x_throw( xfs( "Rigid color range [%d, %d) exceeds table size %d.",
+                      m_iColor,
+                      m_iColor + m_nColors,
+                      TableCount ) );
+    }
+
+    m_pRigidColor = pInfo->Colors.GetPtr();
 }
 
 //=============================================================================
@@ -206,12 +172,8 @@ void rigid_inst::RenderShadowCast( const matrix4* pL2W,
     if( !pRigidGeom )
         return;
 
-    u64 ShadLODMask = GetLODMask( 0 );
-    if( ShadLODMask == 0 )
-        ShadLODMask = GetLODMask( *pL2W );
-    if( ShadLODMask == 0 )
-        ShadLODMask = GetLODMask( U16_MAX );
-    if( ShadLODMask == 0 )
+    u64 LODMask = GetLODMask( *pL2W );
+    if( LODMask == 0 )
         return;
 
     (void)Flags;
@@ -219,7 +181,7 @@ void rigid_inst::RenderShadowCast( const matrix4* pL2W,
     // add the shadow
     render::AddRigidCaster( m_hInst,
                             pL2W,
-                            ShadLODMask,
+                            LODMask,
                             ProjMask );
 }
 

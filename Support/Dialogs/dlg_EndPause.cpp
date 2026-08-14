@@ -4,17 +4,17 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_EndPause.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
 
 //=========================================================================
 //  End Pause Dialog
@@ -28,7 +28,7 @@ enum controls
 
 ui_manager::control_tem EndPauseControls[] = 
 {
-    { IDC_WAIT_TEXT,	    "IDS_WAIT_TEXT",          "text",     246, 300, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_WAIT_TEXT,	    "IDS_WAIT_TEXT",          "text",     246, 300, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 };
 
 
@@ -153,14 +153,7 @@ void dlg_end_pause::Render( s32 ox, s32 oy )
     {
         irect rb;
 
-	    s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-        // Nasty hack to force PS2 to draw to rb.l = 0
-        rb.Set( -1, 0, XRes, YRes );
-#else
-        rb.Set( 0, 0, XRes, YRes );
-#endif
+	    rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                        xcolor(0,0,0,180),
                                        xcolor(0,0,0,180),
@@ -196,10 +189,6 @@ void dlg_end_pause::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         {
             if (g_StateMgr.IsExiting())
             {
-            #ifndef TARGET_XBOX
-                // show wait text
-                m_pWaitText->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            #endif
                 // set flag to start loading screen
                 m_StartWaiting = TRUE;
                 m_Countdown = (10.0f / 60.0f);

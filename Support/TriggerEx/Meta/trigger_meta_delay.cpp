@@ -9,7 +9,7 @@
 //=========================================================================
 
 #include "trigger_meta_delay.hpp"
-#include "..\TriggerEx_Object.hpp"
+#include "../TriggerEx_Object.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS
@@ -36,7 +36,7 @@ xbool trigger_meta_delay::Execute ( f32 DeltaTime )
 {
     m_TimeDelayingSoFar += DeltaTime;
 
-    if (m_TimeDelayingSoFar > m_DelayTime)
+    if (m_TimeDelayingSoFar >= m_DelayTime)
     {
         //done with delay
         m_TimeDelayingSoFar = 0.0f;
@@ -81,5 +81,4 @@ const char* trigger_meta_delay::GetDescription( void )
     Info.Set(xfs("* DELAY %g seconds",m_DelayTime));
     return Info.Get();
 }
-
 

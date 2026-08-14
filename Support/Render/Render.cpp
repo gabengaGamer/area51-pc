@@ -1,10 +1,11 @@
 //=============================================================================
 //
-//  Render Manager
+//  Render.cpp
 //
 //=============================================================================
 
 #include "Entropy.hpp"
+#include "GeometryDraw.hpp"
 #include "Render.hpp"
 #include "ProjTextureMgr.hpp"
 
@@ -12,169 +13,36 @@
 #include "MaterialArray.hpp"
 #undef RENDER_PRIVATE
 
-//=============================================================================
-// Structures and types
-//=============================================================================
+//=========================================================================
+//  TYPES
+//=========================================================================
 
-struct distortion_info
+//-------------------------------------------------------------------------
+
+enum class GeometryType
 {
-    radian3 NormalRot;  // rotation for perturbing the normals
-    u32     MatIndex;   // index of the original material, or -1 if we are
-                        // completely overriding the material settings
+    Rigid = 0,
+    Skin
 };
 
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
-enum
+struct PrivateInstance
 {
-    ORDER_OPAQUE        = 0,
-    ORDER_GLOWING       = 1,
-    ORDER_ALPHA_GLOWING = 2,
-    ORDER_ALPHA         = 3,
-    // everything aver this point will be in the custom render
-    ORDER_CUSTOM_START  = 4,
-    ORDER_FORCED_LAST   = 4,
-    ORDER_ZPRIME        = 5,
-    ORDER_FADING_ALPHA  = 6,
-    ORDER_DISTORTION    = 7
+    geom*        m_pGeometry;
+    GeometryType m_Type;
+    xhandle      m_geometryHandle;
 };
 
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
-union sortkey
+struct PrivateGeometry
 {
-    struct
-    {
-        u32     GeomSubMesh  : 8;
-        u32     GeomHandle   : 9;
-        u32     GeomType     : 1;
-        u32     MatIndex     : 10;
-        u32     RenderOrder  : 3;
-    };
-    u32         Bits;
-};
-
-//-----------------------------------------------------------------------------
-
-union shad_sortkey
-{
-    struct
-    {
-        u32     ShadowSourceIndex : 6;
-        u32     GeomSubMesh     : 8;
-        u32     GeomHandle      : 9;
-        u32     GeomType        : 1;
-        u32     ShadType        : 1;    // cast or receive
-    };
-    u32     Bits;
-};
-
-//-----------------------------------------------------------------------------
-
-#ifdef X_EDITOR
-    xbool g_bZPriming;
-#endif
-
-//-----------------------------------------------------------------------------
-
-typedef enum geom_type
-{
-    TYPE_RIGID = 0,
-    TYPE_SKIN,
-    TYPE_UNKNOWN
-};
-
-//-----------------------------------------------------------------------------
-
-struct rigid_data
-{
-    rigid_geom*     pGeom;
-    const matrix4*  pL2W;
-    const void*     pColInfo;
-};
-
-//-----------------------------------------------------------------------------
-
-struct skin_data
-{
-    skin_geom*      pGeom;
-    const matrix4*  pBones;
-    u32             Pad;
-};
-
-//-----------------------------------------------------------------------------
-
-union instance_data
-{
-    rigid_data  Rigid;
-    skin_data   Skin;
-};
-
-//-----------------------------------------------------------------------------
-
-struct render_instance
-{
-    union
-    {
-        shad_sortkey    ShadSortKey;
-        sortkey         SortKey;
-    };
-    u32             Flags;
-    void*           pLighting;
-    instance_data   Data;
-
-    u8              UOffset;
-    u8              VOffset;
-    u8              Alpha;
-    u8              OverrideMat;    // such as distortion
-
-    // information for the hash table
-    s16             Brother;
-    s16             Next;
-
-#ifdef TARGET_PC
-    xhandle         hDList;
-#endif // TARGET_PC
-};
-
-//-----------------------------------------------------------------------------
-
-struct sort_struct
-{
-    u32 SortKey;
-    s32 iRenderInst;
-};
-
-//-----------------------------------------------------------------------------
-
-struct private_instance
-{
-    geom*       pGeom;
-    geom_type   Type;
-};
-
-//-----------------------------------------------------------------------------
-
-struct private_geom
-{
-    // simple struct for registered geoms...no information is really needed,
-    // but we'll put a pointer back in for sanity checking later on
-    geom*       pGeom;
-
-#ifdef TARGET_PC
-    xarray<xhandle> RigidDList;
-    xarray<xhandle> SkinDList;
-#endif // TARGET_PC
-};
-
-//-----------------------------------------------------------------------------
-
-struct texture_projection
-{
-    matrix4         L2W;
-    radian          FOV;
-    f32             Length;
-    texture::handle Texture;
+    geom*           m_pGeometry;
+    GeometryType    m_Type;
+    s32             m_referenceCount;
+    xhandle         m_renderGeometryHandle;
+    xarray<xhandle> m_materialHandles;
 };
 
 //=============================================================================
@@ -183,225 +51,121 @@ struct texture_projection
 
 // Stats for determining how much data has been loaded
 #ifndef X_RETAIL
-static s32 s_nGeomsLoaded         = 0;
-static s32 s_nGeomBonesLoaded     = 0;
-static s32 s_nGeomMeshesLoaded    = 0;
-static s32 s_nGeomSubMeshesLoaded = 0;
-static s32 s_nGeomMaterialsLoaded = 0;
-static s32 s_nGeomTexturesLoaded  = 0;
-static s32 s_nGeomUVKeysLoaded    = 0;
-static s32 s_nGeomVMatsLoaded     = 0;
+static s32 s_loadedGeometryCount = 0;
+static s32 s_loadedBoneCount = 0;
+static s32 s_loadedMeshCount = 0;
+static s32 s_loadedSubmeshCount = 0;
+static s32 s_loadedMaterialCount = 0;
+static s32 s_loadedTextureCount = 0;
+static s32 s_loadedUvKeyCount = 0;
+static s32 s_loadedVirtualMaterialCount = 0;
 #endif
 
-color_info::usage color_info::m_Usage = color_info::kUse32;
-
-//=============================================================================
-
-//  VERY IMPORTANT NOTE: README README README README!!!!!
-//  Some of these max numbers will get used by the sort keys, so if they need
-//  to increase, make sure the sort key still has enough bits to deal with it.
-
-static const s32 kHashTableSize          = 769;  // 1543;   // keep this a prime number for best hashing results.
-static const s32 kMaxRegisteredGeoms     = 512;
-static const s32 kMaxRegisteredInstances = 12800;
-static const s32 kMaxRegisteredMaterials = 640; // NOTE: Don't go over what the sort key can handle!
-static const s32 kMaxTexAnims            = 2048;
-static const s32 kMaxTexAnimInstances    = 1024;
-static const s32 kMaxRegisteredTexAnims  = 1024;
-static const s32 kMaxDistortedInstances  = 16;
-static const s32 kMaxRenderedInstances   = 32768;
+static const s32 kMaxRegisteredGeoms = 512;
+static s32 const kMaxRegisteredInstances = 12800;
+static s32 const kMaxRegisteredMaterials = 640;
+static s32 const kMaxTexAnims = 2048;
+static s32 const kMaxTexAnimInstances = 1024;
+static s32 const kMaxRegisteredTexAnims = 1024;
+static s32 const kMaxRenderedInstances = 32768;
 
 // arrays for rendering everything
-static s32                          s_LoHashMark;   // below this needs sorting
-static s32                          s_HiHashMark;   // above this is a duplicate key (no need to sort)
-static s16                          s_HashTable[kMaxRenderedInstances];
-static xarray<sort_struct>          s_lSortData;
-static xharray<private_geom>        s_lRegisteredGeoms;
-static xharray<private_instance>    s_lRegisteredInst;
-static material_array               s_lRegisteredMaterials;
-static xarray<render_instance>      s_lRenderInst;
-static xarray<distortion_info>      s_lDistortionInfo;
+static xharray<PrivateGeometry>          s_registeredGeometry;
+static xharray<PrivateInstance>          s_registeredInstances;
+static MaterialArray                     s_registeredMaterials;
+static xarray<geometry_draw_item>        s_geometryDraws;
+static xarray<dynamic_geometry_draw>     s_dynamicGeometryDraws;
+static xarray<dynamic_geometry_shadow_draw> s_dynamicShadowDraws;
+static xarray<geometry_draw_item>        s_shadowDraws;
+static xarray<geometry_draw_item const*> s_orderedShadowDraws;
+static u32                               s_nextGeometrySequence;
+static u32                               s_nextShadowSequence;
 
 // sanity check data
-static xbool s_InRawBegin    = FALSE;
-static xbool s_InRenderBegin = FALSE;
-static xbool s_InShadowBegin = FALSE;
-static xbool s_InCustomBegin = FALSE;
+static xbool s_isPrimitiveRenderActive = FALSE;
+static xbool s_isRenderActive = FALSE;
+static xbool s_isShadowRenderActive = FALSE;
 
 // misc. data
-static cubemap* s_pCurrCubeMap = NULL;
-static f32      s_PulseTime;
-static s32      s_CustomStart;
+static cubemap* s_pCurrentCubeMap = NULL;
+static f32      s_pulseTime;
 
 // debugging options
 #ifndef X_RETAIL
-render::debug_options       g_RenderDebug = { FALSE, FALSE, FALSE, FALSE };
+render::debug_options g_renderDebug = { FALSE, FALSE, FALSE, FALSE };
 #endif
 
 // Filter light data
-static s32    s_bFilterLight = FALSE;
-static xcolor s_FilterLightColor(xcolor(30,0,0,255));
+static s32    s_isLightFilteringEnabled = FALSE;
+static xcolor s_filterLightColor( xcolor( 30, 0, 0, 255 ) );
 
 // dynamic shadow-map sources generated for the current frame
-static s32                  s_nShadowSources;
+static s32 s_shadowSourceCount;
 
 //=============================================================================
 // Platform-specific code
 //=============================================================================
 
-#ifdef TARGET_PC
 #include "LightMgr.hpp"
+#include "PrimitiveBatch.hpp"
 #include "platform_Render.hpp"
-#include "Entropy/D3DEngine/d3deng_private.hpp"
-#include "Entropy/D3DEngine/d3deng_shader.hpp"
+
+static xhandle GetRegisteredMaterialHandle( xhandle hGeom, s32 iVirtualMaterial );
+
 #include "PC/pc_platform.inl"
-#endif
 
 //=============================================================================
 // Static declarations that we can put X_SECTION's on.
 //=============================================================================
 
-static u32                  HashFn                  ( u32 SortKey )                 X_SECTION( render_add );
-static render_instance&     AddToHashHybrid         ( u32 SortKey )                 X_SECTION( render_add );
-static xhandle              FindMaterial            ( material& Material )          X_SECTION( init );
-static void                 RegisterMaterials       ( geom& Geom )                  X_SECTION( init );
-static void                 UnregisterMaterials     ( geom& Geom )                  X_SECTION( init );
-static void                 RegisterGeom            ( geom& Geom )                  X_SECTION( init );
-static u32                  GetRenderOrder          ( material_type Type )          X_SECTION( render_add );
-static void                 ComputeBaseSortKeys     ( geom& Geom,
-                                                      geom_type Type )              X_SECTION( init );
-static void                 UnregisterGeom          ( geom& Geom )                  X_SECTION( init );
-static void                 RegisterRigidGeom       ( rigid_geom& Geom )            X_SECTION( init );
-static void                 UnregisterRigidGeom     ( rigid_geom& Geom )            X_SECTION( init );
-static void                 RegisterSkinGeom        ( skin_geom& Geom )             X_SECTION( init );
-static void                 UnregisterSkinGeom      ( skin_geom& Geom )             X_SECTION( init );
-static render::hgeom_inst   AddPrivateInstance      ( geom& Geom,
-                                                      geom_type Type )              X_SECTION( init );
-static void                 RemovePrivateInstance   ( render::hgeom_inst hInst )    X_SECTION( init );  
-static s32                  InstanceCompareFn       ( const void* p1,
-                                                      const void* p2 )              X_SECTION( render_infrequent );
-static void                 GetUVOffset             ( u8& UOffset,
-                                                      u8& VOffset,
-                                                      geom* pGeom,
-                                                      material& Mat )               X_SECTION( render_add );
-static xbool                IntersectsView          ( const view& V,
-                                                      const bbox& BBox )            X_SECTION( render_add );
-static void                 CalcVMatOffsets         ( s32* VMatOffsets,
-                                                      const geom* pGeom,
-                                                      u32 VTextureMask )            X_SECTION( render_infrequent );
+static xhandle                        FindMaterial( material& sourceMaterial ) X_SECTION( init );
+static xhandle                        FindRegisteredGeom( geom const& geom ) X_SECTION( init );
+static void                           RegisterMaterials( PrivateGeometry& registeredGeom ) X_SECTION( init );
+static void                           UnregisterMaterials( PrivateGeometry& registeredGeom ) X_SECTION( init );
+static xhandle                        RegisterGeom( geom& geom, GeometryType type ) X_SECTION( init );
+static void                           UnregisterGeom( xhandle hGeom ) X_SECTION( init );
+static xhandle                        RegisterRigidGeom( rigid_geom& geom ) X_SECTION( init );
+static void                           UnregisterRigidGeom( xhandle hGeom ) X_SECTION( init );
+static xhandle                        RegisterSkinGeom( skin_geom& geom ) X_SECTION( init );
+static void                           UnregisterSkinGeom( xhandle hGeom ) X_SECTION( init );
+static render::GeometryInstanceHandle AddPrivateInstance( xhandle hGeom, GeometryType type ) X_SECTION( init );
+static void                           RemovePrivateInstance( render::GeometryInstanceHandle hInst ) X_SECTION( init );
+static s32                            ShadowCompareFn( void const* p1, void const* p2 ) X_SECTION( render_infrequent );
+static geometry_render_pass           ClassifyGeometryPass( material const& material, u32 flags, xbool fadingAlpha )
+    X_SECTION( render_add );
+static xbool ComputeGeometryDepth( f32& depth, bbox const& localBounds, matrix4 const* pLocalToWorld )
+    X_SECTION( render_add );
+static void AppendRigidGeometryDraw( PrivateInstance const& registeredInst, rigid_geom& geom, xhandle hMaterial,
+                                     s32 iSurface, matrix4 const* pL2W, u32 const* pColorInfo, void const* pLighting,
+                                     u32 flags, u32 projectionFlags, u8 alpha, xbool fadingAlpha )
+    X_SECTION( render_add );
+static void  AppendSkinGeometryDraw( PrivateInstance const& registeredInst, skin_geom& geom, xhandle hMaterial,
+                                     s32 iSurface, matrix4 const* pBones, void const* pLighting, u32 flags,
+                                     u32 projectionFlags, u8 alpha, xbool fadingAlpha ) X_SECTION( render_add );
+static void  AppendRigidShadowDraw( PrivateInstance const& registeredInst, rigid_geom& geom, xhandle hMaterial,
+                                    s32 iSurface, matrix4 const* pL2W, s32 shadowSourceIndex )
+    X_SECTION( render_add_shadow );
+static void  AppendSkinShadowDraw( PrivateInstance const& registeredInst, skin_geom& geom, xhandle hMaterial,
+                                   s32 iSurface, matrix4 const* pBones, s32 boneCount, s32 shadowSourceIndex )
+    X_SECTION( render_add_shadow );
+static void  GetUVOffset( u8& uOffset, u8& vOffset, geom* pGeom, material& mat ) X_SECTION( render_add );
+static xbool IntersectsView( view const& v, bbox const& bBox ) X_SECTION( render_add );
+static void  CalcVMatOffsets( s32* pVMatOffsets, geom const* pGeom, u32 vTextureMask ) X_SECTION( render_infrequent );
 
 //=============================================================================
 
-color_info::color_info( fileio& File )
-{
-    (void)File;
-#if defined(TARGET_XBOX)
-    m_hColors  = g_VertFactory.Create( "Vertex colours", m_nColors*sizeof(u32), m_pVoid );
-    m_pColor32 = (u32*)m_hColors->m_Ptr;
-#elif defined(TARGET_PC)
-    m_hColors  = new u32[ m_nColors ];
-    x_memmove( m_hColors, m_pVoid, m_nColors * sizeof(u32) );
-    m_pColor32 = m_hColors;
-#endif
-}
-
-//=============================================================================
 // Internal functions
 //=============================================================================
 
-static
-u32 HashFn( u32 SortKey )
+static xhandle FindMaterial( material& sourceMaterial )
 {
-    return SortKey % kHashTableSize;
-}
-
-//=============================================================================
-
-static
-render_instance& AddToHashHybrid( u32 SortKey )
-{
-    ASSERT( s_LoHashMark < s_HiHashMark );
-    #if defined(X_EDITOR) || defined(CONFIG_VIEWER)
-    if ( s_LoHashMark >= s_HiHashMark )
-        x_throw( "Too many submeshes rendered." );
-    #endif // X_EDITOR || VIEWER
-
-    u32 HashIndex = HashFn( SortKey );
-    if ( s_HashTable[HashIndex] == -1 )
+    for ( s32 i = 0; i < s_registeredMaterials.GetCount(); i++ )
     {
-        // if there is no hash entry, just add it
-        render_instance& AddInst = s_lRenderInst[s_LoHashMark];
-        s_HashTable[HashIndex]   = s_LoHashMark;
-        AddInst.SortKey.Bits     = SortKey;
-        AddInst.Next             = -1;
-        AddInst.Brother          = -1;
-        AddInst.pLighting        = NULL;
-        sort_struct& SortInst    = s_lSortData[s_LoHashMark];
-        SortInst.iRenderInst     = s_LoHashMark;
-        SortInst.SortKey         = SortKey;
-        s_LoHashMark++;
-        return AddInst;
-    }
-    else
-    {
-        // loop through the linked list of hash collisions
-        s32 CurrLink = s_HashTable[HashIndex];
-        #ifdef X_ASSERT
-        s32 Count = 0;
-        #endif
-        while ( 1 )
+        material& m = s_registeredMaterials[i];
+
+        if ( m == sourceMaterial )
         {
-            ASSERT( ++Count < kMaxRenderedInstances && "Infinite loop detected" );
-            render_instance& TestInst = s_lRenderInst[CurrLink];
-            if ( TestInst.SortKey.Bits == SortKey )
-            {
-                // this sort key isn't unique, add it to the end of the array
-                // so that it won't be considered for sorting, and link it as a
-                // "brother" of the unique instance
-                render_instance& AddInst = s_lRenderInst[s_HiHashMark];
-                AddInst.SortKey.Bits     = SortKey;
-                AddInst.Next             = -1;
-                AddInst.Brother          = TestInst.Brother;
-                AddInst.pLighting        = NULL;
-                TestInst.Brother         = s_HiHashMark;
-                s_HiHashMark--;
-                return AddInst;
-            }
-
-            if ( TestInst.Next == -1 )
-            {
-                // the key wasn't found, so add it to the end of our linked list of
-                // hash collisions
-                render_instance& AddInst = s_lRenderInst[s_LoHashMark];
-                AddInst.SortKey.Bits     = SortKey;
-                AddInst.Next             = -1;
-                AddInst.Brother          = -1;
-                AddInst.pLighting        = NULL;
-                TestInst.Next            = s_LoHashMark;
-                sort_struct& SortInst    = s_lSortData[s_LoHashMark];
-                SortInst.iRenderInst     = s_LoHashMark;
-                SortInst.SortKey         = SortKey;
-                s_LoHashMark++;
-                return AddInst;
-            }
-
-            CurrLink = TestInst.Next;
-        }
-    }
-}
-
-//=============================================================================
-
-static
-xhandle FindMaterial( material& Material )
-{
-    for ( s32 i = 0; i < s_lRegisteredMaterials.GetCount(); i++ )
-    {
-        material& M = s_lRegisteredMaterials[i];
-        
-        if ( M == Material )
-        {
-            return s_lRegisteredMaterials.GetHandleByIndex(i);
+            return s_registeredMaterials.GetHandleByIndex( i );
         }
     }
 
@@ -410,375 +174,679 @@ xhandle FindMaterial( material& Material )
 
 //=============================================================================
 
-static
-void RegisterMaterials( geom& Geom )
+static xhandle FindRegisteredGeom( geom const& geom )
 {
-    // Register all the materials in the geom
-    for ( s32 iMat = 0; iMat < Geom.m_nMaterials; iMat++ )
+    for ( s32 i = 0; i < s_registeredGeometry.GetCount(); ++i )
     {
-        material    Mat;
-
-        // get the next material used by the geom
-        geom::material& GeomMat = Geom.m_pMaterial[iMat];
-
-        // set the material type
-        Mat.m_Type = GeomMat.Type;
-
-        // set the flags
-        Mat.m_Flags = GeomMat.Flags;
-
-        // set the detail scale
-        Mat.m_DetailScale = GeomMat.DetailScale;
-
-        // set the fixed alpha
-        Mat.m_FixedAlpha = GeomMat.FixedAlpha;
-
-        // copy across the uvanim data
-        Mat.m_UVAnim.CurrentFrame = 0.0f;
-        Mat.m_UVAnim.iKey         = GeomMat.UVAnim.iKey;
-        Mat.m_UVAnim.iFrame       = 0;
-        Mat.m_UVAnim.Dir          = 1;
-        Mat.m_UVAnim.Type         = GeomMat.UVAnim.Type;
-        Mat.m_UVAnim.nFrames      = GeomMat.UVAnim.nKeys;
-        Mat.m_UVAnim.FPS          = GeomMat.UVAnim.FPS;
-        Mat.m_UVAnim.StartFrame   = GeomMat.UVAnim.StartFrame;
-
-        // sanity checks
-        if ( ((Mat.m_Type == Material_Diff_PerPixelEnv) ||
-              (Mat.m_Type == Material_Alpha_PerPolyEnv)) &&
-              !(Mat.m_Flags & geom::material::FLAG_ENV_CUBE_MAP) )
+        if ( s_registeredGeometry[i].m_pGeometry == &geom )
         {
-            if( !(GeomMat.Flags & geom::material::FLAG_HAS_ENV_MAP) )
-            {
-                x_throw( "Environment mapped material without an env texture!" );
-            }
+            return s_registeredGeometry.GetHandleByIndex( i );
+        }
+    }
+
+    return HNULL;
+}
+
+//=============================================================================
+
+static xhandle GetRegisteredMaterialHandle( xhandle hGeom, s32 iVirtualMaterial )
+{
+    PrivateGeometry const& registeredGeom = s_registeredGeometry( hGeom );
+    ASSERT( iVirtualMaterial >= 0 );
+    ASSERT( iVirtualMaterial < registeredGeom.m_materialHandles.GetCount() );
+    return registeredGeom.m_materialHandles[iVirtualMaterial];
+}
+
+//=============================================================================
+
+static void RegisterMaterials( PrivateGeometry& registeredGeom )
+{
+    geom& geom = *registeredGeom.m_pGeometry;
+
+    registeredGeom.m_materialHandles.SetCount( geom.m_nVirtualMaterials );
+    for ( s32 i = 0; i < registeredGeom.m_materialHandles.GetCount(); ++i )
+    {
+        registeredGeom.m_materialHandles[i].Handle = HNULL;
+    }
+
+    for ( s32 iMat = 0; iMat < geom.m_nMaterials; iMat++ )
+    {
+        material        mat;
+        geom::material& geomMat = geom.m_pMaterial[iMat];
+
+        mat.m_Type = geomMat.Type;
+        mat.m_Flags = geomMat.Flags;
+        mat.m_detailScale = geomMat.DetailScale;
+        mat.m_fixedAlpha = geomMat.FixedAlpha;
+
+        mat.m_uvAnim.CurrentFrame = 0.0f;
+        mat.m_uvAnim.iKey = geomMat.UVAnim.iKey;
+        mat.m_uvAnim.iFrame = 0;
+        mat.m_uvAnim.Dir = 1;
+        mat.m_uvAnim.Type = geomMat.UVAnim.Type;
+        mat.m_uvAnim.nFrames = geomMat.UVAnim.nKeys;
+        mat.m_uvAnim.FPS = geomMat.UVAnim.FPS;
+        mat.m_uvAnim.StartFrame = geomMat.UVAnim.StartFrame;
+
+        if ( ( ( mat.m_Type == Material_Diff_PerPixelEnv ) || ( mat.m_Type == Material_Alpha_PerPolyEnv ) ) &&
+             !( mat.m_Flags & geom::material::FLAG_ENV_CUBE_MAP ) &&
+             !( geomMat.Flags & geom::material::FLAG_HAS_ENV_MAP ) )
+        {
+            x_throw( "Environment mapped material without an env texture!" );
         }
 
-        // copy the texture info over
-        s32 iDiffuse     = GeomMat.iTexture;
-        s32 iEnvironment = iDiffuse     + GeomMat.nVirtualMats;
-        s32 iDetail      = iEnvironment +
-                           ((GeomMat.Flags&geom::material::FLAG_HAS_ENV_MAP) ? 1 : 0);
+        s32 const iDiffuse = geomMat.iTexture;
+        s32 const iEnvironment = iDiffuse + geomMat.nVirtualMats;
+        s32 const iDetail = iEnvironment + ( ( geomMat.Flags & geom::material::FLAG_HAS_ENV_MAP ) ? 1 : 0 );
 
-        // now for virtual textures, each different bitmap choice will become a
-        // unique material
-        for ( s32 iVMat = 0; iVMat < GeomMat.nVirtualMats; iVMat++ )
+        for ( s32 iVMat = 0; iVMat < geomMat.nVirtualMats; iVMat++ )
         {
-            // set the diffuse map for this bitmap choice
-            Mat.m_DiffuseMap.SetName( Geom.GetTextureName( iDiffuse + iVMat ) );
+            mat.m_diffuseMap.SetName( geom.GetTextureName( iDiffuse + iVMat ) );
 
-            // set the env map for this bitmap choice
-            if ( GeomMat.Flags&geom::material::FLAG_HAS_ENV_MAP )
+            if ( geomMat.Flags & geom::material::FLAG_HAS_ENV_MAP )
             {
-                Mat.m_EnvironmentMap.SetName( Geom.GetTextureName( iEnvironment ) );
+                mat.m_environmentMap.SetName( geom.GetTextureName( iEnvironment ) );
             }
             else
             {
-                Mat.m_EnvironmentMap.SetName( "" );
+                mat.m_environmentMap.SetName( "" );
             }
 
-            // set the detail map for this bitmap choice
-            if ( GeomMat.Flags&geom::material::FLAG_HAS_DETAIL_MAP )
+            if ( geomMat.Flags & geom::material::FLAG_HAS_DETAIL_MAP )
             {
-                Mat.m_DetailMap.SetName( Geom.GetTextureName( iDetail ) );
+                mat.m_detailMap.SetName( geom.GetTextureName( iDetail ) );
             }
             else
             {
-                Mat.m_DetailMap.SetName( "" );
+                mat.m_detailMap.SetName( "" );
             }
 
-            // check if we already have this material registered
-            xhandle Handle = FindMaterial( Mat );
+            mat.Finalize();
 
-            // if this is a new material, then add it
-            if ( Handle == HNULL )
+            xhandle handle = FindMaterial( mat );
+            if ( handle == HNULL )
             {
-                // If you hit this assert, this means we are causing a realloc
-                // which will fragment memory, and we are possibly going over
-                // the max number of materials that will fit within the sort
-                // key. This could cause material corruptions.
-                ASSERT( s_lRegisteredMaterials.GetCount() < kMaxRegisteredMaterials );
-                material& NewMat = s_lRegisteredMaterials.Add( Handle );
-                NewMat           = Mat;
+                ASSERT( s_registeredMaterials.GetCount() < kMaxRegisteredMaterials );
+                material& newMat = s_registeredMaterials.Add( handle );
+                newMat = mat;
             }
 
-            // finally, we can add a ref to this material, and let the geometry know its
-            // material handle
-            material& FinalMat = s_lRegisteredMaterials(Handle);
-            FinalMat.AddRef();
+            material& finalMat = s_registeredMaterials( handle );
+            finalMat.AddRef();
 
-            // let the geometry know where its registered material can be found
-            Geom.m_pVirtualMaterials[GeomMat.iVirtualMat+iVMat].MatHandle = Handle;
-
-            // and let the platform do any initialization that it needs to
-            platform_RegisterMaterial( FinalMat );
+            s32 const iRegisteredMaterial = geomMat.iVirtualMat + iVMat;
+            ASSERT( iRegisteredMaterial >= 0 );
+            ASSERT( iRegisteredMaterial < registeredGeom.m_materialHandles.GetCount() );
+            registeredGeom.m_materialHandles[iRegisteredMaterial] = handle;
         }
     }
 }
 
 //=============================================================================
 
-static
-void UnregisterMaterials( geom& Geom )
+static void UnregisterMaterials( PrivateGeometry& registeredGeom )
 {
-    // unregister any of the materials
-    for ( s32 iMat = 0; iMat < Geom.m_nMaterials; iMat++ )
+    for ( s32 i = 0; i < registeredGeom.m_materialHandles.GetCount(); ++i )
     {
-        geom::material& GeomMat = Geom.m_pMaterial[iMat];
-
-        for ( s32 iVMat = 0; iVMat < GeomMat.nVirtualMats; iVMat++ )
+        xhandle const handle = registeredGeom.m_materialHandles[i];
+        if ( handle.IsNull() )
         {
-            xhandle Handle = Geom.m_pVirtualMaterials[GeomMat.iVirtualMat+iVMat].MatHandle;
-            material& Mat = s_lRegisteredMaterials(Handle);
-            Mat.Release();
-            if ( Mat.GetRefCount() == 0 )
-            {
-                s_lRegisteredMaterials.DeleteByHandle(Handle);
-            }
+            continue;
+        }
+
+        material& mat = s_registeredMaterials( handle );
+        mat.Release();
+        if ( mat.GetRefCount() == 0 )
+        {
+            s_registeredMaterials.DeleteByHandle( handle );
         }
     }
+
+    registeredGeom.m_materialHandles.Clear();
 }
 
 //=============================================================================
 
-static
-void RegisterGeom( geom& Geom )
+static xhandle RegisterGeom( geom& geom, GeometryType type )
 {
-    // register the geometry
-    ASSERT( Geom.m_hGeom == HNULL );
-    ASSERT( Geom.GetRefCount() == 0 );
-    ASSERT( s_lRegisteredGeoms.GetCount() < kMaxRegisteredGeoms );
-    private_geom& RegGeom = s_lRegisteredGeoms.Add( Geom.m_hGeom );
+    ASSERT( FindRegisteredGeom( geom ).IsNull() );
+    ASSERT( s_registeredGeometry.GetCount() < kMaxRegisteredGeoms );
 
-    // this pointer isn't really needed, but will be nice for sanity checking
-    // later on
-    RegGeom.pGeom = &Geom;
+    xhandle          hGeom;
+    PrivateGeometry& registeredGeom = s_registeredGeometry.Add( hGeom );
+    registeredGeom.m_pGeometry = &geom;
+    registeredGeom.m_Type = type;
+    registeredGeom.m_referenceCount = 0;
+    registeredGeom.m_renderGeometryHandle.Handle = HNULL;
+    registeredGeom.m_materialHandles.Clear();
 
-    // register the materials this geometry uses
-    RegisterMaterials( Geom );
+    x_try;
 
-    #ifndef X_RETAIL
-    s_nGeomsLoaded         += 1;
-    s_nGeomBonesLoaded     += Geom.m_nBones;
-    s_nGeomMeshesLoaded    += Geom.m_nMeshes;
-    s_nGeomSubMeshesLoaded += Geom.m_nSubMeshes;
-    s_nGeomMaterialsLoaded += Geom.m_nMaterials;
-    s_nGeomTexturesLoaded  += Geom.m_nTextures;
-    s_nGeomUVKeysLoaded    += Geom.m_nUVKeys;
-    s_nGeomVMatsLoaded     += Geom.m_nVirtualMaterials;
-    #endif
+    RegisterMaterials( registeredGeom );
+
+    x_catch_begin;
+
+    UnregisterMaterials( registeredGeom );
+    s_registeredGeometry.DeleteByHandle( hGeom );
+
+    x_catch_end_ret;
+
+#ifndef X_RETAIL
+    s_loadedGeometryCount += 1;
+    s_loadedBoneCount += geom.m_nBones;
+    s_loadedMeshCount += geom.m_nMeshes;
+    s_loadedSubmeshCount += geom.m_nSubMeshes;
+    s_loadedMaterialCount += geom.m_nMaterials;
+    s_loadedTextureCount += geom.m_nTextures;
+    s_loadedUvKeyCount += geom.m_nUVKeys;
+    s_loadedVirtualMaterialCount += geom.m_nVirtualMaterials;
+#endif
+
+    return hGeom;
 }
 
 //=============================================================================
 
-static
-u32 GetRenderOrder( material_type Type )
+static void UnregisterGeom( xhandle hGeom )
 {
-    switch( Type )
+    PrivateGeometry& registeredGeom = s_registeredGeometry( hGeom );
+    geom&            geom = *registeredGeom.m_pGeometry;
+
+    ASSERT( registeredGeom.m_referenceCount == 0 );
+    ASSERT( registeredGeom.m_renderGeometryHandle.IsNull() );
+
+    UnregisterMaterials( registeredGeom );
+
+#ifndef X_RETAIL
+    s_loadedGeometryCount -= 1;
+    s_loadedBoneCount -= geom.m_nBones;
+    s_loadedMeshCount -= geom.m_nMeshes;
+    s_loadedSubmeshCount -= geom.m_nSubMeshes;
+    s_loadedMaterialCount -= geom.m_nMaterials;
+    s_loadedTextureCount -= geom.m_nTextures;
+    s_loadedUvKeyCount -= geom.m_nUVKeys;
+    s_loadedVirtualMaterialCount -= geom.m_nVirtualMaterials;
+#endif
+
+    s_registeredGeometry.DeleteByHandle( hGeom );
+}
+
+//=============================================================================
+
+static xhandle RegisterRigidGeom( rigid_geom& geom )
+{
+    xhandle const    hGeom = RegisterGeom( geom, GeometryType::Rigid );
+    PrivateGeometry& registeredGeom = s_registeredGeometry( hGeom );
+
+    x_try;
+
+    registeredGeom.m_renderGeometryHandle = platform_RegisterRigidGeom( geom );
+
+    x_catch_begin;
+
+    registeredGeom.m_renderGeometryHandle.Handle = HNULL;
+    UnregisterGeom( hGeom );
+
+    x_catch_end_ret;
+
+    return hGeom;
+}
+
+//=============================================================================
+
+static void UnregisterRigidGeom( xhandle hGeom )
+{
+    PrivateGeometry& registeredGeom = s_registeredGeometry( hGeom );
+    ASSERT( registeredGeom.m_Type == GeometryType::Rigid );
+
+    platform_UnregisterRigidGeom( registeredGeom.m_renderGeometryHandle );
+    registeredGeom.m_renderGeometryHandle.Handle = HNULL;
+    UnregisterGeom( hGeom );
+}
+
+//=============================================================================
+
+static xhandle RegisterSkinGeom( skin_geom& geom )
+{
+    xhandle const    hGeom = RegisterGeom( geom, GeometryType::Skin );
+    PrivateGeometry& registeredGeom = s_registeredGeometry( hGeom );
+
+    x_try;
+
+    registeredGeom.m_renderGeometryHandle = platform_RegisterSkinGeom( geom );
+
+    x_catch_begin;
+
+    registeredGeom.m_renderGeometryHandle.Handle = HNULL;
+    UnregisterGeom( hGeom );
+
+    x_catch_end_ret;
+
+    return hGeom;
+}
+
+//=============================================================================
+
+static void UnregisterSkinGeom( xhandle hGeom )
+{
+    PrivateGeometry& registeredGeom = s_registeredGeometry( hGeom );
+    ASSERT( registeredGeom.m_Type == GeometryType::Skin );
+
+    platform_UnregisterSkinGeom( registeredGeom.m_renderGeometryHandle );
+    registeredGeom.m_renderGeometryHandle.Handle = HNULL;
+    UnregisterGeom( hGeom );
+}
+
+//=============================================================================
+
+static render::GeometryInstanceHandle AddPrivateInstance( xhandle hGeom, GeometryType type )
+{
+    PrivateGeometry& registeredGeom = s_registeredGeometry( hGeom );
+    ASSERT( registeredGeom.m_Type == type );
+    registeredGeom.m_referenceCount++;
+
+    render::GeometryInstanceHandle handle;
+    ASSERT( s_registeredInstances.GetCount() < kMaxRegisteredInstances );
+    PrivateInstance& inst = s_registeredInstances.Add( handle );
+    inst.m_pGeometry = registeredGeom.m_pGeometry;
+    inst.m_Type = type;
+    inst.m_geometryHandle = hGeom;
+
+    return handle;
+}
+
+//=============================================================================
+
+static void RemovePrivateInstance( render::GeometryInstanceHandle hInst )
+{
+    PrivateInstance& inst = s_registeredInstances( hInst );
+    PrivateGeometry& registeredGeom = s_registeredGeometry( inst.m_geometryHandle );
+
+    ASSERT( registeredGeom.m_referenceCount > 0 );
+    registeredGeom.m_referenceCount--;
+    s_registeredInstances.DeleteByHandle( hInst );
+}
+
+//=============================================================================
+
+static s32 ShadowCompareFn( void const* p1, void const* p2 )
+{
+    geometry_draw_item const& a = **(geometry_draw_item const* const*)p1;
+    geometry_draw_item const& b = **(geometry_draw_item const* const*)p2;
+
+    if ( a.ShadowSourceIndex < b.ShadowSourceIndex )
     {
-    default:
-        ASSERTS( FALSE, "Unknown material type." );
-    case Material_Diff:
-    case Material_Diff_PerPixelEnv:
-        return ORDER_OPAQUE;
-    case Material_Diff_PerPixelIllum:
-        return ORDER_GLOWING;
-    case Material_Alpha_PerPixelIllum:
-    case Material_Alpha_PerPolyIllum:
-        return ORDER_ALPHA_GLOWING;
-    case Material_Alpha:
-    case Material_Alpha_PerPolyEnv:
-        return ORDER_ALPHA;
-    case Material_Distortion:
-    case Material_Distortion_PerPolyEnv:
-        return ORDER_DISTORTION;
+        return -1;
     }
-}
-
-//=============================================================================
-
-static
-void ComputeBaseSortKeys( geom& Geom, geom_type Type )
-{
-    s32 iSubMesh;
-    ASSERT( Geom.m_hGeom.IsNonNull() );
-    for ( iSubMesh = 0; iSubMesh < Geom.m_nSubMeshes; iSubMesh++ )
+    if ( a.ShadowSourceIndex > b.ShadowSourceIndex )
     {
-        geom::submesh*  pSubMesh  = &Geom.m_pSubMesh[iSubMesh];
-        geom::material* pMaterial = &Geom.m_pMaterial[pSubMesh->iMaterial];
-        s32             TypeBit   = (Type==TYPE_RIGID) ? 0 : 1;
-
-        // range safety check for the sort key
-        ASSERT( (Geom.m_hGeom>=0) && (Geom.m_hGeom<kMaxRegisteredGeoms    ) );
-        ASSERT( (iSubMesh    >=0) && (iSubMesh    <256                    ) );
-
-        // build the sort key
-        sortkey BaseSortKey;
-        BaseSortKey.Bits = 0;
-        BaseSortKey.GeomSubMesh = iSubMesh;
-        BaseSortKey.GeomHandle  = Geom.m_hGeom;
-        BaseSortKey.GeomType    = TypeBit;
-        BaseSortKey.RenderOrder = GetRenderOrder( (material_type)pMaterial->Type );
-        pSubMesh->BaseSortKey   = BaseSortKey.Bits;
+        return 1;
     }
-}
-
-//=============================================================================
-
-static
-void UnregisterGeom( geom& Geom )
-{
-    ASSERT( Geom.GetRefCount() == 0 );
-
-    // unregister the materials
-    UnregisterMaterials( Geom );
-
-    // unregister the geom
-    ASSERT( s_lRegisteredGeoms( Geom.m_hGeom ).pGeom == &Geom );
-    s_lRegisteredGeoms.DeleteByHandle( Geom.m_hGeom );
-    Geom.m_hGeom = HNULL;
-
-    #ifndef X_RETAIL
-    s_nGeomsLoaded         -= 1;
-    s_nGeomBonesLoaded     -= Geom.m_nBones;
-    s_nGeomMeshesLoaded    -= Geom.m_nMeshes;
-    s_nGeomSubMeshesLoaded -= Geom.m_nSubMeshes;
-    s_nGeomMaterialsLoaded -= Geom.m_nMaterials;
-    s_nGeomTexturesLoaded  -= Geom.m_nTextures;
-    s_nGeomUVKeysLoaded    -= Geom.m_nUVKeys;
-    s_nGeomVMatsLoaded     -= Geom.m_nVirtualMaterials;
-    #endif
-}
-
-//=============================================================================
-
-static
-void RegisterRigidGeom( rigid_geom& Geom )
-{
-    RegisterGeom( Geom );
-    ComputeBaseSortKeys( Geom, TYPE_RIGID );
-    platform_RegisterRigidGeom( Geom );
-}
-
-//=============================================================================
-
-static
-void UnregisterRigidGeom( rigid_geom& Geom )
-{
-    platform_UnregisterRigidGeom( Geom );
-    UnregisterGeom( Geom );
-}
-
-//=============================================================================
-
-static
-void RegisterSkinGeom( skin_geom& Geom )
-{
-    RegisterGeom( Geom );
-    ComputeBaseSortKeys( Geom, TYPE_SKIN );
-    platform_RegisterSkinGeom( Geom );
-}
-
-//=============================================================================
-
-static
-void UnregisterSkinGeom( skin_geom& Geom )
-{
-    platform_UnregisterSkinGeom( Geom );
-    UnregisterGeom( Geom );
-}
-
-//=============================================================================
-
-static
-render::hgeom_inst AddPrivateInstance( geom& Geom, geom_type Type )
-{
-    // increment the geom's ref count
-    Geom.AddRef();
-
-    // add the instance
-    render::hgeom_inst Handle;
-    ASSERT( s_lRegisteredInst.GetCount() < kMaxRegisteredInstances );
-    private_instance& Inst = s_lRegisteredInst.Add( Handle );
-    Inst.pGeom     = &Geom;
-    Inst.Type      = Type;
-
-    // return the new handle
-    return Handle;
-}
-
-//=============================================================================
-
-static
-void RemovePrivateInstance( render::hgeom_inst hInst )
-{
-    // decrement the geom's ref count
-    private_instance& Inst = s_lRegisteredInst( hInst );
-    Inst.pGeom->Release();
-
-    // delete the instance
-    s_lRegisteredInst.DeleteByHandle( hInst );
-}
-
-//=============================================================================
-
-static
-s32 InstanceCompareFn( const void* p1, const void* p2 )
-{
-    sort_struct* Inst1 = (sort_struct*)p1;
-    sort_struct* Inst2 = (sort_struct*)p2;
-
-    if ( Inst1->SortKey > Inst2->SortKey )  return  1;
-    if ( Inst1->SortKey < Inst2->SortKey )  return -1;
-    
+    if ( a.Type < b.Type )
+    {
+        return -1;
+    }
+    if ( a.Type > b.Type )
+    {
+        return 1;
+    }
+    if ( a.hRenderGeom.Handle < b.hRenderGeom.Handle )
+    {
+        return -1;
+    }
+    if ( a.hRenderGeom.Handle > b.hRenderGeom.Handle )
+    {
+        return 1;
+    }
+    if ( a.iSurface < b.iSurface )
+    {
+        return -1;
+    }
+    if ( a.iSurface > b.iSurface )
+    {
+        return 1;
+    }
+    if ( a.Sequence < b.Sequence )
+    {
+        return -1;
+    }
+    if ( a.Sequence > b.Sequence )
+    {
+        return 1;
+    }
     return 0;
 }
 
 //=============================================================================
 
-static
-void GetUVOffset( u8& UOffset, u8& VOffset, geom* pGeom, material& Mat )
+static geometry_render_pass ClassifyGeometryPass( material const& material, u32 flags, xbool fadingAlpha )
 {
-    if( Mat.m_UVAnim.nFrames == 0 )
+    if ( material.IsDistortion() )
     {
-        UOffset = VOffset = 0;
+        return GEOMETRY_PASS_DISTORTION;
+    }
+
+    if ( fadingAlpha )
+    {
+        return GEOMETRY_PASS_FADING;
+    }
+
+    if ( flags & render::FORCE_LAST )
+    {
+        return GEOMETRY_PASS_FORCE_LAST;
+    }
+
+    if ( material.RequiresForwardPass() )
+    {
+        return material.IsPostEffectBlend() ? GEOMETRY_PASS_ADDITIVE : GEOMETRY_PASS_TRANSPARENT;
+    }
+
+    return GEOMETRY_PASS_GBUFFER;
+}
+
+//=============================================================================
+
+static xbool ComputeGeometryDepth( f32& depth, bbox const& localBounds, matrix4 const* pLocalToWorld )
+{
+    view const* pView = eng_GetView();
+    if ( !pView )
+    {
+        return FALSE;
+    }
+
+    vector3 center = localBounds.GetCenter();
+    if ( pLocalToWorld )
+    {
+        center = *pLocalToWorld * center;
+    }
+
+    depth = ( pView->GetW2V() * center ).GetZ();
+    return x_isvalid( depth );
+}
+
+//=============================================================================
+
+static xbool ShouldSubmitGeometry( u32 flags )
+{
+#ifndef X_RETAIL
+    if ( g_renderDebug.RenderClippedOnly && !( flags & render::CLIPPED ) )
+    {
+        return FALSE;
+    }
+
+    if ( g_renderDebug.RenderShadowedOnly && !( flags & render::INSTFLAG_PROJ_SHADOW ) )
+    {
+        return FALSE;
+    }
+#else
+    static_cast<void>( flags );
+#endif
+
+    return TRUE;
+}
+
+//=============================================================================
+
+static void AppendZPrimeDraw( geometry_draw_item const& source )
+{
+    ASSERT( s_geometryDraws.GetCount() < kMaxRenderedInstances );
+    if ( s_geometryDraws.GetCount() >= kMaxRenderedInstances )
+    {
         return;
     }
 
-    s32 iKey = Mat.m_UVAnim.iKey + Mat.m_UVAnim.iFrame;
-    UOffset = pGeom->m_pUVKey[iKey].OffsetU;
-    VOffset = pGeom->m_pUVKey[iKey].OffsetV;
+    geometry_draw_item  zPrime = source;
+    geometry_draw_item& item = s_geometryDraws.Append();
+    item = zPrime;
+    item.Pass = GEOMETRY_PASS_ZPRIME;
+    item.pMaterial = NULL;
+    item.MaterialOrder = 0;
+    item.Flags = source.Flags & render::CLIPPED;
+    item.Alpha = 0x80;
+    item.MaterialOverride = TRUE;
+    item.Sequence = s_nextGeometrySequence++;
 }
 
 //=============================================================================
 
-static
-xbool IntersectsView( const view& V, const bbox& BBox )
+static void AppendRigidGeometryDraw( PrivateInstance const& registeredInst, rigid_geom& geom, xhandle hMaterial,
+                                     s32 iSurface, matrix4 const* pL2W, u32 const* pColorInfo, void const* pLighting,
+                                     u32 flags, u32 projectionFlags, u8 alpha, xbool fadingAlpha )
 {
-    return ( V.BBoxInView(BBox) != view::VISIBLE_NONE );
+    if ( !ShouldSubmitGeometry( flags ) )
+    {
+        return;
+    }
+
+    ASSERT( s_geometryDraws.GetCount() < kMaxRenderedInstances );
+    if ( s_geometryDraws.GetCount() >= kMaxRenderedInstances )
+    {
+        return;
+    }
+
+    PrivateGeometry&           registeredGeom = s_registeredGeometry( registeredInst.m_geometryHandle );
+    material&                  material = s_registeredMaterials( hMaterial );
+    geometry_render_pass const pass = ClassifyGeometryPass( material, flags, fadingAlpha );
+
+    f32 sortDepth = 0.0f;
+    if ( ( ( pass == GEOMETRY_PASS_TRANSPARENT ) || ( pass == GEOMETRY_PASS_FADING ) ||
+           ( pass == GEOMETRY_PASS_DISTORTION ) ) &&
+         !ComputeGeometryDepth( sortDepth, geom.m_BBox, pL2W ) )
+    {
+        return;
+    }
+
+    geometry_draw_item& item = s_geometryDraws.Append();
+    item.Pass = pass;
+    item.Type = GEOMETRY_DRAW_RIGID;
+    item.hRenderGeom = registeredGeom.m_renderGeometryHandle;
+    item.pMaterial = &material;
+    item.MaterialOrder = s_registeredMaterials.GetIndexByHandle( hMaterial );
+    item.iSurface = iSurface;
+    item.Flags = flags;
+    item.pLighting = pLighting;
+    item.Data.Rigid.pGeom = &geom;
+    item.Data.Rigid.pL2W = pL2W;
+    item.Data.Rigid.pColorInfo = pColorInfo;
+    item.SortDepth = sortDepth;
+    item.Sequence = s_nextGeometrySequence++;
+    item.ShadowSourceIndex = -1;
+    item.Alpha = alpha;
+    item.MaterialOverride = FALSE;
+    item.DistortionNormalRot.Zero();
+    GetUVOffset( item.UOffset, item.VOffset, &geom, material );
+
+    if ( ( item.Pass == GEOMETRY_PASS_GBUFFER ) || ( item.Pass == GEOMETRY_PASS_TRANSPARENT ) ||
+         ( item.Pass == GEOMETRY_PASS_ADDITIVE ) )
+    {
+        if ( material.ReceivesProjection() )
+        {
+            item.Flags |= projectionFlags;
+        }
+    }
+
+    if ( fadingAlpha )
+    {
+        AppendZPrimeDraw( item );
+    }
 }
 
 //=============================================================================
 
-static
-void CalcVMatOffsets( s32* VMatOffsets, const geom* pGeom, u32 VTextureMask )
+static void AppendSkinGeometryDraw( PrivateInstance const& registeredInst, skin_geom& geom, xhandle hMaterial,
+                                    s32 iSurface, matrix4 const* pBones, void const* pLighting, u32 flags,
+                                    u32 projectionFlags, u8 alpha, xbool fadingAlpha )
 {
-    x_memset( VMatOffsets, 0, sizeof(s32)*32 );
+    if ( !ShouldSubmitGeometry( flags ) )
+    {
+        return;
+    }
+
+    ASSERT( s_geometryDraws.GetCount() < kMaxRenderedInstances );
+    if ( s_geometryDraws.GetCount() >= kMaxRenderedInstances )
+    {
+        return;
+    }
+
+    PrivateGeometry&           registeredGeom = s_registeredGeometry( registeredInst.m_geometryHandle );
+    material&                  material = s_registeredMaterials( hMaterial );
+    geometry_render_pass const pass = ClassifyGeometryPass( material, flags, fadingAlpha );
+
+    f32 sortDepth = 0.0f;
+    if ( ( ( pass == GEOMETRY_PASS_TRANSPARENT ) || ( pass == GEOMETRY_PASS_FADING ) ||
+           ( pass == GEOMETRY_PASS_DISTORTION ) ) &&
+         !ComputeGeometryDepth( sortDepth, geom.m_BBox, pBones ) )
+    {
+        return;
+    }
+
+    geometry_draw_item& item = s_geometryDraws.Append();
+    item.Pass = pass;
+    item.Type = GEOMETRY_DRAW_SKIN;
+    item.hRenderGeom = registeredGeom.m_renderGeometryHandle;
+    item.pMaterial = &material;
+    item.MaterialOrder = s_registeredMaterials.GetIndexByHandle( hMaterial );
+    item.iSurface = iSurface;
+    item.Flags = flags;
+    item.pLighting = pLighting;
+    item.Data.Skin.pGeom = &geom;
+    item.Data.Skin.pBones = pBones;
+    item.Data.Skin.BoneCount = 0;
+    item.SortDepth = sortDepth;
+    item.Sequence = s_nextGeometrySequence++;
+    item.ShadowSourceIndex = -1;
+    item.Alpha = alpha;
+    item.MaterialOverride = FALSE;
+    item.DistortionNormalRot.Zero();
+    GetUVOffset( item.UOffset, item.VOffset, &geom, material );
+
+    if ( ( item.Pass == GEOMETRY_PASS_GBUFFER ) || ( item.Pass == GEOMETRY_PASS_TRANSPARENT ) ||
+         ( item.Pass == GEOMETRY_PASS_ADDITIVE ) )
+    {
+        if ( material.ReceivesProjection() )
+        {
+            item.Flags |= projectionFlags;
+        }
+    }
+
+    if ( fadingAlpha )
+    {
+        AppendZPrimeDraw( item );
+    }
+}
+
+//=============================================================================
+
+static void AppendRigidShadowDraw( PrivateInstance const& registeredInst, rigid_geom& geom, xhandle hMaterial,
+                                   s32 iSurface, matrix4 const* pL2W, s32 shadowSourceIndex )
+{
+    ASSERT( s_shadowDraws.GetCount() < kMaxRenderedInstances );
+    if ( s_shadowDraws.GetCount() >= kMaxRenderedInstances )
+    {
+        return;
+    }
+
+    PrivateGeometry& registeredGeom = s_registeredGeometry( registeredInst.m_geometryHandle );
+    material&        material = s_registeredMaterials( hMaterial );
+
+    geometry_draw_item& item = s_shadowDraws.Append();
+    item.Pass = GEOMETRY_PASS_SHADOW_CAST;
+    item.Type = GEOMETRY_DRAW_RIGID;
+    item.hRenderGeom = registeredGeom.m_renderGeometryHandle;
+    item.pMaterial = &material;
+    item.MaterialOrder = s_registeredMaterials.GetIndexByHandle( hMaterial );
+    item.iSurface = iSurface;
+    item.Flags = 0;
+    item.pLighting = NULL;
+    item.Data.Rigid.pGeom = &geom;
+    item.Data.Rigid.pL2W = pL2W;
+    item.Data.Rigid.pColorInfo = NULL;
+    item.SortDepth = 0.0f;
+    item.ShadowSourceIndex = shadowSourceIndex;
+    item.Sequence = s_nextShadowSequence++;
+    item.Alpha = 255;
+    item.MaterialOverride = FALSE;
+    item.DistortionNormalRot.Zero();
+    GetUVOffset( item.UOffset, item.VOffset, &geom, material );
+}
+
+//=============================================================================
+
+static void AppendSkinShadowDraw( PrivateInstance const& registeredInst, skin_geom& geom, xhandle hMaterial,
+                                  s32 iSurface, matrix4 const* pBones, s32 boneCount, s32 shadowSourceIndex )
+{
+    ASSERT( s_shadowDraws.GetCount() < kMaxRenderedInstances );
+    if ( s_shadowDraws.GetCount() >= kMaxRenderedInstances )
+    {
+        return;
+    }
+
+    PrivateGeometry& registeredGeom = s_registeredGeometry( registeredInst.m_geometryHandle );
+    material&        material = s_registeredMaterials( hMaterial );
+
+    geometry_draw_item& item = s_shadowDraws.Append();
+    item.Pass = GEOMETRY_PASS_SHADOW_CAST;
+    item.Type = GEOMETRY_DRAW_SKIN;
+    item.hRenderGeom = registeredGeom.m_renderGeometryHandle;
+    item.pMaterial = &material;
+    item.MaterialOrder = s_registeredMaterials.GetIndexByHandle( hMaterial );
+    item.iSurface = iSurface;
+    item.Flags = 0;
+    item.pLighting = NULL;
+    item.Data.Skin.pGeom = &geom;
+    item.Data.Skin.pBones = pBones;
+    item.Data.Skin.BoneCount = boneCount;
+    item.SortDepth = 0.0f;
+    item.ShadowSourceIndex = shadowSourceIndex;
+    item.Sequence = s_nextShadowSequence++;
+    item.Alpha = 255;
+    item.MaterialOverride = FALSE;
+    item.DistortionNormalRot.Zero();
+    GetUVOffset( item.UOffset, item.VOffset, &geom, material );
+}
+
+//=============================================================================
+
+static void GetUVOffset( u8& uOffset, u8& vOffset, geom* pGeom, material& mat )
+{
+    if ( mat.m_uvAnim.nFrames == 0 )
+    {
+        uOffset = vOffset = 0;
+        return;
+    }
+
+    s32 iKey = mat.m_uvAnim.iKey + mat.m_uvAnim.iFrame;
+    uOffset = pGeom->m_pUVKey[iKey].OffsetU;
+    vOffset = pGeom->m_pUVKey[iKey].OffsetV;
+}
+
+//=============================================================================
+
+static xbool IntersectsView( view const& v, bbox const& bBox )
+{
+    return ( v.BBoxInView( bBox ) != view::VISIBLE_NONE );
+}
+
+//=============================================================================
+
+static void CalcVMatOffsets( s32* pVMatOffsets, geom const* pGeom, u32 vTextureMask )
+{
+    x_memset( pVMatOffsets, 0, sizeof( s32 ) * 32 );
 
     s32 i, j;
-    for( i = 0; i < pGeom->m_nVirtualTextures; i++ )
+    for ( i = 0; i < pGeom->m_nVirtualTextures; i++ )
     {
-        s32 Offset = VTextureMask & 0xf;
-        VTextureMask >>= 4;
+        s32 offset = vTextureMask & 0xf;
+        vTextureMask >>= 4;
 
-        geom::virtual_texture& VTexture = pGeom->m_pVirtualTextures[i];
-        for( j = 0; j < pGeom->m_nMaterials; j++ )
+        geom::virtual_texture& vTexture = pGeom->m_pVirtualTextures[i];
+        for ( j = 0; j < pGeom->m_nMaterials; j++ )
         {
             ASSERT( j < 32 );
-            if( VTexture.MaterialMask & (1<<j) )
+            if ( vTexture.MaterialMask & ( 1 << j ) )
             {
-                Offset = MINMAX( 0, Offset, pGeom->m_pMaterial[j].nVirtualMats-1 );
-                VMatOffsets[j] = Offset;
+                offset = MINMAX( 0, offset, pGeom->m_pMaterial[j].nVirtualMats - 1 );
+                pVMatOffsets[j] = offset;
             }
         }
     }
@@ -795,23 +863,26 @@ s32 render::GetHardwareBufferSize( void )
 
 void render::Init( void )
 {
-    s_PulseTime = 0.0f;
+    s_pulseTime = 0.0f;
 
-    s_lRegisteredGeoms.Clear();
-    s_lRegisteredGeoms.GrowListBy( kMaxRegisteredGeoms );
-    s_lRegisteredInst.Clear();
-    s_lRegisteredInst.GrowListBy( kMaxRegisteredInstances );
-    s_lRegisteredMaterials.Clear();
-    s_lRegisteredMaterials.GrowListBy( kMaxRegisteredMaterials );
-    s_lRenderInst.Clear();
-    s_lRenderInst.SetCapacity( kMaxRenderedInstances );
-    s_lRenderInst.SetCount( kMaxRenderedInstances );
-    s_lDistortionInfo.Clear();
-    s_lDistortionInfo.SetCapacity( kMaxDistortedInstances );
-    s_lDistortionInfo.SetLocked(TRUE);
-    s_lSortData.Clear();
-    s_lSortData.SetCapacity( kMaxRenderedInstances );
-    s_lSortData.SetCount( kMaxRenderedInstances );
+    s_registeredGeometry.Clear();
+    s_registeredGeometry.GrowListBy( kMaxRegisteredGeoms );
+    s_registeredInstances.Clear();
+    s_registeredInstances.GrowListBy( kMaxRegisteredInstances );
+    s_registeredMaterials.Clear();
+    s_registeredMaterials.GrowListBy( kMaxRegisteredMaterials );
+    s_geometryDraws.Clear();
+    s_geometryDraws.SetCapacity( kMaxRenderedInstances );
+    s_dynamicGeometryDraws.Clear();
+    s_dynamicGeometryDraws.SetCapacity( kMaxRenderedInstances );
+    s_dynamicShadowDraws.Clear();
+    s_dynamicShadowDraws.SetCapacity( kMaxRenderedInstances );
+    s_shadowDraws.Clear();
+    s_shadowDraws.SetCapacity( kMaxRenderedInstances );
+    s_orderedShadowDraws.Clear();
+    s_orderedShadowDraws.SetCapacity( kMaxRenderedInstances );
+    s_nextGeometrySequence = 0;
+    s_nextShadowSequence = 0;
 
     platform_Init();
 }
@@ -822,260 +893,244 @@ void render::Kill( void )
 {
     platform_Kill();
 
-    ASSERT( s_lRegisteredGeoms.GetCount() == 0 );
-    ASSERT( s_lRegisteredInst.GetCount() == 0 );
-    ASSERT( s_lRegisteredMaterials.GetCount() == 0 );
-    s_lRegisteredGeoms.Clear();
-    s_lRegisteredInst.Clear();
-    s_lRegisteredMaterials.Clear();
-    s_lRenderInst.Clear();
-    s_lSortData.Clear();
+    ASSERT( s_registeredGeometry.GetCount() == 0 );
+    ASSERT( s_registeredInstances.GetCount() == 0 );
+    ASSERT( s_registeredMaterials.GetCount() == 0 );
+    s_registeredGeometry.Clear();
+    s_registeredInstances.Clear();
+    s_registeredMaterials.Clear();
+    s_geometryDraws.Clear();
+    s_dynamicGeometryDraws.Clear();
+    s_dynamicShadowDraws.Clear();
+    s_shadowDraws.Clear();
+    s_orderedShadowDraws.Clear();
 }
 
 //=============================================================================
 
-void render::Update( f32 DeltaTime )
+void render::Update( f32 deltaTime )
 {
-    s_PulseTime += DeltaTime;
+    s_pulseTime += deltaTime;
+    platform_UpdatePostEffects( deltaTime );
 
     // update all uv animations
-    s_lRegisteredMaterials.Update( DeltaTime );
+    s_registeredMaterials.Update( deltaTime );
 }
 
 //=============================================================================
 
-void render::StartRawDataMode( void )
+xbool render::SubmitPrimitives( primitive_draw_desc const& desc, matrix4 const& localToWorld,
+                                primitive_vertex const* pVertices, s32 nVertices, u16 const* pIndices, s32 nIndices )
 {
-    ASSERT( !s_InRenderBegin && !s_InShadowBegin && !s_InRawBegin );
-    s_InRawBegin = TRUE;
+    ASSERTS( s_isPrimitiveRenderActive, "Primitive geometry submitted outside primitive session" );
+    if ( !s_isPrimitiveRenderActive )
+    {
+        return FALSE;
+    }
 
-    platform_StartRawDataMode();
+    return platform_SubmitPrimitives( desc, localToWorld, pVertices, nVertices, pIndices, nIndices );
 }
 
 //=============================================================================
 
-void render::EndRawDataMode( void )
+xbool render::SubmitDecalBatch( decal_draw_desc const& desc, decal_vertex const* pVertices, s32 nVertices,
+                                u16 const* pIndices, s32 nIndices )
 {
-    platform_EndRawDataMode();
-    
-    ASSERT( s_InRawBegin );
-    s_InRawBegin = FALSE;
+    ASSERTS( s_isRenderActive, "Decal geometry submitted outside normal render session" );
+    if ( !s_isRenderActive )
+    {
+        return FALSE;
+    }
+
+    return platform_SubmitDecalBatch( desc, s_pCurrentCubeMap, pVertices, nVertices, pIndices, nIndices );
 }
 
 //=============================================================================
 
-void render::RenderRawStrips( s32            nVerts,
-                              const matrix4& L2W,
-                              const vector4* pPos,
-                              const s16*     pUV,
-                              const u32*     pColor )
+void render::ReserveDecalSubmissionCapacity( s32 nVertices, s32 nIndices, s32 nDraws )
 {
-    ASSERT( s_InRawBegin );
-    platform_RenderRawStrips( nVerts, L2W, pPos, pUV, pColor );
+    platform_ReserveDecalSubmissionCapacity( nVertices, nIndices, nDraws );
 }
 
 //=============================================================================
 
-void render::Render3dSprites( s32            nSprites,
-                              f32            UniScale,
-                              const matrix4* pL2W,
-                              const vector4* pPositions,
-                              const vector2* pRotScales,
-                              const u32*     pColors )
+xbool render::SetDepthRect( irect const& rect, f32 depth )
 {
-    ASSERT( s_InRawBegin );
-    platform_Render3dSprites( nSprites, UniScale, pL2W, pPositions, pRotScales, pColors );
+    ASSERTS( s_isPrimitiveRenderActive, "Depth rectangle submitted outside primitive session" );
+    if ( !s_isPrimitiveRenderActive )
+    {
+        return FALSE;
+    }
+
+    return platform_SetDepthRect( rect, depth );
 }
 
 //=============================================================================
 
-void render::RenderHeatHazeSprites( s32             nSprites,
-                                    f32             UniScale,
-                                    const matrix4*  pL2W,
-                                    const vector4*  pPositions,
-                                    const vector2*  pRotScales,
-                                    const u32*      pColors )
+xbool render::BeginPrimitiveRender( void )
 {
-    ASSERT( s_InRawBegin );
-    platform_RenderHeatHazeSprites( nSprites, UniScale, pL2W, pPositions, pRotScales, pColors );
+    ASSERT( !s_isRenderActive && !s_isShadowRenderActive && !s_isPrimitiveRenderActive );
+
+    if ( !platform_BeginPrimitiveRender() )
+    {
+        return FALSE;
+    }
+
+    s_isPrimitiveRenderActive = TRUE;
+    return TRUE;
 }
 
 //=============================================================================
 
-void render::RenderVelocitySprites( s32             nSprites,
-                                    f32             UniScale,
-                                    const matrix4*  pL2W,
-                                    const matrix4*  pVelMatrix,
-                                    const vector4*  pPositions,
-                                    const vector4*  pVelocities,
-                                    const u32*      pColors  )
+void render::EndPrimitiveRender( void )
 {
-    ASSERT( s_InRawBegin );
-    platform_RenderVelocitySprites( nSprites, UniScale, pL2W, pVelMatrix, pPositions, pVelocities, pColors );
+    ASSERT( s_isPrimitiveRenderActive );
+    if ( !s_isPrimitiveRenderActive )
+    {
+        return;
+    }
+
+    platform_EndPrimitiveRender();
+    s_isPrimitiveRenderActive = FALSE;
 }
 
 //=============================================================================
 
-void render::SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
+void render::ExecuteForwardRender( forward_render_stage stage )
 {
-    ASSERT( s_InRawBegin );
-    platform_SetDiffuseMaterial( Bitmap, BlendMode, ZTestEnabled );
+    ASSERT( !s_isRenderActive && !s_isShadowRenderActive && !s_isPrimitiveRenderActive );
+    platform_ExecuteForwardRender( stage );
 }
 
 //=============================================================================
 
-void render::SetGlowMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
+render::GeometryInstanceHandle render::RegisterRigidInstance( rigid_geom& geom )
 {
-    ASSERT( s_InRawBegin );
-    platform_SetGlowMaterial( Bitmap, BlendMode, ZTestEnabled );
+    ASSERT( !s_isRenderActive && !s_isShadowRenderActive && !s_isPrimitiveRenderActive );
+
+    xhandle hGeom = FindRegisteredGeom( geom );
+    if ( hGeom.IsNull() )
+    {
+        hGeom = RegisterRigidGeom( geom );
+    }
+
+    PrivateGeometry& registeredGeom = s_registeredGeometry( hGeom );
+    ASSERT( registeredGeom.m_pGeometry == &geom );
+    ASSERT( registeredGeom.m_Type == GeometryType::Rigid );
+
+    render::GeometryInstanceHandle handle = AddPrivateInstance( hGeom, GeometryType::Rigid );
+
+    return handle;
 }
 
 //=============================================================================
 
-void render::SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
+void render::UnregisterRigidInstance( GeometryInstanceHandle hInst )
 {
-    ASSERT( s_InRawBegin );
-    platform_SetEnvMapMaterial( Bitmap, BlendMode, ZTestEnabled );
-}
+    ASSERT( !s_isRenderActive && !s_isShadowRenderActive && !s_isPrimitiveRenderActive );
 
-//============================================================================= 
+    PrivateInstance& inst = s_registeredInstances( hInst );
+    ASSERT( inst.m_Type == GeometryType::Rigid );
+    xhandle const    hGeom = inst.m_geometryHandle;
+    PrivateGeometry& registeredGeom = s_registeredGeometry( hGeom );
+    xbool const      bUnregisterGeom = ( registeredGeom.m_referenceCount == 1 );
 
-void render::SetDistortionMaterial( s32 BlendMode, xbool ZTestEnabled )
-{
-    ASSERT( s_InRawBegin );
-    platform_SetDistortionMaterial( BlendMode, ZTestEnabled );
-}
-
-//============================================================================= 
-
-render::hgeom_inst render::RegisterRigidInstance( rigid_geom& Geom )
-{
-    ASSERT( !s_InRenderBegin && !s_InShadowBegin && !s_InRawBegin );
-
-    // register the geom if that hasn't been done yet
-    if ( Geom.GetRefCount() == 0 )
-        RegisterRigidGeom( Geom );
-
-    // safety check
-    ASSERT( s_lRegisteredGeoms(Geom.m_hGeom).pGeom == &Geom );
-
-    // add the instance
-    render::hgeom_inst Handle = AddPrivateInstance( Geom, TYPE_RIGID );    
-    platform_RegisterRigidInstance( Geom, Handle );
-
-    return Handle;
-}
-
-//=============================================================================
-
-void render::UnregisterRigidInstance( hgeom_inst hInst )
-{
-    ASSERT( !s_InRenderBegin && !s_InShadowBegin && !s_InRawBegin );
-
-    // do we need to unregister the geom?
-    xbool bUnregisterGeom  = FALSE;;
-    private_instance& Inst = s_lRegisteredInst(hInst);
-    ASSERT( Inst.Type == TYPE_RIGID );
-    if ( Inst.pGeom->GetRefCount() == 1 )
-        bUnregisterGeom = TRUE;
-
-    // unregister the instance
-    platform_UnregisterRigidInstance( hInst );
     RemovePrivateInstance( hInst );
 
-    // unregister the geom
     if ( bUnregisterGeom )
-        UnregisterRigidGeom( *((rigid_geom*)Inst.pGeom) );
+    {
+        UnregisterRigidGeom( hGeom );
+    }
 }
 
 //=============================================================================
 
-render::hgeom_inst render::RegisterSkinInstance( skin_geom& Geom )
+render::GeometryInstanceHandle render::RegisterSkinInstance( skin_geom& geom )
 {
-    ASSERT( !s_InRenderBegin && !s_InShadowBegin && !s_InRawBegin );
+    ASSERT( !s_isRenderActive && !s_isShadowRenderActive && !s_isPrimitiveRenderActive );
 
-    // register the geom if that hasn't been done yet
-    if ( Geom.GetRefCount() == 0 )
-        RegisterSkinGeom( Geom );
+    xhandle hGeom = FindRegisteredGeom( geom );
+    if ( hGeom.IsNull() )
+    {
+        hGeom = RegisterSkinGeom( geom );
+    }
 
-    // safety check
-    ASSERT( s_lRegisteredGeoms(Geom.m_hGeom).pGeom == &Geom );
+    PrivateGeometry& registeredGeom = s_registeredGeometry( hGeom );
+    ASSERT( registeredGeom.m_pGeometry == &geom );
+    ASSERT( registeredGeom.m_Type == GeometryType::Skin );
 
-    // add the instance
-    render::hgeom_inst Handle = AddPrivateInstance( Geom, TYPE_SKIN );
-    platform_RegisterSkinInstance( Geom, Handle );
+    render::GeometryInstanceHandle handle = AddPrivateInstance( hGeom, GeometryType::Skin );
 
-    return Handle;
+    return handle;
 }
 
 //=============================================================================
 
-void render::UnregisterSkinInstance( hgeom_inst hInst )
+void render::UnregisterSkinInstance( GeometryInstanceHandle hInst )
 {
-    ASSERT( !s_InRenderBegin && !s_InShadowBegin && !s_InRawBegin );
+    ASSERT( !s_isRenderActive && !s_isShadowRenderActive && !s_isPrimitiveRenderActive );
 
-    // do we need to unregister the geom?
-    xbool bUnregisterGeom  = FALSE;;
-    private_instance& Inst = s_lRegisteredInst(hInst);
-    ASSERT( Inst.Type == TYPE_SKIN );
-    if ( Inst.pGeom->GetRefCount() == 1 )
-        bUnregisterGeom = TRUE;
+    PrivateInstance& inst = s_registeredInstances( hInst );
+    ASSERT( inst.m_Type == GeometryType::Skin );
+    xhandle const    hGeom = inst.m_geometryHandle;
+    PrivateGeometry& registeredGeom = s_registeredGeometry( hGeom );
+    xbool const      bUnregisterGeom = ( registeredGeom.m_referenceCount == 1 );
 
-    // unregister the instance
-    platform_UnregisterSkinInstance( hInst );
     RemovePrivateInstance( hInst );
 
-    // unregister the geom
     if ( bUnregisterGeom )
-        UnregisterSkinGeom( *((skin_geom*)Inst.pGeom) );
+    {
+        UnregisterSkinGeom( hGeom );
+    }
 }
 
 //=============================================================================
 
-const geom* render::GetGeom( hgeom_inst hInst )
+geom const* render::GetGeom( GeometryInstanceHandle hInst )
 {
     if ( hInst.IsNull() )
+    {
         return NULL;
+    }
 
-    private_instance& Inst = s_lRegisteredInst(hInst);
-    return Inst.pGeom;
+    PrivateInstance& inst = s_registeredInstances( hInst );
+    return inst.m_pGeometry;
 }
 
 //=============================================================================
 
-void render::SetCustomFogPalette( const texture::handle& Texture, xbool ImmediateSwitch, s32 PaletteIndex )
+void render::SetCustomFogPalette( texture::handle const& texture, xbool immediateSwitch, s32 paletteIndex )
 {
-    platform_SetCustomFogPalette( Texture, ImmediateSwitch, PaletteIndex );
+    platform_SetCustomFogPalette( texture, immediateSwitch, paletteIndex );
 }
 
 //=============================================================================
 
-xcolor render::GetFogValue( const vector3& WorldPos, s32 PaletteIndex )
+xcolor render::GetFogValue( vector3 const& worldPos, s32 paletteIndex )
 {
-    return platform_GetFogValue( WorldPos, PaletteIndex );
+    return platform_GetFogValue( worldPos, paletteIndex );
 }
 
 //=============================================================================
 
 void render::BeginNormalRender( void )
 {
-    CONTEXT( "render::Begin" );
-
-    // clear out the distorted instance list
-    s_lDistortionInfo.Delete( 0, s_lDistortionInfo.GetCount() );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "render::Begin" );
 
     // sort the materials
-    s_lRegisteredMaterials.Sort();
+    s_registeredMaterials.Sort();
 
     // safety check
     ASSERT( eng_InBeginEnd() );
-    ASSERT( !s_InRenderBegin && !s_InShadowBegin && !s_InRawBegin );
-    s_InRenderBegin = TRUE;
+    ASSERT( !s_isRenderActive && !s_isShadowRenderActive );
+    s_isRenderActive = TRUE;
 
-    // clear out the list of render instances
-    s_LoHashMark = 0;
-    s_HiHashMark = kMaxRenderedInstances - 1;
-    x_memset( s_HashTable, 0xff, sizeof(s16)*kMaxRenderedInstances );
+    ASSERT( s_geometryDraws.GetCount() == 0 );
+    s_geometryDraws.SetCount( 0 );
+    ASSERT( s_dynamicGeometryDraws.GetCount() == 0 );
+    s_dynamicGeometryDraws.SetCount( 0 );
+    s_dynamicShadowDraws.SetCount( 0 );
+    s_nextGeometrySequence = 0;
 
     platform_BeginNormalRender();
 }
@@ -1084,1087 +1139,500 @@ void render::BeginNormalRender( void )
 
 void render::EndNormalRender( void )
 {
-    CONTEXT( "render::End" );
-
-    // mark that we have no distortion or alpha meshes to render during the custom phase
-    s_CustomStart = s_LoHashMark;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "render::End" );
 
     // safety check
     ASSERT( eng_InBeginEnd() );
-    ASSERT( s_InRenderBegin );
-    s_InRenderBegin = FALSE;
+    ASSERT( s_isRenderActive );
+    s_isRenderActive = FALSE;
 
-    // bail out early if there are no instances to render
-    if ( s_LoHashMark == 0 )
+    static xprofile_counter geometryDraws = x_GetProfiler().RegisterCounter( "RenderInstances", "RenderCounter" );
+    geometryDraws.Add( s_geometryDraws.GetCount() );
+
     {
-        return;
+        X_PROFILE_SCOPE_CATEGORY( "RenderSection", "Render/SubmitGeometry" );
+        platform_SubmitGeometry( s_geometryDraws, s_dynamicGeometryDraws, s_pCurrentCubeMap );
     }
 
-    // set up the "cube" environment texture
-    platform_CreateEnvTexture();
-
-    // let the platform-specific shaders get initialized (whether its d3d vert/pixel
-    // shaders, vu0/vu1 microcode, or gamecube passes)
-    platform_BeginShaders();
-
-    // sort the render instances (by material and sort key)
-    x_qsort( s_lSortData.GetPtr(), s_LoHashMark, sizeof(sort_struct), InstanceCompareFn );
-
-{
-    // loop through all of the render instances and render those bad boys
-    sortkey   CurrentSortData;
-    CurrentSortData.Bits          = 0xffffffff;
-    geom*     pCurrentGeom        = NULL;
-    geom_type CurrentType         = TYPE_UNKNOWN;
-    for ( s32 iUniqueInst = 0; iUniqueInst < s_LoHashMark; iUniqueInst++ )
-    {
-        render_instance& Inst = s_lRenderInst[s_lSortData[iUniqueInst].iRenderInst];
-        
-        // If this is the start of the custom distortion and alpha instances,
-        // the bail out of this loop. They'll come later
-        if ( Inst.SortKey.RenderOrder >= ORDER_CUSTOM_START )
-        {
-            // distortion meshes have to be done separately
-            s_CustomStart = iUniqueInst;
-            break;
-        }
-
-        // activate the material if necessary
-        if ( CurrentSortData.MatIndex  != Inst.SortKey.MatIndex )
-        {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                else                                platform_EndSkinGeom ();
-                pCurrentGeom = NULL;
-            }
-
-            material& Mat = s_lRegisteredMaterials[Inst.SortKey.MatIndex];
-            ASSERT( (Mat.m_Type != Material_Distortion) &&
-                    (Mat.m_Type != Material_Distortion_PerPolyEnv) );
-
-            platform_ActivateMaterial( Mat );
-            
-            CurrentSortData.MatIndex  = Inst.SortKey.MatIndex;
-        }
-
-        // start a new instance batch if necessary (geometry sorting should already
-        // be built into the sort key)
-        if ( (Inst.SortKey.GeomType == 0) &&
-             ((pCurrentGeom != Inst.Data.Rigid.pGeom) || (CurrentSortData.GeomSubMesh != Inst.SortKey.GeomSubMesh)) )
-        {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                else                                platform_EndSkinGeom ();
-            }
-
-            pCurrentGeom                = Inst.Data.Rigid.pGeom;
-            CurrentType                 = TYPE_RIGID;
-            CurrentSortData.GeomSubMesh = Inst.SortKey.GeomSubMesh;
-            platform_BeginRigidGeom( pCurrentGeom, Inst.SortKey.GeomSubMesh );
-        }
-        else
-        if ( Inst.SortKey.GeomType &&
-             ((pCurrentGeom != Inst.Data.Skin.pGeom) || (CurrentSortData.GeomSubMesh != Inst.SortKey.GeomSubMesh)) )
-        {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                else                                platform_EndSkinGeom ();
-            }
-
-            pCurrentGeom                = Inst.Data.Skin.pGeom;
-            CurrentType                 = TYPE_SKIN;
-            CurrentSortData.GeomSubMesh = Inst.SortKey.GeomSubMesh;
-            platform_BeginSkinGeom( pCurrentGeom, Inst.SortKey.GeomSubMesh );
-        }
-
-        // let the platform run its render code on the instances
-        s32 iInstToRender = s_lSortData[iUniqueInst].iRenderInst;
-        if ( Inst.SortKey.GeomType == 0 )
-        {
-            while ( iInstToRender != -1 )
-            {
-                #ifndef X_RETAIL
-                if( g_RenderDebug.RenderClippedOnly && !(s_lRenderInst[iInstToRender].Flags & render::CLIPPED) )
-                {
-                    iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                    continue;
-                }
-
-                if( g_RenderDebug.RenderShadowedOnly &&
-                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW | render::SHADOW_PASS)))
-                {
-                    iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                    continue;
-                }
-                #endif
-                ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
-                platform_RenderRigidInstance( s_lRenderInst[iInstToRender] );
-                iInstToRender = s_lRenderInst[iInstToRender].Brother;
-            };
-        }
-        else
-        {
-            while ( iInstToRender != -1 )
-            {
-                #ifndef X_RETAIL
-                if( g_RenderDebug.RenderClippedOnly && !(s_lRenderInst[iInstToRender].Flags & render::CLIPPED) )
-                {
-                    iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                    continue;
-                }
-
-                if( g_RenderDebug.RenderShadowedOnly &&
-                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW | render::SHADOW_PASS)))
-                {
-                    iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                    continue;
-                }
-                #endif
-
-                ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
-                platform_RenderSkinInstance ( s_lRenderInst[iInstToRender] );
-                iInstToRender = s_lRenderInst[iInstToRender].Brother;
-            };
-        }
-    }
-
-    // finish up any pending tasks
-    if ( pCurrentGeom != NULL )
-    {
-        ASSERT( CurrentType != TYPE_UNKNOWN );
-        if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-        else                                platform_EndSkinGeom ();
-    }
-}
-
-    // let the microcode or whatever finish up
-    platform_EndShaders();
+    s_geometryDraws.SetCount( 0 );
+    s_dynamicGeometryDraws.SetCount( 0 );
     platform_EndNormalRender();
-}
-
-//=============================================================================
-
-void render::BeginCustomRender( void )
-{
-    // safety check
-    ASSERT( eng_InBeginEnd() );
-    ASSERT( !s_InRenderBegin && !s_InShadowBegin && !s_InRawBegin && !s_InCustomBegin );
-    s_InCustomBegin = TRUE;
-}
-
-//=============================================================================
-
-void render::EndCustomRender( void )
-{
-    // safety check
-    ASSERT( eng_InBeginEnd() );
-    ASSERT( s_InCustomBegin );
-    s_InCustomBegin = FALSE;
-
-    // bail out early if there are no distorted meshes to render
-    if ( s_CustomStart == s_LoHashMark )
-        return;
-
-    // let the platform-specific shaders get initialized (whether its d3d vert/pixel
-    // shaders, vu0/vu1 microcode, or gamecube passes)
-    platform_BeginShaders();
-
-    // loop through all of the render instances and render those bad boys
-    // now handle the distorted meshes
-    sortkey   CurrentSortData;
-    CurrentSortData.Bits        = 0xffffffff;
-    CurrentSortData.RenderOrder = ORDER_OPAQUE;
-    geom*     pCurrentGeom      = NULL;
-    geom_type CurrentType       = TYPE_UNKNOWN;
-    xbool     bDistortionPassActive = FALSE;
-
-    for ( s32 iUniqueInst = s_CustomStart; iUniqueInst < s_LoHashMark; iUniqueInst++ )
-    {
-        render_instance& Inst = s_lRenderInst[s_lSortData[iUniqueInst].iRenderInst];
-
-        ASSERT( Inst.SortKey.RenderOrder >= ORDER_CUSTOM_START );
-
-        // set up a z-prime material or distortion map for the first time if necessary
-        if ( CurrentSortData.RenderOrder != Inst.SortKey.RenderOrder )
-        {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                else                                platform_EndSkinGeom ();
-                pCurrentGeom = NULL;
-            }
-
-            CurrentSortData.MatIndex    = 0x3ff;
-            CurrentSortData.RenderOrder = Inst.SortKey.RenderOrder;
-
-            if ( CurrentSortData.RenderOrder == ORDER_ZPRIME )
-            {
-                platform_ActivateZPrimeMaterial();
-            }
-            else
-            if ( CurrentSortData.RenderOrder == ORDER_DISTORTION )
-            {
-                platform_BeginDistortion();
-                bDistortionPassActive = TRUE;
-            }
-        }
-
-        // the distortion and fading alpha materials need to get set properly
-        if ( ((CurrentSortData.RenderOrder == ORDER_FORCED_LAST) ||
-              (CurrentSortData.RenderOrder == ORDER_FADING_ALPHA)) &&
-             (CurrentSortData.MatIndex != Inst.SortKey.MatIndex) )
-        {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                else                                platform_EndSkinGeom ();
-                pCurrentGeom = NULL;
-            }
-            material& Mat = s_lRegisteredMaterials[Inst.SortKey.MatIndex];
-            platform_ActivateMaterial( Mat );
-            CurrentSortData.MatIndex  = Inst.SortKey.MatIndex;
-        }
-        else
-        if ( (CurrentSortData.RenderOrder == ORDER_DISTORTION) &&
-             (CurrentSortData.MatIndex != Inst.SortKey.MatIndex) )
-        {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                else                                platform_EndSkinGeom ();
-                pCurrentGeom = NULL;
-            }
-
-            if ( Inst.OverrideMat )
-            {
-                const distortion_info& DistortInfo = s_lDistortionInfo[(s32)Inst.SortKey.MatIndex];
-                if ( DistortInfo.MatIndex != 0xffffffff )
-                {
-                    material& Mat = s_lRegisteredMaterials[DistortInfo.MatIndex];
-                    platform_ActivateDistortionMaterial( &Mat, DistortInfo.NormalRot );
-                }
-                else
-                {
-                    platform_ActivateDistortionMaterial( NULL, DistortInfo.NormalRot );
-                }
-            }
-            else
-            {
-                material& Mat = s_lRegisteredMaterials[Inst.SortKey.MatIndex];
-                platform_ActivateMaterial( Mat );
-            }
-            
-            CurrentSortData.MatIndex  = Inst.SortKey.MatIndex;
-        }
-
-        // start a new instance batch if necessary (geometry sorting should already
-        // be built into the sort key)
-        if ( (Inst.SortKey.GeomType == 0) &&
-            ((pCurrentGeom != Inst.Data.Rigid.pGeom) || (CurrentSortData.GeomSubMesh != Inst.SortKey.GeomSubMesh)) )
-        {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                else                                platform_EndSkinGeom ();
-            }
-
-            pCurrentGeom                = Inst.Data.Rigid.pGeom;
-            CurrentType                 = TYPE_RIGID;
-            CurrentSortData.GeomSubMesh = Inst.SortKey.GeomSubMesh;
-            platform_BeginRigidGeom( pCurrentGeom, Inst.SortKey.GeomSubMesh );
-        }
-        else
-        if ( Inst.SortKey.GeomType &&
-            ((pCurrentGeom != Inst.Data.Skin.pGeom) || (CurrentSortData.GeomSubMesh != Inst.SortKey.GeomSubMesh)) )
-        {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-                else                                platform_EndSkinGeom ();
-            }
-
-            pCurrentGeom                = Inst.Data.Skin.pGeom;
-            CurrentType                 = TYPE_SKIN;
-            CurrentSortData.GeomSubMesh = Inst.SortKey.GeomSubMesh;
-            platform_BeginSkinGeom( pCurrentGeom, Inst.SortKey.GeomSubMesh );
-        }
-
-        // let the platform run its render code on the instances
-        s32 iInstToRender = s_lSortData[iUniqueInst].iRenderInst;
-        if ( Inst.SortKey.GeomType == 0 )
-        {
-            while ( iInstToRender != -1 )
-            {
-                #ifndef X_RETAIL
-                if( g_RenderDebug.RenderClippedOnly && !(s_lRenderInst[iInstToRender].Flags & render::CLIPPED) )
-                {
-                    iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                    continue;
-                }
-
-                if( g_RenderDebug.RenderShadowedOnly &&
-                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW | render::SHADOW_PASS)))
-                {
-                    iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                    continue;
-                }
-                #endif
-
-                ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
-                platform_RenderRigidInstance( s_lRenderInst[iInstToRender] );
-                iInstToRender = s_lRenderInst[iInstToRender].Brother;
-            };
-        }
-        else
-        {
-            while ( iInstToRender != -1 )
-            {
-                #ifndef X_RETAIL
-                if( g_RenderDebug.RenderClippedOnly && !(s_lRenderInst[iInstToRender].Flags & render::CLIPPED) )
-                {
-                    iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                    continue;
-                }
-
-                if( g_RenderDebug.RenderShadowedOnly &&
-                    !(s_lRenderInst[iInstToRender].Flags & (render::INSTFLAG_PROJ_SHADOW | render::SHADOW_PASS)))
-                {
-                    iInstToRender = s_lRenderInst[iInstToRender].Brother;
-                    continue;
-                }
-                #endif
-                ASSERT( s_lRenderInst[iInstToRender].SortKey.Bits == Inst.SortKey.Bits );
-                platform_RenderSkinInstance ( s_lRenderInst[iInstToRender] );
-                iInstToRender = s_lRenderInst[iInstToRender].Brother;
-            };
-        }
-    }
-
-    // finish up any pending tasks
-    if ( pCurrentGeom != NULL )
-    {
-        ASSERT( CurrentType != TYPE_UNKNOWN );
-        if ( CurrentType == TYPE_RIGID )    platform_EndRigidGeom();
-        else                                platform_EndSkinGeom ();
-    }
-
-    // end distortion
-    if( bDistortionPassActive )
-        platform_EndDistortion();
-
-    // let the microcode or whatever finish up
-    platform_EndShaders();
 }
 
 //=============================================================================
 
 void render::ResetAfterException( void )
 {
-    s_InRenderBegin = FALSE;
-    s_InShadowBegin = FALSE;
-    s_InRawBegin = FALSE;
+    platform_ResetAfterException();
+    s_isRenderActive = FALSE;
+    s_isShadowRenderActive = FALSE;
+    s_isPrimitiveRenderActive = FALSE;
+    s_geometryDraws.SetCount( 0 );
+    s_dynamicGeometryDraws.SetCount( 0 );
+    s_shadowDraws.SetCount( 0 );
+    s_orderedShadowDraws.SetCount( 0 );
+    s_dynamicShadowDraws.SetCount( 0 );
+    s_nextGeometrySequence = 0;
+    s_nextShadowSequence = 0;
 }
 
 //=============================================================================
 
-void render::AddRigidInstanceSimple( hgeom_inst     hInst,
-                                     const void*    pCol,
-                                     const matrix4* pL2W,
-                                     const bbox&    WorldBBox,
-                                     u32            Flags )
+void render::AddDynamicGeometry( dynamic_geometry_draw const& draw )
 {
-    #ifndef X_RETAIL
-    if( g_RenderDebug.RenderSkinOnly )
+    ASSERT( s_isRenderActive );
+    ASSERT( draw.pVertices );
+    ASSERT( draw.pIndices );
+    ASSERT( draw.pDiffuseTexture );
+    ASSERT( draw.pDamageMask );
+    ASSERT( draw.pDamageTexture );
+    ASSERT( draw.pDamageUploadPending );
+    ASSERT( ( draw.VertexCount > 0 ) && ( draw.VertexCount <= 65535 ) );
+    ASSERT( ( draw.IndexCount > 0 ) && ( ( draw.IndexCount % 3 ) == 0 ) );
+
+    if( !s_isRenderActive || !draw.pVertices || !draw.pIndices || !draw.pDiffuseTexture || !draw.pDamageMask ||
+        !draw.pDamageTexture || !draw.pDamageUploadPending ||
+        ( draw.VertexCount <= 0 ) || ( draw.VertexCount > 65535 ) || ( draw.IndexCount <= 0 ) ||
+        ( ( draw.IndexCount % 3 ) != 0 ) || ( s_dynamicGeometryDraws.GetCount() >= kMaxRenderedInstances ) )
+    {
         return;
-    #endif
+    }
+
+    dynamic_geometry_draw& queued = s_dynamicGeometryDraws.Append();
+    queued = draw;
+    matrix4 Identity;
+    Identity.Identity();
+    queued.pLighting = platform_CalculateRigidLighting( Identity, draw.Bounds );
+    if( queued.pLighting )
+        queued.Flags |= INSTFLAG_DYNAMICLIGHT;
+
+    queued.Flags |= g_ProjTextureMgr.CollectProjectionFlags( queued.Flags, draw.Bounds );
+    if( s_isLightFilteringEnabled && ( ( queued.Flags & DISABLE_FILTERLIGHT ) == 0 ) )
+        queued.Flags |= INSTFLAG_FILTERLIGHT;
+
+    queued.Sequence = s_nextGeometrySequence++;
+}
+
+//=============================================================================
+
+void render::AddDynamicShadowCaster( dynamic_geometry_shadow_draw const& draw )
+{
+    ASSERT( s_isShadowRenderActive );
+    if( !s_isShadowRenderActive || !draw.pVertices || !draw.pIndices || !draw.pDiffuse || !draw.pDamageMask ||
+        !draw.pDamageTexture || !draw.pDamageUploadPending ||
+        ( draw.VertexCount <= 0 ) || ( draw.VertexCount > 65535 ) || ( draw.IndexCount <= 0 ) ||
+        ( ( draw.IndexCount % 3 ) != 0 ) || ( draw.ShadowSourceMask == 0 ) ||
+        ( s_dynamicShadowDraws.GetCount() >= kMaxRenderedInstances ) )
+        return;
+
+    s_dynamicShadowDraws.Append() = draw;
+}
+
+//=============================================================================
+
+void render::AddRigidInstanceSimple( GeometryInstanceHandle hInst, u32 const* pCol, matrix4 const* pL2W,
+                                     bbox const& worldBBox, u32 flags )
+{
+#ifndef X_RETAIL
+    if ( g_renderDebug.RenderSkinOnly )
+    {
+        return;
+    }
+#endif
 
     // safety check
-    ASSERT( s_InRenderBegin );
+    ASSERT( s_isRenderActive );
     ASSERT( pL2W->IsValid() );
 
     // grab the useful pointers out
-    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
-    ASSERT( RegisteredInst.Type == TYPE_RIGID );
-    rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
+    PrivateInstance& registeredInst = s_registeredInstances( hInst );
+    ASSERT( registeredInst.m_Type == GeometryType::Rigid );
+    rigid_geom* pGeom = static_cast<rigid_geom*>( registeredInst.m_pGeometry );
 
     // calculate lighting
-    void* pLighting = platform_CalculateRigidLighting( *pL2W, WorldBBox );
-    if( pLighting )
-        Flags |= INSTFLAG_DYNAMICLIGHT;
+    void* pLighting = platform_CalculateRigidLighting( *pL2W, worldBBox );
+    if ( pLighting )
+    {
+        flags |= INSTFLAG_DYNAMICLIGHT;
+    }
 
     // collect texture projections
-    u32 ProjFlags = g_ProjTextureMgr.CollectProjectionFlags( Flags, WorldBBox );
+    u32 projFlags = g_ProjTextureMgr.CollectProjectionFlags( flags, worldBBox );
 
     // Use filter light?
-    if ( ( s_bFilterLight ) && ( (Flags & DISABLE_FILTERLIGHT) == 0 ) )
-        Flags |= INSTFLAG_FILTERLIGHT;
+    if ( ( s_isLightFilteringEnabled ) && ( ( flags & DISABLE_FILTERLIGHT ) == 0 ) )
+    {
+        flags |= INSTFLAG_FILTERLIGHT;
+    }
 
     // add each of the submeshes to the render list
     for ( s32 iMesh = 0; iMesh < pGeom->m_nMeshes; iMesh++ )
     {
-        geom::mesh& Mesh = pGeom->m_pMesh[iMesh];
-        for ( s32 iSubMesh = Mesh.iSubMesh; iSubMesh < Mesh.iSubMesh+Mesh.nSubMeshes; iSubMesh++ )
+        geom::mesh& mesh = pGeom->m_pMesh[iMesh];
+        for ( s32 iSubMesh = mesh.iSubMesh; iSubMesh < mesh.iSubMesh + mesh.nSubMeshes; iSubMesh++ )
         {
-            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
-        
-            // get the material handle info
-            geom::material& Material      = pGeom->m_pMaterial[SubMesh.iMaterial];
-            xhandle         hMat          = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
-            ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
+            geom::submesh&  subMesh = pGeom->m_pSubMesh[iSubMesh];
+            geom::material& geometryMaterial = pGeom->m_pMaterial[subMesh.iMaterial];
+            xhandle hMat = GetRegisteredMaterialHandle( registeredInst.m_geometryHandle, geometryMaterial.iVirtualMat );
+            ASSERT( ( hMat >= 0 ) && ( hMat < kMaxRegisteredMaterials ) );
 
-            // set the color pointer
-			#ifdef TARGET_PC
-            const u32* pInstCol=( u32* )pCol;
-            #else
-			#error Unknown Target!	
-            #endif
-
-            //	#ifdef TARGET_PC
-            //	rigid_geom::dlist_pc& DList = pGeom->m_System.pPC[SubMesh.iDList];
-            //	ASSERT( DList.iColor <= pGeom->m_nVertices );
-            //	if( pInstCol )
-            //	    pInstCol += DList.iColor;
-            //	#endif
-
-            // figure out the sort key
-            sortkey SortKey;
-            SortKey.Bits     = SubMesh.BaseSortKey;
-            SortKey.MatIndex = s_lRegisteredMaterials.GetIndexByHandle(hMat);
-
-            // fill in the basic render instance info
-            render_instance& Inst = AddToHashHybrid( SortKey.Bits );
-            Inst.Flags            = Flags;
-            Inst.OverrideMat      = FALSE;
-            Inst.Alpha            = 255;
-
-            // get scrolling uv information
-            GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
-
-            // fill in the rigid geom instance info
-            Inst.Data.Rigid.pGeom    = pGeom;
-            Inst.Data.Rigid.pL2W     = pL2W;
-            Inst.Data.Rigid.pColInfo = pInstCol;
-
-            // fill in the lighting
-            Inst.pLighting = pLighting;
-
-            // do texture projections
-            if( (SortKey.RenderOrder < ORDER_ZPRIME) && g_ProjTextureMgr.CanReceiveProjTexture( Material ) )
-                Inst.Flags |= ProjFlags;
-
-            #ifdef TARGET_PC
-            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
-            #endif
+            AppendRigidGeometryDraw( registeredInst, *pGeom, hMat, iSubMesh, pL2W, pCol, pLighting, flags, projFlags,
+                                     255, FALSE );
         }
     }
 }
 
 //=============================================================================
 
-void render::AddRigidInstance( hgeom_inst     hInst,
-                               const void*    pCol,
-                               const matrix4* pL2W,
-                               u64            Mask,
-                               u32            Flags,
-                               s32            Alpha )
+void render::AddRigidInstance( GeometryInstanceHandle hInst, u32 const* pCol, matrix4 const* pL2W, u64 mask, u32 flags,
+                               s32 alpha )
 {
-    #ifndef X_RETAIL
-    if( g_RenderDebug.RenderSkinOnly )
+#ifndef X_RETAIL
+    if ( g_renderDebug.RenderSkinOnly )
+    {
         return;
-    #endif
+    }
+#endif
 
-    CONTEXT( "render::AddRigidInstance" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "render::AddRigidInstance" );
 
     // safety check
-    ASSERT( s_InRenderBegin );
+    ASSERT( s_isRenderActive );
     ASSERT( pL2W->IsValid() );
 
     // grab the useful pointers out
-    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
-    ASSERT( RegisteredInst.Type == TYPE_RIGID );
-    rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
+    PrivateInstance& registeredInst = s_registeredInstances( hInst );
+    ASSERT( registeredInst.m_Type == GeometryType::Rigid );
+    rigid_geom* pGeom = static_cast<rigid_geom*>( registeredInst.m_pGeometry );
 
     // calculate lighting
-    bbox WorldBBox( pGeom->m_BBox );
-    WorldBBox.Transform( *pL2W );
-    void* pLighting = platform_CalculateRigidLighting( *pL2W, WorldBBox );
+    bbox worldBBox( pGeom->m_BBox );
+    worldBBox.Transform( *pL2W );
+    void* pLighting = platform_CalculateRigidLighting( *pL2W, worldBBox );
     if ( pLighting )
-        Flags |= INSTFLAG_DYNAMICLIGHT;
+    {
+        flags |= INSTFLAG_DYNAMICLIGHT;
+    }
 
     // collect texture projections
-    u32 ProjFlags = g_ProjTextureMgr.CollectProjectionFlags( Flags, WorldBBox );
+    u32 projFlags = g_ProjTextureMgr.CollectProjectionFlags( flags, worldBBox );
 
     // Use filter light?
-    if ( ( s_bFilterLight ) && ( (Flags & DISABLE_FILTERLIGHT) == 0 ) )
-        Flags |= INSTFLAG_FILTERLIGHT;
+    if ( ( s_isLightFilteringEnabled ) && ( ( flags & DISABLE_FILTERLIGHT ) == 0 ) )
+    {
+        flags |= INSTFLAG_FILTERLIGHT;
+    }
 
-    const xbool bFadingAlpha = ((Flags & render::FADING_ALPHA) != 0) || (Alpha != 255);
+    xbool const bFadingAlpha = ( ( flags & render::FADING_ALPHA ) != 0 ) || ( alpha != 255 );
     if ( bFadingAlpha )
-        Flags |= INSTFLAG_FADING_ALPHA;
+    {
+        flags |= INSTFLAG_FADING_ALPHA;
+    }
 
     // add the meshes and submeshes to the render list
-    s32         iMesh    = 0;
-    geom::mesh* pMesh    = pGeom->m_pMesh;
+    s32         iMesh = 0;
+    geom::mesh* pMesh = pGeom->m_pMesh;
     geom::mesh* pEndMesh = pMesh + pGeom->m_nMeshes;
     while ( pMesh < pEndMesh )
     {
         // skip this mesh?
-        if( (Mask & 1) == 0 )
+        if ( ( mask & 1 ) == 0 )
         {
             pMesh++;
             iMesh++;
-            Mask >>= 1;
+            mask >>= 1;
             continue;
         }
 
         // add each of the submeshes to the render list
-        for ( s32 iSubMesh = pMesh->iSubMesh;
-              iSubMesh < pMesh->iSubMesh+pMesh->nSubMeshes;
-              iSubMesh++ )
+        for ( s32 iSubMesh = pMesh->iSubMesh; iSubMesh < pMesh->iSubMesh + pMesh->nSubMeshes; iSubMesh++ )
         {
-            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
-            geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
+            geom::submesh&  subMesh = pGeom->m_pSubMesh[iSubMesh];
+            geom::material& geomMaterial = pGeom->m_pMaterial[subMesh.iMaterial];
 
             // get the material handle info
-            xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
+            xhandle hMat = GetRegisteredMaterialHandle( registeredInst.m_geometryHandle, geomMaterial.iVirtualMat );
 
-            // range safety check for the sort key
-            ASSERT( (pGeom->m_hGeom>=0) && (pGeom->m_hGeom<kMaxRegisteredGeoms    ) );
-            ASSERT( (hMat          >=0) && (hMat          <kMaxRegisteredMaterials) );
-            ASSERT( (iSubMesh      >=0) && (iSubMesh      <256                    ) );
+            ASSERT( ( hMat >= 0 ) && ( hMat < kMaxRegisteredMaterials ) );
 
-            // figure out the bone we should render with
-            #ifdef TARGET_PC
-            s32 iBone = pGeom->m_System.pPC  [SubMesh.iDList].iBone;
-            #else
-            #error Unknown Target!	
-            #endif
+            s32      iBone = pGeom->m_pSection[subMesh.iSection].iBone;
+            matrix4* pMat = reinterpret_cast<matrix4*>( smem_BufferAlloc( sizeof( matrix4 ) ) );
+            *pMat = pL2W[iBone];
+            ASSERT( pMat->IsValid() );
 
-            // set the color pointer
-			#ifdef TARGET_PC
-            const u32* pInstCol=( u32* )pCol;
-            #else
-			#error Unknown Target!	
-            #endif
-
-            //#ifdef TARGET_PC
-            //rigid_geom::dlist_pc& DList = pGeom->m_System.pPC[SubMesh.iDList];
-            //ASSERT( DList.iColor <= pGeom->m_nVertices );
-            //if( pInstCol )
-            //    pInstCol += DList.iColor;
-            //#endif
-
-            // build the sort key
-            sortkey SortKey;
-            SortKey.Bits        = 0;
-            SortKey.GeomSubMesh = iSubMesh;
-            SortKey.GeomHandle  = pGeom->m_hGeom;
-            SortKey.GeomType    = 0;
-            SortKey.MatIndex    = s_lRegisteredMaterials.GetIndexByHandle(hMat);
-            SortKey.RenderOrder = GetRenderOrder( (material_type)Material.Type );
-            if ( bFadingAlpha && (SortKey.RenderOrder < ORDER_FADING_ALPHA) )
-                SortKey.RenderOrder = ORDER_FADING_ALPHA;
-
-            // make a copy of the l2w in smem that we can ref to
-            matrix4* pMat = (matrix4*)smem_BufferAlloc(sizeof(matrix4));
-            {
-                *pMat = *(pL2W + iBone);
-                ASSERT( pMat->IsValid() );
-            }
-
-            // fill in the basic render instance info
-            render_instance& Inst    = AddToHashHybrid( SortKey.Bits );
-            Inst.SortKey             = SortKey;
-            Inst.Flags               = Flags;
-            Inst.OverrideMat         = FALSE;
-            Inst.Alpha               = Alpha;
-
-            // get scrolling uv information
-            GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
-
-            // fill in the rigid geom instance info
-            Inst.Data.Rigid.pGeom    = pGeom;
-            Inst.Data.Rigid.pL2W     = pMat;
-            Inst.Data.Rigid.pColInfo = pInstCol;
-
-            // fill in the lighting
-            Inst.pLighting = pLighting;
-
-            // do texture projections
-            if( (SortKey.RenderOrder < ORDER_ZPRIME) && g_ProjTextureMgr.CanReceiveProjTexture( Material ) )
-                Inst.Flags |= ProjFlags;
-
-            #ifdef TARGET_PC
-            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
-            #endif
-
-            // handle fading geometry
-            if ( bFadingAlpha )
-            {
-                // we need to render twice to prime the z-buffer for alpha geometry
-                SortKey.GeomSubMesh         = iSubMesh;
-                SortKey.GeomHandle          = pGeom->m_hGeom;
-                SortKey.GeomType            = 0;
-                SortKey.MatIndex            = 0x3ff;
-                SortKey.RenderOrder         = ORDER_ZPRIME;
-                render_instance& ZPrimeInst = AddToHashHybrid( SortKey.Bits );
-                ZPrimeInst.Flags            = Inst.Flags & render::CLIPPED;
-                ZPrimeInst.pLighting        = pLighting;
-                ZPrimeInst.Data             = Inst.Data;
-                ZPrimeInst.UOffset          = Inst.UOffset;
-                ZPrimeInst.VOffset          = Inst.VOffset;
-                ZPrimeInst.Alpha            = 0x80;
-                ZPrimeInst.OverrideMat      = 1;
-                #ifdef TARGET_PC
-                ZPrimeInst.hDList           = Inst.hDList;
-                #endif
-            }
+            AppendRigidGeometryDraw( registeredInst, *pGeom, hMat, iSubMesh, pMat, pCol, pLighting, flags, projFlags,
+                                     static_cast<u8>( alpha ), bFadingAlpha );
         }
         // next mesh
         iMesh++;
         pMesh++;
-        Mask >>= 1;
+        mask >>= 1;
     }
 }
 
 //=============================================================================
 
-void render::AddRigidInstance( hgeom_inst        hInst,
-                               const void*       pCol,
-                               const matrix4*    pL2W,
-                               u64               Mask,
-                               u32               VTextureMask,
-                               u32               Flags,
-                               s32               Alpha )
+void render::AddRigidInstance( GeometryInstanceHandle hInst, u32 const* pCol, matrix4 const* pL2W, u64 mask,
+                               u32 vTextureMask, u32 flags, s32 alpha )
 {
-    #ifndef X_RETAIL
-    if( g_RenderDebug.RenderSkinOnly )
+#ifndef X_RETAIL
+    if ( g_renderDebug.RenderSkinOnly )
+    {
         return;
-    #endif
+    }
+#endif
 
-    CONTEXT( "render::AddRigidInstance" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "render::AddRigidInstance" );
 
     // safety check
-    ASSERT( s_InRenderBegin );
+    ASSERT( s_isRenderActive );
     ASSERT( pL2W->IsValid() );
 
     // grab the useful pointers out
-    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
-    ASSERT( RegisteredInst.Type == TYPE_RIGID );
-    rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
+    PrivateInstance& registeredInst = s_registeredInstances( hInst );
+    ASSERT( registeredInst.m_Type == GeometryType::Rigid );
+    rigid_geom* pGeom = static_cast<rigid_geom*>( registeredInst.m_pGeometry );
 
     // calculate lighting
-    bbox WorldBBox( pGeom->m_BBox );
-    WorldBBox.Transform( *pL2W );
-    void* pLighting = platform_CalculateRigidLighting( *pL2W, WorldBBox );
+    bbox worldBBox( pGeom->m_BBox );
+    worldBBox.Transform( *pL2W );
+    void* pLighting = platform_CalculateRigidLighting( *pL2W, worldBBox );
     if ( pLighting )
-        Flags |= INSTFLAG_DYNAMICLIGHT;
+    {
+        flags |= INSTFLAG_DYNAMICLIGHT;
+    }
 
     // collect texture projections
-    u32 ProjFlags = g_ProjTextureMgr.CollectProjectionFlags( Flags, WorldBBox );
+    u32 projFlags = g_ProjTextureMgr.CollectProjectionFlags( flags, worldBBox );
 
     // Use filter light?
-    if ( ( s_bFilterLight ) && ( (Flags & DISABLE_FILTERLIGHT) == 0 ) )
-        Flags |= INSTFLAG_FILTERLIGHT;
+    if ( ( s_isLightFilteringEnabled ) && ( ( flags & DISABLE_FILTERLIGHT ) == 0 ) )
+    {
+        flags |= INSTFLAG_FILTERLIGHT;
+    }
 
-    const xbool bFadingAlpha = ((Flags & render::FADING_ALPHA) != 0) || (Alpha != 255);
+    xbool const bFadingAlpha = ( ( flags & render::FADING_ALPHA ) != 0 ) || ( alpha != 255 );
     if ( bFadingAlpha )
-        Flags |= INSTFLAG_FADING_ALPHA;
+    {
+        flags |= INSTFLAG_FADING_ALPHA;
+    }
 
     // calculate the virtual mesh offsets
-    s32 VMatOffsets[32];
-    CalcVMatOffsets( VMatOffsets, pGeom, VTextureMask );
+    s32 vMatOffsets[32];
+    CalcVMatOffsets( vMatOffsets, pGeom, vTextureMask );
 
     // add the meshes and submeshes to the render list
-    s32         iMesh    = 0;
-    geom::mesh* pMesh    = pGeom->m_pMesh;
+    s32         iMesh = 0;
+    geom::mesh* pMesh = pGeom->m_pMesh;
     geom::mesh* pEndMesh = pMesh + pGeom->m_nMeshes;
     while ( pMesh < pEndMesh )
     {
         // skip this mesh?
-        if( (Mask & 1) == 0 )
+        if ( ( mask & 1 ) == 0 )
         {
             pMesh++;
             iMesh++;
-            Mask >>= 1;
+            mask >>= 1;
             continue;
         }
 
         // add each of the submeshes to the render list
-        for ( s32 iSubMesh = pMesh->iSubMesh;
-            iSubMesh < pMesh->iSubMesh+pMesh->nSubMeshes;
-            iSubMesh++ )
+        for ( s32 iSubMesh = pMesh->iSubMesh; iSubMesh < pMesh->iSubMesh + pMesh->nSubMeshes; iSubMesh++ )
         {
-            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
-            geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
+            geom::submesh&  subMesh = pGeom->m_pSubMesh[iSubMesh];
+            geom::material& geometryMaterial = pGeom->m_pMaterial[subMesh.iMaterial];
 
             // get the material handle info
-            xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat + VMatOffsets[SubMesh.iMaterial]].MatHandle;
+            xhandle hMat = GetRegisteredMaterialHandle( registeredInst.m_geometryHandle,
+                                                        geometryMaterial.iVirtualMat + vMatOffsets[subMesh.iMaterial] );
 
-            // range safety check for the sort key
-            ASSERT( (pGeom->m_hGeom>=0) && (pGeom->m_hGeom<kMaxRegisteredGeoms    ) );
-            ASSERT( (hMat          >=0) && (hMat          <kMaxRegisteredMaterials) );
-            ASSERT( (iSubMesh      >=0) && (iSubMesh      <256                    ) );
+            ASSERT( ( hMat >= 0 ) && ( hMat < kMaxRegisteredMaterials ) );
 
-            // figure out the bone we should render with
-            #ifdef TARGET_PC
-            s32 iBone = pGeom->m_System.pPC  [SubMesh.iDList].iBone;
-            #else
-            #error Unknown Target!
-            #endif
+            s32      iBone = pGeom->m_pSection[subMesh.iSection].iBone;
+            matrix4* pMat = reinterpret_cast<matrix4*>( smem_BufferAlloc( sizeof( matrix4 ) ) );
+            *pMat = pL2W[iBone];
+            ASSERT( pMat->IsValid() );
 
-            // set the color pointer
-            #ifdef TARGET_PC
-            const u32* pInstCol=( u32* )pCol;
-            #else
-			#error Unknown Target!	
-            #endif
-
-            //#ifdef TARGET_PC
-            //rigid_geom::dlist_pc& DList = pGeom->m_System.pPC[SubMesh.iDList];
-            //ASSERT( DList.iColor <= pGeom->m_nVertices );
-            //if( pInstCol )
-            //    pInstCol += DList.iColor;
-            //#endif
-
-            // build the sort key
-            sortkey SortKey;
-            SortKey.Bits        = 0;
-            SortKey.GeomSubMesh = iSubMesh;
-            SortKey.GeomHandle  = pGeom->m_hGeom;
-            SortKey.GeomType    = 0;
-            SortKey.MatIndex    = s_lRegisteredMaterials.GetIndexByHandle(hMat);
-            SortKey.RenderOrder = GetRenderOrder( (material_type)Material.Type );
-            if ( bFadingAlpha && (SortKey.RenderOrder < ORDER_FADING_ALPHA) )
-                SortKey.RenderOrder = ORDER_FADING_ALPHA;
-
-            // make a copy of the l2w in smem that we can ref to
-            matrix4* pMat = (matrix4*)smem_BufferAlloc(sizeof(matrix4));
-            {
-                *pMat = *(pL2W + iBone);
-                ASSERT( pMat->IsValid() );
-            }
-
-            // fill in the basic render instance info
-            render_instance& Inst    = AddToHashHybrid( SortKey.Bits );
-            Inst.SortKey             = SortKey;
-            Inst.Flags               = Flags;
-            Inst.OverrideMat         = FALSE;
-            Inst.Alpha               = Alpha;
-
-            // get scrolling uv information
-            GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
-
-            // fill in the rigid geom instance info
-            Inst.Data.Rigid.pGeom    = pGeom;
-            Inst.Data.Rigid.pL2W     = pMat;
-            Inst.Data.Rigid.pColInfo = pInstCol;
-
-            // fill in the lighting
-            Inst.pLighting = pLighting;
-
-            // do texture projections
-            if( (SortKey.RenderOrder < ORDER_ZPRIME) && g_ProjTextureMgr.CanReceiveProjTexture( Material ) )
-                Inst.Flags |= ProjFlags;
-
-            #ifdef TARGET_PC
-            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
-            #endif
-
-            // handle fading geometry
-            if ( bFadingAlpha )
-            {
-                // we need to render twice to prime the z-buffer for alpha geometry
-                SortKey.GeomSubMesh         = iSubMesh;
-                SortKey.GeomHandle          = pGeom->m_hGeom;
-                SortKey.GeomType            = 0;
-                SortKey.MatIndex            = 0x3ff;
-                SortKey.RenderOrder         = ORDER_ZPRIME;
-                render_instance& ZPrimeInst = AddToHashHybrid( SortKey.Bits );
-                ZPrimeInst.Flags            = Inst.Flags & render::CLIPPED;
-                ZPrimeInst.pLighting        = pLighting;
-                ZPrimeInst.Data             = Inst.Data;
-                ZPrimeInst.UOffset          = Inst.UOffset;
-                ZPrimeInst.VOffset          = Inst.VOffset;
-                ZPrimeInst.Alpha            = 0x80;
-                ZPrimeInst.OverrideMat      = 1;
-                #ifdef TARGET_PC
-                ZPrimeInst.hDList           = Inst.hDList;
-                #endif
-            }
+            AppendRigidGeometryDraw( registeredInst, *pGeom, hMat, iSubMesh, pMat, pCol, pLighting, flags, projFlags,
+                                     static_cast<u8>( alpha ), bFadingAlpha );
         }
         // next mesh
         iMesh++;
         pMesh++;
-        Mask >>= 1;
+        mask >>= 1;
     }
 }
 
 //=============================================================================
 
-void render::AddSkinInstance( hgeom_inst     hInst,
-                              const matrix4* pBone,
-                              u64            Mask,
-                              u32            VTextureMask,
-                              u32            Flags,
-                              const xcolor&  Ambient )
+void render::AddSkinInstance( GeometryInstanceHandle hInst, matrix4 const* pBone, u64 mask, u32 vTextureMask, u32 flags,
+                              xcolor const& ambient )
 {
-    #ifndef X_RETAIL
-    if( g_RenderDebug.RenderRigidOnly )
+#ifndef X_RETAIL
+    if ( g_renderDebug.RenderRigidOnly )
+    {
         return;
-    #endif
+    }
+#endif
 
-    CONTEXT( "render::AddSkinInstance" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "render::AddSkinInstance" );
 
     // safety check
-    ASSERT( s_InRenderBegin );
+    ASSERT( s_isRenderActive );
 
     // grab the useful pointers out
-    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
-    ASSERT( RegisteredInst.Type == TYPE_SKIN );
-    skin_geom* pGeom = (skin_geom*)RegisteredInst.pGeom;
+    PrivateInstance& registeredInst = s_registeredInstances( hInst );
+    ASSERT( registeredInst.m_Type == GeometryType::Skin );
+    skin_geom* pGeom = static_cast<skin_geom*>( registeredInst.m_pGeometry );
 
     // calculate lighting
-    void* pLighting = platform_CalculateSkinLighting( Flags, pBone[0], pGeom->m_BBox, Ambient );
-    Flags |= INSTFLAG_DYNAMICLIGHT;
-    const xbool bFadingAlpha = ((Flags & render::FADING_ALPHA) != 0) || (Ambient.A != 255);
+    void* pLighting = platform_CalculateSkinLighting( flags, pBone[0], pGeom->m_BBox, ambient );
+    flags |= INSTFLAG_DYNAMICLIGHT;
+    xbool const bGlowing = ( flags & render::GLOWING ) != 0;
+    xbool const bFadingAlpha = ( ( flags & render::FADING_ALPHA ) != 0 ) || ( !bGlowing && ( ambient.A != 255 ) );
     if ( bFadingAlpha )
-        Flags |= INSTFLAG_FADING_ALPHA;
+    {
+        flags |= INSTFLAG_FADING_ALPHA;
+    }
 
     // collect texture projections
-    bbox WorldBBox( pGeom->m_BBox );
-    WorldBBox.Transform( pBone[0] );
-    u32 ProjFlags = g_ProjTextureMgr.CollectProjectionFlags( Flags, WorldBBox );
+    bbox worldBBox( pGeom->m_BBox );
+    worldBBox.Transform( pBone[0] );
+    u32 projFlags = g_ProjTextureMgr.CollectProjectionFlags( flags, worldBBox );
 
     // calculate the virtual mesh offsets
-    s32 VMatOffsets[32];
-    CalcVMatOffsets( VMatOffsets, pGeom, VTextureMask );
+    s32 vMatOffsets[32];
+    CalcVMatOffsets( vMatOffsets, pGeom, vTextureMask );
 
     // add the meshes and submeshes to the render list
     for ( s32 iMesh = 0; iMesh < pGeom->m_nMeshes; iMesh++ )
     {
         // skip this mesh?
-        if( (Mask & ((u64)1 << iMesh)) == 0 )
+        if ( ( mask & ( u64{ 1 } << iMesh ) ) == 0 )
+        {
             continue;
+        }
 
         // add each of the submeshes to the render list
-        geom::mesh& Mesh = pGeom->m_pMesh[iMesh];
-        for ( s32 iSubMesh = Mesh.iSubMesh;
-              iSubMesh < Mesh.iSubMesh+Mesh.nSubMeshes;
-              iSubMesh++ )
+        geom::mesh& mesh = pGeom->m_pMesh[iMesh];
+        for ( s32 iSubMesh = mesh.iSubMesh; iSubMesh < mesh.iSubMesh + mesh.nSubMeshes; iSubMesh++ )
         {
-            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
-            geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
+            geom::submesh&  subMesh = pGeom->m_pSubMesh[iSubMesh];
+            geom::material& geometryMaterial = pGeom->m_pMaterial[subMesh.iMaterial];
 
             // get the material handle info
-            xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat + VMatOffsets[SubMesh.iMaterial]].MatHandle;
+            xhandle hMat = GetRegisteredMaterialHandle( registeredInst.m_geometryHandle,
+                                                        geometryMaterial.iVirtualMat + vMatOffsets[subMesh.iMaterial] );
 
-            // range safety check for the sort key
-            ASSERT( (pGeom->m_hGeom>=0) && (pGeom->m_hGeom<kMaxRegisteredGeoms    ) );
-            ASSERT( (hMat          >=0) && (hMat          <kMaxRegisteredMaterials) );
-            ASSERT( (iSubMesh      >=0) && (iSubMesh      <256                    ) );
+            ASSERT( ( hMat >= 0 ) && ( hMat < kMaxRegisteredMaterials ) );
 
-            // build the sort key
-            sortkey SortKey;
-            SortKey.Bits        = 0;
-            SortKey.GeomSubMesh = iSubMesh;
-            SortKey.GeomHandle  = pGeom->m_hGeom;
-            SortKey.GeomType    = 1;
-            SortKey.MatIndex    = s_lRegisteredMaterials.GetIndexByHandle(hMat);
-            SortKey.RenderOrder = GetRenderOrder( (material_type)Material.Type );
-            if ( bFadingAlpha && (SortKey.RenderOrder < ORDER_FADING_ALPHA) )
-                SortKey.RenderOrder = ORDER_FADING_ALPHA;
-            if ( (Flags & render::GLOWING) && (SortKey.RenderOrder < ORDER_GLOWING) )
-                SortKey.RenderOrder = ORDER_GLOWING;
-            if ( (Flags & render::FORCE_LAST) && (SortKey.RenderOrder < ORDER_FORCED_LAST) )
-                SortKey.RenderOrder = ORDER_FORCED_LAST;
-
-            // fill in the basic render instance info
-            render_instance& Inst    = AddToHashHybrid( SortKey.Bits );
-            Inst.SortKey             = SortKey;
-            Inst.Flags               = Flags;
-            Inst.OverrideMat         = FALSE;
-
-            // get scrolling uv information
-            GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
-
-            // fill in the alpha
-            Inst.Alpha = Ambient.A;
-
-            // fill in the skin geom instance info
-            Inst.Data.Skin.pGeom     = pGeom;
-            Inst.Data.Skin.pBones    = pBone;
-            Inst.Data.Skin.Pad       = 0;
-
-            // fill in the lighting
-            Inst.pLighting = pLighting;
-
-            // do texture projections
-            if( (SortKey.RenderOrder < ORDER_ZPRIME) && g_ProjTextureMgr.CanReceiveProjTexture( Material ) )
-                Inst.Flags |= ProjFlags;
-
-            #ifdef TARGET_PC
-            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.hDList               = PrivateGeom.SkinDList[(s32)SubMesh.iDList];
-            #endif
-
-            // handle fading geometry
-            if ( bFadingAlpha )
-            {
-                // we need to render twice to prime the z-buffer for alpha geometry
-                SortKey.GeomSubMesh         = iSubMesh;
-                SortKey.GeomHandle          = pGeom->m_hGeom;
-                SortKey.GeomType            = 1;
-                SortKey.MatIndex            = 0x3ff;
-                SortKey.RenderOrder         = ORDER_ZPRIME;
-                render_instance& ZPrimeInst = AddToHashHybrid( SortKey.Bits );
-                ZPrimeInst.Flags            = Inst.Flags & render::CLIPPED;
-                ZPrimeInst.pLighting        = pLighting;
-                ZPrimeInst.Data             = Inst.Data;
-                ZPrimeInst.UOffset          = Inst.UOffset;
-                ZPrimeInst.VOffset          = Inst.VOffset;
-                ZPrimeInst.Alpha            = 0x80;
-                ZPrimeInst.OverrideMat      = 1;
-                #ifdef TARGET_PC
-                ZPrimeInst.hDList           = Inst.hDList;
-                #endif
-            }
+            AppendSkinGeometryDraw( registeredInst, *pGeom, hMat, iSubMesh, pBone, pLighting, flags, projFlags,
+                                    ambient.A, bFadingAlpha );
         }
     }
 }
 
 //=============================================================================
 
-void render::AddSkinInstanceDistorted( hgeom_inst        hInst,
-                                       const matrix4*    pBone,
-                                       u64               Mask,
-                                       u32               Flags,
-                                       const radian3&    NormalRot,
-                                       xcolor            Ambient )
+void render::AddSkinInstanceDistorted( GeometryInstanceHandle hInst, matrix4 const* pBone, u64 mask, u32 flags,
+                                       radian3 const& normalRot, xcolor ambient )
 {
-    #ifndef X_RETAIL
-    if( g_RenderDebug.RenderRigidOnly )
+#ifndef X_RETAIL
+    if ( g_renderDebug.RenderRigidOnly )
+    {
         return;
-    #endif
+    }
+#endif
 
-    CONTEXT( "render::AddSkinInstance" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "render::AddSkinInstance" );
 
     // safety check
-    ASSERT( s_InRenderBegin );
+    ASSERT( s_isRenderActive );
 
     // grab the useful pointers out
-    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
-    ASSERT( RegisteredInst.Type == TYPE_SKIN );
-    skin_geom* pGeom = (skin_geom*)RegisteredInst.pGeom;
+    PrivateInstance& registeredInst = s_registeredInstances( hInst );
+    ASSERT( registeredInst.m_Type == GeometryType::Skin );
+    skin_geom* pGeom = static_cast<skin_geom*>( registeredInst.m_pGeometry );
 
     // calculate lighting
     // TODO: Ignore dynamic lights for "cloaked" objects
-    void* pLighting = platform_CalculateSkinLighting( Flags, pBone[0], pGeom->m_BBox, Ambient );
-    Flags |= INSTFLAG_DYNAMICLIGHT;
-
-    // generate a default distortion info struct for handling this guy
-    s32 DefaultInfoIndex = s_lDistortionInfo.GetCount();
-    distortion_info& DefaultInfo = s_lDistortionInfo.Append();
-    DefaultInfo.MatIndex  = 0xffffffff;
-    DefaultInfo.NormalRot = NormalRot;
+    void* pLighting = platform_CalculateSkinLighting( flags, pBone[0], pGeom->m_BBox, ambient );
+    flags |= INSTFLAG_DYNAMICLIGHT;
 
     // add the meshes and submeshes to the render list
     for ( s32 iMesh = 0; iMesh < pGeom->m_nMeshes; iMesh++ )
     {
         // skip this mesh?
-        if( (Mask & ((u64)1 << iMesh)) == 0 )
+        if ( ( mask & ( u64{ 1 } << iMesh ) ) == 0 )
+        {
             continue;
+        }
 
         // add each of the submeshes to the render list
-        geom::mesh& Mesh = pGeom->m_pMesh[iMesh];
-        for ( s32 iSubMesh = Mesh.iSubMesh;
-              iSubMesh < Mesh.iSubMesh+Mesh.nSubMeshes;
-              iSubMesh++ )
+        geom::mesh& mesh = pGeom->m_pMesh[iMesh];
+        for ( s32 iSubMesh = mesh.iSubMesh; iSubMesh < mesh.iSubMesh + mesh.nSubMeshes; iSubMesh++ )
         {
-            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
-            geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
+            geom::submesh&  subMesh = pGeom->m_pSubMesh[iSubMesh];
+            geom::material& geometryMaterial = pGeom->m_pMaterial[subMesh.iMaterial];
 
             // get the material handle info
-            xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
+            xhandle hMat = GetRegisteredMaterialHandle( registeredInst.m_geometryHandle, geometryMaterial.iVirtualMat );
 
-            // range safety check for the sort key
-            ASSERT( (pGeom->m_hGeom>=0) && (pGeom->m_hGeom<kMaxRegisteredGeoms    ) );
-            ASSERT( (hMat          >=0) && (hMat          <kMaxRegisteredMaterials) );
-            ASSERT( (iSubMesh      >=0) && (iSubMesh      <256                    ) );
+            ASSERT( ( hMat >= 0 ) && ( hMat < kMaxRegisteredMaterials ) );
 
-            // are we overriding a non-distortion material, or using a distortion material
-            // already?!?
-            if( (Material.Type == Material_Distortion) ||
-                (Material.Type == Material_Distortion_PerPolyEnv) )
+            if ( !ShouldSubmitGeometry( flags ) )
             {
-                // NOTE: Since the default info is shared by the entire mesh, this
-                // will break any cases where we've mixed distortion materials within
-                // a single piece of geometry. This shouldn't ever happen, but if
-                // it does, then we need a DefaultInfo per material.
-                DefaultInfo.MatIndex = s_lRegisteredMaterials.GetIndexByHandle( hMat );
+                continue;
             }
 
-            // build the sort key
-            sortkey SortKey;
-            SortKey.Bits        = 0;
-            SortKey.GeomSubMesh = iSubMesh;
-            SortKey.GeomHandle  = pGeom->m_hGeom;
-            SortKey.GeomType    = 1;
-            SortKey.MatIndex    = DefaultInfoIndex;
-            SortKey.RenderOrder = ORDER_DISTORTION;
+            f32 sortDepth;
+            if ( !ComputeGeometryDepth( sortDepth, pGeom->m_BBox, pBone ) )
+            {
+                continue;
+            }
 
-            // fill in the basic render instance info
-            render_instance& Inst    = AddToHashHybrid( SortKey.Bits );
-            Inst.SortKey             = SortKey;
-            Inst.Flags               = Flags;
-            Inst.OverrideMat         = TRUE;
+            ASSERT( s_geometryDraws.GetCount() < kMaxRenderedInstances );
+            if ( s_geometryDraws.GetCount() >= kMaxRenderedInstances )
+            {
+                continue;
+            }
 
-            // get scrolling uv information
-            GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
+            PrivateGeometry& registeredGeom = s_registeredGeometry( registeredInst.m_geometryHandle );
+            material&        renderMaterial = s_registeredMaterials( hMat );
 
-            // fill in the alpha
-            Inst.Alpha = Ambient.A;
-
-            // fill in the skin geom instance info
-            Inst.Data.Skin.pGeom     = pGeom;
-            Inst.Data.Skin.pBones    = pBone;
-            Inst.Data.Skin.Pad       = 0;
-
-            // fill in the lighting
-            Inst.pLighting = pLighting;
-
-            #ifdef TARGET_PC
-            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.hDList               = PrivateGeom.SkinDList[(s32)SubMesh.iDList];
-            #endif
+            geometry_draw_item& item = s_geometryDraws.Append();
+            item.Pass = GEOMETRY_PASS_DISTORTION;
+            item.Type = GEOMETRY_DRAW_SKIN;
+            item.hRenderGeom = registeredGeom.m_renderGeometryHandle;
+            item.pMaterial = renderMaterial.IsDistortion() ? &renderMaterial : NULL;
+            item.MaterialOrder = renderMaterial.IsDistortion() ? s_registeredMaterials.GetIndexByHandle( hMat ) : 0;
+            item.iSurface = iSubMesh;
+            item.Flags = flags;
+            item.pLighting = pLighting;
+            item.Data.Skin.pGeom = pGeom;
+            item.Data.Skin.pBones = pBone;
+            item.Data.Skin.BoneCount = 0;
+            item.DistortionNormalRot = normalRot;
+            item.SortDepth = sortDepth;
+            item.Sequence = s_nextGeometrySequence++;
+            item.ShadowSourceIndex = -1;
+            item.Alpha = ambient.A;
+            item.MaterialOverride = FALSE;
+            GetUVOffset( item.UOffset, item.VOffset, pGeom, renderMaterial );
         }
     }
 }
 
 //=============================================================================
 
-void render::BeginMidPostEffects( void ) //Deprecated ?
+void render::BeginMidPostEffects( void ) // Deprecated ?
 {
     platform_BeginPostEffects();
 }
 
 //=============================================================================
 
-void render::EndMidPostEffects( void ) //Deprecated ?
+void render::EndMidPostEffects( void ) // Deprecated ?
 {
     platform_EndPostEffects();
 }
@@ -2173,788 +1641,464 @@ void render::EndMidPostEffects( void ) //Deprecated ?
 
 void render::BeginPostEffects( void )
 {
-    CONTEXT( "render::BeginPostEffects" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "render::BeginPostEffects" );
     platform_BeginPostEffects();
 }
 
 //=============================================================================
 
-void render::ApplySelfIllumGlows( f32 MotionBlurIntensity, s32 GlowCutoff )
+void render::ApplySelfIllumGlows( f32 motionBlurIntensity, s32 glowCutoff )
 {
-    platform_ApplySelfIllumGlows( MotionBlurIntensity, GlowCutoff );
+    platform_ApplySelfIllumGlows( motionBlurIntensity, glowCutoff );
 }
 
 //=============================================================================
 
-void render::ZFogFilter( render::post_falloff_fn Fn, xcolor Color, f32 Param1, f32 Param2 )
+void render::ZFogFilter( render::post_falloff_fn fn, xcolor color, f32 param1, f32 param2 )
 {
-    platform_ZFogFilter( Fn, Color, Param1, Param2 );
+    platform_ZFogFilter( fn, color, param1, param2 );
 }
 
 //=============================================================================
 
-void render::ZFogFilter( render::post_falloff_fn Fn, s32 PaletteIndex )
+void render::ZFogFilter( render::post_falloff_fn fn, s32 paletteIndex )
 {
-    platform_ZFogFilter( Fn, PaletteIndex );
+    platform_ZFogFilter( fn, paletteIndex );
 }
 
 //=============================================================================
 
-void render::AddScreenWarp( const vector3& WorldPos, f32 Radius, f32 WarpAmount )
+void render::AddScreenWarp( vector3 const& worldPos, f32 radius, f32 warpAmount )
 {
-    platform_AddScreenWarp( WorldPos, Radius, WarpAmount );
+    platform_AddScreenWarp( worldPos, radius, warpAmount );
 }
 
 //=============================================================================
 
-void render::MotionBlur( f32 Intensity )
+void render::MotionBlur( f32 intensity )
 {
-    platform_MotionBlur( Intensity );
+    platform_MotionBlur( intensity );
 }
 
 //=============================================================================
 
-void render::MipFilter( s32                     nFilters,
-                        f32                     Offset,
-                        render::post_falloff_fn Fn,
-                        xcolor                  Color,
-                        f32                     Param1,
-                        f32                     Param2,
-                        s32                     PaletteIndex )
+void render::MipFilter( s32 nFilters, f32 offset, render::post_falloff_fn fn, xcolor color, f32 param1, f32 param2,
+                        s32 paletteIndex )
 {
-    platform_MipFilter( nFilters, Offset, Fn, Color, Param1, Param2, PaletteIndex );
+    platform_MipFilter( nFilters, offset, fn, color, param1, param2, paletteIndex );
 }
 
 //=============================================================================
 
-void render::MipFilter( s32                     nFilters,
-                        f32                     Offset,
-                        render::post_falloff_fn Fn,
-                        const texture::handle&  Texture,
-                        s32                     PaletteIndex )
+void render::MipFilter( s32 nFilters, f32 offset, render::post_falloff_fn fn, texture::handle const& texture,
+                        s32 paletteIndex )
 {
-    platform_MipFilter( nFilters, Offset, Fn, Texture, PaletteIndex );
+    platform_MipFilter( nFilters, offset, fn, texture, paletteIndex );
 }
 
 //=============================================================================
 
-void render::MultScreen( xcolor MultColor, post_screen_blend FinalBlend )
+void render::MultScreen( xcolor multColor, post_screen_blend finalBlend )
 {
-    platform_MultScreen( MultColor, FinalBlend );
+    platform_MultScreen( multColor, finalBlend );
 }
 
 //=============================================================================
 
-void render::RadialBlur( f32 Zoom, radian Angle, f32 AlphaSub, f32 AlphaScale )
+void render::RadialBlur( f32 zoom, radian angle, f32 alphaSub, f32 alphaScale )
 {
-    platform_RadialBlur( Zoom, Angle, AlphaSub, AlphaScale );
+    platform_RadialBlur( zoom, angle, alphaSub, alphaScale );
 }
 
 //=============================================================================
 
-void render::NoiseFilter( xcolor Color )
+void render::NoiseFilter( xcolor color )
 {
-    platform_NoiseFilter( Color );
+    platform_NoiseFilter( color );
 }
 
 //=============================================================================
 
-void render::ScreenFade( xcolor Color )
+void render::ScreenFade( xcolor color )
 {
-    platform_ScreenFade( Color );
+    platform_ScreenFade( color );
 }
 
 //=============================================================================
 
 void render::EndPostEffects( void )
 {
-    CONTEXT( "render::EndPostEffects" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "render::EndPostEffects" );
     platform_EndPostEffects();
 }
 
 //=============================================================================
 
-material& render::GetMaterial( hgeom_inst hInst, s32 iSubMesh )
+material& render::GetMaterial( GeometryInstanceHandle hInst, s32 iSubMesh )
 {
     // grab the useful pointers out
-    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
+    PrivateInstance& registeredInst = s_registeredInstances( hInst );
 
-    geom* pGeom = RegisteredInst.pGeom;
-    ASSERT(pGeom) ;
+    geom* pGeom = registeredInst.m_pGeometry;
+    ASSERT( pGeom );
 
     // get the internal registered material from the geometry material
-    geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
-    geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
-    xhandle         hMat     = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
-    ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
+    geom::submesh&  subMesh = pGeom->m_pSubMesh[iSubMesh];
+    geom::material& geometryMaterial = pGeom->m_pMaterial[subMesh.iMaterial];
+    xhandle         hMat = GetRegisteredMaterialHandle( registeredInst.m_geometryHandle, geometryMaterial.iVirtualMat );
+    ASSERT( ( hMat >= 0 ) && ( hMat < kMaxRegisteredMaterials ) );
 
-    return s_lRegisteredMaterials(hMat);
+    return s_registeredMaterials( hMat );
 }
 
 //=============================================================================
 
-texture* render::GetVTexture( const geom* pGeom,
-                              s32         iMaterial,
-                              s32         VTextureMask )
+texture* render::GetVTexture( geom const* pGeom, s32 iMaterial, s32 vTextureMask )
 {
     // assume no offset to start with
-    s32 VMatOffset = 0;
+    s32 vMatOffset = 0;
 
     // find any virtual textures that might affect this material, and if so
     // the material offset will come directly from the mask
     s32 i;
-    for( i = 0; i < pGeom->m_nVirtualTextures; i++ )
+    for ( i = 0; i < pGeom->m_nVirtualTextures; i++ )
     {
         // grab the associated bits for this vtexture from the texture mask
-        s32 Offset = VTextureMask & 0xf;
-        VTextureMask >>= 4;
-        
+        s32 offset = vTextureMask & 0xf;
+        vTextureMask >>= 4;
+
         // does this virtual texture affect this material?
-        const geom::virtual_texture& VTexture = pGeom->m_pVirtualTextures[i];
-        if( VTexture.MaterialMask & (1<<iMaterial) )
+        geom::virtual_texture const& vTexture = pGeom->m_pVirtualTextures[i];
+        if ( vTexture.MaterialMask & ( 1 << iMaterial ) )
         {
-            VMatOffset = Offset;
+            vMatOffset = offset;
             break;
         }
     }
 
     // now, using the offset, get the texture (requires a good bit of
     // redirection, but all comes out in the end)
-    const geom::material&         GeomMat  = pGeom->m_pMaterial[iMaterial];
-    const geom::virtual_material& GeomVMat = pGeom->m_pVirtualMaterials[GeomMat.iVirtualMat + VMatOffset];
-    xhandle                       hMat     = GeomVMat.MatHandle;
-    material&                     Mat      = s_lRegisteredMaterials(hMat);
-    
-    return Mat.m_DiffuseMap.GetPointer();
+    xhandle hGeom = FindRegisteredGeom( *pGeom );
+    ASSERT( !hGeom.IsNull() );
+
+    geom::material const& geomMat = pGeom->m_pMaterial[iMaterial];
+    xhandle               hMat = GetRegisteredMaterialHandle( hGeom, geomMat.iVirtualMat + vMatOffset );
+    material&             mat = s_registeredMaterials( hMat );
+
+    return mat.m_diffuseMap.GetPointer();
 }
 
 //=============================================================================
 
-void render::SetAreaCubeMap( const cubemap::handle&  CubeMap )
+void render::SetAreaCubeMap( cubemap::handle const& cubeMap )
 {
-    s_pCurrCubeMap = CubeMap.GetPointer();
+    s_pCurrentCubeMap = cubeMap.GetPointer();
 }
 
 //=============================================================================
 
-void render::EnableFilterLight( xbool  bEnable )
+void render::EnableFilterLight( xbool bEnable )
 {
-    s_bFilterLight = bEnable ;
+    s_isLightFilteringEnabled = bEnable;
 }
 
 //=============================================================================
 
 xbool render::IsFilterLightEnabled( void )
 {
-    return s_bFilterLight ;
+    return s_isLightFilteringEnabled;
 }
 
 //=============================================================================
 
-void render::SetFilterLightColor( xcolor Color   )
+void render::SetFilterLightColor( xcolor color )
 {
-    s_FilterLightColor = Color ;
+    s_filterLightColor = color;
 }
 
 //=============================================================================
 
 xcolor render::GetFilterLightColor( void )
 {
-    return s_FilterLightColor ;
+    return s_filterLightColor;
 }
 
 //=============================================================================
 
 void render::BeginShadowCreation( void )
 {
-    ASSERT( !s_InRenderBegin && !s_InShadowBegin && !s_InRawBegin );
+    ASSERT( !s_isRenderActive && !s_isShadowRenderActive && !s_isPrimitiveRenderActive );
 
-    s_InShadowBegin = TRUE;
+    s_isShadowRenderActive = TRUE;
 
-    // clear out the list of render instances
-    s_LoHashMark = 0;
-    s_HiHashMark = kMaxRenderedInstances - 1;
-    x_memset( s_HashTable, 0xff, sizeof(s16)*kMaxRenderedInstances );
+    s_shadowDraws.SetCount( 0 );
+    s_dynamicShadowDraws.SetCount( 0 );
+    s_orderedShadowDraws.SetCount( 0 );
+    s_nextShadowSequence = 0;
 
     // clear out any current shadow-map sources
     platform_ClearShadowSourceList();
-    s_nShadowSources = 0;
+    s_shadowSourceCount = 0;
 }
 
 //=============================================================================
 
 void render::EndShadowCreation( void )
 {
-    CONTEXT( "render::EndShadowCreation" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "render::EndShadowCreation" );
 
     // safety check
     ASSERT( eng_InBeginEnd() );
-    ASSERT( s_InShadowBegin );
-    s_InShadowBegin = FALSE;
+    ASSERT( s_isShadowRenderActive );
+    s_isShadowRenderActive = FALSE;
 
-    platform_FinalizeShadowSourceList();
+    static xprofile_counter shadowCasterDraws = x_GetProfiler().RegisterCounter( "ShadowCasterDraws", "RenderCounter" );
+    static xprofile_counter shadowSources = x_GetProfiler().RegisterCounter( "ShadowSources", "RenderCounter" );
+    shadowCasterDraws.Add( s_shadowDraws.GetCount() + s_dynamicShadowDraws.GetCount() );
+    shadowSources.Add( s_shadowSourceCount );
 
-    // let the platform-specific shaders get initialized (whether its d3d vert/pixel
-    // shaders, vu0/vu1 microcode, or gamecube passes)
-    platform_BeginShadowShaders();
-
-    // sort the render instances (by material and sort key)
-    x_qsort( s_lSortData.GetPtr(), s_LoHashMark, sizeof(sort_struct), InstanceCompareFn );
-
-    // we start by casting shadows
-    platform_StartShadowCast();
-
-    // loop through all of the render instances and render those bad boys
-    geom*           pCurrentGeom = NULL;
-    geom_type       CurrentType  = TYPE_UNKNOWN;
-    shad_sortkey    CurrentSortData;
-    CurrentSortData.Bits = 0xffffffff;
-    s32       iUniqueInst;
-    for ( iUniqueInst = 0; iUniqueInst < s_LoHashMark; iUniqueInst++ )
     {
-        render_instance& Inst = s_lRenderInst[s_lSortData[iUniqueInst].iRenderInst];
+        X_PROFILE_SCOPE_CATEGORY( "Renderer", "Shadow/FinalizeSources" );
+        platform_FinalizeShadowSourceList();
+    }
 
-        // break out of this loop if it's time to receive
-        if ( Inst.ShadSortKey.ShadType )
+    {
+        X_PROFILE_SCOPE_CATEGORY( "Renderer", "Shadow/Prepare" );
+        platform_BeginShadowShaders();
+    }
+
+    {
+        X_PROFILE_SCOPE_CATEGORY( "Renderer", "Shadow/SortCasters" );
+        for ( s32 i = 0; i < s_shadowDraws.GetCount(); ++i )
         {
-            break;
+            s_orderedShadowDraws.Append() = &s_shadowDraws[i];
         }
 
-        // TODO: Handle material swaps...shadows will eventually need to work
-        // with punch-through
-
-        // start a new instance batch if necessary (geometry sorting should already
-        // be built into the sort key)
-        if ( (Inst.ShadSortKey.GeomType == 0) &&
-             ((pCurrentGeom != Inst.Data.Rigid.pGeom) || (CurrentSortData.GeomSubMesh != Inst.ShadSortKey.GeomSubMesh)) )
+        if ( s_orderedShadowDraws.GetCount() > 1 )
         {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndShadowCastRigid();
-                else                                platform_EndShadowCastSkin();
-            }
-
-            pCurrentGeom                = Inst.Data.Rigid.pGeom;
-            CurrentType                 = TYPE_RIGID;
-            CurrentSortData.GeomSubMesh = Inst.ShadSortKey.GeomSubMesh;
-            platform_BeginShadowCastRigid( pCurrentGeom, Inst.ShadSortKey.GeomSubMesh );
-        }
-        else
-        if ( Inst.ShadSortKey.GeomType &&
-             ((pCurrentGeom != Inst.Data.Skin.pGeom) || (CurrentSortData.GeomSubMesh != Inst.ShadSortKey.GeomSubMesh)) )
-        {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndShadowCastRigid();
-                else                                platform_EndShadowCastSkin();
-            }
-
-            pCurrentGeom                = Inst.Data.Skin.pGeom;
-            CurrentType                 = TYPE_SKIN;
-            CurrentSortData.GeomSubMesh = Inst.ShadSortKey.GeomSubMesh;
-            platform_BeginShadowCastSkin( pCurrentGeom, Inst.ShadSortKey.GeomSubMesh );
-        }
-
-        // let the platform run its render code on the instances
-        s32 iInstToRender = s_lSortData[iUniqueInst].iRenderInst;
-        if ( Inst.ShadSortKey.GeomType == 0 )
-        {
-            while ( iInstToRender != -1 )
-            {
-                ASSERT( s_lRenderInst[iInstToRender].ShadSortKey.Bits == Inst.ShadSortKey.Bits );
-                platform_RenderShadowCastRigid( s_lRenderInst[iInstToRender] );
-                iInstToRender = s_lRenderInst[iInstToRender].Brother;
-            };
-        }
-        else
-        {
-            while ( iInstToRender != -1 )
-            {
-                ASSERT( s_lRenderInst[iInstToRender].ShadSortKey.Bits == Inst.ShadSortKey.Bits );
-                platform_RenderShadowCastSkin( s_lRenderInst[iInstToRender], Inst.ShadSortKey.ShadowSourceIndex );
-                iInstToRender = s_lRenderInst[iInstToRender].Brother;
-            };
+            x_qsort( s_orderedShadowDraws.GetPtr(), s_orderedShadowDraws.GetCount(),
+                     sizeof( geometry_draw_item const* ), ShadowCompareFn );
         }
     }
 
-    // finish any pending tasks
-    if ( pCurrentGeom != NULL )
     {
-        ASSERT( CurrentType != TYPE_UNKNOWN );
-        if ( CurrentType == TYPE_RIGID )    platform_EndShadowCastRigid();
-        else                                platform_EndShadowCastSkin();
+        X_PROFILE_SCOPE_CATEGORY( "Renderer", "Shadow/RenderCasters" );
+        platform_RenderShadowCasters( s_orderedShadowDraws, s_dynamicShadowDraws );
     }
-
-    // done casting, time to receive
-    platform_EndShadowCast();
-
-    platform_StartShadowReceive();
-
-    pCurrentGeom         = NULL;
-    CurrentType          = TYPE_UNKNOWN;
-    CurrentSortData.Bits = 0xffffffff;
-    for ( ; iUniqueInst < s_LoHashMark; iUniqueInst++ )
     {
-        render_instance& Inst = s_lRenderInst[s_lSortData[iUniqueInst].iRenderInst];
-
-        // sanity check
-        ASSERT( Inst.ShadSortKey.ShadType );
-
-        // TODO: Handle material swaps...shadows will eventually need to work
-        // with punch-through
-
-        // start a new instance batch if necessary (geometry sorting should already
-        // be built into the sort key)
-        if ( (Inst.ShadSortKey.GeomType == 0) &&
-             ((pCurrentGeom != Inst.Data.Rigid.pGeom) || (CurrentSortData.GeomSubMesh != Inst.ShadSortKey.GeomSubMesh)) )
-        {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndShadowReceiveRigid();
-                else                                platform_EndShadowReceiveSkin();
-            }
-
-            pCurrentGeom                = Inst.Data.Rigid.pGeom;
-            CurrentType                 = TYPE_RIGID;
-            CurrentSortData.GeomSubMesh = Inst.ShadSortKey.GeomSubMesh;
-            platform_BeginShadowReceiveRigid( pCurrentGeom, Inst.ShadSortKey.GeomSubMesh );
-        }
-        else
-        if ( Inst.ShadSortKey.GeomType &&
-             ((pCurrentGeom != Inst.Data.Skin.pGeom) || (CurrentSortData.GeomSubMesh != Inst.ShadSortKey.GeomSubMesh)) )
-        {
-            if ( pCurrentGeom != NULL )
-            {
-                ASSERT( CurrentType != TYPE_UNKNOWN );
-                if ( CurrentType == TYPE_RIGID )    platform_EndShadowReceiveRigid();
-                else                                platform_EndShadowReceiveSkin();
-            }
-
-            pCurrentGeom                = Inst.Data.Skin.pGeom;
-            CurrentType                 = TYPE_SKIN;
-            CurrentSortData.GeomSubMesh = Inst.ShadSortKey.GeomSubMesh;
-            platform_BeginShadowReceiveSkin( pCurrentGeom, Inst.ShadSortKey.GeomSubMesh );
-        }
-
-        // let the platform run its render code on the instances
-        s32 iInstToRender = s_lSortData[iUniqueInst].iRenderInst;
-        if ( Inst.ShadSortKey.GeomType == 0 )
-        {
-            while ( iInstToRender != -1 )
-            {
-                ASSERT( s_lRenderInst[iInstToRender].ShadSortKey.Bits == Inst.ShadSortKey.Bits );
-                platform_RenderShadowReceiveRigid( s_lRenderInst[iInstToRender], Inst.ShadSortKey.ShadowSourceIndex );
-                iInstToRender = s_lRenderInst[iInstToRender].Brother;
-            };
-        }
-        else
-        {
-            while ( iInstToRender != -1 )
-            {
-                ASSERT( s_lRenderInst[iInstToRender].ShadSortKey.Bits == Inst.ShadSortKey.Bits );
-                platform_RenderShadowReceiveSkin( s_lRenderInst[iInstToRender] );
-                iInstToRender = s_lRenderInst[iInstToRender].Brother;
-            };
-        }
+        X_PROFILE_SCOPE_CATEGORY( "Renderer", "Shadow/EndShaders" );
+        platform_EndShadowShaders();
     }
-
-    // finish up any pending tasks
-    if ( pCurrentGeom != NULL )
-    {
-        ASSERT( CurrentType != TYPE_UNKNOWN );
-        if ( CurrentType == TYPE_RIGID )    platform_EndShadowReceiveRigid();
-        else                                platform_EndShadowReceiveSkin();
-    }
-
-    // completely done
-    platform_EndShadowReceive();
-    platform_EndShadowShaders();
+    s_orderedShadowDraws.SetCount( 0 );
+    s_shadowDraws.SetCount( 0 );
+    s_dynamicShadowDraws.SetCount( 0 );
 }
 
 //=============================================================================
 
-void render::AddPointShadowMapSource( const matrix4&         L2W,
-                                      radian                 FOV,
-                                      f32                    LightRadius,
-                                      f32                    LightFalloff,
-                                      s32                    ShadowMapResolution,
-                                      s32                    ShadowPriority,
-                                      f32                    ShadowScore )
+void render::AddPointShadowMapSource( matrix4 const& l2W, radian fov, f32 lightRadius, f32 lightFalloff,
+                                      s32 shadowMapResolution, s32 shadowPriority, f32 shadowScore,
+                                      s32 dynamicLightIndex )
 {
-    ASSERT( s_InShadowBegin );
-    platform_AddPointShadowMapSource( L2W,
-                                      FOV,
-                                      LightRadius,
-                                      LightFalloff,
-                                      ShadowMapResolution,
-                                      ShadowPriority,
-                                      ShadowScore );
-    s_nShadowSources++;
+    ASSERT( s_isShadowRenderActive );
+    platform_AddPointShadowMapSource( l2W, fov, lightRadius, lightFalloff, shadowMapResolution, shadowPriority,
+                                      shadowScore, dynamicLightIndex );
+    s_shadowSourceCount++;
 }
 
 //=============================================================================
 
-void render::AddSpotShadowMapSource( const matrix4&         L2W,
-                                     radian                 FOV,
-                                     f32                    LightRadius,
-                                     f32                    LightFalloff,
-                                     s32                    ShadowMapResolution,
-                                     s32                    ShadowPriority,
-                                     f32                    ShadowScore )
+void render::AddSpotShadowMapSource( matrix4 const& l2W, radian fov, f32 lightRadius, f32 lightFalloff,
+                                     s32 shadowMapResolution, s32 shadowPriority, f32 shadowScore,
+                                     s32 dynamicLightIndex )
 {
-    ASSERT( s_InShadowBegin );
-    platform_AddSpotShadowMapSource( L2W,
-                                     FOV,
-                                     LightRadius,
-                                     LightFalloff,
-                                     ShadowMapResolution,
-                                     ShadowPriority,
-                                     ShadowScore );
-    s_nShadowSources++;
+    ASSERT( s_isShadowRenderActive );
+    platform_AddSpotShadowMapSource( l2W, fov, lightRadius, lightFalloff, shadowMapResolution, shadowPriority,
+                                     shadowScore, dynamicLightIndex );
+    s_shadowSourceCount++;
 }
 
 //=============================================================================
 
-void render::AddRigidCasterSimple( render::hgeom_inst hInst,
-                                   const matrix4*     pL2W,  // will be DMA ref'd to!
-                                   u64                ShadowSourceMask )
+void render::AddRigidCasterSimple( render::GeometryInstanceHandle hInst,
+                                   matrix4 const*                 pL2W, // will be DMA ref'd to!
+                                   u64                            shadowSourceMask )
 {
-    #ifndef X_RETAIL
-    if( g_RenderDebug.RenderSkinOnly )
+#ifndef X_RETAIL
+    if ( g_renderDebug.RenderSkinOnly )
+    {
         return;
-    #endif
+    }
+#endif
 
-    ASSERT( s_InShadowBegin );
+    ASSERT( s_isShadowRenderActive );
     ASSERT( pL2W );
     ASSERT( pL2W->IsValid() );
 
-    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
-    ASSERT( RegisteredInst.Type == TYPE_RIGID );
-    rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
+    PrivateInstance& registeredInst = s_registeredInstances( hInst );
+    ASSERT( registeredInst.m_Type == GeometryType::Rigid );
+    rigid_geom* pGeom = static_cast<rigid_geom*>( registeredInst.m_pGeometry );
 
-    for ( s32 iShadowSource = 0; iShadowSource < s_nShadowSources; iShadowSource++ )
+    for ( s32 iShadowSource = 0; iShadowSource < s_shadowSourceCount; iShadowSource++ )
     {
-        if ( (ShadowSourceMask & ((u64)1 << iShadowSource)) == 0 )
+        if ( ( shadowSourceMask & ( u64{ 1 } << iShadowSource ) ) == 0 )
+        {
             continue;
+        }
 
         for ( s32 iSubMesh = 0; iSubMesh < pGeom->m_nSubMeshes; iSubMesh++ )
         {
-            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
-            geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
-            if ( IsAlphaMaterial( (material_type)Material.Type ) )
+            geom::submesh&  subMesh = pGeom->m_pSubMesh[iSubMesh];
+            geom::material& geometryMaterial = pGeom->m_pMaterial[subMesh.iMaterial];
+            xhandle hMat = GetRegisteredMaterialHandle( registeredInst.m_geometryHandle, geometryMaterial.iVirtualMat );
+            ASSERT( ( hMat >= 0 ) && ( hMat < kMaxRegisteredMaterials ) );
+            if ( s_registeredMaterials( hMat ).IsAlpha() )
+            {
                 continue;
+            }
 
-            xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
-            ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
-
-            shad_sortkey SortKey;
-            SortKey.Bits              = 0;
-            SortKey.ShadowSourceIndex = iShadowSource;
-            SortKey.GeomSubMesh       = iSubMesh;
-            SortKey.GeomHandle        = pGeom->m_hGeom;
-            SortKey.GeomType          = 0;
-            SortKey.ShadType          = 0;
-
-            render_instance& Inst = AddToHashHybrid( SortKey.Bits );
-            Inst.ShadSortKey      = SortKey;
-            Inst.Flags            = 0;
-            Inst.OverrideMat      = FALSE;
-            GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
-
-            Inst.Data.Rigid.pGeom    = pGeom;
-            Inst.Data.Rigid.pL2W     = pL2W;
-            Inst.Data.Rigid.pColInfo = NULL;
-
-            #ifdef TARGET_PC
-            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
-            #endif
+            AppendRigidShadowDraw( registeredInst, *pGeom, hMat, iSubMesh, pL2W, iShadowSource );
         }
     }
 }
 
 //=============================================================================
 
-void render::AddRigidCaster( render::hgeom_inst hInst,
-                             const matrix4*     pL2W,
-                             u64                Mask,
-                             u64                ShadowSourceMask )
+void render::AddRigidCaster( render::GeometryInstanceHandle hInst, matrix4 const* pL2W, u64 mask, u64 shadowSourceMask )
 {
-    #ifndef X_RETAIL
-    if( g_RenderDebug.RenderSkinOnly )
+#ifndef X_RETAIL
+    if ( g_renderDebug.RenderSkinOnly )
+    {
         return;
-    #endif
+    }
+#endif
 
-    ASSERT( s_InShadowBegin );
+    ASSERT( s_isShadowRenderActive );
     ASSERT( pL2W );
     ASSERT( pL2W->IsValid() );
 
-    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
-    ASSERT( RegisteredInst.Type == TYPE_RIGID );
-    rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
+    PrivateInstance& registeredInst = s_registeredInstances( hInst );
+    ASSERT( registeredInst.m_Type == GeometryType::Rigid );
+    rigid_geom* pGeom = static_cast<rigid_geom*>( registeredInst.m_pGeometry );
 
-    geom::mesh* pMesh    = pGeom->m_pMesh;
+    geom::mesh* pMesh = pGeom->m_pMesh;
     geom::mesh* pEndMesh = pMesh + pGeom->m_nMeshes;
     while ( pMesh < pEndMesh )
     {
-        if( (Mask & 1) == 0 )
+        if ( ( mask & 1 ) == 0 )
         {
             pMesh++;
-            Mask >>= 1;
+            mask >>= 1;
             continue;
         }
 
-        for ( s32 iSubMesh = pMesh->iSubMesh;
-              iSubMesh < pMesh->iSubMesh+pMesh->nSubMeshes;
-              iSubMesh++ )
+        for ( s32 iSubMesh = pMesh->iSubMesh; iSubMesh < pMesh->iSubMesh + pMesh->nSubMeshes; iSubMesh++ )
         {
-            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
-            geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
-            if ( IsAlphaMaterial( (material_type)Material.Type ) )
-                continue;
-
-            xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
-            ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
-
-            ASSERT( (pGeom->m_hGeom>=0) && (pGeom->m_hGeom<kMaxRegisteredGeoms) );
-            ASSERT( (iSubMesh      >=0) && (iSubMesh      <256                ) );
-
-            #ifdef TARGET_PC
-            s32 iBone = pGeom->m_System.pPC[SubMesh.iDList].iBone;
-            #else
-            #error Unknown Target!
-            #endif
-
-            matrix4* pMat = (matrix4*)smem_BufferAlloc(sizeof(matrix4));
+            geom::submesh&  subMesh = pGeom->m_pSubMesh[iSubMesh];
+            geom::material& geometryMaterial = pGeom->m_pMaterial[subMesh.iMaterial];
+            xhandle hMat = GetRegisteredMaterialHandle( registeredInst.m_geometryHandle, geometryMaterial.iVirtualMat );
+            ASSERT( ( hMat >= 0 ) && ( hMat < kMaxRegisteredMaterials ) );
+            if ( s_registeredMaterials( hMat ).IsAlpha() )
             {
-                *pMat = *(pL2W + iBone);
+                continue;
+            }
+
+            ASSERT( ( registeredInst.m_geometryHandle >= 0 ) &&
+                    ( registeredInst.m_geometryHandle < kMaxRegisteredGeoms ) );
+            ASSERT( ( iSubMesh >= 0 ) && ( iSubMesh < 256 ) );
+
+            s32 iBone = pGeom->m_pSection[subMesh.iSection].iBone;
+
+            matrix4* pMat = reinterpret_cast<matrix4*>( smem_BufferAlloc( sizeof( matrix4 ) ) );
+            {
+                *pMat = *( pL2W + iBone );
                 ASSERT( pMat->IsValid() );
             }
 
-            for ( s32 iShadowSource = 0; iShadowSource < s_nShadowSources; iShadowSource++ )
+            for ( s32 iShadowSource = 0; iShadowSource < s_shadowSourceCount; iShadowSource++ )
             {
-                if ( (ShadowSourceMask & ((u64)1 << iShadowSource)) == 0 )
+                if ( ( shadowSourceMask & ( u64{ 1 } << iShadowSource ) ) == 0 )
+                {
                     continue;
+                }
 
-                shad_sortkey SortKey;
-                SortKey.Bits              = 0;
-                SortKey.ShadowSourceIndex = iShadowSource;
-                SortKey.GeomSubMesh       = iSubMesh;
-                SortKey.GeomHandle        = pGeom->m_hGeom;
-                SortKey.GeomType          = 0;
-                SortKey.ShadType          = 0;
-
-                render_instance& Inst = AddToHashHybrid( SortKey.Bits );
-                Inst.ShadSortKey      = SortKey;
-                Inst.Flags            = 0;
-                Inst.OverrideMat      = FALSE;
-                GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
-
-                Inst.Data.Rigid.pGeom    = pGeom;
-                Inst.Data.Rigid.pL2W     = pMat;
-                Inst.Data.Rigid.pColInfo = NULL;
-
-                #ifdef TARGET_PC
-                private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-                Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
-                #endif
+                AppendRigidShadowDraw( registeredInst, *pGeom, hMat, iSubMesh, pMat, iShadowSource );
             }
         }
 
         pMesh++;
-        Mask >>= 1;
+        mask >>= 1;
     }
 }
 
 //=============================================================================
 
-void render::AddSkinCaster( render::hgeom_inst hInst,
-                            const matrix4*     pBone,
-                            u64                Mask,
-                            u64                ShadowSourceMask )
+void render::AddSkinCaster( render::GeometryInstanceHandle hInst, matrix4 const* pBone, s32 nBone, u64 mask,
+                            u64 shadowSourceMask )
 {
-    #ifndef X_RETAIL
-    if( g_RenderDebug.RenderRigidOnly )
+#ifndef X_RETAIL
+    if ( g_renderDebug.RenderRigidOnly )
+    {
         return;
-    #endif
+    }
+#endif
 
-    CONTEXT( "render::AddSkinCaster" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "render::AddSkinCaster" );
 
     // safety check
-    ASSERT( s_InShadowBegin );
+    ASSERT( s_isShadowRenderActive );
 
     // grab the useful pointers out
-    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
-    ASSERT( RegisteredInst.Type == TYPE_SKIN );
-    skin_geom* pGeom = (skin_geom*)RegisteredInst.pGeom;
+    PrivateInstance& registeredInst = s_registeredInstances( hInst );
+    ASSERT( registeredInst.m_Type == GeometryType::Skin );
+    skin_geom* pGeom = static_cast<skin_geom*>( registeredInst.m_pGeometry );
+    ASSERT( pBone );
+    ASSERT( nBone > 0 );
+    if ( !pBone || ( nBone <= 0 ) )
+    {
+        return;
+    }
 
     // for each shadow source, add the meshes and submeshes to the render list
-    for ( s32 iShadowSource = 0; iShadowSource < s_nShadowSources; iShadowSource++ )
+    for ( s32 iShadowSource = 0; iShadowSource < s_shadowSourceCount; iShadowSource++ )
     {
-        if ( (ShadowSourceMask & ((u64)1 << iShadowSource)) == 0 )
+        if ( ( shadowSourceMask & ( u64{ 1 } << iShadowSource ) ) == 0 )
+        {
             continue;
-        
+        }
+
         for ( s32 iMesh = 0; iMesh < pGeom->m_nMeshes; iMesh++ )
         {
             // skip this mesh?
-            if( (Mask & ((u64)1 << iMesh)) == 0 )
+            if ( ( mask & ( u64{ 1 } << iMesh ) ) == 0 )
+            {
                 continue;
+            }
 
             // add each of the submeshes to the render list
-            geom::mesh& Mesh = pGeom->m_pMesh[iMesh];
-            for ( s32 iSubMesh = Mesh.iSubMesh;
-                  iSubMesh < Mesh.iSubMesh+Mesh.nSubMeshes;
-                  iSubMesh++ )
+            geom::mesh& mesh = pGeom->m_pMesh[iMesh];
+            for ( s32 iSubMesh = mesh.iSubMesh; iSubMesh < mesh.iSubMesh + mesh.nSubMeshes; iSubMesh++ )
             {
                 // range safety check for the sort key
-                ASSERT( (pGeom->m_hGeom>=0) && (pGeom->m_hGeom<kMaxRegisteredGeoms) );
-                ASSERT( (iSubMesh      >=0) && (iSubMesh      <256                ) );
+                ASSERT( ( registeredInst.m_geometryHandle >= 0 ) &&
+                        ( registeredInst.m_geometryHandle < kMaxRegisteredGeoms ) );
+                ASSERT( ( iSubMesh >= 0 ) && ( iSubMesh < 256 ) );
 
                 // don't let alpha cast shadows
-                geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
-                geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
-                if ( IsAlphaMaterial( (material_type)Material.Type ) )
+                geom::submesh&  subMesh = pGeom->m_pSubMesh[iSubMesh];
+                geom::material& geometryMaterial = pGeom->m_pMaterial[subMesh.iMaterial];
+                xhandle         hMat =
+                    GetRegisteredMaterialHandle( registeredInst.m_geometryHandle, geometryMaterial.iVirtualMat );
+                ASSERT( ( hMat >= 0 ) && ( hMat < kMaxRegisteredMaterials ) );
+                if ( s_registeredMaterials( hMat ).IsAlpha() )
+                {
                     continue;
+                }
 
-                xhandle hMat = pGeom->m_pVirtualMaterials[Material.iVirtualMat].MatHandle;
-                ASSERT( (hMat>=0) && (hMat<kMaxRegisteredMaterials) );
-
-                // build the sort key
-                shad_sortkey SortKey;
-                SortKey.Bits           = 0;
-                SortKey.ShadowSourceIndex = iShadowSource;
-                SortKey.GeomSubMesh    = iSubMesh;
-                SortKey.GeomHandle     = pGeom->m_hGeom;
-                SortKey.GeomType       = 1;
-                SortKey.ShadType       = 0;
-
-                // fill in the basic render instance info
-                render_instance& Inst = AddToHashHybrid( SortKey.Bits );
-                Inst.ShadSortKey      = SortKey;
-                Inst.Flags            = 0;
-                Inst.OverrideMat      = FALSE;
-                GetUVOffset( Inst.UOffset, Inst.VOffset, pGeom, s_lRegisteredMaterials(hMat) );
-
-                // fill in the skin geom instance info
-                Inst.Data.Skin.pGeom  = pGeom;
-                Inst.Data.Skin.pBones = pBone;
-                Inst.Data.Skin.Pad    = 0;
-
-                #ifdef TARGET_PC
-                private_geom&  PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-                Inst.hDList                = PrivateGeom.SkinDList[(s32)SubMesh.iDList];	
-                #endif
+                AppendSkinShadowDraw( registeredInst, *pGeom, hMat, iSubMesh, pBone, nBone, iShadowSource );
             }
         }
     }
-}
-
-//=============================================================================
-
-void render::AddRigidReceiverSimple( render::hgeom_inst hInst,
-                                     const matrix4*     pL2W,  // will be DMA ref'd to!
-                                     u32                Flags,
-                                     u64                ShadowSourceMask )
-{
-    #ifndef X_RETAIL
-    if( g_RenderDebug.RenderSkinOnly )
-        return;
-    #endif
-
-    // safety check
-    ASSERT( s_InShadowBegin );
-    ASSERT( pL2W->IsValid() );
-
-    // grab the useful pointers out
-    private_instance& RegisteredInst = s_lRegisteredInst( hInst );
-    ASSERT( RegisteredInst.Type == TYPE_RIGID );
-    rigid_geom* pGeom = (rigid_geom*)RegisteredInst.pGeom;
-
-    // for each shadow source, add each of the submeshes to the render list
-    for ( s32 iShadowSource = 0; iShadowSource < s_nShadowSources; iShadowSource++ )
-    {
-        if ( (ShadowSourceMask & ((u64)1 << iShadowSource)) == 0 )
-            continue;
-
-        for ( s32 iSubMesh = 0; iSubMesh < pGeom->m_nSubMeshes; iSubMesh ++ )
-        {
-            // don't let alpha receive shadows
-            geom::submesh&  SubMesh  = pGeom->m_pSubMesh[iSubMesh];
-            geom::material& Material = pGeom->m_pMaterial[SubMesh.iMaterial];
-            if( IsAlphaMaterial( (material_type)Material.Type ) && !(Material.Flags&geom::material::FLAG_FORCE_ZFILL) )
-                continue;
-
-            // don't let punch-through receive shadows
-            if( Material.Flags & geom::material::FLAG_IS_PUNCH_THRU )
-                continue;
-
-            // TODO: Later, these should use material info for scrolling uv's
-            // and punch-through. For now, we can render solid polys.
-
-            // make sure we're aligned for dma purposes
-            ASSERT( ALIGN_16(pL2W) == (saddr)pL2W );
-
-            // build the sort key
-            shad_sortkey SortKey;
-            SortKey.Bits = 0;
-            SortKey.ShadowSourceIndex = iShadowSource;
-            SortKey.GeomSubMesh    = iSubMesh;
-            SortKey.GeomHandle     = pGeom->m_hGeom;
-            SortKey.GeomType       = 0;
-            SortKey.ShadType       = 1;
-
-            // fill in the basic render instance info
-            render_instance& Inst = AddToHashHybrid( SortKey.Bits );
-            Inst.Flags            = Flags;
-            Inst.UOffset          = 0;
-            Inst.VOffset          = 0;
-            Inst.OverrideMat      = FALSE;
-
-            // fill in the rigid geom info
-            Inst.Data.Rigid.pGeom = pGeom;
-            Inst.Data.Rigid.pL2W  = pL2W;
-
-            #ifdef TARGET_PC
-            private_geom& PrivateGeom = s_lRegisteredGeoms(pGeom->m_hGeom);
-            Inst.hDList               = PrivateGeom.RigidDList[(s32)SubMesh.iDList];
-            #endif
-        }
-    }
-}
-
-//=============================================================================
-
-void render::AddRigidReceiver( render::hgeom_inst hInst,
-                               const matrix4*     pL2W,
-                               u64                Mask,
-                               u32                Flags,
-                               u64                ShadowSourceMask )
-{
-    ASSERT( s_InShadowBegin );
-    (void)hInst;
-    (void)pL2W;
-    (void)Flags;
-    (void)Mask;
-    (void)ShadowSourceMask;
-}
-
-//=============================================================================
-
-void render::AddSkinReceiver( render::hgeom_inst hInst,
-                              const matrix4*     pBone,
-                              u64                Mask,
-                              u32                Flags,
-                              u64                ShadowSourceMask )
-{
-    ASSERT( s_InShadowBegin );
-    (void)hInst;
-    (void)pBone;
-    (void)Flags;
-    (void)Mask;
-    (void)ShadowSourceMask;
 }
 
 //=============================================================================
@@ -2968,5 +2112,5 @@ void render::BeginSession( u32 nPlayers )
 
 void render::EndSession( void )
 {
-    platform_EndSession( );
+    platform_EndSession();
 }

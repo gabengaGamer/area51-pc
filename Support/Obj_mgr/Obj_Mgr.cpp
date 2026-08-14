@@ -8,36 +8,35 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "x_stdio.hpp"
 #include "Entropy.hpp"
-#include "objects\player.hpp"
-#include "objects\projector.hpp"
-#include "Render\Render.hpp"
-#include "Render\LightMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/Projector.hpp"
+#include "Render/Render.hpp"
+#include "Render/LightMgr.hpp"
 #include "GameLib/RenderContext.hpp"
 #include "ManagerRegistration.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "PlaySurfaceMgr\PlaySurfaceMgr.hpp"
-#include "..\auxiliary\fx_RunTime\Fx_Mgr.hpp"
-#include "..\Support\GameLib\StatsMgr.hpp"
-#include "..\Support\Tracers\TracerMgr.hpp"
-#include "..\Support\Decals\DecalMgr.hpp"
-#include "Objects\ProxyPlaySurface.hpp"
-#include "Objects\LevelSettings.hpp"
-#include "Objects\Render\PostEffectMgr.hpp"
-#include "Objects\Camera.hpp"
-#include "Objects\NewWeapon.hpp"
-#include "Objects\Pip.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
-#include "Navigation\nav_map.hpp"
-#include "PhysicsMgr\PhysicsMgr.hpp"
-#include "OccluderMgr\OccluderMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "PlaySurfaceMgr/PlaySurfaceMgr.hpp"
+#include "FX/fx_Mgr.hpp"
+#include "../Support/GameLib/StatsMgr.hpp"
+#include "../Support/Tracers/TracerMgr.hpp"
+#include "../Support/Decals/DecalMgr.hpp"
+#include "Objects/ProxyPlaySurface.hpp"
+#include "Objects/LevelSettings.hpp"
+#include "Objects/Render/PostEffectMgr.hpp"
+#include "Objects/Camera.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "Objects/Pip.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
+#include "Navigation/Nav_Map.hpp"
+#include "PhysicsMgr/PhysicsMgr.hpp"
+#include "OccluderMgr/OccluderMgr.hpp"
 
-#ifdef TARGET_PC
-#include "Render\ShadowMapMgr.hpp"
-#endif
+#include "Render/ShadowMapMgr.hpp"
 
 #ifdef X_EDITOR
 extern xbool g_EditorShowNameFlag;
@@ -87,6 +86,7 @@ obj_mgr::obj_mgr( void ) :
     ASSERT( !AlreadyCreated);
     AlreadyCreated      = TRUE;
     m_GameTime          = 0;
+    m_SimulationTimeSeconds = 0.0;
     m_pProxyPlaySurface = NULL;
 
     m_nLogicLoops = 0;
@@ -824,9 +824,14 @@ void obj_mgr::Clear( void )
 
 //==============================================================================
 
-void obj_mgr::AdvanceAllLogic( f32 DeltaTime )
+void obj_mgr::AdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "obj_mgr::AdvanceAllLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::AdvanceSimulation" );
+
+    if( !x_isvalid( DeltaTime ) || (DeltaTime <= 0.0f) )
+        return;
+
+    DeltaTime = MIN( DeltaTime, 0.1f );
 
     m_nLogicLoops++;
 
@@ -837,14 +842,11 @@ void obj_mgr::AdvanceAllLogic( f32 DeltaTime )
 
     s32     i;
 
-    //
-    // Deal with the game time
-    // 
-    if( DeltaTime > 0.1f )
-        DeltaTime = 0.1f;
+    //ASSERT( DeltaTime > 0.0f );
+    //ASSERT( DeltaTime <= 0.1f );
 
-    // Increment the game time (the units are in ticks).
-    m_GameTime += (xtick)( ((s64)(DeltaTime*1000)) * x_GetTicksPerMs());
+    m_SimulationTimeSeconds += static_cast<f64>( DeltaTime );
+    m_GameTime = (xtick)( m_SimulationTimeSeconds * 1000.0 * (f64)x_GetTicksPerMs() );
 
     for( i = 0; i < (s32)object::TYPE_END_OF_LIST; i++ )
     {
@@ -865,13 +867,33 @@ void obj_mgr::AdvanceAllLogic( f32 DeltaTime )
                     //    BREAK;
 
                     m_pAdvanceLogicActiveObject = pObject;
-                    m_pAdvanceLogicActiveObject->OnAdvanceLogic( DeltaTime );                
+                    m_pAdvanceLogicActiveObject->OnAdvanceSimulation( DeltaTime );
                     m_pAdvanceLogicActiveObject = NULL;
 
                     // Trapping after logic
                     //if( m_TrapAfterLogicGuid && (pObject->GetGuid() == m_TrapAfterLogicGuid) )
                     //    BREAK;
                 }
+            }
+        }
+    }
+
+    // Refresh external cinema views only after every simulation object has
+    // updated. Cameras are ordered after players for legacy object type
+    // stability, so their final pose is not available during player logic.
+    object_desc* pPlayerDesc = m_ObjectType[object::TYPE_PLAYER].pDesc;
+    if( pPlayerDesc && pPlayerDesc->OnBeginLogic() )
+    {
+        slot_id PlayerSlotID = GetFirst( object::TYPE_PLAYER );
+        while( PlayerSlotID != SLOT_NULL )
+        {
+            player* pPlayer = static_cast<player*>( GetObjectBySlot( PlayerSlotID ) );
+            PlayerSlotID = GetNext( PlayerSlotID );
+
+            if( pPlayer &&
+                (pPlayer->GetAttrBits() & object::ATTR_NEEDS_LOGIC_TIME) )
+            {
+                pPlayer->FinalizeCinemaView();
             }
         }
     }
@@ -999,7 +1021,7 @@ xbool SelectFunc( spatial_cell* pCell, void* pPrivateData )
 
 void obj_mgr::SelectBBox( u32 Attribute, const bbox& BBox, object::type Type, u32 NotTheseAttributes )
 {
-    CONTEXT( "obj_mgr::SelectBBox" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::SelectBBox" );
 
 
     //
@@ -1025,7 +1047,9 @@ void obj_mgr::SelectBBox( u32 Attribute, const bbox& BBox, object::type Type, u3
         spatial_cell& Cell = g_SpatialDBase.GetCell( CI );
 
         // Check for inf loops
+        #ifdef X_ASSERT
         ASSERT( (InfCount1++)<obj_mgr::MAX_OBJECTS );
+        #endif
         
         // Check if there are any objects in cell
         if( Cell.OccFlags )
@@ -1041,7 +1065,9 @@ void obj_mgr::SelectBBox( u32 Attribute, const bbox& BBox, object::type Type, u3
 
                 for(; LI != LINK_NULL; LI = m_ObjectLink[LI].Next )
                 {
+                    #ifdef X_ASSERT
                     ASSERT( (InfCount2++) < obj_mgr::MAX_OBJECTS );
+                    #endif
 
                     // Get object index
                     slot_id I       = LI / 8;
@@ -1088,7 +1114,7 @@ void obj_mgr::SelectBBox( u32 Attribute, const bbox& BBox, object::type Type, u3
 
 void obj_mgr::SelectRay( u32 Attribute, const vector3& RayStart, const vector3& RayEnd, object::type Type, u32 NotTheseAttributes )
 {
-    CONTEXT( "obj_mgr::SelectBBox" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::SelectBBox" );
 
     //
     // update the sequence
@@ -1113,7 +1139,9 @@ void obj_mgr::SelectRay( u32 Attribute, const vector3& RayStart, const vector3& 
         spatial_cell& Cell = g_SpatialDBase.GetCell( CI );
 
         // Check for inf loops
+        #ifdef X_ASSERT
         ASSERT( (InfCount1++)<obj_mgr::MAX_OBJECTS );
+        #endif
         
         // Check if there are any objects in cell
         if( Cell.OccFlags )
@@ -1129,7 +1157,9 @@ void obj_mgr::SelectRay( u32 Attribute, const vector3& RayStart, const vector3& 
 
                 for(; LI != LINK_NULL; LI = m_ObjectLink[LI].Next )
                 {
+                    #ifdef X_ASSERT
                     ASSERT( (InfCount2++) < obj_mgr::MAX_OBJECTS );
+                    #endif
 
                     // Get object index
                     slot_id I       = LI / 8;
@@ -1435,27 +1465,30 @@ void obj_mgr::AddToSpatialDBase( slot_id SlotID )
     object* pObject = GetObjectBySlot( SlotID );
     ASSERT( pObject );
     bbox ObjBBox( pObject->GetBBox() );
+
+    if( !ObjBBox.Min.IsValid() || !ObjBBox.Max.IsValid() )
+    {
+        x_DebugMsg( "CRITICAL ERROR!!! Object of Type %s has an invalid spacial dbase bbox: "
+                    "Min(%.3f, %.3f, %.3f) Max(%.3f, %.3f, %.3f)\n",
+                    pObject->GetTypeDesc().GetTypeName(),
+                    ObjBBox.Min.GetX(), ObjBBox.Min.GetY(), ObjBBox.Min.GetZ(),
+                    ObjBBox.Max.GetX(), ObjBBox.Max.GetY(), ObjBBox.Max.GetZ() );
+        return;
+    }
     
     s32  Level = 0;
 
+    if( !g_SpatialDBase.TryGetBBoxLevel( ObjBBox, Level ) )
+    {
 #ifdef X_EDITOR
-    x_try;
-    Level = g_SpatialDBase.GetBBoxLevel( ObjBBox );
-    x_catch_begin;
-    //failure
-    x_DebugMsg("CRITICAL ERROR!!! Object of Type %s, [%s] has bad spacial dbase entry!\n",
-        GetObjectBySlot( SlotID )->GetTypeDesc().GetTypeName(), guid_ToString(GetObjectBySlot( SlotID )->GetGuid()));
-    x_catch_end;
+        x_DebugMsg("CRITICAL ERROR!!! Object of Type %s, [%s] has bad spacial dbase entry!\n",
+            GetObjectBySlot( SlotID )->GetTypeDesc().GetTypeName(), guid_ToString(GetObjectBySlot( SlotID )->GetGuid()));
 #else // X_EDITOR
-    x_try;
-    Level = g_SpatialDBase.GetBBoxLevel( ObjBBox );
-    x_catch_begin;
-    //failure
-    x_DebugMsg("CRITICAL ERROR!!! Object of Type %s has bad spacial dbase entry!\n",
-        GetObjectBySlot( SlotID )->GetTypeDesc().GetTypeName());
-    ASSERT(0);
-    x_catch_end;
+        x_DebugMsg("CRITICAL ERROR!!! Object of Type %s has bad spacial dbase entry!\n",
+            GetObjectBySlot( SlotID )->GetTypeDesc().GetTypeName());
 #endif // X_EDITOR
+        return;
+    }
 
     g_SpatialDBase.GetCellRegion( ObjBBox, Level, MinX, MinY, MinZ, MaxX, MaxY, MaxZ );
     ASSERT( IN_RANGE( 0, (MaxX-MinX), 1 ) );
@@ -1525,30 +1558,30 @@ void obj_mgr::UpdateSpatialDBase( slot_id SlotID, const bbox& OldBBox )
     object* pObject = GetObjectBySlot( SlotID );
     ASSERT( pObject );
     bbox NewBBox( pObject->GetBBox() );
+
+    if( !OldBBox.Min.IsValid() || !OldBBox.Max.IsValid() ||
+        !NewBBox.Min.IsValid() || !NewBBox.Max.IsValid() )
+    {
+        x_DebugMsg( "CRITICAL ERROR!!! Object of Type %s has an invalid spacial dbase bbox during update.\n",
+                    pObject->GetTypeDesc().GetTypeName() );
+        return;
+    }
     
     s32  OldLevel = 0;
     s32  NewLevel = 0;
 
+    if( !g_SpatialDBase.TryGetBBoxLevel( OldBBox, OldLevel ) ||
+        !g_SpatialDBase.TryGetBBoxLevel( NewBBox, NewLevel ) )
+    {
 #ifdef X_EDITOR
-    x_try;
-    OldLevel = g_SpatialDBase.GetBBoxLevel( OldBBox );
-    NewLevel = g_SpatialDBase.GetBBoxLevel( NewBBox );
-    x_catch_begin;
-    //failure
-    x_DebugMsg("CRITICAL ERROR!!! Object of Type %s, [%s] has bad spacial dbase entry!\n",
-        GetObjectBySlot( SlotID )->GetTypeDesc().GetTypeName(), guid_ToString(GetObjectBySlot( SlotID )->GetGuid()));
-    x_catch_end;
+        x_DebugMsg("CRITICAL ERROR!!! Object of Type %s, [%s] has bad spacial dbase entry!\n",
+            GetObjectBySlot( SlotID )->GetTypeDesc().GetTypeName(), guid_ToString(GetObjectBySlot( SlotID )->GetGuid()));
 #else // X_EDITOR
-    x_try;
-    OldLevel = g_SpatialDBase.GetBBoxLevel( OldBBox );
-    NewLevel = g_SpatialDBase.GetBBoxLevel( NewBBox );
-    x_catch_begin;
-    //failure
-    x_DebugMsg("CRITICAL ERROR!!! Object of Type %s has bad spacial dbase entry!\n",
-        GetObjectBySlot( SlotID )->GetTypeDesc().GetTypeName());
-    ASSERT(0);
-    x_catch_end;
+        x_DebugMsg("CRITICAL ERROR!!! Object of Type %s has bad spacial dbase entry!\n",
+            GetObjectBySlot( SlotID )->GetTypeDesc().GetTypeName());
 #endif // X_EDITOR
+        return;
+    }
 
     g_SpatialDBase.GetCellRegion( OldBBox, OldLevel, OldMinX, OldMinY, OldMinZ, OldMaxX, OldMaxY, OldMaxZ );
     g_SpatialDBase.GetCellRegion( NewBBox, NewLevel, NewMinX, NewMinY, NewMinZ, NewMaxX, NewMaxY, NewMaxZ );
@@ -1655,7 +1688,7 @@ s32 obj_mgr::IsBoxInView(
     }
 
 #ifndef X_EDITOR
-    // This will reject any bbox that intersects the far plane, on the PS2 we don't want to clip against the far plane.
+    // Reject any bbox that intersects the far plane.
     // In the editor we do want to allow those objects to render.
     if( (SkipPlaneMask & XBIN( 100000 )) == 0 )
         return -1;
@@ -1719,7 +1752,8 @@ void obj_mgr::RenderIcons( void )
                             if( (pObject->GetAttrBits() & object::ATTR_EDITOR_SELECTED) &&
                                 (pObject->IsHidden()==FALSE) )
                             {
-                                editor_icon IconToDraw = (editor_icon)pObject->GetTypeDesc().OnEditorRender( *pObject );
+                                EditorIcon const iconToDraw =
+                                    static_cast<EditorIcon>( pObject->GetTypeDesc().OnEditorRender( *pObject ) );
 
                                 if(g_EditorShowNameFlag)
                                 {
@@ -1729,14 +1763,14 @@ void obj_mgr::RenderIcons( void )
                                     if(x_strcmp(pObject->GetName(), pObject->GetTypeDesc().GetTypeName())!=0 &&
                                         x_strcmp(pObject->GetName(), "<Trigger>")!=0)
                                     {
-                                        draw_Label(LabelPos, xcolor(255,255,255,255), pObject->GetName());
+                                        render::debug::Label(LabelPos, xcolor(255,255,255,255), pObject->GetName());
                                     }
                                 }
 
-                                if( IconToDraw != -1 )
+                                if( iconToDraw != EditorIcon::Invalid )
                                 {
                                     const matrix4&      M       = pObject->GetL2W();
-                                    EditorIcon_Draw(IconToDraw, M, TRUE, Tint );
+                                    DrawEditorIcon(iconToDraw, M, TRUE, Tint );
                                 }
                             }
                         }
@@ -1781,17 +1815,17 @@ void obj_mgr::RenderIcons( void )
                             x_strcmp(Object.GetName(), "<Trigger>")!=0)
                         {
                             if( F < (1000.0f*10000.0f))
-                                draw_Label(LabelPos, xcolor(255,255,255,255), Object.GetName());
+                                render::debug::Label(LabelPos, xcolor(255,255,255,255), Object.GetName());
                         }
                     }
 
                     // Handle the rendering of it all.
                     const object_desc&  ObjDesc = Object.GetTypeDesc();
-                    editor_icon IconToDraw = (editor_icon)ObjDesc.OnEditorRender( Object );
+                    EditorIcon const iconToDraw = static_cast<EditorIcon>( ObjDesc.OnEditorRender( Object ) );
 
-                    if( IconToDraw != -1 )
+                    if( iconToDraw != EditorIcon::Invalid )
                     {
-                        EditorIcon_Draw(IconToDraw, M, FALSE, Tint );
+                        DrawEditorIcon(iconToDraw, M, FALSE, Tint );
                     }
                 }
             }
@@ -1805,7 +1839,7 @@ void obj_mgr::RenderIcons( void )
 
 void obj_mgr::DoVisibilityTests( const view& View )
 {
-    CONTEXT( "obj_mgr::DoVisibilityTests" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::DoVisibilityTests" );
 
     // Clear vis lists
     s32 i;
@@ -1975,7 +2009,7 @@ void obj_mgr::DoVisibilityTests( const view& View )
 #endif
 
             // perform clipping tests
-            const bbox& BBox = pObject->GetBBox();
+                    const bbox& BBox = pObject->GetBBox();
             s32 InView = IsBoxInView( BBox, XBIN(111111) );
 
             // Outside the view?
@@ -2013,7 +2047,7 @@ void obj_mgr::DoVisibilityTests( const view& View )
 
 void obj_mgr::RenderNormalObjects( void )
 {
-    CONTEXT( "obj_mgr::RenderNormalObjects" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::RenderNormalObjects" );
 
     for( s32 type=0; type<(s32)object::TYPE_END_OF_LIST; type++ )
     {
@@ -2099,7 +2133,7 @@ void obj_mgr::DisplayLocations( void )
                 vector3 Center = pObject->GetBBox().GetCenter();
 
                 // Render a label
-                draw_Label( Center, XCOLOR_WHITE,"%04d", pObject->m_SlotID );
+                render::debug::Label( Center, XCOLOR_WHITE,"%04d", pObject->m_SlotID );
             }
         }
     }
@@ -2109,7 +2143,7 @@ void obj_mgr::DisplayLocations( void )
 
 void obj_mgr::RenderCollision( void )
 {
-    CONTEXT( "obj_mgr::RenderCollision" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::RenderCollision" );
     for( s32 type=object::TYPE_TRIGGER; type<(s32)object::TYPE_END_OF_LIST; type++ )
     {
         // If a type is renderable then render
@@ -2146,7 +2180,7 @@ void obj_mgr::RenderCollision( void )
 
 void obj_mgr::RenderPlaySurfaces( void )
 {
-    CONTEXT( "obj_mgr::RenderPlaySurfaces" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::RenderPlaySurfaces" );
     g_PlaySurfaceMgr.RenderPlaySurfaces();
 }
 
@@ -2168,27 +2202,28 @@ s32 TransparentSortFn( const void* pItem1, const void* pItem2 )
 void obj_mgr::RenderSpecialObjects( void )
 {
 
-#if defined(TARGET_PC)
     if( g_RenderContext.m_bIsPipRender )
+    {
+        // PIP skips special-object submission, but normal alpha geometry still
+        // belongs to the forward queue and must complete for this view.
+        render::ExecuteForwardRender();
         return;
-#endif
+    }
 
-    CONTEXT( "obj_mgr::RenderSpecialObjects" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::RenderSpecialObjects" );
     LOG_STAT( k_stats_OtherRender );
 
     if( eng_Begin( "Special Objects" ) )
     {
-        render::BeginCustomRender();
-
-        g_DecalMgr.OnRender();
-        g_PostEffectMgr.RenderFog();
-        g_TracerMgr.Render();
 #ifndef X_RETAIL
         g_NavMap.RenderNavNearView();
 #endif
 
-        // enter raw mode so particles and such will render
-        render::StartRawDataMode();
+        // Enter primitive submission mode for tracers, particles, and the
+        // remaining transparent world primitives.
+        VERIFY( render::BeginPrimitiveRender() );
+
+        g_TracerMgr.Render();
 
         if( g_SpecialRenderObj.GetCount() )
         {
@@ -2240,11 +2275,19 @@ void obj_mgr::RenderSpecialObjects( void )
         }
         #endif
 
-        // exit raw data mode and go back to a deferred mode
-        render::EndRawDataMode();
+        // Close collection, draw opaque/decals, composite scene fog, then draw
+        // forward geometry with its own per-pixel fog.
+#ifdef X_EDITOR
+        g_DecalMgr.OnRenderEditorWireframes();
+#endif
+        render::EndPrimitiveRender();
+        render::ExecuteForwardRender( render::FORWARD_RENDER_PRE_EFFECTS );
+
+        g_PostEffectMgr.RenderFog();
+
+        render::ExecuteForwardRender( render::FORWARD_RENDER_POST_EFFECTS );
 
         new_weapon::CreateScopeTexture();
-        render::EndCustomRender();  // this will get distorted guys to render
         g_PostEffectMgr.Render();
         eng_End();
     }
@@ -2258,7 +2301,7 @@ void obj_mgr::RenderSpecialObjects( void )
 
 void obj_mgr::Render2dObjects( void )
 {
-    CONTEXT( "obj_mgr::Render - 2d Objects" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::Render - 2d Objects" );
     LOG_STAT( k_stats_OtherRender );
 
 #ifndef X_RETAIL
@@ -2364,7 +2407,7 @@ void obj_mgr::CompleteVisibilityTests( void )
 void obj_mgr::Render3dPrep( xbool DoPortalWalk, const view& PortalView, u8 StartZone )
 {
     // Prepare visibility and other per-frame state for 3D rendering.
-    CONTEXT( "obj_mgr::Render3dPrep" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::Render3dPrep" );
 
     // Update the OccluderMgr with the latest view
     #ifdef X_EDITOR
@@ -2376,22 +2419,18 @@ void obj_mgr::Render3dPrep( xbool DoPortalWalk, const view& PortalView, u8 Start
     if ( DoPortalWalk )
         g_ZoneMgr.PortalWalk( PortalView, StartZone );
     else
-        g_ZoneMgr.PortalWalk( PortalView, 0 );
+        g_ZoneMgr.TurnOff();
     DoVisibilityTests( PortalView );
 
     // clear the list of dynamic and character lights so visible light objects can add them back in
     g_LightMgr.ClearLights();
     CollectVisibleLights();
 
-#ifdef TARGET_PC
     if( g_RenderContext.m_bIsPipRender == 0 )
     {
         CompleteVisibilityTests();
         g_ShadowMapMgr.CreateShadowMap( NULL, 0 );
     }
-#else
-    CompleteVisibilityTests();
-#endif
 
     // Clear the list of special render objects;
     g_SpecialRenderObj.Delete(0, g_SpecialRenderObj.GetCount() );
@@ -2421,7 +2460,7 @@ xbool g_bRenderPlaysurfaces = TRUE;
 
 void obj_mgr::Render3dObjects( xbool bDoPortalWalk, const view& PortalView, u8 StartZone )
 {
-    CONTEXT( "obj_mgr::Render3dObjects" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::Render3dObjects" );
     LOG_STAT( k_stats_HighLevelRender );
 
 	if( g_ZoneMgr.GetPortalCount() == 0 ) bDoPortalWalk = FALSE;
@@ -2430,9 +2469,22 @@ void obj_mgr::Render3dObjects( xbool bDoPortalWalk, const view& PortalView, u8 S
         // Handle the normal rendering
         if( eng_Begin( "3d Objects" ) )
         {
-            g_LightMgr.BeginLightCollection();
-            render::BeginNormalRender();
-            RenderNormalObjects();
+            VERIFY( render::BeginPrimitiveRender() );
+
+            {
+                X_PROFILE_SCOPE_CATEGORY( "RenderSection", "3D/LightBegin" );
+                g_LightMgr.BeginLightCollection();
+            }
+
+            {
+                X_PROFILE_SCOPE_CATEGORY( "RenderSection", "3D/BeginNormalRender" );
+                render::BeginNormalRender();
+            }
+
+            {
+                X_PROFILE_SCOPE_CATEGORY( "RenderSection", "3D/CollectObjects" );
+                RenderNormalObjects();
+            }
 
             // Editor special case: Solve path visiblity by hand since they fail the zone checks if they are huge
 #ifdef X_EDITOR
@@ -2460,22 +2512,38 @@ void obj_mgr::Render3dObjects( xbool bDoPortalWalk, const view& PortalView, u8 S
 #endif // X_EDITOR
 
             if( g_bRenderPlaysurfaces )
+            {
+                X_PROFILE_SCOPE_CATEGORY( "RenderSection", "3D/PlaySurfaces" );
                 RenderPlaySurfaces();
+            }
 
-            g_LightMgr.EndLightCollection();
+            {
+                X_PROFILE_SCOPE_CATEGORY( "RenderSection", "3D/Decals" );
+                g_DecalMgr.OnRender();
+            }
+
+            {
+                X_PROFILE_SCOPE_CATEGORY( "RenderSection", "3D/LightEnd" );
+                g_LightMgr.EndLightCollection();
+            }
 
             // Check if any types need their collision rendered
 #ifndef X_RETAIL
-            RenderCollision();
+            {
+                X_PROFILE_SCOPE_CATEGORY( "RenderSection", "3D/Collision" );
+                RenderCollision();
+            }
 #endif
             {
                 LOG_STAT( k_stats_ObjectRender );
+                X_PROFILE_SCOPE_CATEGORY( "RenderSection", "3D/EndNormalRender" );
                 render::EndNormalRender();
             }
 
 #ifdef X_EDITOR
             g_NavMap.RenderConnectionsBright();
 #endif
+            render::EndPrimitiveRender();
             eng_End();
         }
     }
@@ -2489,7 +2557,7 @@ void obj_mgr::Render3dObjects( xbool bDoPortalWalk, const view& PortalView, u8 S
 
 void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone )
 {
-    CONTEXT( "obj_mgr::Render" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::Render" );
     LOG_STAT( k_stats_HighLevelRender );
 
     slot_id SlotID ;
@@ -2499,7 +2567,6 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
     render::GetStats().Begin();
     #endif
 
-    #if defined(TARGET_PC)
     {
         SlotID = m_ObjectType[object::TYPE_PIP].FirstType;
         while( SlotID != SLOT_NULL )
@@ -2514,7 +2581,6 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
             SlotID = m_ObjectSlot[SlotID].Next;
         }
     }
-    #endif
 
     // Render 3d scene
     Render3dObjects( bDoPortalWalk, PortalView, StartZone );
@@ -2574,7 +2640,12 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
         // Polycache
         if( eng_Begin("PolyCache") )
         {
-            g_PolyCache.Render();
+            if( render::BeginPrimitiveRender() )
+            {
+                g_PolyCache.Render();
+                render::EndPrimitiveRender();
+                render::ExecuteForwardRender();
+            }
             eng_End();
         }
     }
@@ -2587,14 +2658,18 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
         // Physics manager
         if( eng_Begin("PhysicsMgr") )
         {
-            g_PhysicsMgr.DebugRender();
+            if( render::BeginPrimitiveRender() )
+            {
+                g_PhysicsMgr.DebugRender();
+                render::EndPrimitiveRender();
+                render::ExecuteForwardRender();
+            }
             eng_End();
         }
     }
 #endif // #ifdef ENABLE_PHYSICS_DEBUG
 
     eng_Begin( "MP Zones" );
-    g_ZoneMgr.RenderMPZoneStates();
     eng_End();
 
     // Render HUD
@@ -2611,13 +2686,13 @@ void obj_mgr::Render( xbool bDoPortalWalk, const view& PortalView, u8 StartZone 
         {
             if( eng_Begin("Pip") )
             {
+                VERIFY( render::BeginPrimitiveRender() );
                 render::BeginNormalRender();
                 pPip->OnRender();
                 render::EndNormalRender();
+                render::EndPrimitiveRender();
+                render::ExecuteForwardRender();
 
-                // DS: Custom render added so pip will get distortion guys
-                render::BeginCustomRender();
-                render::EndCustomRender();
                 eng_End();
             }
         }

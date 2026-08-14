@@ -3,11 +3,13 @@
 //  VoiceMgr.cpp
 //
 //==============================================================================
+
 #include "x_types.hpp"
 
 //==============================================================================
 //  INCLUDES
 //==============================================================================
+
 #include "VoiceMgr.hpp"
 #include "VoiceProxy.hpp"
 #include "NetworkMgr/NetworkMgr.hpp"
@@ -16,140 +18,77 @@
 #include "Objects/actor/Actor.hpp"
 #include "NetworkMgr/GameMgr.hpp"
 
-#ifdef TARGET_PS2
-#include "ps2/IopManager.hpp"
-#endif
-
 voice_mgr g_VoiceMgr;
 
 //==============================================================================
 //  FUNCTIONS
 //==============================================================================
 
-//==============================================================================
 voice_mgr::voice_mgr( void )
 {
-    m_Initialized = FALSE;
-    m_LocalMutedPlayers = 0;
+    m_Initialized         = FALSE;
+    m_LocalMutedPlayers   = 0;
     m_bGameIsVoiceEnabled = TRUE;
 }
 
 //==============================================================================
+
 voice_mgr::~voice_mgr( void )
 {
-#ifndef TARGET_PC
     ASSERT(!m_Initialized);
-#endif
 }
 
 //==============================================================================
 
-void voice_mgr::Init( xbool LocalIsServer, xbool EnableHeadset )
-#if defined ( TARGET_PC )
+void voice_mgr::Init( xbool EnableHeadset )
 {
     ASSERT(!m_Initialized);
-    m_LocalIsServer          = LocalIsServer;
     m_Initialized            = TRUE;
-    m_PlayerNetSlot          = -1;
-    m_HeadsetEnabled         = FALSE;
+    m_bGameIsVoiceEnabled    = TRUE;
+    m_HeadsetEnabled         = EnableHeadset;
     m_LocalVoiceOwner        = -1;
+    m_LocalVoiceTalkType     = TALK_NOT_TALKING;
     m_CurrentTalkType        = TALK_GLOBAL;
     m_LocalDesiredTalkMode   = TALK_NONE;
+    m_LocalMutedPlayers      = 0;
     m_LocalDirtyMutedPlayers = TRUE;
 
-    m_Headset.Init( FALSE );
-
-    m_MaxSpeakers = 1;
-
-    for( s32 i = 0; i < NET_MAX_PLAYERS; i++ )
-    {
-        m_Speakers[ i ].PlayerNum      = i;
-        m_Speakers[ i ].ActualTalkMode = TALK_NOT_TALKING;
-        m_Speakers[ i ].TalkTime       = 0.0f;
-
-        m_SpeakerQueue[ i ] = m_Speakers + i;
-
-        for( s32 j = 0; j < 4; j++ )
-        {
-            m_Listeners[ i ].PlayerNum       = i;
-            m_Listeners[ i ].ListeningTo[ j ] = -1;
-        }
-
-        GameMgr.SetSpeaking( i, FALSE );
-    }
-
-    (void)EnableHeadset;
-}
-#endif
-#if defined ( TARGET_XBOX )
-{
-    ASSERT(!m_Initialized);
-    m_LocalIsServer         = LocalIsServer;
-    m_Initialized           = TRUE;
-    m_PlayerNetSlot         = -1;
-    m_HeadsetEnabled        = EnableHeadset;
-    m_LocalVoiceOwner       = -1;
-    m_CurrentTalkType       = TALK_GLOBAL;
-    m_LocalDesiredTalkMode  = TALK_NONE;
-
-    m_LocalDirtyMutedPlayers = TRUE;
-
-    // The headset is initialized ONCE at startup on XBox only!
-    // All other platforms should initialize the headset here.
-    #ifndef TARGET_XBOX
     m_Headset.Init( m_HeadsetEnabled );
-    #endif
 
     m_MaxSpeakers = 1;
 
     for( s32 i = 0; i < NET_MAX_PLAYERS; i++ )
     {
-        m_Speakers[ i ].PlayerNum       = i;
-        m_Speakers[ i ].ActualTalkMode  = TALK_NOT_TALKING;
-        m_Speakers[ i ].TalkTime        = 0.0f;
+        m_Speakers[ i ].PlayerNum        = i;
+        m_Speakers[ i ].ActualTalkMode   = TALK_NOT_TALKING;
+        m_Speakers[ i ].TalkTime         = 0.0f;
+        m_Speakers[ i ].MoveToEndOfQueue = FALSE;
 
-        // Set up the priority queue.
         m_SpeakerQueue[ i ] = m_Speakers + i;
-
-        for( s32 j = 0; j < 4; j++ )
-        {
-            m_Listeners[ i ].PlayerNum = i;
-            m_Listeners[ i ].ListeningTo[ j ] = -1; 
-        }
 
         GameMgr.SetSpeaking( i, FALSE );
     }
+
 }
-#endif
+
 //==============================================================================
+
 void voice_mgr::Kill( void )
-#if defined ( TARGET_PC )
 {
+    ASSERT(m_Initialized);
     if( m_Initialized )
     {
         m_Headset.Kill();
-        m_Initialized = FALSE;
+        m_HeadsetEnabled     = FALSE;
+        m_LocalVoiceOwner    = -1;
+        m_LocalVoiceTalkType = TALK_NOT_TALKING;
+        m_Initialized        = FALSE;
     }
 }
-#endif
-#if defined ( TARGET_XBOX )
-{
-    ASSERT(m_Initialized);
 
-    #ifndef TARGET_XBOX
-    m_Headset.Kill();
-    #endif
-    m_HeadsetEnabled    = FALSE;
-    m_Initialized       = FALSE;
-}
-#endif
 //==============================================================================
+
 void voice_mgr::Update( f32 DeltaTime )
-#if defined ( TARGET_PC )
-{
-}
-#endif
-#if defined ( TARGET_XBOX )
 {
     if( m_HeadsetEnabled )
     {
@@ -161,17 +100,41 @@ void voice_mgr::Update( f32 DeltaTime )
         DoArbitration( DeltaTime );
     }
 }
-#endif
+
 //==============================================================================
+
 s32 voice_mgr::GetLocalVoiceOwner( void )
 {
     return m_LocalVoiceOwner;
 }
 
 //==============================================================================
+
 void voice_mgr::SetVoiceOwner( s32 Listener, s32 Owner, actual_talk_mode TalkMode )
 {
     ASSERT( g_NetworkMgr.IsServer() );
+
+    if( !IN_RANGE( 0, Listener, NET_MAX_PLAYERS - 1 ) )
+    {
+        ASSERT( FALSE );
+        return;
+    }
+
+    if( (Owner != -1) && !IN_RANGE( 0, Owner, NET_MAX_PLAYERS - 1 ) )
+    {
+        ASSERT( FALSE );
+        return;
+    }
+
+    if( Owner == -1 )
+    {
+        TalkMode = TALK_NOT_TALKING;
+    }
+    else if( !IN_RANGE( TALK_MODE_FIRST, TalkMode, TALK_MODE_LAST ) )
+    {
+        ASSERT( FALSE );
+        return;
+    }
 
     s32 ClientIndex = g_NetworkMgr.GetClientIndex( Listener );
 
@@ -187,66 +150,72 @@ void voice_mgr::SetVoiceOwner( s32 Listener, s32 Owner, actual_talk_mode TalkMod
         }
     }
 
-    // Must be the server we're trying to set.
-    else
+    // The local player belongs to the server process.
+    else if( ClientIndex == -1 )
     {
         SetLocalVoiceOwner( Owner, TalkMode );
     }
 }
 
 //==============================================================================
+
 void voice_mgr::SetLocalVoiceOwner( s32 Owner, actual_talk_mode TalkMode )
 {
+    if( (Owner != -1) && !IN_RANGE( 0, Owner, NET_MAX_PLAYERS - 1 ) )
+    {
+        ASSERT( FALSE );
+        return;
+    }
+
+    if( Owner == -1 )
+    {
+        TalkMode = TALK_NOT_TALKING;
+    }
+    else if( !IN_RANGE( TALK_MODE_FIRST, TalkMode, TALK_MODE_LAST ) )
+    {
+        ASSERT( FALSE );
+        return;
+    }
+
     // If there is a change of voice ownership from the current local player.
     if( m_LocalVoiceOwner != Owner )
     {
-        if( Owner != -1 )
-        {
-            if( m_LocalVoiceOwner == -1 )
-            {
-                LOG_MESSAGE( "voice_mgr::SetLocalVoiceOwner", "Granted to player %d", Owner );
-            }
-            else
-            {
-                GameMgr.SetSpeaking( m_LocalVoiceOwner, FALSE );
-                LOG_MESSAGE( "voice_mgr::SetLocalVoiceOwner", "Stolen from player %d, granted to player %d", m_LocalVoiceOwner, Owner );
-            }
-        }
-        else
+        if( m_LocalVoiceOwner >= 0 )
         {
             GameMgr.SetSpeaking( m_LocalVoiceOwner, FALSE );
             LOG_MESSAGE( "voice_mgr::SetLocalVoiceOwner", "Released from player %d", m_LocalVoiceOwner );
-
-        }
-        // If the new owner is the local player, then send the beep sound to the headset.
-        if( Owner==g_NetworkMgr.GetLocalPlayerSlot(0) )
-        {
-            LOG_WARNING( "voice_mgr::SetLocalVoiceOwner","Start to talk BEEEP Sent to local headset" );
         }
 
-        // If the old owner is the local player, then send the release sound to the headset.
-        if( m_LocalVoiceOwner==g_NetworkMgr.GetLocalPlayerSlot(0) )
+        if( Owner >= 0 )
         {
-            LOG_WARNING( "voice_mgr::SetLocalVoiceOwner","End of talk STATIC sent to local headset" );
+            LOG_MESSAGE( "voice_mgr::SetLocalVoiceOwner", "Granted to player %d", Owner );
         }
+
+        m_Headset.ClearWriteFifo();
     }
 
     m_LocalVoiceOwner    = Owner;
     m_LocalVoiceTalkType = TalkMode;
 
-    GameMgr.SetSpeaking( m_LocalVoiceOwner, TRUE );
+    if( m_LocalVoiceOwner >= 0 )
+    {
+        GameMgr.SetSpeaking( m_LocalVoiceOwner, TRUE );
+    }
 }
 
 //==============================================================================
+
 // This will read a chunk of data from the 'write' fifo. This is because, on a
 // client, the write fifo is just used to store voice data pending to go out
 // to each client.
+
 s32 voice_mgr::ReadFromVoiceFifo( byte* pBuffer, s32 MaxLength )
 {
     return m_Headset.Read( pBuffer, MaxLength );
 }
 
 //==============================================================================
+
 void voice_mgr::WriteToVoiceFifo( const byte* pBuffer, s32 Length )
 {
     m_Headset.Write( pBuffer, Length );
@@ -254,25 +223,16 @@ void voice_mgr::WriteToVoiceFifo( const byte* pBuffer, s32 Length )
 
 //==============================================================================
 
+
 s32 voice_mgr::GetBytesInWriteFifo( void )
 {
     return( m_Headset.GetNumBytesInWriteFifo() );
 }
 
 //==============================================================================
+
 void voice_mgr::SetTalking( xbool bTalking )
 {
-    #ifdef TARGET_XBOX
-    {
-        // If we are recording a voice attachment then don't transmit voice
-        if( m_Headset.GetVoiceIsRecording() == TRUE )
-        {
-            m_LocalDesiredTalkMode = TALK_NONE;
-            return;
-        }
-    }
-    #endif
-
     desired_talk_mode OldMode = m_LocalDesiredTalkMode;
     if( bTalking && m_bGameIsVoiceEnabled )
     {
@@ -286,11 +246,11 @@ void voice_mgr::SetTalking( xbool bTalking )
     if( m_LocalDesiredTalkMode != OldMode )
     {
 #if defined(X_DEBUG)
-        LOG_MESSAGE( "voice_mgr::SetTalking", "Voice mode change. Old Mode:%s, New Mode:%s", 
-            GetTalkModeName(OldMode), 
+        LOG_MESSAGE( "voice_mgr::SetTalking", "Voice mode change. Old Mode:%s, New Mode:%s",
+            GetTalkModeName(OldMode),
             GetTalkModeName(m_LocalDesiredTalkMode) );
 #endif
-        
+
         if( m_LocalDesiredTalkMode == TALK_NONE )
         {
             m_Headset.SetTalking( FALSE );
@@ -298,97 +258,138 @@ void voice_mgr::SetTalking( xbool bTalking )
         else
         {
             m_Headset.SetTalking( TRUE );
-        }    
+        }
     }
 }
 
 //==============================================================================
+
+void voice_mgr::SetIsGameVoiceEnabled( xbool Enabled )
+{
+    m_bGameIsVoiceEnabled = Enabled;
+    if( !Enabled && m_Initialized )
+    {
+        m_LocalDesiredTalkMode = TALK_NONE;
+        m_Headset.SetTalking( FALSE );
+        m_Headset.ClearReadFifo();
+    }
+}
+
+//==============================================================================
+
 xbool voice_mgr::IsValidTarget( s32 Speaker, s32 Listener, actual_talk_mode TalkMode )
 {
-    
-    if( (g_NetworkMgr.GetClientIndex( Speaker  ) >= -1) &&
-        (g_NetworkMgr.GetClientIndex( Listener ) >= -1) )
+    if( !IN_RANGE( 0, Speaker, NET_MAX_PLAYERS - 1 ) ||
+        !IN_RANGE( 0, Listener, NET_MAX_PLAYERS - 1 ) )
     {
-        actor* pSpeaker  = (actor*)NetObjMgr.GetObjFromSlot( Speaker  );
-        actor* pListener = (actor*)NetObjMgr.GetObjFromSlot( Listener );
+        return FALSE;
+    }
 
-        if( !pSpeaker || !pListener )
-        {
-            LOG_WARNING( "voice_mgr::IsValidTarget", "Bad Speaker (%d) or Listener (%d)", Speaker, Listener );
-            return FALSE;
-        }
+    s32 SpeakerClientIndex  = g_NetworkMgr.GetClientIndex( Speaker );
+    s32 ListenerClientIndex = g_NetworkMgr.GetClientIndex( Listener );
+    if( (SpeakerClientIndex < -1) || (ListenerClientIndex < -1) )
+    {
+        return FALSE;
+    }
 
-        // Have to get the appropriate speaker bits for the server or client, then check and see if the listener has him muted.
-        if( ( Listener == 0 ? m_LocalMutedPlayers : 
-                              g_NetworkMgr.GetVoiceProxy( g_NetworkMgr.GetClientIndex( Listener ) ).GetMutedPlayers() ) & (1 << Speaker) )
-        {
-            return FALSE;
-        }
+    actor* pSpeaker  = (actor*)NetObjMgr.GetObjFromSlot( Speaker  );
+    actor* pListener = (actor*)NetObjMgr.GetObjFromSlot( Listener );
 
-        // Check if the speaker is voice banned
-        if( GameMgr.GetScore().Player[ Speaker ].IsVoiceAllowed == FALSE )
-            return( FALSE );
+    if( !pSpeaker || !pListener )
+    {
+        LOG_WARNING( "voice_mgr::IsValidTarget", "Bad Speaker (%d) or Listener (%d)", Speaker, Listener );
+        return FALSE;
+    }
 
-        // Check if the listener is voice banned
-        if( GameMgr.GetScore().Player[ Listener ].IsVoiceAllowed == FALSE )
-            return( FALSE );
+    // Use the local mute list for the server process and the proxy list for a remote client.
+    u32 MutedPlayers;
+    if( ListenerClientIndex == -1 )
+    {
+        MutedPlayers = m_LocalMutedPlayers;
+    }
+    else if( ListenerClientIndex >= 0 )
+    {
+        MutedPlayers = g_NetworkMgr.GetVoiceProxy( ListenerClientIndex ).GetMutedPlayers();
+    }
+    else
+    {
+        return FALSE;
+    }
 
-        switch( TalkMode )
-        {
+    if( MutedPlayers & (u32( 1 ) << Speaker) )
+    {
+        return FALSE;
+    }
+
+    // Check if the speaker is voice banned.
+    if( GameMgr.GetScore().Player[ Speaker ].IsVoiceAllowed == FALSE )
+        return FALSE;
+
+    // Check if the listener is voice banned.
+    if( GameMgr.GetScore().Player[ Listener ].IsVoiceAllowed == FALSE )
+        return FALSE;
+
+    switch( TalkMode )
+    {
         case TALK_NEW_GLOBAL:
         case TALK_POT_GLOBAL:
         case TALK_OLD_GLOBAL:
+        {
             return TRUE;
+        }
+        break;
 
         case TALK_NEW_TEAM:
         case TALK_POT_TEAM:
         case TALK_OLD_TEAM:
-            if( pSpeaker->net_GetTeamBits() & pListener->net_GetTeamBits() )
-            {
-                return TRUE;
-            }
-            else
-            {
-                return FALSE;
-            }
+        {
+            return (pSpeaker->net_GetTeamBits() & pListener->net_GetTeamBits()) != 0;
+        }
+        break;
 
         case TALK_NEW_LOCAL:
         case TALK_POT_LOCAL:
         case TALK_OLD_LOCAL:
-            if( (pSpeaker->GetPosition() - pListener->GetPosition()).LengthSquared() < 2560000.0f )
-            {
-                return TRUE;
-            }
-            else
-            {
-                return FALSE;
-            }
-           
-        default:
-            return FALSE;
-            break;
+        {
+            return ( (pSpeaker->GetPosition() - pListener->GetPosition()).LengthSquared() < 2560000.0f );
         }
-    }
+        break;
 
-    return FALSE;
+        default:
+        {
+            return FALSE;
+        }
+        break;
+    }
 }
 
 //==============================================================================
 
 xbool voice_mgr::IsSpeaking( s32 Speaker )
 {
+    ASSERT( IN_RANGE( 0, Speaker, NET_MAX_PLAYERS - 1 ) );
+    if( !IN_RANGE( 0, Speaker, NET_MAX_PLAYERS - 1 ) )
+    {
+        return FALSE;
+    }
+
     switch( m_Speakers[ Speaker ].ActualTalkMode )
     {
-    case TALK_NEW_TEAM:     
-    case TALK_OLD_TEAM:     
-    case TALK_NEW_LOCAL:    
-    case TALK_OLD_LOCAL:    
-    case TALK_NEW_GLOBAL:   
-    case TALK_OLD_GLOBAL:
-        return TRUE;
+        case TALK_NEW_TEAM:
+        case TALK_OLD_TEAM:
+        case TALK_NEW_LOCAL:
+        case TALK_OLD_LOCAL:
+        case TALK_NEW_GLOBAL:
+        case TALK_OLD_GLOBAL:
+        {
+            return TRUE;
+        }
         break;
-    default:
-        return FALSE;
+
+        default:
+        {
+            return FALSE;
+        }
         break;
     }
 }
@@ -399,21 +400,39 @@ void voice_mgr::AgeSpeaker( s32 Speaker, f32 DeltaTime )
 {
     const f32 ProtectedTime = 5.0f;
 
+    ASSERT( IN_RANGE( 0, Speaker, NET_MAX_PLAYERS - 1 ) );
+    if( !IN_RANGE( 0, Speaker, NET_MAX_PLAYERS - 1 ) )
+    {
+        return;
+    }
+
     m_Speakers[ Speaker ].TalkTime += DeltaTime;
     if( m_Speakers[ Speaker ].TalkTime > ProtectedTime )
     {
         switch( m_Speakers[ Speaker ].ActualTalkMode )
         {
-        case TALK_NEW_TEAM:     
-            m_Speakers[ Speaker ].ActualTalkMode = TALK_OLD_TEAM;
+
+            case TALK_NEW_TEAM:
+            {
+                m_Speakers[ Speaker ].ActualTalkMode = TALK_OLD_TEAM;
+            }
             break;
-        case TALK_NEW_LOCAL:    
-            m_Speakers[ Speaker ].ActualTalkMode = TALK_OLD_LOCAL;
+
+            case TALK_NEW_LOCAL:
+            {
+                m_Speakers[ Speaker ].ActualTalkMode = TALK_OLD_LOCAL;
+            }
             break;
-        case TALK_NEW_GLOBAL:   
-            m_Speakers[ Speaker ].ActualTalkMode = TALK_OLD_GLOBAL;
+
+            case TALK_NEW_GLOBAL:
+            {
+                m_Speakers[ Speaker ].ActualTalkMode = TALK_OLD_GLOBAL;
+            }
             break;
-        default:
+
+            default:
+            {
+            }
             break;
         }
     }
@@ -439,14 +458,12 @@ desired_talk_mode voice_mgr::GetDesiredTalkMode( s32 PlayerIndex )
             return TALK_NONE;
         }
     }
-    else if( ClientIndex == -2 )
-    {
-        return TALK_NONE;
-    }
-    else
+    else if( ClientIndex == -1 )
     {
         return GetLocalDesiredTalkMode();
     }
+
+    return TALK_NONE;
 }
 
 //==============================================================================
@@ -462,16 +479,27 @@ void voice_mgr::ToggleTalkMode( void )
 
             switch( m_CurrentTalkType )
             {
-            case TALK_GLOBAL:
-                m_CurrentTalkType = TALK_LOCAL;
+                case TALK_GLOBAL:
+                {
+                    m_CurrentTalkType = TALK_LOCAL;
+                }
                 break;
-            case TALK_LOCAL:
-                m_CurrentTalkType = ScoreData.IsTeamBased ? TALK_TEAM : TALK_GLOBAL;
+
+                case TALK_LOCAL:
+                {
+                    m_CurrentTalkType = ScoreData.IsTeamBased ? TALK_TEAM : TALK_GLOBAL;
+                }
                 break;
-            case TALK_TEAM:
-                m_CurrentTalkType = TALK_GLOBAL;
+
+                case TALK_TEAM:
+                {
+                    m_CurrentTalkType = TALK_GLOBAL;
+                }
                 break;
-            default:
+
+                default:
+                {
+                }
                 break;
             }
         }
@@ -484,19 +512,17 @@ void voice_mgr::DoArbitration( f32 DeltaTime )
 {
     s32 CurrentMax = 1;
 
-    // First, create an array to hold how many people 
+    // First, create an array to hold how many people
     // each person is currently listening to.
 
-    if( m_Headset.IsEnabled() == FALSE )
-    {
-        return;
-    }
     s32 NumSpeakers          [ NET_MAX_PLAYERS ];
     u32 WantedListeners      [ NET_MAX_PLAYERS ];
     s32 NumWantedListeners   [ NET_MAX_PLAYERS ];
 
     u32 PotentialListeners   [ NET_MAX_PLAYERS ];
     s32 NumPotentialListeners[ NET_MAX_PLAYERS ];
+    s32 NewOwners            [ NET_MAX_PLAYERS ];
+    actual_talk_mode NewTalkModes[ NET_MAX_PLAYERS ];
 
     // Clear everything out.
     for( s32 i = 0; i < NET_MAX_PLAYERS; i++ )
@@ -508,8 +534,9 @@ void voice_mgr::DoArbitration( f32 DeltaTime )
 
         WantedListeners         [ i ] = 0;
         NumWantedListeners      [ i ] = 0;
-    
-        SetVoiceOwner( i, -1, TALK_NOT_TALKING );
+
+        NewOwners               [ i ] = -1;
+        NewTalkModes            [ i ] = TALK_NOT_TALKING;
 
         if( IsSpeaking( i ) )
         {
@@ -532,22 +559,33 @@ void voice_mgr::DoArbitration( f32 DeltaTime )
                 {
                     switch( DesiredTalkMode )
                     {
-                    case TALK_GLOBAL:
-                        m_Speakers[ i ].ActualTalkMode = TALK_POT_GLOBAL;
+                        case TALK_GLOBAL:
+                        {
+                            m_Speakers[ i ].ActualTalkMode = TALK_POT_GLOBAL;
+                        }
                         break;
-                    case TALK_TEAM:
-                        m_Speakers[ i ].ActualTalkMode = TALK_POT_TEAM;
+
+                        case TALK_TEAM:
+                        {
+                            m_Speakers[ i ].ActualTalkMode = TALK_POT_TEAM;
+                        }
                         break;
-                    case TALK_LOCAL:
-                        m_Speakers[ i ].ActualTalkMode = TALK_POT_LOCAL;
+
+                        case TALK_LOCAL:
+                        {
+                            m_Speakers[ i ].ActualTalkMode = TALK_POT_LOCAL;
+                        }
                         break;
-                    default:
-                        break; 
+
+                        default:
+                        {
+                        }
+                        break;
                     }
                 }
             }
 
-            // If they don't desire to speak, 
+            // If they don't desire to speak,
             // we certainly aren't going to make them.
             else
             {
@@ -565,7 +603,7 @@ void voice_mgr::DoArbitration( f32 DeltaTime )
     }
 
     //
-    // Go through and set up the speaker bitfields with 
+    // Go through and set up the speaker bitfields with
     // the desired recipients.
     //
     for( s32 i = 0; i < NET_MAX_PLAYERS; i++ )
@@ -577,7 +615,7 @@ void voice_mgr::DoArbitration( f32 DeltaTime )
                 if( IsValidTarget( i, j, m_Speakers[ i ].ActualTalkMode ) )
                 {
                     // Turn on the bit, this speaker wants to talk to this player.
-                    WantedListeners[ i ] |= (1 << j);
+                    WantedListeners[ i ] |= (u32( 1 ) << j);
                     NumWantedListeners[ i ]++;
                 }
             }
@@ -585,10 +623,10 @@ void voice_mgr::DoArbitration( f32 DeltaTime )
     }
 
     //
-    // We know who wants to talk to whom, 
+    // We know who wants to talk to whom,
     // now figure out who can talk to whom.
     // Priority is determined by talk mode, then priority queue.
-    // 
+    //
     for( s32 TalkMode = TALK_MODE_FIRST; TalkMode <= TALK_MODE_LAST; TalkMode++ )
     {
         // This is defined so we don't cover the same entry twice
@@ -607,46 +645,58 @@ void voice_mgr::DoArbitration( f32 DeltaTime )
                 for( s32 ListenerNum = 0; ListenerNum < NET_MAX_PLAYERS; ListenerNum++ )
                 {
                     if( (NumSpeakers[ ListenerNum ] < m_MaxSpeakers) &&
-                        (WantedListeners[ Speaker.PlayerNum ] & (1 << ListenerNum)) )
+                        (WantedListeners[ Speaker.PlayerNum ] & (u32( 1 ) << ListenerNum)) )
                     {
                         if( NumSpeakers[ ListenerNum ] < CurrentMax )
                         {
                             NumPotentialListeners[ Speaker.PlayerNum ]++;
-                            PotentialListeners[ Speaker.PlayerNum ] |= (1 << ListenerNum);
+                            PotentialListeners[ Speaker.PlayerNum ] |= (u32( 1 ) << ListenerNum);
                         }
                     }
                 }
 
                 // Now check to see that we can talk to at least half the
-                // people we wanted to originally.  Also, you need to be 
+                // people we wanted to originally.  Also, you need to be
                 // able to talk to yourself, but not just yourself, cause
                 // that's a sure sign of madness.
-                if( (NumPotentialListeners[ Speaker.PlayerNum ] > (NumWantedListeners[ Speaker.PlayerNum ] / 2)) &&
+                if( ((NumPotentialListeners[ Speaker.PlayerNum ] * 2) >= NumWantedListeners[ Speaker.PlayerNum ]) &&
                     (NumPotentialListeners[ Speaker.PlayerNum ] > 1) &&
-                    (PotentialListeners[ Speaker.PlayerNum ] & (1 << Speaker.PlayerNum)) )
+                    (PotentialListeners[ Speaker.PlayerNum ] & (u32( 1 ) << Speaker.PlayerNum)) )
                 {
                     // If this is his first frame talking, upgrade him from a potential talker.
                     switch( Speaker.ActualTalkMode )
                     {
-                    case TALK_POT_GLOBAL:
-                        Speaker.ActualTalkMode = TALK_NEW_GLOBAL;
+                        case TALK_POT_GLOBAL:
+                        {
+                            Speaker.ActualTalkMode = TALK_NEW_GLOBAL;
+                        }
                         break;
-                    case TALK_POT_LOCAL:
-                        Speaker.ActualTalkMode = TALK_NEW_LOCAL;
+
+                        case TALK_POT_LOCAL:
+                        {
+                            Speaker.ActualTalkMode = TALK_NEW_LOCAL;
+                        }
                         break;
-                    case TALK_POT_TEAM:
-                        Speaker.ActualTalkMode = TALK_NEW_TEAM;
+
+                        case TALK_POT_TEAM:
+                        {
+                            Speaker.ActualTalkMode = TALK_NEW_TEAM;
+                        }
                         break;
-                    default:
+
+                        default:
+                        {
+                        }
                         break;
                     }
-                                                
+
                     for( s32 ListenerNum = 0; ListenerNum < NET_MAX_PLAYERS; ListenerNum++ )
                     {
-                        if( (PotentialListeners[ Speaker.PlayerNum ] & (1 << ListenerNum)) )
+                        if( (PotentialListeners[ Speaker.PlayerNum ] & (u32( 1 ) << ListenerNum)) )
                         {
                             NumSpeakers[ ListenerNum ]++;
-                            SetVoiceOwner( ListenerNum, Speaker.PlayerNum, m_Speakers[ Speaker.PlayerNum ].ActualTalkMode );
+                            NewOwners[ ListenerNum ] = Speaker.PlayerNum;
+                            NewTalkModes[ ListenerNum ] = m_Speakers[ Speaker.PlayerNum ].ActualTalkMode;
                         }
                     }
                 }
@@ -656,7 +706,7 @@ void voice_mgr::DoArbitration( f32 DeltaTime )
                 {
                     // If he still desires to speak, it will get sorted out at the beginning
                     // of the next DoArbitration, but he'll have to start from scratch.
-                    
+
                     if( IsSpeaking( Speaker.PlayerNum ) )
                     {
                         // Move them to the end of the queue.
@@ -670,7 +720,14 @@ void voice_mgr::DoArbitration( f32 DeltaTime )
         }
     }
 
-    // Move people who finished speaking 
+    // Apply only ownership changes. Clearing and reassigning every frame would
+    // flush queued voice data even while the same speaker remains selected.
+    for( s32 ListenerNum = 0; ListenerNum < NET_MAX_PLAYERS; ListenerNum++ )
+    {
+        SetVoiceOwner( ListenerNum, NewOwners[ ListenerNum ], NewTalkModes[ ListenerNum ] );
+    }
+
+    // Move people who finished speaking
     // this frame to the end of the priority queue.
     s32 NumMoves = 0;
     for( s32 i = 0; i + NumMoves < NET_MAX_PLAYERS; )
@@ -698,14 +755,25 @@ void voice_mgr::DoArbitration( f32 DeltaTime )
 
 //==============================================================================
 
-void voice_mgr::Distribute( s32 TalkerIndex, const byte* pBuffer, s32 Length, s32 Mode )
+void voice_mgr::Distribute( s32 TalkerIndex, const byte* pBuffer, s32 Length )
 {
     s32     PlayerIndex;
     s32     ClientIndex;
-    (void)TalkerIndex;
+    s32     EncodeBlockSize;
 
-    (void)Mode;
     ASSERT( g_NetworkMgr.IsServer() );
+
+    EncodeBlockSize = GetEncodeBlockSize();
+
+    if( !IN_RANGE( 0, TalkerIndex, NET_MAX_PLAYERS - 1 ) ||
+        (pBuffer == NULL) ||
+        (Length <= 0) ||
+        (EncodeBlockSize <= 0) ||
+        ((Length % EncodeBlockSize) != 0) )
+    {
+        return;
+    }
+
     for( PlayerIndex=0; PlayerIndex < NET_MAX_PLAYERS; PlayerIndex++ )
     {
         ClientIndex = g_NetworkMgr.GetClientIndex( PlayerIndex );
@@ -729,9 +797,10 @@ void voice_mgr::Distribute( s32 TalkerIndex, const byte* pBuffer, s32 Length, s3
 }
 
 //==============================================================================
+
 // The format of the data sent out here should mirror the voice_proxy::AcceptUpdate
 // function. This can be used by any client to send to the server.
-//
+
 void voice_mgr::ProvideUpdate( netstream& BitStream )
 {
     ASSERT( g_NetworkMgr.IsClient() );
@@ -756,16 +825,13 @@ void voice_mgr::ProvideUpdate( netstream& BitStream )
             LOG_MESSAGE( "voice_mgr::ProvideUpdate", "Requesting voice ownership. Talk Mode:%s", GetTalkModeName(m_LocalDesiredTalkMode) );
 #endif
             // Write a flag to say data is present.
-            BitStream.WriteRangedS32( m_LocalDesiredTalkMode, TALK_MODE_FIRST, TALK_MODE_LAST );
-            m_Headset.ProvideUpdate( BitStream, 128 );
+            BitStream.WriteRangedS32( m_LocalDesiredTalkMode, TALK_TEAM, TALK_NONE );
+            m_Headset.ProvideUpdate( BitStream, VOICE_MAX_UPDATE_BYTES );
         }
         else
         {
-            // Release the headset. We do this, at the moment, by sending no data for
-            // up to a half second. We will change this so that we send a player
-            // slot of -1, until the network manager confirms someone else owns the
-            // voice.
-            BitStream.WriteRangedS32( m_LocalDesiredTalkMode, TALK_MODE_FIRST, TALK_MODE_LAST );
+            // Keep the ownership request active while another player owns the channel.
+            BitStream.WriteRangedS32( m_LocalDesiredTalkMode, TALK_TEAM, TALK_NONE );
             m_Headset.ProvideUpdate( BitStream, 0 );
         }
     }
@@ -774,24 +840,16 @@ void voice_mgr::ProvideUpdate( netstream& BitStream )
         //
         // No one from this machine is interested in speaking!
         //
-        BitStream.WriteRangedS32( TALK_NONE, TALK_MODE_FIRST, TALK_MODE_LAST );
-#if defined(TARGET_XBOX)
-        // Now tell the bitstream that it's only got a byte in it.
-        s32 Cursor = BitStream.GetCursor();
-        s32 BytesUsed = (Cursor+7) >> 3;
-        BitStream.SetCursor( 0 );
-        BitStream.WriteU32( BytesUsed-2, 8 );
-        BitStream.WriteU32( 0, 8 );
-        BitStream.SetCursor( Cursor );
-#endif
+        BitStream.WriteRangedS32( TALK_NONE, TALK_TEAM, TALK_NONE );
     }
 }
 
 //==============================================================================
+
 // Data came in from the server. This tells us who actually has control of the
-// headset. It *may* be us! The format of this data should mirror 
+// headset. It *may* be us! The format of this data should mirror
 // voice_proxy::ProvideUpdate()
-//
+
 void voice_mgr::AcceptUpdate( netstream& BitStream )
 {
     xbool   DataPresent;
@@ -799,7 +857,7 @@ void voice_mgr::AcceptUpdate( netstream& BitStream )
     s32     TalkMode;
 
     ASSERT( g_NetworkMgr.IsClient() );
-    
+
     DataPresent = BitStream.ReadFlag();
     //
     // We have the data coming in from a bitstream. This is only called on a client
@@ -822,13 +880,23 @@ void voice_mgr::AcceptUpdate( netstream& BitStream )
     }
 
 
-    BitStream.ReadRangedS32( Owner, 0, NET_MAX_PLAYERS );
+    BitStream.ReadRangedS32( Owner, 0, NET_MAX_PLAYERS - 1 );
     BitStream.ReadRangedS32( TalkMode, TALK_MODE_FIRST, TALK_MODE_LAST );
 
-    if( GetLocalVoiceOwner() != Owner )
+    if( !IN_RANGE( 0, Owner, NET_MAX_PLAYERS - 1 ) ||
+        !IN_RANGE( TALK_MODE_FIRST, TalkMode, TALK_MODE_LAST ) )
+    {
+        ASSERT( FALSE );
+        m_Headset.AcceptUpdate( BitStream );
+        SetLocalVoiceOwner( -1, TALK_NOT_TALKING );
+        return;
+    }
+
+    if( (GetLocalVoiceOwner() != Owner) ||
+        (m_LocalVoiceTalkType != static_cast<actual_talk_mode>( TalkMode )) )
     {
         LOG_MESSAGE( "voice_mgr::AcceptUpdate", "New voice owner, old speaker:%d, new speaker:%d", GetLocalVoiceOwner(), Owner );
-        SetLocalVoiceOwner( Owner, (actual_talk_mode)TalkMode );
+        SetLocalVoiceOwner( Owner, static_cast<actual_talk_mode>( TalkMode ) );
     }
     m_Headset.AcceptUpdate( BitStream );
 }
@@ -850,7 +918,7 @@ xbool voice_mgr::IsVoiceCapable( void )
 
 //==============================================================================
 
-#if defined(X_DEBUG)        
+#if defined(X_DEBUG)
 const char* GetTalkModeName( s32 Mode )
 {
     switch(Mode)
@@ -865,163 +933,10 @@ const char* GetTalkModeName( s32 Mode )
 }
 #endif
 
+//==============================================================================
+
 #if defined(X_DEBUG) && (defined(bwatson) || defined(jpcossigny) || defined(Biscuit))
-#if defined(TARGET_PS2)
-#include "Audio/Hardware/audio_hardware_ps2_private.hpp"
-void VoiceTestCode( void )
-{
-    g_NetworkMgr.SetOnline( TRUE );
-    g_VoiceMgr.Init( TRUE, TRUE );
-    s_ChannelManager.SetPCMVolume( 1.0f );
-    g_VoiceMgr.SetVoiceThruSpeakers( TRUE );
-    g_VoiceMgr.SetLoopback( TRUE );
-    g_VoiceMgr.SetTalking( TRUE );
-    while( TRUE )
-    {
-        g_VoiceMgr.Update( 1.0f/32.0f );
-        x_DelayThread( 32 );
-    }
-    g_VoiceMgr.Kill();
-}
-#endif
-
-#if defined(TARGET_PC)
 void VoiceTestCode( void )
 {
 }
-#endif
-
-//=============================================================================
-#if defined(TARGET_XBOX)
-//=============================================================================
-
-void PrintProgress( xbool IsMic, f32 T )
-{
-    xstring String;
-
-    if( IsMic == TRUE )
-        String = "Read : <               >\n";
-    else
-        String = "Play : <               >\n";
-
-    s32 Index = 7 + (s32)(15.0f * T);
-
-    String[ Index ] = 'X';
-
-    x_DebugMsg( String );
-}
-
-//=============================================================================
-
-void VoiceTestCode( void )
-#if defined ( TARGET_PC )
-{
-}
-#endif
-#if defined ( TARGET_XBOX )
-{
-    g_NetworkMgr.SetOnline( TRUE );
-    g_VoiceMgr.Init( TRUE, TRUE );
-
-    // We must delay for a while until the xbox detects a headset is connected!
-    for( s32 i=0; i < 32; i++ )
-    {
-        g_VoiceMgr.Update( 1.0f / 32.0f );
-        x_DelayThread( 32 );
-    }
-
-    // Headset should now be registered, so we can enable talking
-    g_VoiceMgr.SetTalking( TRUE );
-    g_VoiceMgr.SetVolume( 1.0f, 1.0f );
-
-    //g_VoiceMgr.SetVoiceThruSpeakers( TRUE );
-
-    headset& Headset = g_VoiceMgr.GetHeadset();
-
-    xbool IsInitialized = FALSE;
-    xbool IsRecording   = TRUE;
-
-    while( 1 )
-    {
-        g_VoiceMgr.Update( 1.0f / 32.0f );
-
-        if( 0 )
-        {
-            //
-            // Loopback Test
-            //
-
-            byte Buffer[ 256 ];
-            s32 nBytes = g_VoiceMgr.ReadFromVoiceFifo( Buffer, sizeof( Buffer ) );
-            if( nBytes > 0 )
-                g_VoiceMgr.WriteToVoiceFifo( Buffer, nBytes );
-        }
-        else
-        {
-            //
-            // Voice Message Recording/Playback Test
-            //
-
-            if( IsRecording == TRUE )
-            {
-                if( IsInitialized == FALSE )
-                {
-                    IsInitialized = TRUE;
-                    Headset.InitVoiceRecording();
-                    Headset.StartVoiceRecording();
-                }
-
-                // Wait until recording has finished
-                if( Headset.GetVoiceIsRecording() == FALSE )
-                {
-                    // Switch to playback mode
-                    IsRecording = FALSE;
-
-                    s32     NumBytes      = Headset.GetVoiceNumBytesRec();
-                    s32     DurationMS    = Headset.GetVoiceDurationMS();
-                    byte*   pVoiceMessage = Headset.GetVoiceMessageRec();
-                    ASSERT( pVoiceMessage != NULL );
-
-                    Headset.StartVoicePlaying( pVoiceMessage, DurationMS, NumBytes );
-
-                    X_FILE* pFile = x_fopen( "\\Audio.bin", "wb" );
-                    ASSERT( pFile != NULL );
-                    x_fwrite( pVoiceMessage, 1, NumBytes, pFile );
-                    x_fclose( pFile );
-                }
-                else
-                {
-                    PrintProgress( TRUE, Headset.GetVoiceRecordingProgress() );
-                }
-            }
-            else
-            {
-                // Wait until voice has finished playing
-                if( Headset.GetVoiceIsPlaying() == FALSE )
-                {
-                    IsInitialized = FALSE;
-                    IsRecording   = TRUE;
-
-                    // Finished with the voice message so destroy it
-                    Headset.KillVoiceRecording();
-                }
-                else
-                {
-                    PrintProgress( FALSE, Headset.GetVoicePlayingProgress() );
-                }
-            }
-        }
-
-        x_DelayThread( 32 );
-    }
-
-    Headset.KillVoiceRecording();
-
-    g_VoiceMgr.Kill();
-}
-#endif
-//=============================================================================
-#endif
-//=============================================================================
-
 #endif

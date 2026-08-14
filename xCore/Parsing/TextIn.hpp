@@ -24,7 +24,7 @@
 //=========================================================================
 #include "x_math.hpp"
 #include "x_color.hpp"
-#include "Tokenizer.hpp"
+#include "tokenizer.hpp"
 
 //=========================================================================
 // CLASS
@@ -129,7 +129,7 @@ protected:
 protected:
     
     xbool   ReadAllFields  ( void );
-    xbool   ReportError ( char* pStr, ... );
+    xbool   ReportError ( const char* pStr, ... );
     s32     Stricmp     ( const char* pStr1,  const char* pStr2, s32 Count );
 
 protected:

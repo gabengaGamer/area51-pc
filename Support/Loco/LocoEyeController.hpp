@@ -21,6 +21,13 @@
 //=========================================================================
 class loco_eye_controller : public loco_anim_controller
 {
+private:
+        struct additive_reference_cache
+        {
+            anim_key    Key[2];
+            xbool       Active[2];
+        };
+
 // Functions
 public:
 
@@ -50,6 +57,16 @@ virtual void    Advance         ( f32 nSeconds, vector3&  DeltaPos, radian& Delt
         
         // Returns TRUE if eye anims are present
         xbool   IsActive        ( void ) const;
+
+private:
+        xbool   CacheAdditiveReferences( const anim_info& AnimInfo,
+                                         s32              iRefFrame,
+                                         additive_reference_cache& Cache );
+        void    MixCachedAdditive      ( const info&       Info,
+                                         const anim_info&  AnimInfo,
+                                         f32               Frame,
+                                         const additive_reference_cache& Cache,
+                                         anim_key*         pDestKey );
         
 // Member variables
 protected:
@@ -62,6 +79,9 @@ protected:
         f32     m_TargetBlendSpeed;         // Speed to blend towards target
         vector3 m_LookAt ;                  // Current position that the eyes are looking at
         vector3 m_TargetLookAt ;            // Target position that the eyes need to look towards
+        additive_reference_cache m_UDReferenceCache;
+        additive_reference_cache m_LRReferenceCache;
+        xbool   m_bUseReferenceCache;
         
 //=========================================================================
 // FRIENDS
@@ -86,4 +106,3 @@ xbool loco_eye_controller::IsActive( void ) const
 //=========================================================================
 
 #endif // __LOCO_EYE_CONTROLLER_HPP_
-

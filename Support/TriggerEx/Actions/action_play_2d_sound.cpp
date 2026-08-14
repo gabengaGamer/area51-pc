@@ -9,9 +9,9 @@
 //=========================================================================
 
 #include "action_play_2d_sound.hpp"
-#include "..\TriggerEx_Object.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Audio\audio_stream_controller.hpp"
+#include "../TriggerEx_Object.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Audio/audio_stream_controller.hpp"
 
 extern audio_stream_controller g_ConversationStreamControl;
 

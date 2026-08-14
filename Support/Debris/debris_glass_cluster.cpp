@@ -5,14 +5,14 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "debris_glass_cluster.hpp"
-#include "e_Draw.hpp"
 #include "e_ScratchMem.hpp"
-#include "..\Support\GameLib\StatsMgr.hpp"
-#include "Objects\PropSurface.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "audiomgr\AudioMgr.hpp"
+#include "../Support/GameLib/StatsMgr.hpp"
+#include "Objects/PropSurface.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 
 #define UV_TO_FIXED(V2)     (u32)((((u32)(((V2).X)*16))<<16) | ((u32)(((V2).Y)*16)))
 
@@ -22,6 +22,7 @@
 static const f32 k_TESSELATION_AREA_THRESHOLD           = (50*50);
 static const f32 k_TESSELATION_MAX_EDGE_LENGTH_SQUARED  = (40*40);
 static const s32 k_MAX_COLLIDERS                        = 6;
+static const f32 k_GLASS_IMPACT_INTERVAL               = 0.1f;
 
 //=============================================================================
 // OBJECT DESC.
@@ -64,6 +65,11 @@ debris_glass_cluster::debris_glass_cluster()
 {
     m_nShards           = 0;
     m_TotalTime         = 0;
+    m_NextAudioImpactTime = k_GLASS_IMPACT_INTERVAL;
+    m_BrokenGlassTexture.SetName( PRELOAD_FILE( "SHBrokenGlass.xbmp" ) );
+
+    for( s32 i = 0; i < MAX_SHARDS * 3; ++i )
+        m_RenderIndices[i] = (u16)i;
 
     m_BBox.Set( vector3(0,0,0), 5 );
 }
@@ -132,7 +138,7 @@ void debris_glass_cluster::TesselateIntoShards ( const play_surface*       pPlay
         PainDamageRadius = pPainProfile->m_DamageFarDist;
     }
 
-    xbool  bSplash = pPainProfile->m_bSplash;
+    xbool  bSplash = (pPainProfile != NULL) && pPainProfile->m_bSplash;
 
     
     // Do some setup based on hit type
@@ -432,14 +438,16 @@ void debris_glass_cluster::CreateFromRigidGeom ( play_surface* pPlaySurface, con
     ASSERT( pPain );
 
     m_SourcePain = *pPain;
+    m_TotalTime = 0.0f;
+    m_NextAudioImpactTime = k_GLASS_IMPACT_INTERVAL;
 
     rigid_inst& RigidInst  = pPlaySurface->GetRigidInst();
     rigid_geom* pRigidGeom = RigidInst.GetRigidGeom();
 
     ASSERT( pRigidGeom );    
-    ASSERT( pRigidGeom->m_Collision.nHighClusters );
+    ASSERT( pRigidGeom->m_collision.nHighClusters );
 
-    collision_data& Coll = pRigidGeom->m_Collision;
+    collision_data& Coll = pRigidGeom->m_collision;
 
     // Count the number of shards we need
     s32 iCluster, iTri;
@@ -515,11 +523,22 @@ void debris_glass_cluster::CreateFromRigidGeom ( play_surface* pPlaySurface, con
         }
 
         f32 Range = MaxRaw - MinRaw;
-        f32 Scale = MinCollapseTime / Range;
 
-        for (i=0;i<m_nShards;i++)
+        if( Range > 0.0f )
         {
-            m_Shards[i].m_StartTime = (pRawTriStartTime[i]-MinRaw) * Scale;
+            f32 Scale = MinCollapseTime / Range;
+
+            for (i=0;i<m_nShards;i++)
+            {
+                m_Shards[i].m_StartTime = (pRawTriStartTime[i]-MinRaw) * Scale;
+            }
+        }
+        else
+        {
+            for (i=0;i<m_nShards;i++)
+            {
+                m_Shards[i].m_StartTime = 0.0f;
+            }
         }
 
         m_MinStartTime = 0;
@@ -532,8 +551,8 @@ void debris_glass_cluster::CreateFromRigidGeom ( play_surface* pPlaySurface, con
 
     s32 i;
     f32 T;
-    s32 nColliders = 0;    
-    s32 AudioStep = m_nShards / k_MAX_COLLIDERS;
+    s32 nColliders = 0;
+    s32 AudioStep = MAX( 1, m_nShards / k_MAX_COLLIDERS );
 
     for (i=0;i<m_nShards;i++)
     {
@@ -565,10 +584,8 @@ void debris_glass_cluster::CreateFromRigidGeom ( play_surface* pPlaySurface, con
 //=============================================================================
 //
 //=============================================================================
-void debris_glass_cluster::OnAdvanceLogic      ( f32 DeltaTime )
+void debris_glass_cluster::OnAdvanceSimulation      ( f32 DeltaTime )
 {
-    static f32 Mass = 30;
-
     m_TotalTime += DeltaTime;
 
     if (m_TotalTime > 5.0f)
@@ -579,8 +596,7 @@ void debris_glass_cluster::OnAdvanceLogic      ( f32 DeltaTime )
 
     s32 i;
     vector3 G(0,-981,0);
-
-    G *= DeltaTime * DeltaTime * Mass;
+    G *= DeltaTime;
 
     for (i=0;i<m_nShards;i++)
     {
@@ -609,9 +625,13 @@ void debris_glass_cluster::OnAdvanceLogic      ( f32 DeltaTime )
             {
                 Shard.m_bCheckAudioCollision = FALSE;
                 
-                // Play some sweetened audio here
-                // "Glass_Impact" is from SFX_Pickups theme
-                g_AudioMgr.Play( "Glass_Impact", Shard.m_Pos, GetZone1(), TRUE );
+                // Keep the sweeteners serialized so the
+                // initial break and the impacts remain intelligible.
+                if( m_TotalTime >= m_NextAudioImpactTime )
+                {
+                    g_AudioMgr.Play( "Glass_Impact", Shard.m_Pos, GetZone1(), TRUE );
+                    m_NextAudioImpactTime = m_TotalTime + k_GLASS_IMPACT_INTERVAL;
+                }
             }
         }
     }
@@ -623,7 +643,7 @@ void debris_glass_cluster::OnAdvanceLogic      ( f32 DeltaTime )
 //=============================================================================
 void debris_glass_cluster::UpdatePhysics( f32 DeltaTime )
 {
-    CONTEXT("debris_glass_cluster::UpdatePhysics");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "debris_glass_cluster::UpdatePhysics");
     (void)DeltaTime;
 }
 
@@ -643,10 +663,10 @@ void debris_glass_cluster::OnMove( const vector3& rNewPos )
 void debris_glass_cluster::OnRender( void )
 {
     /*
-    draw_BBox( GetBBox(), XCOLOR_BLUE );
-    draw_Sphere( m_SourcePain.Center, 5, XCOLOR_RED );
-    draw_Sphere( m_SourcePain.Center, m_SourcePain.RadiusR0, XCOLOR_YELLOW );
-    draw_Sphere( m_SourcePain.Center, m_SourcePain.RadiusR1, XCOLOR_GREEN );    
+    render::debug::Box( GetBBox(), XCOLOR_BLUE );
+    render::debug::Sphere( m_SourcePain.Center, 5, XCOLOR_RED );
+    render::debug::Sphere( m_SourcePain.Center, m_SourcePain.RadiusR0, XCOLOR_YELLOW );
+    render::debug::Sphere( m_SourcePain.Center, m_SourcePain.RadiusR1, XCOLOR_GREEN );
     */
 }
 
@@ -657,61 +677,46 @@ void debris_glass_cluster::OnRender( void )
 
 void debris_glass_cluster::OnRenderTransparent ( void )
 {
-    //draw_BBox( GetBBox(), XCOLOR_YELLOW );
-    CONTEXT("debris_glass_cluster::OnRenderTransparent");
+    //render::debug::Box( GetBBox(), XCOLOR_YELLOW );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "debris_glass_cluster::OnRenderTransparent");
 
-// TODO:   u32 ADCOn  = 1<<15;
-// TODO:   u32 ADCOff = 0;
-
-    rhandle<xbitmap> BrokenGlass;
-    
-    BrokenGlass.SetName(PRELOAD_FILE("SHBrokenGlass.xbmp"));
-    xbitmap* pBrokenGlass = BrokenGlass.GetPointer();
-
+    const texture* pBrokenGlass = m_BrokenGlassTexture.GetPointer();
     if (!pBrokenGlass)
         return;
 
-    //static xcolor Clr(255,255,255,255);
     xcolor Fog = render::GetFogValue( GetBBox().GetCenter(), g_RenderContext.LocalPlayerIndex );
     xcolor Clr(128,128,128,128);
     static const f32 FogAScalar = 0.75f;
     Clr.A = (u8)((255 - Fog.A) * FogAScalar);
 
-    draw_ClearL2W();
-    draw_Begin( DRAW_TRIANGLES,  DRAW_TEXTURED | DRAW_CULL_NONE | DRAW_USE_ALPHA | DRAW_USE_GDEPTH );
-    //draw_Begin( DRAW_TRIANGLES,  DRAW_TEXTURED | DRAW_CULL_NONE );
-    {        
-        draw_Color( Clr );
+    matrix4 L2W;
+    L2W.Identity();
 
-        draw_SetTexture( *pBrokenGlass );
+    for( s32 i = 0; i < m_nShards; ++i )
+    {
+        shard& Shard = m_Shards[i];
+        const s32 VertexIndex = i * 3;
 
-        matrix4     L2W;
-        L2W.Identity();
+        L2W.SetRotation( Shard.m_TotalSpin );
+        L2W.SetTranslation( Shard.m_Pos );
+        L2W.Transform( &m_pPos[VertexIndex], &m_pLocalPos[VertexIndex], 3 );
 
-        s32 i;
-        for (i=0;i<m_nShards;i++)
+        for( s32 j = 0; j < 3; ++j )
         {
-            shard&  Shard   = m_Shards[ i ];
-            s32     idx     = i*3;
-
-            L2W.SetRotation(Shard.m_TotalSpin);
-            L2W.SetTranslation( Shard.m_Pos );
-            L2W.Transform( &(m_pPos[ idx ]), &(m_pLocalPos[ idx ]), 3 );
-
-// TODO: This code is only needed for the VU1 render code which is not yet written
-//
-//            m_pPos[idx+0].GetW() = *((f32*)(&ADCOn));
-//            m_pPos[idx+1].GetW() = *((f32*)(&ADCOn));
-//            m_pPos[idx+2].GetW() = *((f32*)(&ADCOff));
-
-            draw_UV    ( m_pUV [idx+0] );
-            draw_Vertex( m_pPos[idx+0] );
-            draw_UV    ( m_pUV [idx+1] );
-            draw_Vertex( m_pPos[idx+1] );
-            draw_UV    ( m_pUV [idx+2] );
-            draw_Vertex( m_pPos[idx+2] );
+            const s32 Index = VertexIndex + j;
+            m_RenderVertices[Index] = render::primitive_vertex( m_pPos[Index], m_pUV[Index], Clr );
         }
     }
-    draw_End( );
-}
 
+    const render::primitive_draw_desc Material( pBrokenGlass,
+                                                render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                render::PRIMITIVE_BLEND_ALPHA,
+                                                render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_ANISOTROPIC_WRAP,
+                                                render::PRIMITIVE_LAYER_TRANSPARENT );
+    matrix4 Identity;
+    Identity.Identity();
+    render::SubmitPrimitives( Material, Identity, m_RenderVertices, m_nShards * 3,
+                              m_RenderIndices, m_nShards * 3 );
+}

@@ -10,13 +10,13 @@
 
 #include "Grunt.hpp"
 
-#include "objects\GrenadeProjectile.hpp"
-#include "objects\NewWeapon.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "..\MiscUtils\TrajectoryGenerator.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "Debris\debris_rigid.hpp"
-#include "gamelib\StatsMgr.hpp"
+#include "Objects/GrenadeProjectile.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "../MiscUtils/TrajectoryGenerator.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Debris/debris_rigid.hpp"
+#include "GameLib/StatsMgr.hpp"
 
 //=========================================================================
 // DEBUG
@@ -156,11 +156,6 @@ const object_desc& grunt::GetObjectType( void )
 // GRUNT CHARACTER
 //=========================================================================
 
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( push )
-    #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
-#endif
-
 grunt::grunt() :
     character(),
     m_Idle              ( *this, character_state::STATE_IDLE    ),
@@ -188,10 +183,6 @@ grunt::grunt() :
     m_bCanReload            = FALSE;
 
 }
-
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( pop )
-#endif
 
 //=========================================================================
 

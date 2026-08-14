@@ -214,5 +214,4 @@ static s16 s_iicon_coupler[] =
 };
 
 
-#define DRAW_ICON_COUPLER() draw_icon( NUM_FACETS_ICON_COUPLER, NUM_VERTICES_ICON_COUPLER, s_vicon_coupler, s_iicon_coupler )
 

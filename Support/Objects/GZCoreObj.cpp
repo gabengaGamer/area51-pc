@@ -11,17 +11,17 @@
 //==========================================================================
 // INCLUDE
 //==========================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "GZCoreObj.hpp"
-#include "e_Draw.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "AlienOrb.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Player.hpp"
-#include "Characters\Character.hpp"
-#include "Loco\LocoUtil.hpp"
-#include "objects\group.hpp"
-#include "Objects\ParticleEmiter.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Player/Player.hpp"
+#include "Characters/Character.hpp"
+#include "Loco/LocoUtil.hpp"
+#include "Objects/Group.hpp"
+#include "Objects/ParticleEmiter.hpp"
 
 //==========================================================================
 // DEFINES
@@ -62,7 +62,7 @@ static struct ground_zero_core_obj_desc : public object_desc
             //    (Object.GetAttrBits() & object::ATTR_EDITOR_PLACEMENT_OBJECT) )
                 Object.OnDebugRender();
 
-            return EDITOR_ICON_TWO_WAY_ARROW;
+            return static_cast<s32>( EditorIcon::TwoWayArrow );
         }
 #endif // X_EDITOR
 
@@ -125,43 +125,43 @@ void ground_zero_core_obj::OnDebugRender( void )
     if( m_MarkerStart != 0 && m_MarkerEnd != 0 )
     {
         if( m_ShieldDetected )
-            draw_Line( g_ObjMgr.GetObjectByGuid(m_MarkerStart)->GetPosition(), g_ObjMgr.GetObjectByGuid(m_MarkerEnd)->GetPosition(), XCOLOR_GREEN );
+            render::debug::Line( g_ObjMgr.GetObjectByGuid(m_MarkerStart)->GetPosition(), g_ObjMgr.GetObjectByGuid(m_MarkerEnd)->GetPosition(), XCOLOR_GREEN );
         else if( m_LogicActive )
-            draw_Line( g_ObjMgr.GetObjectByGuid(m_MarkerStart)->GetPosition(), g_ObjMgr.GetObjectByGuid(m_MarkerEnd)->GetPosition(), XCOLOR_RED );
+            render::debug::Line( g_ObjMgr.GetObjectByGuid(m_MarkerStart)->GetPosition(), g_ObjMgr.GetObjectByGuid(m_MarkerEnd)->GetPosition(), XCOLOR_RED );
         else
-            draw_Line( g_ObjMgr.GetObjectByGuid(m_MarkerStart)->GetPosition(), g_ObjMgr.GetObjectByGuid(m_MarkerEnd)->GetPosition(), XCOLOR_BLUE );
+            render::debug::Line( g_ObjMgr.GetObjectByGuid(m_MarkerStart)->GetPosition(), g_ObjMgr.GetObjectByGuid(m_MarkerEnd)->GetPosition(), XCOLOR_BLUE );
     }
 
     if( m_GroupShieldGUID )
     {
         group* g = (group*)g_ObjMgr.GetObjectByGuid (m_GroupShieldGUID);
-        draw_Line (GetPosition (),g->GetPosition (), XCOLOR_GREEN );
+        render::debug::Line (GetPosition (),g->GetPosition (), XCOLOR_GREEN );
         for( s32 i = 0 ; i < g->GetNumChildren() ; i ++ )
         {
             object* objPtr = g_ObjMgr.GetObjectByGuid( g->GetChild(i) ); 
-            draw_BBox(objPtr->GetBBox(),XCOLOR_GREEN);
+            render::debug::Box(objPtr->GetBBox(),XCOLOR_GREEN);
 
-            draw_Line(GetPosition(), objPtr->GetPosition(), XCOLOR_RED );
+            render::debug::Line(GetPosition(), objPtr->GetPosition(), XCOLOR_RED );
         }
     }
 
     if( GetSafeObject(m_FxGUID) )
-        draw_Line(GetPosition(), g_ObjMgr.GetObjectByGuid(m_FxGUID)->GetPosition(), XCOLOR_RED );
+        render::debug::Line(GetPosition(), g_ObjMgr.GetObjectByGuid(m_FxGUID)->GetPosition(), XCOLOR_RED );
 
     if( GetSafeObject(m_FxGUIDShort) )
-        draw_Line( GetPosition(), g_ObjMgr.GetObjectByGuid(m_FxGUIDShort)->GetPosition(), XCOLOR_RED );
+        render::debug::Line( GetPosition(), g_ObjMgr.GetObjectByGuid(m_FxGUIDShort)->GetPosition(), XCOLOR_RED );
 
     if( GetSafeObject(m_SoundEmitterFlare) )
-        draw_Line( GetPosition(), g_ObjMgr.GetObjectByGuid(m_SoundEmitterFlare)->GetPosition(), XCOLOR_YELLOW);
+        render::debug::Line( GetPosition(), g_ObjMgr.GetObjectByGuid(m_SoundEmitterFlare)->GetPosition(), XCOLOR_YELLOW);
 
     if( GetSafeObject(m_SoundEmitterShield) )
-        draw_Line( GetPosition(), g_ObjMgr.GetObjectByGuid(m_SoundEmitterShield)->GetPosition(), XCOLOR_YELLOW);
+        render::debug::Line( GetPosition(), g_ObjMgr.GetObjectByGuid(m_SoundEmitterShield)->GetPosition(), XCOLOR_YELLOW);
 #endif
 }
 
 
 //==============================================================================
-void ground_zero_core_obj::OnAdvanceLogic( f32 DeltaTime )
+void ground_zero_core_obj::OnAdvanceSimulation( f32 DeltaTime )
 {
     (void)DeltaTime;
 

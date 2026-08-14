@@ -5,11 +5,13 @@
 #include <x_types.hpp>
 #include <x_stdio.hpp>
 
-#include "Objects\Object.hpp"
-#include "..\auxiliary\miscutils\property.hpp"
-#include "..\auxiliary\miscutils\PropertyEnum.hpp"
-#include "..\support\Characters\AlertPackage.hpp"
-#include "..\Auxiliary\fx_RunTime\Fx_Mgr.hpp"
+#include "Auxiliary/MiscUtils/Guid.hpp"
+#include "Objects/Object.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../auxiliary/miscutils/property.hpp"
+#include "../auxiliary/miscutils/PropertyEnum.hpp"
+#include "../support/Characters/AlertPackage.hpp"
+#include "FX/fx_Mgr.hpp"
 
 //Misc utils useful for the A51 project. There are project dependicies so this isn't a cross project
 //util class..
@@ -44,9 +46,6 @@ void        SMP_UTIL_StrSafeCpy          ( char* Dest, const char* Src, s32 MaxL
 xbool       SMP_UTIL_FileExist           ( const char* File );
 vector3     SMP_UTIL_RandomVector        ( f32 Extent );
 vector3     SMP_UTIL_RandomVector        ( f32 Extent, const vector3& Orientation );
-void        SMP_UTIL_draw_MatrixAxis     ( const matrix4& rM );
-void        SMP_UTIL_draw_Polygon        ( const vector3* pPoint, s32 NPoints, xcolor Color, xbool DoWire = TRUE );
-void        SMP_UTIL_draw_Cube           ( const vector3& Halves, const matrix4& Matrix,  xcolor Color );
 void        SMP_UTIL_PointObjectAt       ( object*  pObject, const vector3& rDir,const vector3& rPos, const f32 Roll );
 xbool       SMP_UTIL_IsGuidOfType        ( object** ppObject, const guid& rGuid, const rtti& rRunTimeInfo );
 f32         SMP_UTIL_GetVolume           ( const bbox& BBox );
@@ -89,9 +88,6 @@ xbool       SMP_UTIL_IsHiddenManualResource   ( prop_query&         PropQuery,
 //=========================================================================
 
 #ifdef TARGET_PC
-void draw_Arc       ( const vector3& C, f32 R, radian Dir, radian FOV, xcolor Color = XCOLOR_WHITE, f32 PercentDraw = 0.005f ) ;
-void draw_3DCircle  ( const vector3& C, f32 R, xcolor Color = XCOLOR_WHITE, const vector3& Up=vector3(0,1,0), f32 PercentDraw = 0.005f );
-void draw_Cylinder  ( const vector3& Center, f32 Radius, f32 Height, s32 nSteps, xcolor Color, xbool bCapped = TRUE, const vector3& Up=vector3(0,1,0));
 
 #endif
 //=========================================================================

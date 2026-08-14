@@ -1,9 +1,10 @@
+#include "Render/PrimitiveDebug.hpp"
 #include "LightObject.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "Render\LightMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "Render/LightMgr.hpp"
 
 //=========================================================================
 // BASE LIGHT OBJECT
@@ -37,8 +38,8 @@ static struct light_obj_desc : public object_desc
         {
             light_obj& Light = light_obj::GetSafeType( Object );            
 
-            EditorIcon_Draw(
-                EDITOR_ICON_LIGHT, 
+            DrawEditorIcon(
+                EditorIcon::Light,
                 Light.GetL2W(), 
                 !!( Light.GetAttrBits() & object::ATTR_EDITOR_SELECTED ), 
                 Light.GetColor() );
@@ -80,67 +81,12 @@ light_obj::light_obj( void )
     m_Intensity = 1;
     m_bAccentAngle = FALSE;
 
-    InvalidateRenderState();
 }
 
 //=========================================================================
 
 light_obj::~light_obj( void )
 {
-}
-
-//=========================================================================
-
-void light_obj::InvalidateRenderState( void )
-{
-    InitTransformInterpCache( m_RenderCache );
-}
-
-//=========================================================================
-
-void light_obj::CaptureRenderInterpState( void )
-{
-    transform_interp_state Snapshot;
-    CaptureTransformInterpState( Snapshot, GetL2W() );
-    if( CaptureTransformInterpCache( m_RenderCache, Snapshot ) == INTERP_CAPTURE_CHANGED )
-        RegisterRenderInterpUpdate();
-}
-
-//=========================================================================
-
-void light_obj::UpdateRenderInterpState( f32 Alpha )
-{
-    UpdateTransformInterpCache( m_RenderCache, Alpha );
-}
-
-//=========================================================================
-
-void light_obj::ClearRenderInterpState( void )
-{
-    ClearTransformInterpCache( m_RenderCache );
-}
-
-//=========================================================================
-
-void light_obj::InvalidateRenderInterpState( void )
-{
-    object::InvalidateRenderInterpState();
-    InvalidateTransformInterpCache( m_RenderCache );
-}
-
-//=========================================================================
-
-void light_obj::SnapRenderInterpState( void )
-{
-    object::SnapRenderInterpState();
-    SnapTransformInterpCache( m_RenderCache, GetL2W() );
-}
-
-//=========================================================================
-
-const matrix4& light_obj::GetRenderL2W( void ) const
-{
-    return GetTransformInterpCacheL2W( m_RenderCache, GetL2W() );
 }
 
 //=========================================================================
@@ -153,11 +99,11 @@ void light_obj::OnRender( void )
 
 void light_obj::OnCollectLight( void )
 {
-    CONTEXT( "light_obj::OnCollectLight" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "light_obj::OnCollectLight" );
 
     if ( IsDynamic() )
     {
-        g_LightMgr.AddDynamicLight( GetRenderL2W().GetTranslation(),
+        g_LightMgr.AddDynamicLight( GetL2W().GetTranslation(),
                                     m_Color,
                                     m_Sphere.R,
                                     m_Intensity,
@@ -170,11 +116,11 @@ void light_obj::OnCollectLight( void )
 #ifndef X_RETAIL
 void light_obj::OnDebugRender( void )
 {
-    CONTEXT( "light_obj::OnDebugRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "light_obj::OnDebugRender" );
 
     if( GetAttrBits() & ATTR_EDITOR_SELECTED )
     {
-        draw_BBox( GetBBox(), m_Color );
+        render::debug::Box( GetBBox(), m_Color );
     }
 }
 #endif // X_RETAIL
@@ -258,8 +204,8 @@ static struct character_light_obj_desc : public object_desc
         {
             character_light_obj& Light = character_light_obj::GetSafeType( Object );            
 
-            EditorIcon_Draw(
-                EDITOR_ICON_LIGHT_CHARACTER, 
+            DrawEditorIcon(
+                EditorIcon::CharacterLight,
                 Light.GetL2W(), 
                 !!( Light.GetAttrBits() & object::ATTR_EDITOR_SELECTED ), 
                 Light.GetColor() );
@@ -335,8 +281,8 @@ static struct dynamic_light_obj_desc : public object_desc
         {
             dynamic_light_obj& Light = dynamic_light_obj::GetSafeType( Object );            
 
-            EditorIcon_Draw(
-                EDITOR_ICON_LIGHT_DYNAMIC, 
+            DrawEditorIcon(
+                EditorIcon::DynamicLight,
                 Light.GetL2W(), 
                 !!( Light.GetAttrBits() & object::ATTR_EDITOR_SELECTED ), 
                 Light.GetColor() );
@@ -893,21 +839,28 @@ void dynamic_light_obj::OnActivate( xbool Flag )
 
 //=========================================================================
 
-void dynamic_light_obj::FadingLogic( f32 DeltaTime )
+f32 dynamic_light_obj::FadingLogic( f32 DeltaTime )
 {
     if ( (m_LightState == STATE_FADING_OUT) ||
          (m_LightState == STATE_FADING_IN) )
     {
-        m_FadeTimeLeft -= DeltaTime;
-        if ( m_FadeTimeLeft <= 0.0f )
+        if( m_FadeTimeLeft > DeltaTime )
         {
-            m_FadeTimeLeft  = 0.0f;
-            if ( m_LightState == STATE_FADING_OUT )
-                m_LightState = STATE_OFF;
-            else
-                m_LightState = STATE_ON;
+            m_FadeTimeLeft -= DeltaTime;
+            return 0.0f;
+        }
+
+        DeltaTime -= MAX( m_FadeTimeLeft, 0.0f );
+        m_FadeTimeLeft  = 0.0f;
+        if ( m_LightState == STATE_FADING_OUT )
+            m_LightState = STATE_OFF;
+        else
+        {
+            m_LightState = STATE_ON;
         }
     }
+
+    return DeltaTime;
 }
 
 //=========================================================================
@@ -931,65 +884,89 @@ void dynamic_light_obj::ConstantLogic( f32 DeltaTime )
 
 void dynamic_light_obj::FlashingLogic( f32 DeltaTime )
 {
-    // handle any fading
-    FadingLogic(DeltaTime);
-
-    // handle any flashing
-    if ( (m_LightFlags&LIGHT_ACTIVE) &&
-         ((m_LightState == STATE_ON) || (m_LightState == STATE_OFF)) )
-    {
-        if ( m_FlashTimeLeft == 0.0f )
-        {
-            // we've yet to start the flash timer
-            m_FlashTimeLeft = m_FlashRate;
-        }
-        else
-        {
-            // tick down the flash timer
-            m_FlashTimeLeft -= DeltaTime;
-            if ( m_FlashTimeLeft <= 0.0f )
-            {
-                m_FlashTimeLeft = 0.0f;
-                if ( m_LightState == STATE_ON )
-                    StartFadeOut();
-                else
-                    StartFadeIn();
-            }
-        }
-    }
+    AdvanceFlashLogic( DeltaTime, FALSE );
 }
 
 //=========================================================================
 
 void dynamic_light_obj::RandomLogic( f32 DeltaTime )
 {
-    // handle any fading
-    FadingLogic(DeltaTime);
+    AdvanceFlashLogic( DeltaTime, TRUE );
+}
 
-    // handle any random flashing
-    if ( (m_LightFlags&LIGHT_ACTIVE) &&
-         ((m_LightState == STATE_ON) || (m_LightState == STATE_OFF)) )
+//=========================================================================
+
+void dynamic_light_obj::AdvanceFlashLogic( f32 DeltaTime, xbool bRandom )
+{
+    if( !x_isvalid( DeltaTime ) || (DeltaTime <= 0.0f) )
     {
-        if ( m_FlashTimeLeft == 0.0f )
+        return;
+    }
+
+    // Inactive lights may still need to finish their fade-out, but must not
+    // start another flash cycle.
+    if( !(m_LightFlags & LIGHT_ACTIVE) )
+    {
+        FadingLogic( DeltaTime );
+        return;
+    }
+
+    f32 RemainingTime = DeltaTime;
+    while( RemainingTime > 0.0f )
+    {
+        if( (m_LightState == STATE_FADING_OUT) ||
+            (m_LightState == STATE_FADING_IN) )
         {
-            // we've yet to start the flash timer
-            if ( m_LightState == STATE_ON )
-                m_FlashTimeLeft = x_frand( m_RandTimeOnMin, m_RandTimeOnMax );
+            RemainingTime = FadingLogic( RemainingTime );
+            if( RemainingTime <= 0.0f )
+            {
+                break;
+            }
+            continue;
+        }
+
+        if( (m_LightState != STATE_ON) && (m_LightState != STATE_OFF) )
+        {
+            break;
+        }
+
+        if( m_FlashTimeLeft <= 0.0f )
+        {
+            if( bRandom )
+            {
+                m_FlashTimeLeft = (m_LightState == STATE_ON)
+                                 ? x_frand( m_RandTimeOnMin,  m_RandTimeOnMax )
+                                 : x_frand( m_RandTimeOffMin, m_RandTimeOffMax );
+            }
             else
-                m_FlashTimeLeft = x_frand( m_RandTimeOffMin, m_RandTimeOffMax );
+            {
+                m_FlashTimeLeft = m_FlashRate;
+            }
+
+            if( !x_isvalid( m_FlashTimeLeft ) || (m_FlashTimeLeft <= 0.0f) )
+            {
+                m_FlashTimeLeft = 0.0f;
+                break;
+            }
+        }
+
+        const f32 FlashTime = MIN( RemainingTime, m_FlashTimeLeft );
+        m_FlashTimeLeft -= FlashTime;
+        RemainingTime    -= FlashTime;
+
+        if( m_FlashTimeLeft > 0.0f )
+        {
+            break;
+        }
+
+        m_FlashTimeLeft = 0.0f;
+        if( m_LightState == STATE_ON )
+        {
+            StartFadeOut();
         }
         else
         {
-            // tick down the flash timer
-            m_FlashTimeLeft -= DeltaTime;
-            if ( m_FlashTimeLeft <= 0.0f )
-            {
-                m_FlashTimeLeft = 0.0f;
-                if ( m_LightState == STATE_ON )
-                    StartFadeOut();
-                else
-                    StartFadeIn();
-            }
+            StartFadeIn();
         }
     }
 }
@@ -1033,9 +1010,9 @@ void dynamic_light_obj::OneShotFadeLogic( f32 DeltaTime )
 
 //=========================================================================
 
-void dynamic_light_obj::OnAdvanceLogic( f32 DeltaTime )
+void dynamic_light_obj::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "dynamic_light_obj::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "dynamic_light_obj::OnAdvanceSimulation" );
 
     switch ( m_LightBehavior )
     {
@@ -1057,13 +1034,13 @@ void dynamic_light_obj::OnRender( void )
 
 void dynamic_light_obj::OnCollectLight( void )
 {
-    CONTEXT( "dynamic_light_obj::OnCollectLight" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "dynamic_light_obj::OnCollectLight" );
 
     f32 T = CalcT();
     
     if ( T > 0.0f )
     {
-        const matrix4& RenderL2W = GetRenderL2W();
+        const matrix4& RenderL2W = GetL2W();
         vector3 Direction = RenderL2W.RotateVector( vector3( 0.0f, 0.0f, 1.0f ) );
         f32     InnerRadius = MAX( 0.0f, m_Sphere.R * ( 1.0f - m_Falloff ) );
 

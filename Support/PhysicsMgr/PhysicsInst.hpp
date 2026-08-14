@@ -11,10 +11,10 @@
 // INCLUDES
 //==============================================================================
 
-#include "Animation\AnimData.hpp"
-#include "Objects\Render\SkinInst.hpp"
-#include "Animation\SMemMatrixCache.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "Animation/AnimData.hpp"
+#include "Objects/Render/SkinInst.hpp"
+#include "Animation/SMemMatrixCache.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 
 #include "Physics.hpp"
 #include "RigidBody.hpp"
@@ -29,7 +29,6 @@ class rigid_body;
 class constraint;
 class collision_shape;
 class loco_char_anim_player;
-struct simple_anim_interp_state;
 
 
 //==============================================================================
@@ -59,6 +58,7 @@ public:
     // Initialization functions
 private:    
             xbool               Init                    ( xbool bPopFix, f32 ConstraintBlendTime );
+            xbool               ComputeRenderBoneMatrices( matrix4* pBoneMatrices, s32 nBones ) const;
             
 public:            
             xbool               Init                    ( const char*      pGeomName, xbool bPopFix, f32 ConstraintBlendTime = 0.0f );
@@ -88,11 +88,10 @@ public:
     // Matrix functions
             void                DirtyMatrices           ( void ) X_SECTION(physics);
             const matrix4*      GetBoneL2Ws             ( u64& LODMask, s32& nActiveBones );
-            xbool               CaptureRenderInterpState      ( simple_anim_interp_state& Snapshot ) const;
             vector3             GetBoneWorldPosition    ( s32 iBone );  // NOTE: Bind has been removed!
             matrix4             GetBoneWorldTransform   ( s32 iBone );  // NOTE: Bind has been removed!
-            void                SetMatrices             ( loco_char_anim_player& AnimPlayer, const vector3& Vel );
-            void                SetMatrices             ( const matrix4* pMatrices, s32 nBones, xbool bInheritVel );
+            void                SetAnimatedPose         ( loco_char_anim_player& AnimPlayer, const vector3& WorldVelocity );
+            void                SetPose                 ( const matrix4* pMatrices, s32 nBones );
 
             
     // Blast/force functions
@@ -159,7 +158,7 @@ public:
 private:
 
     // Flags
-    u32                             m_bInitialized           : 1;   // Initialized
+    u32                             m_isInitialized           : 1;   // Initialized
     u32                             m_bInAwakeList           : 1;   // In physics mgr awake list
     u32                             m_bInSleepingList        : 1;   // In physics mgr sleeping list
     u32                             m_bInCollisionWakeupList : 1;   // In physics mgr collision wake up list

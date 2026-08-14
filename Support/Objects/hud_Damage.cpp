@@ -16,15 +16,15 @@
 //==============================================================================
 // INCLUDES
 //==============================================================================
-
 #include "hud_Damage.hpp"
 #include "HudObject.hpp"
+#include "UI/ui_renderer.hpp"
 
 //==============================================================================
 // STORAGE
 //==============================================================================
 
-rhandle<xbitmap>            hud_damage::m_DamageBitmap;
+rhandle<texture>            hud_damage::m_DamageBitmap;
 f32                         hud_damage::m_DamageTimeTillFade;
 f32                         hud_damage::m_DamageBitmapOffset;
 f32                         hud_damage::m_DamageFadeOutTime;
@@ -60,13 +60,12 @@ void hud_damage::OnRender( player* pPlayer )
 
     s32      g_MaxDamageAlpha = 255;
     player&  rPlayer          = *pPlayer;
-    xbitmap* pBitmap          = m_DamageBitmap.GetPointer();
+    texture* pTexture         = m_DamageBitmap.GetPointer();
 
-    if( pBitmap == NULL )
+    if( pTexture == NULL )
         return;
 
-    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_BLEND_ADD|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER|DRAW_UV_CLAMP );
-    draw_SetTexture( *pBitmap );
+    const xbitmap& Bitmap = pTexture->m_bitmap;
 
     for( s32 iPain = 0; iPain < MAX_PAIN_EVENTS; iPain++ )
     {
@@ -82,7 +81,7 @@ void hud_damage::OnRender( player* pPlayer )
         // Render pain.
         //
         {
-            view& rView = rPlayer.GetInterpView();
+            const view& rView = rPlayer.GetRenderView();
 
             radian Pitch;
             radian Yaw;
@@ -91,11 +90,11 @@ void hud_damage::OnRender( player* pPlayer )
             radian Diff = m_pPain[iPain].LastRot + Yaw;
             
             vector3 ScreenPos;
-            vector2 WH( (f32)pBitmap->GetWidth(), (f32)pBitmap->GetHeight() );
+            vector2 WH( (f32)Bitmap.GetWidth(), (f32)Bitmap.GetHeight() );
 
             // aharp TODO Make sure this scales for split screen.
-            f32 DamageOffsetX = 75.0f; //m_DamageBitmapOffset * (m_ViewDimensions.GetWidth() /512.0f);
-            f32 DamageOffsetY = 75.0f; //m_DamageBitmapOffset * (m_ViewDimensions.GetHeight()/448.0f);
+            f32 DamageOffsetX = 75.0f;
+            f32 DamageOffsetY = 75.0f;
 
             // Go 2D.
 
@@ -133,17 +132,23 @@ void hud_damage::OnRender( player* pPlayer )
             //
             for( s32 iRender = 0; iRender < m_pPain[iPain].Overlay; iRender++ )
             {
-                draw_SpriteUV( ScreenPos, WH, UV0, UV1, Color, -Diff ); 
+                g_UIRenderer.DrawImage( *pTexture,
+                                        vector2( ScreenPos.GetX(), ScreenPos.GetY() ),
+                                        WH,
+                                        UV0,
+                                        UV1,
+                                        Color,
+                                        -Diff,
+                                        UI_BLEND_ADDITIVE );
             }
         }
     }
     
-    draw_End();
 }
 
 //==============================================================================
 
-void hud_damage::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
+void hud_damage::OnAdvanceSimulation( player* pPlayer, f32 DeltaTime )
 {
     ASSERT( pPlayer );
     player& rPlayer = *pPlayer;
@@ -157,7 +162,10 @@ void hud_damage::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
     if( rPlayer.GetHealth() <= 0.0f )   // TODO - Use the IsDead function!
     {    
         for( s32 iPain = 0; iPain < MAX_PAIN_EVENTS; iPain++ )
+        {
             m_pPain[ iPain ].LocalSlot = -1;
+            m_pPain[ iPain ].Overlay   = 0;
+        }
         
         rPlayer.ClearPainEvent();
         m_ScreenFlashDeltaTime = 0.0f;
@@ -169,20 +177,20 @@ void hud_damage::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
         if( rPain.GetCount() > 0 )
             m_ScreenFlashDeltaTime = g_ScreenFlashTime;
     }
-    
+
     //
     // Manage existing pain.
     //
     for( s32 iPain = 0; iPain < MAX_PAIN_EVENTS; iPain++ )
     {
-        if( m_pPain[ iPain ].PainTime > 0.0f )
+        if( m_pPain[ iPain ].LocalSlot == -1 )
+            continue;
+
+        m_pPain[ iPain ].PainTime -= DeltaTime;
+        if( m_pPain[ iPain ].PainTime <= 0.0f )
         {
-            m_pPain[ iPain ].PainTime -= DeltaTime;
-        }
-        else
-        {                
-            // Remove the pain event from the list.
-            m_pPain[iPain].LocalSlot = -1;
+            m_pPain[ iPain ].LocalSlot = -1;
+            m_pPain[ iPain ].Overlay   = 0;
         }
     }
     
@@ -253,7 +261,8 @@ void hud_damage::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
     }
     rPlayer.ClearPainEvent();
 
-    m_ScreenFlashDeltaTime -= DeltaTime;
+    m_ScreenFlashDeltaTime = MAX( 0.0f, m_ScreenFlashDeltaTime - DeltaTime );
+
 }
 
 //==============================================================================

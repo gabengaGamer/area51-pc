@@ -9,19 +9,19 @@
 //==============================================================================
 
 #ifndef X_PLUS_HPP
-#include "..\x_plus.hpp"
+#include "../x_plus.hpp"
 #endif
 
 #ifndef X_MATH_HPP
-#include "..\x_math.hpp"
+#include "../x_math.hpp"
 #endif
 
 #ifndef X_COLOR_HPP
-#include "..\x_color.hpp"
+#include "../x_color.hpp"
 #endif
 
 #ifndef X_DEBUG_HPP
-#include "..\x_debug.hpp"
+#include "../x_debug.hpp"
 #endif
 
 #ifndef X_FILES_PRIVATE_HPP

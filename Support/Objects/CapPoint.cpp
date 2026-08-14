@@ -17,12 +17,12 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "CapPoint.hpp"
 #include "GameLib/RenderContext.hpp"
 #include "TemplateMgr/TemplateMgr.hpp"
-#include "Entropy/e_Draw.hpp"
 #include "Objects/Actor/Actor.hpp"
-#include "Objects\HudObject.hpp"
+#include "Objects/HudObject.hpp"
 
 #ifndef X_EDITOR
 #include "NetworkMgr/NetworkMgr.hpp"
@@ -101,9 +101,8 @@ cap_point::cap_point( void )
     m_OmegaMask   = 0x00000000;
     m_Alpha       = 0.0f;
     m_IconOpacity = 0.0f;
-    m_bRendered   = FALSE;
 
-    m_bInitialized = FALSE;
+    m_isInitialized = FALSE;
 
     for( s32 i = 0; i < 32; i++ )
     {
@@ -119,7 +118,7 @@ cap_point::cap_point( void )
 
 void cap_point::Init( void )
 {
-    if( !m_bInitialized )
+    if( !m_isInitialized )
     {
         // Base.
         {
@@ -186,7 +185,7 @@ void cap_point::Init( void )
         }
     }
 
-    m_bInitialized = TRUE;
+    m_isInitialized = TRUE;
 }
 
 //==============================================================================
@@ -265,7 +264,7 @@ void cap_point::OnRender( void )
     //  else
     //  {
     //      #ifdef X_EDITOR
-    //      draw_BBox( GetBBox() );
+    //      render::debug::Box( GetBBox() );
     //      #endif
     //  }
 
@@ -287,7 +286,6 @@ void cap_point::OnRenderTransparent( void )
     //--------------------------------------------------------------------------
 
     xcolor Color;
-    m_bRendered = TRUE;
 
     if( (m_NetTeamBits == 0x00000000) || (m_NetTeamBits == 0xFFFFFFFF) )
     {
@@ -385,7 +383,7 @@ void cap_point::OnRenderTransparent( void )
 
 //==============================================================================
 
-void cap_point::OnAdvanceLogic( f32 DeltaTime )
+void cap_point::OnAdvanceSimulation( f32 DeltaTime )
 {
     //--------------------------------------------------------------------------
     #ifndef X_EDITOR
@@ -451,8 +449,8 @@ void cap_point::OnAdvanceLogic( f32 DeltaTime )
 
             xbool bHasLOS = !bInActiveZone;
          
-            // If it wasn't rendered last frame, we can assume there is no LoS.
-            if( m_bRendered && bInActiveZone )
+            const xbool IsVisible = pPlayer->GetSimulationView().BBoxInView( GetBBox() ) != view::VISIBLE_NONE;
+            if( IsVisible && bInActiveZone )
             {
                 g_CollisionMgr.LineOfSightSetup( pPlayer->GetGuid(), m_Center, pPlayer->GetEyesPosition() );
 
@@ -465,9 +463,6 @@ void cap_point::OnAdvanceLogic( f32 DeltaTime )
 
                 bHasLOS = (g_CollisionMgr.m_nCollisions == 0);
             }
-
-            // Clear this so it's ready for the next render pass to set.
-            m_bRendered = FALSE;
 
             // Increment the opacity if you can't see it, otherwise decrement it.
             m_IconOpacity += (2.0f * DeltaTime) * (bHasLOS ? -1.0f : 1.0f);
@@ -510,9 +505,9 @@ void cap_point::OnAdvanceLogic( f32 DeltaTime )
                         Color2 = Red;
                     }
 
-                    Hud.GetPlayerHud( 0 ).m_Icon.AddIcon( ICON_CNH_OUTER, 
+                    Hud.GetPlayerHud( 0 ).m_Icon.SubmitIcon( ICON_CNH_OUTER,
                                                           m_Center, m_Center, 
-                                                          FALSE, FALSE, 
+                                                          FALSE,
                                                           GUTTER_NONE, Color2, 
                                                           NULL, FALSE, FALSE, 
                                                           m_IconOpacity );
@@ -532,10 +527,9 @@ void cap_point::OnAdvanceLogic( f32 DeltaTime )
                             Color1 = Red;
                         }
 
-                        Hud.GetPlayerHud( 0 ).m_Icon.AddIcon( ICON_CNH_INNER, 
+                        Hud.GetPlayerHud( 0 ).m_Icon.SubmitIcon( ICON_CNH_INNER,
                                 m_Center, 
                                 m_Center, 
-                                FALSE, 
                                 FALSE, 
                                 GUTTER_NONE, 
                                 Color1, 

@@ -8,9 +8,9 @@
 //==============================================================================
 
 #include "DebugMenu2.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "Gamelib\statsmgr.hpp"
-#include "Render\Render.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "Render/Render.hpp"
 
 //==============================================================================
 
@@ -66,10 +66,10 @@ debug_menu_page_render::debug_menu_page_render( ) : debug_menu_page()
 #ifndef X_RETAIL
                             AddItemSeperator( );
                             AddItemBool     ( "Render bone BBoxes"         , g_RenderBoneBBoxes            );
-                            AddItemBool     ( "Render rigids only"         , g_RenderDebug.RenderRigidOnly );
-                            AddItemBool     ( "Render skins  only"         , g_RenderDebug.RenderSkinOnly );
-                            AddItemBool     ( "Render clipped only"        , g_RenderDebug.RenderClippedOnly );
-                            AddItemBool     ( "Render shadowed only"       , g_RenderDebug.RenderShadowedOnly );
+                            AddItemBool     ( "Render rigids only"         , g_renderDebug.RenderRigidOnly );
+                            AddItemBool     ( "Render skins  only"         , g_renderDebug.RenderSkinOnly );
+                            AddItemBool     ( "Render clipped only"        , g_renderDebug.RenderClippedOnly );
+                            AddItemBool     ( "Render shadowed only"       , g_renderDebug.RenderShadowedOnly );
 #endif
 
 #if !defined(X_RETAIL) || defined(X_QA)

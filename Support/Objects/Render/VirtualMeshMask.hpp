@@ -17,7 +17,7 @@
 //==============================================================================
 
 #include "x_types.hpp"
-#include "Auxiliary\MiscUtils\Dictionary.hpp"
+#include "Auxiliary/MiscUtils/dictionary.hpp"
 
 //==============================================================================
 // FORWARD REFERENCES

@@ -1,18 +1,33 @@
-#include "audio_private.hpp"
-#include "audio_hardware.hpp"
-#include "audio_voice_mgr.hpp"
-#include "audio_package.hpp"
-#include "..\IOManager\io_mgr.hpp"
+//==============================================================================
+//
+//  audio_package.cpp
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
+#include "Audio/audio_types.hpp"
+#include "Audio/audio_runtime.hpp"
+#include "Audio/backend/audio_backend.hpp"
+#include "Audio/audio_voice_mgr.hpp"
+#include "Audio/audio_package.hpp"
+#include "IOManager/io_mgr.hpp"
 #include "x_files.hpp"
-#include "e_virtual.hpp"
-#include "audio_debug.hpp"
 #include "e_audio.hpp"
+
+//==============================================================================
+//  DEFINES
+//==============================================================================
 
 s32 N_ARAM_USED = 0; // 512*1024;
 
 #define LOG_AUDIO_PACKAGE_LOAD "audio_package::Init"
 
-//------------------------------------------------------------------------------
+//==============================================================================
+//  IMPLEMENTATION
+//==============================================================================
 
 audio_package::audio_package( void )
 {
@@ -20,6 +35,9 @@ audio_package::audio_package( void )
     m_Link.pPrev    = NULL;
     m_Link.pNext    = NULL;
     m_Link.pPackage = NULL;
+    m_pRuntime      = NULL;
+    m_Filename[0]   = 0;
+    m_LookupName[0] = 0;
     m_UserVolume      =
     m_UserPitch       =
     m_UserEffectSend  =
@@ -28,21 +46,20 @@ audio_package::audio_package( void )
     x_memset( &m_Header, 0, sizeof(m_Header) );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 audio_package::~audio_package( void )
 {
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, uaddr Aram )
 {
-    CONTEXT("audio_package::LoadHotSample");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_package::LoadHotSample");
 
     switch( pHotSample->CompressionType )
     {
-#ifdef TARGET_PC
         case ADPCM:
         case MP3:
         case PCM:
@@ -55,7 +72,6 @@ u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, uaddr Aram 
             // Done.
             return pHotSample->WaveformLength;
         }
-#endif
         default:
         {
             ASSERT( 0 );
@@ -66,54 +82,58 @@ u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, uaddr Aram 
     return 0;
 }
 
-#if 1
-#undef vm_Alloc
-#undef vm_Free
+//==============================================================================
 
-#define vm_Alloc x_malloc
-#define vm_Free  x_free
-#endif
-
-//------------------------------------------------------------------------------
-
-// Read sample headers in their 32-bit on-disk layout into native structs.
-// AudioRam is a runtime address (set during load), so it is not read from disk.
-static void ReadSampleHeaders( X_FILE* f, sample_header* pDest, s32 nHeaders, s32 DiskSize )
+static
+void ReadSampleHeaders( X_FILE* f, sample_header* pDest, s32 nHeaders, s32 DiskSize )
 {
     struct disk_sample_header
     {
-        u32 AudioRam, WaveformOffset, WaveformLength, LipSyncOffset, BreakPointOffset, CompressionType;
-        s32 nSamples, SampleRate, LoopStart, LoopEnd;
+        u32 AudioRam;
+        u32 WaveformOffset;
+        u32 WaveformLength;
+        u32 LipSyncOffset;
+        u32 BreakPointOffset;
+        u32 CompressionType;
+        s32 nSamples;
+        s32 SampleRate;
+        s32 LoopStart;
+        s32 LoopEnd;
     };
+
     ASSERT( DiskSize == (s32)sizeof(disk_sample_header) );
     (void)DiskSize;
 
-    for( s32 i = 0; i < nHeaders; i++ )
+    for( s32 i=0 ; i<nHeaders ; i++ )
     {
-        disk_sample_header d;
-        x_fread( &d, sizeof(d), 1, f );
+        disk_sample_header DiskHeader;
+        x_fread( &DiskHeader, sizeof(DiskHeader), 1, f );
+
         pDest[i].AudioRam         = 0;
-        pDest[i].WaveformOffset   = d.WaveformOffset;
-        pDest[i].WaveformLength   = d.WaveformLength;
-        pDest[i].LipSyncOffset    = d.LipSyncOffset;
-        pDest[i].BreakPointOffset = d.BreakPointOffset;
-        pDest[i].CompressionType  = d.CompressionType;
-        pDest[i].nSamples         = d.nSamples;
-        pDest[i].SampleRate       = d.SampleRate;
-        pDest[i].LoopStart        = d.LoopStart;
-        pDest[i].LoopEnd          = d.LoopEnd;
+        pDest[i].WaveformOffset   = DiskHeader.WaveformOffset;
+        pDest[i].WaveformLength   = DiskHeader.WaveformLength;
+        pDest[i].LipSyncOffset    = DiskHeader.LipSyncOffset;
+        pDest[i].BreakPointOffset = DiskHeader.BreakPointOffset;
+        pDest[i].CompressionType  = DiskHeader.CompressionType;
+        pDest[i].nSamples         = DiskHeader.nSamples;
+        pDest[i].SampleRate       = DiskHeader.SampleRate;
+        pDest[i].LoopStart        = DiskHeader.LoopStart;
+        pDest[i].LoopEnd          = DiskHeader.LoopEnd;
     }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
-xbool audio_package::Init( const char* pFilename )
+xbool audio_package::Init( audio_runtime& Runtime, const char* pFilename, const char* pLookupName )
 {
-    CONTEXT("audio_package::Init");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_package::Init");
 
-    X_FILE*             f;
+    X_FILE*             f = NULL;
     package_identifier  PackageID;
     xbool               Result = FALSE;
+    xbool               AramAccounted = FALSE;
+
+    m_pRuntime = &Runtime;
 
     //
     // Clear out pointers
@@ -128,6 +148,7 @@ xbool audio_package::Init( const char* pFilename )
         m_BreakPointTable = NULL;
         m_HotSamples = NULL;
         m_ColdSamples = NULL;
+        m_AudioRam = 0;
 
         for( s32 i=0 ; i<NUM_TEMPERATURES ; i++ )
         {
@@ -141,11 +162,17 @@ xbool audio_package::Init( const char* pFilename )
 
     // Error check.
     ASSERT( pFilename );
+    ASSERT( pLookupName );
+    const char* pStoredLookupName = pLookupName ? pLookupName : pFilename;
 
     // Save the filename
     ASSERT( x_strlen( pFilename ) < AUDIO_PACKAGE_FILENAME_LENGTH );
     x_strncpy( m_Filename, pFilename, AUDIO_PACKAGE_FILENAME_LENGTH );
     m_Filename[ AUDIO_PACKAGE_FILENAME_LENGTH-1 ] = 0;
+
+    ASSERT( x_strlen( pStoredLookupName ) < AUDIO_PACKAGE_FILENAME_LENGTH );
+    x_strncpy( m_LookupName, pStoredLookupName, AUDIO_PACKAGE_FILENAME_LENGTH );
+    m_LookupName[ AUDIO_PACKAGE_FILENAME_LENGTH-1 ] = 0;
 
     // Open the file.
     f = x_fopen( pFilename, "rb" );
@@ -165,12 +192,12 @@ xbool audio_package::Init( const char* pFilename )
                 // Now read in the header.
                 x_fread( &m_Header, sizeof(package_header), 1, f );
 
-                if( m_Header.nDescriptors <= 0 || m_Header.nDescriptors > 5000 )
-                    return FALSE;
+                if( (m_Header.nDescriptors <= 0) || (m_Header.nDescriptors > 5000) )
+                    goto Cleanup;
                 if( m_Header.nIdentifiers <= 0 )
-                    return FALSE;
+                    goto Cleanup;
                 if( m_Header.DescriptorFootprint <= 0 )
-                    return FALSE;
+                    goto Cleanup;
 
                 ASSERT( m_Header.nDescriptors > 0 );
                 ASSERT( m_Header.nIdentifiers > 0 );
@@ -179,15 +206,21 @@ xbool audio_package::Init( const char* pFilename )
                 if (m_Header.nDescriptors == 0 ||
                     m_Header.nIdentifiers == 0 ||
                     m_Header.DescriptorFootprint == 0)
-                 return FALSE;
+                    goto Cleanup;
+
+                if( m_Header.nSampleHeaders[ WARM ] || m_Header.nSampleIndices[ WARM ] )
+                {
+                    ASSERTS( 0, "Warm audio samples are not supported." );
+                    goto Cleanup;
+                }
 
                 // Allocate memory for the string table.
-                m_IdentifierStringTable = (char*)vm_Alloc( m_Header.StringTableFootprint );
+                m_IdentifierStringTable = (char*)x_malloc( m_Header.StringTableFootprint );
 
                 // Allocate memory for the music data.
                 if( m_Header.MusicDataFootprint )
                 {
-                    m_MusicData = (char*)vm_Alloc( m_Header.MusicDataFootprint );
+                    m_MusicData = (char*)x_malloc( m_Header.MusicDataFootprint );
                 }
                 else
                 {
@@ -197,7 +230,7 @@ xbool audio_package::Init( const char* pFilename )
                 // Allocate memory for the lip sync table.
                 if( m_Header.LipSyncTableFootprint )
                 {
-                    m_LipSyncTable = (char*)vm_Alloc( m_Header.LipSyncTableFootprint );
+                    m_LipSyncTable = (char*)x_malloc( m_Header.LipSyncTableFootprint );
                 }
                 else
                 {
@@ -207,7 +240,7 @@ xbool audio_package::Init( const char* pFilename )
                 // Allocate memory for the break point table
                 if( m_Header.BreakPointTableFootprint )
                 {
-                    m_BreakPointTable = (char*)vm_Alloc( m_Header.BreakPointTableFootprint );
+                    m_BreakPointTable = (char*)x_malloc( m_Header.BreakPointTableFootprint );
                 }
                 else
                 {
@@ -215,13 +248,13 @@ xbool audio_package::Init( const char* pFilename )
                 }
 
                 // Allocate memory for the descriptor identifiers
-                m_IdentifierTable = (descriptor_identifier*)vm_Alloc( m_Header.nIdentifiers * sizeof(descriptor_identifier) );
+                m_IdentifierTable = (descriptor_identifier*)x_malloc( m_Header.nIdentifiers * sizeof(descriptor_identifier) );
 
                 // Allocate memory for the descriptor table.
-                m_DescriptorTable = (uaddr*)vm_Alloc( m_Header.nDescriptors * sizeof(uaddr) );
+                m_DescriptorTable = (uaddr*)x_malloc( m_Header.nDescriptors * sizeof(uaddr) );
 
                 // Allocate memory for the descriptors.
-                m_DescriptorBuffer = (u16*)vm_Alloc( m_Header.DescriptorFootprint );
+                m_DescriptorBuffer = (u16*)x_malloc( m_Header.DescriptorFootprint );
 
                 // For each temperature...
                 for( i=0 ; i<NUM_TEMPERATURES ; i++ )
@@ -229,7 +262,7 @@ xbool audio_package::Init( const char* pFilename )
                     if( m_Header.nSampleIndices[ i ] )
                     {
                         // Allocate memory for sample header index table.
-                        m_SampleIndices[ i ] = (u16*)vm_Alloc( (m_Header.nSampleIndices[ i ]+1) * sizeof(u16) );
+                        m_SampleIndices[ i ] = (u16*)x_malloc( (m_Header.nSampleIndices[ i ]+1) * sizeof(u16) );
                     }
                     else
                     {
@@ -240,7 +273,7 @@ xbool audio_package::Init( const char* pFilename )
                 // Allocate memory for the hot and cold samples
                 if( m_Header.nSampleHeaders[ HOT ] )
                 {
-                    m_HotSamples = (void*)vm_Alloc( m_Header.nSampleHeaders[ HOT ] * sizeof(sample_header) );
+                    m_HotSamples = (void*)x_malloc( m_Header.nSampleHeaders[ HOT ] * sizeof(sample_header) );
                 }
                 else
                 {
@@ -249,15 +282,12 @@ xbool audio_package::Init( const char* pFilename )
 
                 if( m_Header.nSampleHeaders[ COLD ] )
                 {
-                    m_ColdSamples = (void*)vm_Alloc( m_Header.nSampleHeaders[ COLD ] * sizeof(sample_header) );
+                    m_ColdSamples = (void*)x_malloc( m_Header.nSampleHeaders[ COLD ] * sizeof(sample_header) );
                 }
                 else
                 {
                     m_ColdSamples = NULL;
                 }
-
-                // TODO: Allocate memory for the warm samples.
-                m_WarmSamples = NULL;
 
                 // Read in the string table.
                 x_fread( m_IdentifierStringTable, m_Header.StringTableFootprint, 1, f );
@@ -274,13 +304,16 @@ xbool audio_package::Init( const char* pFilename )
                 if( m_BreakPointTable )
                     x_fread( m_BreakPointTable, m_Header.BreakPointTableFootprint, 1, f );
 
-                // Read in the identifiers. On disk each record is the old
-                // 32-bit layout {u16 StringOffset; u16 Index; u32 pPackage-slot}
-                // = 8 bytes; read it explicitly so the 64-bit pPackage pointer
-                // doesn't widen the record and misalign the rest of the file.
+                // Read the 32-bit on-disk identifier records into native records.
                 for( i=0 ; i<m_Header.nIdentifiers ; i++ )
                 {
-                    struct { u16 StringOffset; u16 Index; u32 Pad; } DiskId;
+                    struct disk_descriptor_identifier
+                    {
+                        u16 StringOffset;
+                        u16 Index;
+                        u32 PackageSlot;
+                    } DiskId;
+
                     x_fread( &DiskId, sizeof(DiskId), 1, f );
                     m_IdentifierTable[ i ].StringOffset = DiskId.StringOffset;
                     m_IdentifierTable[ i ].Index        = DiskId.Index;
@@ -290,12 +323,11 @@ xbool audio_package::Init( const char* pFilename )
                 for( i=0 ; i<m_Header.nIdentifiers ; i++ )
                     m_IdentifierTable[ i ].pPackage = this;
 
-                // Read the 32-bit on-disk descriptor offsets and resolve them
-                // to pointer-sized addresses in memory.
+                // Read 32-bit on-disk descriptor offsets and resolve to native pointers.
                 for( i=0 ; i<m_Header.nDescriptors ; i++ )
                 {
                     s32 Offset;
-                    x_fread( &Offset, sizeof(s32), 1, f );
+                    x_fread( &Offset, sizeof(Offset), 1, f );
                     m_DescriptorTable[ i ] = (uaddr)m_DescriptorBuffer + (u32)Offset;
                 }
 
@@ -321,11 +353,10 @@ xbool audio_package::Init( const char* pFilename )
                 if( m_ColdSamples )
                     ReadSampleHeaders( f, (sample_header*)m_ColdSamples, m_Header.nSampleHeaders[ COLD ], m_Header.HeaderSizes[ COLD ] );
                 
-                // TODO: Load the warm sample headers.
-
                 // TODO: Allocate individual aram for the samples.
                 // Load the hot samples.
                 N_ARAM_USED += m_Header.Aram;
+                AramAccounted = TRUE;
 
 #if defined(LOG_AUDIO_PACKAGE_LOAD)
                 LOG_MESSAGE( LOG_AUDIO_PACKAGE_LOAD, "ARAM Required: %d, Total: %d", m_Header.Aram, N_ARAM_USED );
@@ -334,7 +365,7 @@ xbool audio_package::Init( const char* pFilename )
                 m_AudioRam = 0;
                 if( m_Header.Aram )
                 {
-                    m_AudioRam    = (uaddr)g_AudioHardware.AllocAudioRam( m_Header.Aram );
+                    m_AudioRam    = (uaddr)Runtime.Backend.AllocAudioRam( m_Header.Aram );
                     uaddr Aram    = m_AudioRam;
                     s32 TotalAram = 0;
                     u32 BlockSize = 0;
@@ -346,7 +377,7 @@ xbool audio_package::Init( const char* pFilename )
                         x_DebugMsg( "Audio package load failed!\n" );
                         x_DebugMsg( "-=> %s\n", pFilename );
                         x_DebugMsg( "Currently loaded packages:\n" );
-                        g_AudioMgr.DisplayPackages();
+                        Runtime.Audio.DisplayPackages();
                         ASSERT( m_AudioRam );
                     }
                     #endif
@@ -365,18 +396,8 @@ xbool audio_package::Init( const char* pFilename )
                             TotalAram += BlockSize;
                             ASSERT( TotalAram <= m_Header.Aram );
                         }
-#if 0
-                        else
-                        {
-                            // Make it point to the not loaded sample
-                            x_memcpy( pHotSample, g_AudioDebug.GetDebugSampleHeader( WARN_NOT_LOADED ), m_Header.HeaderSizes[HOT] );
-                        }
-#endif
                     }
                 }
-
-
-                // TODO: Load warm samples.
 
                 // Set the user parameter defaults.
                 SetUserVolume( 1.0f );
@@ -397,26 +418,38 @@ xbool audio_package::Init( const char* pFilename )
                 Result = ((m_AudioRam)||(!m_Header.Aram)) ? TRUE : FALSE;
             }
         }
-
-        // Close the file.
-        x_fclose( f );
     }
+
+Cleanup:
+    if( f )
+        x_fclose( f );
 	
     if( Result == FALSE )
     {
-        vm_Free(m_IdentifierStringTable);   m_IdentifierStringTable = NULL;
-        vm_Free(m_IdentifierTable);         m_IdentifierTable = NULL;
-        vm_Free(m_DescriptorTable);         m_DescriptorTable = NULL;
-        vm_Free(m_DescriptorBuffer);        m_DescriptorBuffer = NULL;
-        vm_Free(m_MusicData);               m_MusicData = NULL;
-        vm_Free(m_LipSyncTable);            m_LipSyncTable = NULL;
-        vm_Free(m_BreakPointTable);         m_BreakPointTable = NULL;
-        vm_Free(m_HotSamples);              m_HotSamples = NULL;
-        vm_Free(m_ColdSamples);             m_ColdSamples = NULL;
+        if( m_AudioRam )
+        {
+            Runtime.Backend.FreeAudioRam( (void*)m_AudioRam );
+            m_AudioRam = 0;
+        }
+
+        if( AramAccounted )
+        {
+            N_ARAM_USED -= m_Header.Aram;
+        }
+
+        x_free(m_IdentifierStringTable);    m_IdentifierStringTable = NULL;
+        x_free(m_IdentifierTable);          m_IdentifierTable = NULL;
+        x_free(m_DescriptorTable);          m_DescriptorTable = NULL;
+        x_free(m_DescriptorBuffer);         m_DescriptorBuffer = NULL;
+        x_free(m_MusicData);                m_MusicData = NULL;
+        x_free(m_LipSyncTable);             m_LipSyncTable = NULL;
+        x_free(m_BreakPointTable);          m_BreakPointTable = NULL;
+        x_free(m_HotSamples);               m_HotSamples = NULL;
+        x_free(m_ColdSamples);              m_ColdSamples = NULL;
 
         for( s32 i=0 ; i<NUM_TEMPERATURES ; i++ )
         {
-            vm_Free( m_SampleIndices[ i ] );
+            x_free( m_SampleIndices[ i ] );
             m_SampleIndices[ i ] = NULL;
         }
     }
@@ -425,44 +458,45 @@ xbool audio_package::Init( const char* pFilename )
     return Result;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::Kill( void )
 {
     N_ARAM_USED -= m_Header.Aram;
 
     // Nuke voices that belong to this package.
-    g_AudioHardware.Lock();
-    g_AudioVoiceMgr.ReleasePackagesVoices( this );
-    g_AudioHardware.Unlock();
+    Runtime().Voices.ReleasePackagesVoices( this );
+    Runtime().Backend.FlushRenderCommands();
 
     // Free the memory up
-    vm_Free( m_IdentifierStringTable );
-    vm_Free( m_IdentifierTable );
-    vm_Free( m_DescriptorTable );
-    vm_Free( m_DescriptorBuffer );
+    x_free( m_IdentifierStringTable );
+    x_free( m_IdentifierTable );
+    x_free( m_DescriptorTable );
+    x_free( m_DescriptorBuffer );
     if( m_MusicData )
-        vm_Free( m_MusicData );
+        x_free( m_MusicData );
     if( m_LipSyncTable )
-        vm_Free( m_LipSyncTable );
+        x_free( m_LipSyncTable );
     if( m_BreakPointTable )
-        vm_Free( m_BreakPointTable );
+        x_free( m_BreakPointTable );
     for( s32 i=0 ; i<NUM_TEMPERATURES ; i++ )
     {
         if( m_SampleIndices[ i ] )
-            vm_Free( (void*)m_SampleIndices[ i ] );
+            x_free( (void*)m_SampleIndices[ i ] );
     }
     if( m_HotSamples )
     {
-        vm_Free( m_HotSamples );
+        x_free( m_HotSamples );
     }
     if( m_ColdSamples )
-        vm_Free( m_ColdSamples );
+        x_free( m_ColdSamples );
     if( m_AudioRam )
-        g_AudioHardware.FreeAudioRam( (void*)m_AudioRam );
+        Runtime().Backend.FreeAudioRam( (void*)m_AudioRam );
+
+    m_pRuntime = NULL;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::SetUserVolume( f32 Volume )
 {
@@ -470,7 +504,7 @@ void audio_package::SetUserVolume( f32 Volume )
     ComputeVolume();
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::SetUserPitch( f32 Pitch )
 {
@@ -478,7 +512,7 @@ void audio_package::SetUserPitch( f32 Pitch )
     ComputePitch();
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::SetUserEffectSend( f32 EffectSend )
 {
@@ -486,7 +520,7 @@ void audio_package::SetUserEffectSend( f32 EffectSend )
     ComputeEffectSend();
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::SetUserNearFalloff( f32 NearFalloff )
 {
@@ -494,7 +528,7 @@ void audio_package::SetUserNearFalloff( f32 NearFalloff )
     ComputeNearFalloff();
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::SetUserFarFalloff( f32 FarFalloff )
 {
@@ -502,7 +536,7 @@ void audio_package::SetUserFarFalloff( f32 FarFalloff )
     ComputeFarFalloff();
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::SetUserNearDiffuse( f32 NearDiffuse )
 {
@@ -510,7 +544,7 @@ void audio_package::SetUserNearDiffuse( f32 NearDiffuse )
     ComputeNearDiffuse();
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::SetUserFarDiffuse( f32 FarDiffuse )
 {
@@ -518,7 +552,7 @@ void audio_package::SetUserFarDiffuse( f32 FarDiffuse )
     ComputeFarDiffuse();
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::ComputeVolume( void )
 {
@@ -530,7 +564,7 @@ void audio_package::ComputeVolume( void )
     Volume = m_UserVolume * m_Header.Params.Volume;
 
     // Ducking enabled?
-    if( g_AudioMgr.IsAudioDuckingEnabled() )
+    if( Runtime().AudioDuckLevel > 0 )
         Volume *= m_Header.Params.VolumeDuck;
 
     // Was there a change?
@@ -540,11 +574,11 @@ void audio_package::ComputeVolume( void )
         m_Volume = Volume;
 
         // Update all voices that reference this package.
-        g_AudioVoiceMgr.UpdateVoiceVolume( this );
+        Runtime().Voices.UpdateVoiceVolume( this );
     }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::ComputePitch( void )
 {
@@ -562,11 +596,11 @@ void audio_package::ComputePitch( void )
         m_Pitch = Pitch;
 
         // Update all voices that reference this package.
-        g_AudioVoiceMgr.UpdateVoicePitch( this );
+        Runtime().Voices.UpdateVoicePitch( this );
     }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::ComputeEffectSend( void )
 {
@@ -584,11 +618,11 @@ void audio_package::ComputeEffectSend( void )
         m_EffectSend = EffectSend;
 
         // Update all voices that reference this package.
-        g_AudioVoiceMgr.UpdateVoiceEffectSend( this );
+        Runtime().Voices.UpdateVoiceEffectSend( this );
     }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::ComputeNearFalloff( void )
 {
@@ -607,7 +641,7 @@ void audio_package::ComputeNearFalloff( void )
     }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::ComputeFarFalloff( void )
 {
@@ -626,7 +660,7 @@ void audio_package::ComputeFarFalloff( void )
     }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::ComputeNearDiffuse( void )
 {
@@ -645,7 +679,7 @@ void audio_package::ComputeNearDiffuse( void )
     }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_package::ComputeFarDiffuse( void )
 {
@@ -664,7 +698,7 @@ void audio_package::ComputeFarDiffuse( void )
     }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 char* audio_package::GetMusicType( void )
 {
@@ -678,7 +712,7 @@ char* audio_package::GetMusicType( void )
     }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 s32 audio_package::GetMusicIntensity( music_intensity* & Intensity )
 {

@@ -8,8 +8,7 @@
 // INCLUDES
 //=========================================================================
 
-#include "animdata.hpp"
-//#include "parsing/bitstream.hpp"
+#include "AnimData.hpp"
 #include "x_bitstream.hpp"
 
 //
@@ -28,17 +27,7 @@ static anim_key_block*  s_pMRUBlock = NULL;
 static anim_key_block*  s_pLRUBlock = NULL;
 static s32              s_nBlocksDecompressed = 0;
 static s32              s_nBlockBytesDecompressed = 0;
-static s32              s_MaxAllowedDecompressedBytes = 300*1024;
-
-//=========================================================================
-
-s32     anim_key_stream::s_SF;
-s32     anim_key_stream::s_RF;
-s32     anim_key_stream::s_TF;
-s32     anim_key_stream::s_SO;
-s32     anim_key_stream::s_RO;
-s32     anim_key_stream::s_TO;
-byte*   anim_key_stream::s_pData;
+static s32              s_MaxAllowedDecompressedBytes = 32*1024*1024;
 
 //=========================================================================
 
@@ -52,6 +41,7 @@ void AnimationDecompress( const anim_group& AG,
 
 void anim_SetMaxAllowedDecompressedBytes( s32 NBytes )
 {
+    ASSERT( NBytes > 0 );
     s_MaxAllowedDecompressedBytes = NBytes;
 }
 
@@ -147,25 +137,27 @@ void anim_key_stream::GetOffsetsAndFormats   (  s32  nFrames,
 
 //=========================================================================
 
-inline void anim_key_stream::GrabKey( s32 iFrame, anim_key& Key )
+inline void anim_key_stream::GrabKey( const decode_context& Context,
+                                      s32                   iFrame,
+                                      anim_key&             Key ) const
 {
 #if USE_SCALE_KEYS    
 
     // Decompress scale
     {
-        if( s_SF == CONSTANT_VALUE )
+        if( Context.SF == CONSTANT_VALUE )
         {
             Key.Scale.Set( 1.0f, 1.0f, 1.0f );
         }
         else
-        if( s_SF == SINGLE_VALUE )
+        if( Context.SF == SINGLE_VALUE )
         {
-            Key.Scale = ((vector3p*)(s_pData + s_SO))[ 0 ];
+            Key.Scale = ((vector3p*)(Context.pData + Context.SO))[ 0 ];
         }
         else
-        if( s_SF == PRECISION_32 )
+        if( Context.SF == PRECISION_32 )
         {
-            Key.Scale = ((vector3p*)(s_pData + s_SO))[ iFrame ];
+            Key.Scale = ((vector3p*)(Context.pData + Context.SO))[ iFrame ];
         }
         else
         {
@@ -176,11 +168,11 @@ inline void anim_key_stream::GrabKey( s32 iFrame, anim_key& Key )
 
     // Decompress rotation
     {
-        if( s_RF == PRECISION_16 )
+        if( Context.RF == PRECISION_16 )
         {   
             // I'm using temp variables to tell the compiler that pR doesn't
             // point to Key.Rotation so it can do the math out of order.
-            u16* pR = &((u16*)(s_pData + s_RO))[ iFrame<<2 ];
+            u16* pR = &((u16*)(Context.pData + Context.RO))[ iFrame<<2 ];
             f32 TempX = ((f32)pR[0] * (2.0f / 65535.0f)) - 1.0f;
             f32 TempY = ((f32)pR[1] * (2.0f / 65535.0f)) - 1.0f;
             f32 TempZ = ((f32)pR[2] * (2.0f / 65535.0f)) - 1.0f;
@@ -191,19 +183,19 @@ inline void anim_key_stream::GrabKey( s32 iFrame, anim_key& Key )
             Key.Rotation.W = TempW;
         }
         else
-        if( s_RF == CONSTANT_VALUE )
+        if( Context.RF == CONSTANT_VALUE )
         {
             Key.Rotation.Identity();
         }
         else
-        if( s_RF == SINGLE_VALUE )
+        if( Context.RF == SINGLE_VALUE )
         {
-            Key.Rotation = ((quaternion*)(s_pData + s_RO))[ 0 ];
+            Key.Rotation = ((quaternion*)(Context.pData + Context.RO))[ 0 ];
         }
         else
-        if( s_RF == PRECISION_32 )
+        if( Context.RF == PRECISION_32 )
         {
-            Key.Rotation = ((quaternion*)(s_pData + s_RO))[ iFrame ];
+            Key.Rotation = ((quaternion*)(Context.pData + Context.RO))[ iFrame ];
         }
         else
         {
@@ -213,19 +205,19 @@ inline void anim_key_stream::GrabKey( s32 iFrame, anim_key& Key )
 
     // Decompress translation
     {
-        if( s_TF == CONSTANT_VALUE )
+        if( Context.TF == CONSTANT_VALUE )
         {
             Key.Translation.Set(0.0f,0.0f,0.0f);// = vector3(0,0,0);
         }
         else
-        if( s_TF == SINGLE_VALUE )
+        if( Context.TF == SINGLE_VALUE )
         {
-            Key.Translation = ((vector3p*)(s_pData + s_TO))[ 0 ];
+            Key.Translation = ((vector3p*)(Context.pData + Context.TO))[ 0 ];
         }
         else
-        if( s_TF == PRECISION_32 )
+        if( Context.TF == PRECISION_32 )
         {
-            Key.Translation = ((vector3p*)(s_pData + s_TO))[ iFrame ];
+            Key.Translation = ((vector3p*)(Context.pData + Context.TO))[ iFrame ];
         }
         else
         {
@@ -238,15 +230,17 @@ inline void anim_key_stream::GrabKey( s32 iFrame, anim_key& Key )
 
 void anim_key_stream::GetRawKey( byte* pData, s32 nFrames, s32 iFrame, anim_key& Key )
 {
-    s_SF = (Offset >> STREAM_SCL_SHIFT) & STREAM_SCL_MASK;
-    s_RF = (Offset >> STREAM_ROT_SHIFT) & STREAM_ROT_MASK;
-    s_TF = (Offset >> STREAM_TRS_SHIFT) & STREAM_TRS_MASK;
-    s_SO = (Offset >> STREAM_OFT_SHIFT) & STREAM_OFT_MASK;
-    s_RO = s_SO + s_ScaleFormatOverhead[s_SF]     + s_ScaleFormatSize[s_SF]*nFrames;
-    s_TO = s_RO + s_RotationFormatOverhead[s_RF]  + s_RotationFormatSize[s_RF]*nFrames;
-    s_pData = pData;
+    decode_context Context;
+    Context.pData = pData;
+    GetOffsetsAndFormats( nFrames,
+                          Context.SO,
+                          Context.RO,
+                          Context.TO,
+                          Context.SF,
+                          Context.RF,
+                          Context.TF );
 
-    GrabKey( iFrame, Key );
+    GrabKey( Context, iFrame, Key );
 }
 
 //=========================================================================
@@ -255,18 +249,20 @@ void anim_key_stream::GetInterpKey( byte* pData, s32 nFrames, s32 iFrame, f32 T,
 {
     ASSERT( iFrame < nFrames-1 );
 
-    s_pData = pData;
-    s_SF = (Offset >> STREAM_SCL_SHIFT) & STREAM_SCL_MASK;
-    s_RF = (Offset >> STREAM_ROT_SHIFT) & STREAM_ROT_MASK;
-    s_TF = (Offset >> STREAM_TRS_SHIFT) & STREAM_TRS_MASK;
-    s_SO = (Offset >> STREAM_OFT_SHIFT) & STREAM_OFT_MASK;
-    s_RO = s_SO + s_ScaleFormatOverhead[s_SF]     + s_ScaleFormatSize[s_SF]*nFrames;
-    s_TO = s_RO + s_RotationFormatOverhead[s_RF]  + s_RotationFormatSize[s_RF]*nFrames;
+    decode_context Context;
+    Context.pData = pData;
+    GetOffsetsAndFormats( nFrames,
+                          Context.SO,
+                          Context.RO,
+                          Context.TO,
+                          Context.SF,
+                          Context.RF,
+                          Context.TF );
     anim_key K0;
     anim_key K1;
 
-    GrabKey( iFrame+0, K0 );
-    GrabKey( iFrame+1, K1 );
+    GrabKey( Context, iFrame+0, K0 );
+    GrabKey( Context, iFrame+1, K1 );
 
     Key.Interpolate( K0, K1, T );
 }
@@ -354,19 +350,32 @@ anim_key_stream* anim_key_block::AcquireStreams( const anim_group& AG )
     // Be sure we can fit this decompressed data into the cache
     ASSERT( DecompressedDataSize <= s_MaxAllowedDecompressedBytes );
 
-    // Move block to beginning of list
-    DetachFromList();
-    AttachToList();
+    // Keep the LRU order current without relinking an already-MRU block on
+    // every sampled bone.
+    if( s_pMRUBlock != this )
+    {
+        DetachFromList();
+        AttachToList();
+    }
 
     // Check if we've already decompressed
     if( pStream )
         return pStream;
+
+    static xprofile_counter CacheMissMetric =
+        x_GetProfiler().RegisterCounter( "KeyCacheMisses", "Animation" );
+    static xprofile_counter CacheEvictionMetric =
+        x_GetProfiler().RegisterCounter( "KeyCacheEvictions", "Animation" );
+    static xprofile_gauge CacheBytesMetric =
+        x_GetProfiler().RegisterGauge( "KeyCacheBytes", XPROFILE_UNIT_BYTES, "Animation" );
+    CacheMissMetric.Add();
 
     // Limit the maximum number of decompressed bytes
     while( (s_nBlockBytesDecompressed+DecompressedDataSize) > s_MaxAllowedDecompressedBytes )
     {
         ASSERT( s_pLRUBlock != this );
         s_pLRUBlock->ReleaseStreams();
+        CacheEvictionMetric.Add();
 
         // Force us to hold at least one
         if( s_pMRUBlock == NULL )
@@ -377,24 +386,19 @@ anim_key_stream* anim_key_block::AcquireStreams( const anim_group& AG )
     s_nBlockBytesDecompressed += DecompressedDataSize;
     s_nBlocksDecompressed++;
 
-    // Allocate destination of decompressed data
-    pStream = (anim_key_stream*)x_malloc( DecompressedDataSize );
-    ASSERT( pStream );
+    {
+        X_PROFILE_SCOPE_CATEGORY( "Animation", "DecompressKeyBlock" );
 
-    xtimer Timer;
-    Timer.Start();
+        // Allocate destination and decompress synchronously on a cache miss.
+        pStream = (anim_key_stream*)x_malloc( DecompressedDataSize );
+        ASSERT( pStream );
+        AnimationDecompress( AG,
+                             pFactoredCompressedData,
+                             pStream,
+                             DecompressedDataSize );
+    }
 
-    // Kick off decompression
-    AnimationDecompress( AG,
-                         //AG.GetCompressedDataPtr()+CompressedDataOffset, 
-                         pFactoredCompressedData,
-                         pStream, 
-                         DecompressedDataSize );
-
-    Timer.Stop();
-
-    //x_DebugMsg("DecompressedBlock: (%1.3f ms) (%d bytes) (%d blocks) (%d bytes total) <%s>\n",
-    //    Timer.ReadMs(), DecompressedDataSize, s_nBlocksDecompressed, s_nBlockBytesDecompressed, AG.GetFileName() );
+    CacheBytesMetric.Set( s_nBlockBytesDecompressed );
 
     return pStream;
 }
@@ -494,6 +498,17 @@ void anim_keys::GetInterpKey( const anim_group& AnimGroup, f32  Frame, s32 iStre
 
 void anim_keys::GetRawKeys( const anim_group& AnimGroup, s32 iFrame, anim_key* pKey ) const
 {
+    GetRawKeys( AnimGroup, iFrame, pKey, 0, m_nBones - 1 );
+}
+
+//=========================================================================
+
+void anim_keys::GetRawKeys( const anim_group& AnimGroup, s32 iFrame, anim_key* pKey, s32 iBoneMin, s32 iBoneMax ) const
+{
+    ASSERT( iBoneMin >= 0 );
+    ASSERT( iBoneMax >= iBoneMin );
+    ASSERT( iBoneMax < m_nBones );
+
     s32 iBlock      = iFrame >> MAX_KEYS_PER_BLOCK_SHIFT;
     s32 iBlockFrame = iFrame & MAX_KEYS_PER_BLOCK_MASK;
     if( (iBlock==m_nKeyBlocks) && (iBlockFrame==0) )
@@ -506,7 +521,7 @@ void anim_keys::GetRawKeys( const anim_group& AnimGroup, s32 iFrame, anim_key* p
     anim_key_block& KeyBlock = AnimGroup.m_pKeyBlock[ m_iKeyBlock + iBlock ];
     anim_key_stream* pStream = KeyBlock.AcquireStreams( AnimGroup );
 
-    for( s32 i=0; i<m_nBones; i++ )
+    for( s32 i=iBoneMin; i<=iBoneMax; i++ )
         pStream[i].GetRawKey( (byte*)pStream, KeyBlock.nFrames, iBlockFrame, pKey[i] );
 }
 
@@ -514,6 +529,17 @@ void anim_keys::GetRawKeys( const anim_group& AnimGroup, s32 iFrame, anim_key* p
 
 void anim_keys::GetInterpKeys( const anim_group& AnimGroup, f32  Frame, anim_key* pKey ) const
 {
+    GetInterpKeys( AnimGroup, Frame, pKey, 0, m_nBones - 1 );
+}
+
+//=========================================================================
+
+void anim_keys::GetInterpKeys( const anim_group& AnimGroup, f32 Frame, anim_key* pKey, s32 iBoneMin, s32 iBoneMax ) const
+{
+    ASSERT( iBoneMin >= 0 );
+    ASSERT( iBoneMax >= iBoneMin );
+    ASSERT( iBoneMax < m_nBones );
+
     s32 iFrame      = (s32)Frame;
     f32 fFrac       = Frame - (f32)iFrame;
     s32 iBlock      = iFrame >> MAX_KEYS_PER_BLOCK_SHIFT;
@@ -528,7 +554,7 @@ void anim_keys::GetInterpKeys( const anim_group& AnimGroup, f32  Frame, anim_key
     anim_key_block& KeyBlock = AnimGroup.m_pKeyBlock[ m_iKeyBlock + iBlock ];
     anim_key_stream* pStream = KeyBlock.AcquireStreams( AnimGroup );
 
-    for( s32 i=0; i<m_nBones; i++ )
+    for( s32 i=iBoneMin; i<=iBoneMax; i++ )
         pStream[i].GetInterpKey( (byte*)pStream, KeyBlock.nFrames, iBlockFrame, fFrac, pKey[i] );
 }
 
@@ -536,23 +562,9 @@ void anim_keys::GetInterpKeys( const anim_group& AnimGroup, f32  Frame, anim_key
 
 void anim_keys::GetInterpKeys( const anim_group& AnimGroup, f32  Frame, anim_key* pKey, s32 nBones ) const
 {
-    s32 iFrame      = (s32)Frame;
-    f32 fFrac       = Frame - (f32)iFrame;
-    s32 iBlock      = iFrame >> MAX_KEYS_PER_BLOCK_SHIFT;
-    s32 iBlockFrame = iFrame & MAX_KEYS_PER_BLOCK_MASK;
-    if( (iBlock==m_nKeyBlocks) && (iBlockFrame==0) )
-    {
-        iBlock--;
-        iBlockFrame = MAX_KEYS_PER_BLOCK;
-    }
-    ASSERT( (iBlock>=0) && (iBlock<m_nKeyBlocks) );
-
-    anim_key_block& KeyBlock = AnimGroup.m_pKeyBlock[ m_iKeyBlock + iBlock ];
-    anim_key_stream* pStream = KeyBlock.AcquireStreams( AnimGroup );
-
+    ASSERT( nBones > 0 );
     ASSERT(nBones <= m_nBones) ;
-    for( s32 i=0; i<nBones; i++ )
-        pStream[i].GetInterpKey( (byte*)pStream, KeyBlock.nFrames, iBlockFrame, fFrac, pKey[i] );
+    GetInterpKeys( AnimGroup, Frame, pKey, 0, nBones - 1 );
 }
 
 //=========================================================================

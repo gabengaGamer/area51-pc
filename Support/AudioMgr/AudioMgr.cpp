@@ -6,17 +6,18 @@
 // INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "AudioMgr.hpp"
-#include "GameLib\StatsMgr.hpp"
-#include "..\ZoneMgr\ZoneMgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Audio\audio_private_pkg.hpp"
-#include "Audio\audio_hardware.hpp"
-#include "..\ConversationMgr\ConversationMgr.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "../ZoneMgr/ZoneMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Audio/audio_package_format.hpp"
+#include "Audio/backend/audio_backend.hpp"
+#include "../ConversationMgr/ConversationMgr.hpp"
 
 #ifdef X_EDITOR
-#include "..\Apps\Editor\Project.hpp"
+#include "../Apps/Editor/Project.hpp"
 #endif
 
 //==============================================================================
@@ -447,7 +448,6 @@ void audio_manager::Init( s32 MemSize )
     //W2V.Identity();
     g_AudioMgr.SetSpeakerConfig( SPEAKERS_STEREO );
     //g_AudioMgr.SetSpeakerConfig(-90,+90,0,0,2);
-    //g_AudioMgr.SetSpeakerConfig(-45,45,45+90,45+180,4);
     //g_AudioManager.SetEar( W2V, NEAR_CLIP, FAR_CLIP );
     g_AudioMgr.SetClip( NEAR_CLIP, FAR_CLIP );
 }
@@ -473,12 +473,12 @@ void audio_manager::Render ( void )
 #ifdef sansari
     if( eng_Begin( "Audio Manager Render" ) )
     {
-        draw_Line( BeginPoint, EndPoint, XCOLOR_BLUE );
+        render::debug::Line( BeginPoint, EndPoint, XCOLOR_BLUE );
 
-        draw_Marker( BeginPoint, XCOLOR_GREEN );
-        draw_Marker( EndPoint, XCOLOR_GREEN );
+        render::debug::Marker( BeginPoint, XCOLOR_GREEN );
+        render::debug::Marker( EndPoint, XCOLOR_GREEN );
 
-        draw_Marker( ClosePoint, XCOLOR_RED );
+        render::debug::Marker( ClosePoint, XCOLOR_RED );
 
         eng_End();
     }

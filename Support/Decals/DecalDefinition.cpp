@@ -8,7 +8,6 @@
 //==============================================================================
 
 #include "DecalDefinition.hpp"
-#include "DecalMgr.hpp"
 
 //==============================================================================
 // Implementation
@@ -32,44 +31,10 @@ decal_definition::decal_definition( void ) :
 
 //==============================================================================
 
-decal_definition::decal_definition( fileio& File )
-{
-    (void)File;
-
-    m_Handle = HNULL;
-}
-
-//==============================================================================
-
 decal_definition::~decal_definition( void )
 {
     ASSERT( m_Handle.IsNull() );
     m_Handle = HNULL;
-}
-
-//==============================================================================
-
-void decal_definition::FileIO( fileio& File )
-{
-    File.Static( m_Name,       32  );
-    File.Static( m_MinSize         );
-    File.Static( m_MaxSize         );
-    File.Static( m_MinRoll         );
-    File.Static( m_MaxRoll         );
-    File.Static( m_Color           );
-    File.Static( m_BitmapName, 256 );
-    File.Static( m_MaxVisible      );
-    File.Static( m_FadeTime        );
-    File.Static( m_Flags           );
-    File.Static( m_BlendMode       );
-
-    if ( m_MinRoll > m_MaxRoll )
-    {
-        // this shouldn't happen, but just to be safe
-        radian Temp = m_MinRoll;
-        m_MinRoll   = m_MaxRoll;
-        m_MaxRoll   = Temp;
-    }
 }
 
 //==============================================================================

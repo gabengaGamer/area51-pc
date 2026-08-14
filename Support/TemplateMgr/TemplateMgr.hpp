@@ -5,9 +5,9 @@
 // INCLUDES
 //=========================================================================
 #include "Entropy.hpp"
-#include "Auxiliary\MiscUtils\Dictionary.hpp"
-#include "x_BitStream.hpp"
-#include "Objects\object.hpp"
+#include "Auxiliary/MiscUtils/dictionary.hpp"
+#include "x_bitstream.hpp"
+#include "Objects/object.hpp"
 
 //=========================================================================
 // PRE-DECL

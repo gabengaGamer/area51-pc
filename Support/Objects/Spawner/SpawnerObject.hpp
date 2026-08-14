@@ -1,8 +1,8 @@
 #ifndef __SPAWNEROBJECT_HPP__
 #define __SPAWNEROBJECT_HPP__
 
-#include "..\Object.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../object.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 //#include "..\Support\Globals\Global_Variables_Manager.hpp"
 
 class spawner_object : public object
@@ -30,7 +30,7 @@ public:
                     void            OnDebugRender        ( void );
 #endif // X_RETAIL
 
-    virtual         void            OnAdvanceLogic      ( f32 DeltaTime );
+    virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
     virtual         bbox            GetLocalBBox        ( void ) const{ return bbox( vector3(0,50,0), 50 ); }
     virtual         void            OnActivate          ( xbool Flag );            
 

@@ -1,9 +1,9 @@
 
 #include "MeshViewer.hpp"
-#include "Entropy/e_Draw.hpp"
 #include "Entropy/e_VRAM.hpp"
 #include "Entropy/e_ScratchMem.hpp"
 #include "Auxiliary/Bitmap/aux_Bitmap.hpp"
+#include "PreviewRender.hpp"
 
 namespace fx_core
 {
@@ -16,11 +16,9 @@ void mesh_viewer::CleanUp( void )
 {
     for( s32 i=0; i<m_Mesh.m_nTextures; i++ )
     {
-        if( m_Bitmap[i].GetVRAMID() != 0 )
-        {
-            vram_Unregister( m_Bitmap[i] );
-            m_Bitmap[i].Kill();
-        }
+        if( m_Texture[i].m_texture )
+            vram_DestroyTexture( m_Texture[i].m_texture );
+        m_Texture[i].m_bitmap.Kill();
     }
 
     m_Mesh.~rawmesh();
@@ -38,7 +36,7 @@ void mesh_viewer::CleanUp( void )
 mesh_viewer::mesh_viewer()
 {
     //set bbox so view doesn't corrupt
-    m_BBox.Set(vector3(0,0,0),10);
+    m_bBox.Set(vector3(0,0,0),10);
     m_bBackFacets = FALSE;
 }
 
@@ -47,7 +45,7 @@ mesh_viewer::mesh_viewer()
 mesh_viewer::mesh_viewer( const mesh_viewer& mViewer )
 {
     //set bbox so view doesn't corrupt
-    m_BBox.Set(vector3(0,0,0),10);
+    m_bBox.Set(vector3(0,0,0),10);
     m_bBackFacets = FALSE;
 }
 
@@ -57,11 +55,9 @@ mesh_viewer::~mesh_viewer( void )
 {
     for( s32 i=0; i<m_Mesh.m_nTextures; i++ )
     {
-        if( m_Bitmap[i].GetVRAMID() != 0 )
-        {
-            vram_Unregister( m_Bitmap[i] );
-            m_Bitmap[i].Kill();
-        }
+        if( m_Texture[i].m_texture )
+            vram_DestroyTexture( m_Texture[i].m_texture );
+        m_Texture[i].m_bitmap.Kill();
     }
 }
 
@@ -74,21 +70,21 @@ void mesh_viewer::Load( const char* pFileName )
     m_Mesh.Load( pFileName );
     m_Anim.Load( pFileName );
 
-    m_L2W.Identity();
     m_Frame         = 0;
     m_bPlayAnim     = FALSE;
 
-    m_BBox = m_Mesh.GetBBox();
+    m_bBox = m_Mesh.GetBBox();
     m_LightDir.Set( -0.5f, 1, -0.5f );
     m_LightDir.Normalize();
 
     m_Mesh.SortFacetsByMaterialAndBone();
     for( s32 i=0; i<m_Mesh.m_nTextures; i++ )
     {
-        if( auxbmp_LoadD3D( m_Bitmap[i], m_Mesh.m_pTexture[i].FileName ) )
-        {
-        }        
-        vram_Register( m_Bitmap[i] );
+        if( auxbmp_LoadD3D( m_Texture[i].m_bitmap, m_Mesh.m_pTexture[i].FileName ) )
+            VERIFY( vram_CreateTexture( m_Texture[i].m_texture,
+                                        m_Texture[i].m_bitmap,
+                                        TRUE,
+                                        "fx_mesh_viewer" ) );
     }
 
     m_Ambient.Set( 0.5f, 0.5f, 0.5f );
@@ -103,15 +99,15 @@ void mesh_viewer::Unload( void )
 
 //=========================================================================
 
-void mesh_viewer::Render( xcolor TintColor )
+void mesh_viewer::Render( xcolor TintColor, const matrix4& LocalToWorld )
 {
     if( m_Mesh.m_nBones == 1 )
     {
-        RenderSolid( TintColor );
+        RenderSolid( TintColor, LocalToWorld );
     }
     else
     {
-        RenderSoftSkin();
+        RenderSoftSkin( LocalToWorld );
     }
 }
 
@@ -124,7 +120,7 @@ void mesh_viewer::SetBackFacets( xbool bFaceFacets )
 
 //=========================================================================
 
-void mesh_viewer::RenderSolid( xcolor TintColor )
+void mesh_viewer::RenderSolid( xcolor TintColor, const matrix4& LocalToWorld )
 {
     rawmesh::vertex*    pVertex         = NULL;
 
@@ -138,27 +134,30 @@ void mesh_viewer::RenderSolid( xcolor TintColor )
     vector3 L = m_LightDir;
     f32     I;
     xcolor  VertColor;
-    u32     DrawFlags = DRAW_TEXTURED | DRAW_USE_ALPHA;
-
-    if( m_bBackFacets )
-    {
-        DrawFlags |= DRAW_CULL_NONE;
-    }
-
-    draw_Begin( DRAW_TRIANGLES, DrawFlags );
-
     for( iMaterial = 0; iMaterial < m_Mesh.m_nMaterials; iMaterial++ )
     {
         // Activate the diffuse texture for this material
         iTexture    = m_Mesh.m_pMaterial[ iMaterial ].TexMaterial[0].iTexture;
+        const texture* pTexture = NULL;
+        if( (iTexture >= 0) && (iTexture < 32) && m_Texture[iTexture].GetShaderResource() )
+            pTexture = &m_Texture[iTexture];
 
-        if( m_Bitmap[iTexture].GetVRAMID() )   { draw_SetTexture( m_Bitmap[iTexture] ); }
-        else                                   { draw_SetTexture(); }
+        const render::primitive_draw_desc Material(
+            pTexture,
+            render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+            render::PRIMITIVE_BLEND_ALPHA,
+            render::PRIMITIVE_DEPTH_READ_ONLY,
+            m_bBackFacets ? render::PRIMITIVE_RASTER_SOLID_NO_CULL
+                          : render::PRIMITIVE_RASTER_SOLID,
+            render::PRIMITIVE_SAMPLER_LINEAR_WRAP,
+            render::PRIMITIVE_LAYER_TRANSPARENT );
+        render::PrimitiveBatch Batch( Material );
 
         for( i = 0; i < m_Mesh.m_nFacets; i++ )
         {
             if( m_Mesh.m_pFacet[i].iMaterial == iMaterial )
             {
+                render::primitive_vertex Triangle[3];
                 for( j = 0; j < 3; j++ )
                 {
                     iVertex = m_Mesh.m_pFacet[i].iVertex[j];
@@ -174,20 +173,20 @@ void mesh_viewer::RenderSolid( xcolor TintColor )
                                         ( m_Ambient.GetZ() + (TintColor.B / 255.0f * I) ),
                                         (f32)TintColor.A / 255.0f );
 
-                    draw_UV( pVertex->UV[0] );
-                    draw_Color( VertColor );
-                    draw_Vertex( pVertex->Position );
+                    Triangle[j] = render::primitive_vertex( pVertex->Position,
+                                                            pVertex->UV[0],
+                                                            VertColor );
                 }
+                VERIFY( Batch.AddTriangle( Triangle[0], Triangle[1], Triangle[2] ) );
             }
         }
+        VERIFY( Batch.Submit( LocalToWorld ) );
     }
-
-    draw_End();
 }
 
 //=========================================================================
 
-void mesh_viewer::RenderSoftSkin( void )
+void mesh_viewer::RenderSoftSkin( const matrix4& LocalToWorld )
 {
     struct lovert
     {
@@ -223,79 +222,70 @@ void mesh_viewer::RenderSoftSkin( void )
     // Compute final matrices
     for( i=0; i<m_Anim.m_nBones; i++ )
     {
-        pMatrix[i] = m_L2W * pMatrix[i];
+        pMatrix[i] = LocalToWorld * pMatrix[i];
     }
 
-    // Render triangles
-    s32 iLastTex = -1;
-    u32 DrawFlags = DRAW_TEXTURED | DRAW_USE_ALPHA;
-
-    if( m_bBackFacets )
+    // Render triangles grouped by material so every submission owns all state.
+    for( s32 iMaterial = 0; iMaterial < m_Mesh.m_nMaterials; ++iMaterial )
     {
-        DrawFlags |= DRAW_CULL_NONE;
-    }
+        const s32 iTexture = m_Mesh.m_pMaterial[iMaterial].TexMaterial[0].iTexture;
+        const texture* pTexture = NULL;
+        if( (iTexture >= 0) && (iTexture < 32) && m_Texture[iTexture].GetShaderResource() )
+            pTexture = &m_Texture[iTexture];
 
-    draw_Begin( DRAW_TRIANGLES, DrawFlags );
+        const render::primitive_draw_desc Material(
+            pTexture,
+            render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+            render::PRIMITIVE_BLEND_ALPHA,
+            render::PRIMITIVE_DEPTH_READ_ONLY,
+            m_bBackFacets ? render::PRIMITIVE_RASTER_SOLID_NO_CULL
+                          : render::PRIMITIVE_RASTER_SOLID,
+            render::PRIMITIVE_SAMPLER_LINEAR_WRAP,
+            render::PRIMITIVE_LAYER_TRANSPARENT );
+        render::PrimitiveBatch Batch( Material );
 
-    for( i=0; i<m_Mesh.m_nFacets; i++ )
-    {
-        lovert      V[3];
-        vector3     N[3];
-        const rawmesh::facet& Facet = m_Mesh.m_pFacet[i];
-        f32         MaxWeight = 0;
-        s32         iBone;
-
-        // This needs to update
-        if( m_Mesh.m_pMaterial[ Facet.iMaterial ].TexMaterial[0].iTexture != iLastTex )
+        for( i=0; i<m_Mesh.m_nFacets; i++ )
         {
-            iLastTex = m_Mesh.m_pMaterial[ Facet.iMaterial ].TexMaterial[0].iTexture;
-            if( m_Bitmap[iLastTex].GetVRAMID() ) draw_SetTexture( m_Bitmap[iLastTex] );
-            else                                 draw_SetTexture();
-        }
+            const rawmesh::facet& Facet = m_Mesh.m_pFacet[i];
+            if( Facet.iMaterial != iMaterial )
+                continue;
 
-        for( s32 j=0; j<3; j++ )
-        {
-            const rawmesh::vertex& Vert = m_Mesh.m_pVertex[ Facet.iVertex[j] ];
-            V[j].P.Zero();
-            N[j].Zero();
-            
-            for( s32 w=0; w<Vert.nWeights; w++ )
+            lovert V[3];
+            vector3 N[3];
+            for( s32 j=0; j<3; j++ )
             {
-                const rawmesh::weight& W = Vert.Weight[w];
-
-                if( W.Weight > MaxWeight )
+                const rawmesh::vertex& Vert = m_Mesh.m_pVertex[ Facet.iVertex[j] ];
+                V[j].P.Zero();
+                N[j].Zero();
+                
+                for( s32 w=0; w<Vert.nWeights; w++ )
                 {
-                    MaxWeight = W.Weight;
-                    iBone     = W.iBone;
+                    const rawmesh::weight& W = Vert.Weight[w];
+                    V[j].P += (pMatrix[ W.iBone ] * Vert.Position) * W.Weight;
+                    N[j]   += pMatrix[ W.iBone ].RotateVector( Vert.Normal[0] ) * W.Weight;
                 }
 
-                V[j].P += (pMatrix[ W.iBone ] * Vert.Position) * W.Weight;
-                N[j]   += pMatrix[ W.iBone ].RotateVector( Vert.Normal[0] ) * W.Weight;
+                N[j].Normalize();
+                V[j].UV = Vert.UV[0];
+                f32 I = fMax( 0, LightDir.Dot( N[j] ) );
+                I = fMin( 1, I );
+                V[j].C.SetfRGBA( fMin( 1, m_Ambient.GetX() + I),
+                                 fMin( 1, m_Ambient.GetY() + I),
+                                 fMin( 1, m_Ambient.GetZ() + I), 1 );
             }
 
-            N[j].Normalize();
-            V[j].UV.X = Vert.UV[0].X; 
-            V[j].UV.Y = Vert.UV[0].Y;  
-            f32 I     = fMax( 0, LightDir.Dot( N[j] ) );
-                I     = fMin( 1, I );
-
-            //ASSERT( I >= 0 );
-
-            V[j].C.SetfRGBA( fMin( 1, m_Ambient.GetX() + I), 
-                             fMin( 1, m_Ambient.GetY() + I), 
-                             fMin( 1, m_Ambient.GetZ() + I), 1 );
-
+            const render::primitive_vertex Triangle[3] =
+            {
+                render::primitive_vertex( V[0].P, V[0].UV, V[0].C ),
+                render::primitive_vertex( V[1].P, V[1].UV, V[1].C ),
+                render::primitive_vertex( V[2].P, V[2].UV, V[2].C )
+            };
+            VERIFY( Batch.AddTriangle( Triangle[0], Triangle[1], Triangle[2] ) );
         }
-
-        for( s32 j=0; j<3; j++ )
-        {
-            draw_UV( V[j].UV );
-            draw_Color( V[j].C );
-            draw_Vertex( V[j].P );
-        }
+        matrix4 Identity;
+        Identity.Identity();
+        VERIFY( Batch.Submit( Identity ) );
     }
-
-    draw_End();
 
     // Free alloced memory
     smem_StackPopToMarker();

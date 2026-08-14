@@ -11,18 +11,15 @@
 //==============================================================================
 
 #include "hud_MutantVision.hpp"
-#include "GameLib\RenderContext.hpp"
-
-#ifdef TARGET_PS2
-#include "ps2/ps2_misc.hpp"
-#endif
+#include "GameLib/RenderContext.hpp"
 
 //==============================================================================
 // STATICS
 //==============================================================================
 
 static const f32 s_MutantOverlayHeight = 425.0f;
-static const f32 s_MutantOverlayFOV    = R_90;
+static f32 const s_OverlayAuthoringXFOV   = R_60;
+static f32 const s_OverlayReferenceAspect = 4.0f / 3.0f;
 
 rhandle<char>   hud_mutant_vision::m_OverlayResource;
 fx_handle       hud_mutant_vision::m_OverlayHandle;
@@ -57,33 +54,36 @@ void hud_mutant_vision::OnRender( player* pPlayer )
 
     s32 L, T, R, B;
     OrigView.GetViewport( L, T, R, B );
+
+    s32 const ViewportWidth  = R - L + 1;
+    s32 const ViewportHeight = B - T + 1;
+    if( (ViewportWidth <= 0) || (ViewportHeight <= 0) )
+    {
+        return;
+    }
+
+    f32 const ViewportAspect = static_cast<f32>( ViewportWidth ) / static_cast<f32>( ViewportHeight );
+    radian const OverlayXFOV = OrigView.GetXFOV();
+    f32 const OverlayScale   = x_tan( OverlayXFOV * 0.5f ) / x_tan( s_OverlayAuthoringXFOV * 0.5f );
+
+    // Keep the authored effect at a constant screen size as the player FOV changes.
+    m_OverlayHandle.SetScale( vector3( OverlayScale, OverlayScale, OverlayScale ) );
     
     // set up a camera that looks directly at our particle effect
     view OverlayView;
     OverlayView.SetPosition( vector3( 0.0f, s_MutantOverlayHeight, 0.0f ) );
     OverlayView.SetRotation( radian3( R_90, R_0, R_0 ) );
-    OverlayView.SetXFOV    ( s_MutantOverlayFOV );
+    OverlayView.SetXFOV    ( OverlayXFOV );
     OverlayView.SetViewport( L, T, R, B );
+    OverlayView.SetPixelScale( ViewportAspect / s_OverlayReferenceAspect );
     OverlayView.SetZLimits ( 10.0f, 5000.0f );
     eng_SetView( OverlayView );
 
-    // Set up the scissoring region for the uber-nasty ps2
-    #ifdef TARGET_PS2
-    gsreg_Begin(1);
-    gsreg_SetScissor( L, T, R, B );
-    gsreg_End();
-    #endif
-
     // render it!
-    render::StartRawDataMode(); // required for particle render
-#ifdef TARGET_XBOX
-draw_DisableSatCompensation();
-#endif    
+    VERIFY( render::BeginPrimitiveRender() );
     m_OverlayHandle.Render( );
-    render::EndRawDataMode();
-#ifdef TARGET_XBOX
-draw_EnableSatCompensation();
-#endif    
+    render::EndPrimitiveRender();
+    render::ExecuteForwardRender();
 
     // restore the original view
     eng_SetView( OrigView );
@@ -139,4 +139,3 @@ void hud_mutant_vision::UpdateEffects( f32 DeltaTime )
 {
     m_OverlayHandle.AdvanceLogic( DeltaTime );
 }
-

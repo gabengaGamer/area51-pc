@@ -8,8 +8,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\Support\TriggerEx\TriggerEx_Manager.hpp"
-#include "gamelib\StatsMgr.hpp"
+#include "../Support/TriggerEx/TriggerEx_Manager.hpp"
+#include "GameLib/StatsMgr.hpp"
 
 //=========================================================================
 // GLOBALS

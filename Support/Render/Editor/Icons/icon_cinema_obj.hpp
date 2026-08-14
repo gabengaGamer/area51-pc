@@ -430,5 +430,4 @@ static s16 s_iicon_cinema_obj[] =
 };
 
 
-#define DRAW_ICON_CINEMA_OBJ() draw_icon( NUM_FACETS_ICON_CINEMA_OBJ, NUM_VERTICES_ICON_CINEMA_OBJ, s_vicon_cinema_obj, s_iicon_cinema_obj )
 

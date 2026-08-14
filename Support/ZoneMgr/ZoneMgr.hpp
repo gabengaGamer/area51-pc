@@ -5,8 +5,8 @@
 // INCLUDES
 //=========================================================================
 #include "Entropy.hpp"
-#include "auxiliary\miscutils\Guid.hpp"
-#include "..\..\MiscUtils\PriorityQueue.hpp"
+#include "Auxiliary/MiscUtils/Guid.hpp"
+#include "../../MiscUtils/PriorityQueue.hpp"
 #include "x_bitstream.hpp"
 
 //=========================================================================
@@ -49,9 +49,26 @@ public:
     };
 
     //---------------------------------------------------------------------
-    typedef u8 zone_id;
+    using zone_id = u8;
 
     //---------------------------------------------------------------------
+
+    enum class SeedSource : u8
+    {
+        None,
+        Object,
+        Player,
+        Camera,
+        Destination
+    };
+
+    //---------------------------------------------------------------------
+
+    enum class TrackingMode : u8
+    {
+        PortalTraversal,
+        CameraPath
+    };
 
     struct zone
     {
@@ -84,25 +101,24 @@ public:
     //---------------------------------------------------------------------
     struct tracker
     {
-	public:
-                tracker();
-                
-				zone_id		GetMainZone		( void ) const			{ return iCurrentZone;	}
-				zone_id		GetZone2		( void ) const			{ return iTempZone;		}
-                void		SetMainZone		( u8 Zone )				{ iCurrentZone = Zone;	}
-                void		SetZone2    	( u8 Zone )				{ iTempZone = Zone;	}
-				void		SetPosition		( const vector3& Pos )	{ LastPosition = Pos;	}
-				void		SetBBox			( const bbox& aBBox )	{ BBox = aBBox;			}
-                const bbox& GetBBox         ( void )                { return BBox;          }
+    public:
+                        tracker                 ( void );
 
-	protected:
+        zone_id         GetMainZone              ( void ) const         { return iCurrentZone; }
+        zone_id         GetZone2                 ( void ) const         { return iTempZone; }
+        const vector3&  GetPosition              ( void ) const         { return LastPosition; }
+        void            SetBBox                  ( const bbox& aBBox )   { BBox = aBBox; }
+        const bbox&     GetBBox                  ( void ) const         { return BBox; }
 
-        vector3     LastPosition;       // Last Know position.
-        zone_id     iCurrentZone;       // Current Zone that the tracker is in
-		zone_id		iTempZone;			// Temporary zone which the object may also be in
-		bbox		BBox;				// Local Space BBox
+    protected:
 
-	friend class zone_mgr;
+        vector3         LastPosition;           // Last known position.
+        vector3         LastDirection;          // Last non-zero movement direction.
+        zone_id         iCurrentZone;           // Current zone that the tracker is in.
+        zone_id         iTempZone;              // Temporary zone which the object may also be in.
+        bbox            BBox;                   // Local space BBox.
+
+        friend class zone_mgr;
     };
 
     //---------------------------------------------------------------------
@@ -146,19 +162,51 @@ public:
     s32         GetLastPortalWalkZone   ( void ) const;
 
     void        Render                  ( void ) const;
-    void        RenderMPZoneStates      ( void ) const;
-    zone_id     FindZone                ( const vector3& Position ) const;
-    zone_id     GetTrackerZoneAtPosition( const tracker& Tracker, const vector3& Position ) const;
+    #if !defined( CONFIG_RETAIL )
+    zone_id     FindZoneByBoundsDebug   ( const vector3& Position ) const;
+    #endif
     void        GetBBoxMaxNormalMasks   ( const plane& Plane, vector3& Mask0, vector3& Mask1 ) const;
     xbool       IsBBoxVisible           ( const bbox& BBox, zone_id Zone1, zone_id Zone2 ) const; 
     xbool       IsZoneVisible           ( zone_id iZone ) const;
+    xbool       IsValidZone             ( zone_id Zone ) const;
     
-private:    
-    void        MoveTracker             ( tracker& Tracker, const vector3& NewPosition ) const;
-    
-public:    
-    void        InitZoneTracking        ( object& Object, tracker& Tracker ) const;
-    void        UpdateZoneTracking      ( object& Object, tracker& Tracker, const vector3& NewPosition ) const;
+private:
+    xbool       LineCrossPortal         ( const portal& Portal,
+                                          const vector3& P0,
+                                          const vector3& P1,
+                                          const vector3& LastDirection,
+                                          f32& T ) const;
+    void        MoveTracker             ( tracker& Tracker,
+                                          const vector3& NewPosition,
+                                          TrackingMode Mode ) const;
+    void        MoveCameraTracker       ( tracker& Tracker,
+                                          const vector3& NewPosition ) const;
+    void        UpdateTemporaryZone     ( tracker& Tracker ) const;
+
+public:
+    void        AdvanceZoneTracking     ( tracker& Tracker,
+                                          const vector3& NewPosition ) const;
+    void        AdvanceZoneTracking     ( tracker& Tracker,
+                                          const vector3& NewPosition,
+                                          TrackingMode Mode ) const;
+    void        AdvanceZoneTracking     ( object& Object,
+                                          tracker& Tracker,
+                                          const vector3& NewPosition ) const;
+    void        AdvanceZoneTracking     ( object& Object,
+                                          tracker& Tracker,
+                                          const vector3& NewPosition,
+                                          TrackingMode Mode ) const;
+    void        RebaseZoneTracking      ( tracker& Tracker,
+                                          const vector3& Position,
+                                          zone_id Zone1,
+                                          zone_id Zone2,
+                                          SeedSource Source ) const;
+    void        RebaseZoneTracking      ( object& Object,
+                                          tracker& Tracker,
+                                          const vector3& Position,
+                                          zone_id Zone1,
+                                          zone_id Zone2,
+                                          SeedSource Source ) const;
 
     s32         GetPortalCount          ( void ) const;
     s32         GetZoneCount            ( void ) const;
@@ -178,7 +226,7 @@ public:
     void        SanityCheck                     ( void );
 
     s32         GetZoneCount                    ( void ){ return m_nZones; }
-    s32         GetStartingZone                 ( void ) { return m_Frustum[0].iZone; }
+    s32         GetStartingZone                 ( void ) { return m_bHasValidVisibilityState ? m_Frustum[0].iZone : 0; }
 
 protected:
 
@@ -210,8 +258,6 @@ protected:
                                             const portal&   Portal ) const;    
     void        PortalWalk              ( frustum* pFrustum, const frustum& ParentFrustum );
     xbool       BBoxInView              ( const frustum& Frustum, const bbox& BBox ) const;
-    xbool       LineCrossPortal         ( const portal& Portal, const vector3& P0, const vector3& P1 ) const;
-
 protected:
 
     // Data-Base variables
@@ -237,6 +283,8 @@ protected:
 
     // Quick Frustum look up
     s8              m_ZoneToFrustum[256];
+    xbool           m_bPortalCullingEnabled;
+    xbool           m_bHasValidVisibilityState;
 
 
     // Dome to quicly look up portals
@@ -300,10 +348,17 @@ inline const char* zone_mgr::GetZoneFog( s32 ZoneID, xbool& QuickFog )
 
 inline xbool zone_mgr::IsZoneVisible( zone_id iZone ) const
 {
-    if ( m_nFrustums == 0 )
+    if( !m_bPortalCullingEnabled )
+    {
         return TRUE;
-    else
-        return (m_ZoneToFrustum[iZone] != -1);
+    }
+
+    if( !m_bHasValidVisibilityState )
+    {
+        return iZone == 0;
+    }
+
+    return m_ZoneToFrustum[iZone] != -1;
 }
 
 //=========================================================================

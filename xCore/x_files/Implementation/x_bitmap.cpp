@@ -9,19 +9,19 @@
 //==============================================================================
 
 #ifndef X_BITMAP_HPP
-#include "..\x_bitmap.hpp"
+#include "../x_bitmap.hpp"
 #endif
 
 #ifndef AUX_BITMAP_HPP
-#include "..\..\Auxiliary\Bitmap\aux_bitmap.hpp"
+#include "../../Auxiliary/Bitmap/aux_bitmap.hpp"
 #endif
 
 #ifndef X_MEMORY_HPP
-#include "..\x_memory.hpp"
+#include "../x_memory.hpp"
 #endif
 
 #ifndef X_MATH_HPP
-#include "..\x_math.hpp"
+#include "../x_math.hpp"
 #endif
 
 //==============================================================================
@@ -222,14 +222,14 @@ void xbitmap::CopyFrom( const xbitmap& Source )
     // "this" xbitmap should be ready to receive the Source xbitmap state.
     // But, do a little checking to be safe.
     ASSERT( m_Format == FMT_NULL );
-    ASSERT( m_Flags  == 0        );
+    ASSERT( m_flags  == 0        );
 
     // Validate the Source a little.
-    //ASSERT( Source.m_Flags & FLAG_VALID );
+    //ASSERT( Source.m_flags & FLAG_VALID );
     // BpH: A bad thing to do--but until GeomCompiler is rewritten to use
     // BpH: xarray<xbitmap*> instead of the pointerless kind this is the
     // BpH: only solution that makes sense.
-    if(!(Source.m_Flags & FLAG_VALID ))
+    if(!(Source.m_flags & FLAG_VALID ))
     {
         return;
     }
@@ -260,9 +260,9 @@ void xbitmap::CopyFrom( const xbitmap& Source )
     m_Format   = Source.m_Format;  
     
     // Set the flags properly.
-    m_Flags = (Source.m_Flags | FLAG_DATA_OWNED);
+    m_flags = (Source.m_flags | FLAG_DATA_OWNED);
     if( m_pClut )
-        m_Flags |= FLAG_CLUT_OWNED;
+        m_flags |= FLAG_CLUT_OWNED;
 }
 
 //==============================================================================
@@ -276,7 +276,7 @@ void xbitmap::Init( void )
     m_Width       = 0;
     m_Height      = 0;
     m_PW          = 0;
-    m_Flags       = 0;
+    m_flags       = 0;
     m_NMips       = 0;
     m_VRAMID      = 0;
     m_Format      = FMT_NULL;    
@@ -287,8 +287,8 @@ void xbitmap::Init( void )
 void xbitmap::Kill( void )
 {
     {
-        if( m_Flags & FLAG_DATA_OWNED ) x_free( m_Data.pPixel );
-        if( m_Flags & FLAG_CLUT_OWNED ) x_free( m_pClut       );
+        if( m_flags & FLAG_DATA_OWNED ) x_free( m_Data.pPixel );
+        if( m_flags & FLAG_CLUT_OWNED ) x_free( m_pClut       );
     }
     Init();
 }
@@ -341,7 +341,7 @@ void xbitmap::XboxSwizzleData( void )
                     NULL,
                     GetFormatInfo().BPP>>3 );
             }
-            m_Flags |= FLAG_XBOX_DATA_SWIZZLED;
+            m_flags |= FLAG_XBOX_DATA_SWIZZLED;
             *this = Temp;
             break;
         }
@@ -716,7 +716,7 @@ xcolor xbitmap::GetPixelColor( s32 X, s32 Y, s32 Mip ) const
 
     // Find from swizzled xbox ************************************************
 
-    if( m_Flags & FLAG_GCN_DATA_SWIZZLED && GetBPP() == 32 )
+    if( m_flags & FLAG_GCN_DATA_SWIZZLED && GetBPP() == 32 )
     {
         //--    GCN Docs
         //--     Appendix A. GCN Texture Formats
@@ -757,19 +757,19 @@ xcolor xbitmap::GetPixelColor( s32 X, s32 Y, s32 Mip ) const
 
         return( C );
     }
-    else if( m_Flags & FLAG_GCN_DATA_SWIZZLED && GetBPP() == 24 )
+    else if( m_flags & FLAG_GCN_DATA_SWIZZLED && GetBPP() == 24 )
     {
         ASSERTS(FALSE,"GetPixelColor Needs Un-Swizzle code written for 24BPP");
     }
-    else if( m_Flags & FLAG_GCN_DATA_SWIZZLED && GetBPP() == 16 )
+    else if( m_flags & FLAG_GCN_DATA_SWIZZLED && GetBPP() == 16 )
     {
         ASSERTS(FALSE,"GetPixelColor Needs Un-Swizzle code written for 16BPP");
     }
-    else if( m_Flags & FLAG_GCN_DATA_SWIZZLED && GetBPP() == 8 )
+    else if( m_flags & FLAG_GCN_DATA_SWIZZLED && GetBPP() == 8 )
     {
         ASSERTS(FALSE,"GetPixelColor Needs Un-Swizzle code written for 8BPP");
     }
-    else if( m_Flags & FLAG_GCN_DATA_SWIZZLED && GetBPP() == 4 )
+    else if( m_flags & FLAG_GCN_DATA_SWIZZLED && GetBPP() == 4 )
     {
         ASSERTS(FALSE,"GetPixelColor Needs Un-Swizzle code written for 4BPP");
 
@@ -817,7 +817,7 @@ xcolor xbitmap::GetPixelColor( s32 X, s32 Y, s32 Mip ) const
             if( Format.BPP == 4 )
             {
                 // Nibbles flipped?
-                if (m_Flags & FLAG_4BIT_NIBBLES_FLIPPED)
+                if (m_flags & FLAG_4BIT_NIBBLES_FLIPPED)
                     Index = (X & 0x01) ? (*pPixel >> 4) : (*pPixel & 0x0F);
                 else
                     Index = (X & 0x01) ? (*pPixel & 0x0F) : (*pPixel >> 4);
@@ -827,7 +827,7 @@ xcolor xbitmap::GetPixelColor( s32 X, s32 Y, s32 Mip ) const
                 Index = *pPixel;
             }
 
-            if( m_Flags & FLAG_PS2_CLUT_SWIZZLED )
+            if( m_flags & FLAG_PS2_CLUT_SWIZZLED )
                 Index = GetPS2SwizzledIndex( Index );
 
             // We now have the index, find the pixel's color in the palette.
@@ -855,7 +855,7 @@ s32 xbitmap::GetPixelIndex( s32 X, s32 Y, s32 Mip ) const
     s32   Index;
 
     //TODO: Implement extraction when swizzled
-    ASSERTS( !(m_Flags & FLAG_GCN_DATA_SWIZZLED), 
+    ASSERTS( !(m_flags & FLAG_GCN_DATA_SWIZZLED), 
              "xbitmap::GetPixelIndex : Not implemented for swizzled GCN textures");
 
     const xbitmap::format_info& Format = m_FormatInfo[m_Format];
@@ -889,7 +889,7 @@ s32 xbitmap::GetPixelIndex( s32 X, s32 Y, s32 Mip ) const
     if( Format.BPP == 4 )
     {
         // Nibbles flipped?
-        if (m_Flags & FLAG_4BIT_NIBBLES_FLIPPED)
+        if (m_flags & FLAG_4BIT_NIBBLES_FLIPPED)
             Index = (X & 0x01) ? (*pPixel >> 4) : (*pPixel & 0x0F);
         else
             Index = (X & 0x01) ? (*pPixel & 0x0F) : (*pPixel >> 4);
@@ -916,7 +916,7 @@ xcolor xbitmap::GetClutColor( s32 Index ) const
     ASSERT( Index >= 0 );
     ASSERT( Index < (1 << Format.BPP) );
 
-    if( m_Flags & FLAG_PS2_CLUT_SWIZZLED )
+    if( m_flags & FLAG_PS2_CLUT_SWIZZLED )
         Index = GetPS2SwizzledIndex( Index );
 
     // We have the index, find the color in the palette.
@@ -936,7 +936,7 @@ xcolor xbitmap::GetClutColor( s32 Index ) const
 void xbitmap::SetPixelColor( xcolor Color, s32 X, s32 Y, s32 Mip )
 {
     //TODO: Implement insertion when swizzled
-    ASSERTS( !(m_Flags & FLAG_GCN_DATA_SWIZZLED), 
+    ASSERTS( !(m_flags & FLAG_GCN_DATA_SWIZZLED), 
              "xbitmap::SetPixelColor : Not implemented for swizzled GCN textures");
 
     byte* pPixel;
@@ -976,9 +976,9 @@ void xbitmap::SetPixelColor( xcolor Color, s32 X, s32 Y, s32 Mip )
 void xbitmap::SetPixelIndex( s32 Index, s32 X, s32 Y, s32 Mip )
 {
     //TODO: Implement insertion when swizzled
-    ASSERTS( !(m_Flags & FLAG_XBOX_DATA_SWIZZLED), 
+    ASSERTS( !(m_flags & FLAG_XBOX_DATA_SWIZZLED), 
              "xbitmap::SetPixelIndex : Not implemented for swizzled Xbox textures");
-    ASSERTS( !(m_Flags & FLAG_GCN_DATA_SWIZZLED), 
+    ASSERTS( !(m_flags & FLAG_GCN_DATA_SWIZZLED), 
              "xbitmap::SetPixelIndex : Not implemented for swizzled GCN textures");
 
     byte* pPixel;
@@ -1016,7 +1016,7 @@ void xbitmap::SetPixelIndex( s32 Index, s32 X, s32 Y, s32 Mip )
         u8 Byte;
 
         // Nibbles flipped?
-        if (m_Flags & FLAG_4BIT_NIBBLES_FLIPPED)
+        if (m_flags & FLAG_4BIT_NIBBLES_FLIPPED)
         {
             if( X & 0x01 )
                 Byte = (*pPixel & 0x0F) | ((u8)Index <<   4);
@@ -1051,7 +1051,7 @@ void xbitmap::SetClutColor( xcolor Color, s32 Index )
     ASSERT( Index >= 0 );
     ASSERT( Index < (1 << Format.BPP) );
 
-    if( m_Flags & FLAG_PS2_CLUT_SWIZZLED )
+    if( m_flags & FLAG_PS2_CLUT_SWIZZLED )
         Index = GetPS2SwizzledIndex( Index );
 
     // We have the index, find the color in the palette.
@@ -1086,7 +1086,7 @@ void xbitmap::Blit( s32 DestX, s32 DestY,
     byte* pWrite;
 
     // Validate at least minimal compatibility between the two xbitmaps.
-    ASSERT( SourceBitmap.m_Flags & FLAG_VALID );
+    ASSERT( SourceBitmap.m_flags & FLAG_VALID );
     ASSERT( SFormat.BPP == DFormat.BPP );
 
     // Cannot blit into self.
@@ -1190,19 +1190,19 @@ void xbitmap::Setup( format    Format,
     m_Height      = Height;
     m_PW          = PhysicalWidth;
     m_VRAMID      = 0;
-    m_Flags       = FLAG_VALID;
+    m_flags       = FLAG_VALID;
     m_NMips       = nMips;
     m_Format      = Format;
 
     if( DataOwned )
-        m_Flags |= FLAG_DATA_OWNED;
+        m_flags |= FLAG_DATA_OWNED;
 
     if( pClutData )
     {
         s32 ClutEntries = (1 << m_FormatInfo[Format].BPP);
         m_ClutSize = (ClutEntries * m_FormatInfo[Format].BPC) >> 3;
         if( ClutOwned )
-            m_Flags |= FLAG_CLUT_OWNED;
+            m_flags |= FLAG_CLUT_OWNED;
     }
 
     if( nMips )
@@ -1243,7 +1243,7 @@ xbool xbitmap::IsClutBased( void ) const
 
 void xbitmap::PS2SwizzleClut  ( void )
 {
-    if( m_Flags & FLAG_PS2_CLUT_SWIZZLED )
+    if( m_flags & FLAG_PS2_CLUT_SWIZZLED )
         return;
 
     if( GetBPP() == 8 )
@@ -1266,7 +1266,7 @@ void xbitmap::PS2SwizzleClut  ( void )
         for( i=0; i<256; i++ )
             C[i] = Clut8[i];
 
-        m_Flags |= FLAG_PS2_CLUT_SWIZZLED;
+        m_flags |= FLAG_PS2_CLUT_SWIZZLED;
     }
 }
 
@@ -1274,7 +1274,7 @@ void xbitmap::PS2SwizzleClut  ( void )
 
 void xbitmap::PS2UnswizzleClut( void )
 {
-    if( (m_Flags & FLAG_PS2_CLUT_SWIZZLED) == 0 )
+    if( (m_flags & FLAG_PS2_CLUT_SWIZZLED) == 0 )
         return;
 
     // Attempt reversal of swizzling.
@@ -1298,7 +1298,7 @@ void xbitmap::PS2UnswizzleClut( void )
         for( i=0; i<256; i++ )
             C[i] = Clut8[i];
 
-        m_Flags &= ~FLAG_PS2_CLUT_SWIZZLED;
+        m_flags &= ~FLAG_PS2_CLUT_SWIZZLED;
     }
 }
 
@@ -1311,7 +1311,7 @@ void xbitmap::Flip4BitNibbles( void )
         return;
 
     // Already flipped?
-    if (m_Flags & FLAG_4BIT_NIBBLES_FLIPPED)
+    if (m_flags & FLAG_4BIT_NIBBLES_FLIPPED)
         return ;
 
     // Flip those nibbles
@@ -1330,7 +1330,7 @@ void xbitmap::Flip4BitNibbles( void )
     }
 
     // Flag they are flipped
-    m_Flags |= FLAG_4BIT_NIBBLES_FLIPPED ;
+    m_flags |= FLAG_4BIT_NIBBLES_FLIPPED ;
 }
 
 //==============================================================================
@@ -1342,7 +1342,7 @@ void xbitmap::Unflip4BitNibbles( void )
         return;
 
     // Must be flipped already
-    if (!(m_Flags & FLAG_4BIT_NIBBLES_FLIPPED))
+    if (!(m_flags & FLAG_4BIT_NIBBLES_FLIPPED))
         return ;
 
     // Flip those nibbles
@@ -1361,7 +1361,7 @@ void xbitmap::Unflip4BitNibbles( void )
     }
 
     // Flag they are not flipped
-    m_Flags &= ~FLAG_4BIT_NIBBLES_FLIPPED ;
+    m_flags &= ~FLAG_4BIT_NIBBLES_FLIPPED ;
 }
 
 //==============================================================================
@@ -1709,7 +1709,7 @@ void xbitmap::GCNSwizzleData  ( void )
 {
 
     // Bail if data is already swizzled
-    if (m_Flags & FLAG_GCN_DATA_SWIZZLED)
+    if (m_flags & FLAG_GCN_DATA_SWIZZLED)
         return;
 
     // Make sure the width and height are powers of 2
@@ -1806,13 +1806,13 @@ void xbitmap::GCNSwizzleData  ( void )
         x_memcpy( pSwizzledData, m_Data.pPixel, Offset );
     }
 
-    if (m_Flags & FLAG_DATA_OWNED)
+    if (m_flags & FLAG_DATA_OWNED)
         x_free( m_Data.pPixel );
 
     m_Data.pPixel = pSwizzledData;
 
     // Set the OWNED flag so this data will be released later
-    m_Flags |= FLAG_DATA_OWNED | FLAG_GCN_DATA_SWIZZLED;
+    m_flags |= FLAG_DATA_OWNED | FLAG_GCN_DATA_SWIZZLED;
 }
        
 //==============================================================================
@@ -1925,13 +1925,13 @@ void xbitmap::GCNSwizzleDXT1  ( void )
         x_memcpy( pOrigDest, m_Data.pPixel, m_Data.pMip[0].Offset );
     }
 
-    if (m_Flags & FLAG_DATA_OWNED)
+    if (m_flags & FLAG_DATA_OWNED)
         x_free( m_Data.pPixel );
 
     m_Data.pPixel = pOrigDest;
 
     // Set the OWNED flag so this data will be released later
-    m_Flags |= FLAG_DATA_OWNED | FLAG_GCN_DATA_SWIZZLED;   
+    m_flags |= FLAG_DATA_OWNED | FLAG_GCN_DATA_SWIZZLED;   
 }
 
 #endif

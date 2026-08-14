@@ -19,7 +19,8 @@
 #include "NetworkMgr/GameServer.hpp"
 #include "NetworkMgr/ClientProxy.hpp"
 #include "InputMgr/GamePad.hpp"
-#include "Ui/ui_font.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_renderer.hpp"
 
 //==============================================================================
 #if defined( ENABLE_DEBUG_MENU )
@@ -156,16 +157,19 @@ void debug_menu_page_multiplayer::OnChangeItem( debug_menu_item* pItem )
             pSpawnPoint->GetSpawnInfo( pPlayer->GetGuid(), Position, Rotation, Zone1, Zone2 );
 
             // Teleport the player just like in "logic_base::MoveToSpawnPt"
-            pPlayer->Teleport( Position, FALSE );
-            pPlayer->SetPitch( Rotation.Pitch );
-            pPlayer->SetYaw  ( Rotation.Yaw   ); 
-            pPlayer->SetZone1( Zone1 );
-            pPlayer->SetZone2( Zone2 );
-            pPlayer->InitZoneTracking();
+            pPlayer->Teleport( Position,
+                               Rotation.Pitch,
+                               Rotation.Yaw,
+                               static_cast<zone_mgr::zone_id>( Zone1 ),
+                               static_cast<zone_mgr::zone_id>( Zone2 ),
+                               PlayerTeleportVelocityPolicy::Clear,
+                               FALSE,
+                               FALSE );
 
-            // Force player to update internal view members so view updates
-            g_IngamePad[ pPlayer->GetActivePlayerPad() ].ClearAllActions();
-            g_ObjMgr.AdvanceAllLogic( 1.0f / 30.0f );
+            // Flush stale input at the discontinuity. The next simulation
+            // update aplies the new authoritative view. Debug UI must never
+            // advance the whole world
+            g_GameInput.ClearPlayerActions( pPlayer->GetActivePlayerPad() );
         }
         else
         {
@@ -237,7 +241,7 @@ void debug_menu_page_multiplayer::OnPreRender( void )
                                 (s32)  (Stats.MaxBitsTotal >> 3));
 
             Rect.Set( x - 4, y, x + 320, y + g_UiMgr->GetLineHeight(font) * 10 );
-            draw_Rect( Rect, xcolor(0,0,0,128), FALSE, DRAW_UI_RTARGET );
+            g_UIRenderer.DrawRect( Rect, xcolor(0,0,0,128) );
         }
         
         if( g_NetworkMgr.IsClient() )
@@ -287,7 +291,7 @@ void debug_menu_page_multiplayer::OnPreRender( void )
                 (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.MaxBitsPainQueue >> 3));
 
             Rect.Set( x - 4, y, x + 320, y + g_UiMgr->GetLineHeight(font) * 12 );
-            draw_Rect( Rect, xcolor(0,0,0,128), FALSE, DRAW_UI_RTARGET );
+            g_UIRenderer.DrawRect( Rect, xcolor(0,0,0,128) );
         }
 
         RenderText( strPackets   , x, y, font, Rect );   y += 10;

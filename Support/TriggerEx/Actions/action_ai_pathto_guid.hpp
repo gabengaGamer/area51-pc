@@ -12,7 +12,7 @@
 //=========================================================================
 
 #include "action_ai_base.hpp"
-#include "..\support\loco\loco.hpp"
+#include "../Support/Loco/Loco.hpp"
 
 //=========================== ==============================================
 // action_ai_pathto_guid

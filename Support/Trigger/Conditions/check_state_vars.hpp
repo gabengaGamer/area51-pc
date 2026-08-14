@@ -13,10 +13,10 @@
 //=========================================================================
 
 #include "x_types.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "..\Support\Trigger\Global_Variables_Manager.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/Trigger/Global_Variables_Manager.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
 
 //=========================================================================
 // CONDITIONAL_BASE

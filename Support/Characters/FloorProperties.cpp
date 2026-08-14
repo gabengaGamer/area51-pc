@@ -5,8 +5,9 @@
 //==============================================================================
 
 #include "FloorProperties.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Render/SurfaceColor.hpp"
 
 //==============================================================================
 
@@ -15,8 +16,10 @@ floor_properties::floor_properties( void )
     m_StartColor.Zero();
     m_EndColor.Zero();
     m_CurrentColor = xcolor(64,64,64,255);
-    m_ColorFadeTime = 0;
-    m_RadiusSquared = -1;
+    m_ColorFadeTime = 0.0f;
+    m_ColorFadeT    = 0.0f;
+    m_RadiusSquared = -1.0f;
+    m_FloorMat      = 0;
     m_LastPosition.Zero();
 }
 
@@ -31,7 +34,8 @@ floor_properties::~floor_properties( void )
 void floor_properties::Init( f32 Radius, f32 ColorFadeTime )
 {
     m_RadiusSquared = Radius*Radius;
-    m_ColorFadeTime = ColorFadeTime;
+    m_ColorFadeTime = x_max( 0.0f, ColorFadeTime );
+    m_ColorFadeT    = 0.0f;
 }
 
 //==============================================================================
@@ -66,17 +70,22 @@ void floor_properties::Update( const vector3& NewPosition, f32 DeltaTime, xbool 
 
             // Reset color fade timer
             m_ColorFadeT = 0;
+
+            if( m_ColorFadeTime <= 0.0f )
+            {
+                m_CurrentColor = NewFloorColor;
+            }
         }
     }
 
     //
     // Has the color timer run completely out?
     //
-    if( m_ColorFadeT != m_ColorFadeTime )
+    if( ( m_ColorFadeTime > 0.0f ) && ( m_ColorFadeT < m_ColorFadeTime ) )
     {
         // Advance the color timer
         m_ColorFadeT += DeltaTime;
-        if( m_ColorFadeT > m_ColorFadeTime )
+        if( m_ColorFadeT >= m_ColorFadeTime )
             m_ColorFadeT = m_ColorFadeTime;
 
         // Compute the interpolated color
@@ -161,34 +170,11 @@ xbool floor_properties::GrabFloorProperties( const vector3& ObjectPosition, xcol
         if ( pObj->GetColDetails( PrimitiveKey, Tri ) == FALSE )
             continue;
 
-        // the color is a weighted average of the triangle colors
-        // use barycentric coords to achieve that
-        const vector3& P0 = Tri.Vertex[0];
-        const vector3& P1 = Tri.Vertex[1];
-        const vector3& P2 = Tri.Vertex[2];
-        const vector3& TP = g_CollisionMgr.m_Collisions[iCol].Point;
+        if( !render::SampleSurfaceColor( Tri, g_CollisionMgr.m_Collisions[iCol].Point, FloorColor ) )
+        {
+            continue;
+        }
 
-        // Compute scaled normal
-        vector3 Normal = v3_Cross(P1-P0, P2-P0);
-        Normal *= 1.0f / Normal.LengthSquared();
-
-        // Compute barycentric co-ords
-        vector3 Bary( v3_Cross(P2-P1, TP-P1).Dot(Normal),
-                      v3_Cross(P0-P2, TP-P2).Dot(Normal),
-                      v3_Cross(P1-P0, TP-P0).Dot(Normal) );
-
-        // now we can get the color
-        const xcolor& C0 = Tri.Color[0];
-        const xcolor& C1 = Tri.Color[1];
-        const xcolor& C2 = Tri.Color[2];
-        vector3 vFloorCol( Bary.GetX()*C0.R + Bary.GetY()*C1.R + Bary.GetZ()*C2.R,
-                           Bary.GetX()*C0.G + Bary.GetY()*C1.G + Bary.GetZ()*C2.G,
-                           Bary.GetX()*C0.B + Bary.GetY()*C1.B + Bary.GetZ()*C2.B );
-        vFloorCol.Min( 255.0f );
-        vFloorCol.Max( 0.0f   );
-
-        // woohoo...done with the hard stuff
-        FloorColor.Set((u8)vFloorCol.GetX(), (u8)vFloorCol.GetY(), (u8)vFloorCol.GetZ());
         FloorMat = g_CollisionMgr.m_Collisions[iCol].Flags;
         return TRUE;
     }

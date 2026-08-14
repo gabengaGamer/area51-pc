@@ -1,13 +1,13 @@
 #include "Character_Death_State.hpp"
-#include "Characters\Character.hpp"
-#include "Characters\BaseStates\Character_Cover_State.hpp"
-#include "Characters\God.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
-#include "Objects\Corpse.hpp"
-#include "TriggerEx\Actions\action_ai_death.hpp"
+#include "Characters/Character.hpp"
+#include "Characters/BaseStates/Character_Cover_State.hpp"
+#include "Characters/God.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
+#include "Objects/Corpse.hpp"
+#include "TriggerEx/Actions/action_ai_death.hpp"
 
 #ifndef X_EDITOR
-#include "NetworkMgr\NetworkMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
 #endif
 
 

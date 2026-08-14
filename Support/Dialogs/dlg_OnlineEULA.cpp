@@ -4,17 +4,17 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_textbox.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_textbox.hpp"
 
 #include "dlg_OnlineEULA.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 
 //=========================================================================
@@ -24,15 +24,13 @@
 enum controls
 {
 	IDC_EULA_TEXTBOX,
-    IDC_EULA_NAV_TEXT,
 };
 
 
 ui_manager::control_tem OnlineEulaControls[] = 
 {
     // Frames.
-    { IDC_EULA_TEXTBOX,     "IDS_NULL", "textbox",  45, 60, 350, 248, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_EULA_NAV_TEXT,    "IDS_NULL", "text",      0,  0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_EULA_TEXTBOX,     "IDS_NULL", "textbox",  45, 60, 350, 248, 0, 0, 1, 1, ui_win::WF_VISIBLE },
 };
 
 
@@ -113,14 +111,13 @@ xbool dlg_online_eula::Create( s32                        UserID,
 	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pEULATextBox  = (ui_textbox*) FindChildByID( IDC_EULA_TEXTBOX  );
-    m_pNavText      = (ui_text*)    FindChildByID( IDC_EULA_NAV_TEXT );
     
     GotoControl( (ui_control*)m_pEULATextBox );
     m_CurrentControl = IDC_EULA_TEXTBOX;
 
     // set up textbox
     m_pEULATextBox->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pEULATextBox->SetFlag( ui_win::WF_SELECTED, TRUE );
+    m_pEULATextBox->SetActive( TRUE );
     m_pEULATextBox->SetExitOnSelect( TRUE );
     m_pEULATextBox->SetExitOnBack( TRUE );
     m_pEULATextBox->SetBackgroundColor( xcolor (39,117,28,128) );
@@ -131,10 +128,7 @@ xbool dlg_online_eula::Create( s32                        UserID,
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_AGREE" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_DISAGREE" ); 
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // initialize timeout
     m_Timeout = 2.0f;
@@ -215,7 +209,7 @@ void dlg_online_eula::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_online_eula::OnPadSelect( ui_win* pWin )
+void dlg_online_eula::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -233,7 +227,7 @@ void dlg_online_eula::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_online_eula::OnPadBack( ui_win* pWin )
+void dlg_online_eula::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -280,7 +274,6 @@ void dlg_online_eula::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         {
             // show nav text
             m_Timeout = 0;
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
         }
     }
 

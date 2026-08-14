@@ -1,509 +1,513 @@
-//=========================================================================
+//==============================================================================
 //
-//  dlg_profile_controls.cpp
+//  dlg_ProfileControls.cpp
 //
-//=========================================================================
+//==============================================================================
 
-#include "entropy.hpp"
+//==============================================================================
+//  INCLUDES
+//==============================================================================
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
+#include "Entropy.hpp"
+
+#include "UI/ui_button.hpp"
+#include "UI/ui_check.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_text.hpp"
 
 #include "dlg_ProfileControls.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "StateMgr\StateMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "SaveData/SaveDataMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "dlg_PopUp.hpp"
 
-//=========================================================================
-//  Main Options Dialog
-//=========================================================================
+//==============================================================================
+//  ENUMS
+//==============================================================================
 
-enum controls
+enum profile_controls_internal
 {
-    IDC_CONTROLS_INVERTY_TEXT,
-    IDC_CONTROLS_SENSITIVITY_X_TEXT,
-    IDC_CONTROLS_SENSITIVITY_Y_TEXT,
-    IDC_CONTROLS_CROUCH_TEXT,
-    //IDC_CONTROLS_LOOK_TEXT,
-    IDC_CONTROLS_VIBRATION_TEXT,
+    IDC_CONTROLS_CROUCH_TEXT = IDC_CONTROLS_BUTTON_ACCEPT + 1,
+    IDC_CONTROLS_AIM_TEXT,
     IDC_CONTROLS_AUTO_SWITCH_TEXT,
-
-    IDC_CONTROLS_TOGGLE_INVERTY,
-    IDC_CONTROLS_SENSITIVITY_X,
-    IDC_CONTROLS_SENSITIVITY_Y,
-    IDC_CONTROLS_TOGGLE_CROUCH,
-    //IDC_CONTROLS_TOGGLE_LOOK,
-    IDC_CONTROLS_TOGGLE_VIBRATION,
-    IDC_CONTROLS_TOGGLE_AUTO_SWITCH,
-    IDC_CONTROLS_BUTTON_ACCEPT,
-
-    IDC_CONTROLS_NAV_TEXT,
 };
 
-//-------------------------------------------------------------------------
+//==============================================================================
+//  DATA
+//==============================================================================
 
-ui_manager::control_tem ProfileControlsControls[] = 
+ui_manager::control_tem ProfileControlsControls[] =
 {
-    // Frames.
-    { IDC_CONTROLS_INVERTY_TEXT,        "IDS_OPTIONS_TOGGLE_INVERTY",   "text",      40,  40, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CONTROLS_SENSITIVITY_X_TEXT,  "IDS_OPTIONS_SENSITIVITY_X",    "text",      40,  75, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CONTROLS_SENSITIVITY_Y_TEXT,  "IDS_OPTIONS_SENSITIVITY_Y",    "text",      40, 110, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CONTROLS_CROUCH_TEXT,         "IDS_OPTIONS_TOGGLE_CROUCH",    "text",      40, 145, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    //{ IDC_CONTROLS_LOOK_TEXT,           "IDS_OPTIONS_LOOKSPRING",       "text",      40, 180, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },	
-    { IDC_CONTROLS_VIBRATION_TEXT,      "IDS_OPTIONS_VIBRATION",        "text",      40, 180, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CONTROLS_AUTO_SWITCH_TEXT,    "IDS_OPTIONS_AUTO_SWITCH",      "text",      40, 215, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-
-    { IDC_CONTROLS_TOGGLE_INVERTY,      "IDS_NULL",                     "check",    300,  40, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CONTROLS_SENSITIVITY_X,       "IDS_NULL",                     "slider",   300,  75, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CONTROLS_SENSITIVITY_Y,       "IDS_NULL",                     "slider",   300, 110, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CONTROLS_TOGGLE_CROUCH,       "IDS_NULL",                     "check",    300, 145, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    //{ IDC_CONTROLS_TOGGLE_LOOK,         "IDS_NULL",                     "check",    300, 180, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },	
-    { IDC_CONTROLS_TOGGLE_VIBRATION,    "IDS_NULL",                     "check",    300, 180, 120, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_CONTROLS_TOGGLE_AUTO_SWITCH,  "IDS_NULL",                     "check",    300, 215, 120, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-
-    { IDC_CONTROLS_BUTTON_ACCEPT,       "IDS_PROFILE_OPTIONS_ACCEPT",   "button",    40, 285, 220, 40, 0, 7, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-
-    { IDC_CONTROLS_NAV_TEXT,            "IDS_NULL",                     "text",       0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_CONTROLS_MOUSE_MENU,             "IDS_PROFILE_MOUSE_CONTROLS",   "button",  40, 165, 220, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CONTROLS_GAMEPAD_MENU,           "IDS_PROFILE_GAMEPAD_CONTROLS", "button",  40, 200, 220, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CONTROLS_KEYBOARD_MENU,          "IDS_PROFILE_KEYBOARD_CONTROLS", "button",  40, 235, 220, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_DISABLED },
+    { IDC_CONTROLS_TOGGLE_CROUCH,          "IDS_NULL",                     "check",  300,  40, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CONTROLS_TOGGLE_AIM,             "IDS_NULL",                     "check",  300,  75, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CONTROLS_TOGGLE_AUTO_SWITCH,     "IDS_NULL",                     "check",  300, 110, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CONTROLS_BUTTON_ACCEPT,          "IDS_PROFILE_OPTIONS_ACCEPT",   "button",  40, 285, 220, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_CONTROLS_CROUCH_TEXT,            "IDS_OPTIONS_TOGGLE_CROUCH",    "text",    40,  40, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_CONTROLS_AIM_TEXT,               "IDS_OPTIONS_TOGGLE_AIM",       "text",    40,  75, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_CONTROLS_AUTO_SWITCH_TEXT,       "IDS_OPTIONS_AUTO_SWITCH",      "text",    40, 110, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 };
 
-//-------------------------------------------------------------------------
+//==============================================================================
 
 ui_manager::dialog_tem ProfileControlsDialog =
 {
     "IDS_PROFILE_CONTROLS",
-    1, 9,
-    sizeof(ProfileControlsControls)/sizeof(ui_manager::control_tem),
+    1, 7,
+    sizeof(ProfileControlsControls) / sizeof(ui_manager::control_tem),
     &ProfileControlsControls[0],
     0
 };
 
-//=========================================================================
-//  Defines
-//=========================================================================
-
-//=========================================================================
-//  Structs
-//=========================================================================
-
-//=========================================================================
-//  Data
-//=========================================================================
-
-//=========================================================================
-//  Registration function
-//=========================================================================
+//==============================================================================
+//  REGISTRATION
+//==============================================================================
 
 void dlg_profile_controls_register( ui_manager* pManager )
 {
     pManager->RegisterDialogClass( "profile controls", &ProfileControlsDialog, &dlg_profile_controls_factory );
 }
 
-//=========================================================================
-//  Factory function
-//=========================================================================
+//==============================================================================
 
 ui_win* dlg_profile_controls_factory( s32 UserID, ui_manager* pManager, ui_manager::dialog_tem* pDialogTem, const irect& Position, ui_win* pParent, s32 Flags, void* pUserData )
 {
     dlg_profile_controls* pDialog = new dlg_profile_controls;
     pDialog->Create( UserID, pManager, pDialogTem, Position, pParent, Flags, pUserData );
-
-    return (ui_win*)pDialog;
+    return static_cast<ui_win*>( pDialog );
 }
 
-//=========================================================================
-//  dlg_profile_controls
-//=========================================================================
+//==============================================================================
+//  IMPLEMENTATION
+//==============================================================================
 
 dlg_profile_controls::dlg_profile_controls( void )
 {
 }
 
-//=========================================================================
+//==============================================================================
 
 dlg_profile_controls::~dlg_profile_controls( void )
 {
     Destroy();
 }
 
-//=========================================================================
+//==============================================================================
 
-xbool dlg_profile_controls::Create( s32                        UserID,
-                             ui_manager*                pManager,
-                             ui_manager::dialog_tem*    pDialogTem,
-                             const irect&               Position,
-                             ui_win*                    pParent,
-                             s32                        Flags,
-                             void*                      pUserData )
+xbool dlg_profile_controls::Create( s32                       UserID,
+                                    ui_manager*               pManager,
+                                    ui_manager::dialog_tem*   pDialogTem,
+                                    const irect&              Position,
+                                    ui_win*                   pParent,
+                                    s32                       Flags,
+                                    void*                     pUserData )
 {
-    xbool   Success = FALSE;
-
     (void)pUserData;
-
     ASSERT( pManager );
 
-    // Do dialog creation
-    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    xbool const Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
-    m_pToggleInvertY        = (ui_check*)   FindChildByID( IDC_CONTROLS_TOGGLE_INVERTY     );    
-    m_pSensitivityX         = (ui_slider*)  FindChildByID( IDC_CONTROLS_SENSITIVITY_X      );
-    m_pSensitivityY         = (ui_slider*)  FindChildByID( IDC_CONTROLS_SENSITIVITY_Y      );
-    m_pToggleCrouch         = (ui_check*)   FindChildByID( IDC_CONTROLS_TOGGLE_CROUCH      );    
-    //m_pToggleLookspring     = (ui_check*)   FindChildByID( IDC_CONTROLS_TOGGLE_LOOK        );    
-    m_pToggleVibration      = (ui_check*)   FindChildByID( IDC_CONTROLS_TOGGLE_VIBRATION   );
-    m_pToggleAutoSwitch     = (ui_check*)   FindChildByID( IDC_CONTROLS_TOGGLE_AUTO_SWITCH );
-    m_pButtonAccept         = (ui_button*)  FindChildByID( IDC_CONTROLS_BUTTON_ACCEPT      );
+    m_pMouseMenu        = static_cast<ui_button*>( FindChildByID( IDC_CONTROLS_MOUSE_MENU ) );
+    m_pGamepadMenu      = static_cast<ui_button*>( FindChildByID( IDC_CONTROLS_GAMEPAD_MENU ) );
+    m_pKeyboardMenu     = static_cast<ui_button*>( FindChildByID( IDC_CONTROLS_KEYBOARD_MENU ) );
+    m_pToggleCrouch     = static_cast<ui_check*>( FindChildByID( IDC_CONTROLS_TOGGLE_CROUCH ) );
+    m_pToggleAim        = static_cast<ui_check*>( FindChildByID( IDC_CONTROLS_TOGGLE_AIM ) );
+    m_pToggleAutoSwitch = static_cast<ui_check*>( FindChildByID( IDC_CONTROLS_TOGGLE_AUTO_SWITCH ) );
+    m_pButtonAccept     = static_cast<ui_button*>( FindChildByID( IDC_CONTROLS_BUTTON_ACCEPT ) );
+    m_pCrouchText       = static_cast<ui_text*>( FindChildByID( IDC_CONTROLS_CROUCH_TEXT ) );
+    m_pAimText          = static_cast<ui_text*>( FindChildByID( IDC_CONTROLS_AIM_TEXT ) );
+    m_pAutoSwitchText   = static_cast<ui_text*>( FindChildByID( IDC_CONTROLS_AUTO_SWITCH_TEXT ) );
 
-    m_pInvertYText          = (ui_text*)    FindChildByID( IDC_CONTROLS_INVERTY_TEXT       );
-    m_pSensitivityXText     = (ui_text*)    FindChildByID( IDC_CONTROLS_SENSITIVITY_X_TEXT );
-    m_pSensitivityYText     = (ui_text*)    FindChildByID( IDC_CONTROLS_SENSITIVITY_Y_TEXT );
-    m_pCrouchText           = (ui_text*)    FindChildByID( IDC_CONTROLS_CROUCH_TEXT        );
-    //m_pLookspringText       = (ui_text*)    FindChildByID( IDC_CONTROLS_LOOK_TEXT          );
-    m_pVibrationText        = (ui_text*)    FindChildByID( IDC_CONTROLS_VIBRATION_TEXT     );
-    m_pAutoSwitchText       = (ui_text*)    FindChildByID( IDC_CONTROLS_AUTO_SWITCH_TEXT   );
-    m_pNavText              = (ui_text*)    FindChildByID( IDC_CONTROLS_NAV_TEXT           );
-
-    GotoControl( (ui_control*)m_pToggleInvertY );
-    m_CurrentControl = IDC_CONTROLS_TOGGLE_INVERTY;
-    m_CurrHL = 0;
-
-    // set range
-    m_pSensitivityX->SetRange( 0, 32 );
-    m_pSensitivityY->SetRange( 0, 32 );
-
-    // switch off the controls to start
-    m_pToggleInvertY    ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pSensitivityX     ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pSensitivityY     ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pToggleCrouch     ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    //m_pToggleLookspring ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pToggleVibration  ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pToggleAutoSwitch ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pButtonAccept     ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-
-    m_pInvertYText      ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pSensitivityXText ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pSensitivityYText ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pCrouchText       ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    //m_pLookspringText   ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pVibrationText    ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pAutoSwitchText   ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText          ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-
-    m_pInvertYText      ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
-    m_pSensitivityXText ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
-    m_pSensitivityYText ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
-    m_pCrouchText       ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
-    //m_pLookspringText   ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
-    m_pVibrationText    ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
-    m_pAutoSwitchText   ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
-
-    // set button alignment
-    m_pButtonAccept     ->SetFlag( ui_win::WF_BUTTON_LEFT, TRUE );
-
-    // set up nav text
-    xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
-    navText += g_StringTableMgr( "ui", "IDS_NAV_CANCEL" );
-    navText += g_StringTableMgr( "ui", "IDS_NAV_RESTORE_DEFAULTS" );
-  
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
-
-    // set default values (should be set from options data)
     player_profile& Profile = g_StateMgr.GetPendingProfile();
+    m_OriginalProfile = Profile;
+    m_OriginalProfile.Checksum();
+    m_pToggleCrouch->SetChecked( Profile.GetCrouchOn() );
+    m_pToggleAim->SetChecked( Profile.IsAimToggleEnabled() );
+    m_pToggleAutoSwitch->SetChecked( Profile.GetWeaponAutoSwitch() );
 
-    m_pSensitivityX->SetValue( Profile.GetSensitivity(0) );
-    m_pSensitivityY->SetValue( Profile.GetSensitivity(1) );
+    m_pMouseMenu       ->SetFlag( ui_win::WF_BUTTON_LEFT, TRUE );
+    m_pGamepadMenu     ->SetFlag( ui_win::WF_BUTTON_LEFT, TRUE );
+    m_pKeyboardMenu    ->SetFlag( ui_win::WF_BUTTON_LEFT, TRUE );
+    m_pButtonAccept    ->SetFlag( ui_win::WF_BUTTON_LEFT, TRUE );
+    m_pCrouchText      ->SetLabelFlags( ui_font::h_left | ui_font::v_center );
+    m_pAimText         ->SetLabelFlags( ui_font::h_left | ui_font::v_center );
+    m_pAutoSwitchText  ->SetLabelFlags( ui_font::h_left | ui_font::v_center );
 
-    m_pToggleInvertY    ->SetChecked( Profile.m_bInvertY            );
-    m_pToggleCrouch     ->SetChecked( Profile.m_bCrouchOn           );
-    //m_pToggleLookspring ->SetChecked( Profile.m_bLookspringOn       );
-    m_pToggleVibration  ->SetChecked( Profile.m_bVibration          );
-    m_pToggleAutoSwitch ->SetChecked( Profile.GetWeaponAutoSwitch() );
+    s32 const CurrentControl = g_StateMgr.GetCurrentControl();
+    if( (CurrentControl == -1) || (GotoControl( CurrentControl ) == NULL) )
+    {
+        GotoControl( static_cast<ui_control*>( m_pToggleCrouch ) );
+    }
+    else
+    {
+        m_CurrentControl = CurrentControl;
+    }
 
-    // initialize screen scaling
+    m_pMouseMenu       ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pGamepadMenu     ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pKeyboardMenu    ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pToggleCrouch    ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pToggleAim       ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pToggleAutoSwitch->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pButtonAccept    ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pCrouchText      ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pAimText         ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+    m_pAutoSwitchText  ->SetFlag( ui_win::WF_VISIBLE, FALSE );
+
+    m_CurrHL = 0;
+    m_PopUp = NULL;
+    m_PopUpResult = DLG_POPUP_IDLE;
+
+    xwstring NavText( g_StringTableMgr( "ui", "IDS_NAV_SELECT" ) );
+    NavText += g_StringTableMgr( "ui", "IDS_NAV_CANCEL" );
+    NavText += g_StringTableMgr( "ui", "IDS_NAV_RESTORE_DEFAULTS" );
+    SetNavText( NavText );
+
     InitScreenScaling( Position );
-
-    // disable background filter
     m_bRenderBlackout = FALSE;
-
-    // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
-
-    // Return success code
     return Success;
 }
 
-//=========================================================================
+//==============================================================================
 
 void dlg_profile_controls::Destroy( void )
 {
+    g_SaveDataMgr.CancelCallbacks( this );
     ui_dialog::Destroy();
-
-    // kill screen wipe
     g_UiMgr->ResetScreenWipe();
 }
 
-//=========================================================================
+//==============================================================================
 
 void dlg_profile_controls::Render( s32 ox, s32 oy )
 {
-    const s32 offset = (s32)(g_UiMgr->GetAlphaTime() * 60.0f) % 10;
-    static s32 gap      =  9;
-    static s32 width    =  4;
+    s32 const Offset = static_cast<s32>( g_UiMgr->GetAlphaTime() * 60.0f ) % 10;
+    static s32 const Gap = 9;
+    static s32 const Width = 4;
+    irect Bounds;
 
-    irect rb;    
-    
-    // render background filter
     if( m_bRenderBlackout )
     {
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-        rb.Set( 0, 0, XRes, YRes );
-        g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
-                                    xcolor(0,0,0,180),
-                                    xcolor(0,0,0,180),
-                                    xcolor(0,0,0,180),FALSE);
+        Bounds = g_UiMgr->GetUserBounds( m_UserID );
+        g_UiMgr->RenderGouraudRect( Bounds,
+                                    xcolor( 0, 0, 0, 180 ), xcolor( 0, 0, 0, 180 ),
+                                    xcolor( 0, 0, 0, 180 ), xcolor( 0, 0, 0, 180 ), FALSE );
     }
 
-    // render transparent screen
-    rb.l = m_CurrPos.l + 22;
-    rb.t = m_CurrPos.t;
-    rb.r = m_CurrPos.r - 23;
-    rb.b = m_CurrPos.b;
+    Bounds.l = m_CurrPos.l + 22;
+    Bounds.t = m_CurrPos.t;
+    Bounds.r = m_CurrPos.r - 23;
+    Bounds.b = m_CurrPos.b;
+    g_UiMgr->RenderGouraudRect( Bounds,
+                                xcolor( 56, 115, 58, 64 ), xcolor( 56, 115, 58, 64 ),
+                                xcolor( 56, 115, 58, 64 ), xcolor( 56, 115, 58, 64 ), FALSE );
 
-    g_UiMgr->RenderGouraudRect(rb, xcolor(56,115,58,64),
-                                   xcolor(56,115,58,64),
-                                   xcolor(56,115,58,64),
-                                   xcolor(56,115,58,64),FALSE);
-
-
-    // render the screen bars
-    s32 y = rb.t + offset;    
-
-    while (y < rb.b)
+    for( s32 Y = Bounds.t + Offset; Y < Bounds.b; Y += Gap )
     {
-        irect bar;
-
-        if ((y+width) > rb.b)
-        {
-            bar.Set(rb.l, y, rb.r, rb.b);
-        }
-        else
-        {
-            bar.Set(rb.l, y, rb.r, y+width);
-        }
-
-        // draw the bar
-        g_UiMgr->RenderGouraudRect(bar, xcolor(56,115,58,30),
-                                        xcolor(56,115,58,30),
-                                        xcolor(56,115,58,30),
-                                        xcolor(56,115,58,30),FALSE);
-
-        y+=gap;
+        irect const Bar( Bounds.l, Y, Bounds.r, MIN( Y + Width, Bounds.b ) );
+        g_UiMgr->RenderGouraudRect( Bar,
+                                    xcolor( 56, 115, 58, 30 ), xcolor( 56, 115, 58, 30 ),
+                                    xcolor( 56, 115, 58, 30 ), xcolor( 56, 115, 58, 30 ), FALSE );
     }
 
-    // render the normal dialog stuff
     ui_dialog::Render( ox, oy );
-
-    // render the glow bar
     g_UiMgr->RenderGlowBar();
 }
 
-//=========================================================================
+//==============================================================================
 
-void dlg_profile_controls::OnPadSelect( ui_win* pWin )
+void dlg_profile_controls::ApplyCommonControls( player_profile& Profile ) const
 {
-    // accept changes
-    if ( m_State == DIALOG_STATE_ACTIVE )
+    Profile.SetCrouchOn( m_pToggleCrouch->IsChecked() );
+    Profile.SetAimToggleEnabled( m_pToggleAim->IsChecked() );
+    Profile.SetWeaponAutoSwitch( m_pToggleAutoSwitch->IsChecked() );
+}
+
+//==============================================================================
+
+void dlg_profile_controls::OnAccept( ui_win* pWin )
+{
+    if( m_State != DIALOG_STATE_ACTIVE )
     {
-        if( pWin == (ui_win*)m_pButtonAccept )
+        return;
+    }
+
+    if( (pWin == static_cast<ui_win*>( m_pMouseMenu )) ||
+        (pWin == static_cast<ui_win*>( m_pGamepadMenu )) )
+    {
+        ApplyCommonControls( g_StateMgr.GetPendingProfile() );
+        g_AudioMgr.Play( "Select_Norm" );
+        GotoControl( static_cast<ui_control*>( pWin ) );
+        m_State = DIALOG_STATE_SELECT;
+    }
+    else if( pWin == static_cast<ui_win*>( m_pButtonAccept ) )
+    {
+        player_profile Profile = m_OriginalProfile;
+        ApplyCommonControls( Profile );
+        if( !Profile.HasChanged() )
         {
-            g_AudioMgr.Play("Select_Norm");
-                       
-            // get the pending profile
-            player_profile& Profile = g_StateMgr.GetPendingProfile();
+            g_AudioMgr.Play( "Select_Norm" );
+            m_State = DIALOG_STATE_BACK;
+            return;
+        }
 
-            // update the settings from the controls
-            Profile.SetSensitivity( 0, m_pSensitivityX->GetValue() );
-            Profile.SetSensitivity( 1, m_pSensitivityY->GetValue() );
+        g_StateMgr.GetPendingProfile() = Profile;
+        g_AudioMgr.Play( "Select_Norm" );
+        OpenSavePopup();
+    }
+}
 
-            Profile.m_bCrouchOn     = m_pToggleCrouch     ->IsChecked();
-            Profile.m_bInvertY      = m_pToggleInvertY    ->IsChecked();
-            Profile.m_bVibration    = m_pToggleVibration  ->IsChecked();
-            //  Profile.m_bLookspringOn = m_pToggleLookspring ->IsChecked();
+//==============================================================================
 
-            Profile.SetWeaponAutoSwitch( m_pToggleAutoSwitch->IsChecked() );
+void dlg_profile_controls::OnCancel( ui_win* pWin )
+{
+    (void)pWin;
 
+    if( m_State == DIALOG_STATE_ACTIVE )
+    {
+        player_profile Profile = m_OriginalProfile;
+        ApplyCommonControls( Profile );
+        if( !Profile.HasChanged() )
+        {
+            g_AudioMgr.Play( "Backup" );
+            m_State = DIALOG_STATE_BACK;
+            return;
+        }
+
+        g_StateMgr.GetPendingProfile() = Profile;
+        OpenSavePopup();
+    }
+}
+
+//==============================================================================
+
+void dlg_profile_controls::BeginSave( void )
+{
+    s32 const ProfileIndex = g_StateMgr.GetPendingProfileIndex();
+    if( (ProfileIndex < 0) || (ProfileIndex >= SM_PROFILE_COUNT) )
+    {
+        RestoreProfile();
+        g_AudioMgr.Play( "Backup" );
+        m_State = DIALOG_STATE_BACK;
+        return;
+    }
+
+    if( g_StateMgr.GetProfileNotSaved( ProfileIndex ) )
+    {
+        g_StateMgr.GetPendingProfile().SetHash();
+        g_StateMgr.SetSelectedProfile( ProfileIndex, g_StateMgr.GetPendingProfile().GetHash() );
+        g_SaveDataMgr.CreateProfile( ProfileIndex, this, &dlg_profile_controls::OnSaveProfileCB );
+    }
+    else
+    {
+        profile_info* pProfileInfo = &g_SaveDataMgr.GetProfileInfo( ProfileIndex );
+        g_SaveDataMgr.SaveProfile( *pProfileInfo,
+                                   ProfileIndex,
+                                   this,
+                                   &dlg_profile_controls::OnSaveProfileCB );
+    }
+    m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
+}
+
+//==============================================================================
+
+void dlg_profile_controls::OpenSavePopup( void )
+{
+    irect const Bounds = g_UiMgr->GetUserBounds( g_UiUserID );
+    m_PopUp = static_cast<dlg_popup*>( g_UiMgr->OpenDialog( m_UserID,
+                                                            "popup",
+                                                            Bounds,
+                                                            NULL,
+                                                            ui_win::WF_VISIBLE | ui_win::WF_BORDER |
+                                                            ui_win::WF_DLG_CENTER | ui_win::WF_INPUTMODAL ) );
+    xwstring PopupNavText( g_StringTableMgr( "ui", "IDS_NAV_YES" ) );
+    PopupNavText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
+    SetNavTextVisible( FALSE );
+    m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_PROFILE_EDIT" ),
+                        TRUE,
+                        TRUE,
+                        FALSE,
+                        g_StringTableMgr( "ui", "IDS_PROFILE_EDIT_MSG" ),
+                        PopupNavText,
+                        &m_PopUpResult );
+    m_State = DIALOG_STATE_POPUP;
+}
+
+//==============================================================================
+
+void dlg_profile_controls::RestoreProfile( void )
+{
+    g_StateMgr.GetPendingProfile() = m_OriginalProfile;
+}
+
+//==============================================================================
+
+void dlg_profile_controls::OnSaveProfileCB( void )
+{
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
+    {
+        s32 const ProfileIndex = g_StateMgr.GetPendingProfileIndex();
+        g_StateMgr.SetProfileNotSaved( ProfileIndex, FALSE );
+        g_StateMgr.ActivatePendingProfile();
+        g_StateMgr.InitPendingProfile( ProfileIndex );
+        g_AudioMgr.Play( "Select_Norm" );
+        m_State = DIALOG_STATE_BACK;
+    }
+    else
+    {
+        g_AudioMgr.Play( "Backup" );
+        m_State = DIALOG_STATE_SAVE_DATA_ERROR;
+    }
+}
+
+//==============================================================================
+
+void dlg_profile_controls::OnDelete( ui_win* pWin )
+{
+    (void)pWin;
+
+    if( m_State == DIALOG_STATE_ACTIVE )
+    {
+        player_profile DefaultProfile;
+        DefaultProfile.RestoreCommonControlDefaults();
+        m_pToggleCrouch->SetChecked( DefaultProfile.GetCrouchOn() );
+        m_pToggleAim->SetChecked( DefaultProfile.IsAimToggleEnabled() );
+        m_pToggleAutoSwitch->SetChecked( DefaultProfile.GetWeaponAutoSwitch() );
+        g_AudioMgr.Play( "Select_Norm" );
+    }
+}
+
+//==============================================================================
+
+void dlg_profile_controls::OnUpdate( ui_win* pWin, f32 DeltaTime )
+{
+    (void)pWin;
+    s32 Highlight = -1;
+
+    if( m_PopUp && (m_PopUpResult != DLG_POPUP_IDLE) )
+    {
+        s32 const Result = m_PopUpResult;
+        m_PopUp = NULL;
+        m_PopUpResult = DLG_POPUP_IDLE;
+        SetNavTextVisible( TRUE );
+
+        if( Result == DLG_POPUP_YES )
+        {
+            BeginSave();
+        }
+        else
+        {
+            RestoreProfile();
+            g_AudioMgr.Play( "Backup" );
             m_State = DIALOG_STATE_BACK;
         }
     }
-}
 
-//=========================================================================
-
-void dlg_profile_controls::OnPadBack( ui_win* pWin )
-{
-    (void)pWin;
-
-    // cancel
-    if ( m_State == DIALOG_STATE_ACTIVE )
+    g_UiMgr->UpdateGlowBar( DeltaTime );
+    if( g_UiMgr->IsScreenScaling() && (UpdateScreenScaling( DeltaTime ) == FALSE) )
     {
-        g_AudioMgr.Play( "Backup" );
-        m_State = DIALOG_STATE_BACK;
-    }
-}
+        m_pMouseMenu       ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+        m_pGamepadMenu     ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+        m_pKeyboardMenu    ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+        m_pToggleCrouch    ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+        m_pToggleAim       ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+        m_pToggleAutoSwitch->SetFlag( ui_win::WF_VISIBLE, TRUE );
+        m_pButtonAccept    ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+        m_pCrouchText      ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+        m_pAimText         ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+        m_pAutoSwitchText  ->SetFlag( ui_win::WF_VISIBLE, TRUE );
 
-//=========================================================================
-
-void dlg_profile_controls::OnPadDelete( ui_win* pWin )
-{
-    (void)pWin;
-
-    // restore defaults
-    if ( m_State == DIALOG_STATE_ACTIVE )
-    {
-        // get the default controller settings
-        player_profile TempProfile;
-        TempProfile.RestoreControlDefaults();
-
-        // set controls to default settings
-        m_pSensitivityX     ->SetValue  ( TempProfile.GetSensitivity(0)     );
-        m_pSensitivityY     ->SetValue  ( TempProfile.GetSensitivity(1)     );
-        m_pToggleInvertY    ->SetChecked( TempProfile.m_bInvertY            );
-        m_pToggleCrouch     ->SetChecked( TempProfile.m_bCrouchOn           );
-        //m_pToggleLookspring ->SetChecked( TempProfile.m_bLookspringOn       );
-        m_pToggleVibration  ->SetChecked( TempProfile.m_bVibration          );
-        m_pToggleAutoSwitch ->SetChecked( TempProfile.GetWeaponAutoSwitch() );
-
-        g_AudioMgr.Play("Select_Norm");
-    }
-}
-
-//=========================================================================
-
-void dlg_profile_controls::OnUpdate ( ui_win* pWin, f32 DeltaTime )
-{
-    (void)pWin;
-    (void)DeltaTime;
-
-    s32 highLight = -1;
-
-    // scale window if necessary
-    if( g_UiMgr->IsScreenScaling() )
-    {
-        if( UpdateScreenScaling( DeltaTime ) == FALSE )
+        s32 const CurrentControl = g_StateMgr.GetCurrentControl();
+        if( (CurrentControl == -1) || (GotoControl( CurrentControl ) == NULL) )
         {
-            // turn on the buttons
-            m_pToggleInvertY    ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pSensitivityX     ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pSensitivityY     ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pToggleCrouch     ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            //m_pToggleLookspring ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pToggleVibration  ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pToggleAutoSwitch ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pButtonAccept     ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-
-            m_pInvertYText      ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pSensitivityXText ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pSensitivityYText ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pCrouchText       ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            //m_pLookspringText   ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pVibrationText    ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pAutoSwitchText   ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pNavText          ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-
-            GotoControl( (ui_control*)m_pToggleInvertY );
-            m_pToggleInvertY->SetFlag( WF_HIGHLIGHT, TRUE );
-            g_UiMgr->SetScreenHighlight( m_pInvertYText->GetPosition() );
+            GotoControl( static_cast<ui_control*>( m_pToggleCrouch ) );
         }
+        else
+        {
+            m_CurrentControl = CurrentControl;
+        }
+        g_UiMgr->SetScreenHighlight( m_pCrouchText->GetPosition() );
     }
 
-    // update the glow bar
-    g_UiMgr->UpdateGlowBar(DeltaTime);
+    if( m_pMouseMenu->IsFocused() )
+    {
+        Highlight = 3;
+        m_pMouseMenu->SetLabelColor( xcolor( 255, 252, 204, 255 ) );
+        g_UiMgr->SetScreenHighlight( m_pMouseMenu->GetPosition() );
+    }
+    else
+    {
+        m_pMouseMenu->SetLabelColor( xcolor( 126, 220, 60, 255 ) );
+    }
 
-    // update labels
-    if( m_pToggleInvertY->GetFlags(WF_HIGHLIGHT) )
+    if( m_pGamepadMenu->IsFocused() )
     {
-        highLight = 0;
-        m_pInvertYText->SetLabelColor( xcolor(255,252,204,255) );
-        g_UiMgr->SetScreenHighlight( m_pInvertYText->GetPosition() );
+        Highlight = 4;
+        m_pGamepadMenu->SetLabelColor( xcolor( 255, 252, 204, 255 ) );
+        g_UiMgr->SetScreenHighlight( m_pGamepadMenu->GetPosition() );
     }
     else
-        m_pInvertYText->SetLabelColor( xcolor(126,220,60,255) );
+    {
+        m_pGamepadMenu->SetLabelColor( xcolor( 126, 220, 60, 255 ) );
+    }
 
-    if( m_pSensitivityX->GetFlags(WF_HIGHLIGHT) )
+    if( m_pToggleCrouch->IsFocused() )
     {
-        highLight = 1;
-        m_pSensitivityXText->SetLabelColor( xcolor(255,252,204,255) );
-        g_UiMgr->SetScreenHighlight( m_pSensitivityXText->GetPosition() );
-    }
-    else
-        m_pSensitivityXText->SetLabelColor( xcolor(126,220,60,255) );
-    
-    if( m_pSensitivityY->GetFlags(WF_HIGHLIGHT) )
-    {
-        highLight = 2;
-        m_pSensitivityYText->SetLabelColor( xcolor(255,252,204,255) );
-        g_UiMgr->SetScreenHighlight( m_pSensitivityYText->GetPosition() );
-    }
-    else
-        m_pSensitivityYText->SetLabelColor( xcolor(126,220,60,255) );
-    
-    if( m_pToggleCrouch->GetFlags(WF_HIGHLIGHT) )
-    {
-        highLight = 3;
-        m_pCrouchText->SetLabelColor( xcolor(255,252,204,255) );
+        Highlight = 0;
+        m_pCrouchText->SetLabelColor( xcolor( 255, 252, 204, 255 ) );
         g_UiMgr->SetScreenHighlight( m_pCrouchText->GetPosition() );
     }
     else
-        m_pCrouchText->SetLabelColor( xcolor(126,220,60,255) );
-    
-    //if( m_pToggleLookspring->GetFlags(WF_HIGHLIGHT) )
-    //{
-    //    highLight = 4;
-    //    m_pLookspringText->SetLabelColor( xcolor(255,252,204,255) );
-    //    g_UiMgr->SetScreenHighlight( m_pLookspringText->GetPosition() );
-    //}
-    //else
-    //    m_pLookspringText->SetLabelColor( xcolor(126,220,60,255) );
-
-    if( m_pToggleVibration->GetFlags(WF_HIGHLIGHT) )
     {
-        highLight = 5;
-        m_pVibrationText->SetLabelColor( xcolor(255,252,204,255) );
-        g_UiMgr->SetScreenHighlight( m_pVibrationText->GetPosition() );
+        m_pCrouchText->SetLabelColor( xcolor( 126, 220, 60, 255 ) );
     }
-    else
-        m_pVibrationText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pToggleAutoSwitch->GetFlags(WF_HIGHLIGHT) )
+    if( m_pToggleAutoSwitch->IsFocused() )
     {
-        highLight = 6;
-        m_pAutoSwitchText->SetLabelColor( xcolor(255,252,204,255) );
+        Highlight = 2;
+        m_pAutoSwitchText->SetLabelColor( xcolor( 255, 252, 204, 255 ) );
         g_UiMgr->SetScreenHighlight( m_pAutoSwitchText->GetPosition() );
     }
     else
-        m_pAutoSwitchText->SetLabelColor( xcolor(126,220,60,255) );
-
-    if( m_pButtonAccept->GetFlags(WF_HIGHLIGHT) )
     {
-        highLight = 7;
-        m_pButtonAccept->SetLabelColor( xcolor(255,252,204,255) );
+        m_pAutoSwitchText->SetLabelColor( xcolor( 126, 220, 60, 255 ) );
+    }
+
+    if( m_pToggleAim->IsFocused() )
+    {
+        Highlight = 1;
+        m_pAimText->SetLabelColor( xcolor( 255, 252, 204, 255 ) );
+        g_UiMgr->SetScreenHighlight( m_pAimText->GetPosition() );
+    }
+    else
+    {
+        m_pAimText->SetLabelColor( xcolor( 126, 220, 60, 255 ) );
+    }
+
+    if( m_pButtonAccept->IsFocused() )
+    {
+        Highlight = 5;
+        m_pButtonAccept->SetLabelColor( xcolor( 255, 252, 204, 255 ) );
         g_UiMgr->SetScreenHighlight( m_pButtonAccept->GetPosition() );
     }
     else
-        m_pButtonAccept->SetLabelColor( xcolor(126,220,60,255) );
-
-    if( highLight != m_CurrHL )
     {
-        if( highLight != -1 )
-            g_AudioMgr.Play("Cusor_Norm");
+        m_pButtonAccept->SetLabelColor( xcolor( 126, 220, 60, 255 ) );
+    }
 
-        m_CurrHL = highLight;
+    if( Highlight != m_CurrHL )
+    {
+        if( Highlight != -1 )
+        {
+            g_AudioMgr.Play( "Cusor_Norm" );
+        }
+        m_CurrHL = Highlight;
     }
 }
 
-//=========================================================================
+//==============================================================================

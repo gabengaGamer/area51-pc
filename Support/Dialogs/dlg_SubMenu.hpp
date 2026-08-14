@@ -11,7 +11,7 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
+#include "UI/ui_dialog.hpp"
 
 enum
 {
@@ -79,8 +79,8 @@ public:
 
     virtual void    Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void    OnPadSelect         ( ui_win* pWin );
-    virtual void    OnPadBack           ( ui_win* pWin );
+    virtual void    OnAccept         ( ui_win* pWin );
+    virtual void    OnCancel           ( ui_win* pWin );
     virtual void    OnUpdate            ( ui_win* pWin, f32 DeltaTime);
 
 protected:

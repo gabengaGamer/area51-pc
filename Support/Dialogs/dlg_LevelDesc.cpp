@@ -4,17 +4,14 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 #include "dlg_LevelDesc.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "StateMgr\MapList.hpp"
-#include "stringmgr\stringmgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StateMgr/MapList.hpp"
+#include "StringMgr/StringMgr.hpp"
 
-#include "ui\ui_font.hpp"
-
-#ifdef TARGET_PS2
-#include "ps2\ps2_misc.hpp"
-#endif
+#include "UI/ui_font.hpp"
+#include "UI/ui_renderer.hpp"
 
 xcolor g_TextRectLoadScreen( 0, 0, 0, 128);
 
@@ -25,9 +22,6 @@ xcolor g_TextRectLoadScreen( 0, 0, 0, 128);
 enum controls
 {
     IDC_LEVEL_DESC,
-    //IDC_LEVEL_DESC_OUTER_FRAME,
-    //IDC_LEVEL_DESC_FRAME_ONE,
-    //IDC_LEVEL_DESC_FRAME_TWO,
     IDC_MAP_TITLE_TEXT,
     IDC_MAP_DESC_TEXT,
     IDC_GAME_TYPE_TEXT,
@@ -39,18 +33,14 @@ enum controls
 
 ui_manager::control_tem LevelDescControls[] =
 {
-    { IDC_LEVEL_DESC,               "IDS_NULL",        "text",        0, 308, 480,  30,  0, 0, 1, 1, ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE  },
-//  { IDC_LEVEL_DESC_OUTER_FRAME,   "IDS_NULL",        "frame",       0,   0, 496, 352, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-//  { IDC_LEVEL_DESC_FRAME_ONE,     "IDS_NULL",        "frame",      10,  10, 476, 332, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-//  { IDC_LEVEL_DESC_FRAME_ONE,     "IDS_NULL",        "frame",      10,  10, 476, 230, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-//  { IDC_LEVEL_DESC_FRAME_TWO,     "IDS_NULL",        "frame",      10, 250, 476,  97, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_MAP_TITLE_TEXT,           "IDS_NULL",        "text",       40,   8, 426,  22, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_MAP_DESC_TEXT,            "IDS_NULL",        "text",       40,  38, 426,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_GAME_TYPE_TEXT,           "IDS_NULL",        "text",       40, 190, 426,  22, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_GAME_DESC_TEXT,           "IDS_NULL",        "text",       40, 220, 426,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_LEVEL_DESC_LOADING_TEXT,  "IDS_NULL",        "text",      235, 395, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_LEVEL_DESC_LOADING_PIPS,  "IDS_NULL",        "text",      465, 395,  50,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_LEVEL_DESC_NAV_TEXT,      "IDS_NULL",        "text",       25, 395, 200,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
+    { IDC_LEVEL_DESC,               "IDS_NULL",        "text",        0, 308, 480,  30,  0, 0, 1, 1, 0 },
+    { IDC_MAP_TITLE_TEXT,           "IDS_NULL",        "text",       40,   8, 426,  22, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_MAP_DESC_TEXT,            "IDS_NULL",        "text",       40,  38, 426,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_GAME_TYPE_TEXT,           "IDS_NULL",        "text",       40, 190, 426,  22, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_GAME_DESC_TEXT,           "IDS_NULL",        "text",       40, 220, 426,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_LEVEL_DESC_LOADING_TEXT,  "IDS_NULL",        "text",      235, 395, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_LEVEL_DESC_LOADING_PIPS,  "IDS_NULL",        "text",      465, 395,  50,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_LEVEL_DESC_NAV_TEXT,      "IDS_NULL",        "text",       25, 395, 200,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 };
 
 ui_manager::dialog_tem LevelDescDialog =
@@ -101,11 +91,6 @@ ui_win* dlg_level_desc_factory( s32 UserID, ui_manager* pManager, ui_manager::di
 
 dlg_level_desc::dlg_level_desc( void )
 {
-#ifdef TARGET_XBOX
-    m_XBOXNotificationOffsetX = -15;
-    m_XBOXNotificationOffsetY = 0;
-    m_bUseTopmost             = 1;
-#endif
 }
 
 //=========================================================================
@@ -134,13 +119,6 @@ xbool dlg_level_desc::Create( s32                        UserID,
     // Do dialog creation
     Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
-    // initialize screen scaling
-    //InitScreenScaling( Position );
-
-    // Initialize the frames
-    //m_pFrameOuter        = (ui_frame*)FindChildByID( IDC_LEVEL_DESC_OUTER_FRAME  );
-    //m_pFrameGameTypeDesc = (ui_frame*)FindChildByID( IDC_LEVEL_DESC_FRAME_ONE    );
-    //m_pFrameLevelDesc    = (ui_frame*)FindChildByID( IDC_LEVEL_DESC_FRAME_TWO    );
     m_MapTitleText      = (ui_text*) FindChildByID( IDC_MAP_TITLE_TEXT          );
     m_MapDescText       = (ui_text*) FindChildByID( IDC_MAP_DESC_TEXT           );
     m_GameTypeText      = (ui_text*) FindChildByID( IDC_GAME_TYPE_TEXT          );
@@ -148,31 +126,6 @@ xbool dlg_level_desc::Create( s32                        UserID,
     m_pLoadingText      = (ui_text*) FindChildByID( IDC_LEVEL_DESC_LOADING_TEXT );
     m_pLoadingPips      = (ui_text*) FindChildByID( IDC_LEVEL_DESC_LOADING_PIPS );
     m_pNavText          = (ui_text*) FindChildByID( IDC_LEVEL_DESC_NAV_TEXT     );
-
-#ifdef TARGET_XBOX
-    extern xbool g_b480P;
-    if( g_b480P )
-    {
-        m_MapTitleText->SetPosition( irect( 40,  8+10, 40+426,  8+22 ));
-        m_MapDescText ->SetPosition( irect( 40, 38+10, 40+426, 38+16 ));
-        m_GameTypeText->SetPosition( irect( 40,190+10, 40+426,190+22 ));
-        m_GameDescText->SetPosition( irect( 40,220+10, 40+426,220+16 ));
-        m_pLoadingText->SetPosition( irect(235,395+10,235+230,395+16 ));
-        m_pLoadingPips->SetPosition( irect(465,395+10,465+ 50,395+16 ));
-        m_pNavText    ->SetPosition( irect( 25,395+10, 25+200,395+16 ));
-    }
-#endif
-
-    //m_pFrameOuter->SetBackgroundColor( xcolor(39,117,28,64) );
-    //m_pFrameOuter->ChangeElement("frame2");
-    //m_pFrameGameTypeDesc->SetBackgroundColor( xcolor(39,117,28,64) );
-    //m_pFrameGameTypeDesc->ChangeElement("frame2");
-    //m_pFrameLevelDesc->SetBackgroundColor( xcolor(39,117,28,64) );
-    //m_pFrameLevelDesc->ChangeElement("frame2");
-
-
-    //m_pFrameOuter        ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    //m_pFrameGameTypeDesc ->SetFlag( ui_win::WF_VISIBLE, FALSE );
 
     // initialize text strings    
     m_MapTitleText->SetFlag( ui_win::WF_VISIBLE, TRUE );
@@ -231,35 +184,17 @@ xbool dlg_level_desc::Create( s32                        UserID,
     m_pLoadingPips->SetLabelFlags( ui_font::h_left|ui_font::v_top );
     m_pLoadingPips->UseSmallText(TRUE);
 
-    // center loading text
-    //s32 Width = g_UiMgr->TextWidth( g_UiMgr->FindFont("small"), LoadText );
-    //s32 XRes, YRes;
-    //eng_GetRes( XRes, YRes );
-    //irect NewPos = m_pLoadingText->GetPosition();
-    //NewPos.l = (XRes - Width) / 2;
-    //NewPos.r = NewPos.l + Width;
-    //m_pLoadingText->SetPosition( NewPos );
-
     m_pNavText->SetLabel( g_StringTableMgr( "ui", "IDS_NULL") );
     m_pNavText->SetFlag( ui_win::WF_VISIBLE, TRUE );
     m_pNavText->SetLabelFlags( ui_font::h_left|ui_font::v_top );
     m_pNavText->UseSmallText(TRUE);
 
     // load the appropriate background
-#ifdef TARGET_XBOX
-    xwstring LoadName( "UI_LoadScreen_MP_XBOX_" );
-#else
     xwstring LoadName( "UI_LoadScreen_MP_" );
-#endif
-    if( IN_RANGE( 2000, g_ActiveConfig.GetLevelID(), 2999 ) &&
-        ( x_GetTerritory() == XL_TERRITORY_AMERICA ) )
+
+    if( IN_RANGE( 2000, g_ActiveConfig.GetLevelID(), 2999 ) )
     {
-        //LoadName += g_ActiveConfig.GetLevelName();
         LoadName += (const char*)xfs("%d", g_ActiveConfig.GetLevelID());
-    }
-    else
-    {
-        LoadName += "PAL";
     }
     LoadName += ".xbmp";
     g_UiMgr->LoadBackground ( "mp_load", xstring(LoadName) );
@@ -286,11 +221,6 @@ void dlg_level_desc::Destroy( void )
 {
     ui_dialog::Destroy();
 
-#ifdef TARGET_PS2
-    // wait until we finish drawing before we unload the logo bitmap
-    DLIST.Flush();
-    DLIST.WaitForTasks();
-#endif
     g_UiMgr->UnloadBackground( "mp_load" );
     g_UiMgr->SetUserBackground( g_UiUserID, "" );
 
@@ -319,41 +249,11 @@ void dlg_level_desc::Render( s32 ox, s32 oy )
         rect r;
         pView->GetViewport( r );
         irect ir( (s32)r.Min.X, (s32)r.Min.Y, (s32)r.Max.X, (s32)r.Max.Y );
-
-        draw_Rect( ir, g_TextRectLoadScreen, FALSE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( ir, g_TextRectLoadScreen );
     }
 
     // render the normal ui dialog
     ui_dialog::Render( ox, oy );
-
-#if 0
-    // render the main title bar
-    irect r;
-    xcolor ch(255,252,204,255);
-    s32 FontID = g_UiMgr->FindFont("small");
-
-    r = m_pFrameGameTypeDesc->GetPosition();
-    r.l += 35;
-    r.r -= 5;
-    r.t += 30;
-    r.b -= 5;
-    m_pManager->RenderText( m_Font, r, ui_font::h_left|ui_font::v_top, ch, g_StringTableMgr( "ui", "IDS_TEST_GAME_TYPE_TITLE" ) );
-    r.t += 22;
-    m_pManager->RenderText( FontID, r, ui_font::h_left|ui_font::v_top, ch, g_StringTableMgr( "ui", "IDS_TEST_GAME_TYPE_DESC" ) );
-
-    //r = m_pFrameLevelDesc->GetPosition();
-    //r.l += 15;
-    //r.r -= 5;
-    //r.t += 17;
-    //r.b -= 5;
-    s32 Height = m_pManager->TextHeight( FontID, g_StringTableMgr( "ui", "IDS_TEST_GAME_TYPE_DESC" ) );
-    r.t += Height + 16;
-    m_pManager->RenderText( m_Font, r, ui_font::h_left|ui_font::v_top, ch, g_StringTableMgr( "ui", "IDS_TEST_MAP_TITLE" ) );
-    r.t += 22;
-    m_pManager->RenderText( FontID, r, ui_font::h_left|ui_font::v_top, ch, g_StringTableMgr( "ui", "IDS_TEST_MAP_DESC" ) );
-#endif
-
-
 
     // render loading text
     xwstring LoadText("");
@@ -370,7 +270,7 @@ void dlg_level_desc::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_level_desc::OnPadSelect( ui_win* pWin )
+void dlg_level_desc::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -427,5 +327,3 @@ void dlg_level_desc::Configure( level_desc_mode Mode )
 {
     m_Mode = Mode;
 }
-
-//=========================================================================

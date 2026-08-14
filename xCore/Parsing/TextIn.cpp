@@ -42,7 +42,7 @@ text_in::~text_in( void )
 
 //=========================================================================
 
-xbool text_in::ReportError( char* pStr, ... )
+xbool text_in::ReportError( const char* pStr, ... )
 {
     char Buff[512];
     x_va_list   Args;

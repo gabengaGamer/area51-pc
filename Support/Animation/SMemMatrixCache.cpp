@@ -89,19 +89,11 @@ matrix4* smem_matrix_cache::GetMatrices( s32 nMatrices )
 
     // Allocate new cache and flag data is dirty
     m_ID        = smem_GetActiveID() ;
-    ASSERT( nMatrices > 0 );
+   ASSERT( nMatrices > 0 );
     m_nMatrices = nMatrices ;
     m_pMatrices = (matrix4*)smem_BufferAlloc(nMatrices * sizeof(matrix4)) ;
     ASSERT( m_pMatrices );
     m_bDirty    = TRUE ;
-
-    #ifdef TARGET_PS2
-    // SMEM allocations are uncached as a safety precaution for MFIFO.
-    // Since we know characters are a special case and there will be
-    // a FlushCache before any deferred rendering happens, we can go
-    // ahead and make them cached for better performance.
-    m_pMatrices = (matrix4*)((u32)m_pMatrices & 0x0fffffff );
-    #endif
 
     return m_pMatrices ;
 }

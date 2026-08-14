@@ -4,17 +4,17 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_ProfileAV.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "StateMgr\StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
 
 //=========================================================================
 //  Main Options Dialog
@@ -33,7 +33,6 @@ enum controls
     IDC_AV_HEADSET_TEST,
     IDC_AV_RESTORE_DEFAULTS,
 
-    IDC_AV_NAV_TEXT,
 };
 
 //-------------------------------------------------------------------------
@@ -41,18 +40,17 @@ enum controls
 ui_manager::control_tem ProfileAVControls[] = 
 {
     // Frames.
-    { IDC_AV_VOLUME_SFX_TEXT,       "IDS_OPTIONS_SFX_VOLUME",       "text",      40,  40, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_AV_VOLUME_MUSIC_TEXT,     "IDS_OPTIONS_MUSIC_VOLUME",     "text",      40,  75, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_AV_VOLUME_SPEECH_TEXT,    "IDS_OPTIONS_SPEECH_VOLUME",    "text",      40, 110, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_AV_VOLUME_SFX_TEXT,       "IDS_OPTIONS_SFX_VOLUME",       "text",      40,  40, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_AV_VOLUME_MUSIC_TEXT,     "IDS_OPTIONS_MUSIC_VOLUME",     "text",      40,  75, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_AV_VOLUME_SPEECH_TEXT,    "IDS_OPTIONS_SPEECH_VOLUME",    "text",      40, 110, 220, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_AV_VOLUME_SFX,            "IDS_NULL",                     "slider",   320,  40, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_AV_VOLUME_MUSIC,          "IDS_NULL",                     "slider",   320,  75, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_AV_VOLUME_SPEECH,         "IDS_NULL",                     "slider",   320, 110, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_AV_VOLUME_SFX,            "IDS_NULL",                     "slider",   320,  40, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_AV_VOLUME_MUSIC,          "IDS_NULL",                     "slider",   320,  75, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_AV_VOLUME_SPEECH,         "IDS_NULL",                     "slider",   320, 110, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
 	
-    { IDC_AV_HEADSET_TEST,          "IDS_OPTIONS_HEADSET_TEST",     "button",    40, 180, 220, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_AV_RESTORE_DEFAULTS,      "IDS_OPTIONS_RESTORE_DEFAULTS", "button",    40, 285, 220, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_AV_HEADSET_TEST,          "IDS_OPTIONS_HEADSET_TEST",     "button",    40, 180, 220, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_AV_RESTORE_DEFAULTS,      "IDS_OPTIONS_RESTORE_DEFAULTS", "button",    40, 285, 220, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_AV_NAV_TEXT,              "IDS_NULL",                     "text",       0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -142,7 +140,6 @@ xbool dlg_profile_av::Create( s32                        UserID,
     m_pVolumeSFXText	        = (ui_text*)    FindChildByID( IDC_AV_VOLUME_SFX_TEXT      );
     m_pVolumeMusicText	        = (ui_text*)    FindChildByID( IDC_AV_VOLUME_MUSIC_TEXT    );
     m_pVolumeSpeechText	        = (ui_text*)    FindChildByID( IDC_AV_VOLUME_SPEECH_TEXT   );
-    m_pNavText                  = (ui_text*)    FindChildByID( IDC_AV_NAV_TEXT             );
 
     GotoControl( (ui_control*)m_pVolumeSFX );
     m_CurrentControl = IDC_AV_VOLUME_SFX;
@@ -163,7 +160,6 @@ xbool dlg_profile_av::Create( s32                        UserID,
     m_pVolumeSFXText            ->SetFlag( ui_win::WF_VISIBLE, FALSE );
     m_pVolumeMusicText          ->SetFlag( ui_win::WF_VISIBLE, FALSE );
     m_pVolumeSpeechText         ->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText                  ->SetFlag( ui_win::WF_VISIBLE, FALSE );
 
     m_pVolumeSFXText            ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
     m_pVolumeMusicText          ->SetLabelFlags( ui_font::h_left|ui_font::v_center );
@@ -177,9 +173,7 @@ xbool dlg_profile_av::Create( s32                        UserID,
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
   
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // set default values from pending settings
     global_settings& Settings = g_StateMgr.GetPendingSettings();
@@ -237,9 +231,7 @@ void dlg_profile_av::Render( s32 ox, s32 oy )
     
     if( m_bRenderBlackout )
     {
-	    s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-        rb.Set( 0, 0, XRes, YRes );
+	    rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
@@ -292,23 +284,22 @@ void dlg_profile_av::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_profile_av::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_profile_av::OnNotify( ui_notification const& Event )
 {
-    (void)pWin;
-    (void)pSender;
-    (void)Command;
-    (void)pData;
+    (void)Event.m_pSender;
+    (void)Event.m_Type;
+    (void)Event.m_pText;
 
     static s32 SpeechVoiceID;
 
     // set default values (should be set from options data)
     global_settings& Settings = g_StateMgr.GetPendingSettings();
    
-    switch (Command)
+    switch (Event.m_Type)
     {    
-        case WN_SLIDER_CHANGE:
+        case ui_notification_type::SliderChanged:
         {
-            if ( pSender == (ui_win*)m_pVolumeSFX )
+            if ( Event.m_pSender == (ui_win*)m_pVolumeSFX )
             {
                 if( m_pVolumeSFX->GetValue() != Settings.GetVolume( VOLUME_SFX ) )
                 {
@@ -317,7 +308,7 @@ void dlg_profile_av::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, void*
                     g_AudioMgr.Play("Fader_SFX");
                 }
             }
-            else if ( pSender == (ui_win*)m_pVolumeMusic )
+            else if ( Event.m_pSender == (ui_win*)m_pVolumeMusic )
             {
                 if( m_pVolumeMusic->GetValue() != Settings.GetVolume( VOLUME_MUSIC ) )
                 {
@@ -326,7 +317,7 @@ void dlg_profile_av::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, void*
                     g_AudioMgr.Play("Music_Slider");
                 }
             }
-            else if ( pSender == (ui_win*)m_pVolumeSpeech )
+            else if ( Event.m_pSender == (ui_win*)m_pVolumeSpeech )
             {
                 if( m_pVolumeSpeech->GetValue() != Settings.GetVolume( VOLUME_SPEECH ) )
                 {
@@ -347,7 +338,7 @@ void dlg_profile_av::OnNotify( ui_win* pWin, ui_win* pSender, s32 Command, void*
 
 //=========================================================================
 
-void dlg_profile_av::OnPadSelect( ui_win* pWin )
+void dlg_profile_av::OnAccept( ui_win* pWin )
 {
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
@@ -380,7 +371,7 @@ void dlg_profile_av::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_profile_av::OnPadBack( ui_win* pWin )
+void dlg_profile_av::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -414,7 +405,6 @@ void dlg_profile_av::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pVolumeSFXText            ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pVolumeMusicText          ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pVolumeSpeechText         ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pNavText                  ->SetFlag( ui_win::WF_VISIBLE, TRUE );
 
             if( m_pHeadsetTest->GetFlags( ui_win::WF_DISABLED ) == FALSE )
             {
@@ -422,7 +412,6 @@ void dlg_profile_av::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             }
 
             GotoControl( (ui_control*)m_pVolumeSFX );
-            m_pVolumeSFX->SetFlag(WF_HIGHLIGHT, TRUE);        
             g_UiMgr->SetScreenHighlight( m_pVolumeSFXText->GetPosition() );
         }
     }
@@ -431,7 +420,7 @@ void dlg_profile_av::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
     // update labels
-    if( m_pVolumeSFX->GetFlags(WF_HIGHLIGHT) )
+    if( m_pVolumeSFX->IsFocused() )
     {
         highLight = 0;
         m_pVolumeSFXText->SetLabelColor( xcolor(255,252,204,255) );
@@ -440,7 +429,7 @@ void dlg_profile_av::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pVolumeSFXText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pVolumeMusic->GetFlags(WF_HIGHLIGHT) )
+    if( m_pVolumeMusic->IsFocused() )
     {
         highLight = 1;
         m_pVolumeMusicText->SetLabelColor( xcolor(255,252,204,255) );
@@ -449,7 +438,7 @@ void dlg_profile_av::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pVolumeMusicText->SetLabelColor( xcolor(126,220,60,255) );
     
-    if( m_pVolumeSpeech->GetFlags(WF_HIGHLIGHT) )
+    if( m_pVolumeSpeech->IsFocused() )
     {
         highLight = 2;
 
@@ -459,13 +448,13 @@ void dlg_profile_av::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pVolumeSpeechText->SetLabelColor( xcolor(126,220,60,255) );
        
-    if( m_pHeadsetTest->GetFlags(WF_HIGHLIGHT) )
+    if( m_pHeadsetTest->IsFocused() )
     {
         highLight = 4;
         g_UiMgr->SetScreenHighlight( m_pHeadsetTest->GetPosition() );
     }
 
-    if( m_pRestoreDefaults->GetFlags(WF_HIGHLIGHT) )
+    if( m_pRestoreDefaults->IsFocused() )
     {
         highLight = 6;
         g_UiMgr->SetScreenHighlight( m_pRestoreDefaults->GetPosition() );

@@ -9,9 +9,9 @@
 //=========================================================================
 
 #include "action_ai_dialog_line.hpp"
-#include "Characters\Character.hpp"
-#include "Loco\LocoUtil.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
+#include "Characters/Character.hpp"
+#include "Loco/LocoUtil.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS

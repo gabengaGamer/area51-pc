@@ -5,7 +5,7 @@
 //=============================================================================
 
 #include "Entropy.hpp"
-#include "Objects\Render\RenderInst.hpp"
+#include "Objects/Render/RenderInst.hpp"
 
 //=============================================================================
 // DATA
@@ -92,7 +92,7 @@ void render_inst::StartFade( s8 Direction, f32 TimeToFade )
 
 //=============================================================================
 
-void render_inst::OnAdvanceLogic( f32 DeltaTime )
+void render_inst::OnAdvanceSimulation( f32 DeltaTime )
 {
     if( m_FadeDirection == -1 )
     {

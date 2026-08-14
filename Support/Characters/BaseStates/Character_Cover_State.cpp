@@ -1,9 +1,10 @@
+#include "Render/PrimitiveDebug.hpp"
 #include "Character_Cover_State.hpp"
-#include "..\Character.hpp"
-#include "navigation\coverNode.hpp"
-#include "objects\NewWeapon.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "objects\Player.hpp"
+#include "../Character.hpp"
+#include "Navigation/CoverNode.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Objects/Player/Player.hpp"
 
 //=========================================================================
 // constants
@@ -1197,12 +1198,12 @@ s32 character_cover_state::UpdatePhase( f32 DeltaTime )
 #ifndef X_RETAIL
 void character_cover_state::OnDebugRender()
 {
-    draw_Sphere(m_RolledOutPosition,50.0f);
+    render::debug::Sphere(m_RolledOutPosition,50.0f);
 
     vector3 straightAhead(0.0f,0.0f,1.0f);
     straightAhead.RotateY(m_RolledOutFacing);
     straightAhead.NormalizeAndScale(100.0f);
-    draw_Sphere(m_RolledOutPosition+straightAhead,50.0f,XCOLOR_GREEN);
+    render::debug::Sphere(m_RolledOutPosition+straightAhead,50.0f,XCOLOR_GREEN);
 }
 #endif
 

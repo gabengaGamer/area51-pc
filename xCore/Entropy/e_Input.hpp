@@ -23,7 +23,7 @@
 #define DEFINE_GADGET_RANGE(__first__, __last__, __platform__, __device__, __value_kind__, __control_kind__, __flags__)
 #define END_GADGETS                                 };
 
-#include "e_input_gadget_defines.hpp"
+#include "Input/e_Input_Gadget_Defines.hpp"
 
 //==============================================================================
 //  ENUMS
@@ -46,7 +46,8 @@ enum input_device
     INPUT_DEVICE_KEYBOARD,
     INPUT_DEVICE_MOUSE,
     INPUT_DEVICE_GAMEPAD,
-    INPUT_DEVICE_MESSAGE
+    INPUT_DEVICE_MESSAGE,
+    INPUT_DEVICE_COUNT
 };
 
 //------------------------------------------------------------------------------
@@ -104,9 +105,14 @@ struct feedback_envelope
     s32     Mode;
 };
 
-//==============================================================================
-//  INPUT SYSTEM CLASSES
-//==============================================================================
+//------------------------------------------------------------------------------
+
+struct input_init_desc
+{
+    void*   pWindow;
+};
+
+//------------------------------------------------------------------------------
 
 enum
 {
@@ -116,7 +122,140 @@ enum
 
 //------------------------------------------------------------------------------
 
+enum input_event_type
+{
+    INPUT_EVENT_PRESSED,
+    INPUT_EVENT_RELEASED,
+    INPUT_EVENT_ABSOLUTE,
+    INPUT_EVENT_RELATIVE,
+    INPUT_EVENT_EXIT
+};
+
+//------------------------------------------------------------------------------
+
+struct input_event
+{
+    input_gadget       GadgetID;
+    s32                DeviceID;
+    input_event_type   Type;
+    f32                Value;
+    u32                TimeStamp;
+    u32                Sequence;
+};
+
+//------------------------------------------------------------------------------
+
+struct input_debug_stats
+{
+    u32                 CapturedMouseEvents      = 0;
+    s32                 CapturedMouseDeltaX      = 0;
+    s32                 CapturedMouseDeltaY      = 0;
+    f32                 CaptureMilliseconds     = 0.0f;
+};
+
+//------------------------------------------------------------------------------
+
+enum
+{
+    INPUT_EVENT_CAPACITY = 4096
+};
+
+//------------------------------------------------------------------------------
+
+class input_event_buffer
+{
+public:
+                        input_event_buffer      ( void );
+
+    void                BeginCapture            ( u32 StartTimeStamp );
+    xbool               Append                  ( input_gadget GadgetID,
+                                                  s32 DeviceID,
+                                                  input_event_type Type,
+                                                  f32 Value,
+                                                  u32 TimeStamp );
+    void                MarkOverflow            ( void );
+    void                EndCapture              ( u32 EndTimeStamp );
+    void                Sort                    ( void );
+
+    s32                 GetCount                ( void ) const;
+    input_event&        GetEvent                ( s32 Index );
+    input_event const&  GetEvent                ( s32 Index ) const;
+    u32                 GetStartTimeStamp       ( void ) const;
+    u32                 GetEndTimeStamp         ( void ) const;
+    xbool               HasOverflowed           ( void ) const;
+
+private:
+
+    input_event         m_Events[INPUT_EVENT_CAPACITY];
+    s32                 m_Count;
+    u32                 m_StartTimeStamp;
+    u32                 m_EndTimeStamp;
+    u32                 m_NextSequence;
+    xbool               m_HasOverflowed;
+};
+
+//------------------------------------------------------------------------------
+
+struct input_gadget_sample
+{
+    f32     Value;
+    xbool   IsDown;
+    xbool   WasPressed;
+    xbool   WasReleased;
+    xbool   IsPresent;
+};
+
+//------------------------------------------------------------------------------
+
+class input_snapshot
+{
+public:
+
+    xbool                       IsPressed       ( input_gadget GadgetID, s32 DeviceID = 0 ) const;
+    xbool                       WasPressed      ( input_gadget GadgetID, s32 DeviceID = 0 ) const;
+    xbool                       WasReleased     ( input_gadget GadgetID, s32 DeviceID = 0 ) const;
+    f32                         GetValue        ( input_gadget GadgetID, s32 DeviceID = 0 ) const;
+    xbool                       IsPresent       ( input_gadget GadgetID, s32 DeviceID = INPUT_DEVICE_ID_ANY ) const;
+    input_gadget_sample const&  GetSample      ( input_gadget GadgetID, s32 DeviceID = 0 ) const;
+
+private:
+    friend class input_system;
+    friend class input_snapshot_builder;
+
+    void                        Clear           ( void );
+
+private:
+
+    input_gadget_sample         m_Gadgets[INPUT_GADGET_COUNT][INPUT_MAX_DEVICES];
+};
+
+//------------------------------------------------------------------------------
+
+// Explicit construction API for deterministic replays and headless tests.
+// Runtime capture continues to write snapshots only through input_system.
+class input_snapshot_builder
+{
+public:
+
+                                input_snapshot_builder  ( void );
+
+    void                        Clear                   ( void );
+    void                        SetSample               ( input_gadget GadgetID,
+                                                          s32 DeviceID,
+                                                          const input_gadget_sample& Sample );
+    input_snapshot const&       GetSnapshot             ( void ) const;
+
+private:
+
+    input_snapshot              m_Snapshot;
+};
+
+//==============================================================================
+//  INPUT SYSTEM CLASSES
+//==============================================================================
+
 class input_action_map;
+class input_backend;
 class input_system
 {
 public:
@@ -126,19 +265,21 @@ public:
     // Lifetime
     //--------------------------------------------------------------------------
 
+    xbool           Init                        ( const input_init_desc& Desc );
     void            Init                        ( void );
     void            Kill                        ( void );
 
     //--------------------------------------------------------------------------
-    // Sampled Input Queries
+    // Frame Input
     //--------------------------------------------------------------------------
 
-    xbool               IsPressed               ( input_gadget GadgetID, s32 DeviceID = 0 ) const;
-    xbool               WasPressed              ( input_gadget GadgetID, s32 DeviceID = 0 ) const;
-    f32                 GetValue                ( input_gadget GadgetID, s32 DeviceID = 0 ) const;
-    xbool               IsPresent               ( input_gadget GadgetID, s32 DeviceID = INPUT_DEVICE_ID_ANY ) const;
+    xbool               CaptureFrameInput       ( void );
+
+    input_snapshot const& GetFrameSnapshot       ( void ) const;
+    input_debug_stats const& GetDebugStats       ( void ) const;
+
     static input_gadget LookupGadget            ( const char* pName );
-#ifdef TARGET_PC
+#ifdef TARGET_DESKTOP
     s32                 GetPadCount             ( void ) const;
 #endif
 
@@ -152,55 +293,24 @@ public:
     static input_value_kind         GetGadgetValueKind   ( input_gadget GadgetID );
     static input_control_kind       GetGadgetControlKind ( input_gadget GadgetID );
     static xbool                    IsGadgetValid        ( input_gadget GadgetID );
+    static xbool                    IsPromptDeviceActivity( input_gadget GadgetID,
+                                                            f32 Value,
+                                                            xbool WasPressed );
 
     //--------------------------------------------------------------------------
     // Frame Input State
     //--------------------------------------------------------------------------
 
-    void            ClearFrameInput             ( void );
-    void            SampleFrameInput            ( void );
-    void            RecordGadgetActivity        ( input_gadget GadgetID, f32 Value );
-    xbool           WasDeviceButtonPressed      ( input_device Device ) const;
+    xbool           WasFrameDeviceButtonPressed ( input_device Device ) const;
     input_device    GetCurrentInputDevice       ( void ) const;
     input_platform  GetCurrentInputPlatform     ( void ) const;
-    s32             GetMouseDeltaX              ( s32 DeviceID = 0 ) const;
-    s32             GetMouseDeltaY              ( s32 DeviceID = 0 ) const;
-
-    //--------------------------------------------------------------------------
-    // Action Map Coordination
-    //--------------------------------------------------------------------------
-
-    xbool           SampleActionMaps            ( input_action_map** ppMaps, s32 MapCount, f32 DeltaTime );
-    xbool           SampleActionMaps            ( input_action_map** ppMaps, s32 MapCount, f32 DeltaTime, u32 ContextMask );
-    void            SetActionMapsContext        ( input_action_map** ppMaps, s32 MapCount, u32 ContextMask );
-    void            CommitActionMapsFrame       ( input_action_map** ppMaps, s32 MapCount );
-    void            PrepareActionMapsFixed      ( input_action_map** ppMaps, s32 MapCount, s32 StepCount );
-    void            CommitActionMapsFixed       ( input_action_map** ppMaps, s32 MapCount );
-    void            ClearActionMapsFixed        ( input_action_map** ppMaps, s32 MapCount );
-
-    template< class T, int MapCount >
-    xbool           SampleActionMaps            ( T (&Maps)[MapCount], f32 DeltaTime );
-
-    template< class T, int MapCount >
-    xbool           SampleActionMaps            ( T (&Maps)[MapCount], f32 DeltaTime, u32 ContextMask );
-
-    template< class T, int MapCount >
-    void            CommitActionMapsFrame       ( T (&Maps)[MapCount] );
-
-    template< class T, int MapCount >
-    void            PrepareActionMapsFixed      ( T (&Maps)[MapCount], s32 StepCount );
-
-    template< class T, int MapCount >
-    void            CommitActionMapsFixed       ( T (&Maps)[MapCount] );
-
-    template< class T, int MapCount >
-    void            ClearActionMapsFixed        ( T (&Maps)[MapCount] );
+    s32             GetFrameMouseDeltaX         ( s32 DeviceID = 0 ) const;
+    s32             GetFrameMouseDeltaY         ( s32 DeviceID = 0 ) const;
 
     //--------------------------------------------------------------------------
     // Hardware Pump And Feedback
     //--------------------------------------------------------------------------
 
-    xbool           PollHardwareState           ( void );
     void            Feedback                    ( f32 Duration, f32 Intensity, s32 DeviceID = 0 );
     void            Feedback                    ( s32 Count, feedback_envelope* pEnvelope, s32 DeviceID = 0 );
     void            EnableFeedback              ( xbool state, s32 DeviceID = 0 );
@@ -209,30 +319,10 @@ public:
 
 private:
     //--------------------------------------------------------------------------
-    // Frame Gadget State
-    //--------------------------------------------------------------------------
-
-    struct frame_gadget_state
-    {
-        f32     Value;
-        xbool   IsDown;
-        xbool   WasPressed;
-        xbool   IsPresent;
-    };
-
-    //--------------------------------------------------------------------------
-    // Action Map Helpers
-    //--------------------------------------------------------------------------
-
-    template< class T, int MapCount >
-    input_action_map** GetActionMaps            ( T (&Maps)[MapCount] ) const;
-
-    //--------------------------------------------------------------------------
     // Platform Backend
     //--------------------------------------------------------------------------
 
     xbool           IsRawGadgetDown             ( input_gadget GadgetID, s32 DeviceID = 0 ) const;
-    xbool           WasRawGadgetPressed         ( input_gadget GadgetID, s32 DeviceID = 0 ) const;
     f32             GetRawGadgetValue           ( input_gadget GadgetID, s32 DeviceID = 0 ) const;
     xbool           IsRawGadgetPresent          ( input_gadget GadgetID, s32 DeviceID ) const;
 
@@ -240,15 +330,13 @@ private:
     // Frame Sampling Internals
     //--------------------------------------------------------------------------
 
-    xbool                     IsFrameGadgetValid       ( input_gadget GadgetID ) const;
-    xbool                     IsInputDeviceValid       ( s32 DeviceID ) const;
-    void                      ClearFrameActivity       ( void );
-    void                      RecordGadgetActivity     ( const input_gadget_info& Info, f32 Value );
-    void                      RecordGadgetActivity     ( const input_gadget_info& Info, f32 Value, s32 Priority );
-    void                      ResolveFrameActivity     ( void );
-    void                      AccumulateFrameValue     ( frame_gadget_state& State, const input_gadget_info& Info, f32 Value ) const;
-    void                      SampleFrameGadget        ( input_gadget GadgetID, s32 DeviceID );
-    const frame_gadget_state& GetFrameGadgetState      ( input_gadget GadgetID, s32 DeviceID ) const;
+    xbool                    IsInputDeviceValid       ( s32 DeviceID ) const;
+    void                     ClearFrameActivity       ( void );
+    void                     RecordGadgetActivity     ( input_gadget_info const& Info, f32 Value, s32 Priority );
+    void                     ResolveFrameActivity     ( void );
+    void                     BuildFrameSnapshot       ( void );
+    void                     InitializeSnapshotState ( input_snapshot& Snapshot ) const;
+    void                     ApplyEvent               ( input_snapshot& Snapshot, input_event const& Event );
 
 private:
     //--------------------------------------------------------------------------
@@ -257,11 +345,15 @@ private:
 
     input_device        m_CurrentDevice;
     input_platform      m_CurrentPlatform;
+    input_init_desc     m_InitDesc;
+    input_backend*      m_pBackend;
+    input_event_buffer  m_CapturedEvents;
+    input_snapshot      m_FrameSnapshot;
+    input_debug_stats   m_DebugStats;
     input_device        m_FrameActivityDevice;
     input_platform      m_FrameActivityPlatform;
     s32                 m_FrameActivityPriority;
     xbool               m_FrameActivityConflict;
-    frame_gadget_state  m_FrameGadgets[INPUT_GADGET_COUNT][INPUT_MAX_DEVICES];
 };
 
 //==============================================================================

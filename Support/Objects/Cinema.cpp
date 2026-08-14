@@ -8,14 +8,16 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Entropy.hpp"
 #include "Cinema.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
-#include "Loco\LocoUtil.hpp"
-#include "Characters\Character.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Animation\AnimPlayer.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
+#include "Loco/LocoUtil.hpp"
+#include "Characters/Character.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Animation/AnimPlayer.hpp"
+#include "Objects/Player/Player.hpp"
 
 //=========================================================================
 // DATA
@@ -67,7 +69,7 @@ static struct cinema_object_desc : public object_desc
         virtual s32 OnEditorRender( object& Object ) const
         {
             (void)Object;
-            return( EDITOR_ICON_CINEMA_OBJECT );
+            return static_cast<s32>( EditorIcon::CinemaObject );
         }
 
 #endif // X_EDITOR
@@ -138,6 +140,7 @@ void cinema_object::cinema_character::Init( void )
     NextAiState   = character_state::STATE_NULL;
     hNextAnimGroup.SetName( "" );
     iNextAnim     = -1;
+    IsPlaying     = FALSE;
 };
 
 //==============================================================================
@@ -150,8 +153,6 @@ cinema_object::cinema_object(void)
     m_PositionMarkers.Clear();
     m_ActionMarkers.Clear(); 
 
-    m_bCinemaActive     = FALSE;
-    m_bCinemaDone       = FALSE;
     m_bIs2D             = FALSE;
     m_AudioStatus       = AUDIO_STATUS_OFF;
     m_AnimStatus        = ANIM_STATUS_OFF;
@@ -159,8 +160,7 @@ cinema_object::cinema_object(void)
     m_nPositionMarkers  = 0;
     m_nActionMarkers    = 0;
     m_nCharacters       = 0;
-    m_PrevTime          = 0.0f;
-    m_CurrTime          = 0.0f;
+    m_BoundPlayerGuid   = 0;
     m_AudioLength       = 0.0f;
     m_VoiceID           = 0;
     m_Descriptor[0]     = 0; 
@@ -294,7 +294,7 @@ xbool cinema_object::OnProperty( prop_query& I )
     {
         if( I.IsRead() )
         {
-            I.SetVarBool( (GetAttrBits() & object::ATTR_NEEDS_LOGIC_TIME) != 0 );
+            I.SetVarBool( m_Playback.IsActive() );
         }
         else
         {
@@ -303,7 +303,6 @@ xbool cinema_object::OnProperty( prop_query& I )
 
         return TRUE;
     }
-
 
     // External
     if( I.IsVar( "Cinema\\Audio Descriptor" ) )
@@ -1304,21 +1303,22 @@ void cinema_object::PopCharactersToEndMarkers( void )
         radian  MarkerYaw = pMarker->GetL2W().GetRotation().Yaw;
 
         // Lookup the player
-        actor* pActor = (actor*)SMP_UTIL_GetActivePlayer();
-        if( pActor )
+        player* pPlayer = SMP_UTIL_GetActivePlayer();
+        if( pPlayer )
         {
-            // Move the actor
-            pActor->OnMove( MarkerPos );
-            pActor->SetYaw( MarkerYaw );
-
-            // Update actor zone to be markers and reset zone tracking
-            pActor->SetZone1( pMarker->GetZone1() );
-            pActor->SetZone2( pMarker->GetZone2() );
-            pActor->InitZoneTracking();
+            pPlayer->Teleport(
+                MarkerPos,
+                pPlayer->GetPitch(),
+                MarkerYaw,
+                static_cast<zone_mgr::zone_id>( pMarker->GetZone1() ),
+                static_cast<zone_mgr::zone_id>( pMarker->GetZone2() ),
+                PlayerTeleportVelocityPolicy::Clear,
+                FALSE,
+                FALSE );
             
             LOG_MESSAGE( "cinema_object::PopCharactersToEndMarkers", 
                          "Player %s put at end marker %s", 
-                         (const char*)guid_ToString( pActor->GetGuid() ),
+                         (const char*)guid_ToString( pPlayer->GetGuid() ),
                          (const char*)guid_ToString( pMarker->GetGuid() ) );
         }
     }
@@ -1340,14 +1340,27 @@ void cinema_object::PopCharactersToEndMarkers( void )
                 vector3 MarkerPos = pMarker->GetPosition();
                 radian  MarkerYaw = pMarker->GetL2W().GetRotation().Yaw;
 
-                // Move the actor
-                pActor->OnMove( MarkerPos );
-                pActor->SetYaw( MarkerYaw );
-
-                // Update actor zone to be markers and reset zone tracking
-                pActor->SetZone1( pMarker->GetZone1() );
-                pActor->SetZone2( pMarker->GetZone2() );
-                pActor->InitZoneTracking();
+                if( pActor->GetType() == object::TYPE_PLAYER )
+                {
+                    player& Player = player::GetSafeType( *pActor );
+                    Player.Teleport(
+                        MarkerPos,
+                        pActor->GetPitch(),
+                        MarkerYaw,
+                        static_cast<zone_mgr::zone_id>( pMarker->GetZone1() ),
+                        static_cast<zone_mgr::zone_id>( pMarker->GetZone2() ),
+                        PlayerTeleportVelocityPolicy::Clear,
+                        FALSE,
+                        FALSE );
+                }
+                else
+                {
+                    pActor->OnMove( MarkerPos );
+                    pActor->SetYaw( MarkerYaw );
+                    pActor->SetZone1( pMarker->GetZone1() );
+                    pActor->SetZone2( pMarker->GetZone2() );
+                    pActor->InitZoneTracking();
+                }
                 
                 LOG_MESSAGE( "cinema_object::PopCharactersToEndMarkers", 
                              "Character %s put at end marker %s", 
@@ -1400,7 +1413,7 @@ xbool cinema_object::IsPast( char* Marker )
     // Special check for end of cinema.
     if( x_strcmp( Marker, s_pEndOfCinema ) == 0 )
     {
-        return m_bCinemaDone;
+        return m_Playback.IsDone();
     }
     
     // Process the action markers.
@@ -1413,7 +1426,7 @@ xbool cinema_object::IsPast( char* Marker )
             if( x_strcmp( Marker, m_ActionMarkers[i].Name ) == 0 )
             {
                 // Past this marker? (or done!)
-                return m_bCinemaDone || (m_ActionMarkers[i].Time <= m_CurrTime);
+                return m_Playback.IsPast( m_ActionMarkers[i].Time );
             }
         }
     }
@@ -1438,7 +1451,7 @@ void cinema_object::ProcessMarkers( void )
             f32 Time = m_PositionMarkers[i].Time;
 
             // This marker activate this frame?
-            if( (Time >= m_PrevTime) && (Time < m_CurrTime) )
+            if( m_Playback.Crossed( Time ) )
             {
                 // Most recent?
                 if( Time >= BestTime )
@@ -1485,7 +1498,7 @@ void cinema_object::ProcessMarkers( void )
     for( s32 i=0 ; i<m_nActionMarkers ; i++ )
     {
         // This marker activate this tick?
-        if( (m_ActionMarkers[i].Time > m_PrevTime) && (m_ActionMarkers[i].Time <= m_CurrTime) )
+        if( m_Playback.Crossed( m_ActionMarkers[i].Time ) )
         {
             // Activating marker?
             if( m_ActionMarkers[i].MarkerType == ACTIVATING )
@@ -1507,6 +1520,12 @@ void cinema_object::ProcessMarkers( void )
 
 void cinema_object::ResumeCharacterAi( cinema_character& CinChar )
 {
+    if( !CinChar.IsPlaying )
+    {
+        return;
+    }
+    CinChar.IsPlaying = FALSE;
+
     // Lookup actor and exit if already resumed
     object_ptr<actor> pActor( CinChar.CharacterAffecter.GetGuid() ) ;
     if( !pActor )
@@ -1550,8 +1569,17 @@ void cinema_object::ResumeCharacterAi( cinema_character& CinChar )
         }                        
     }
 
-    // Just do this once
-    CinChar.CharacterAffecter.SetStaticGuid( 0 );
+}
+
+//==============================================================================
+
+void cinema_object::OnKill( void )
+{
+    if( m_Playback.IsActive() )
+    {
+        Finalize( CinemaPlaybackFinishReason::Deactivated );
+    }
+    object::OnKill();
 }
 
 //==============================================================================
@@ -1601,11 +1629,14 @@ void cinema_object::StartAnims( void )
         // Lookup info
         cinema_character& CinChar  = m_Characters[i];
         guid              CharGuid = CinChar.CharacterAffecter.GetGuid();
+        CinChar.IsPlaying = FALSE;
 
         // Lookup object
         object* pObject = g_ObjMgr.GetObjectByGuid( CharGuid );
         if( !pObject )
             continue;
+
+        CinChar.IsPlaying = TRUE;
             
         // Make sure object is active            
         if( !pObject->IsActive() )
@@ -1650,13 +1681,26 @@ void cinema_object::StartAnims( void )
                     // Use for relative pos
                     RelPos = MarkerPos;
                 
-                    // Move the actor
-                    pActor->OnMove( MarkerPos );
-                    
-                    // Update actor zone to be markers and reset zone tracking
-                    pActor->SetZone1( pMarker->GetZone1() );
-                    pActor->SetZone2( pMarker->GetZone2() );
-                    pActor->InitZoneTracking();
+                    if( pActor->GetType() == object::TYPE_PLAYER )
+                    {
+                        player& Player = player::GetSafeType( *pActor );
+                        Player.Teleport(
+                            MarkerPos,
+                            pActor->GetPitch(),
+                            pActor->GetYaw(),
+                            static_cast<zone_mgr::zone_id>( pMarker->GetZone1() ),
+                            static_cast<zone_mgr::zone_id>( pMarker->GetZone2() ),
+                            PlayerTeleportVelocityPolicy::Clear,
+                            FALSE,
+                            FALSE );
+                    }
+                    else
+                    {
+                        pActor->OnMove( MarkerPos );
+                        pActor->SetZone1( pMarker->GetZone1() );
+                        pActor->SetZone2( pMarker->GetZone2() );
+                        pActor->InitZoneTracking();
+                    }
                     
                     LOG_MESSAGE( "cinema_object::StartAnims", 
                                  "Character %s pos set to start marker %s pos", 
@@ -1769,7 +1813,7 @@ void cinema_object::UpdateAnims( void )
             {
                 // Update lip sync controller
                 loco_lip_sync_controller& LipSyncCont = pLoco->GetLipSyncController();
-                LipSyncCont.SetTime( m_CurrTime );
+                LipSyncCont.SetTime( m_Playback.GetTime() );
             }
         }
                         
@@ -1787,7 +1831,7 @@ void cinema_object::UpdateAnims( void )
             {
                 // Update anim position
                 if( pAnimPlayer->GetAnimIndex() != -1 )
-                    pAnimPlayer->SetTime( m_CurrTime );
+                    pAnimPlayer->SetTime( m_Playback.GetTime() );
             }
         }
     }
@@ -1838,20 +1882,20 @@ void cinema_object::StopAnims( void )
                 "Character %s anim stopped/resumed", 
                 (const char*)guid_ToString( pActor->GetGuid() ) );
         }
-            
-        // Just do this once
-        CinChar.CharacterAffecter.SetStaticGuid( 0 );
+        else
+        {
+            CinChar.IsPlaying = FALSE;
+        }
     }
 }
 
 //==============================================================================
 
-void cinema_object::OnAdvanceLogic( f32 DeltaTime )
+void cinema_object::OnAdvanceSimulation( f32 DeltaTime )
 {
-    (void)DeltaTime;
-
     // Should only get in here if active
-    ASSERT( m_bCinemaActive );
+    ASSERT( m_Playback.IsActive() );
+    f32 CurrentTime = m_Playback.GetTime();
 
     //==========================================================================
     // Update audio
@@ -1875,50 +1919,61 @@ void cinema_object::OnAdvanceLogic( f32 DeltaTime )
         }
         if( g_AudioMgr.IsValidVoiceId( m_VoiceID ) )
         {
-            LOG_MESSAGE( "cinema_object::OnAdvanceLogic", "AUDIO_STATUS_WARMING" );
+            LOG_MESSAGE( "cinema_object::OnAdvanceSimulation", "AUDIO_STATUS_WARMING" );
             m_AudioStatus = AUDIO_STATUS_WARMING;
             StartAnimAudioTimer();
-        }                
+        }
+        else
+        {
+            m_VoiceID     = 0;
+            m_AudioStatus = AUDIO_STATUS_DONE;
+            LOG_WARNING( "cinema_object::OnAdvanceSimulation",
+                         "Cinema %s could not start audio '%s'; continuing without audio.",
+                         (const char*)guid_ToString( GetGuid() ),
+                         m_Descriptor );
+        }
         break;
 
     case AUDIO_STATUS_WARMING:
 
-        // Ready to start?
-        if( g_AudioMgr.GetIsReady( m_VoiceID ) )
+        if( !g_AudioMgr.IsValidVoiceId( m_VoiceID ) )
+        {
+            m_VoiceID     = 0;
+            m_AudioStatus = AUDIO_STATUS_DONE;
+        }
+        else if( g_AudioMgr.GetIsReady( m_VoiceID ) )
         {
             g_AudioMgr.Start( m_VoiceID );
-            LOG_MESSAGE( "cinema_object::OnAdvanceLogic", "AUDIO_STATUS_PLAYING" );
+            LOG_MESSAGE( "cinema_object::OnAdvanceSimulation", "AUDIO_STATUS_PLAYING" );
             m_AudioStatus = AUDIO_STATUS_PLAYING;
         }
         break;
 
     case AUDIO_STATUS_PLAYING:
-        
-        // Finished?
-        if( !g_AudioMgr.IsValidVoiceId(m_VoiceID) )
+        if( !g_AudioMgr.IsValidVoiceId( m_VoiceID ) )
         {
-            // Stop the audio
             g_ConverseMgr.Stop( m_VoiceID );
             m_VoiceID = 0;
-            
-            LOG_MESSAGE( "cinema_object::OnAdvanceLogic", "AUDIO_STATUS_DONE" );
+            LOG_MESSAGE( "cinema_object::OnAdvanceSimulation", "AUDIO_STATUS_DONE" );
             m_AudioStatus = AUDIO_STATUS_DONE;
             
             // Stop anim audio timer
             m_Timer.Stop();
         }
-        
-        // Update the current time from the anim audio timer
-        m_CurrTime = m_Timer.GetTime();
+        else
+        {
+            m_Timer.Advance( DeltaTime );
+            CurrentTime = m_Timer.GetTime();
+        }
         break;
         
     case AUDIO_STATUS_DONE:
     
         // Keep timer going incase audio has ended before the animation has finished
-        m_CurrTime += DeltaTime;
+        CurrentTime += DeltaTime;
         break;
     }
-    
+
     //==========================================================================
     // Update animations
     //==========================================================================
@@ -1933,11 +1988,12 @@ void cinema_object::OnAdvanceLogic( f32 DeltaTime )
     case ANIM_STATUS_OFF:
 
         // Wait for audio to start
-        if( m_AudioStatus == AUDIO_STATUS_PLAYING )                   
+        if( (m_AudioStatus == AUDIO_STATUS_PLAYING) ||
+            (m_AudioStatus == AUDIO_STATUS_DONE) )
         {
             // Start anims and pop actors to markers if needed
             StartAnims();
-            LOG_MESSAGE( "cinema_object::OnAdvanceLogic", "ANIM_STATUS_PLAYING" );
+            LOG_MESSAGE( "cinema_object::OnAdvanceSimulation", "ANIM_STATUS_PLAYING" );
             m_AnimStatus = ANIM_STATUS_PLAYING;
         }
         break;
@@ -1947,7 +2003,7 @@ void cinema_object::OnAdvanceLogic( f32 DeltaTime )
         // Have all animations finished?
         if( AreAnimsDone() )
         {
-            LOG_MESSAGE( "cinema_object::OnAdvanceLogic", "ANIM_STATUS_DONE" );
+            LOG_MESSAGE( "cinema_object::OnAdvanceSimulation", "ANIM_STATUS_DONE" );
             m_AnimStatus = ANIM_STATUS_DONE;
         }
 
@@ -1960,8 +2016,11 @@ void cinema_object::OnAdvanceLogic( f32 DeltaTime )
         break;
     }
 
-    // Update anim audio timer
-    m_Timer.Advance( DeltaTime );
+    if( (m_AudioStatus == AUDIO_STATUS_PLAYING) ||
+        (m_AnimStatus  == ANIM_STATUS_PLAYING) )
+    {
+        m_Playback.AdvanceTo( CurrentTime );
+    }
 
     // Update anim surface and skin prop animations
     UpdateAnims();
@@ -1974,15 +2033,14 @@ void cinema_object::OnAdvanceLogic( f32 DeltaTime )
     if(     ( m_AudioStatus == AUDIO_STATUS_PLAYING )
         ||  ( m_AnimStatus  == ANIM_STATUS_PLAYING ) )
     {
-        LOG_MESSAGE( "cinema_object::OnAdvanceLogic", "m_PrevTime: %f, m_CurrTime: %f", m_PrevTime, m_CurrTime );
+        LOG_MESSAGE( "cinema_object::OnAdvanceSimulation",
+                     "PreviousTime: %f, CurrentTime: %f",
+                     m_Playback.GetPreviousTime(),
+                     m_Playback.GetTime() );
         // Process markers
         ProcessMarkers();
     }
 
-    // Update previous.
-    m_PrevTime = m_CurrTime;
-    
-    
     //==========================================================================
     // End logic
     //==========================================================================
@@ -1990,8 +2048,7 @@ void cinema_object::OnAdvanceLogic( f32 DeltaTime )
     // Both audio and anim done?
     if( ( m_AudioStatus == AUDIO_STATUS_DONE ) && ( m_AnimStatus == ANIM_STATUS_DONE ) )
     {
-        // Deactivate
-        OnActivate( FALSE );
+        Finalize( CinemaPlaybackFinishReason::Completed );
     }
 }
 
@@ -1999,65 +2056,109 @@ void cinema_object::OnAdvanceLogic( f32 DeltaTime )
 
 void cinema_object::OnActivate( xbool Flag )
 {
-    // Turn on/off logic
-    object::OnActivate( Flag );
-    
-    // Starting the cinema?
-    if( Flag )
+    if( !Flag )
     {
-        // Ending/skipping the cinema...
-        LOG_MESSAGE( "cinema_object::OnActivate", 
-                     "Cinema %s started!", 
-                     (const char*)guid_ToString( GetGuid() ) );
-    
-        // Clear done flag
-        m_bCinemaDone = FALSE;
-
-        // If position_marker[0] is the player, then the cinema is goinf to be 2D.
-        if( m_nPositionMarkers == 1 )
+        if( m_Playback.IsActive() )
         {
-            object *pObject = m_PositionMarkers[0].ObjectAffecter.GetObjectPtr();
-            if( pObject == (object*)SMP_UTIL_GetActivePlayer() )
-            {
-                LOG_MESSAGE( "cinema_object::OnActivate", "2D Cinema!!!!" );
-                m_bIs2D = TRUE;
-            }
+            Finalize( CinemaPlaybackFinishReason::Deactivated );
         }
-        
-        // Status should be off
-        ASSERT( m_AudioStatus == AUDIO_STATUS_OFF );
-        ASSERT( m_AnimStatus  == ANIM_STATUS_OFF );
-    }
-    else
-    {
-        // Ending or skipping an active cinema?
-        if( m_bCinemaActive )
+        else
         {
-            // Put audio into off state
-            g_ConverseMgr.Stop( m_VoiceID );
-            m_VoiceID = 0;
-            m_AudioStatus = AUDIO_STATUS_OFF;
-            LOG_MESSAGE( "cinema_object::OnActivate", "AUDIO_STATUS_OFF" );
+            object::OnActivate( FALSE );
+        }
+        return;
+    }
 
-            // Put anims into off state
-            StopAnims();
-            m_AnimStatus = ANIM_STATUS_OFF;
-            LOG_MESSAGE( "cinema_object::OnActivate", "ANIM_STATUS_OFF" );
-            
-            // Position characters at their end markers                    
-            PopCharactersToEndMarkers();
+    if( m_Playback.IsActive() )
+    {
+        return;
+    }
 
-            // Finally, flag cinema is done so blocking stops and game continues...
-            m_bCinemaDone = TRUE;
-            
-            LOG_MESSAGE( "cinema_object::OnActivate", 
-                         "Cinema %s done!", 
-                         (const char*)guid_ToString( GetGuid() ) );
+    object::OnActivate( TRUE );
+    m_Playback.Begin();
+    m_bIs2D = FALSE;
+    m_PositionMarkerIndex = -1;
+
+    for( s32 i = 0; i < m_nCharacters; i++ )
+    {
+        m_Characters[i].IsPlaying = FALSE;
+    }
+
+    if( m_nPositionMarkers == 1 )
+    {
+        object* pObject = m_PositionMarkers[0].ObjectAffecter.GetObjectPtr();
+        if( pObject == static_cast<object*>( SMP_UTIL_GetActivePlayer() ) )
+        {
+            m_bIs2D = TRUE;
         }
     }
-    
-    // Store flag
-    m_bCinemaActive = Flag;
+
+    ASSERT( m_AudioStatus == AUDIO_STATUS_OFF );
+    ASSERT( m_AnimStatus  == ANIM_STATUS_OFF );
+    BindActivePlayer();
+
+    LOG_MESSAGE( "cinema_object::OnActivate",
+                 "Cinema %s started.",
+                 (const char*)guid_ToString( GetGuid() ) );
+}
+
+//==============================================================================
+
+void cinema_object::Finalize( CinemaPlaybackFinishReason Reason )
+{
+    if( !m_Playback.IsActive() )
+    {
+        object::OnActivate( FALSE );
+        return;
+    }
+
+    g_ConverseMgr.Stop( m_VoiceID );
+    m_Timer.Stop();
+    m_VoiceID = 0;
+    m_AudioStatus = AUDIO_STATUS_OFF;
+
+    StopAnims();
+    m_AnimStatus = ANIM_STATUS_OFF;
+
+    // End markers are completion state, not timed marker actions. They apply
+    // for natural completion and explicit deactivation.
+    PopCharactersToEndMarkers();
+
+    m_Playback.Finish( Reason );
+    UnbindActivePlayer();
+    object::OnActivate( FALSE );
+
+    LOG_MESSAGE( "cinema_object::Finalize",
+                 "Cinema %s finished (%d).",
+                 (const char*)guid_ToString( GetGuid() ),
+                 (s32)Reason );
+}
+
+//==============================================================================
+
+void cinema_object::BindActivePlayer( void )
+{
+    player* pPlayer = SMP_UTIL_GetActivePlayer();
+    if( !pPlayer )
+    {
+        m_BoundPlayerGuid = 0;
+        return;
+    }
+
+    m_BoundPlayerGuid = pPlayer->GetGuid();
+    pPlayer->BindCinemaObject( GetGuid() );
+}
+
+//==============================================================================
+
+void cinema_object::UnbindActivePlayer( void )
+{
+    object_ptr<player> pPlayer( m_BoundPlayerGuid );
+    if( pPlayer )
+    {
+        pPlayer->UnbindCinemaObject( GetGuid() );
+    }
+    m_BoundPlayerGuid = 0;
 }
 
 //==============================================================================
@@ -2285,8 +2386,8 @@ void cinema_object::OnDebugRender( void )
             radian  MarkerYaw = pMarker->GetL2W().GetRotation().Yaw;
             
             // Draw info
-            draw_3DCircle  ( MarkerPos, CinChar.StartMarkerDistance, XCOLOR_RED );
-            draw_Arc       ( MarkerPos, CinChar.StartMarkerDistance, MarkerYaw, CinChar.StartMarkerYaw * 0.5f, XCOLOR_PURPLE );
+            render::debug::Circle  ( MarkerPos, CinChar.StartMarkerDistance, XCOLOR_RED );
+            render::debug::Arc       ( MarkerPos, CinChar.StartMarkerDistance, MarkerYaw, CinChar.StartMarkerYaw * 0.5f, XCOLOR_PURPLE );
         }
     }        
 }
@@ -2294,5 +2395,3 @@ void cinema_object::OnDebugRender( void )
 //==============================================================================
 
 #endif  //#ifdef X_EDITOR
-
-

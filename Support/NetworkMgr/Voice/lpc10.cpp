@@ -75,6 +75,22 @@ xbool LPC10Kill( void )
 
 //------------------------------------------------------------------------------
 
+xbool LPC10Reset( void )
+{
+    if( g_LPC10 == NULL )
+    {
+        return FALSE;
+    }
+
+    g_LPC10->encode_in_samples = 0;
+    x_memset( g_LPC10->encode_in, 0, sizeof( g_LPC10->encode_in ) );
+    init_lpc10_encoder_state( g_LPC10->encode_state );
+
+    return TRUE;
+}
+
+//------------------------------------------------------------------------------
+
 xbool LPC10Encode( const s16 *src, const u32 src_size, u8 *dest, s32 *dest_size )
 {
     const s16 * next_sample_frame   = src;
@@ -151,65 +167,72 @@ xbool LPC10Decode( const u8 *src, const u32 src_size, s16 *dest, s32 *dest_size 
     const u8 *  next_enc_frame      = src;
     s16 *       next_sample_frame   = dest;
 
-    s32         frames_to_decode    = 0;
     s32         consume_bytes       = 0;
     s32         samples_decoded     = 0;
-    s32         bytes_to_encode     = 0;
-    u32         dest_bytes_left     = 0;
+    s32         bytes_remaining     = 0;
+    s32         dest_bytes_left     = 0;
+    s32         dest_capacity      = 0;
 
     ASSERT( src != NULL );
     ASSERT( dest != NULL );
     ASSERT( dest_size != NULL );
-    ASSERT( (*dest_size % sizeof(s16)) == 0 );
-    ASSERT( src_size > 0 );
-    ASSERT( *dest_size > 0 );
-
-    bytes_to_encode = src_size;
-    dest_bytes_left = *dest_size;
-
-    // we must have at least bytes_per_enc_frame bytes
-    frames_to_decode = src_size / LPC10_BYTES_PER_EFRAME;
-    if (frames_to_decode <= 0)
+    if( (src == NULL) || (dest == NULL) || (dest_size == NULL) )
     {
-        *dest_size = 0;
-        return TRUE;
+        return FALSE;
     }
 
-    frames_to_decode = MIN( *dest_size / (LPC10_SAMPLES_PER_FRAME * 2),     frames_to_decode );
-    bytes_to_encode  = MIN( frames_to_decode * LPC10_SAMPLES_PER_FRAME * 2, bytes_to_encode  );
+    ASSERT( (*dest_size % sizeof(s16)) == 0 );
+    if( ((*dest_size % sizeof(s16)) != 0) || (*dest_size <= 0) )
+    {
+        *dest_size = 0;
+        return FALSE;
+    }
+
+    dest_capacity  = *dest_size;
+    dest_bytes_left = dest_capacity;
+    bytes_remaining = src_size;
 
     // clear output fields
     x_memset( dest, 0, (unsigned int)*dest_size );        
     *dest_size = 0;
 
     // decode the data
-    while (1)
+    while( (bytes_remaining > 0) ||
+           (g_LPC10->decode_in_bytes == LPC10_BYTES_PER_EFRAME) )
     {
-
-        // fill up the buffer (there may be samples already in the decoding buffer)
-        consume_bytes = MIN( LPC10_BYTES_PER_EFRAME - g_LPC10->decode_in_bytes, bytes_to_encode );
-        x_memcpy( g_LPC10->decode_in + g_LPC10->decode_in_bytes, next_enc_frame, (u32)consume_bytes );
-        next_enc_frame += consume_bytes;
-        g_LPC10->decode_in_bytes += consume_bytes;
-
-        if (g_LPC10->decode_in_bytes == LPC10_BYTES_PER_EFRAME && (dest_bytes_left >= (LPC10_SAMPLES_PER_FRAME*sizeof(s16))))
+        if( g_LPC10->decode_in_bytes == LPC10_BYTES_PER_EFRAME )
         {
+            if( dest_bytes_left < (LPC10_SAMPLES_PER_FRAME * sizeof(s16)) )
+            {
+                break;
+            }
+
             LPC10FrameDecode( g_LPC10->decode_in, next_sample_frame );
 
             samples_decoded += LPC10_SAMPLES_PER_FRAME;
-            bytes_to_encode -= LPC10_BYTES_PER_EFRAME;
             next_sample_frame += LPC10_SAMPLES_PER_FRAME;
             g_LPC10->decode_in_bytes = 0;
-            dest_bytes_left -= (samples_decoded * sizeof(short));
+            dest_bytes_left -= (LPC10_SAMPLES_PER_FRAME * sizeof(s16));
+            continue;
         }
-        else
+
+        if( bytes_remaining <= 0 )
         {
-            // mark the total bytes decoded
-            *dest_size = (samples_decoded * 2);
             break;
         }
+
+        // Fill up the buffer. There may be residue from a previous call.
+        consume_bytes = MIN( LPC10_BYTES_PER_EFRAME - g_LPC10->decode_in_bytes,
+                             bytes_remaining );
+        x_memcpy( g_LPC10->decode_in + g_LPC10->decode_in_bytes,
+                  next_enc_frame,
+                  (u32)consume_bytes );
+        next_enc_frame += consume_bytes;
+        bytes_remaining -= consume_bytes;
+        g_LPC10->decode_in_bytes += consume_bytes;
     }
 
+    *dest_size = samples_decoded * sizeof(s16);
     return TRUE;
 
 /*

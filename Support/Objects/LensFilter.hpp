@@ -11,7 +11,7 @@
 #ifndef __LENSFILTER_HPP__
 #define __LENSFILTER_HPP__
 
-#include "Obj_mgr\Obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 //==============================================================================
 // CLASS DEFINITION
@@ -33,7 +33,7 @@ public:
     virtual void        OnEnumProp      ( prop_enum& List );
     virtual xbool       OnProperty      ( prop_query& I );
     virtual void        OnActivate      ( xbool bFlag );
-    virtual void        OnAdvanceLogic  ( f32 DeltaTime );
+    virtual void        OnAdvanceSimulation  ( f32 DeltaTime );
 
 protected:
     enum

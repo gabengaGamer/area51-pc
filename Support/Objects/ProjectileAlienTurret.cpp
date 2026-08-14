@@ -5,14 +5,14 @@
 //=============================================================================================
 // INCLUDES
 //=============================================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "ProjectileAlienTurret.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "Entropy\e_Draw.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "render\LightMgr.hpp"
-#include "..\Support\Tracers\TracerMgr.hpp"
-#include "Objects\actor\actor.hpp"
-#include "Decals\DecalMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "../Support/Tracers/TracerMgr.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Decals/DecalMgr.hpp"
 
 //=============================================================================================
 // STATICS & CONSTANTS
@@ -130,7 +130,7 @@ bbox alien_turret_projectile::GetLocalBBox( void ) const
 
     if( pRigidGeom )
     {
-        return( pRigidGeom->m_Collision.BBox );
+        return( pRigidGeom->m_collision.BBox );
     }
     */
     return( bbox( vector3( 10.0f, 10.0f, 10.0f),
@@ -168,7 +168,7 @@ void alien_turret_projectile::UpdatePhysics( const f32& DeltaTime )
 
 //=============================================================================
 
-void alien_turret_projectile::OnAdvanceLogic( f32 DeltaTime )
+void alien_turret_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
     m_AliveTime += DeltaTime;
     m_TimeSinceLastBroadcast += DeltaTime;
@@ -473,15 +473,15 @@ void alien_turret_projectile::OnMove( const vector3& NewPos )
 void alien_turret_projectile::OnRender( void )
 {
 #ifdef X_EDITOR
-    draw_Line( GetPosition(), m_TargetPos, XCOLOR_YELLOW );
-    draw_Label( m_TargetPos, XCOLOR_YELLOW, "TARGET" );
+    render::debug::Line( GetPosition(), m_TargetPos, XCOLOR_YELLOW );
+    render::debug::Label( m_TargetPos, XCOLOR_YELLOW, "TARGET" );
 #endif
 
     base_projectile::OnRender();
 
 #ifdef X_EDITOR
-//    draw_Line( GetPosition() , GetPosition() + m_NormalCollision );
-//    draw_Line( GetPosition() , GetPosition() + m_Velocity , XCOLOR_BLUE );
+//    render::debug::Line( GetPosition() , GetPosition() + m_NormalCollision );
+//    render::debug::Line( GetPosition() , GetPosition() + m_Velocity , XCOLOR_BLUE );
 #endif // X_EDITOR
 }
 

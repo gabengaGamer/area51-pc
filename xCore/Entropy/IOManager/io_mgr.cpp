@@ -16,17 +16,16 @@
 #include "x_array.hpp"
 #include "x_string.hpp"
 #include "x_time.hpp"
-#include "x_context.hpp"
+#include "x_workers.hpp"
 #include "io_mgr.hpp"
 #include "io_filesystem.hpp"
-#include "device_host\io_device_host.hpp"
+#include "device_host/io_device_host.hpp"
 
 //==============================================================================
 //  LOCAL VARIABLES
 //==============================================================================
 
 static xbool s_Initialized      = FALSE;
-static xbool s_DispatcherActive = FALSE;
 
 //==============================================================================
 //  GLOBAL INSTANCE
@@ -38,114 +37,227 @@ io_mgr g_IoMgr;
 //  IMPLEMENTATION
 //==============================================================================
 
-void io_dispatcher( void )
+void io_dispatch_job( void* pData )
 {
+    io_mgr* pMgr = (io_mgr*)pData;
+
+    ASSERT( pMgr );
+
+    if( pMgr )
+        pMgr->DispatchRequests();
+}
+
+//==============================================================================
+
+void io_mgr::DispatchRequest( io_request* pRequest )
+{
+    io_device_file* pFile           = NULL;
+    io_request*     pCurr           = NULL;
+    io_device*      pDevice         = NULL;
+    xbool           bServiceQueue   = TRUE;
+    xbool           bServiceRequest = TRUE;
+
     // Error check.
-    ASSERT( s_Initialized );    
-    ASSERT( !s_DispatcherActive );
-
-    // Set semaphore
-    s_DispatcherActive = TRUE;
-
-    while( x_GetCurrentThread()->IsActive() )
+    ASSERT( pRequest );
+    ASSERT( pRequest->m_pOpenFile );
+    ASSERT( pRequest->m_pOpenFile->pDeviceFile );
+    ASSERT( pRequest->m_pOpenFile->pDeviceFile->pDevice );
+    
+    // Run-time protection if the file gets closed underneath the IO manager...
+    if( pRequest && pRequest->m_pOpenFile && pRequest->m_pOpenFile->pDeviceFile && pRequest->m_pOpenFile->pDeviceFile->pDevice )
     {
-        io_device_file* pFile           = NULL;
-        io_request*     pCurr           = NULL;
-        io_request*     pRequest        = NULL;
-        io_device*      pDevice         = NULL;
-        xbool           bServiceQueue   = TRUE;
-        xbool           bServiceRequest = TRUE;       
-
-        // Wait on a request.
-        pRequest = (io_request*)GET_DISPATCHER_MQ().Recv( MQ_BLOCK );
-        if( x_GetCurrentThread()->IsActive()==FALSE )
-        {
-            ASSERT( pRequest==NULL );
-            break;
-        }
-
-        // Error check.
-        ASSERT( pRequest );
-        ASSERT( pRequest->m_pOpenFile );
-        ASSERT( pRequest->m_pOpenFile->pDeviceFile );
-        ASSERT( pRequest->m_pOpenFile->pDeviceFile->pDevice );
+        pFile   = pRequest->m_pOpenFile->pDeviceFile;
+        pDevice = pRequest->m_pOpenFile->pDeviceFile->pDevice;
         
-        // Run-time protection if the file gets closed underneath the IO manager...
-        if( pRequest && pRequest->m_pOpenFile && pRequest->m_pOpenFile->pDeviceFile && pRequest->m_pOpenFile->pDeviceFile->pDevice )
-        {
-            pFile   = pRequest->m_pOpenFile->pDeviceFile;
-            pDevice = pRequest->m_pOpenFile->pDeviceFile->pDevice;
-            
-            // Error check
-            ASSERT( VALID_DEVICE_FILE( pFile ) );
-            
-            // Aquire device semaphore.
-            pDevice->m_Semaphore.Recv( MQ_BLOCK );
+        // Error check
+        ASSERT( VALID_DEVICE_FILE( pFile ) );
+        
+        // Aquire device semaphore.
+        pDevice->m_Semaphore.Recv( MQ_BLOCK );
 
-            // Need to be queued?
-            if( pRequest->m_Status == io_request::QUEUED )
+        // Need to be queued?
+        if( pRequest->m_Status == io_request::QUEUED )
+        {
+            // Status is pending now.
+            pRequest->m_Status = io_request::PENDING;
+
+            // Bump the files reference count
+            pFile->ReferenceCount++;
+
+            // Now don't need to service the request
+            bServiceRequest = FALSE;
+
+            // Better not be in a list...
+            ASSERT( pRequest->m_pNext == NULL );
+            ASSERT( pRequest->m_pPrev == NULL );
+
+            // Set sequence.
+            pRequest->m_Sequence = pDevice->m_Sequence++;
+
+            // Find the insertion point.
+            pCurr = pDevice->m_RequestQueue.m_pNext;
+            while( pRequest->m_Priority >= pCurr->m_Priority )
+                pCurr = pCurr->m_pNext;
+
+            // Insert it into the list.
+            pRequest->m_pNext       = pCurr;
+            pRequest->m_pPrev       = pCurr->m_pPrev;
+            pCurr->m_pPrev->m_pNext = pRequest;
+            pCurr->m_pPrev          = pRequest;
+
+            // Bump the request count.
+            pDevice->m_RequestCount++;
+
+            // Check for single entry in queue
+            if( pDevice->m_RequestCount != 1 )
             {
-                // Status is pending now.
-                pRequest->m_Status = io_request::PENDING;
-
-                // Bump the files reference count
-                pFile->ReferenceCount++;
-
-                // Now don't need to service the request
-                bServiceRequest = FALSE;
-
-                // Better not be in a list...
-                ASSERT( pRequest->m_pNext == NULL );
-                ASSERT( pRequest->m_pPrev == NULL );
-
-                // Set sequence.
-                pRequest->m_Sequence = pDevice->m_Sequence++;
-
-                // Find the insertion point.
-                pCurr = pDevice->m_RequestQueue.m_pNext;
-                while( pRequest->m_Priority >= pCurr->m_Priority )
-                    pCurr = pCurr->m_pNext;
-
-                // Insert it into the list.
-                pRequest->m_pNext       = pCurr;
-                pRequest->m_pPrev       = pCurr->m_pPrev;
-                pCurr->m_pPrev->m_pNext = pRequest;
-                pCurr->m_pPrev          = pRequest;
-
-                // Bump the request count.
-                pDevice->m_RequestCount++;
-
-                // Check for single entry in queue
-                if( pDevice->m_RequestCount != 1 )
-                {
-                    bServiceQueue = FALSE;
-                }
+                bServiceQueue = FALSE;
             }
-
-            // Service the devices current io_request.
-            if( bServiceRequest )
-                pDevice->ServiceDeviceCurrentRequest();
-
-            // Service the devices io_request queue.
-            if( bServiceQueue )
-                pDevice->ServiceDeviceQueue();
-        
-            // Release device semaphore.
-            pDevice->m_Semaphore.Send( NULL, MQ_BLOCK );
         }
+
+        // Service the devices current io_request.
+        if( bServiceRequest )
+            pDevice->ServiceDeviceCurrentRequest();
+
+        // Service the devices io_request queue.
+        if( bServiceQueue )
+            pDevice->ServiceDeviceQueue();
+    
+        // Release device semaphore.
+        pDevice->m_Semaphore.Send( NULL, MQ_BLOCK );
     }
 }
 
 //==============================================================================
 
-io_mgr::io_mgr( void ) : m_DispatcherMQ(MAX_DEFAULT_MESSAGES)
+void io_mgr::DispatchRequests( void )
 {
+    io_request* pRequest;
+
+    ASSERT( s_Initialized );
+
+    while( TRUE )
+    {
+        while( PopDispatcherRequest( pRequest ) )
+        {
+            DispatchRequest( pRequest );
+        }
+
+        x_BeginAtomic();
+
+        if( m_DispatcherCount > 0 )
+        {
+            x_EndAtomic();
+            continue;
+        }
+
+        m_DispatcherJobActive = FALSE;
+        x_EndAtomic();
+        break;
+    }
+}
+
+//==============================================================================
+
+io_mgr::io_mgr( void )
+{
+    m_DispatcherRead      = 0;
+    m_DispatcherWrite     = 0;
+    m_DispatcherCount     = 0;
+    m_DispatcherJobActive = FALSE;
+    m_DispatcherKilling   = FALSE;
 }
 
 //==============================================================================
 
 io_mgr::~io_mgr( void )
 {
+}
+
+//==============================================================================
+
+xbool io_mgr::PopDispatcherRequest( io_request*& pRequest )
+{
+    xbool HasRequest;
+
+    HasRequest = FALSE;
+    pRequest   = NULL;
+
+    x_BeginAtomic();
+
+    if( m_DispatcherCount > 0 )
+    {
+        pRequest = m_DispatcherRequests[m_DispatcherRead];
+        m_DispatcherRead++;
+        if( m_DispatcherRead >= DISPATCHER_QUEUE_SIZE )
+            m_DispatcherRead = 0;
+        m_DispatcherCount--;
+        HasRequest = TRUE;
+    }
+
+    x_EndAtomic();
+
+    return HasRequest;
+}
+
+//==============================================================================
+
+xbool io_mgr::StartDispatcher( void )
+{
+    if( x_WorkerJobSubmitDetached( io_dispatch_job, this, "IOManager" ) )
+        return TRUE;
+
+    x_BeginAtomic();
+    m_DispatcherJobActive = FALSE;
+    x_EndAtomic();
+
+    return FALSE;
+}
+
+//==============================================================================
+
+xbool io_mgr::QueueDispatcherRequest( io_request* pRequest, xbool IsCompletion )
+{
+    xbool MessageStatus;
+    xbool StartJob;
+
+    ASSERT( pRequest );
+
+    MessageStatus = FALSE;
+    StartJob      = FALSE;
+
+    x_BeginAtomic();
+
+    if( !m_DispatcherKilling || (IsCompletion && m_DispatcherJobActive) )
+    {
+        if( m_DispatcherCount < DISPATCHER_QUEUE_SIZE )
+        {
+            m_DispatcherRequests[m_DispatcherWrite] = pRequest;
+            m_DispatcherWrite++;
+            if( m_DispatcherWrite >= DISPATCHER_QUEUE_SIZE )
+                m_DispatcherWrite = 0;
+            m_DispatcherCount++;
+            MessageStatus = TRUE;
+
+            if( !m_DispatcherJobActive )
+            {
+                m_DispatcherJobActive = TRUE;
+                StartJob = TRUE;
+            }
+        }
+    }
+
+    x_EndAtomic();
+
+    ASSERT( MessageStatus );
+
+    if( StartJob )
+    {
+        MessageStatus = StartDispatcher();
+        ASSERT( MessageStatus );
+    }
+
+    return MessageStatus;
 }
 
 //==============================================================================
@@ -158,11 +270,14 @@ s32 io_mgr::Init( void )
     m_Devices[ IO_DEVICE_HOST ] = &g_IODeviceHost;
     m_Devices[ IO_DEVICE_HOST ]->Init();
 
+    m_DispatcherRead      = 0;
+    m_DispatcherWrite     = 0;
+    m_DispatcherCount     = 0;
+    m_DispatcherJobActive = FALSE;
+    m_DispatcherKilling   = FALSE;
+
     // It's inited.
     s_Initialized = TRUE;
-
-    // Create the io_mgr thread.
-    m_pThread = new xthread( io_dispatcher, "io_mgr dispatcher", 8192, 3 );
 
     // Initialize file system
     g_IOFSMgr.Init();
@@ -176,12 +291,33 @@ s32 io_mgr::Init( void )
 s32 io_mgr::Kill( void )
 {
     s32 i;
+    xbool DispatcherActive;
 
     // Error check.
     ASSERT( s_Initialized );
 
-    // Destroy the io_mgr thread.
-    delete m_pThread;
+    x_BeginAtomic();
+    m_DispatcherKilling = TRUE;
+    x_EndAtomic();
+
+    do
+    {
+        x_BeginAtomic();
+        DispatcherActive = m_DispatcherJobActive;
+        x_EndAtomic();
+
+        if( DispatcherActive )
+            x_DelayThread( 1 );
+    }
+    while( DispatcherActive );
+
+    x_BeginAtomic();
+    ASSERT( m_DispatcherCount == 0 );
+    m_DispatcherRead      = 0;
+    m_DispatcherWrite     = 0;
+    m_DispatcherCount     = 0;
+    m_DispatcherKilling   = FALSE;
+    x_EndAtomic();
 
     // Shut down the file system
     g_IOFSMgr.Kill();
@@ -195,7 +331,6 @@ s32 io_mgr::Kill( void )
 
     // Clear flag
     s_Initialized = FALSE;
-    s_DispatcherActive = FALSE;
 
     // ok its all good.
     return 1;
@@ -250,7 +385,7 @@ s32 io_mgr::QueueRequest( io_request* pRequest )
 #endif
 
     // Queue the request.
-    s32 MessageStatus = GET_DISPATCHER_MQ().Send( pRequest, MQ_NOBLOCK );
+    s32 MessageStatus = QueueDispatcherRequest( pRequest, FALSE );
     ASSERT( MessageStatus );
     (void)MessageStatus;
 

@@ -1,20 +1,21 @@
+#include "Render/PrimitiveDebug.hpp"
 #include "debris_meson_lash.hpp"
-#include "NetworkMgr\Networkmgr.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "..\Objects\Player.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "Tracers\TracerMgr.hpp"
-#include "..\CollisionMgr\CollisionMgr.hpp"
-#include "render\LightMgr.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "Characters\GenericNPC\GenericNPC.hpp"
-#include "Characters\MutantTank\Mutant_Tank.hpp"
-#include "Objects\AlienGlob.hpp"
-#include "Characters\ActorEffects.hpp"
-#include "Objects\Corpse.hpp"
-#include "Characters\Gray\Gray.hpp"
-#include "Objects\AlienShield.hpp"
-#include "Objects\Turret.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "../Objects/Player/Player.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Tracers/TracerMgr.hpp"
+#include "../CollisionMgr/CollisionMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "Characters/GenericNPC/GenericNPC.hpp"
+#include "Characters/MutantTank/Mutant_Tank.hpp"
+#include "Objects/AlienGlob.hpp"
+#include "Characters/ActorEffects.hpp"
+#include "Objects/Corpse.hpp"
+#include "Characters/Gray/Gray.hpp"
+#include "Objects/AlienShield.hpp"
+#include "Objects/Turret.hpp"
 
 #define ENABLE_LOGGING 0
 //#define DEEP_LOGGING 
@@ -621,7 +622,6 @@ void debris_meson_explosion::OnInit              ( void )
     // CharMarks.decalpkg;
 
     m_MaxRadius = MAX( s_TweakMaxRadius.GetF32(), 100.0f );
-    m_Texture.SetName( PRELOAD_FILE("Tracer_Lightning.xbmp") );
     m_hDecalPackage.SetName( PRELOAD_FILE( "BulletHoles.decalpkg" ) );
     
 }
@@ -1109,7 +1109,7 @@ void debris_meson_explosion::SwitchState( explosion_state State )
 
 //=============================================================================
 
-void debris_meson_explosion::OnAdvanceLogic      ( f32 DeltaTime )
+void debris_meson_explosion::OnAdvanceSimulation      ( f32 DeltaTime )
 {
     // Handle total time calculations
     m_TotalTime   += DeltaTime;
@@ -1215,7 +1215,7 @@ void debris_meson_explosion::AdvanceAttackLogic( f32 DeltaTime )
         if ((m_TimeInState < k_MIN_KILLING_STATE_TIME) || (m_iNextTarget < m_nLashTargets))
         {
             if (CreateNewBeam())
-                m_BeamTimer = x_frand( k_MIN_TIME_BETWEEN_BEAMS, k_MAX_TIME_BETWEEN_BEAMS );
+                m_BeamTimer += x_frand( k_MIN_TIME_BETWEEN_BEAMS, k_MAX_TIME_BETWEEN_BEAMS );
         }
     } 
 
@@ -1500,7 +1500,7 @@ void debris_meson_explosion::OnRender            ( void )
             }
 
 
-            draw_Line( Origin, FinalPt );
+            render::debug::Line( Origin, FinalPt );
         }
 
     }
@@ -1513,62 +1513,6 @@ void debris_meson_explosion::OnRender            ( void )
 
 void debris_meson_explosion::OnRenderTransparent ( void )
 {
-    //==-------------------------------
-    // RENDER ARCS
-    //==-------------------------------
-   // s32 i;
-    draw_ClearL2W();
-    /*
-    draw_Begin( DRAW_TRIANGLES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_CULL_NONE | DRAW_USE_GDEPTH );        
-    xbitmap* pBitmap = m_Texture.GetPointer();
-    draw_SetTexture( *pBitmap );
-*/
-    /*
-    for (i=0;i<MAX_IMPACTS;i++)
-    {
-        impact& Imp = m_Impact[i];
-        if (Imp.iArcDest == -1)
-            continue;
-
-        // Don't render if the arc has already been rendered
-        if ((i == m_Impact[ Imp.iArcDest ].iArcDest) && (Imp.iArcDest > m_Impact[ Imp.iArcDest ].iArcDest))
-            continue;
-
-        s32 j;
-        f32 t;
-        f32 Dot = 1.0f - (x_abs(Imp.Normal.Dot( m_Impact[ Imp.iArcDest ].Normal )));
-        Dot = MAX(Dot,0.2f);
-
-        f32 Scale = 150.0f * Dot * Imp.ArcScale;
-        vector3 P0 = Imp.Pt;
-        vector3 P1 = m_Impact[ Imp.iArcDest ].Pt;
-        vector3 N0 = Imp.Normal * Scale;
-        vector3 N1 = m_Impact[ Imp.iArcDest ].Normal * -Scale;
-        vector3 Pt[6];
-
-        Pt[0] = P0;
-        for (j=0,t=0.2f;j<5;j++,t+=0.2f)
-        {
-            Pt[j+1] = GetSplinePos( P0, N0, P1, N1, t );            
-        }
-
-        f32 InitialU = x_frand(0,1);
-
-        draw_OrientedStrand( Pt, 6, vector2(InitialU,0), vector2(InitialU + 0.3f,1), XCOLOR_WHITE, XCOLOR_WHITE, 5 );
-    }
-    draw_End();
-*/
-    /*
-    for (i=0;i<MAX_IMPACTS;i++)
-    {
-        impact& Imp = m_Impact[i];
-        draw_Sphere( Imp.Pt, 5, XCOLOR_RED );
-    }
-    */
-
-//    draw_Sphere( GetPosition(), m_MaxRadius, XCOLOR_RED );
-//    RenderImpacts();
-
     RenderLashes();   
     RenderBeams();
 
@@ -1921,22 +1865,15 @@ void BuildPoints( vector3* pOutPos, s32 nPos, vector3* pSourcePt, vector3* pSour
 
 static f32 LashScale = 1000.0f;
 static f32 LashScale2 = 1.0f;
-static f32 RadiusScale = 2.0f;
 
 void debris_meson_explosion::RenderLashes( void )
 {
-    draw_ClearL2W();
-
     s32 i;
     
     vector3 Pt[3];
     vector3 Nrm[3];
     f32 MidPoint = 0.5f;
 
-    f32 SecondsForSingleTile = 0.5f;
-
-    f32 Ofs = (m_TotalTime - ((s32)(m_TotalTime / SecondsForSingleTile)*SecondsForSingleTile)) / SecondsForSingleTile;
-    Ofs = x_frand(0,1);
     for (i=0;i<MAX_LASHES;i++)
     {
         if (!m_Lash[i].m_bActive)
@@ -2057,12 +1994,6 @@ void debris_meson_explosion::RenderLashes( void )
 
         BuildPoints( Pos, nPoints, Pt, Nrm, 3, T );
         
-        draw_Begin( DRAW_TRIANGLES, DRAW_BLEND_ADD | DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_CULL_NONE | DRAW_USE_GDEPTH );        
-        xbitmap* pBitmap = m_Texture.GetPointer();
-        draw_SetTexture( *pBitmap );
-        draw_OrientedStrand( Pos, nPoints, vector2(Ofs,0), vector2(1+Ofs,1), L.m_Color, L.m_Color, L.m_Size * RadiusScale );
-        draw_End();  
-
         L.m_PainDirection = Pos[nPoints-1] - Pos[nPoints-2];    
         L.m_PainDirection.Normalize();
         L.m_EndPoint = Pos[nPoints-1];
@@ -2187,7 +2118,7 @@ s32 debris_meson_explosion::CreateNewLashes( xbool bNetworkForced )
         L.m_FX.SetScale( vector3(1,1,1) );        
     }
 
-    m_LashSpawnTimer = k_TIME_BETWEEN_LASHES + x_frand(0,0.25f);
+    m_LashSpawnTimer += k_TIME_BETWEEN_LASHES + x_frand(0,0.25f);
 
     CLOG_MESSAGE( ENABLE_LOGGING, "debris_meson_explosion::CreateNewLashes", 
         "Created new lash" );
@@ -2326,14 +2257,6 @@ void debris_meson_explosion::RenderBeams( void )
 {
     s32 i;
 
-    xcolor C1,C2;
-    f32 R1,R2;
-
-    C1 = C2 = k_START_COLOR;
-
-    draw_Begin( DRAW_TRIANGLES, DRAW_BLEND_ADD | DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_CULL_NONE | DRAW_USE_GDEPTH);        
-    xbitmap* pBitmap = m_Texture.GetPointer();
-    draw_SetTexture( *pBitmap );
     vector3 EndPt[ MAX_BEAMS ];
 
     for (i=0;i<MAX_BEAMS;i++)
@@ -2345,30 +2268,6 @@ void debris_meson_explosion::RenderBeams( void )
             // They oscillate around and fade out very quickly
             B.m_ImpactFX.SetSuspended(FALSE);
 
-
-
-
-            f32 T = B.m_Timer / k_BEAM_LIFE_TIME;
-/*
-            if ( T > 0.5f)
-            {
-                if (B.m_ImpactFX.Validate())
-                    B.m_ImpactFX.SetSuspended(FALSE);
-            }
-*/
-            T = 1-x_abs(2*T-1);
-
-            f32 Falloff = x_sin(T * PI / 2);
-            f32 Falloff2 = x_sin(T * (PI / 2) + (PI / 2)) + 1.0f;
-
-            C1.A = (u8)(Falloff * 255);
-            C2.A = (u8)(Falloff2 * 255);
-
-            R1 = 7 * Falloff;
-            R2 = 11 * Falloff;
-
-            //draw_OrientedQuad( m_Origin, m_Beam[i].m_EndPt, vector2(0,0), vector2(4,1), C1, C2, R1, R2 );
-    
             vector3 Pos[k_MAX_BEAM_POINTS];
             vector3 SrcPt[3];
             vector3 SrcNrm[3];
@@ -2401,26 +2300,18 @@ void debris_meson_explosion::RenderBeams( void )
             SrcNrm[2].RotateY( SwimX );
             SrcNrm[2].RotateX( SwimY );
 
-            T = 1.0f;
-
-            BuildPoints( Pos, k_MAX_BEAM_POINTS, SrcPt, SrcNrm, 3, T );
+            BuildPoints( Pos, k_MAX_BEAM_POINTS, SrcPt, SrcNrm, 3, 1.0f );
 
             EndPt[ i ] = Pos[k_MAX_BEAM_POINTS-1];
             ASSERT( EndPt[i].IsValid() );
             if (!EndPt[i].IsValid())
                 EndPt[i] = m_Origin;
-            //C1.A = 255;
-            
-            draw_OrientedStrand( Pos, k_MAX_BEAM_POINTS, vector2(0,0), vector2(1,1), C1,C1, s_LashSizes[ LASH_EXTEND ] * RadiusScale );
-            
         }
         else
         {
             EndPt[i] = m_Origin;
         }
     }
-    draw_End();
-
     for (i=0;i<MAX_BEAMS;i++)
     {
         if (m_Beam[i].m_ImpactFX.Validate())

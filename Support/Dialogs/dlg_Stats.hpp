@@ -11,9 +11,9 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
 
 //==============================================================================
 //  dlg_stats
@@ -41,7 +41,7 @@ public:
 
     virtual void        Render                  ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadBack               ( ui_win* pWin );
+    virtual void        OnCancel               ( ui_win* pWin );
     virtual void        OnUpdate                ( ui_win* pWin, f32 DeltaTime );
 
     void                EnableBlackout          ( void )                    { m_bRenderBlackout = TRUE; }
@@ -75,7 +75,6 @@ protected:
     ui_text*            m_pTextVotes;
 #endif
 
-    ui_text*            m_pNavText;
     s32                 m_CurrHL;
     xbool               m_bRenderBlackout;	
 };

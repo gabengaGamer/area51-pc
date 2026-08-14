@@ -3,18 +3,19 @@
 //  
 //
 //=============================================================================
-#include "nav_map.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Nav_Map.hpp"
 #include "ng_node2.hpp"
 #include "ng_connection2.hpp"
 #include "Entropy.hpp"
 #include "../../MiscUtils/SimpleUtils.hpp"
-#include "..\MiscUtils\PriorityQueue.hpp"
-#include "AI\AIMgr.hpp"
+#include "../MiscUtils/PriorityQueue.hpp"
+#include "AI/AIMgr.hpp"
 #include "Objects/Actor/Actor.hpp"
 #include "Characters/Character.hpp"
 
 #ifdef X_EDITOR
-#include "..\..\Apps\WorldEditor\nav_connection2_editor.hpp"
+#include "../../Apps/WorldEditor/nav_connection2_editor.hpp"
 #endif // X_EDITOR
 nav_map g_NavMap;
 
@@ -81,338 +82,107 @@ void path_find_struct::Clear( void )
 
 #ifndef X_RETAIL
 
-void draw_Connection( ng_connection2& Con, s32 i, const vector3& Offset, xcolor Color )
+void RenderNavigationConnection( ng_connection2& Connection, s32 index, const vector3& offset, xcolor color )
 {
-    // Get corner pts
-    vector3 P[4];
-    Con.GetCorners( P );
+    vector3 positions[4];
+    Connection.GetCorners( positions );
+    xcolor colors[4] = { color, color, color, color };
+    vector2 uvs[4] = { vector2( 0.0f, 0.0f ), vector2( 0.0f, 0.0f ),
+                       vector2( 0.0f, 0.0f ), vector2( 0.0f, 0.0f ) };
+    for( s32 i = 0; i < 4; ++i )
+        positions[i] += offset;
 
-    // Draw interior
-    draw_Begin( DRAW_QUADS, DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
-    draw_Color( Color );
-    draw_Vertex( P[0] + Offset );
-    draw_Vertex( P[1] + Offset );
-    draw_Vertex( P[2] + Offset );
-    draw_Vertex( P[3] + Offset );
-    draw_End();
+    const render::primitive_draw_desc Material( NULL,
+                                                render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                render::PRIMITIVE_BLEND_ALPHA,
+                                                render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch Batch( Material );
+    Batch.AddQuad( positions, uvs, colors );
+    matrix4 Identity;
+    Identity.Identity();
+    Batch.Submit( Identity );
 
-    // Draw edges
-    draw_Begin( DRAW_LINE_STRIPS, DRAW_CULL_NONE | DRAW_NO_ZWRITE );
-    draw_Color( XCOLOR_WHITE );
-    draw_Vertex( P[0] + Offset );
-    draw_Vertex( P[1] + Offset );
-    draw_Vertex( P[2] + Offset );
-    draw_Vertex( P[3] + Offset );
-    draw_Vertex( P[0] + Offset );
-    draw_End();
+    for( s32 i = 0; i < 4; ++i )
+        render::debug::Line( positions[i], positions[( i + 1 ) & 3], XCOLOR_WHITE );
 
-    // Draw #
-    draw_Label( ( ( P[0] + P[1] + P[2] + P[3] ) * 0.25f ) + Offset, XCOLOR_WHITE, "%d", i );
+    render::debug::Label( ( positions[0] + positions[1] + positions[2] + positions[3] ) * 0.25f,
+                          XCOLOR_WHITE, "%d", index );
 }
 
-//=========================================================================
-// DEBUG RENDER ANIMATION FUNCTIONS
-//=========================================================================
+void RenderNavigationPolygon( const void* pPositions, s32 positionCount, s32 positionStride, xcolor color )
+{
+    if( !pPositions || positionCount < 3 || positionStride < (s32)sizeof( vector3p ) )
+        return;
+
+    const render::primitive_draw_desc Material( NULL,
+                                                render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                render::PRIMITIVE_BLEND_ALPHA,
+                                                render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch Batch( Material );
+    Batch.Reserve( ( positionCount - 2 ) * 3, ( positionCount - 2 ) * 3 );
+    const byte* pPositionBytes = (const byte*)pPositions;
+    const vector3 Position0 = *(const vector3p*)pPositionBytes;
+    for( s32 i = 1; i < positionCount - 1; ++i )
+    {
+        const vector3 Position1 = *(const vector3p*)( pPositionBytes + i * positionStride );
+        const vector3 Position2 = *(const vector3p*)( pPositionBytes + ( i + 1 ) * positionStride );
+        Batch.AddTriangle( render::primitive_vertex( Position0, vector2( 0.0f, 0.0f ), color ),
+                           render::primitive_vertex( Position1, vector2( 0.0f, 0.0f ), color ),
+                           render::primitive_vertex( Position2, vector2( 0.0f, 0.0f ), color ) );
+    }
+    matrix4 Identity;
+    Identity.Identity();
+    Batch.Submit( Identity );
+}
 
 #ifdef X_EDITOR
-
-void navRenderFullScreenQuad( void )
+void RenderNavigationFrustum( const vector3* positions )
 {
-    const view* pView = eng_GetView();
-    matrix4 L2W;
-    L2W.Identity();
-    L2W.Scale( vector3(1000,1000,50) );
-    L2W.RotateX( pView->GetViewZ().GetPitch() );
-    L2W.RotateY( pView->GetViewZ().GetYaw() );
-    L2W.Translate( pView->GetPosition() );
-    draw_SetL2W(L2W);
-    draw_Vertex(+1,+1,1);
-    draw_Vertex(+1,-1,1);
-    draw_Vertex(-1,+1,1);
-    draw_Vertex(-1,+1,1);
-    draw_Vertex(+1,-1,1);
-    draw_Vertex(-1,-1,1);
-    draw_End();
-    draw_ClearL2W();
-}
-
-void navPrepD3DForStencil( void )
-{
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
-    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
-    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
-	//
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_REPLACE  );
-	//
-    //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
-    //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
-    //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
-}
-
-void navPrepD3DForIncreStencil( void )
-{
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
-    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
-    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
-	//
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_INCR );
-	//
-    //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
-    //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
-    //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
-}
-
-void navPrepD3DForDecreStencil( void )
-{
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,   D3DTOP_SELECTARG1  );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE      );
-    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,   D3DTOP_DISABLE     );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG1  );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE      );
-    //g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,   D3DTOP_DISABLE     );
-	//
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  TRUE );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,    D3DCMP_ALWAYS );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILMASK,    0xFFFFFFFF );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILFAIL,    D3DSTENCILOP_KEEP );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILZFAIL,   D3DSTENCILOP_KEEP );
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILPASS,    D3DSTENCILOP_DECR );
-	//
-    //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0 );
-    //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_ALPHATESTENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,         D3DBLEND_ONE );
-    //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,        D3DBLEND_ZERO );
-}
-
-void navDoFinalStencil()
-{
-    // Darken outside of frustum
+    static const u16 EdgeIndices[24] =
     {
-        draw_Begin( DRAW_TRIANGLES );
-        draw_Color(xcolor(64,64,64,255));
-
-        navPrepD3DForStencil();
-        //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
-        //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
-        //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
-        //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0 );
-        //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
-        //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ZERO );
-        //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_SRCCOLOR );
-        //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
-
-        navRenderFullScreenQuad();
-    }
-
-    // Illuminate inside of frustum
-    {
-        draw_Begin( DRAW_TRIANGLES );
-        draw_Color(xcolor(45,45,45,255));
-
-        navPrepD3DForStencil();
-        //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE,       FALSE );
-        //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE,   0x0F );
-        //g_pd3dDevice->SetRenderState( D3DRS_STENCILFUNC,        D3DCMP_EQUAL );
-        //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,         0xFFFFFFFF );
-        //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
-        //g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_ONE );
-        //g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_ONE );
-        //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE,           D3DCULL_CW );
-
-        navRenderFullScreenQuad();
-    }
-
-    //g_pd3dDevice->SetRenderState( D3DRS_STENCILENABLE,  FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_ZWRITEENABLE, TRUE );
-    //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
-    //g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE, FALSE );
-    //g_pd3dDevice->SetRenderState( D3DRS_COLORWRITEENABLE, 0x0F );
+        0, 1, 1, 3, 3, 2, 2, 0,
+        4, 5, 5, 7, 7, 6, 6, 4,
+        0, 4, 1, 5, 2, 6, 3, 7
+    };
+    for( s32 i = 0; i < ARRAYSIZE( EdgeIndices ); i += 2 )
+        render::debug::Line( positions[EdgeIndices[i]], positions[EdgeIndices[i + 1]], XCOLOR_WHITE );
 }
-
-
-void navRenderFrustum( const vector3* VertexList, xbool bInside )
-{
-    s16     IndexList[] = {0,4,1, 1,4,5, 
-                           1,5,3, 3,5,7, 
-                           3,7,2, 2,7,6, 
-                           2,6,0, 0,6,4,
-                           0,1,3, 0,3,2, 
-                           4,6,7, 4,7,5 };
-
-    // Render Front
-    {
-        draw_Begin( DRAW_TRIANGLES );
-        draw_Color(xcolor(64,64,64,0));
-        navPrepD3DForIncreStencil();
-//        g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x00000001 );
-        //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
-        draw_Verts( VertexList, 8 );
-        draw_Execute( IndexList, sizeof(IndexList)/sizeof(s16) );
-        draw_End();
-    }
-
-    // Clear Back
-    {
-        draw_Begin( DRAW_TRIANGLES );
-        draw_Color(xcolor(0,0,0,0));
-        navPrepD3DForDecreStencil();
-//        g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0xFFFFFFFF );
-        //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
-        draw_Verts( VertexList, 8 );
-        draw_Execute( IndexList, sizeof(IndexList)/sizeof(s16) );
-        draw_End();
-    }
-}
-
-// Draws a lit quad
-void navdraw_LitQuad( const vector3& A, 
-                  const vector3& B, 
-                  const vector3& C, 
-                  const vector3& D,
-                  const vector3& LightDir,
-                  f32      LightDirI,
-                  f32      LightAmbI,
-                  xcolor   LightColor ) 
-{
-    // Compute lighting
-    vector3 N  = (A - C).Cross(B - A) ;
-    N.Normalize() ;
-    f32 Dot = N.Dot(LightDir) * LightDirI ;
-    if (Dot < 0)
-        Dot = 0 ;
-    Dot += LightAmbI ;
-    if (Dot > 1)
-        Dot = 1 ;
-
-    // Compute color
-    LightColor.R = (u8)((f32)LightColor.R * Dot) ;
-    LightColor.G = (u8)((f32)LightColor.G * Dot) ;
-    LightColor.B = (u8)((f32)LightColor.B * Dot) ;
-
-    // Draw quad
-    draw_Color( LightColor );
-    draw_Vertex(D) ;
-    draw_Vertex(C) ;
-    draw_Vertex(B) ;
-    draw_Vertex(A) ;
-}
-
-//===========================================================================
 
 void nav_map::RenderConnectionsBright()
 {
-#ifdef X_EDITOR
-    if( g_AIMgr.GetRenderConnectionsBright() )
+    if( !g_AIMgr.GetRenderConnectionsBright() )
+        return;
+
+    slot_id slot = g_ObjMgr.GetFirst( object::TYPE_NAV_CONNECTION2_EDITOR );
+    while( slot != SLOT_NULL )
     {
-        // Clear stencil buffer
+        object* pObject = g_ObjMgr.GetObjectBySlot( slot );
+        if( pObject && pObject->IsKindOf( nav_connection2_editor::GetRTTI() ) )
         {
-            draw_Begin( DRAW_TRIANGLES );
-            draw_Color(xcolor(64,64,64,0));
-            navPrepD3DForStencil();
-            //g_pd3dDevice->SetRenderState( D3DRS_STENCILREF,     0x0 );
-            //g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CW );
-            navRenderFullScreenQuad();
-        }
-
-        // loop through each connection.
-        slot_id iSlot = g_ObjMgr.GetFirst( object::TYPE_NAV_CONNECTION2_EDITOR );
-        while( SLOT_NULL != iSlot )
-        {
-            object* pObj = g_ObjMgr.GetObjectBySlot( iSlot );
-            if( pObj &&
-                pObj->IsKindOf(nav_connection2_editor::GetRTTI()) )
+            nav_connection2_editor& Connection = nav_connection2_editor::GetSafeType( *pObject );
+            if( g_ObjMgr.IsBoxInView( Connection.GetBBox(), XBIN(111111) ) != -1 )
             {
-                nav_connection2_editor& navConnection = nav_connection2_editor::GetSafeType( *pObj );
-                s32 InView = g_ObjMgr.IsBoxInView( navConnection.GetBBox(), XBIN(111111) );
-                if( InView != -1 )
-                {
-                    // render each visible connection.
-                    vector3 *renderCorners = navConnection.GetRenderCorners(); 
-                    vector3 navCorners[8];
-                    // top up
-                    navCorners[2].Set(renderCorners[2].GetX(),renderCorners[2].GetY()+k_NavYIncrease,renderCorners[2].GetZ());
-                    navCorners[3].Set(renderCorners[3].GetX(),renderCorners[3].GetY()+k_NavYIncrease,renderCorners[3].GetZ());
-                    navCorners[6].Set(renderCorners[6].GetX(),renderCorners[6].GetY()+k_NavYIncrease,renderCorners[6].GetZ());
-                    navCorners[7].Set(renderCorners[7].GetX(),renderCorners[7].GetY()+k_NavYIncrease,renderCorners[7].GetZ());
-                    // bottom down
-                    navCorners[0].Set(renderCorners[0].GetX(),renderCorners[0].GetY()-k_NavYDecrease,renderCorners[0].GetZ());
-                    navCorners[1].Set(renderCorners[1].GetX(),renderCorners[1].GetY()-k_NavYDecrease,renderCorners[1].GetZ());
-                    navCorners[4].Set(renderCorners[4].GetX(),renderCorners[4].GetY()-k_NavYDecrease,renderCorners[4].GetZ());
-                    navCorners[5].Set(renderCorners[5].GetX(),renderCorners[5].GetY()-k_NavYDecrease,renderCorners[5].GetZ());
-                    navRenderFrustum(navCorners,FALSE);
-                }
+                vector3* pCorners = Connection.GetRenderCorners();
+                vector3 frustumCorners[8];
+                frustumCorners[2] = pCorners[2] + vector3( 0.0f, k_NavYIncrease, 0.0f );
+                frustumCorners[3] = pCorners[3] + vector3( 0.0f, k_NavYIncrease, 0.0f );
+                frustumCorners[6] = pCorners[6] + vector3( 0.0f, k_NavYIncrease, 0.0f );
+                frustumCorners[7] = pCorners[7] + vector3( 0.0f, k_NavYIncrease, 0.0f );
+                frustumCorners[0] = pCorners[0] - vector3( 0.0f, k_NavYDecrease, 0.0f );
+                frustumCorners[1] = pCorners[1] - vector3( 0.0f, k_NavYDecrease, 0.0f );
+                frustumCorners[4] = pCorners[4] - vector3( 0.0f, k_NavYDecrease, 0.0f );
+                frustumCorners[5] = pCorners[5] - vector3( 0.0f, k_NavYDecrease, 0.0f );
+                RenderNavigationFrustum( frustumCorners );
             }
-            iSlot = g_ObjMgr.GetNext( iSlot );
         }
-        // do the final stuff.
-        navDoFinalStencil();
+        slot = g_ObjMgr.GetNext( slot );
     }
-#endif
-}
-
-//=========================================================================
-
-// Draws a solid, lit, bbox
-void navdraw_LitSolidBBox( const bbox&    BBox,
-                       const matrix4& L2W,
-                       const vector3& WorldLightDir,
-                       f32      LightDirI,
-                       f32      LightAmbI,
-                       xcolor   LightColor )
-{
-    // Compute corner points in local space
-    vector3 P[8];
-    P[0].GetX() = BBox.Min.GetX();    P[0].GetY() = BBox.Min.GetY();    P[0].GetZ() = BBox.Min.GetZ(); 
-    P[1].GetX() = BBox.Min.GetX();    P[1].GetY() = BBox.Min.GetY();    P[1].GetZ() = BBox.Max.GetZ(); 
-    P[2].GetX() = BBox.Min.GetX();    P[2].GetY() = BBox.Max.GetY();    P[2].GetZ() = BBox.Min.GetZ(); 
-    P[3].GetX() = BBox.Min.GetX();    P[3].GetY() = BBox.Max.GetY();    P[3].GetZ() = BBox.Max.GetZ(); 
-    P[4].GetX() = BBox.Max.GetX();    P[4].GetY() = BBox.Min.GetY();    P[4].GetZ() = BBox.Min.GetZ(); 
-    P[5].GetX() = BBox.Max.GetX();    P[5].GetY() = BBox.Min.GetY();    P[5].GetZ() = BBox.Max.GetZ(); 
-    P[6].GetX() = BBox.Max.GetX();    P[6].GetY() = BBox.Max.GetY();    P[6].GetZ() = BBox.Min.GetZ(); 
-    P[7].GetX() = BBox.Max.GetX();    P[7].GetY() = BBox.Max.GetY();    P[7].GetZ() = BBox.Max.GetZ(); 
-
-    // Setup light direction in local space
-    matrix4 W2L ;
-    W2L = L2W ;
-    W2L.InvertSRT() ;
-    vector3 LightDir = W2L.RotateVector(WorldLightDir) ;
-    LightDir.Normalize() ;
-
-    // Draw bbox
-    draw_SetL2W(L2W) ;
-    draw_Begin( DRAW_QUADS, (LightColor.A == 255) ? 0 : DRAW_USE_ALPHA );
-    navdraw_LitQuad(P[0], P[2], P[6], P[4], LightDir, LightDirI, LightAmbI, LightColor) ; // F
-    navdraw_LitQuad(P[1], P[5], P[7], P[3], LightDir, LightDirI, LightAmbI, LightColor) ; // B
-    navdraw_LitQuad(P[4], P[6], P[7], P[5], LightDir, LightDirI, LightAmbI, LightColor) ; // R
-    navdraw_LitQuad(P[0], P[1], P[3], P[2], LightDir, LightDirI, LightAmbI, LightColor) ; // L
-    navdraw_LitQuad(P[2], P[3], P[7], P[6], LightDir, LightDirI, LightAmbI, LightColor) ; // T
-    navdraw_LitQuad(P[0], P[4], P[5], P[1], LightDir, LightDirI, LightAmbI, LightColor) ; // B
-    draw_End();
-    draw_ClearL2W() ;
 }
 #endif
 //===========================================================================
@@ -422,17 +192,16 @@ void path_find_struct::RenderPath( f32 Radius )
     s32 i;
     
     // Draw start and end labels
-    draw_ClearL2W();
-    draw_Label( m_vStartPoint, XCOLOR_WHITE, "Start" );
-    draw_Label( m_vEndPoint,   XCOLOR_WHITE, "End" );
+    render::debug::Label( m_vStartPoint, XCOLOR_WHITE, "Start" );
+    render::debug::Label( m_vEndPoint,   XCOLOR_WHITE, "End" );
 
     // Draw straight line info
     vector3 Offset;
     Offset.Set( 0.0f, 30.0f, 0.0f );
-    draw_Sphere( m_ClipLineStart + Offset, 10.0f, XCOLOR_GREEN );
-    draw_Sphere( m_ClipLineEnd   + Offset, 10.0f, XCOLOR_BLUE );
-    draw_Line  ( m_ClipLineStart + Offset, m_ClipLineEnd + Offset, XCOLOR_RED );
-    draw_Label ( m_ClipLineStart + Offset, XCOLOR_WHITE, "ClipLineCalls:%d", m_nClipLineConnections );
+    render::debug::Sphere( m_ClipLineStart + Offset, 10.0f, XCOLOR_GREEN );
+    render::debug::Sphere( m_ClipLineEnd   + Offset, 10.0f, XCOLOR_BLUE );
+    render::debug::Line  ( m_ClipLineStart + Offset, m_ClipLineEnd + Offset, XCOLOR_RED );
+    render::debug::Label ( m_ClipLineStart + Offset, XCOLOR_WHITE, "ClipLineCalls:%d", m_nClipLineConnections );
 
     // Straight line?
     Offset.Set( 0.0f, 25.0f, 0.0f );
@@ -440,15 +209,15 @@ void path_find_struct::RenderPath( f32 Radius )
     {
         // Draw connections
         if( m_StepData[0].m_CurrentConnection != NULL_NAV_SLOT )
-            draw_Connection( g_NavMap.GetConnectionByID( m_StepData[0].m_CurrentConnection ), 0, Offset, xcolor( 255, 0, 255, 128) );
+            RenderNavigationConnection( g_NavMap.GetConnectionByID( m_StepData[0].m_CurrentConnection ), 0, Offset, xcolor( 255, 0, 255, 128) );
         
         if( m_StepData[0].m_DestConnection != NULL_NAV_SLOT )
-            draw_Connection( g_NavMap.GetConnectionByID( m_StepData[0].m_DestConnection ), 0, Offset, xcolor( 255, 0, 255, 128) );
+            RenderNavigationConnection( g_NavMap.GetConnectionByID( m_StepData[0].m_DestConnection ), 0, Offset, xcolor( 255, 0, 255, 128) );
 
         // Draw path
-        draw_Line( m_vStartPoint, m_vEndPoint, XCOLOR_GREEN );
-        draw_Sphere( m_vStartPoint, Radius, XCOLOR_YELLOW );
-        draw_Sphere( m_vEndPoint,   Radius, XCOLOR_YELLOW );
+        render::debug::Line( m_vStartPoint, m_vEndPoint, XCOLOR_GREEN );
+        render::debug::Sphere( m_vStartPoint, Radius, XCOLOR_YELLOW );
+        render::debug::Sphere( m_vEndPoint,   Radius, XCOLOR_YELLOW );
         return;
     }
 
@@ -460,16 +229,16 @@ void path_find_struct::RenderPath( f32 Radius )
 
         // Draw it        
         if( i == 0 )
-            draw_Connection( Con, i, Offset, xcolor( 255, 250, 0, 128) );
+            RenderNavigationConnection( Con, i, Offset, xcolor( 255, 250, 0, 128) );
         else if( i == ( m_nSteps - 1 ) )            
-            draw_Connection( Con, i, Offset, xcolor( 255, 250, 0, 128 ) );
+            RenderNavigationConnection( Con, i, Offset, xcolor( 255, 250, 0, 128 ) );
         else            
-            draw_Connection( Con, i, Offset, xcolor( 0, 255, 0, 128 ) );
+            RenderNavigationConnection( Con, i, Offset, xcolor( 0, 255, 0, 128 ) );
     }
 
     // Render path pts
     vector3 MyPos = m_vStartPoint;
-    draw_Sphere( MyPos, Radius, XCOLOR_GREEN );
+    render::debug::Sphere( MyPos, Radius, XCOLOR_GREEN );
     for( i = 0; i < m_nSteps; i++ )
     {
         vector3 vMoveTo;
@@ -491,16 +260,16 @@ void path_find_struct::RenderPath( f32 Radius )
             Radius,
             vMoveTo );
 
-        draw_Line  (MyPos,vMoveTo,XCOLOR_GREEN);
-        draw_Marker( vMoveTo, XCOLOR_GREEN );
-        draw_Label ( vMoveTo, XCOLOR_BLUE, "%d", i );
+        render::debug::Line  (MyPos,vMoveTo,XCOLOR_GREEN);
+        render::debug::Marker( vMoveTo, XCOLOR_GREEN );
+        render::debug::Label ( vMoveTo, XCOLOR_BLUE, "%d", i );
 
         MyPos = vMoveTo;
     }
 
     // Draw start and end pts
-    draw_Sphere( m_vStartPoint, Radius, XCOLOR_YELLOW );
-    draw_Sphere( m_vEndPoint,   Radius, XCOLOR_YELLOW );
+    render::debug::Sphere( m_vStartPoint, Radius, XCOLOR_YELLOW );
+    render::debug::Sphere( m_vEndPoint,   Radius, XCOLOR_YELLOW );
 }
 
 #endif
@@ -739,7 +508,7 @@ nav_map::connection2_connectivity_data&  nav_map::GetConnectivityData( s32 iConn
 //=============================================================================
 nav_node_slot_id nav_map::GetNearestNode( const vector3 &ThisPoint )
 {
-    CONTEXT("nav_map::GetNearestNode") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "nav_map::GetNearestNode") ;
 
     // until we have zone info, just using the slowest version possible.
     // just walk through the nodes and check lengths
@@ -785,7 +554,7 @@ nav_node_slot_id nav_map::GetNearestNode( const vector3 &ThisPoint )
 //=============================================================================
 nav_node_slot_id nav_map::GetNearestWithIgnore(const vector3& Position, nav_node_slot_id* pNavNodes, s32 nNodes )
 {
-    CONTEXT("nav_map::GetNearestWithIgnore");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "nav_map::GetNearestWithIgnore");
 
     f32                 fBestDistSquared = F32_MAX;
     nav_node_slot_id    iNearest         = NULL_NAV_SLOT;
@@ -858,7 +627,7 @@ xbool nav_map::IsPatrolNode( nav_node_slot_id NodeId )
 //=============================================================================
 nav_node_slot_id nav_map::GetNearestPatrolNode( const vector3 &thisPoint )
 {
-    CONTEXT("nav_map::GetNearestPatrolNode") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "nav_map::GetNearestPatrolNode") ;
 
     // until we have zone info, just using the slowest version possible.
     // just walk through the nodes and check lengths
@@ -1533,73 +1302,6 @@ void nav_map::SetData( void )
     }
 }
 
-//=============================================================================
-/*
-void nav_map::RenderExportedMap( void )
-{
-#ifdef TARGET_PC
-    ASSERT( m_bIsLoaded ) ;
-//	RenderAllNodes() ;
-	RenderAllConnections() ;
-#endif
-}
-*/
-//=============================================================================
-/*
-void nav_map::RenderAllNodes( void )
-{
-    for ( s32 i = 0; i < m_NodeCount; i++ )
-    {
-        vector3 vPos = m_NodeData[i].m_Position ;
-        draw_Sphere( vPos, 10.f, XCOLOR_AQUA ) ;
-    }
-}
-*/
-//=============================================================================
-/*
-void nav_map::RenderAllConnections( void )
-{
-    
-    xcolor  CurrentColor( 0, 0, 0, 150 ) ;
-
-    for( s32 i = 0; i < m_ConnectionCount; i++ )
-    {
-        ng_node& N0 = GetNodeByID( m_ConnectionData[i].m_Node[0] ) ;
-        ng_node& N1 = GetNodeByID( m_ConnectionData[i].m_Node[1] ) ;
-
-        u8 GridID = N1.GetGridID() ;
-
-        s32 ColorDeterminer = GridID % 3 ;
-        s32 IntensityDeterminer = 255;
-
-        switch( ColorDeterminer )
-        {
-            case 0:
-                CurrentColor.R += IntensityDeterminer ;
-                break ;
-
-            case 1:
-                CurrentColor.G += IntensityDeterminer ;
-                break ;
-        
-            case 2:
-                CurrentColor.B += IntensityDeterminer ;
-                break ;
-        
-            default:
-                break ;
-        }
-
-
-
-        vector3 P1 = N0.GetPosition() ;
-        vector3 P2 = N1.GetPosition() ;
-
-        draw_Volume( P1, P2, m_ConnectionData[i].m_Width, 1.f, CurrentColor ) ;
-    }
-}
-*/
-
 //===========================================================================
 
 xbool nav_map::IsPointInGrid( const vector3& testPoint, u8 testGrid )
@@ -1685,7 +1387,7 @@ void nav_map::RenderNavigationSpine( void )
     {
         ng_connection2& Conn = g_NavMap.GetConnectionByID( i );
         
-        draw_Line( m_pConnectionData[i].m_StartPt + vector3(0,50,0), 
+        render::debug::Line( m_pConnectionData[i].m_StartPt + vector3(0,50,0), 
                    m_pConnectionData[i].m_EndPt   + vector3(0,50,0), 
                    XCOLOR_PURPLE );
 
@@ -1694,7 +1396,7 @@ void nav_map::RenderNavigationSpine( void )
         Center.Scale(0.5f);
         
         if (g_AIMgr.GetShowConnectionIDs())
-            draw_Label( Center, XCOLOR_YELLOW, "ID:%d",i);
+            render::debug::Label( Center, XCOLOR_YELLOW, "ID:%d",i);
 
         for (j=0;j<Conn.GetOverlapCount();j++)
         {
@@ -1727,7 +1429,7 @@ void nav_map::RenderNavigationSpine( void )
                 N = A + Dir;
             }
 
-            draw_Line( Pt, N, XCOLOR_RED );
+            render::debug::Line( Pt, N, XCOLOR_RED );
         }
     }
 
@@ -1745,20 +1447,13 @@ void nav_map::RenderNavigationSpine( void )
             if (Flags & overlap_vert::FLAG_OUTSIDE)
                 Clr = XCOLOR_RED;
 
-            draw_Sphere( m_pOverlapVerts[ OD.m_iFirstOverlapPt + j ].m_Pos, 10, Clr );
+            render::debug::Sphere( m_pOverlapVerts[ OD.m_iFirstOverlapPt + j ].m_Pos, 10, Clr );
         }
 
-        draw_Sphere( OD.m_Center, 10, XCOLOR_GREEN);
+        render::debug::Sphere( OD.m_Center, 10, XCOLOR_GREEN);
 
-        draw_Begin( DRAW_TRIANGLES, DRAW_USE_ALPHA | DRAW_CULL_NONE);
-        draw_Color(255,0,40,128);
-        for (j=0;j<OD.m_nOverlapPts-1;j++)
-        {
-            draw_Vertex( m_pOverlapVerts[ OD.m_iFirstOverlapPt + 0 ].m_Pos );
-            draw_Vertex( m_pOverlapVerts[ OD.m_iFirstOverlapPt + j ].m_Pos );
-            draw_Vertex( m_pOverlapVerts[ OD.m_iFirstOverlapPt + j+1 ].m_Pos );
-        }
-        draw_End();
+        RenderNavigationPolygon( &m_pOverlapVerts[OD.m_iFirstOverlapPt].m_Pos,
+                                 OD.m_nOverlapPts, sizeof( overlap_vert ), xcolor( 255, 0, 40, 128 ) );
     }
 }
 
@@ -1978,15 +1673,6 @@ vector3 nav_map::GetClosestPointToLine( nav_map::overlap_vert* pVerts, s32 nVert
             }
         }
     }
-/*
-#if (defined TARGET_PC) && (defined shird)
-    if( eng_Begin() )
-    {
-        draw_Line( vStart, vClosestPoint );
-        eng_End();
-    }
-#endif
-    */
     return vClosestPoint;
 }
 
@@ -1998,78 +1684,7 @@ struct FindConnStruct
     nav_node_slot_id        nodeID;
 };
 
-/*
-nav_node_slot_id nav_map::FindOverlapAtDistanceFromPoint(   f32 desiredDistance, 
-                                                            vector3 fleeFromLocation, 
-                                                            vector3 startLocation,
-                                                            nav_connection_slot_id startConnection )
-{    
-    priority_queue<FindConnStruct,f32,64> connectionQueue;
-
-    FindConnStruct firstStruct;
-    firstStruct.connectionID    = startConnection;
-    firstStruct.nodeID          = NULL_NAV_SLOT;
-
-    connectionQueue.Push( firstStruct, -1.0f );
-
-    nav_connection_slot_id  currentConnID   = NULL_NAV_SLOT;
-    nav_node_slot_id        currentNodeID   = NULL_NAV_SLOT;
-    nav_node_slot_id        finalNodeID     = NULL_NAV_SLOT;   
-
-    while(finalNodeID == NULL_NAV_SLOT && !connectionQueue.IsEmpty() )
-    {
-        // get the best connection and pop it off.
-        FindConnStruct currentFindConnStruct = connectionQueue.Pop();
-        currentConnID = currentFindConnStruct.connectionID;
-        currentNodeID = currentFindConnStruct.nodeID;
-        
-        ng_connection2 currentConnection = g_NavMap.GetConnectionByID( currentConnID );
-
-        f32 currentNodeToTargetDist = 0.0f;
-        if( currentNodeID != NULL_NAV_SLOT )
-        {
-            ng_node2 currentNode = g_NavMap.GetNodeByID( currentNodeID );
-            currentNodeToTargetDist = ( fleeFromLocation - currentNode.GetPosition() ).LengthSquared();
-        }
-
-        s32 c;
-        for(c=0;c<currentConnection.GetOverlapCount();c++)
-        {
-            nav_node_slot_id nextNodeID = currentConnection.GetOverlapNodeID( c );
-            if( nextNodeID == NULL_NAV_SLOT || nextNodeID == currentNodeID )
-            {
-                continue;
-            }
-            ng_node2 nextNode = g_NavMap.GetNodeByID( nextNodeID );
-            f32 nextNodeToTargetDistance = ( fleeFromLocation - nextNode.GetPosition()).LengthSquared();
-            if( nextNodeToTargetDistance <= currentNodeToTargetDist )
-            {
-                continue;
-            }
-            // first check to see if we have achieved our goal.
-            if( nextNodeToTargetDistance >= desiredDistance * desiredDistance )
-            {
-                finalNodeID = nextNodeID;
-            }
-            else
-            {            
-                vector3 toTarget    = fleeFromLocation - startLocation;
-                vector3 toNextNode  = nextNode.GetPosition() - startLocation;
-                toTarget.Normalize();
-                toNextNode.Normalize();
-
-                f32 nextNodeDot = toTarget.Dot(toNextNode);
-                FindConnStruct nextConnStruct;
-                nextConnStruct.connectionID = nextNode.GetOtherConnectionID( currentConnID );
-                nextConnStruct.nodeID = nextNodeID;
-                connectionQueue.Push(nextConnStruct,-nextNodeDot);
-            }
-        }
-    }
-    return finalNodeID;
-}
-*/
-
+//===========================================================================
 
 nav_node_slot_id nav_map::FindOverlapAtDistanceFromPoint(   f32 desiredDistance, 
                                                             const vector3& fleeFromLocation, 
@@ -2834,7 +2449,7 @@ void nav_map::RenderNavNearView( void )
             continue;
         }
 
-        draw_Line( m_pConnectionData[i].m_StartPt + vector3(0,50,0), 
+        render::debug::Line( m_pConnectionData[i].m_StartPt + vector3(0,50,0), 
             m_pConnectionData[i].m_EndPt   + vector3(0,50,0), 
             XCOLOR_PURPLE );
 
@@ -2849,23 +2464,13 @@ void nav_map::RenderNavNearView( void )
         Corner[2] = m_pConnectionData[i].m_EndPt   - Side + vector3(0,25,0);
         Corner[3] = m_pConnectionData[i].m_StartPt - Side + vector3(0,25,0);
 
-        draw_Begin( DRAW_TRIANGLES, DRAW_CULL_NONE | DRAW_USE_ALPHA );
-        draw_ClearL2W();
-        draw_Color(0,0,0.5,0.5);
-        draw_Vertex( Corner[0] );
-        draw_Vertex( Corner[1] );
-        draw_Vertex( Corner[2] );
-
-        draw_Vertex( Corner[0] );
-        draw_Vertex( Corner[2] );
-        draw_Vertex( Corner[3] );
-        draw_End();
+        RenderNavigationPolygon( Corner, ARRAYSIZE( Corner ), sizeof( vector3 ), xcolor( 0, 0, 128, 128 ) );
 
         vector3 Center = m_pConnectionData[i].m_StartPt + m_pConnectionData[i].m_EndPt;
         Center.Scale(0.5f);
 
         if (g_AIMgr.GetShowConnectionIDs())
-            draw_Label( Center, XCOLOR_YELLOW, "ID:%d",i);
+            render::debug::Label( Center, XCOLOR_YELLOW, "ID:%d",i);
 
         for (j=0;j<Conn.GetOverlapCount();j++)
         {
@@ -2898,7 +2503,7 @@ void nav_map::RenderNavNearView( void )
                 N = A + Dir;
             }
 
-            draw_Line( Pt, N, XCOLOR_RED );
+            render::debug::Line( Pt, N, XCOLOR_RED );
         }
     }
 
@@ -2925,20 +2530,13 @@ void nav_map::RenderNavNearView( void )
             if (Flags & overlap_vert::FLAG_OUTSIDE)
                 Clr = XCOLOR_RED;
 
-            draw_Sphere( m_pOverlapVerts[ OD.m_iFirstOverlapPt + j ].m_Pos, 10, Clr );
+            render::debug::Sphere( m_pOverlapVerts[ OD.m_iFirstOverlapPt + j ].m_Pos, 10, Clr );
         }
 
-        draw_Sphere( OD.m_Center, 10, XCOLOR_GREEN);
+        render::debug::Sphere( OD.m_Center, 10, XCOLOR_GREEN);
 */
-        draw_Begin( DRAW_TRIANGLES, DRAW_USE_ALPHA | DRAW_CULL_NONE);
-        draw_Color(255,0,40,128);
-        for (j=0;j<OD.m_nOverlapPts-1;j++)
-        {
-            draw_Vertex( m_pOverlapVerts[ OD.m_iFirstOverlapPt + 0 ].m_Pos );
-            draw_Vertex( m_pOverlapVerts[ OD.m_iFirstOverlapPt + j ].m_Pos );
-            draw_Vertex( m_pOverlapVerts[ OD.m_iFirstOverlapPt + j+1 ].m_Pos );
-        }
-        draw_End();
+        RenderNavigationPolygon( &m_pOverlapVerts[OD.m_iFirstOverlapPt].m_Pos,
+                                 OD.m_nOverlapPts, sizeof( overlap_vert ), xcolor( 255, 0, 40, 128 ) );
     }
 }
 

@@ -39,7 +39,7 @@ public:
                                                         const render_state& rRenderState = RENDER_STATE_PLAYER,
                                                         const guid& rParentGuid = NULL );
     virtual s32                 GetTotalSecondaryAmmo   ( void );
-	virtual	void                OnAdvanceLogic      ( f32 DeltaTime );   
+	virtual	void                OnAdvanceSimulation      ( f32 DeltaTime );   
     virtual	xbool	            OnProperty		    ( prop_query& rPropQuery );
 	virtual	void				RenderWeapon	    ( xbool bDebug, const xcolor& Ambient, xbool Cloaked );
 

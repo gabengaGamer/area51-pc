@@ -10,7 +10,7 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "x_bitmap.hpp"
 
 
@@ -28,7 +28,7 @@ public:
                             nav_point                   ( void );
     virtual                 ~nav_point                  ( void );
     virtual s32             GetMaterial                 ( void ) const { return MAT_TYPE_NULL; }
-    virtual void            OnRender                    ( void );
+    virtual void            OnAdvanceSimulation         ( f32 DeltaTime );
     virtual bbox            GetLocalBBox                ( void ) const;      
     virtual void            OnActivate                  ( xbool Flag );
 

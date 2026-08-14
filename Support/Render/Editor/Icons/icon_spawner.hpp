@@ -662,5 +662,4 @@ static s16 s_iicon_spawner[] =
 };
 
 
-#define DRAW_ICON_SPAWNER() draw_icon( NUM_FACETS_ICON_SPAWNER, NUM_VERTICES_ICON_SPAWNER, s_vicon_spawner, s_iicon_spawner )
 

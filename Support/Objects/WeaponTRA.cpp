@@ -1,19 +1,19 @@
 //=========================================================================
 // WEAPON TRA (Bouncy Ball Gun) or NAW (New Alien Weapon)
 //=========================================================================
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "ProjectileEnergy.hpp"
 #include "WeaponTRA.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "objects\Projector.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "render\LightMgr.hpp"
-#include "Player.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/Projector.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Player/Player.hpp"
 #if !defined(X_EDITOR)
 #include "NetworkMgr/NetworkMgr.hpp"
 #endif
-#include "Gamelib/DebugCheats.hpp"
+#include "GameLib/DebugCheats.hpp"
 
 //=========================================================================
 // STATIC DEFINTIONS AND CONSTANTS
@@ -108,7 +108,7 @@ weapon_tra::weapon_tra( void )
     m_hMuzzleFXSecondary.SetName( PRELOAD_FILE("mhg_muzzleflash_000.fxo") );
 
     // initialize time
-    m_LastUpdateTime = (f32)x_GetTimeSec();
+    m_LastUpdateTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
 
     m_bIsAltFiring = FALSE;    
     m_LastAmmoBurnTime = m_LastUpdateTime;
@@ -304,36 +304,45 @@ void weapon_tra::InitWeapon( const vector3& rInitPos, render_state rRenderState,
 
 //=========================================================================
 
-void weapon_tra::OnAdvanceLogic( f32 DeltaTime )
+void weapon_tra::OnAdvanceSimulation( f32 DeltaTime )
 {
-    f32 currentTime = (f32)x_GetTimeSec();
+    f32 currentTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
 
     if( m_bIdleMode )
     {   
-        m_CurrentWaitTime += ((currentTime - m_LastUpdateTime));
+        const f32 ElapsedTime = currentTime - m_LastUpdateTime;
+        if( x_isvalid( ElapsedTime ) && (ElapsedTime > 0.0f) )
+        {
+            m_CurrentWaitTime += ElapsedTime;
+        }
         
         if( (m_CurrentWaitTime >= m_ReloadWaitTime) && 
             (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount < m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax) )
         {
-            s32 Ammo = (s32)((m_CurrentWaitTime-m_ReloadWaitTime)/TRA_GainSecondsTweak.GetF32());
+            const f32 GainSeconds = TRA_GainSecondsTweak.GetF32();
+            s32 Ammo = 0;
+            if( x_isvalid( GainSeconds ) && (GainSeconds > F32_MIN) )
+            {
+                Ammo = (s32)((m_CurrentWaitTime-m_ReloadWaitTime)/GainSeconds);
+            }
 
             // clamp ammo
             Ammo = MIN( Ammo,   ((m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax) - (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount)) );
 
             // Did the ammo count change.
-            if( m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount != (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount+Ammo) )
+            if( Ammo > 0 )
             {
-                // Update the ammo and set the time back.
+                // Update the ammo and retain the fractional recharge time.
                 m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount += Ammo;
                 m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip    = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount;
-                m_CurrentWaitTime = m_ReloadWaitTime;
+                m_CurrentWaitTime -= Ammo * GainSeconds;
             }
         }        
     }
 
-    m_LastUpdateTime = (f32)x_GetTimeSec();
+    m_LastUpdateTime = currentTime;
 
-    new_weapon::OnAdvanceLogic( DeltaTime );
+    new_weapon::OnAdvanceSimulation( DeltaTime );
 }
 
 //==============================================================================
@@ -664,7 +673,7 @@ void weapon_tra::BeginAltRampUp( void )
 {
     m_AmmoBurned = 0;
     m_bIsAltFiring = TRUE;
-    m_LastAmmoBurnTime = (f32)x_GetTimeSec();    
+    m_LastAmmoBurnTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
 }
 
 //==============================================================================

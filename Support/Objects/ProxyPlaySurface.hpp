@@ -1,7 +1,7 @@
 #ifndef PROXYPLAYSURFACE_HPP
 #define PROXYPLAYSURFACE_HPP
 
-#include "Objects\Object.hpp"
+#include "Objects/object.hpp"
 
 //=========================================================================
 // This is a proxy object that gets passed around for collision purposes.
@@ -26,10 +26,6 @@ public:
 
     // proxy part of the whole thing
             void    SetSurface      ( guid Guid );
-
-    // rendering...note that the normal OnRender shouldn't do anything,
-    // but the shadow rendering does
-    virtual void    OnRenderShadowReceive   ( u64 ProjMask );
 
 protected:
     guid    m_CurrentGuid;

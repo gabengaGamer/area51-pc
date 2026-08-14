@@ -6,7 +6,6 @@
 #include "MainFrm.h"
 #include "PartEdDoc.h"
 #include "ParticleView3D.h"
-#include "e_Draw.hpp"
 #include "ManipulatorMgr.h"
 #include "Manipulator.h"
 #include "ManipTranslate.h"
@@ -247,7 +246,19 @@ void CParticleView3D::OnPaint()
     if( eng_InBeginEnd() )
         return;
 
+    if( !eng_BeginFrame() )
+        return;
+
     eng_SetBackColor( xcolor(0x0f, 0x0f, 0x0f, 0xff) );
+
+    rtarget_backbuffer_pass_desc PassDesc;
+    PassDesc.bUseDepth = FALSE;
+    if( !rtarget_BeginBackBufferPass( PassDesc ) )
+    {
+        eng_ResetAfterException();
+        return;
+    }
+    rtarget_EndPass();
 
     //-------------------------------------------------------------------------
     //  Read the frame we are rendering, with sub frame accuracy
@@ -258,7 +269,10 @@ void CParticleView3D::OnPaint()
 
     //-------------------------------------------------------------------------
 
-    eng_Begin( "ParticleView3D" );
+    if( eng_Begin( "ParticleView3D" ) )
+    {
+        VERIFY( render::BeginPrimitiveRender() );
+        render::BeginNormalRender();
 
         // Render effect background
         pDoc->m_Effect.RenderBackground( RenderFrame );
@@ -271,8 +285,12 @@ void CParticleView3D::OnPaint()
 
         // Render the effect
         pDoc->m_Effect.Render( RenderFrame );
-    
-    eng_End();
+
+        render::EndNormalRender();
+        render::EndPrimitiveRender();
+        render::ExecuteForwardRender();
+        eng_End();
+    }
 
     //-------------------------------------------------------------------------
 
@@ -316,7 +334,8 @@ void CParticleView3D::OnPaint()
     g_ManipulatorMgr.Render( m_View );
 
     // Done
-    eng_PageFlip();
+    if( !eng_EndFrame() )
+        return;
 
     // Now draw the rubber-banding box if req'd
     if ( g_MouseState.GetContext() == this )

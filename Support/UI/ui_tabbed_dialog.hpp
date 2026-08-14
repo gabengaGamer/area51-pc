@@ -51,11 +51,10 @@ public:
 
     virtual void    Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void    OnPadNavigate       ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void    OnPadSelect         ( ui_win* pWin );
-    virtual void    OnPadBack           ( ui_win* pWin );
-    virtual void    OnLBDown            ( ui_win* pWin );
-    virtual void    OnMouseMove         ( ui_win* pWin, s32 x, s32 y );
+    virtual void    OnNavigate          ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void    OnAccept            ( ui_win* pWin );
+    virtual void    OnCancel            ( ui_win* pWin );
+    virtual void    OnPointerDown       ( ui_win* pWin, s32 x, s32 y );
 
     void            SetBackgroundColor  ( xcolor Color );
     xcolor          GetBackgroundColor  ( void ) const ;
@@ -80,10 +79,6 @@ protected:
     s32                     m_iActiveTab;
     s32                     m_TabWidth;
     s32*                    m_pTabTracker;
-#ifdef TARGET_PC
-    s32                     m_MouseX;
-    s32                     m_MouseY;
-#endif
 };
 
 //==============================================================================

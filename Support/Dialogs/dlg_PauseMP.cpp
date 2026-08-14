@@ -4,17 +4,17 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_PauseMP.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
@@ -25,17 +25,16 @@ static const s32 IcY = FrY + 9; // Friends Invite Icons Y
 ui_manager::control_tem PauseMPControls[] = 
 {
     // Frames.
-    { IDC_PAUSE_MP_QUIT,	    "IDS_PAUSE_MENU_QUIT",      "button",   60,  60, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MP_SCORE,       "IDS_PAUSE_MENU_SCORE",     "button",   60, 100, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MP_OPTIONS,     "IDS_PAUSE_MENU_OPTIONS",   "button",   60, 140, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MP_SETTINGS,    "IDS_PAUSE_MENU_SETTINGS",  "button",   60, 180, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PAUSE_MP_QUIT,	    "IDS_PAUSE_MENU_QUIT",      "button",   60,  60, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MP_SCORE,       "IDS_PAUSE_MENU_SCORE",     "button",   60, 100, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MP_OPTIONS,     "IDS_PAUSE_MENU_OPTIONS",   "button",   60, 140, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MP_SETTINGS,    "IDS_PAUSE_MENU_SETTINGS",  "button",   60, 180, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
 #ifdef TARGET_XBOX
-    { IDC_PAUSE_MP_FRIENDS,     "IDS_PAUSE_MENU_FRIENDS",   "button",   60, FrY, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PAUSE_MP_FRIENDS,     "IDS_PAUSE_MENU_FRIENDS",   "button",   60, FrY, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE },
 #endif
-    { IDC_PAUSE_MP_NAV_TEXT,    "IDS_NULL",                 "text",      0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 #if defined( TARGET_XBOX )
-    { IDC_PAUSE_MP_FRIEND_INV,  "IDS_NULL",                         "bitmap",   34, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MP_GAME_INV,    "IDS_NULL",                         "bitmap",  182, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PAUSE_MP_FRIEND_INV,  "IDS_NULL",                         "bitmap",   34, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MP_GAME_INV,    "IDS_NULL",                         "bitmap",  182, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 #endif
 };
 
@@ -128,7 +127,6 @@ xbool dlg_pause_mp::Create( s32                        UserID,
 #ifdef TARGET_XBOX
     m_pButtonFriends    = (ui_button*)  FindChildByID( IDC_PAUSE_MP_FRIENDS  );
 #endif
-    m_pNavText 	        = (ui_text*)    FindChildByID( IDC_PAUSE_MP_NAV_TEXT );
 
     s32 iControl = g_StateMgr.GetCurrentControl();
     if( (iControl == -1) || (GotoControl(iControl)==NULL) )
@@ -152,7 +150,6 @@ xbool dlg_pause_mp::Create( s32                        UserID,
 #ifdef TARGET_XBOX
     m_pButtonFriends ->SetFlag(ui_win::WF_VISIBLE, FALSE);    
 #endif
-    m_pNavText       ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
 #if defined( TARGET_XBOX )
     m_pFriendInvite     = (ui_bitmap*)  FindChildByID( IDC_PAUSE_MP_FRIEND_INV  );
@@ -175,9 +172,7 @@ xbool dlg_pause_mp::Create( s32                        UserID,
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_UNPAUSE" );   
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // initialize screen scaling
     InitScreenScaling( Position );
@@ -215,14 +210,7 @@ void dlg_pause_mp::Render( s32 ox, s32 oy )
 
 
     // render background filter
-	s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+	rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
@@ -278,7 +266,7 @@ void dlg_pause_mp::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_pause_mp::OnPadSelect( ui_win* pWin )
+void dlg_pause_mp::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -292,7 +280,7 @@ void dlg_pause_mp::OnPadSelect( ui_win* pWin )
             {
                 // Open a dialog to confirm quitting the online game component
                 irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
                 // get message text
                 xwstring Message( g_StringTableMgr( "ui", "IDS_QUIT_MSG" ));
@@ -300,7 +288,7 @@ void dlg_pause_mp::OnPadSelect( ui_win* pWin )
                 // set nav text
                 xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
                 navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                SetNavTextVisible( FALSE );
 
                 m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_QUIT_POPUP" ), TRUE, TRUE, FALSE, Message, navText, &m_PopUpResult );
             }
@@ -336,7 +324,7 @@ void dlg_pause_mp::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_pause_mp::OnPadBack( ui_win* pWin )
+void dlg_pause_mp::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 }
@@ -400,7 +388,6 @@ void dlg_pause_mp::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             if( g_MatchMgr.GetAuthStatus() != AUTH_STAT_CONNECTED )
                 m_pButtonFriends->SetFlag(ui_win::WF_DISABLED, TRUE);
 #endif
-            m_pNavText       ->SetFlag(ui_win::WF_VISIBLE, TRUE);    
     
 #if defined( TARGET_XBOX )
             m_pFriendInvite     ->SetFlag(ui_win::WF_VISIBLE, HaveFriendRequest     );
@@ -411,14 +398,12 @@ void dlg_pause_mp::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             if( (iControl == -1) || (GotoControl( iControl )==NULL) )
             {
                 GotoControl( (ui_control*)m_pButtonQuit );
-                m_pButtonQuit->SetFlag(WF_HIGHLIGHT, TRUE);        
                 g_UiMgr->SetScreenHighlight( m_pButtonQuit->GetPosition() );
                 m_CurrentControl =  IDC_PAUSE_MP_QUIT;
             }
             else
             {
                 ui_control* pControl = GotoControl( iControl );
-                pControl->SetFlag(WF_HIGHLIGHT, TRUE);
                 g_UiMgr->SetScreenHighlight( pControl->GetPosition() );
                 m_CurrentControl = iControl;
             }
@@ -456,35 +441,35 @@ void dlg_pause_mp::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp = NULL;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
         }
     }
 
     // update the glow bar
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
-    if( m_pButtonQuit->GetFlags(WF_HIGHLIGHT) )
+    if( m_pButtonQuit->IsFocused() )
     {
         highLight = 0;
         g_UiMgr->SetScreenHighlight( m_pButtonQuit->GetPosition() );
     }
-    else if( m_pButtonScore->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonScore->IsFocused() )
     {
         highLight = 1;
         g_UiMgr->SetScreenHighlight( m_pButtonScore->GetPosition() );
     }
-    else if( m_pButtonOptions->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonOptions->IsFocused() )
     {
         highLight = 2;
         g_UiMgr->SetScreenHighlight( m_pButtonOptions->GetPosition() );
     }
-    else if( m_pButtonSettings->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonSettings->IsFocused() )
     {
         highLight = 3;
         g_UiMgr->SetScreenHighlight( m_pButtonSettings->GetPosition() );
     }
 #ifdef TARGET_XBOX
-    else if( m_pButtonFriends->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonFriends->IsFocused() )
     {
         highLight = 4;
         g_UiMgr->SetScreenHighlight( m_pButtonFriends->GetPosition() );

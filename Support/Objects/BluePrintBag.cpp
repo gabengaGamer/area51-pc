@@ -9,7 +9,7 @@
 //==============================================================================
 
 #include "BluePrintBag.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 //==============================================================================
 //  OBJECT DESCRIPTION
@@ -41,7 +41,7 @@ static struct blueprint_bag_desc : public object_desc
     virtual s32 OnEditorRender( object& Object ) const
     {
         (void)Object;
-        return( EDITOR_ICON_BLUEPRINT_BAG );
+        return static_cast<s32>( EditorIcon::BlueprintBag );
     }
 
 #endif // X_EDITOR

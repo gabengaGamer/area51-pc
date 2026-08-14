@@ -304,5 +304,4 @@ static s16 s_iicon_spacial_trigger[] =
 };
 
 
-#define DRAW_ICON_SPACIAL_TRIGGER() draw_icon( NUM_FACETS_ICON_SPACIAL_TRIGGER, NUM_VERTICES_ICON_SPACIAL_TRIGGER, s_vicon_spacial_trigger, s_iicon_spacial_trigger )
 

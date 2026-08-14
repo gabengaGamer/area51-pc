@@ -115,7 +115,7 @@ void ProcessEndOfRequest( io_device* pDevice, s32 Status )
     pRequest->m_HardwareStatus = Status;
 
     // Wake up the dispatcher.
-    s32 MessageStatus = GET_DISPATCHER_MQ().Send( (void*)pRequest, MQ_NOBLOCK );
+    s32 MessageStatus = g_IoMgr.QueueDispatcherRequest( pRequest, TRUE );
     ASSERT( MessageStatus );
     (void)MessageStatus;
 }
@@ -823,7 +823,7 @@ void io_device::GetPathPrefix( char *pBuffer )
 
 //==============================================================================
 
-void io_device::CleanFilename( char* pClean, char* pFilename )
+void io_device::CleanFilename( char* pClean, const char* pFilename )
 {
     (void)pClean;
     (void)pFilename;
@@ -882,4 +882,3 @@ void io_device::DeviceClose ( io_device_file* pFile )
     (void)pFile;
     ASSERT( 0 );
 }
-

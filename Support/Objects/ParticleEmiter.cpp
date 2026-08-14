@@ -7,16 +7,17 @@
 //  INCLUDES
 //==============================================================================
 
-#include "objects\ParticleEmiter.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 #include "Entropy.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "GameLib\StatsMgr.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "Render\Render.hpp"
-#include "Objects\player.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Render/Render.hpp"
+#include "Objects/Player/Player.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 //=========================================================================
 // GLOBALS
@@ -41,43 +42,7 @@ static vector3 P0;
 static vector3 P1;
 #endif // X_EDITOR
 
-//=========================================================================
-// Bitmap callback routines for the fx_mgr.
-//=========================================================================
-
-xbool FxLoadBitmap( const char* pBitmapName, xhandle& Handle )
-{   
-    rhandle<xbitmap> hBitmap;
-    hBitmap.SetName( pBitmapName );
-    if ( hBitmap.GetPointer() == NULL )
-    {
-        Handle.Handle = HNULL;
-        return FALSE;
-    }
-
-    Handle.Handle = reinterpret_cast<xhandle&>(hBitmap);
-    return TRUE;
-}
-
-//=========================================================================
-
-void FxUnloadBitmap( xhandle Handle )
-{
-    // TODO: If the resource system gets cleaned up, here is where you
-    // would decrement the ref counter or unload the data.
-    (void)Handle;
-}
-
-//=========================================================================
-
-const xbitmap* FxResolveBitmap( xhandle Handle )
-{
-    rhandle<xbitmap> hBitmap = reinterpret_cast< rhandle<xbitmap>& >(Handle.Handle);
-    return hBitmap.GetPointer();
-}
-
-//=========================================================================
-//FXO loader.. plugs the FX_Runtime library into our load code here..
+// FXO loader plugs the FX module into the resource system.
 
 static u32 s_UnitFXID = 0;
 
@@ -94,9 +59,6 @@ static struct fx_rsc_loader : public rsc_loader
     {
         MEMORY_OWNER( "fx_rsc_loader::Resolve()" );
         X_FILE* pFP = (X_FILE*)pData;
-
-        // make sure the fx manager goes through our resource system
-        FXMgr.SetBitmapFns( FxLoadBitmap, FxUnloadBitmap, FxResolveBitmap );
 
         // Create a unique name
         char* pEffectName;
@@ -213,7 +175,7 @@ static struct particle_emitter_desc : public object_desc
             if (Emitter.m_Type == particle_emitter::GENERIC_DYNAMIC_PARTICLE || 
                 Emitter.m_Type == particle_emitter::UNINITIALIZED_PARTICLE)
             {
-                return EDITOR_ICON_PARTICLE_EMITTER;
+                return static_cast<s32>( EditorIcon::ParticleEmitter );
             }
         }  
         return -1;
@@ -293,7 +255,6 @@ particle_emitter::particle_emitter(void) :
     m_ParticleBBox(vector3(0.0f,0.0f,0.0f), 40.0f),
     m_bDestroyed(FALSE)
 {
-    m_TimeSinceLastRender = 0.0f;
     m_EmiterArea = 5000.0f;
 }
 
@@ -302,52 +263,6 @@ particle_emitter::particle_emitter(void) :
 particle_emitter::~particle_emitter(void)
 {
     UnloadCurrentEffect();
-}
-
-//=========================================================================
-
-void particle_emitter::SyncFXTransform( void )
-{
-    if( m_FxHandle.IsValid() == TRUE )
-    {
-        const matrix4& L2W = GetL2W();
-
-        m_FxHandle.m_Fx.SetScale      ( vector3( m_Scale, m_Scale, m_Scale ) );
-        m_FxHandle.m_Fx.SetRotation   ( L2W.GetRotation() );
-        m_FxHandle.m_Fx.SetTranslation( L2W.GetTranslation() );
-    }
-}
-
-//=========================================================================
-
-void particle_emitter::UpdateRenderInterpState( f32 Alpha )
-{
-    object::UpdateRenderInterpState( Alpha );
-    SyncFXTransform();
-}
-
-//=========================================================================
-
-void particle_emitter::ClearRenderInterpState( void )
-{
-    object::ClearRenderInterpState();
-    SyncFXTransform();
-}
-
-//=========================================================================
-
-void particle_emitter::InvalidateRenderInterpState( void )
-{
-    object::InvalidateRenderInterpState();
-    SyncFXTransform();
-}
-
-//=========================================================================
-
-void particle_emitter::SnapRenderInterpState( void )
-{
-    object::SnapRenderInterpState();
-    SyncFXTransform();
 }
 
 //=========================================================================
@@ -384,7 +299,7 @@ void particle_emitter::OnRender( void )
 
 void particle_emitter::OnRenderTransparent( void )
 {   
-    CONTEXT("particle_emitter::OnRenderTransparent");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "particle_emitter::OnRenderTransparent");
 
     //check the validity of the handle...
     if ( m_FxHandle.IsValid() == TRUE )
@@ -394,9 +309,6 @@ void particle_emitter::OnRenderTransparent( void )
             //this is an inactive instanced based particle, don't render
             return;
         }
-
-        //logic to control the updates of particles..
-        m_TimeSinceLastRender=0;
 
         switch(m_Visibility)
         {
@@ -435,19 +347,19 @@ void particle_emitter::OnDebugRender( void )
     {
         if( GetAttrBits() & ATTR_EDITOR_SELECTED )
         {
-            draw_BBox( GetBBox(), xcolor(255,255,255) );
+            render::debug::Box( GetBBox(), xcolor(255,255,255) );
         }
     
         //direction of -z for particle..
         vector3 Endpoint = (GetL2W()*vector3(0,0,-500)) + vector3(0, 20, 0);
-        draw_Line( GetPosition() + vector3(0, 20, 0), Endpoint, xcolor(255,0,0));
+        render::debug::Line( GetPosition() + vector3(0, 20, 0), Endpoint, xcolor(255,0,0));
 
         //bbox Bounds = m_FxHandle.m_Fx.GetBounds();
-        //draw_BBox( Bounds );
+        //render::debug::Box( Bounds );
     }
 
     //bullet normal line
- //   draw_Line( P0, P1,xcolor(255,0,0) );
+ //   render::debug::Line( P0, P1,xcolor(255,0,0) );
 }
 #endif // X_RETAIL
 
@@ -455,7 +367,7 @@ void particle_emitter::OnDebugRender( void )
 
 void particle_emitter::OnMove( const vector3& NewPos   )
 {
-    CONTEXT("particle_emitter::OnMove");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "particle_emitter::OnMove");
 
     object::OnMove( NewPos );
 
@@ -481,13 +393,11 @@ void particle_emitter::OnTransform ( const matrix4& L2W )
 }
 
 //=========================================================================
-void particle_emitter::OnAdvanceLogic( f32 DeltaTime )
+void particle_emitter::OnAdvanceSimulation( f32 DeltaTime )
 {  
-    m_TimeSinceLastRender += DeltaTime;
-
     LOG_STAT(k_stats_ParticleSystem);
 
-    CONTEXT( "particle_emitter::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "particle_emitter::OnAdvanceSimulation" );
 
     if( m_bDestroyed )
     {
@@ -906,7 +816,7 @@ void particle_emitter::InitPresetParticle( particle_type ParticleType )
 #endif
 
     //INVALID_PARTICLE particles will immediately be destroyed in the 
-    //OnAdvanceLogic call...
+    //OnAdvanceSimulation call...
     
     //using the type of particle get the fx handle..
     
@@ -1083,7 +993,6 @@ void particle_emitter::Restart( void )
     if ( m_FxHandle.IsValid()== TRUE )
     {
         m_FxHandle.m_Fx.Restart();
-        m_TimeSinceLastRender = 0;
         SetAttrBits( GetAttrBits() | object::ATTR_NEEDS_LOGIC_TIME );
         m_PlayedOnce = FALSE;
     }
@@ -1419,6 +1328,9 @@ guid particle_emitter::CreatePresetParticleAndOrient (
 guid particle_emitter::CreatePresetParticleAndOrient ( const char* rParticlePath, const vector3& rDir, 
                                                       const vector3& rPos, u16 Zone1 )
 {
+    if( (rParticlePath == NULL) || (rParticlePath[0] == '\0') )
+        return NULL_GUID;
+
     // Create a particle object using the particle name and set its position and rotation.
     guid ParticleGuid = g_ObjMgr.CreateObject( particle_emitter::GetObjectType() );
     object* pObject = g_ObjMgr.GetObjectByGuid( ParticleGuid );
@@ -1485,15 +1397,6 @@ void particle_emitter::OnActivate ( xbool Flag )
     m_OnActivate = Flag;
     m_PlayedOnce = FALSE;
 }
-
-
-
-
-
-
-
-
-
 
 
 

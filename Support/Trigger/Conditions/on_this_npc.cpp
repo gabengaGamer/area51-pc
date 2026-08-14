@@ -5,11 +5,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "..\Support\Trigger\Trigger_Conditionals.hpp"
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "..\Support\Objects\Player.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
+#include "../Support/Trigger/Trigger_Conditionals.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "../Support/Objects/Player/Player.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
 
 //=========================================================================
 // STATIC FUNCTIONS
@@ -270,7 +270,7 @@ player_health::player_health(  guid ParentGuid ):  conditional_base(  ParentGuid
 
 xbool player_health::Execute         ( trigger_object* pParent )
 { 
-    TRIGGER_CONTEXT( "CONDITION * player_health::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION * player_health::Execute" );
     
     (void) pParent;
 
@@ -375,7 +375,7 @@ player_has::player_has(  guid ParentGuid ):  conditional_base(  ParentGuid ),  m
 
 xbool player_has::Execute         ( trigger_object* pParent )
 {  
-    TRIGGER_CONTEXT( "CONDITION *player_has::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION *player_has::Execute" );
     
     (void) pParent;
 
@@ -477,7 +477,7 @@ object_exist::object_exist(  guid ParentGuid ):  conditional_base(  ParentGuid )
 
 xbool object_exist::Execute         ( trigger_object* pParent )
 {  
-    TRIGGER_CONTEXT( "CONDITION *object_exist::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION *object_exist::Execute" );
     
     (void) pParent;
 
@@ -634,7 +634,7 @@ m_VarRaw(0)
 
 xbool check_state_vars::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "CONDITION *check_state_vars::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION *check_state_vars::Execute" );
 
     (void) pParent;
 
@@ -959,7 +959,7 @@ m_Code(CODE_SCRIPT_EVAULATE)
 
 xbool check_script::Execute         ( trigger_object* pParent )
 { 
-    TRIGGER_CONTEXT( "CONDITION *check_script::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION *check_script::Execute" );
     
     (void) pParent;
 
@@ -1060,7 +1060,7 @@ m_Code(CODE_TRIGGER_EVAULTATE)
 
 xbool check_trigger_state::Execute         ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "CONDITION *check_trigger_state::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION *check_trigger_state::Execute" );
 
     (void) pParent;
 
@@ -1163,7 +1163,7 @@ m_Code(CODE_RANDOM_CHANCE)
 
 xbool random_chance::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "CONDITION *random_chance::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION *random_chance::Execute" );
 
     (void) pParent;
 
@@ -1266,7 +1266,7 @@ m_Code(CODE_ON_THIS_NPC)
 
 xbool on_this_npc::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "CONDITION *on_this_npc::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION *on_this_npc::Execute" );
 
     (void) pParent;
 
@@ -1368,7 +1368,7 @@ m_Code(CODE_ON_THIS_ITEM)
 
 xbool on_this_item::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "CONDITION *on_this_item::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION *on_this_item::Execute" );
     
     (void) pParent;
 
@@ -1487,7 +1487,7 @@ m_LogicCode(CODE_GREATER_INCLUSIVE)
 
 xbool count_things::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "CONDITION *count_things::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION *count_things::Execute" );
     
     (void) pParent;
 
@@ -1657,7 +1657,7 @@ m_Code(CODE_GREATER_INCLUSIVE)
 
 xbool check_timer::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "CONDITION *check_timer::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION *check_timer::Execute" );
      
     (void) pParent;
 
@@ -1820,7 +1820,7 @@ m_Code(CODE_GREATER_INCLUSIVE)
 
 xbool check_counter::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "CONDITION *check_counter::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "CONDITION *check_counter::Execute" );
      
     (void) pParent;
 

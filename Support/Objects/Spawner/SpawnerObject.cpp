@@ -1,11 +1,12 @@
+#include "Render/PrimitiveDebug.hpp"
 #include "SpawnerObject.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Render\Editor\editor_icons.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Editor/EditorIcons.hpp"
 #include "Entropy.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Characters\\Character.hpp"
-#include "Objects\Group.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Characters/Character.hpp"
+#include "Objects/Group.hpp"
 
 /*
  *
@@ -16,10 +17,10 @@ Ideally, we would be able to set s trigger up so it would spawn a guy, and then 
 when that guy dies.  This way that trigger will always have 1 enemy present in the world.  The next step 
 would be to make it so we could set a cap on how many enemies it could create total before shutting off.
 
-Ideally (I know, I know I’m a dreamer) we could create a spawner, set how many enemies we want it to have 
+Ideally (I know, I know Iï¿½m a dreamer) we could create a spawner, set how many enemies we want it to have 
 present in the world simultaneously (always have 3 out for example) and then set a max number of enemies 
-spawned if we want to (shut off after spawning its 20th enemy or whatever).  I’ve worked with spawners 
-like this in the past and they are great (which is why I’ve been pushing for this functionality for quite 
+spawned if we want to (shut off after spawning its 20th enemy or whatever).  Iï¿½ve worked with spawners 
+like this in the past and they are great (which is why Iï¿½ve been pushing for this functionality for quite 
 some time).
 
 -C
@@ -47,7 +48,7 @@ static struct spawner_object_desc : public object_desc
     virtual object* Create          ( void ) { return new spawner_object; }
 
 #ifdef X_EDITOR
-    virtual s32     OnEditorRender  ( object& Object ) const { Object.OnDebugRender(); return EDITOR_ICON_SPAWNER; }
+    virtual s32     OnEditorRender  ( object& Object ) const { Object.OnDebugRender(); return static_cast<s32>( EditorIcon::Spawner ); }
 #endif // X_EDITOR
 
 } s_Spawner_Object_Desc;
@@ -224,7 +225,7 @@ void spawner_object::OnActivate( xbool bFlag )
 
 //===========================================================================
 
-void spawner_object::OnAdvanceLogic( f32 DeltaTime )
+void spawner_object::OnAdvanceSimulation( f32 DeltaTime )
 {
     // If we have spawned the maximum number of objects in the world that we are allowed,
     // shut down the spawner.
@@ -311,7 +312,7 @@ void spawner_object::OnSpawnedObjectKill( object* pObject )
 #ifndef X_RETAIL
 void spawner_object::OnDebugRender( void )
 {
-    CONTEXT( "spawner_object::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "spawner_object::OnRender" );
 
 #ifdef X_EDITOR
     if( GetAttrBits() & ATTR_EDITOR_SELECTED )
@@ -319,11 +320,11 @@ void spawner_object::OnDebugRender( void )
         object_ptr<object> ObjPtr( m_ActivateObject );
         if ( ObjPtr.IsValid() )
         {
-            draw_Line( GetPosition(), ObjPtr.m_pObject->GetPosition(), XCOLOR_PURPLE );
-            draw_Label( ObjPtr.m_pObject->GetPosition(), XCOLOR_WHITE, "Activate" );
+            render::debug::Line( GetPosition(), ObjPtr.m_pObject->GetPosition(), XCOLOR_PURPLE );
+            render::debug::Label( ObjPtr.m_pObject->GetPosition(), XCOLOR_WHITE, "Activate" );
         }
 
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
     }
 #endif // X_EDITOR
 }

@@ -93,7 +93,7 @@ private:
     QString                m_SelectedGameType;
     QString                m_SelectedThemeType;
     QString                m_CurrentPath;
-    xbitmap                m_Bitmap;
+    xbitmap                m_bitmap;
     xbool                  m_HasBitmap;
 };
 

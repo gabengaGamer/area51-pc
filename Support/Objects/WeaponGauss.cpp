@@ -1,10 +1,10 @@
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "WeaponGauss.hpp"
 #include "ProjectileBullett.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "objects\GrenadeProjectile.hpp"
-#include "objects\Projector.hpp"
-#include "render\LightMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/GrenadeProjectile.hpp"
+#include "Objects/Projector.hpp"
+#include "Render/LightMgr.hpp"
 
 
 //=========================================================================
@@ -86,7 +86,7 @@ weapon_gauss::weapon_gauss(void)
 
     m_LoopVoiceId           = 0;
 
-    m_InvType = inventory_item::INV_WPN_GAUSS;    
+    m_Item = INVEN_WEAPON_BBG;
 
     m_hMuzzleFXPrimary.SetName( "Muzzleflash_1stperson_Gauss_001.fxo" );
 }
@@ -190,16 +190,16 @@ void weapon_gauss::SynchGunToCount( void )
 {
     if ( m_CurrentRenderState == RENDER_STATE_PLAYER )
     {
-        geom* pGeom = m_Skin[ m_CurrentRenderIndex ][RENDER_STATE_PLAYER].GetGeom() ;
+        geom* pGeom = m_Skin[ RENDER_STATE_PLAYER ].GetGeom() ;
 
         if ( pGeom == NULL )
             return ;
 
         for ( s32 i = 0; i < 3; i++ )
         {
-            ASSERT( m_Skin[ m_CurrentRenderIndex ][RENDER_STATE_PLAYER].GetGeom()->HasBitmapAnim(m_LEDInfo[i].Material) );
+            ASSERT( m_Skin[ RENDER_STATE_PLAYER ].GetGeom()->HasBitmapAnim(m_LEDInfo[i].Material) );
             render::tex_anim TexAnim;
-            render::htexanim_inst hTexAnims = render::GetTexAnimData( m_Skin[ m_CurrentRenderIndex ][RENDER_STATE_PLAYER].GetInst() );
+            render::htexanim_inst hTexAnims = render::GetTexAnimData( m_Skin[ RENDER_STATE_PLAYER ].GetInst() );
             render::GetBitmapAnim( hTexAnims,
                                    m_LEDInfo[i].Mesh,
                                    m_LEDInfo[i].Material,
@@ -260,7 +260,7 @@ xbool weapon_gauss::FireSecondaryProtected( const vector3& InitPos , const vecto
         
         f32 ForceOfThrow = k_force_of_grenade_throw ;
 
-        pGrenade->Initialize( m_AnimPlayer[m_CurrentRenderIndex][ m_CurrentRenderState ].GetBonePosition( m_FiringPointBoneIndex[ iBonePoint ] ), 
+        pGrenade->Initialize( m_AnimPlayer[m_CurrentRenderState].GetBonePosition( m_FiringPointBoneIndex[ iBonePoint ] ), 
                               InitRot, 
                               BaseVelocity, 
                               200.f, 
@@ -411,54 +411,6 @@ void weapon_gauss::OnTransform( const matrix4& L2W )
 
     new_weapon::OnTransform( L2W );
 }
-
-//==============================================================================
-
-void  weapon_gauss::InitMuzzleFx ( void )
-{
-    switch ( m_CurrentRenderState )
-    {
-    case RENDER_STATE_PLAYER:
-        {
-            for( s32 iBone = 0; iBone < MAX_BONE_POINTS; iBone++ )
-            {
-                if( m_FiringPointBoneIndex[iBone] != -1 )
-                {
-                    if (m_MuzzleFXGuid[iBone]==NULL)
-                    {
-                        m_MuzzleFXGuid[iBone] = particle_emitter::CreatePersistantParticle(  
-                            particle_emitter::PLAYER_MUZZLE_FLASH_GAUSS );
-                    }
-                }
-                
-                if( m_AltFiringPointBoneIndex[iBone] != -1 )
-                {    
-                    if (m_MuzzleSecondaryFXGuid[iBone]==NULL)
-                    {
-                        m_MuzzleSecondaryFXGuid[iBone] = particle_emitter::CreatePersistantParticle(  
-                            particle_emitter::PLAYER_MUZZLE_FLASH_GAUSS_2ND );
-                    }
-                }
-            }
-        }
-    break;
-    case  RENDER_STATE_NPC:
-        {
-            if ( m_MuzzleFXGuid[ FIRE_POINT ] == NULL )
-            {
-                m_MuzzleFXGuid[ FIRE_POINT ] = particle_emitter::CreatePersistantParticle(  
-                    particle_emitter::PLAYER_MUZZLE_FLASH_MHG );
-            }
-        }
-    break;        
-    default:
-        ASSERT(0);
-        break;
-    }
-
-}
-
-//==============================================================================
 
 xbool weapon_gauss::CanIntereptPrimaryFire( s32 nFireAnimIndex )
 {

@@ -12,11 +12,12 @@
 
 #include "notepad_object.hpp"
 #include "x_color.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 #include "Entropy.hpp"
-#include "Parsing\TextIn.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "Font\font.hpp"
+#include "Parsing/TextIn.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "Font/font.hpp"
+#include "UI/ui_renderer.hpp"
 
 #ifdef X_EDITOR
 xbool g_DisplayNotepads=TRUE;
@@ -57,7 +58,7 @@ static struct notepad_object_desc : public object_desc
     virtual s32  OnEditorRender( object& Object ) const
     {
         (void)Object;
-        return EDITOR_ICON_NOTE;
+        return static_cast<s32>( EditorIcon::Note );
     }
 
 #endif // X_EDITOR
@@ -237,18 +238,13 @@ void notepad_object::OnRender ( void )
     // draw bounding box
     //
     {
-        draw_Begin( DRAW_QUADS, DRAW_2D|DRAW_UI_RTARGET|DRAW_USE_ALPHA );
-        {
-            s32 nX = (XWidth/2) + 4;
-            s32 nY = (YHeight/2) + 4;
-
-            draw_Color( m_crNote );
-            draw_Vertex( ScreenPos.GetX()-nX,       ScreenPos.GetY()+nY, 0 );
-            draw_Vertex( ScreenPos.GetX()+nX,       ScreenPos.GetY()+nY, 0 );
-            draw_Vertex( ScreenPos.GetX()+nX,       ScreenPos.GetY()-nY, 0 );
-            draw_Vertex( ScreenPos.GetX()-nX,       ScreenPos.GetY()-nY, 0 );
-        }
-        draw_End();
+        s32 nX = (XWidth/2) + 4;
+        s32 nY = (YHeight/2) + 4;
+        g_UIRenderer.DrawRect( irect( (s32)ScreenPos.GetX() - nX,
+                                      (s32)ScreenPos.GetY() - nY,
+                                      (s32)ScreenPos.GetX() + nX,
+                                      (s32)ScreenPos.GetY() + nY ),
+                               m_crNote );
     }
 
     //
@@ -351,4 +347,3 @@ void  notepad_object::OnMove( const vector3& newPos )
 }
 
 //==============================================================================
-

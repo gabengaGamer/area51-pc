@@ -11,7 +11,7 @@
 
 //=========================================================================
 
-#include "x_Types.hpp"
+#include "x_types.hpp"
 #include "e_Network.hpp"
 #include "ConnMgr.hpp"
 #include "UpdateMgr.hpp"

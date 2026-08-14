@@ -9,10 +9,11 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\set_actor_friends.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/set_actor_friends.hpp"
 #include "Entropy.hpp"
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Objects\Actor\Actor.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Objects/Actor/Actor.hpp"
 
 static const xcolor s_ActivateColor         (115,0,115);
 
@@ -30,7 +31,7 @@ set_actor_friends::set_actor_friends ( guid ParentGuid ) :
 
 void  set_actor_friends::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * set_actor_friends::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * set_actor_friends::Execute" );
 
     ( void ) pParent;
 
@@ -85,8 +86,8 @@ void set_actor_friends::OnRender ( void )
         return;
 #ifdef TARGET_PC
     vector3 MyPosition = GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
-    draw_Line( MyPosition, ActorPtr.m_pObject->GetPosition(), s_ActivateColor );
-    draw_BBox( ActorPtr.m_pObject->GetBBox(), s_ActivateColor );
-    draw_Label( ActorPtr.m_pObject->GetPosition(), s_ActivateColor, GetTypeName() );
+    render::debug::Line( MyPosition, ActorPtr.m_pObject->GetPosition(), s_ActivateColor );
+    render::debug::Box( ActorPtr.m_pObject->GetBBox(), s_ActivateColor );
+    render::debug::Label( ActorPtr.m_pObject->GetPosition(), s_ActivateColor, GetTypeName() );
 #endif
 }

@@ -22,10 +22,10 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Objects\Actor\Actor.hpp"
-#include "Objects\Render\SkinInst.hpp"
-#include "Objects\NewWeapon.hpp"
-#include "NetworkMgr\Blender.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Objects/Render/SkinInst.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "NetworkMgr/Blender.hpp"
                                 
 //==============================================================================
 //  DEFINES
@@ -71,7 +71,7 @@ protected:
     virtual void            OnKill                      ( void );
     virtual void            OnPain                      ( const pain& Pain );
     virtual void            OnDeath                     ( void );
-    virtual void            OnAdvanceLogic              ( f32 DeltaTime );
+    virtual void            OnAdvanceSimulation              ( f32 DeltaTime );
     virtual void            OnRender                    ( void );
     virtual void            OnRenderTransparent         ( void );
     virtual void            OnEvent                     ( const event& Event );
@@ -141,13 +141,13 @@ protected:
         blender         BlendYaw;
         blender         BlendLean;
 
-        s32             FrameDelay; // Frames of logic since last update.
-        s32             Frames[2];  // Last 2 values of FrameDelay.
+        f32             UpdateElapsedSeconds;
+        f32             UpdateIntervals[2];
 
         vector3         WayPoint[2];
         xbool           DoTeleport;
         xbool           DoWayPoint;
-        xbool           SnapRenderInterp;
+        xbool           SnapNetworkBlend;
     };
 
     //------------------------------------------------------------------

@@ -636,5 +636,4 @@ static s16 s_iicon_task_obj[] =
 };
 
 
-#define DRAW_ICON_TASK_OBJ() draw_icon( NUM_FACETS_ICON_TASK_OBJ, NUM_VERTICES_ICON_TASK_OBJ, s_vicon_task_obj, s_iicon_task_obj )
 

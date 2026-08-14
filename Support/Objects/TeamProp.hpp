@@ -5,11 +5,11 @@
 // INCLUDES
 //=========================================================================
 
-#include "Objects\Circuit.hpp"
+#include "Objects/Circuit.hpp"
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Objects\Render\RigidInst.hpp"
-#include "Objects\PlaySurface.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Render/RigidInst.hpp"
+#include "Objects/PlaySurface.hpp"
 
 //=========================================================================
 // CLASS
@@ -50,7 +50,7 @@ protected:
     //=========================================================================
 
     virtual void                OnRender		    ( void );                       
-    virtual void                OnAdvanceLogic	    ( f32     DelaTime );           
+    virtual void                OnAdvanceSimulation	    ( f32     DelaTime );           
     virtual void                OnInit              ( void );                       
 
     // These store the possible alignments.

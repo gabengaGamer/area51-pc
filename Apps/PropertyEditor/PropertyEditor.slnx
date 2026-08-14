@@ -1,7 +1,0 @@
-<Solution>
-  <Configurations>
-    <BuildType Name="EDITOR-Debug" />
-    <Platform Name="x86" />
-  </Configurations>
-  <Project Path="PropertyEditor.vcxproj" />
-</Solution>

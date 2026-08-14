@@ -9,12 +9,12 @@
 //=========================================================================
 
 #include "conditional_affecter.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "..\Support\Globals\Global_Variables_Manager.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/Globals/Global_Variables_Manager.hpp"
 
 #ifdef X_EDITOR
-#include "TriggerEx\TriggerEx_Object.hpp"
+#include "TriggerEx/TriggerEx_Object.hpp"
 #endif
 
 static const s32        MAX_BIT_SIZE_OF_FLAGS = 32;

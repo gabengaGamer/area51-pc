@@ -13,7 +13,7 @@
 #include "Entropy.hpp"
 #include "AnimAudioTimer.hpp"
 #include "AnimPlayer.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 
 //==============================================================================
@@ -175,6 +175,8 @@ void anim_audio_timer::Advance( f32 DeltaTime )
         // Is audio playing yet?
         if( m_AudioCurrTime > 0.0f )
         {        
+            const xbool IsFirstAudioSample = (m_AudioPrevTime <= 0.0f);
+
             // Compute hardware delta time
             f32 AudioDeltaTime = m_AudioCurrTime - m_AudioPrevTime;
             m_AudioPrevTime = m_AudioCurrTime;
@@ -189,7 +191,7 @@ void anim_audio_timer::Advance( f32 DeltaTime )
             m_AnimPredictedTime += DeltaTime;     
             
             // If this is the first time, sync up the anim exactly
-            if( m_AudioPrevTime == 0.0f )                           
+            if( IsFirstAudioSample )
                 m_AnimPredictedTime = m_AudioCurrTime;
 
             // Compute error of predicted anim time from predicted audio time

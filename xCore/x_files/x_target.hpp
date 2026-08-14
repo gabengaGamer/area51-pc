@@ -24,14 +24,17 @@ enum platform
 //==============================================================================
 //  Targets
 //------------------------------------------------------------------------------
-// The valid targets are PC.
+// The valid desktop targets are PC (Windows) and Linux.
 //==============================================================================
 
-// TARGET_PC will be the default if no TARGET_ macro was defined
-#if( defined( TARGET_PC ) || !defined( VALID_TARGET ) )
+// TARGET_PC is Windows desktop only. TARGET_LINUX is Linux desktop only.
+// TARGET_DESKTOP is the shared desktop implementation selector.
+
+#if defined( TARGET_PC ) || defined( TARGET_LINUX )
     #ifdef VALID_TARGET
         #define MULTIPLE_TARGETS
     #else
+		#define TARGET_DESKTOP
         #define TARGET_PLATFORM PLATFORM_PC
         #define LITTLE_ENDIAN
         #define X_EXCEPTIONS
@@ -54,7 +57,10 @@ enum platform
         #define VALID_CONFIG
         #define TARGET_DEV
         #define X_DEBUG_MSG
-        #define X_CONTEXT
+        #define X_PROFILE 1
+        #if defined( TARGET_PC )
+            #define X_PROFILE_TRACY 1
+        #endif
         #define X_LOGGING
         #define X_ASSERT
         #define X_DEBUG
@@ -76,6 +82,10 @@ enum platform
         #define X_DEBUG_MSG
         #define X_LOGGING
         #define X_DEBUG
+        #define X_PROFILE 1
+        #if defined( TARGET_PC )
+            #define X_PROFILE_TRACY 1
+        #endif
         #define X_MEM_DEBUG
         #define USE_OWNER_STACK
     #endif
@@ -121,6 +131,16 @@ enum platform
     #endif
 #endif
 
+//------------------------------------------------------------------------------
+
+#ifndef X_PROFILE
+    #define X_PROFILE 0
+#endif
+
+#ifndef X_PROFILE_TRACY
+    #define X_PROFILE_TRACY 0
+#endif
+
 //==============================================================================
 //  Applications
 //==============================================================================
@@ -156,7 +176,7 @@ enum platform
 
 // TODO: This fixes a conflict with the definition of 'new' member operators in the DX9 headers,
 // need to find a better solution to the whole who's managing memory problem
-#if defined( TARGET_PC )
+#if defined( TARGET_DESKTOP )
     #define USE_SYSTEM_NEW_DELETE
 #endif
 
@@ -211,32 +231,38 @@ enum platform
 
 //==============================================================================
 //
+//  Make sure platform is properly defined.
+//
+//==============================================================================
+
+#if defined( TARGET_PC ) && defined( TARGET_LINUX )
+    #error TARGET_PC and TARGET_LINUX cannot be defined together.
+#endif
+
+//==============================================================================
+//
 //  Platform specific data structure alignment.
 //
 //==============================================================================
 
-#ifndef PS2_ALIGNMENT
-#define PS2_ALIGNMENT(a)
-#endif
-
-//------------------------------------------------------------------------------
-
-#ifndef XBOX_ALIGNMENT
-#define XBOX_ALIGNMENT(a)
-#endif
-
-//------------------------------------------------------------------------------
-
-#ifndef GCN_ALIGNMENT
-#define GCN_ALIGNMENT(a)
-#endif
-
-//------------------------------------------------------------------------------
-
-#ifdef TARGET_PC
-#define PC_ALIGNMENT(a) __declspec(align(a))
+#if defined( _MSC_VER )
+    #define PC_ALIGNMENT(a) __declspec(align(a))
+#elif defined( __GNUC__ ) || defined( __clang__ )
+    #define PC_ALIGNMENT(a) __attribute__((aligned(a)))
 #else
-#define PC_ALIGNMENT(a)
+    #define PC_ALIGNMENT(a)
+#endif
+
+//------------------------------------------------------------------------------
+
+#ifndef X_ALIGNMENT
+    #if defined( _MSC_VER )
+        #define X_ALIGNMENT(a) __declspec(align(a))
+    #elif defined( __GNUC__ ) || defined( __clang__ )
+        #define X_ALIGNMENT(a) __attribute__((aligned(a)))
+    #else
+        #define X_ALIGNMENT(a)
+    #endif
 #endif
 
 //==============================================================================

@@ -8,18 +8,41 @@
 // INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "PhysicsInst.hpp"
 #include "PhysicsMgr.hpp"
 #include "Entropy.hpp"
-#include "Loco\LocoCharAnimPlayer.hpp"
-#include "Objects\BaseProjectile.hpp"
-#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Loco/LocoCharAnimPlayer.hpp"
+#include "Objects/BaseProjectile.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
-#ifdef TARGET_PS2
-#include "Entropy/PS2/ps2_spad.hpp"
-#endif
+//==============================================================================
+// RAGDOLL BODY PROFILE
+//==============================================================================
 
+struct ragdoll_body_profile
+{
+    f32 m_LinearDecayPerSecond;
+    f32 m_RootAngularDecayPerSecond;
+    f32 m_LimbAngularDecayPerSecond;
+    f32 m_Elasticity;
+    f32 m_DynamicFriction;
+    f32 m_StaticFriction;
+    f32 m_RootMinInertiaExtentCm;
+    f32 m_LimbMinInertiaExtentCm;
+};
+
+static const ragdoll_body_profile k_RagdollBodyProfile =
+{
+    0.1f,
+    0.2f,
+    2.0f,
+    0.1f,
+    0.8f,
+    0.9f,
+    50.0f,
+    100.0f
+};
 
 //==============================================================================
 // UTILITY FUNCTIONS
@@ -57,7 +80,7 @@ void ClampForce( vector3& Force )
 
 physics_inst::physics_inst()
 {
-    m_bInitialized           = FALSE;
+    m_isInitialized           = FALSE;
     m_bInAwakeList           = FALSE;
     m_bInSleepingList        = FALSE;
     m_bInCollisionWakeupList = FALSE;
@@ -225,11 +248,12 @@ xbool physics_inst::Init( xbool bPopFix, f32 ConstraintBlendTime )
         RigidBody.SetL2W( BodyBindL2W );
         RigidBody.ZeroLinearVelocity();
         RigidBody.ZeroAngularVelocity();
-        RigidBody.SetLinearDamping( 0.1f );
-        RigidBody.SetAngularDamping( i == 0 ? 0.2f : 100000.0f );   // Let root bone spin!
-        RigidBody.SetElasticity( 0.1f );
-        RigidBody.SetDynamicFriction( 0.8f );
-        RigidBody.SetStaticFriction( 0.9f );
+        RigidBody.SetLinearDamping( k_RagdollBodyProfile.m_LinearDecayPerSecond );
+        RigidBody.SetAngularDamping( (i == 0) ? k_RagdollBodyProfile.m_RootAngularDecayPerSecond
+                                              : k_RagdollBodyProfile.m_LimbAngularDecayPerSecond );
+        RigidBody.SetElasticity( k_RagdollBodyProfile.m_Elasticity );
+        RigidBody.SetDynamicFriction( k_RagdollBodyProfile.m_DynamicFriction );
+        RigidBody.SetStaticFriction( k_RagdollBodyProfile.m_StaticFriction );
         RigidBody.ClearForces();
         RigidBody.SetWorldCollision( ( GeomRigidBody.Flags & geom::rigid_body::FLAG_WORLD_COLLISION ) != 0 );
         
@@ -338,7 +362,9 @@ xbool physics_inst::Init( xbool bPopFix, f32 ConstraintBlendTime )
         // Set shape and mass properties (let root bone rotate easier)
         ASSERT( Collision.GetNSpheres() );  // Make sure some spheres were created!
         Collision.SetRadius( Radius );
-        RigidBody.SetCollisionShape( &Collision, GeomRigidBody.Mass, ( i == 0 ) ? 50.0f : 100.0f );
+        const f32 MinInertiaExtent = (i == 0) ? k_RagdollBodyProfile.m_RootMinInertiaExtentCm
+                                              : k_RagdollBodyProfile.m_LimbMinInertiaExtentCm;
+        RigidBody.SetCollisionShape( &Collision, GeomRigidBody.Mass, MinInertiaExtent );
         
         // Connect to parent?
         if( GeomRigidBody.iParentBody != -1 )
@@ -522,7 +548,7 @@ xbool physics_inst::Init( const char* pGeomName, xbool bPopFix, f32 ConstraintBl
 {
     m_SkinInst.SetUpSkinGeom( pGeomName );
     Init( bPopFix, ConstraintBlendTime );
-    return m_bInitialized;
+    return m_isInitialized;
 }
 
 //==============================================================================
@@ -531,7 +557,7 @@ xbool physics_inst::Init( const skin_inst& SkinInst, xbool bPopFix, f32 Constrai
 {
     m_SkinInst = SkinInst;
     Init( bPopFix, ConstraintBlendTime );
-    return m_bInitialized;
+    return m_isInitialized;
 }
 
 //==============================================================================
@@ -606,9 +632,8 @@ void physics_inst::DebugRender( void )
         f32     Radius = GeomRigidBody.Radius;
         //vector3 Pivot  = GeomRigidBody.Pivot;
 
-        // Draw
-        draw_SetL2W( m_RigidBodies[i].GetL2W() );
-        //draw_Sphere( Pivot, 5.0f, XCOLOR_RED );
+        const matrix4& localToWorld = m_RigidBodies[i].GetL2W();
+        //render::debug::Sphere( Pivot, 5.0f, XCOLOR_RED );
         switch( GeomRigidBody.Type )
         {
         case geom::rigid_body::TYPE_BOX:
@@ -620,33 +645,31 @@ void physics_inst::DebugRender( void )
                 BBox.Max.GetX() =  Width  * 0.5f;
                 BBox.Max.GetY() =  Height * 0.5f;
                 BBox.Max.GetZ() =  Length * 0.5f;
-                draw_BBox( BBox, XCOLOR_YELLOW );
+                render::debug::Box( BBox, localToWorld, XCOLOR_YELLOW );
             }
             break;
 
         case geom::rigid_body::TYPE_SPHERE:
             {
-                draw_Sphere( vector3( 0.0f, 0.0f, 0.0f ), Radius, XCOLOR_YELLOW );
+                render::debug::Sphere( localToWorld.GetTranslation(), Radius, XCOLOR_YELLOW );
             }
             break;
 
         case geom::rigid_body::TYPE_CYLINDER:
             {
 #ifdef TARGET_PC            
-                draw_Cylinder( vector3( 0, 0, 0 ),
+                render::debug::Cylinder( localToWorld.GetTranslation(),
                                Radius, 
                                Height, 
                                10, 
                                XCOLOR_YELLOW, 
                                TRUE, 
-                               vector3( 0, 1, 0 ) );
+                               localToWorld.RotateVector( vector3( 0, 1, 0 ) ) );
 #endif                               
             }
             break;
         }
     }
-
-    draw_ClearL2W();
 }
 
 //==============================================================================
@@ -732,12 +755,12 @@ void physics_inst::Deactivate( void )
 {
 #ifdef X_EDITOR
     // Incase geometry is missing
-    if( !m_bInitialized )
+    if( !m_isInitialized )
         return;
 #endif
 
     ASSERTS( m_SkinInst.GetGeom(), "Ragdoll geometry is missing - make sure all resources are compiled!" );
-    ASSERTS( !( m_SkinInst.GetGeom() && !m_bInitialized ), "Geometry is present, but ragdoll not initialized?! - Grab SteveB" );
+    ASSERTS( !( m_SkinInst.GetGeom() && !m_isInitialized ), "Geometry is present, but ragdoll not initialized?! - Grab SteveB" );
     
     // Loop through all bodies and deactivate
     for( s32 i = 0; i < m_RigidBodies.GetCount(); i++ )
@@ -759,13 +782,13 @@ void physics_inst::Activate( void )
 {
 #ifdef X_EDITOR
     // Incase geometry is missing
-    if( !m_bInitialized )
+    if( !m_isInitialized )
         return;
 #endif
 
     ASSERTS( m_SkinInst.GetGeom(), "Ragdoll geometry is missing - make sure all resources are compiled!" );
-    ASSERTS( !( m_SkinInst.GetGeom() && !m_bInitialized ), "Geometry is present, but ragdoll not initialized?! - Grab SteveB" );
-    ASSERT( m_bInitialized );
+    ASSERTS( !( m_SkinInst.GetGeom() && !m_isInitialized ), "Geometry is present, but ragdoll not initialized?! - Grab SteveB" );
+    ASSERT( m_isInitialized );
 
     // Loop through all bodies and activate
     for( s32 i = 0; i < m_RigidBodies.GetCount(); i++ )
@@ -793,52 +816,26 @@ void physics_inst::DirtyMatrices( void )
 
 //==============================================================================
 
-const matrix4* physics_inst::GetBoneL2Ws( u64& LODMask, s32& nActiveBones )
+xbool physics_inst::ComputeRenderBoneMatrices( matrix4* pBoneMatrices, s32 nBones ) const
 {
-    s32 i;
-    
-    // Must have some rigid bodies!
-    s32 nRigidBodies  = m_RigidBodies.GetCount();
-    if( !nRigidBodies )
-        return NULL;
-
-    // Get geometry
     const geom* pGeom = m_SkinInst.GetGeom();
-    if( !pGeom )
-        return NULL;
+    const s32   nRigidBodies = m_RigidBodies.GetCount();
+    const s32   MaxRigidBodies = 32;
+    if( !pBoneMatrices || !pGeom ||
+        (nBones <= 0) || (nBones > pGeom->m_nBones) ||
+        (nRigidBodies <= 0) || (nRigidBodies > MaxRigidBodies) ||
+        (nRigidBodies != pGeom->m_nRigidBodies) ||
+        (m_bPopFix && (m_PopFixMatrices.GetCount() < nBones)) )
+    {
+        ASSERTS( FALSE, "Invalid physics render-pose dimensions" );
+        return FALSE;
+    }
 
-    PHYSICS_DEBUG_START_TIMER( g_PhysicsMgr.m_Profile.m_Render );
-
-    // Geometry rigid body count must match physics rigid body count!
-    ASSERT( nRigidBodies == pGeom->m_nRigidBodies );
-
-    // Compute render info
-    LODMask      = m_SkinInst.GetLODMask( m_RigidBodies[0].GetL2W() );
-    nActiveBones = m_SkinInst.GetNActiveBones( LODMask );
-    ASSERT( nActiveBones > 0 );
-    ASSERT( nActiveBones <= pGeom->m_nBones );
-
-    // Allocate matrices
-    matrix4* pBoneMatrices = m_MatrixCache.GetMatrices( nActiveBones );
-    if( !pBoneMatrices )
-        return NULL;
-
-    // Already valid?
-    if( m_MatrixCache.IsValid( nActiveBones ) )
-        return pBoneMatrices;
-
-    // Allocate rigid body matrices
-#ifdef TARGET_PS2    
-    ASSERT( ( nRigidBodies * sizeof( matrix4 ) ) <= (u32)SPAD.GetUsableSize() );
-    matrix4* pBodyMatrices = (matrix4*)SPAD.GetUsableStartAddr();
-#else
-    ASSERT( nRigidBodies <= 32 );
-    static matrix4 pBodyMatrices[32];
-#endif
+    matrix4 BodyMatrices[MaxRigidBodies];
 
     // Start with physics rigid body L2W's
-    for( i = 0; i < nRigidBodies; i++ )
-        pBodyMatrices[i] = m_RigidBodies[i].GetL2W();
+    for( s32 i = 0; i < nRigidBodies; i++ )
+        BodyMatrices[i] = m_RigidBodies[i].GetL2W();
 
     // Iterate over pivot constraints and spread the error correction across connected bodies
     // (this smooths out the impulse jitter that bodies do before they go to sleep)
@@ -862,10 +859,10 @@ const matrix4* physics_inst::GetBoneL2Ws( u64& LODMask, s32& nActiveBones )
         }
         
         // Loop through rigid bodies
-        for( i = iStart; i != iEnd; i+= iDir )
+        for( s32 i = iStart; i != iEnd; i+= iDir )
         {    
             // Lookup rigid body info
-            matrix4&    BodyL2W   = pBodyMatrices[i];
+            matrix4&    BodyL2W   = BodyMatrices[i];
             rigid_body& RigidBody = m_RigidBodies[i];
         
             // Is this body connected to a parent body?
@@ -879,7 +876,10 @@ const matrix4* physics_inst::GetBoneL2Ws( u64& LODMask, s32& nActiveBones )
                 s32 iParentBody = pGeom->m_pRigidBodies[i].iParentBody;
                 ASSERT( iParentBody != -1 );
                 ASSERT( iParentBody != i );
-                matrix4& ParentBodyL2W = pBodyMatrices[iParentBody];
+                if( (iParentBody < 0) || (iParentBody >= nRigidBodies) || (iParentBody == i) )
+                    return FALSE;
+
+                matrix4& ParentBodyL2W = BodyMatrices[iParentBody];
 
                 // Compute world pivot position
                 ASSERT( pPivotConstraint->GetRigidBody( 0 ) == &RigidBody );
@@ -898,7 +898,7 @@ const matrix4* physics_inst::GetBoneL2Ws( u64& LODMask, s32& nActiveBones )
     }
             
     // Bake in inverse bind ready for skinning
-    for( i = 0; i < nRigidBodies; i++ )
+    for( s32 i = 0; i < nRigidBodies; i++ )
     {
         // Compute inverse bind matrix for rigid body
         const geom::rigid_body& Body = pGeom->m_pRigidBodies[i];
@@ -906,37 +906,87 @@ const matrix4* physics_inst::GetBoneL2Ws( u64& LODMask, s32& nActiveBones )
         matrix4 InvBodyBind = m4_InvertRT( BodyBind );
                  
         // Compute final skin L2W
-        pBodyMatrices[i] = pBodyMatrices[i] * InvBodyBind;
+        BodyMatrices[i] = BodyMatrices[i] * InvBodyBind;
     }
 
     // Finally, compute the bone render matrices. Use pop fix?
     if( m_bPopFix )
     {
         // Loop through all bones
-        for( i = 0; i < nActiveBones; i++ )
+        for( s32 i = 0; i < nBones; i++ )
         {
             // Lookup index of rigid body that bone is attached to
             s32 iRigidBody = pGeom->m_pBone[i].iRigidBody;
             ASSERT( iRigidBody >= 0 );
             ASSERT( iRigidBody < nRigidBodies );
+            if( (iRigidBody < 0) || (iRigidBody >= nRigidBodies) )
+                return FALSE;
 
             // Use rigid body skin matrix with pop fix applied
-            pBoneMatrices[i] = pBodyMatrices[ iRigidBody ] * m_PopFixMatrices[i];
+            pBoneMatrices[i] = BodyMatrices[iRigidBody] * m_PopFixMatrices[i];
         }
     }
     else
     {
         // Loop through all bones
-        for( i = 0; i < nActiveBones; i++ )
+        for( s32 i = 0; i < nBones; i++ )
         {
             // Lookup index of rigid body that bone is attached to
             s32 iRigidBody = pGeom->m_pBone[i].iRigidBody;
             ASSERT( iRigidBody >= 0 );
             ASSERT( iRigidBody < nRigidBodies );
+            if( (iRigidBody < 0) || (iRigidBody >= nRigidBodies) )
+                return FALSE;
             
             // Just copy rigid body skin matrix
-            pBoneMatrices[i] = pBodyMatrices[ iRigidBody ];
+            pBoneMatrices[i] = BodyMatrices[iRigidBody];
         }
+    }
+
+    return TRUE;
+}
+
+//==============================================================================
+
+const matrix4* physics_inst::GetBoneL2Ws( u64& LODMask, s32& nActiveBones )
+{
+    const s32 nRigidBodies = m_RigidBodies.GetCount();
+    if( nRigidBodies <= 0 )
+        return NULL;
+
+    const geom* pGeom = m_SkinInst.GetGeom();
+    if( !pGeom )
+        return NULL;
+
+    PHYSICS_DEBUG_START_TIMER( g_PhysicsMgr.m_Profile.m_Render );
+
+    LODMask      = m_SkinInst.GetLODMask( m_RigidBodies[0].GetL2W() );
+    nActiveBones = m_SkinInst.GetNActiveBones( LODMask );
+    ASSERT( nActiveBones > 0 );
+    ASSERT( nActiveBones <= pGeom->m_nBones );
+    if( (nActiveBones <= 0) || (nActiveBones > pGeom->m_nBones) )
+    {
+        PHYSICS_DEBUG_STOP_TIMER( g_PhysicsMgr.m_Profile.m_Render );
+        return NULL;
+    }
+
+    matrix4* pBoneMatrices = m_MatrixCache.GetMatrices( nActiveBones );
+    if( !pBoneMatrices )
+    {
+        PHYSICS_DEBUG_STOP_TIMER( g_PhysicsMgr.m_Profile.m_Render );
+        return NULL;
+    }
+
+    if( m_MatrixCache.IsValid( nActiveBones ) )
+    {
+        PHYSICS_DEBUG_STOP_TIMER( g_PhysicsMgr.m_Profile.m_Render );
+        return pBoneMatrices;
+    }
+
+    if( !ComputeRenderBoneMatrices( pBoneMatrices, nActiveBones ) )
+    {
+        PHYSICS_DEBUG_STOP_TIMER( g_PhysicsMgr.m_Profile.m_Render );
+        return NULL;
     }
 
     // Flag matrices as valid
@@ -945,112 +995,6 @@ const matrix4* physics_inst::GetBoneL2Ws( u64& LODMask, s32& nActiveBones )
     PHYSICS_DEBUG_STOP_TIMER( g_PhysicsMgr.m_Profile.m_Render );
 
     return pBoneMatrices;
-}
-
-//==============================================================================
-
-xbool physics_inst::CaptureRenderInterpState( simple_anim_interp_state& Snapshot ) const
-{
-    InitSimpleAnimInterpState( Snapshot );
-
-    const geom* pGeom = m_SkinInst.GetGeom();
-    const s32   nRigidBodies = m_RigidBodies.GetCount();
-    if( !pGeom || !nRigidBodies )
-        return FALSE;
-
-    ASSERT( nRigidBodies == pGeom->m_nRigidBodies );
-    ASSERT( nRigidBodies <= 32 );
-
-    Snapshot.Valid  = TRUE;
-    Snapshot.L2W    = m_RigidBodies[0].GetL2W();
-    Snapshot.NBones = MIN( pGeom->m_nBones, MAX_ANIM_BONES );
-    if( Snapshot.NBones <= 0 )
-        return TRUE;
-
-#ifdef TARGET_PS2
-    ASSERT( ( nRigidBodies * sizeof( matrix4 ) ) <= (u32)SPAD.GetUsableSize() );
-    matrix4* pBodyMatrices = (matrix4*)SPAD.GetUsableStartAddr();
-#else
-    static matrix4 pBodyMatrices[32];
-#endif
-
-    for( s32 i = 0; i < nRigidBodies; i++ )
-        pBodyMatrices[i] = m_RigidBodies[i].GetL2W();
-
-    for( s32 Iters = g_PhysicsMgr.m_Settings.m_nRenderIterations; Iters > 0; Iters-- )
-    {
-        s32 iStart, iEnd, iDir;
-        if( Iters & 1 )
-        {
-            iStart = 0;
-            iEnd   = nRigidBodies - 1;
-            iDir   = 1;
-        }
-        else
-        {
-            iStart = nRigidBodies - 1;
-            iEnd   = 0;
-            iDir   = -1;
-        }
-
-        for( s32 i = iStart; i != iEnd; i += iDir )
-        {
-            matrix4& BodyL2W = pBodyMatrices[i];
-
-            constraint* pPivotConstraint = m_RigidBodies[i].GetPivotConstraint();
-            if( !pPivotConstraint )
-                continue;
-
-            ASSERT( pPivotConstraint->GetMaxDist() == 0.0f );
-
-            const s32 iParentBody = pGeom->m_pRigidBodies[i].iParentBody;
-            ASSERT( iParentBody != -1 );
-            ASSERT( iParentBody != i );
-            matrix4& ParentBodyL2W = pBodyMatrices[iParentBody];
-
-            ASSERT( pPivotConstraint->GetRigidBody( 0 ) == &m_RigidBodies[i] );
-            vector3 WorldPivot = BodyL2W * pPivotConstraint->GetBodyPos( 0 );
-
-            ASSERT( pPivotConstraint->GetRigidBody( 1 ) == &m_RigidBodies[iParentBody] );
-            vector3 ParentWorldPivot = ParentBodyL2W * pPivotConstraint->GetBodyPos( 1 );
-
-            vector3 Delta = 0.5f * ( ParentWorldPivot - WorldPivot );
-            BodyL2W.Translate( Delta );
-            ParentBodyL2W.Translate( -Delta );
-        }
-    }
-
-    for( s32 i = 0; i < nRigidBodies; i++ )
-    {
-        const geom::rigid_body& Body = pGeom->m_pRigidBodies[i];
-        matrix4 BodyBind( vector3( 1.0f, 1.0f, 1.0f ), Body.BodyBindRotation, Body.BodyBindPosition );
-        matrix4 InvBodyBind = m4_InvertRT( BodyBind );
-
-        pBodyMatrices[i] = pBodyMatrices[i] * InvBodyBind;
-    }
-
-    if( m_bPopFix )
-    {
-        for( s32 i = 0; i < Snapshot.NBones; i++ )
-        {
-            const s32 iRigidBody = pGeom->m_pBone[i].iRigidBody;
-            ASSERT( iRigidBody >= 0 );
-            ASSERT( iRigidBody < nRigidBodies );
-            Snapshot.Bones[i] = pBodyMatrices[iRigidBody] * m_PopFixMatrices[i];
-        }
-    }
-    else
-    {
-        for( s32 i = 0; i < Snapshot.NBones; i++ )
-        {
-            const s32 iRigidBody = pGeom->m_pBone[i].iRigidBody;
-            ASSERT( iRigidBody >= 0 );
-            ASSERT( iRigidBody < nRigidBodies );
-            Snapshot.Bones[i] = pBodyMatrices[iRigidBody];
-        }
-    }
-
-    return TRUE;
 }
 
 //==============================================================================
@@ -1107,8 +1051,12 @@ matrix4 physics_inst::GetBoneWorldTransform( s32 iBone )
 
 //==============================================================================
 
-void physics_inst::SetMatrices( loco_char_anim_player& AnimPlayer, const vector3& Vel )
+void physics_inst::SetAnimatedPose( loco_char_anim_player& AnimPlayer, const vector3& WorldVelocity )
 {
+    ASSERT( WorldVelocity.IsValid() );
+    if( !WorldVelocity.IsValid() )
+        return;
+
     // No bodies setup?
     if( !m_RigidBodies.GetCount() )
         return;
@@ -1123,59 +1071,128 @@ void physics_inst::SetMatrices( loco_char_anim_player& AnimPlayer, const vector3
     if( CurrAnim.GetAnimIndex() == -1 )
         return;
 
-    // Lookup anim info
+    // Sample animation velocity
     const anim_info& AnimInfo = CurrAnim.GetAnimInfo();
-    f32 DeltaTime = ( CurrAnim.GetRate() / 30.0f ) * (f32)AnimInfo.GetFPS();
-    f32 LastFrame = (f32)( AnimInfo.GetNFrames() - 2 );
-    f32 CurrFrame = CurrAnim.GetFrame();
-    f32 NextFrame = CurrFrame + DeltaTime;
-    
-    // At end of anim?
-    if ( CurrFrame >= LastFrame )
+    const f32 SampleSeconds = 1.0f / 30.0f;
+    const f32 LastFrame     = (f32)x_max( 0, AnimInfo.GetNFrames() - 2 );
+    const f32 CurrFrame     = CurrAnim.GetFrame();
+    const f32 FrameStep     = CurrAnim.GetRate() * (f32)AnimInfo.GetFPS() * SampleSeconds;
+
+    f32 SampleFrame = x_clamp( CurrFrame + FrameStep, 0.0f, LastFrame );
+    f32 SampleDirection = 1.0f;
+    if( x_abs( SampleFrame - CurrFrame ) < 0.00001f )
     {
-        // Rewind a frame
-        CurrFrame = LastFrame - DeltaTime;
-        NextFrame = LastFrame;
-        
-        // Range check
-        if( CurrFrame < 0 )
-            CurrFrame = 0.0f;
+        SampleFrame = x_clamp( CurrFrame - FrameStep, 0.0f, LastFrame );
+        SampleDirection = -1.0f;
     }
-    else
-    {
-        // Range check
-        if( NextFrame > LastFrame )
-            NextFrame = LastFrame;
-    }
-    
-    // Compute matrices for current frame and setup position
+
+    matrix4 CurrentMatrices[MAX_ANIM_BONES];
+    matrix4 SampleMatrices [MAX_ANIM_BONES];
+    const s32 OriginalActiveBones = AnimPlayer.GetNActiveBones();
+
+    ASSERT( pGeom->m_nBones <= MAX_ANIM_BONES );
+    if( pGeom->m_nBones > MAX_ANIM_BONES )
+        return;
+
     AnimPlayer.SetNActiveBones( pGeom->m_nBones );
     AnimPlayer.SetCurrAnimFrame( CurrFrame );
-    SetMatrices( AnimPlayer.GetBoneL2Ws(), pGeom->m_nBones, FALSE );
-    
-    // Compute matrices for next frame and inherit vels
-    AnimPlayer.SetCurrAnimFrame( NextFrame );
-    SetMatrices( AnimPlayer.GetBoneL2Ws(), pGeom->m_nBones, TRUE );
-    
-    // Add final velocity
+    const matrix4* pCurrentMatrices = AnimPlayer.GetBoneL2Ws();
+    ASSERT( pCurrentMatrices );
+    if( !pCurrentMatrices )
+    {
+        AnimPlayer.SetCurrAnimFrame( CurrFrame );
+        if( OriginalActiveBones > 0 )
+            AnimPlayer.SetNActiveBones( OriginalActiveBones );
+        return;
+    }
+    x_memcpy( CurrentMatrices,
+              pCurrentMatrices,
+              sizeof(matrix4) * pGeom->m_nBones );
+
+    AnimPlayer.SetCurrAnimFrame( SampleFrame );
+    const matrix4* pSampleMatrices = AnimPlayer.GetBoneL2Ws();
+    ASSERT( pSampleMatrices );
+    if( !pSampleMatrices )
+    {
+        AnimPlayer.SetCurrAnimFrame( CurrFrame );
+        if( OriginalActiveBones > 0 )
+            AnimPlayer.SetNActiveBones( OriginalActiveBones );
+        return;
+    }
+    x_memcpy( SampleMatrices,
+              pSampleMatrices,
+              sizeof(matrix4) * pGeom->m_nBones );
+
+    AnimPlayer.SetCurrAnimFrame( CurrFrame );
+    if( OriginalActiveBones > 0 )
+        AnimPlayer.SetNActiveBones( OriginalActiveBones );
+
+    for( s32 i = 0; i < pGeom->m_nBones; i++ )
+    {
+        if( !CurrentMatrices[i].IsValid() || !SampleMatrices[i].IsValid() )
+        {
+            ASSERTS( FALSE, "Animated ragdoll pose contains an invalid matrix" );
+            return;
+        }
+    }
+
+    SetPose( CurrentMatrices, pGeom->m_nBones );
+
     for( s32 i = 0; i < m_RigidBodies.GetCount(); i++ )
     {
-        // Lookup body
         rigid_body& Body = m_RigidBodies[i];
-        
-        // Add to the velocity
-        Body.GetLinearVelocity() += Vel * 30.0f;
+        const geom::rigid_body& GeomBody = pGeom->m_pRigidBodies[i];
+
+        matrix4 BodyBind;
+        BodyBind.Setup( vector3( 1.0f, 1.0f, 1.0f ),
+                        GeomBody.BodyBindRotation,
+                        GeomBody.BodyBindPosition );
+
+        const matrix4 CurrentBodyL2W = CurrentMatrices[ GeomBody.iBone ] * BodyBind;
+        const matrix4 SampleBodyL2W  = SampleMatrices [ GeomBody.iBone ] * BodyBind;
+        const vector3 AnimationVelocity = SampleDirection *
+                                          (SampleBodyL2W.GetTranslation() - CurrentBodyL2W.GetTranslation()) /
+                                          SampleSeconds;
+        Body.SetLinearVelocity( WorldVelocity + AnimationVelocity );
+
+        quaternion FromRotation;
+        quaternion ToRotation;
+        if( SampleDirection > 0.0f )
+        {
+            FromRotation = CurrentBodyL2W.GetQuaternion();
+            ToRotation   = SampleBodyL2W.GetQuaternion();
+        }
+        else
+        {
+            FromRotation = SampleBodyL2W.GetQuaternion();
+            ToRotation   = CurrentBodyL2W.GetQuaternion();
+        }
+
+        FromRotation.Invert();
+        quaternion DeltaRotation = ToRotation * FromRotation;
+        DeltaRotation.Normalize();
+        if( DeltaRotation.W < 0.0f )
+        {
+            DeltaRotation.X = -DeltaRotation.X;
+            DeltaRotation.Y = -DeltaRotation.Y;
+            DeltaRotation.Z = -DeltaRotation.Z;
+            DeltaRotation.W = -DeltaRotation.W;
+        }
+
+        const vector3 RotationAxis = DeltaRotation.GetAxis();
+        Body.SetAngularVelocity( RotationAxis * (DeltaRotation.GetAngle() / SampleSeconds) );
     }
 }
 
 //==============================================================================
 
-void physics_inst::SetMatrices( const matrix4* pMatrices, s32 nBones, xbool bInheritVel )
+void physics_inst::SetPose( const matrix4* pMatrices, s32 nBones )
 {
-    s32 i, j, k;
-    
-    (void)nBones;
+    s32 i;
+
     ASSERT( nBones > 0 );
+    if( nBones <= 0 )
+        return;
 
     // Must have matrices!    
     if( !pMatrices )
@@ -1190,13 +1207,19 @@ void physics_inst::SetMatrices( const matrix4* pMatrices, s32 nBones, xbool bInh
     if( !pGeom )
         return;
 
-    // Lookup root bone world position (middle of character)
-    // NOTE: Bind pos is added because inverse bind pos is baked into matrix
-    vector3 WorldPos = pGeom->m_pBone[0].BindPosition + pMatrices[0].GetTranslation();
-    
-    // Move in the air a bit in-case the npc is sitting on the floor
-    WorldPos.GetY() += 40.0f;
-    
+    ASSERT( nBones <= pGeom->m_nBones );
+    if( nBones > pGeom->m_nBones )
+        return;
+
+    for( i = 0; i < nBones; i++ )
+    {
+        if( !pMatrices[i].IsValid() )
+        {
+            ASSERTS( FALSE, "Ragdoll pose contains an invalid matrix" );
+            return;
+        }
+    }
+
     // Setup rigid bodies from animation matrices
     ASSERT( pGeom->m_nRigidBodies == m_RigidBodies.GetCount() );
     for( i = 0; i < m_RigidBodies.GetCount(); i++ )
@@ -1224,39 +1247,14 @@ void physics_inst::SetMatrices( const matrix4* pMatrices, s32 nBones, xbool bInh
         // Compute rigid body L2Ws
         matrix4 CurrBodyL2W = pMatrices[ GeomBody.iBone ] * BodyBind;
         
-        // Inherit motion too?
-        if( bInheritVel )
-        {
-            // Compute velocity (don't need to take into account rotation - this looks good enough)
-            const matrix4& PrevBodyL2W = Body.GetL2W();
-            vector3 Motion = CurrBodyL2W.GetTranslation() - PrevBodyL2W.GetTranslation();
-            Body.SetLinearVelocity( Motion * 30.0f );
-        }
-        
         // Set new rigid body L2W
         Body.SetPrevL2W( CurrBodyL2W );
         Body.SetL2W( CurrBodyL2W );
-        
-        // Setup collision shapes
-        for( j = 0; j < m_CollisionShapes.GetCount(); j++ )
-        {
-            // Lookup collision spheres shape
-            collision_shape& Shape = m_CollisionShapes[j];
-            
-            // Setup spheres
-            for( k = 0; k < Shape.GetNSpheres(); k++ )
-            {
-                // Lookup sphere
-                collision_shape::sphere& Sphere = Shape.GetSphere( k );
-                
-                // Setup coll free pos (hopefully!) to be in middle of character
-                Sphere.m_CollFreePos = WorldPos;
-                
-                // Setup start and end positions
-                Sphere.m_PrevPos =
-                Sphere.m_CurrPos = CurrBodyL2W * Sphere.m_Offset;
-            }
-        }
+
+        collision_shape* pShape = Body.GetCollisionShape();
+        ASSERT( pShape );
+        if( pShape )
+            pShape->SetL2W( CurrBodyL2W );
     }
     
     // Compute pop fix bind matrices?
@@ -1270,7 +1268,7 @@ void physics_inst::SetMatrices( const matrix4* pMatrices, s32 nBones, xbool bInh
             
             // Lookup rigid body
             ASSERT( Bone.iRigidBody >= 0 );
-            ASSERT( Bone.iRigidBody < nBones );
+            ASSERT( Bone.iRigidBody < m_RigidBodies.GetCount() );
             const geom::rigid_body& Body = pGeom->m_pRigidBodies[ Bone.iRigidBody ];
 
             // Compute inverse bind matrix for rigid body
@@ -1470,6 +1468,12 @@ void physics_inst::ComputeWorldBBox( void )
         collision_shape* pColl = Body.GetCollisionShape();
         if( pColl )
         {
+            if( !Body.GetPrevL2W().IsValid() || !Body.GetL2W().IsValid() )
+            {
+                ASSERTS( FALSE, "Physics body transform is invalid before collision detection" );
+                continue;
+            }
+
             // Collide with world?
             if( Body.m_Flags & rigid_body::FLAG_WORLD_COLLISION )
             {
@@ -1544,6 +1548,9 @@ s32 physics_inst::AddBodyWorldConstraint( s32            iRigidBody,
 
 void physics_inst::Advance( f32 DeltaTime )
 {
+    if( !x_isvalid( DeltaTime ) || (DeltaTime < 0.0f) )
+        return;
+
     // Update constraint blending
     m_ConstraintWeight += m_ConstraintWeightDelta * DeltaTime;
     m_ConstraintWeight = x_clamp( m_ConstraintWeight, 0.0f, 1.0f );

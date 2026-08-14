@@ -8,14 +8,15 @@
 //==============================================================================
 
 #include "DebugMenu2.hpp"
-#include "objects\player.hpp"
-#include "StateMgr/mapList.hpp"
-#include "Ui\ui_manager.hpp"
-#include "Ui\ui_font.hpp"
+#include "Objects/Player/Player.hpp"
+#include "StateMgr/MapList.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_renderer.hpp"
 #include "Configuration/GameConfig.hpp"
-#include "PhysicsMgr\PhysicsMgr.hpp"
+#include "PhysicsMgr/PhysicsMgr.hpp"
 
-#include "GameLib\StatsMgr.hpp"
+#include "GameLib/StatsMgr.hpp"
 
 
 //==============================================================================
@@ -182,7 +183,7 @@ void debug_menu_page_general::OnPreRender ( void )
         Rect.Translate(XRes - 270, 25);
         #endif
 
-        draw_Rect( Rect, xcolor(0,0,0,128), FALSE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( Rect, xcolor(0,0,0,128) );
         g_UiMgr->RenderText( font, Rect, ui_font::h_left|ui_font::v_top, xcolor(XCOLOR_WHITE), posText );
     }
 
@@ -196,7 +197,7 @@ void debug_menu_page_general::OnPreRender ( void )
         s32 x = XRes/2-50;
         s32 y = 50;
         Rect.Set(x - 4, y, x + 230, y + g_UiMgr->GetLineHeight(font) * 4);
-        draw_Rect( Rect, xcolor(0,0,0,128), FALSE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( Rect, xcolor(0,0,0,128) );
 
         // Show resolutions
         xwstring Text;
@@ -216,7 +217,7 @@ void debug_menu_page_general::OnPreRender ( void )
         s32 x = XRes/2-50;
         s32 y = 50;
         Rect.Set(x - 4, y, x + 230, y + g_UiMgr->GetLineHeight(font) * 4);
-        draw_Rect( Rect, xcolor(0,0,0,128), FALSE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( Rect, xcolor(0,0,0,128) );
 
         // heading
         g_UiMgr->RenderText( font, Rect, ui_font::h_left|ui_font::v_top, xcolor(XCOLOR_WHITE), xwstring( "BACK + DPad_R/L or White/Black" ) );
@@ -242,7 +243,7 @@ void debug_menu_page_general::OnPreRender ( void )
         s32 x = XRes/2-50;
         s32 y = 50;
         Rect.Set(x - 4, y, x + 230, y + g_UiMgr->GetLineHeight(font) * 4);
-        draw_Rect( Rect, xcolor(0,0,0,128), FALSE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( Rect, xcolor(0,0,0,128) );
 
         // vertex memory pool
         u32 VertexRAM = g_VertFactory.GetGeneralPool().GetFree();
@@ -317,7 +318,7 @@ void debug_menu_page_general::OnPreRender ( void )
         #endif
         s32 y = 50;
         Rect.Set(x - 4, y, x + 230, y + g_UiMgr->GetLineHeight(font) * 4);
-        draw_Rect( Rect, xcolor(0,0,0,128), FALSE, DRAW_UI_RTARGET );
+        g_UIRenderer.DrawRect( Rect, xcolor(0,0,0,128) );
 
         //zone #
         if( pPlayer )
@@ -401,10 +402,10 @@ void debug_menu_page_general::OnPreRender ( void )
 
             irect Box;
             Box.Set( px - 4, py - 2, px + 196, py + lh * (nRows + 2) + 2 );
-            draw_Rect( Box, xcolor(0,0,0,160), FALSE, DRAW_UI_RTARGET );
+            g_UIRenderer.DrawRect( Box, xcolor(0,0,0,160) );
 
             irect TRect;
-            f32   FPS     = eng_GetFPS();
+            f32   FPS     = eng_GetCPUFrameRate();
             f32   FrameMs = ( FPS > 0.0f ) ? ( 1000.0f / FPS ) : 0.0f;
             xcolor FPSCol = ( FPS >= 55.0f ) ? xcolor(  0,255,  0,255 )
                           : ( FPS >= 30.0f ) ? xcolor(255,255,  0,255 )

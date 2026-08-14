@@ -9,8 +9,8 @@
 //=========================================================================
 
 #include "trigger_meta_cinema_block.hpp"
-#include "..\TriggerEx_Object.hpp"
-#include "..\..\Objects\Cinema.hpp"
+#include "../TriggerEx_Object.hpp"
+#include "../../Objects/Cinema.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS

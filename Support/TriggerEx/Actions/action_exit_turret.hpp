@@ -11,8 +11,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\TriggerEx_Actions.hpp"
-#include "..\Support\Objects\WeaponTRA.hpp "
+#include "../TriggerEx_Actions.hpp"
+#include "../Support/Objects/WeaponTRA.hpp"
 
 //=========================================================================
 // Check Property

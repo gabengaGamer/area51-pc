@@ -12,6 +12,7 @@
 #include "WorldEditor.hpp"
 #include "..\Editor\BaseDocument.h"
 #include "..\MiscUtils\SimpleUtils.hpp"
+#include "Render\Texture.hpp"
 
 //=========================================================================
 //=========================================================================
@@ -50,7 +51,7 @@ public:
     void UnloadImage();
 
     xbool m_bImageLoaded;
-    xbitmap m_xbmpImage;
+    texture m_SchematicTexture;
 };
 
 #endif

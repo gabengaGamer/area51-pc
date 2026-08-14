@@ -9,10 +9,11 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\door_logic.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/Door_Logic.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 #include "Entropy.hpp"
 
 static const xcolor s_DoorLogicColor             (0,255,0);
@@ -33,7 +34,7 @@ door_logic::door_logic ( guid ParentGuid ) :
 
 void door_logic::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * move_object::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * move_object::Execute" );
 
     (void) pParent;
 
@@ -70,9 +71,9 @@ void door_logic::OnRender ( void )
 
 #ifdef TARGET_PC
     vector3 MyPosition =  GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
-    draw_Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_DoorLogicColor );
-    draw_BBox( ObjectPtr.m_pObject->GetBBox(), s_DoorLogicColor );
-    draw_Label( ObjectPtr.m_pObject->GetPosition(), s_DoorLogicColor, GetTypeName() );
+    render::debug::Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_DoorLogicColor );
+    render::debug::Box( ObjectPtr.m_pObject->GetBBox(), s_DoorLogicColor );
+    render::debug::Label( ObjectPtr.m_pObject->GetPosition(), s_DoorLogicColor, GetTypeName() );
 #endif
 }
 

@@ -17,6 +17,7 @@
 #endif
 
 #include "ui_control.hpp"
+#include "ui_scrollbar.hpp"
 
 //==============================================================================
 //  ui_textbox
@@ -26,76 +27,63 @@ extern ui_win* ui_textbox_factory( s32 UserID, ui_manager* pManager, const irect
 
 class ui_textbox : public ui_control
 {
-    struct item
-    {
-        xbool       Enabled;
-        xwstring    Label;
-        s32         Data;
-        xcolor      Color;
-    };
-
 public:
-                    ui_textbox              ( void );
-    virtual        ~ui_textbox              ( void );
+                    ui_textbox          ( void );
+    virtual        ~ui_textbox          ( void );
 
-    xbool           Create                  ( s32           UserID,
-                                              ui_manager*   pManager,
-                                              const irect&  Position,
-                                              ui_win*       pParent,
-                                              s32           Flags );
+    xbool           Create              ( s32           UserID,
+                                          ui_manager*   pManager,
+                                          const irect&  Position,
+                                          ui_win*       pParent,
+                                          s32           Flags );
 
     virtual void    SetLabel            ( const xwstring&   Text );
 
-    virtual void    Render                  ( s32 ox=0, s32 oy=0 );
+    virtual void    Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void    SetPosition             ( const irect& Position );
+    virtual void    SetPosition         ( const irect& Position );
 
-    virtual void    OnPadNavigate           ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void    OnPadSelect             ( ui_win* pWin );
-    virtual void    OnPadBack               ( ui_win* pWin );
-    virtual void    OnMouseMove             ( ui_win* pWin, s32 x, s32 y );
-    virtual void    OnLBDown                ( ui_win* pWin );
-    virtual void    OnLBUp                  ( ui_win* pWin );
-    virtual void    OnUpdate                ( ui_win* pWin, f32 DeltaTime );
-    virtual void    OnFocusLost             ( ui_win* pWin );
+    virtual void    OnNavigate          ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void    OnPage              ( ui_win* pWin, s32 Direction );
+    virtual void    OnJump              ( ui_win* pWin, s32 Direction );
+    virtual void    OnAccept            ( ui_win* pWin );
+    virtual void    OnCancel            ( ui_win* pWin );
+    virtual void    OnPointerMove       ( ui_win* pWin, s32 x, s32 y );
+    virtual void    OnPointerLeave      ( ui_win* pWin );
+    virtual void    OnPointerWheel      ( ui_win* pWin, s32 Delta );
+    virtual void    OnPointerDown       ( ui_win* pWin, s32 x, s32 y );
+    virtual void    OnPointerUp         ( ui_win* pWin, s32 x, s32 y );
+    virtual void    OnUpdate            ( ui_win* pWin, f32 DeltaTime );
+    virtual void    OnFocusLost         ( ui_win* pWin );
 
-    void            SetExitOnSelect         ( xbool State )                     { m_ExitOnSelect = State; }
-    void            SetExitOnBack           ( xbool State )                     { m_ExitOnBack = State;   }
+    void            SetExitOnSelect     ( xbool State ) { m_ExitOnSelect = State; }
+    void            SetExitOnBack       ( xbool State ) { m_ExitOnBack = State;   }
+													    
+    void            EnableBorders       ( void )        { m_ShowBorders = TRUE;   }
+    void            DisableBorders      ( void )        { m_ShowBorders = FALSE;  }
+													    
+    void            EnableFrame         ( void )        { m_ShowFrame = TRUE;     }
+    void            DisableFrame        ( void )        { m_ShowFrame = FALSE;    }
 
-    void            EnableBorders           ( void )                            { m_ShowBorders = TRUE;   }
-    void            DisableBorders          ( void )                            { m_ShowBorders = FALSE;  }
+    s32             GetLineCount        ( void ) const;
 
-    void            EnableFrame             ( void )                            { m_ShowFrame = TRUE;     }
-    void            DisableFrame            ( void )                            { m_ShowFrame = FALSE;    }
+    void            EnsureVisible       ( s32 iLine );
 
-    s32             GetLineCount            ( void ) const;
-
-    void            EnsureVisible           ( s32 iLine );
-
-    void            SetBackgroundColor      ( xcolor Color );
-    xcolor          GetBackgroundColor      ( void ) const;
+    void            SetBackgroundColor  ( xcolor Color );
+    xcolor          GetBackgroundColor  ( void ) const;
 
 protected:
+    xbool           SetFirstVisibleLine ( s32 FirstVisibleLine );
+    void            UpdateScrollBar     ( void );
+
+    //-------------------------------------------------------------------------
+
     xbool           m_ExitOnSelect;
     xbool           m_ExitOnBack;
     xbool           m_ShowBorders;
     xbool           m_ShowFrame;
     s32             m_iElementFrame;
-    s32             m_iElement_sb_arrowdown;
-    s32             m_iElement_sb_arrowup;
-    s32             m_iElement_sb_container;
-    s32             m_iElement_sb_thumb;
-
-#ifdef TARGET_PC
-    s32             m_MouseX;
-    s32             m_MouseY;
-    irect           m_UpArrow;
-    irect           m_DownArrow;
-    irect           m_ScrollBar;
-    xbool           m_MouseDown;
-    xbool           m_ScrollDown;
-    f32             m_ScrollTime;
-#endif
+    ui_scrollbar    m_ScrollBar;
 
     irect           m_TextRect;
     s32             m_LineHeight;

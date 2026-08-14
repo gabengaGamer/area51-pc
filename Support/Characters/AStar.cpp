@@ -1,3 +1,4 @@
+#include "Render/PrimitiveDebug.hpp"
 #include "AStar.hpp"
 #include "Entropy.hpp"
 #include "Obj_mgr/obj_mgr.hpp"
@@ -25,7 +26,7 @@ xbool astar_path_finder::GeneratePath( ng_connection2*      pStartConnection,
                                        s32                  PathCount,
                                        s32&                 nStepsInPath )    
 {
-    CONTEXT( "astar_path_finder::GeneratePath" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "astar_path_finder::GeneratePath" );
 
     //clear the open list
     m_OpenList.Clear();
@@ -187,7 +188,7 @@ f32 astar_path_finder::CalculateMultiplierForConnection( const ng_connection2&  
 /*
 xbool astar_path_finder::GenerateRunFrom(ng_node* pStartNode, vector3& RunPos, s32 Depth, s32* PathList, s32 PathCount )
 {
-    CONTEXT( "astar_path_finder::GenerateRunFrom" ) ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "astar_path_finder::GenerateRunFrom" ) ;
 
     // Clear the open list.
     m_OpenList.Clear() ;
@@ -333,51 +334,7 @@ s32  astar_path_finder::CreatePath( s32* PathList, s32 PathCount )
 }
 
 #ifdef X_EDITOR
-
 void astar_path_finder::RenderPath( void )
 {
-    /*
-#ifdef TARGET_PC
-    //walk through our pooled nodes and render spheres around their positions
-    for ( s32 i = 0 ; i < m_NumConnections ; i++ )
-    {
-        vector3 vPos = m_NodeList[i].m_Position;
-        xcolor  cColor;
-        if ( m_NodeList[i].IsOpen() )
-        {
-            cColor = XCOLOR_RED;
-        }
-        else
-        {
-            cColor = XCOLOR_BLUE;
-        }
-
-        draw_Sphere( vPos , 50.f , cColor );
-    }
-
-    //now, if a path has been found, we draw a green line on the path
-    if ( m_PathIndex >= 0 )
-    {
-        s32         CurrentIndex = m_PathIndex;
-        astar_node* pPathNode = &m_NodeList[ CurrentIndex ];
-        vector3 vOffset( 0.f , 10.f , 0.f );
-        while ( pPathNode->m_pParentNode )
-        {
-            char buf[64];
-            draw_Line( vOffset + pPathNode->m_pNavNode->GetPosition() , vOffset + pPathNode->m_pParentNode->GetPosition() , XCOLOR_GREEN );
-            x_sprintf( buf , "NodeID: %u" , pPathNode->m_pNavNode->GetSlotID() );
-            draw_Label( 1.5f * vOffset + pPathNode->m_pNavNode->GetPosition() , XCOLOR_WHITE , buf );
-            CurrentIndex = pPathNode->m_ParentIndex;
-            ASSERT( CurrentIndex >= 0 );
-            pPathNode = &m_NodeList[ CurrentIndex ];
-        }
-
-        char buf[64];
-        x_sprintf( buf , "GOAL NODE ID: %u" , pPathNode->m_pNavNode->GetSlotID() );
-        draw_Label( 1.5f * vOffset + pPathNode->m_pNavNode->GetPosition() , XCOLOR_YELLOW , buf ); 
-    }
-#endif
-*/
 }
-
 #endif // X_EDITOR

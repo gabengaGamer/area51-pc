@@ -1,0 +1,402 @@
+{
+  "version": 4,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "windows-vs2022-base",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "A51_BUILD_SELECTED_APPS": "ON"
+      }
+    },
+    {
+      "name": "windows-vs2022-win32",
+      "inherits": "windows-vs2022-base",
+      "displayName": "Windows MSVC Win32 / Visual Studio 2022",
+      "description": "32-bit x86 multi-configuration MSVC build for Windows.",
+      "architecture": "Win32"
+    },
+    {
+      "name": "windows-vs2022-x64",
+      "inherits": "windows-vs2022-base",
+      "displayName": "Windows MSVC x64 / Visual Studio 2022",
+      "description": "64-bit x64 multi-configuration MSVC build for Windows.",
+      "architecture": "x64"
+    },
+    {
+      "name": "windows-vs2022-arm",
+      "inherits": "windows-vs2022-base",
+      "displayName": "Windows MSVC ARM32 / Visual Studio 2022",
+      "description": "32-bit ARM multi-configuration MSVC build for Windows.",
+      "architecture": "ARM"
+    },
+    {
+      "name": "windows-vs2022-arm64",
+      "inherits": "windows-vs2022-base",
+      "displayName": "Windows MSVC ARM64 / Visual Studio 2022",
+      "description": "64-bit ARM multi-configuration MSVC build for Windows.",
+      "architecture": "ARM64"
+    },
+    {
+      "name": "ninja-multi",
+      "displayName": "Ninja Multi-Config / host compiler",
+      "description": "Multi-configuration Ninja build using the host compiler.",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "A51_BUILD_SELECTED_APPS": "ON"
+      }
+    },
+    {
+      "name": "linux-gcc-x64",
+      "displayName": "Linux GCC x64 portability baseline",
+      "description": "Linux x64 multi-configuration portability baseline; the toolchain supplies the compiler.",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/linux.cmake",
+      "cacheVariables": {
+        "A51_BUILD_SELECTED_APPS": "ON",
+        "A51_BUILD_WINDOWS_TARGETS": "OFF",
+        "A51_ENABLE_QT": "OFF"
+      }
+    },
+    {
+      "name": "linux-gcc-x86",
+      "displayName": "Linux GCC x86 portability baseline",
+      "description": "32-bit x86 Linux multi-configuration build using an i686 cross compiler.",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/linux-x86.cmake",
+      "cacheVariables": {
+        "A51_BUILD_SELECTED_APPS": "ON",
+        "A51_BUILD_WINDOWS_TARGETS": "OFF",
+        "A51_ENABLE_QT": "OFF"
+      }
+    },
+    {
+      "name": "linux-gcc-arm32",
+      "displayName": "Linux GCC ARM32 portability baseline",
+      "description": "32-bit ARM Linux multi-configuration build using an arm-linux-gnueabihf cross compiler.",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/linux-arm.cmake",
+      "cacheVariables": {
+        "A51_BUILD_SELECTED_APPS": "ON",
+        "A51_BUILD_WINDOWS_TARGETS": "OFF",
+        "A51_ENABLE_QT": "OFF"
+      }
+    },
+    {
+      "name": "linux-gcc-arm64",
+      "displayName": "Linux GCC ARM64 portability baseline",
+      "description": "64-bit ARM Linux multi-configuration build using an aarch64 cross compiler.",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/linux-arm64.cmake",
+      "cacheVariables": {
+        "A51_BUILD_SELECTED_APPS": "ON",
+        "A51_BUILD_WINDOWS_TARGETS": "OFF",
+        "A51_ENABLE_QT": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "selected-apps",
+      "hidden": true,
+      "targets": [
+        "a51_selected_apps"
+      ]
+    },
+
+    {
+      "name": "windows-vs2022-win32-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-win32",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-vs2022-win32-optdebug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-win32",
+      "configuration": "OptDebug"
+    },
+    {
+      "name": "windows-vs2022-win32-qa",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-win32",
+      "configuration": "QA"
+    },
+    {
+      "name": "windows-vs2022-win32-release",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-win32",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-vs2022-win32-editor-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-win32",
+      "configuration": "EDITOR-Debug"
+    },
+
+    {
+      "name": "windows-vs2022-x64-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-x64",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-vs2022-x64-optdebug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-x64",
+      "configuration": "OptDebug"
+    },
+    {
+      "name": "windows-vs2022-x64-qa",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-x64",
+      "configuration": "QA"
+    },
+    {
+      "name": "windows-vs2022-x64-release",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-x64",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-vs2022-x64-editor-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-x64",
+      "configuration": "EDITOR-Debug"
+    },
+
+    {
+      "name": "windows-vs2022-arm-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-arm",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-vs2022-arm-optdebug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-arm",
+      "configuration": "OptDebug"
+    },
+    {
+      "name": "windows-vs2022-arm-qa",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-arm",
+      "configuration": "QA"
+    },
+    {
+      "name": "windows-vs2022-arm-release",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-arm",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-vs2022-arm-editor-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-arm",
+      "configuration": "EDITOR-Debug"
+    },
+
+    {
+      "name": "windows-vs2022-arm64-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-arm64",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-vs2022-arm64-optdebug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-arm64",
+      "configuration": "OptDebug"
+    },
+    {
+      "name": "windows-vs2022-arm64-qa",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-arm64",
+      "configuration": "QA"
+    },
+    {
+      "name": "windows-vs2022-arm64-release",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-arm64",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-vs2022-arm64-editor-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "windows-vs2022-arm64",
+      "configuration": "EDITOR-Debug"
+    },
+
+    {
+      "name": "ninja-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "ninja-multi",
+      "configuration": "Debug"
+    },
+    {
+      "name": "ninja-optdebug",
+      "inherits": "selected-apps",
+      "configurePreset": "ninja-multi",
+      "configuration": "OptDebug"
+    },
+    {
+      "name": "ninja-qa",
+      "inherits": "selected-apps",
+      "configurePreset": "ninja-multi",
+      "configuration": "QA"
+    },
+    {
+      "name": "ninja-release",
+      "inherits": "selected-apps",
+      "configurePreset": "ninja-multi",
+      "configuration": "Release"
+    },
+    {
+      "name": "ninja-editor-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "ninja-multi",
+      "configuration": "EDITOR-Debug"
+    },
+
+    {
+      "name": "linux-gcc-x64-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-x64",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-gcc-x64-optdebug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-x64",
+      "configuration": "OptDebug"
+    },
+    {
+      "name": "linux-gcc-x64-qa",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-x64",
+      "configuration": "QA"
+    },
+    {
+      "name": "linux-gcc-x64-release",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-x64",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-gcc-x64-editor-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-x64",
+      "configuration": "EDITOR-Debug"
+    },
+
+    {
+      "name": "linux-gcc-x86-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-x86",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-gcc-x86-optdebug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-x86",
+      "configuration": "OptDebug"
+    },
+    {
+      "name": "linux-gcc-x86-qa",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-x86",
+      "configuration": "QA"
+    },
+    {
+      "name": "linux-gcc-x86-release",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-x86",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-gcc-x86-editor-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-x86",
+      "configuration": "EDITOR-Debug"
+    },
+
+    {
+      "name": "linux-gcc-arm32-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-arm32",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-gcc-arm32-optdebug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-arm32",
+      "configuration": "OptDebug"
+    },
+    {
+      "name": "linux-gcc-arm32-qa",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-arm32",
+      "configuration": "QA"
+    },
+    {
+      "name": "linux-gcc-arm32-release",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-arm32",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-gcc-arm32-editor-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-arm32",
+      "configuration": "EDITOR-Debug"
+    },
+
+    {
+      "name": "linux-gcc-arm64-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-arm64",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-gcc-arm64-optdebug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-arm64",
+      "configuration": "OptDebug"
+    },
+    {
+      "name": "linux-gcc-arm64-qa",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-arm64",
+      "configuration": "QA"
+    },
+    {
+      "name": "linux-gcc-arm64-release",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-arm64",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-gcc-arm64-editor-debug",
+      "inherits": "selected-apps",
+      "configurePreset": "linux-gcc-arm64",
+      "configuration": "EDITOR-Debug"
+      }
+  ]
+}

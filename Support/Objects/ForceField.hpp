@@ -11,11 +11,12 @@
 // INCLUDES
 //=========================================================================
 
-#include "Objects\Circuit.hpp"
+#include "Objects/Circuit.hpp"
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Objects\Render\RigidInst.hpp"
-#include "Objects\PlaySurface.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Render/RigidInst.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "Render/Texture.hpp"
 
 //=========================================================================
 // CLASS
@@ -66,7 +67,7 @@ protected:
     virtual void                OnRender		    ( void ) {};
     virtual void                OnRenderTransparent ( void );
 
-    virtual void                OnAdvanceLogic	    ( f32     DelaTime );           
+    virtual void                OnAdvanceSimulation	    ( f32     DelaTime );           
     virtual void                OnInit              ( void );                       
 
     // These store the possible alignments.
@@ -89,7 +90,7 @@ protected:
     };
 
     circuit      m_Circuit;
-    xbool        m_bInitialized;
+    xbool        m_isInitialized;
 
 protected:
     u32          m_OldState;
@@ -117,8 +118,8 @@ protected:
 
     xbool        m_bActiveWhenFriendlyAll;
 
-    static rhandle<xbitmap>     m_ForceTexture;
-    static rhandle<xbitmap>     m_ForceCloudTexture;
+    static rhandle<texture>     m_ForceTexture;
+    static rhandle<texture>     m_ForceCloudTexture;
 };
 
 //=========================================================================

@@ -1,0 +1,33 @@
+﻿# Native CMake target for FX.
+a51_add_project( FX STATIC
+    SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
+    SOURCES
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Ctrl.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Cylinder.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Effect.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Element.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Handle.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_LinearKeyCtrl.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Mgr.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Plane.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Render.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_ShockWave.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_SmoothKeyCtrl.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_SPEmitter.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Sphere.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Sprite.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Cylinder.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Mgr.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Mgr_insert.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Mgr_private.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Plane.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Render.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_ShockWave.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_SPEmitter.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Sphere.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/fx_Sprite.hpp"
+    PRIVATE_INCLUDE_DIRECTORIES
+        "${CMAKE_SOURCE_DIR}/xCore"
+        "${CMAKE_SOURCE_DIR}/xCore/x_files"
+        "${CMAKE_SOURCE_DIR}/xCore/Entropy"
+)

@@ -9,11 +9,11 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\ai_modify_behavior.hpp"
+#include "../Support/Trigger/Actions/ai_modify_behavior.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "..\Support\Characters\Character.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "../Support/Characters/Character.hpp"
 
 #include "Entropy.hpp"
 
@@ -30,7 +30,7 @@ m_DesiredBehavior(character_state::STATE_IDLE)
 
 void ai_modify_behavior::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * ai_modify_behavior::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * ai_modify_behavior::Execute" );
     
     (void) pParent;
 

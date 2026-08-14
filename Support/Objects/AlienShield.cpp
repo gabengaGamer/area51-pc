@@ -7,16 +7,17 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
-#include "alienshield.hpp"
-#include "e_Draw.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+
+#include "Render/PrimitiveDebug.hpp"
+#include "AlienShield.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "AlienOrb.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Player.hpp"
-#include "Characters\Character.hpp"
-#include "Characters\Gray\Gray.hpp"
-#include "Loco\LocoUtil.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Player/Player.hpp"
+#include "Characters/Character.hpp"
+#include "Characters/Gray/Gray.hpp"
+#include "Loco/LocoUtil.hpp"
 
 extern xbool g_game_running;
 extern xbool g_first_person;
@@ -75,7 +76,7 @@ static struct alien_shield_desc : public object_desc
         virtual s32  OnEditorRender( object& Object ) const
         {
             (void)Object;            
-            return EDITOR_ICON_ALIEN_SHIELD;
+            return static_cast<s32>( EditorIcon::AlienShield );
         }
 
 #endif // X_EDITOR
@@ -117,27 +118,6 @@ alien_shield::alien_shield()
     m_DestructionFX.m_ThinkTimer = -1;
 
 
-#ifdef ALIEN_SHIELD_CAN_FIRE
-    m_CombatInfo[0].m_AttackTime = 1.0f;
-    m_CombatInfo[1].m_AttackTime = 0.5f;    
-
-    m_CombatInfo[0].m_AttackChance = 10;
-    m_CombatInfo[1].m_AttackChance = 45;
-
-    m_CombatInfo[0].m_AttackAccuracy = 50;
-    m_CombatInfo[1].m_AttackAccuracy = 50;
-
-    m_AttackTimer = 0;
-    m_CurCombatMode = COMBAT_NO_HOSTS;
-
-    m_ShotState = SHOT_IDLE;
-
-    m_gLastShotTarget = NULL;
-
-    m_SoundIDChargeup           = -1;
-    m_SoundIDAttack             = -1;
-
-#endif // ALIEN_SHIELD_CAN_FIRE
 
 
     m_OrbMaintenanceTimer = 0;
@@ -197,20 +177,13 @@ bbox alien_shield::GetLocalBBox( void ) const
 
     Box.Set( vector3( -R, -H, -R ), vector3( R, H, R ) );
 
-#ifdef ALIEN_SHIELD_CAN_FIRE
-    if (m_LastShotTimer > 0)
-    {
-        Box.AddVerts( &m_LastShotStart, 1 );
-        Box.AddVerts( &m_LastShotEnd, 1 );
-    }
-#endif // ALIEN_SHIELD_CAN_FIRE
 
     return Box;
 }
 
 //=============================================================================================
 volatile f32 ALIEN_SHIELD_VOLUME = 2.0f;
-void alien_shield::OnAdvanceLogic( f32 DeltaTime )
+void alien_shield::OnAdvanceSimulation( f32 DeltaTime )
 {
     // If we're waiting to die just return
     if( GetAttrBits() & ATTR_DESTROY )
@@ -280,10 +253,7 @@ void alien_shield::OnAdvanceLogic( f32 DeltaTime )
         }
         else
         {
-            if (Delta > 0)
-                m_ActivePitchCurrent += Delta;
-            else
-                m_ActivePitchCurrent -= Delta;
+            m_ActivePitchCurrent += (Delta > 0.0f) ? MaxDelta : -MaxDelta;
         }
     }
 
@@ -419,71 +389,6 @@ void alien_shield::OnAdvanceLogic( f32 DeltaTime )
         }
     }
 
-#ifdef ALIEN_SHIELD_CAN_FIRE
-
-    if (bValidHostsExist)
-        m_CurCombatMode = COMBAT_WITH_HOSTS;
-    else
-        m_CurCombatMode = COMBAT_NO_HOSTS;
-
-
-    if (m_hShootFX.Validate())
-        m_hShootFX.AdvanceLogic(DeltaTime);
-    if (m_hShotChargeupFX.Validate())
-        m_hShotChargeupFX.AdvanceLogic(DeltaTime);
-
-    switch( m_ShotState )
-    {
-    case SHOT_CHARGING:
-        {
-            if (m_hShotChargeupFX.Validate())
-            {
-                if (m_hShotChargeupFX.IsFinished())
-                {
-                    SwitchShotState( SHOT_FIRING );
-                }
-            }
-        }
-        break;
-    case SHOT_FIRING:
-        {
-            if (m_hShootFX.Validate())
-            {
-                if (m_hShootFX.IsFinished())
-                {
-                    SwitchShotState( SHOT_IDLE );
-                }
-            }
-        }
-        break;
-    }
-
-    m_LastShotTimer -= DeltaTime;
-
-
-    // 
-    //  Evaluate firing
-    //
-    combat_info& CI = m_CombatInfo[ m_CurCombatMode ];
-
-    m_AttackTimer += DeltaTime;
-
-    if (m_AttackTimer > CI.m_AttackTime)
-    {
-        m_AttackTimer = 0;
-
-        if (x_irand(0,100) < CI.m_AttackChance)
-        {
-            // Fire on the player
-            xbool bHit = FALSE;
-
-            if (x_irand(0,100) < CI.m_AttackAccuracy)
-                bHit = TRUE;
-
-            Shoot( bHit );
-        }        
-    }
-#endif // ALIEN_SHIELD_CAN_FIRE
 }
 
 //=============================================================================================
@@ -546,78 +451,6 @@ void alien_shield::OnRenderTransparent( void )
         }
     }
 
-#ifdef ALIEN_SHIELD_CAN_FIRE
-    if (m_hShootFX.Validate())
-        m_hShootFX.Render();
-    if (m_hShotChargeupFX.Validate())
-        m_hShotChargeupFX.Render();
-
-
-    if (m_LastShotTimer > 0)
-    {
-        // Build the render verts
-        f32 Multiplier = MIN(1,MAX(0,m_LastShotTimer / k_SHOT_DURATION));
-
-        xcolor Outer(255,0,0);
-        xcolor Center(255,200,200);        
-
-        Outer.A = 0;
-        Center.A = (u8)(Multiplier * 255);
-
-        draw_Begin( DRAW_TRIANGLES, DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_BLEND_ADD | DRAW_CULL_NONE | DRAW_USE_GDEPTH );
-        draw_ClearL2W();
-        draw_SetTexture();
-        s32 i;
-        s32 Index[6] = {0,6,12,4,10,16};
-
-        for (i=0;i<6;i++)
-        {
-            draw_Color( Outer );
-            draw_Vertex( m_RenderVert[ Index[ i     ] ] );
-            draw_Vertex( m_RenderVert[ Index[(i+1)%6] ] );
-            draw_Color ( Center );
-            draw_Vertex( m_RenderVert[ 2 ]);
-        }
-        static iStart = 0;
-        static iEnd   = 3;
-
-        Center.A = (u8)(Multiplier * 128);
-
-        for (i=iStart;i<iEnd;i++)
-        {
-            s32 iBase = i*6;
-
-            draw_Color( Outer );
-            draw_Vertex( m_RenderVert[ iBase+0 ] );
-            draw_Color( Center);
-            draw_Vertex( m_RenderVert[ iBase+3 ] );           
-            draw_Vertex( m_RenderVert[ iBase+2 ] );
-
-            draw_Color( Outer );
-            draw_Vertex( m_RenderVert[ iBase+0 ] );
-            draw_Vertex( m_RenderVert[ iBase+1 ] );
-            draw_Color( Center);
-            draw_Vertex( m_RenderVert[ iBase+3 ] );           
-            
-
-            draw_Color( Center);
-            draw_Vertex( m_RenderVert[ iBase+2 ] );
-            draw_Vertex( m_RenderVert[ iBase+3 ] );
-            draw_Color( Outer );
-            draw_Vertex( m_RenderVert[ iBase+4 ] );
-
-            draw_Color( Center);
-            draw_Vertex( m_RenderVert[ iBase+3 ] );
-            draw_Color( Outer );
-            draw_Vertex( m_RenderVert[ iBase+5 ] );
-            draw_Vertex( m_RenderVert[ iBase+4 ] );
-                        
-        }
-
-        draw_End();
-    }
-#endif // ALIEN_SHIELD_CAN_FIRE
-
 #ifdef X_EDITOR
     if (!g_game_running || (GetAttrBits() & ATTR_EDITOR_SELECTED) )
     {
@@ -625,7 +458,7 @@ void alien_shield::OnRenderTransparent( void )
         // 1. the game isn't running
         // 2. the game is running, but this object is selected
         //
-        draw_Cylinder( Pos, m_Radius, m_Height, 16, xcolor(200,0,50,64) );
+        render::debug::Cylinder( Pos, m_Radius, m_Height, 16, xcolor(200,0,50,64) );
     }
 
 #endif
@@ -642,17 +475,6 @@ void alien_shield::OnEnumProp      ( prop_enum&    List )
     List.PropEnumFloat ( "Alien Shield\\Height", "Height of the shield cylinder", 0 );
     List.PropEnumFloat ( "Alien Shield\\Radius", "Radius of the shield cylinder", 0 );
 
-#ifdef ALIEN_SHIELD_CAN_FIRE
-    List.PropEnumHeader( "Alien Shield\\With hosts", "How the alien shield behaves when hosts are available", 0 );
-    List.PropEnumInt   ( "Alien Shield\\With hosts\\Attack Chance", "0-100 value indicating the odds of the shield firing on the player", 0 );
-    List.PropEnumInt   ( "Alien Shield\\With hosts\\Attack Accuracy", "0-100 value indicating the odds of hitting the player", 0 );
-    List.PropEnumFloat ( "Alien Shield\\With hosts\\Attack Timer", "How often the shield checks to see if it should attack", 0 );
-
-    List.PropEnumHeader( "Alien Shield\\Without hosts", "How the alien shield behaves when hosts are unavailable", 0 );
-    List.PropEnumInt   ( "Alien Shield\\Without hosts\\Attack Chance", "0-100 value indicating the odds of the shield firing on the player", 0 );
-    List.PropEnumInt   ( "Alien Shield\\Without hosts\\Attack Accuracy", "0-100 value indicating the odds of hitting the player", 0 );
-    List.PropEnumFloat ( "Alien Shield\\Without hosts\\Attack Timer", "How often the shield checks to see if it should attack", 0 );
-#endif // ALIEN_SHIELD_CAN_FIRE
 
     List.PropEnumHeader  ( "Alien Shield\\Sound", "Sounds for the alien shield", 0 );    
     List.PropEnumString  ( "Alien Shield\\Sound\\Audio Package Name", "The audio package associated with this alien shield object.", PROP_TYPE_READ_ONLY | PROP_TYPE_DONT_SAVE | PROP_TYPE_DONT_EXPORT );
@@ -661,13 +483,6 @@ void alien_shield::OnEnumProp      ( prop_enum&    List )
     List.PropEnumExternal( "Alien Shield\\Sound\\Stage Destroyed",      "Sound\0soundexternal\0","The sound to play when the shield is damaged enough to change stages", PROP_TYPE_MUST_ENUM );
     List.PropEnumExternal( "Alien Shield\\Sound\\Final Destruction",    "Sound\0soundexternal\0","The sound to play when the shield is destroyed",  PROP_TYPE_MUST_ENUM );
     List.PropEnumExternal( "Alien Shield\\Sound\\Pain",                 "Sound\0soundexternal\0","The sound to play when the shield takes pain",    PROP_TYPE_MUST_ENUM );
-#ifdef ALIEN_SHIELD_CAN_FIRE
-    List.PropEnumExternal( "Alien Shield\\Sound\\Attack Chargeup",      "Sound\0soundexternal\0","The sound to play when the shield charges up for an attack", PROP_TYPE_MUST_ENUM );
-    List.PropEnumExternal( "Alien Shield\\Sound\\Attack",               "Sound\0soundexternal\0","The sound to play when the shield attacks", PROP_TYPE_MUST_ENUM );
-    
-    List.PropEnumExternal( "Alien Shield\\Shot Chargeup FX",    "Resource\0fxo\0",  "Particle effect for when the shield is charging up a shot.", 0 );
-    List.PropEnumExternal( "Alien Shield\\Shoot FX",            "Resource\0fxo\0",  "Particle effect for when the shield takes a shot.", 0 );
-#endif // ALIEN_SHIELD_CAN_FIRE
 
 
     List.PropEnumGuid  ( "Alien Shield\\Gray",      "Gray standing inside the shield", PROP_TYPE_EXPOSE );
@@ -843,30 +658,6 @@ xbool alien_shield::OnProperty      ( prop_query&   I    )
     {}    
     else if (SMP_UTIL_IsAudioVar( I, "Alien Shield\\Sound\\Pain", m_hAudioPackage, m_SoundIDPain ))
     {}    
-#ifdef ALIEN_SHIELD_CAN_FIRE
-    else if (SMP_UTIL_IsAudioVar( I, "Alien Shield\\Sound\\Attack Chargeup", m_hAudioPackage, m_SoundIDChargeup ))
-    {}
-    else if (SMP_UTIL_IsAudioVar( I, "Alien Shield\\Sound\\Attack", m_hAudioPackage, m_SoundIDAttack ))
-    {}
-    else
-    if( SMP_UTIL_IsParticleFxVar( I, "Alien Shield\\Shot Chargeup FX", m_hShotChargeup) )
-    {}
-    else
-    if( SMP_UTIL_IsParticleFxVar( I, "Alien Shield\\Shoot FX", m_hShoot ) )
-    {}
-    else if (I.VarInt("Alien Shield\\With hosts\\Attack Accuracy", m_CombatInfo[ COMBAT_WITH_HOSTS ].m_AttackAccuracy ))
-    {}
-    else if (I.VarInt("Alien Shield\\With hosts\\Attack Chance", m_CombatInfo[ COMBAT_WITH_HOSTS ].m_AttackChance ))
-    {}
-    else if (I.VarFloat("Alien Shield\\With hosts\\Attack Timer", m_CombatInfo[ COMBAT_WITH_HOSTS ].m_AttackTime ))
-    {}
-    else if (I.VarInt("Alien Shield\\Without hosts\\Attack Accuracy", m_CombatInfo[ COMBAT_NO_HOSTS ].m_AttackAccuracy ))
-    {}
-    else if (I.VarInt("Alien Shield\\Without hosts\\Attack Chance", m_CombatInfo[ COMBAT_NO_HOSTS ].m_AttackChance ))
-    {}
-    else if (I.VarFloat("Alien Shield\\Without hosts\\Attack Timer", m_CombatInfo[ COMBAT_NO_HOSTS ].m_AttackTime ))
-    {}
-#endif // ALIEN_SHIELD_CAN_FIRE
     else if (I.VarGUID( "Alien Shield\\Limit SpawnTube Volume", m_SpawnTubeLimitVolume ))
     {}
     else if (I.VarGUID( "Alien Shield\\Limit Turret Volume", m_TurretLimitVolume ))
@@ -1352,245 +1143,6 @@ vector3 alien_shield::GetAimAtPoint( const vector3& AimFromHere )
 
 //=============================================================================================
 
-#ifdef ALIEN_SHIELD_CAN_FIRE
-
-//=============================================================================================
-void alien_shield::Shoot( xbool bAimToHit )
-{
-    if (m_ShotState != SHOT_IDLE)
-        return;
-
-    AcquireTarget();
-
-    if (NULL == m_gLastShotTarget)
-        return;
-
-    object_ptr<actor> pTargetActor( m_gLastShotTarget );
-    if (NULL == pTargetActor)
-    {
-        m_gLastShotTarget = NULL;
-        return;
-    }
-
-    vector3     StartPos = GetL2W().GetTranslation();
-    //vector3     PlayerPos = pPlayer->GetPositionWithOffset( actor::OFFSET_AIM_AT );
-
-    // Determine if we even have LOS to the player.
-    // If we don't, we won't bother committing to the shot
-    g_CollisionMgr.LineOfSightSetup( GetGuid(), StartPos, pTargetActor->GetL2W().GetTranslation() );
-    g_CollisionMgr.AddToIgnoreList( GetGuid() );
-    g_CollisionMgr.AddToIgnoreList( pTargetActor->GetGuid() );
-    g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, 
-        object::ATTR_BLOCKS_CHARACTER_LOS, 
-        object::ATTR_COLLISION_PERMEABLE 
-        | object::ATTR_LIVING
-        | object::ATTR_DAMAGEABLE );
-    if( g_CollisionMgr.m_nCollisions != 0 )
-    {
-        // LOS is blocked
-        return;
-    }
-
-    // Clear LOS to the player, commit to taking the shot.
-    m_bLastShotToHit = bAimToHit;
-    SwitchShotState( SHOT_CHARGING );    
-}
-
-//=========================================================================
-
-void alien_shield::SwitchShotState( shot_state State )
-{
-    if (State == m_ShotState)
-        return;
-
-    m_ShotState = State;
-
-    switch( State )
-    {
-    case SHOT_IDLE:
-        break;
-    case SHOT_CHARGING:
-        {
-            const matrix4& L2W = GetL2W();
-
-            if (m_SoundIDChargeup != -1)
-            {
-                const char* pSoundName = g_StringMgr.GetString( m_SoundIDChargeup );
-                if (pSoundName)
-                {
-                    g_AudioManager.Play( pSoundName, L2W.GetTranslation(), GetZone1() );
-                }
-            }
-
-            if( ( m_hShotChargeupFX.Validate() == FALSE ) && ( m_hShotChargeup.GetPointer() ) )
-            {
-                m_hShotChargeupFX.InitInstance( m_hShotChargeup.GetPointer() );        
-            }   
-            m_hShotChargeupFX.Restart();
-            m_hShotChargeupFX.SetSuspended( FALSE );            
-            m_hShotChargeupFX.SetTranslation( L2W.GetTranslation() );
-            m_hShotChargeupFX.SetRotation   ( L2W.GetRotation()    );
-        }
-        break;
-    case SHOT_FIRING:
-        {
-            const matrix4& L2W = GetL2W();
-
-            // Play Sound
-            if (m_SoundIDAttack != -1)
-            {
-                const char* pSoundName = g_StringMgr.GetString( m_SoundIDAttack );
-                if (pSoundName)
-                {
-                    g_AudioManager.Play( pSoundName, L2W.GetTranslation(), GetZone1() );
-                }
-            }
-
-            // Determine shot origin
-            // Determine shot destination            
-            object_ptr<actor> pTargetActor( m_gLastShotTarget );
-            if (NULL == pTargetActor)
-            {
-                SwitchShotState( SHOT_IDLE );
-            }
-
-            if (m_bLastShotToHit)
-            {
-                // Aim to hit
-                m_LastShotEnd = pTargetActor->GetPositionWithOffset( actor::OFFSET_AIM_AT );
-                m_LastShotEnd += vector3(0,0,0);
-            }
-            else
-            {
-                // Aim to miss
-                m_LastShotEnd = pTargetActor->GetPositionWithOffset( actor::OFFSET_AIM_AT );
-                
-                radian Yaw = pTargetActor->GetSightYaw();
-                vector3 Ofs(0,0,200);
-                Ofs.RotateY( Yaw );
-                
-                m_LastShotEnd += Ofs;
-            }
-            
-            // Find point on outer edge of shield cylinder closese
-            // to the target point
-            vector3 Delta = m_LastShotEnd - L2W.GetTranslation();
-            Delta.GetY() = 0;
-            Delta.NormalizeAndScale( m_Radius );
-
-            m_LastShotStart = L2W.GetTranslation() + vector3(0,200,0) + Delta;
-
-            Delta = m_LastShotEnd - m_LastShotStart;
-            Delta.NormalizeAndScale( 5000 );
-            m_LastShotEnd = Delta + m_LastShotStart;
-
-            g_CollisionMgr.RaySetup( GetGuid(), m_LastShotStart, m_LastShotEnd );
-            g_CollisionMgr.AddToIgnoreList( GetGuid() );
-            //g_CollisionMgr.AddToIgnoreList( m_gLastShotTarget );
-            g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, 
-                object::ATTR_BLOCKS_SMALL_PROJECTILES );
-
-            xbool bHitTarget = FALSE;
-
-            if (g_CollisionMgr.m_nCollisions > 0)
-            {
-                m_LastShotEnd = g_CollisionMgr.m_Collisions[0].Point;
-                //if (g_CollisionMgr.m_Collisions[0].ObjectHitGuid == m_gLastShotTarget)
-                    bHitTarget = TRUE;
-            }
-
-            Delta = m_LastShotStart - m_LastShotEnd;
-
-            radian3 ShotOrient(0,0,0);
-
-            Delta.GetPitchYaw( ShotOrient.Pitch, ShotOrient.Yaw );
-
-            if( ( m_hShootFX.Validate() == FALSE ) && ( m_hShoot.GetPointer() ) )
-            {
-                m_hShootFX.InitInstance( m_hShoot.GetPointer() );        
-            }   
-            m_hShootFX.Restart();
-            m_hShootFX.SetSuspended( FALSE );
-
-            m_hShootFX.SetTranslation( m_LastShotStart );
-            m_hShootFX.SetRotation   ( ShotOrient );
-
-            m_LastShotTimer = k_SHOT_DURATION;
-
-            // Build the render verts
-            f32 BeamStartSize = 25;
-            f32 BeamEndSize = 2;
-
-            BeamEndSize = 5;
-            s32 i;
-            for (i=0;i<3;i++)
-            {
-                vector3         StartEdge(0,BeamStartSize,0);
-                vector3         EndEdge(0,BeamEndSize,0);
-
-                StartEdge.RotateZ( R_180 / 3.0f * i );
-                EndEdge.RotateZ( R_180 / 3.0f * i );
-
-                StartEdge.Rotate( ShotOrient );
-                EndEdge.Rotate( ShotOrient );
-
-                s32 iVert = i*6;
-
-                m_RenderVert[ iVert + 0 ] = ( m_LastShotStart + StartEdge );
-                m_RenderVert[ iVert + 1 ] = ( m_LastShotEnd   + EndEdge   );
-                m_RenderVert[ iVert + 2 ] = ( m_LastShotStart             );
-                m_RenderVert[ iVert + 3 ] = ( m_LastShotEnd               );
-                m_RenderVert[ iVert + 4 ] = ( m_LastShotStart - StartEdge );
-                m_RenderVert[ iVert + 5 ] = ( m_LastShotEnd   - EndEdge   );
-            }
-
-            SetFlagBits( GetFlagBits() | FLAG_DIRTY_TRANSFORM );
-
-            if (bHitTarget)
-            {
-                // Hurt the target
-                vector3 ImpactPt = g_CollisionMgr.m_Collisions[0].Point;
-                guid    gObjectHit = g_CollisionMgr.m_Collisions[0].ObjectHitGuid;
-
-                object* pObj = g_ObjMgr.GetObjectByGuid( gObjectHit );
-                if (pObj)
-                {
-                    vector3 Dir = (m_LastShotEnd - m_LastShotStart);
-                    Dir.Normalize();
-                    pain Pain;
-                    pain_handle PainHandle(GetLogicalName());
-                    Pain.Setup( PainHandle, GetGuid(), ImpactPt );
-                    Pain.SetDirection( Dir );
-                    Pain.SetDirectHitGuid( gObjectHit );
-                    Pain.SetCollisionInfo( g_CollisionMgr.m_Collisions[0] );
-                    Pain.SetCustomScalar( 1 );
-                    Pain.ApplyToObject( pObj  );
-                }
-            }
-        }
-        break;
-    }
-}
-
-//=========================================================================
-
-void alien_shield::AcquireTarget( void )
-{
-    m_gLastShotTarget = NULL;
-
-    player* pPlayer = SMP_UTIL_GetActivePlayer();
-    if (NULL == pPlayer)
-        return;
-
-    if (!pPlayer->IsAlive())
-        return;
-
-    m_gLastShotTarget = pPlayer->GetGuid();
-}
-
-//=========================================================================
-
-#endif // ALIEN_SHIELD_CAN_FIRE
 
 //=========================================================================
 
@@ -1606,4 +1158,3 @@ void alien_shield::EditorPreGame( void )
 #endif // X_EDITOR
 
 //=========================================================================
-

@@ -10,7 +10,7 @@
 #ifndef DECALDEFINITION_HPP
 #define DECALDEFINITION_HPP
 
-#include "Auxiliary\MiscUtils\Fileio.hpp"
+#include "x_files.hpp"
 
 //==============================================================================
 // The class
@@ -43,9 +43,7 @@ public:
     // Constructors/destructors
     //==========================================================================
             decal_definition    ( void );
-            decal_definition    ( fileio& File );
             ~decal_definition   ( void );
-    void    FileIO              ( fileio& File );
 
 
     //==========================================================================

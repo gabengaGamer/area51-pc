@@ -26,7 +26,7 @@
 #include "DebugMenuPerception.hpp"
 #include "DebugMenuPageAdvCheckpoints.hpp"
 #include "DebugMenuPagePolyCache.hpp"
-#include "DebugMenuPageFx.hpp"
+#include "DebugMenuPageFX.hpp"
 #include "DebugMenuPageMultiplayer.hpp"
 #include "DebugMenuPageLocalization.hpp"
 #ifdef CONFIG_VIEWER

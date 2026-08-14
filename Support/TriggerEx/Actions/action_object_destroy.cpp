@@ -8,12 +8,13 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_object_destroy.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "..\TriggerEx_Object.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../TriggerEx_Object.hpp"
 
 static const xcolor s_DestroyColor          (255,255,255);
 
@@ -56,16 +57,16 @@ void action_object_destroy::OnDebugRender ( s32 Index )
     object* pObject = m_ObjectAffecter.GetObjectPtr();
     if (pObject)
     {
-        draw_Line( GetPositionOwner(), pObject->GetPosition(), s_DestroyColor );
-        draw_BBox( pObject->GetBBox(), s_DestroyColor );
+        render::debug::Line( GetPositionOwner(), pObject->GetPosition(), s_DestroyColor );
+        render::debug::Box( pObject->GetBBox(), s_DestroyColor );
 
         if (!GetElse())
         {
-            draw_Label( pObject->GetPosition(), s_DestroyColor, xfs("[%d]Destroy Object", Index) );
+            render::debug::Label( pObject->GetPosition(), s_DestroyColor, xfs("[%d]Destroy Object", Index) );
         }
         else
         {
-            draw_Label( pObject->GetPosition(), s_DestroyColor, xfs("[Else %d]Destroy Object", Index) );
+            render::debug::Label( pObject->GetPosition(), s_DestroyColor, xfs("[Else %d]Destroy Object", Index) );
         }
     }
 }

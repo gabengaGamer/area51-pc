@@ -16,72 +16,76 @@
 #include "Inventory/Inventory2.hpp"
 #include "Objects/NewWeapon.hpp"
 #include "Objects/Actor/Actor.hpp"
-#include "Objects/Player.hpp"
+#include "Objects/Player/Player.hpp"
 #include "InputMgr/GamePad.hpp"
 
-#include "ui/ui_button.hpp"
-#include "ui/ui_dialog.hpp"
-#include "ui/ui_manager.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_renderer.hpp"
 
-#include "dialogs/dlg_ESRB.hpp"
-#include "dialogs/dlg_MainMenu.hpp"
-#include "dialogs/dlg_AVSettings.hpp"
-#include "dialogs/dlg_Headset.hpp"
-#include "dialogs/dlg_GraphicsSettings.hpp"
-#include "dialogs/dlg_PressStart.hpp"
-#include "dialogs/dlg_MultiOptions.hpp"
-#include "dialogs/dlg_LevelSelect.hpp"
-#include "dialogs/dlg_ProfileSelect.hpp"
-#include "dialogs/dlg_ProfileOptions.hpp"
-#include "dialogs/dlg_ProfileControls.hpp"
-#include "dialogs/dlg_ProfileAV.hpp"
-#include "dialogs/dlg_ProfileHeadset.hpp"
-#include "dialogs/dlg_OnlineConnect.hpp"
-#include "dialogs/dlg_OnlineHost.hpp"
-#include "dialogs/dlg_OnlineHostOptions.hpp"
-#include "dialogs/dlg_OnlineJoin.hpp"
-#include "dialogs/dlg_JoinFilter.hpp"
-#include "dialogs/dlg_OnlinePlayers.hpp"
-#include "dialogs/dlg_OnlineLevelSelect.hpp"
-#include "dialogs/dlg_Friends.hpp"
-#include "dialogs/dlg_Players.hpp"
-#include "dialogs/dlg_StartGame.hpp"
-#include "dialogs/dlg_LoadGame.hpp"
-#include "dialogs/dlg_LevelDesc.hpp"
-#include "dialogs/dlg_PauseMain.hpp"
-#include "dialogs/dlg_EndPause.hpp"
-#include "dialogs/dlg_PopUp.hpp"
-#include "dialogs/dlg_ResumeGame.hpp"
-#include "dialogs/dlg_PauseMp.hpp"
-#include "dialogs/dlg_PauseOnline.hpp"
-#include "dialogs/dlg_Leaderboard.hpp"
-#include "dialogs/dlg_TeamLeaderboard.hpp"
-#include "dialogs/dlg_BigLeaderboard.hpp"
-#include "dialogs/dlg_DemoMainMenu.hpp"
-#include "dialogs/dlg_AvatarSelect.hpp"
-#include "dialogs/dlg_ReportError.hpp"
-//#include "dialogs/dlg_Download.hpp"
-#include "dialogs/dlg_MCMessage.hpp"
-#include "dialogs/dlg_CampaignMenu.hpp"
-#include "dialogs/dlg_VoteMap.hpp"
-#include "dialogs/dlg_VoteKick.hpp"
-#include "dialogs/dlg_ServerConfig.hpp"
-#include "dialogs/dlg_ChangeMap.hpp"
-#include "dialogs/dlg_KickPlayer.hpp"
-#include "dialogs/dlg_OnlineLogin.hpp"
-#include "dialogs/dlg_LoreMenu.hpp"
-#include "dialogs/dlg_TeamChange.hpp"
-#include "dialogs/dlg_SubMenu.hpp"
-#include "dialogs/dlg_Feedback.hpp"
-#include "dialogs/dlg_SecretsMenu.hpp"
-#include "dialogs/dlg_Stats.hpp"
-#include "dialogs/dlg_Autosave.hpp"
-#include "dialogs/dlg_Credits.hpp"
-#include "dialogs/dlg_Extras.hpp"
-#include "dialogs/dlg_MultiPlayer.hpp"
-#include "dialogs/dlg_OnlineMain.hpp"
+#include "Dialogs/dlg_MainMenu.hpp"
+#include "Dialogs/dlg_Settings.hpp"
+#include "Dialogs/dlg_AudioSettings.hpp"
+#include "Dialogs/dlg_Headset.hpp"
+#include "Dialogs/dlg_GraphicsSettings.hpp"
+#include "Dialogs/dlg_DisplaySettings.hpp"
+#include "Dialogs/dlg_LanguageSettings.hpp"
+#include "Dialogs/dlg_PressStart.hpp"
+#include "Dialogs/dlg_MultiOptions.hpp"
+#include "Dialogs/dlg_LevelSelect.hpp"
+#include "Dialogs/dlg_ProfileSelect.hpp"
+#include "Dialogs/dlg_ProfileOptions.hpp"
+#include "Dialogs/dlg_ProfileControls.hpp"
+#include "Dialogs/dlg_ProfileMouseControls.hpp"
+#include "Dialogs/dlg_ProfileGamepadControls.hpp"
+#include "Dialogs/dlg_ProfileAV.hpp"
+#include "Dialogs/dlg_ProfileHeadset.hpp"
+#include "Dialogs/dlg_OnlineConnect.hpp"
+#include "Dialogs/dlg_OnlineHost.hpp"
+#include "Dialogs/dlg_OnlineHostOptions.hpp"
+#include "Dialogs/dlg_OnlineJoin.hpp"
+#include "Dialogs/dlg_JoinFilter.hpp"
+#include "Dialogs/dlg_OnlinePlayers.hpp"
+#include "Dialogs/dlg_OnlineLevelSelect.hpp"
+#include "Dialogs/dlg_Friends.hpp"
+#include "Dialogs/dlg_Players.hpp"
+#include "Dialogs/dlg_StartGame.hpp"
+#include "Dialogs/dlg_LoadGame.hpp"
+#include "Dialogs/dlg_LevelDesc.hpp"
+#include "Dialogs/dlg_PauseMain.hpp"
+#include "Dialogs/dlg_EndPause.hpp"
+#include "Dialogs/dlg_PopUp.hpp"
+#include "Dialogs/dlg_ResumeGame.hpp"
+#include "Dialogs/dlg_PauseMP.hpp"
+#include "Dialogs/dlg_PauseOnline.hpp"
+#include "Dialogs/dlg_Leaderboard.hpp"
+#include "Dialogs/dlg_TeamLeaderboard.hpp"
+#include "Dialogs/dlg_BigLeaderboard.hpp"
+#include "Dialogs/dlg_DemoMainMenu.hpp"
+#include "Dialogs/dlg_AvatarSelect.hpp"
+#include "Dialogs/dlg_ReportError.hpp"
+#include "Dialogs/dlg_CampaignMenu.hpp"
+#include "Dialogs/dlg_VoteMap.hpp"
+#include "Dialogs/dlg_VoteKick.hpp"
+#include "Dialogs/dlg_ServerConfig.hpp"
+#include "Dialogs/dlg_ChangeMap.hpp"
+#include "Dialogs/dlg_KickPlayer.hpp"
+#include "Dialogs/dlg_OnlineLogin.hpp"
+#include "Dialogs/dlg_LoreMenu.hpp"
+#include "Dialogs/dlg_TeamChange.hpp"
+#include "Dialogs/dlg_SubMenu.hpp"
+#include "Dialogs/dlg_Feedback.hpp"
+#include "Dialogs/dlg_SecretsMenu.hpp"
+#include "Dialogs/dlg_Stats.hpp"
+#include "Dialogs/dlg_Autosave.hpp"
+#include "Dialogs/dlg_SaveData.hpp"
+#include "Dialogs/dlg_Credits.hpp"
+#include "Dialogs/dlg_Extras.hpp"
+#include "Dialogs/dlg_MultiPlayer.hpp"
+#include "Dialogs/dlg_OnlineMain.hpp"
 
-#include "../MemCardMgr/MemCardMgr.hpp"
+#include "../SaveData/SaveDataMgr.hpp"
 
 #ifdef USE_MOVIES
 #include "MoviePlayer/MoviePlayer.hpp"
@@ -90,15 +94,13 @@
 #include "NetworkMgr/NetworkMgr.hpp"
 #include "NetworkMgr/GameServer.hpp"
 #include "NetworkMgr/GameClient.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 #include "NetworkMgr/MatchMgr.hpp"
 
-#include "Parsing/textin.hpp"
+#include "Parsing/TextIn.hpp"
 #include "AudioMgr/AudioMgr.hpp"
 #include "NetworkMgr/Voice/VoiceMgr.hpp"
-#include "DeltaMgr\DeltaMgr.hpp"
 #include "GameLib/LevelLoader.hpp"
-#include "e_Memcard.hpp"
 #include "IOManager/io_mgr.hpp"
 
 #include "../../Apps/GameApp/Config.hpp"    
@@ -114,12 +116,8 @@ extern xtimer g_DemoIdleTimer;
 //  Defines
 //=========================================================================
 
-//extern u32 g_TEdge,g_PhysW,g_PhysH,g_PhysFPS;
-//#define DIALOG_TOP (g_TEdge - 10)
-//#define DIALOG_BOTTOM (DIALOG_TOP+(448-72))
-
 #define DIALOG_TOP 24
-#define DIALOG_BOTTOM 448-72
+#define DIALOG_BOTTOM (ui_viewport::CONTENT_HEIGHT - 72)
 
 //=========================================================================
 //  Structs                                                                
@@ -134,12 +132,40 @@ state_mgr       g_StateMgr;
 
 extern s32      g_Difficulty;
 
-static s32      s_Delay    = 0;
+static const f32 MUSIC_RESTART_DELAY = 0.1f;
+static f32       s_MusicRestartDelay = 0.0f;
 static s32      s_VoiceID  = 0;
 static xbool    s_FirstMap = TRUE;
 
 static s32 s_ProfileOptLeft    = 106;
 static s32 s_ProfileOptRight   = 406;
+
+static xbool state_mgr_ClearBackBuffer( void )
+{
+    rtarget_backbuffer_pass_desc PassDesc;
+    PassDesc.bUseDepth = FALSE;
+    if( !rtarget_BeginBackBufferPass( PassDesc ) )
+    {
+        x_DebugMsg( "StateMgr: failed to begin clear-only backbuffer pass\n" );
+        eng_ResetAfterException();
+        return FALSE;
+    }
+
+    rtarget_EndPass();
+    return TRUE;
+}
+
+//==============================================================================
+
+static xbool state_mgr_FinishClearOnlyFrame( void )
+{
+    if( !state_mgr_ClearBackBuffer() )
+    {
+        return FALSE;
+    }
+
+    return eng_EndFrame();
+}
 
 //=========================================================================
 //  Player Profile Functions
@@ -175,7 +201,7 @@ void GetMissionName( s32 MapIndex, xwchar* pBuffer )
 state_mgr::state_mgr( void )
 {   
     m_bInited = FALSE;
-    m_ProfileNames.SetCapacity( 32 );  // Max number of profiles read from both memcards
+    m_ProfileNames.SetCapacity( 32 );  // Max number of profiles read from both save datas
 }
 
 //=========================================================================
@@ -190,6 +216,19 @@ state_mgr::~state_mgr( void )
 void state_mgr::Kill( )
 {
     ASSERT( m_bInited == TRUE );
+#ifdef USE_MOVIES
+    if( m_bPlayMovie )
+    {
+        Movie.Close();
+        m_bPlayMovie = FALSE;
+    }
+    Movie.Kill();
+#endif
+    m_bSimpleMoviePending   = FALSE;
+    m_bSimpleMovieCompleted = FALSE;
+    m_bRestoreBackgroundAfterSimpleMovie = FALSE;
+    m_PendingSimpleMovieName.Clear();
+    m_PendingSimpleMovieFallback.Clear();
     m_bInited = FALSE;
 }
 
@@ -200,14 +239,20 @@ void state_mgr::Init( void )
     ASSERT( !m_bInited );
 
     // Register dialogs
-    dlg_esrb_register               ( g_UiMgr );
     dlg_main_menu_register          ( g_UiMgr );
-    dlg_av_settings_register        ( g_UiMgr );
+    dlg_settings_register           ( g_UiMgr );
+    dlg_audio_settings_register     ( g_UiMgr );
     dlg_headset_register            ( g_UiMgr );
-    dlg_graphics_settings_register  ( g_UiMgr );	
+    dlg_graphics_settings_register  ( g_UiMgr );
+    dlg_display_settings_register   ( g_UiMgr );
+    dlg_language_settings_register  ( g_UiMgr );
     dlg_profile_select_register     ( g_UiMgr );
     dlg_profile_options_register    ( g_UiMgr );
     dlg_profile_controls_register   ( g_UiMgr );
+    dlg_profile_mouse_controls_register
+                                    ( g_UiMgr );
+    dlg_profile_gamepad_controls_register
+                                    ( g_UiMgr );
     dlg_profile_av_register         ( g_UiMgr );
     dlg_profile_headset_register    ( g_UiMgr );
     dlg_press_start_register        ( g_UiMgr );
@@ -242,8 +287,6 @@ void state_mgr::Init( void )
     dlg_avatar_select_register      ( g_UiMgr );
 
     dlg_report_error_register       ( g_UiMgr );
-    //dlg_download_register           ( g_UiMgr );
-    dlg_mcmessage_register          ( g_UiMgr );
     dlg_campaign_menu_register      ( g_UiMgr );
     dlg_lore_menu_register          ( g_UiMgr );
     dlg_vote_map_register           ( g_UiMgr );
@@ -258,6 +301,7 @@ void state_mgr::Init( void )
     dlg_secrets_menu_register       ( g_UiMgr );
     dlg_stats_register              ( g_UiMgr );
     dlg_autosave_register           ( g_UiMgr );
+    dlg_save_data_register          ( g_UiMgr );
     dlg_credits_register            ( g_UiMgr );
     dlg_extras_register             ( g_UiMgr );
 
@@ -278,29 +322,28 @@ void state_mgr::Init( void )
     m_PrevState                 = SM_IDLE;
     m_Exit                      = FALSE;
     m_TimeoutTime               = 30.0f;
+    m_StartupInfoTime           = 0.0f;
+    m_StartupIntroMovieIndex    = 0;
     m_CurrentDialog             = NULL;
+    m_pScoreboardDialog         = NULL;
     m_bPlayMovie                = FALSE;
+    m_bSimpleMoviePending       = FALSE;
+    m_bSimpleMovieCompleted     = FALSE;
+    m_bSimpleMovieWaitForCompletion = FALSE;
+    m_bRestoreBackgroundAfterSimpleMovie = FALSE;
+    m_PendingSimpleMovieName.Clear();
+    m_PendingSimpleMovieFallback.Clear();
     m_LeaderboardID             = SM_LEADERBOARD;
     m_CampaignType              = SM_NEW_CAMPAIGN_GAME;
     m_bInventoryIsStored        = FALSE;
     m_bDoDefaultLoadOut         = FALSE;
     m_bCreatingProfile          = FALSE;
-    m_pBackgroundRenderer       = NULL;
+    m_NetworkDisconnectDestination = SM_IDLE;
     m_pLeaderboardDialog        = NULL;
-    m_BackgroundRendererRunning = FALSE;
     m_ActiveControllerID        = -1;
-    m_SettingsCardSlot          = -1;
     m_bAutosaveInProgress       = FALSE;
-    m_bDisableMemcardDialogs    = FALSE;
     m_bSilentSigninStarted      = FALSE;
-
-    // calculate save sizes
-    m_ProfileSaveSize  = ( ( sizeof( player_profile  ) + 1023 ) &~ 1023 ); // round up to nearest KB
-    m_SettingsSaveSize = ( ( sizeof( global_settings ) + 1023 ) &~ 1023 ); // round up to nearest KB
-
-    // add extra space required by platform directory structure
-    m_ProfileSaveSize  += PROFILE_DIR_SIZE;
-    m_SettingsSaveSize += SETTINGS_DIR_SIZE;
+    m_StartupInfoVoiceID        = -1;
 
     // initialize dialog controls
     s32 c;
@@ -358,6 +401,7 @@ void state_mgr::Init( void )
     g_RscMgr.Load( PRELOAD_FILE("DX_FrontEnd.audiopkg"    ) );
     g_RscMgr.Load( PRELOAD_FILE("SFX_FrontEnd.audiopkg"   ) );
     g_RscMgr.Load( PRELOAD_FILE("MUSIC_FrontEnd.audiopkg" ) );
+    g_RscMgr.Load( PRELOAD_FILE("DREAMLAND.audiopkg" ) );    
 
     // Let's get started!
 #if CONFIG_IS_DEMO
@@ -370,17 +414,19 @@ void state_mgr::Init( void )
     }
     else
     {
-        SetState( SM_ESRB_NOTICE );
+        SetState( SM_STARTUP_INFO );
     }
 #endif
 
 #ifndef X_EDITOR
     switch( x_GetLocale() )
     {    
-    case XL_LANG_ENGLISH:    // English uses default
+        case XL_LANG_ENGLISH:    // English uses default
+        {
+        }    
         break;
-
-    default:  // PAL
+        
+        default:  // PAL
         {
             // set up new profile options dialog size
             s_ProfileOptLeft    = 63;
@@ -434,6 +480,7 @@ void state_mgr::SetState( sm_states State, xbool ForceStateChange )
 
         // Initialize new state
         EnterState  ( State );
+
     }
 }
 
@@ -444,25 +491,28 @@ const char* state_mgr::GetStateName( sm_states State )
 {
     switch( State )
     {
-        LABEL_STRING( SM_IDLE );
+    LABEL_STRING( SM_IDLE );
 
-        LABEL_STRING( SM_ESRB_NOTICE );
+        LABEL_STRING( SM_STARTUP_INFO );
         LABEL_STRING( SM_STARTUP_INTRO );
-        LABEL_STRING( SM_MEMCARD_BOOT_CHECK );
+        LABEL_STRING( SM_SAVE_DATA_BOOT_CHECK );
 
         LABEL_STRING( SM_PRESS_START_SCREEN );
 
         LABEL_STRING( SM_MAIN_MENU );
         LABEL_STRING( SM_SETTINGS_MENU );
+        LABEL_STRING( SM_SETTINGS_AUDIO );
         LABEL_STRING( SM_SETTINGS_HEADSET );
-        LABEL_STRING( SM_SETTINGS_GRAPHICS );		
-        LABEL_STRING( SM_SETTINGS_MEMCARD_SELECT );
+        LABEL_STRING( SM_SETTINGS_GRAPHICS );
+        LABEL_STRING( SM_SETTINGS_DISPLAY );
+        LABEL_STRING( SM_SETTINGS_LANGUAGE );
+        LABEL_STRING( SM_SETTINGS_SAVE_DATA_SELECT );
         LABEL_STRING( SM_MANAGE_PROFILES );
         LABEL_STRING( SM_MANAGE_PROFILE_OPTIONS );
         LABEL_STRING( SM_MANAGE_PROFILE_CONTROLS );
         LABEL_STRING( SM_MANAGE_PROFILE_AVATAR );
         LABEL_STRING( SM_MANAGE_PROFILE_SAVE_SELECT );
-        LABEL_STRING( SM_MANAGE_PROFILE_MEMCARD_RESELECT );
+        LABEL_STRING( SM_MANAGE_PROFILE_SAVE_DATA_RESELECT );
 
         LABEL_STRING( SM_DEMO_EXIT );
         LABEL_STRING( SM_CAMPAIGN_MENU );
@@ -470,7 +520,7 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_CAMPAIGN_PROFILE_CONTROLS );
         LABEL_STRING( SM_CAMPAIGN_PROFILE_AVATAR );
         LABEL_STRING( SM_CAMPAIGN_PROFILE_SAVE_SELECT );
-        LABEL_STRING( SM_CAMPAIGN_MEMCARD_RESELECT );
+        LABEL_STRING( SM_CAMPAIGN_SAVE_DATA_RESELECT );
         LABEL_STRING( SM_LOAD_CAMPAIGN );
         LABEL_STRING( SM_SAVE_CAMPAIGN );
 
@@ -487,21 +537,24 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_PROFILE_CONTROLS_MP );
         LABEL_STRING( SM_PROFILE_AVATAR_MP );
         LABEL_STRING( SM_PROFILE_SAVE_SELECT_MP );
-        LABEL_STRING( SM_MEMCARD_RESELECT_MP );
+        LABEL_STRING( SM_SAVE_DATA_RESELECT_MP );
 
         LABEL_STRING( SM_PROFILE_SELECT );
         LABEL_STRING( SM_PROFILE_OPTIONS );
         LABEL_STRING( SM_PROFILE_CONTROLS );
         LABEL_STRING( SM_PROFILE_AVATAR );
+        LABEL_STRING( SM_PROFILE_MOUSE_CONTROLS );
+        LABEL_STRING( SM_PROFILE_GAMEPAD_CONTROLS );
 
         LABEL_STRING( SM_ONLINE_CONNECT );
+        LABEL_STRING( SM_NETWORK_DISCONNECT );
         LABEL_STRING( SM_ONLINE_AUTHENTICATE );
         LABEL_STRING( SM_ONLINE_PROFILE_SELECT );
         LABEL_STRING( SM_ONLINE_PROFILE_OPTIONS );
         LABEL_STRING( SM_ONLINE_PROFILE_CONTROLS );
         LABEL_STRING( SM_ONLINE_PROFILE_AVATAR );
         LABEL_STRING( SM_ONLINE_PROFILE_SAVE_SELECT );
-        LABEL_STRING( SM_ONLINE_MEMCARD_RESELECT );
+        LABEL_STRING( SM_ONLINE_SAVE_DATA_RESELECT );
 
         LABEL_STRING( SM_ONLINE_MAIN_MENU );
         LABEL_STRING( SM_ONLINE_QUICKMATCH );
@@ -514,7 +567,6 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_ONLINE_FEEDBACK_MENU );
         LABEL_STRING( SM_ONLINE_FEEDBACK_MENU_FRIEND );
         LABEL_STRING( SM_ONLINE_FRIENDS_MENU );
-        LABEL_STRING( SM_ONLINE_DOWNLOAD );
         LABEL_STRING( SM_ONLINE_STATS );
         LABEL_STRING( SM_ONLINE_EDIT_PROFILE );
         LABEL_STRING( SM_ONLINE_EDIT_CONTROLS );
@@ -549,22 +601,28 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_PAUSE_OPTIONS );
         LABEL_STRING( SM_PAUSE_CONTROLS );
         LABEL_STRING( SM_PAUSE_SETTINGS );
+        LABEL_STRING( SM_PAUSE_AUDIO );
         LABEL_STRING( SM_PAUSE_HEADSET );
-        LABEL_STRING( SM_PAUSE_GRAPHICS );		
+        LABEL_STRING( SM_PAUSE_GRAPHICS );
+        LABEL_STRING( SM_PAUSE_DISPLAY );
+        LABEL_STRING( SM_PAUSE_LANGUAGE );
         LABEL_STRING( SM_PAUSE_SETTINGS_SELECT );
         LABEL_STRING( SM_PAUSE_PROFILE_SAVE_SELECT );
-        LABEL_STRING( SM_PAUSE_MEMCARD_RESELECT );
+        LABEL_STRING( SM_PAUSE_SAVE_DATA_RESELECT );
 
         LABEL_STRING( SM_PAUSE_MP );
         LABEL_STRING( SM_PAUSE_MP_SCORE );
         LABEL_STRING( SM_PAUSE_MP_OPTIONS );
         LABEL_STRING( SM_PAUSE_MP_CONTROLS );
         LABEL_STRING( SM_PAUSE_MP_SETTINGS );
+        LABEL_STRING( SM_PAUSE_MP_AUDIO );
         LABEL_STRING( SM_PAUSE_MP_HEADSET );
-        LABEL_STRING( SM_PAUSE_MP_GRAPHICS );		
+        LABEL_STRING( SM_PAUSE_MP_GRAPHICS );
+        LABEL_STRING( SM_PAUSE_MP_DISPLAY );
+        LABEL_STRING( SM_PAUSE_MP_LANGUAGE );
         LABEL_STRING( SM_PAUSE_MP_SETTINGS_SELECT );
         LABEL_STRING( SM_PAUSE_MP_PROFILE_SAVE_SELECT );
-        LABEL_STRING( SM_PAUSE_MP_MEMCARD_RESELECT );
+        LABEL_STRING( SM_PAUSE_MP_SAVE_DATA_RESELECT );
 
         LABEL_STRING( SM_PAUSE_ONLINE );
         LABEL_STRING( SM_PAUSE_ONLINE_VOTE_MAP );
@@ -577,9 +635,13 @@ const char* state_mgr::GetStateName( sm_states State )
         LABEL_STRING( SM_PAUSE_ONLINE_OPTIONS );
         LABEL_STRING( SM_PAUSE_ONLINE_CONTROLS );
         LABEL_STRING( SM_PAUSE_ONLINE_SETTINGS );
+        LABEL_STRING( SM_PAUSE_ONLINE_AUDIO );
         LABEL_STRING( SM_PAUSE_ONLINE_HEADSET );
+        LABEL_STRING( SM_PAUSE_ONLINE_GRAPHICS );
+        LABEL_STRING( SM_PAUSE_ONLINE_DISPLAY );
+        LABEL_STRING( SM_PAUSE_ONLINE_LANGUAGE );
         LABEL_STRING( SM_PAUSE_ONLINE_SAVE_SELECT );
-        LABEL_STRING( SM_PAUSE_ONLINE_MEMCARD_RESELECT );
+        LABEL_STRING( SM_PAUSE_ONLINE_SAVE_DATA_RESELECT );
         LABEL_STRING( SM_PAUSE_ONLINE_CHANGE_MAP );
         LABEL_STRING( SM_PAUSE_ONLINE_KICK_PLAYER );
 
@@ -604,7 +666,7 @@ const char* state_mgr::GetStateName( sm_states State )
 
         LABEL_STRING( SM_GAME_EXIT_PROMPT_FOR_SAVE );
         LABEL_STRING( SM_GAME_EXIT_SAVE_SELECT );
-        LABEL_STRING( SM_GAME_EXIT_MEMCARD_RESELECT );
+        LABEL_STRING( SM_GAME_EXIT_SAVE_DATA_RESELECT );
         LABEL_STRING( SM_GAME_EXIT_SAVE_SETTINGS );
         LABEL_STRING( SM_GAME_EXIT_SETTINGS_OVERWRITE );
         LABEL_STRING( SM_GAME_EXIT_SETTINGS_SELECT );
@@ -640,7 +702,7 @@ void state_mgr::SystemError( sm_system_error MessageID, void* pUserData )
     // No controller errors while profile operations are pending.
     if(( MessageID == SM_SYS_ERR_CONTROLLER ) && 
        ( m_CurrentDialog ) && 
-       ( m_CurrentDialog->GetState() == DIALOG_STATE_WAIT_FOR_MEMCARD )) 
+       ( m_CurrentDialog->GetState() == DIALOG_STATE_WAIT_FOR_SAVE_DATA ))
     {
         return;
     }
@@ -681,13 +743,14 @@ void state_mgr::SystemError( sm_system_error MessageID, void* pUserData )
         "popup",
         r,
         NULL,
-        ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+        ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL );
 
     r.Set( 0, 0, 320, 180 );
 
     switch( MessageID )
     {
         case SM_SYS_ERR_DISK:
+        {
             // Xbox disk error
             MessageText = g_StringTableMgr( "ui", "IDS_HARD_DISK_ERROR" );
             CanExit = FALSE;
@@ -702,7 +765,9 @@ void state_mgr::SystemError( sm_system_error MessageID, void* pUserData )
                 NavText,
                 &g_StateMgr.m_PopUpResult );
 
-            break;
+        }
+        break;
+        
         case SM_SYS_ERR_CONTROLLER:
         {
             s32 ControllerID = *(s32*)pUserData;
@@ -742,10 +807,11 @@ void state_mgr::SystemError( sm_system_error MessageID, void* pUserData )
                 MessageText,
                 NavText,
                 &g_StateMgr.m_PopUpResult );
-            break;
         }
+        break;
 
         case SM_SYS_ERR_DUPLICATE_LOGIN :
+        {
 
             MessageText = g_StringTableMgr( "ui", "IDS_ONLINE_DUPLICATE_LOGIN" );
             NavText     = g_StringTableMgr( "ui", "IDS_NAV_NETWORK_CONTINUE"   );
@@ -760,22 +826,16 @@ void state_mgr::SystemError( sm_system_error MessageID, void* pUserData )
                 NavText,
                 &g_StateMgr.m_PopUpResult );
 
-            break;
+        }
+        break;
 
         default:
+        {
             ASSERTS( FALSE, "Unexpected system message!" );
-            break;
+        }
+        break;
     }
 
-    // Bad Disc, render the dialog forever...
-    if( MessageID == SM_SYS_ERR_DISK ) 
-    {
-        for(;;)
-        {
-            g_UiMgr->Render();
-            eng_PageFlip();
-        }
-    }
 #else // not editor
     (void)MessageID;
     (void)pUserData; 
@@ -793,7 +853,7 @@ void state_mgr::CheckControllers( void )
 
 // TODO: GS: Handle PC normaly
 
-#ifdef TARGET_PC
+#ifdef TARGET_DESKTOP
     input_gadget ControllerQuery;
     input_gadget AnalogQuery;
     return;
@@ -815,45 +875,54 @@ void state_mgr::CheckControllers( void )
 
         switch (m_State)
         {
-        case SM_START_GAME:
-        case SM_START_SAVE_GAME:
-        case SM_SINGLE_PLAYER_LOAD_MISSION:
-        case SM_MULTI_PLAYER_LOAD_MISSION:
-        case SM_SERVER_SYNC:
-        case SM_SERVER_COOLDOWN:
-        case SM_SERVER_DISCONNECT:
-        case SM_CLIENT_SYNC:
-        case SM_CLIENT_COOLDOWN:
-        case SM_CLIENT_DISCONNECT:
-        case SM_EXIT_GAME:
-        case SM_POST_GAME:
-            // Not Safe! Not Safe! 
+            case SM_START_GAME:
+            case SM_START_SAVE_GAME:
+            case SM_SINGLE_PLAYER_LOAD_MISSION:
+            case SM_MULTI_PLAYER_LOAD_MISSION:
+            case SM_SERVER_SYNC:
+            case SM_SERVER_COOLDOWN:
+            case SM_SERVER_DISCONNECT:
+            case SM_CLIENT_SYNC:
+            case SM_CLIENT_COOLDOWN:
+            case SM_CLIENT_DISCONNECT:
+            case SM_EXIT_GAME:
+            case SM_POST_GAME:
+		    {
+		    	// Not Safe! Not Safe! 
+		    }	
             break;
-        case SM_PLAYING_GAME:
-            // check all ingame pads with valid IDs
-            for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
-            {
-                ControllerID = g_IngamePad[i].GetDeviceID();
-                if( ControllerID == -1 ) 
-                    continue;
-                if( !(g_Input.IsPresent( ControllerQuery, ControllerID ) &&
-                     g_Input.IsPresent( AnalogQuery, ControllerID ) ) )
+		    
+            case SM_PLAYING_GAME:
+		    {
+                // check all ingame pads with valid IDs
+                for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
                 {
-                    SystemError( SM_SYS_ERR_CONTROLLER, &ControllerID );
-                    break;
+                    ControllerID = g_GameInput.GetPlayerDevice( i );
+                    if( ControllerID == -1 ) 
+                        continue;
+                    if( !(g_Input.GetFrameSnapshot().IsPresent( ControllerQuery, ControllerID ) &&
+                         g_Input.GetFrameSnapshot().IsPresent( AnalogQuery, ControllerID ) ) )
+                    {
+                        SystemError( SM_SYS_ERR_CONTROLLER, &ControllerID );
+                        break;
+                    }
                 }
             }
-            break;
-        default:
-            // only check for "locked" controllers
-            if( (ControllerID = GetActiveControllerID()) != -1 )
-            {
-                if( !(g_Input.IsPresent( ControllerQuery, ControllerID ) &&
-                      g_Input.IsPresent( AnalogQuery, ControllerID ) ) )
+		    break;
+		    
+            default:
+			{
+                // only check for "locked" controllers
+                if( (ControllerID = GetActiveControllerID()) != -1 )
                 {
-                    SystemError( SM_SYS_ERR_CONTROLLER, &ControllerID );
+                    if( !(g_Input.GetFrameSnapshot().IsPresent( ControllerQuery, ControllerID ) &&
+                          g_Input.GetFrameSnapshot().IsPresent( AnalogQuery, ControllerID ) ) )
+                    {
+                        SystemError( SM_SYS_ERR_CONTROLLER, &ControllerID );
+                    }
                 }
-            }
+			}
+			break;
         }
     }
 
@@ -864,14 +933,18 @@ void state_mgr::CheckControllers( void )
 
 void state_mgr::Update( f32 DeltaTime )
 {
-    if( s_Delay )
-        s_Delay--;
+    if( s_MusicRestartDelay > 0.0f )
+    {
+        s_MusicRestartDelay -= DeltaTime;
+        if( s_MusicRestartDelay < 0.0f )
+            s_MusicRestartDelay = 0.0f;
+    }
 
     // update timeout
     m_Timeout -= DeltaTime;
 
     // Do the memory card update
-    g_UIMemCardMgr.Update( DeltaTime );
+    g_SaveDataMgr.Update( DeltaTime );
 
     // Process UI input
     g_UiMgr->ProcessInput( DeltaTime );
@@ -950,14 +1023,14 @@ void state_mgr::Update( f32 DeltaTime )
             //            if( !s_Delay )
             //            {
             //                InitFrontEndMusic("MUSIC_CreditsTheme");
-			//
+            //
             //                s_Delay = 5;
             //            }
             //        }
             //    }
             //}
             //break;
-			//
+            //
             //case SM_SECRETS_MENU:
             //{
             //    if( m_bPlayMovie )
@@ -968,7 +1041,7 @@ void state_mgr::Update( f32 DeltaTime )
             //            if( !s_Delay )
             //            {
             //                InitFrontEndMusic("MUSIC_SecretsDemo");
-			//
+            //
             //                s_Delay = 5;
             //            }
             //        }
@@ -981,10 +1054,10 @@ void state_mgr::Update( f32 DeltaTime )
                 // keep it looping
                 if( !g_AudioMgr.IsValidVoiceId( s_VoiceID ) )
                 {
-                    if( !s_Delay )
+                    if( s_MusicRestartDelay <= 0.0f )
                     {
                         InitFrontEndMusic("MUSIC_MenuBackground");
-                        s_Delay = 5;
+                        s_MusicRestartDelay = MUSIC_RESTART_DELAY;
                     }
                 }
             }
@@ -996,6 +1069,17 @@ void state_mgr::Update( f32 DeltaTime )
         // kill background music
         KillFrontEndMusic();
     }
+}
+
+//=========================================================================
+
+void state_mgr::UpdateLevelLoading( f32 DeltaTime )
+{
+    // A loading frame updates the active dialog but must not advance the
+    // state machine until NetworkMgr::LoadMissionComplete has been called.
+    g_SaveDataMgr.Update( DeltaTime );
+    g_UiMgr->ProcessInput( DeltaTime );
+    g_UiMgr->Update( DeltaTime );
 }
 
 
@@ -1040,16 +1124,71 @@ void state_mgr::DummyScreen( const char* message, xbool canSkip, s32 waitTime )
     //==-----------------------------------------
     //  Run
     //==-----------------------------------------
-    xtimer  Time;
-    xbool   bSkip  = FALSE;
+    xtimer Time;
+    xtimer FrameTimer;
+    xbool  bSkip = FALSE;
 
     Time.Start();
+    FrameTimer.Start();
     while (Time.ReadSec() < waitTime && !bSkip)
     {
+        if( !eng_BeginFrame() )
+        {
+            break;
+        }
+
+        const f32 DeltaTime = FrameTimer.TripSec();
+        if( !x_isvalid( DeltaTime ) || (DeltaTime <= 0.0f) || (DeltaTime > 0.1f) )
+        {
+            x_DebugMsg( "StateMgr: discarding DummyScreen frame with invalid delta %.6f\n",
+                        DeltaTime );
+            if( !state_mgr_FinishClearOnlyFrame() )
+            {
+                break;
+            }
+            continue;
+        }
+
+        {
+            X_PROFILE_SCOPE_CATEGORY( "Frame", "Frame.Update" );
+
+            if( canSkip )
+            {
+                g_FrontendInput.Update( DeltaTime );
+
+                for( s32 i = 0; i < frontend_input::MAX_CONTROLLERS; i++ )
+                {
+                    const frontend_pad& Pad = g_FrontendInput.GetPad( i );
+                    if( (Pad.GetFrameLogical( frontend_pad::UI_SELECT   ).GetIsValue() > 0.25f) ||
+                        (Pad.GetFrameLogical( frontend_pad::UI_SELECT   ).GetWasValue() > 0.25f) ||
+                        (Pad.GetFrameLogical( frontend_pad::UI_BACK     ).GetIsValue() > 0.25f) ||
+                        (Pad.GetFrameLogical( frontend_pad::UI_BACK     ).GetWasValue() > 0.25f) ||
+                        (Pad.GetFrameLogical( frontend_pad::UI_ACTIVATE ).GetIsValue() > 0.25f) ||
+                        (Pad.GetFrameLogical( frontend_pad::UI_ACTIVATE ).GetWasValue() > 0.25f) )
+                    {
+                        bSkip = TRUE;
+                    }
+                }
+            }
+        }
+
         eng_MaximizeViewport( m_View );
         eng_SetView ( m_View );
         eng_SetBackColor( xcolor(0,0,0) );
-        eng_Begin("DummyScreen");
+
+        if( !state_mgr_ClearBackBuffer() )
+        {
+            break;
+        }
+
+        if( !eng_Begin("DummyScreen") )
+        {
+            if( !eng_EndFrame() )
+            {
+                break;
+            }
+            continue;
+        }
 
         f32 Size = YRes;
         f32 HalfSize = Size/2;
@@ -1062,26 +1201,10 @@ void state_mgr::DummyScreen( const char* message, xbool canSkip, s32 waitTime )
         x_printfxy( 30-x_strlen(message)/2, Line++, message );
 
         eng_End();
-        eng_PageFlip();
 
-        if( canSkip )
+        if( !eng_EndFrame() )
         {
-            f32 DeltaTime = g_DeltaMgr.GetFixedUpdateDeltaTime();
-            g_Input.SampleActionMaps( g_IngamePad, DeltaTime, FRONTEND_CONTEXT );
-            g_Input.CommitActionMapsFrame( g_IngamePad );
-            g_Input.ClearActionMapsFixed( g_IngamePad );
-            { 
-			    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
-                {
-                    const auto& pad = g_IngamePad[i];
-                    if( (pad.GetLogical( ingame_pad::UI_SELECT   ).GetIsValue() > 0.25f) ||
-                        (pad.GetLogical( ingame_pad::UI_BACK     ).GetIsValue() > 0.25f) ||
-                        (pad.GetLogical( ingame_pad::UI_ACTIVATE ).GetIsValue() > 0.25f) )
-			    	{
-			    		bSkip = TRUE;
-			    	}
-                }   
-            }				
+            break;
         }
     }
 }
@@ -1092,158 +1215,175 @@ void state_mgr::EnterState( sm_states State )
 {
     switch( State )
     {
-        case SM_ESRB_NOTICE:                    EnterESRBNotice();                  break;
-        case SM_STARTUP_INTRO:                  EnterStartupIntro();                break;
-        case SM_MEMCARD_BOOT_CHECK:             EnterMemcardBootCheck();            break;
-        case SM_PRESS_START_SCREEN:             EnterPressStart();                  break;
-        case SM_MAIN_MENU:                      EnterMainMenu();                    break;
-        case SM_SETTINGS_MENU:                  EnterSettingsMenu();                break;
-        case SM_SETTINGS_HEADSET:               EnterSettingsHeadset();             break;
-        case SM_SETTINGS_GRAPHICS:              EnterSettingsGraphics();            break;		
-        case SM_SETTINGS_MEMCARD_SELECT:        EnterSettingsMemcardSelect();       break;
-        case SM_MANAGE_PROFILES:                EnterManageProfiles();              break;
-        case SM_MANAGE_PROFILE_OPTIONS:         EnterManageProfileOptions();        break;
-        case SM_MANAGE_PROFILE_CONTROLS:        EnterManageProfileControls();       break;
-        case SM_MANAGE_PROFILE_AVATAR:          EnterManageProfileAvatar();         break;
-        case SM_MANAGE_PROFILE_SAVE_SELECT:     EnterManageProfileSaveSelect();     break;
-        case SM_MANAGE_PROFILE_MEMCARD_RESELECT:EnterManageMemcardReselect();       break;
-        case SM_CAMPAIGN_MENU:                  EnterCampaignMenu();                break;
-        case SM_CAMPAIGN_PROFILE_OPTIONS:       EnterCampaignProfileOptions();      break;
-        case SM_CAMPAIGN_PROFILE_CONTROLS:      EnterCampaignProfileControls();     break;
-        case SM_CAMPAIGN_PROFILE_AVATAR:        EnterCampaignProfileAvatar();       break;
-        case SM_CAMPAIGN_PROFILE_SAVE_SELECT:   EnterCampaignProfileSaveSelect();   break;
-        case SM_CAMPAIGN_MEMCARD_RESELECT:      EnterCampaignMemcardReselect();     break;
-        case SM_LOAD_CAMPAIGN:                  EnterLoadCampaign();                break;
-        case SM_SAVE_CAMPAIGN:                  EnterSaveCampaign();                break;
-        case SM_LORE_MAIN_MENU:                 EnterLoreMainMenu();                break;
-        case SM_SECRETS_MENU:                   EnterSecretsMenu();                 break;
-        case SM_EXTRAS_MENU:                    EnterExtrasMenu();                  break;
-        case SM_CREDITS_SCREEN:                 EnterCreditsScreen();               break;
-        case SM_PROFILE_SELECT:                 EnterProfileSelect();               break;
-        case SM_PROFILE_OPTIONS:                EnterProfileOptions();              break;
-        case SM_PROFILE_CONTROLS:               EnterProfileControls();             break;
-        case SM_PROFILE_AVATAR:                 EnterProfileAvatar();               break;
-        case SM_PROFILE_AVATAR_MP:              EnterProfileAvatarMP();             break;
-        case SM_PROFILE_SAVE_SELECT_MP:         EnterProfileSaveSelectMP();         break;
-        case SM_MEMCARD_RESELECT_MP:            EnterMemcardReselectMP();           break;
-        case SM_MULTI_PLAYER_MENU:              EnterMultiPlayer();                 break;
-        case SM_MULTI_PLAYER_OPTIONS:           EnterMultiPlayerOptions();          break;
-        case SM_MULTI_PLAYER_EDIT:              EnterMultiPlayerEdit();             break;
-        case SM_MP_LEVEL_SELECT:                EnterMPLevelSelect();               break;
-        case SM_MP_SAVE_SETTINGS:               EnterMPSaveSettings();              break;
-        case SM_PROFILE_CONTROLS_MP:            EnterProfileControlsMP();           break;
-        case SM_ONLINE_SILENT_LOGON:            EnterOnlineSilentLogin();           break;
-        case SM_ONLINE_CONNECT:                 EnterOnlineConnect();               break;
-        case SM_ONLINE_AUTHENTICATE:            EnterOnlineAuthenticate();          break;
-        case SM_ONLINE_PROFILE_SELECT:          EnterOnlineProfileSelect();         break;
-        case SM_ONLINE_PROFILE_OPTIONS:         EnterOnlineProfileOptions();        break;
-        case SM_ONLINE_PROFILE_CONTROLS:        EnterOnlineProfileControls();       break;
-        case SM_ONLINE_PROFILE_AVATAR:          EnterOnlineProfileAvatar();         break;
-        case SM_ONLINE_PROFILE_SAVE_SELECT:     EnterOnlineProfileSaveSelect();     break;
-        case SM_ONLINE_MEMCARD_RESELECT:        EnterOnlineMemcardReselect();       break;
-        case SM_ONLINE_MAIN_MENU:               EnterOnlineMain();                  break;
-        case SM_ONLINE_HOST_MENU:               EnterOnlineHost();                  break;
-        case SM_ONLINE_HOST_MENU_OPTIONS:       EnterOnlineHostOptions();           break;
-        case SM_HOST_SAVE_SETTINGS:             EnterHostSaveSettings();            break;
-        case SM_ONLINE_QUICKMATCH:              EnterOnlineQuickMatch();            break;
-        case SM_ONLINE_OPTIMATCH:               EnterOnlineOptiMatch();             break;
-        case SM_ONLINE_JOIN_FILTER:             EnterOnlineJoinFilter();            break;
-        case SM_ONLINE_JOIN_MENU:               EnterOnlineJoin();                  break;
-        case SM_ONLINE_JOIN_SAVE_SETTINGS:      EnterOnlineJoinSaveSettings();      break;
-        case SM_SERVER_PLAYERS_MENU:            EnterServerPlayers();               break;
-        case SM_ONLINE_PLAYERS_MENU:            EnterOnlinePlayers();               break;
-        case SM_ONLINE_FEEDBACK_MENU:           EnterOnlineFeedback();              break;
-        case SM_ONLINE_FEEDBACK_MENU_FRIEND:    EnterOnlineFeedbackFriend();        break;
-        case SM_ONLINE_FRIENDS_MENU:            EnterOnlineFriends();               break;
-        case SM_ONLINE_STATS:                   EnterOnlineStats();                 break;
-        case SM_ONLINE_EDIT_PROFILE:            EnterOnlineEditProfile();           break;
-        case SM_ONLINE_EDIT_CONTROLS:           EnterOnlineEditControls();          break;
-        case SM_ONLINE_EDIT_AVATAR:             EnterOnlineEditAvatar();            break;
-        case SM_HOST_LEVEL_SELECT:              EnterHostLevelSelect();             break;
-#ifndef CONFIG_RETAIL
-        case SM_LEVEL_SELECT:                   EnterLevelSelect();                 break;
-#endif
-        case SM_RESUME_CAMPAIGN:                EnterResumeCampaign();              break;
-        case SM_START_SAVE_GAME:                EnterStartSaveGame();               break;
-        case SM_START_GAME:                     EnterStartGame();                   break;
-        case SM_SERVER_SYNC:                    EnterServerSync();                  break;
-        case SM_CLIENT_SYNC:                    EnterClientSync();                  break;
-        case SM_MULTI_PLAYER_LOAD_MISSION:      EnterMultiPlayerLoadMission();      break;
-        case SM_SINGLE_PLAYER_LOAD_MISSION:     EnterSinglePlayerLoadMission();     break;
-        case SM_SERVER_COOLDOWN:                EnterServerCooldown();              break;
-        case SM_CLIENT_COOLDOWN:                EnterClientCooldown();              break;
-        case SM_SERVER_DISCONNECT:              EnterServerDisconnect();            break;
-        case SM_CLIENT_DISCONNECT:              EnterClientDisconnect();            break;
-        case SM_PAUSE_MAIN_MENU:                EnterPauseMain();                   break;
-        case SM_PAUSE_OPTIONS:                  EnterPauseOptions();                break;
-        case SM_PAUSE_CONTROLS:                 EnterPauseControls();               break;
-        case SM_PAUSE_SETTINGS:                 EnterPauseSettings();               break;
-        case SM_PAUSE_HEADSET:                  EnterPauseHeadset();                break;
-        case SM_PAUSE_GRAPHICS:                 EnterPauseGraphics();               break;		
-        case SM_PAUSE_SETTINGS_SELECT:          EnterPauseSettingsSelect();         break;
-        case SM_PAUSE_PROFILE_SAVE_SELECT:      EnterPauseMemcardSaveSelect();      break;
-        case SM_PAUSE_MEMCARD_RESELECT:         EnterPauseMemcardReselect();        break;
-        case SM_PAUSE_MP:                       EnterPauseMP();                     break;
-        case SM_PAUSE_MP_OPTIONS:               EnterPauseMPOptions();              break;
-        case SM_PAUSE_MP_CONTROLS:              EnterPauseMPControls();             break;
-        case SM_PAUSE_MP_SETTINGS:              EnterPauseMPSettings();             break;
-        case SM_PAUSE_MP_HEADSET:               EnterPauseMPHeadset();              break;
-        case SM_PAUSE_MP_GRAPHICS:              EnterPauseMPGraphics();             break;		
-        case SM_PAUSE_MP_SETTINGS_SELECT:       EnterPauseMPSettingsSelect();       break;
-        case SM_PAUSE_MP_PROFILE_SAVE_SELECT:   EnterPauseMPMemcardSaveSelect();    break;
-        case SM_PAUSE_MP_MEMCARD_RESELECT:      EnterPauseMPMemcardReselect();      break;
-        case SM_PAUSE_ONLINE:                   EnterPauseOnline();                 break;
-        case SM_PAUSE_ONLINE_VOTE_MAP:          EnterPauseOnlineVoteMap();          break;
-        case SM_PAUSE_ONLINE_VOTE_KICK:         EnterPauseOnlineVoteKick();         break;
-        case SM_PAUSE_ONLINE_FRIENDS:           EnterPauseOnlineFriends();          break;
-        case SM_PAUSE_ONLINE_PLAYERS:           EnterPauseOnlinePlayers();          break;
-        case SM_PAUSE_ONLINE_FEEDBACK:          EnterPauseOnlineFeedback();         break;
-        case SM_PAUSE_ONLINE_FEEDBACK_FRIEND:   EnterPauseOnlineFeedbackFriend();   break;
-        case SM_PAUSE_ONLINE_SERVER_CONFIG:     EnterPauseServerConfig();           break;
-        case SM_PAUSE_ONLINE_OPTIONS:           EnterPauseOnlineOptions();          break;
-        case SM_PAUSE_ONLINE_CONTROLS:          EnterPauseOnlineControls();         break;
-        case SM_PAUSE_ONLINE_SETTINGS:          EnterPauseOnlineSettings();         break;
-        case SM_PAUSE_ONLINE_HEADSET:           EnterPauseOnlineHeadset();          break;
-        case SM_PAUSE_ONLINE_SAVE_SELECT:       EnterPauseOnlineSaveSelect();       break;
-        case SM_PAUSE_ONLINE_MEMCARD_RESELECT:  EnterPauseOnlineMemcardReselect();  break;
-        case SM_PAUSE_ONLINE_CHANGE_MAP:        EnterPauseOnlineChangeMap();        break;
-        case SM_PAUSE_ONLINE_KICK_PLAYER:       EnterPauseOnlineKickPlayer();       break;
-        case SM_PAUSE_ONLINE_TEAM_CHANGE:       EnterPauseOnlineTeamChange();       break;
-        case SM_PAUSE_ONLINE_RECONFIG_ONE:      EnterPauseOnlineReconfigOne();      break;
-        case SM_PAUSE_ONLINE_RECONFIG_TWO:      EnterPauseOnlineReconfigTwo();      break;
-        case SM_PAUSE_ONLINE_RECONFIG_MAP:      EnterPauseOnlineReconfigMap();      break;
-        case SM_PAUSE_ONLINE_SAVE_SETTINGS:     EnterPauseOnlineSaveSettings();     break;
-        case SM_PAUSE_MP_SCORE:                 EnterPauseMPScore();                break;
-        case SM_END_PAUSE:                      EnterEndPause();                    break;
-        case SM_AUTOSAVE_MENU:                  EnterAutosaveMenu();                break;
-        case SM_AUTOSAVE_PROFILE_RESELECT:      EnterAutosaveProfileReselect();     break;
-        case SM_END_AUTOSAVE:                   EnterEndAutosave();                 break;
-        case SM_POST_GAME:                      EnterPostGame();                    break;
-        case SM_EXIT_GAME:                      EnterExitGame();                    break;
-        case SM_ADVANCE_LEVEL:                  EnterAdvanceLevel();                break;
-        case SM_RELOAD_CHECKPOINT:              EnterReloadCheckpoint();            break;
-        case SM_FINAL_SCORE:                    EnterFinalScore();                  break;
-#if CONFIG_IS_DEMO
-        case SM_DEMO_EXIT:                      EnterDemoExit();                    break;
-#endif
-        case SM_REPORT_ERROR:                   EnterReportError();                 break;
-        case SM_GAME_EXIT_PROMPT_FOR_SAVE:      EnterGameExitPromptForSave();       break;
-        case SM_GAME_EXIT_SAVE_SELECT:          EnterGameExitSaveSelect();          break;
-        case SM_GAME_EXIT_MEMCARD_RESELECT:     EnterGameExitMemcardReselect();     break;
-        case SM_GAME_EXIT_SAVE_SETTINGS:        EnterGameExitSaveSettings();        break;
-        case SM_GAME_EXIT_SETTINGS_OVERWRITE:   EnterGameExitSettingsOverwrite();   break;
-        case SM_GAME_EXIT_SETTINGS_SELECT:      EnterGameExitSettingsSelect();      break;
-        case SM_GAME_EXIT_REDIRECT:             EnterGameExitRedirect();            break;
-        case SM_GAME_OVER:                      EnterGameOver();                    break;
-
-        //case SM_ONLINE_DOWNLOAD:                EnterOnlineDownload();              break;
-        case SM_ONLINE_LOGIN:                   EnterOnlineLogin();                 break;
-        case SM_FOLLOW_BUDDY:                   EnterFollowBuddy();                 break;
-        case SM_PLAYING_GAME:                   EnterPlayingGame();                 break;
+        case SM_STARTUP_INFO:                      EnterStartupInfo();                 break;
+        case SM_STARTUP_INTRO:                     EnterStartupIntro();                break;
+        case SM_SAVE_DATA_BOOT_CHECK:              EnterSaveDataBootCheck();           break;
+        case SM_PRESS_START_SCREEN:                EnterPressStart();                  break;
+        case SM_MAIN_MENU:                         EnterMainMenu();                    break;
+        case SM_SETTINGS_MENU:                     EnterSettingsMenu();                break;
+        case SM_SETTINGS_AUDIO:                    EnterSettingsAudio();               break;
+        case SM_SETTINGS_HEADSET:                  EnterSettingsHeadset();             break;
+        case SM_SETTINGS_GRAPHICS:                 EnterSettingsGraphics();            break;
+        case SM_SETTINGS_DISPLAY:                  EnterSettingsDisplay();             break;
+        case SM_SETTINGS_LANGUAGE:                 EnterSettingsLanguage();            break;
+        case SM_SETTINGS_SAVE_DATA_SELECT:         EnterSettingsSaveDataSelect();      break;
+        case SM_MANAGE_PROFILES:                   EnterManageProfiles();              break;
+        case SM_MANAGE_PROFILE_OPTIONS:            EnterManageProfileOptions();        break;
+        case SM_MANAGE_PROFILE_CONTROLS:           EnterManageProfileControls();       break;
+        case SM_MANAGE_PROFILE_AVATAR:             EnterManageProfileAvatar();         break;
+        case SM_MANAGE_PROFILE_SAVE_SELECT:        EnterManageProfileSaveSelect();     break;
+        case SM_MANAGE_PROFILE_SAVE_DATA_RESELECT: EnterManageSaveDataReselect();      break;
+        case SM_CAMPAIGN_MENU:                     EnterCampaignMenu();                break;
+        case SM_CAMPAIGN_PROFILE_OPTIONS:          EnterCampaignProfileOptions();      break;
+        case SM_CAMPAIGN_PROFILE_CONTROLS:         EnterCampaignProfileControls();     break;
+        case SM_CAMPAIGN_PROFILE_AVATAR:           EnterCampaignProfileAvatar();       break;
+        case SM_CAMPAIGN_PROFILE_SAVE_SELECT:      EnterCampaignProfileSaveSelect();   break;
+        case SM_CAMPAIGN_SAVE_DATA_RESELECT:       EnterCampaignSaveDataReselect();    break;
+        case SM_LOAD_CAMPAIGN:                     EnterLoadCampaign();                break;
+        case SM_SAVE_CAMPAIGN:                     EnterSaveCampaign();                break;
+        case SM_LORE_MAIN_MENU:                    EnterLoreMainMenu();                break;
+        case SM_SECRETS_MENU:                      EnterSecretsMenu();                 break;
+        case SM_EXTRAS_MENU:                       EnterExtrasMenu();                  break;
+        case SM_CREDITS_SCREEN:                    EnterCreditsScreen();               break;
+        case SM_PROFILE_SELECT:                    EnterProfileSelect();               break;
+        case SM_PROFILE_OPTIONS:                   EnterProfileOptions();              break;
+        case SM_PROFILE_CONTROLS:                  EnterProfileControls();             break;
+        case SM_PROFILE_AVATAR:                    EnterProfileAvatar();               break;
+        case SM_PROFILE_MOUSE_CONTROLS:            EnterProfileMouseControls();        break;
+        case SM_PROFILE_GAMEPAD_CONTROLS:          EnterProfileGamepadControls();      break;
+        case SM_PROFILE_AVATAR_MP:                 EnterProfileAvatarMP();             break;
+        case SM_PROFILE_SAVE_SELECT_MP:            EnterProfileSaveSelectMP();         break;
+        case SM_SAVE_DATA_RESELECT_MP:             EnterSaveDataReselectMP();          break;
+        case SM_MULTI_PLAYER_MENU:                 EnterMultiPlayer();                 break;
+        case SM_MULTI_PLAYER_OPTIONS:              EnterMultiPlayerOptions();          break;
+        case SM_MULTI_PLAYER_EDIT:                 EnterMultiPlayerEdit();             break;
+        case SM_MP_LEVEL_SELECT:                   EnterMPLevelSelect();               break;
+        case SM_MP_SAVE_SETTINGS:                  EnterMPSaveSettings();              break;
+        case SM_PROFILE_CONTROLS_MP:               EnterProfileControlsMP();           break;
+        case SM_ONLINE_SILENT_LOGON:               EnterOnlineSilentLogin();           break;
+        case SM_ONLINE_CONNECT:                    EnterOnlineConnect();               break;
+        case SM_NETWORK_DISCONNECT:                EnterNetworkDisconnect();           break;
+        case SM_ONLINE_AUTHENTICATE:               EnterOnlineAuthenticate();          break;
+        case SM_ONLINE_PROFILE_SELECT:             EnterOnlineProfileSelect();         break;
+        case SM_ONLINE_PROFILE_OPTIONS:            EnterOnlineProfileOptions();        break;
+        case SM_ONLINE_PROFILE_CONTROLS:           EnterOnlineProfileControls();       break;
+        case SM_ONLINE_PROFILE_AVATAR:             EnterOnlineProfileAvatar();         break;
+        case SM_ONLINE_PROFILE_SAVE_SELECT:        EnterOnlineProfileSaveSelect();     break;
+        case SM_ONLINE_SAVE_DATA_RESELECT:         EnterOnlineSaveDataReselect();      break;
+        case SM_ONLINE_MAIN_MENU:                  EnterOnlineMain();                  break;
+        case SM_ONLINE_HOST_MENU:                  EnterOnlineHost();                  break;
+        case SM_ONLINE_HOST_MENU_OPTIONS:          EnterOnlineHostOptions();           break;
+        case SM_HOST_SAVE_SETTINGS:                EnterHostSaveSettings();            break;
+        case SM_ONLINE_QUICKMATCH:                 EnterOnlineQuickMatch();            break;
+        case SM_ONLINE_OPTIMATCH:                  EnterOnlineOptiMatch();             break;
+        case SM_ONLINE_JOIN_FILTER:                EnterOnlineJoinFilter();            break;
+        case SM_ONLINE_JOIN_MENU:                  EnterOnlineJoin();                  break;
+        case SM_ONLINE_JOIN_SAVE_SETTINGS:         EnterOnlineJoinSaveSettings();      break;
+        case SM_SERVER_PLAYERS_MENU:               EnterServerPlayers();               break;
+        case SM_ONLINE_PLAYERS_MENU:               EnterOnlinePlayers();               break;
+        case SM_ONLINE_FEEDBACK_MENU:              EnterOnlineFeedback();              break;
+        case SM_ONLINE_FEEDBACK_MENU_FRIEND:       EnterOnlineFeedbackFriend();        break;
+        case SM_ONLINE_FRIENDS_MENU:               EnterOnlineFriends();               break;
+        case SM_ONLINE_STATS:                      EnterOnlineStats();                 break;
+        case SM_ONLINE_EDIT_PROFILE:               EnterOnlineEditProfile();           break;
+        case SM_ONLINE_EDIT_CONTROLS:              EnterOnlineEditControls();          break;
+        case SM_ONLINE_EDIT_AVATAR:                EnterOnlineEditAvatar();            break;
+        case SM_HOST_LEVEL_SELECT:                 EnterHostLevelSelect();             break;
+#ifndef CONFIG_RETAIL                              
+        case SM_LEVEL_SELECT:                      EnterLevelSelect();                 break;
+#endif                                             
+        case SM_RESUME_CAMPAIGN:                   EnterResumeCampaign();              break;
+        case SM_START_SAVE_GAME:                   EnterStartSaveGame();               break;
+        case SM_START_GAME:                        EnterStartGame();                   break;
+        case SM_SERVER_SYNC:                       EnterServerSync();                  break;
+        case SM_CLIENT_SYNC:                       EnterClientSync();                  break;
+        case SM_MULTI_PLAYER_LOAD_MISSION:         EnterMultiPlayerLoadMission();      break;
+        case SM_SINGLE_PLAYER_LOAD_MISSION:        EnterSinglePlayerLoadMission();     break;
+        case SM_SERVER_COOLDOWN:                   EnterServerCooldown();              break;
+        case SM_CLIENT_COOLDOWN:                   EnterClientCooldown();              break;
+        case SM_SERVER_DISCONNECT:                 EnterServerDisconnect();            break;
+        case SM_CLIENT_DISCONNECT:                 EnterClientDisconnect();            break;
+        case SM_PAUSE_MAIN_MENU:                   EnterPauseMain();                   break;
+        case SM_PAUSE_OPTIONS:                     EnterPauseOptions();                break;
+        case SM_PAUSE_CONTROLS:                    EnterPauseControls();               break;
+        case SM_PAUSE_SETTINGS:                    EnterPauseSettings();               break;
+        case SM_PAUSE_AUDIO:                       EnterPauseAudio();                  break;
+        case SM_PAUSE_HEADSET:                     EnterPauseHeadset();                break;
+        case SM_PAUSE_GRAPHICS:                    EnterPauseGraphics();               break;
+        case SM_PAUSE_DISPLAY:                     EnterPauseDisplay();                break;
+        case SM_PAUSE_LANGUAGE:                    EnterPauseLanguage();               break;
+        case SM_PAUSE_SETTINGS_SELECT:             EnterPauseSettingsSelect();         break;
+        case SM_PAUSE_PROFILE_SAVE_SELECT:         EnterPauseSaveDataSaveSelect();     break;
+        case SM_PAUSE_SAVE_DATA_RESELECT:          EnterPauseSaveDataReselect();       break;
+        case SM_PAUSE_MP:                          EnterPauseMP();                     break;
+        case SM_PAUSE_MP_OPTIONS:                  EnterPauseMPOptions();              break;
+        case SM_PAUSE_MP_CONTROLS:                 EnterPauseMPControls();             break;
+        case SM_PAUSE_MP_SETTINGS:                 EnterPauseMPSettings();             break;
+        case SM_PAUSE_MP_AUDIO:                    EnterPauseMPAudio();                break;
+        case SM_PAUSE_MP_HEADSET:                  EnterPauseMPHeadset();              break;
+        case SM_PAUSE_MP_GRAPHICS:                 EnterPauseMPGraphics();             break;
+        case SM_PAUSE_MP_DISPLAY:                  EnterPauseMPDisplay();              break;
+        case SM_PAUSE_MP_LANGUAGE:                 EnterPauseMPLanguage();             break;
+        case SM_PAUSE_MP_SETTINGS_SELECT:          EnterPauseMPSettingsSelect();       break;
+        case SM_PAUSE_MP_PROFILE_SAVE_SELECT:      EnterPauseMPSaveDataSaveSelect();   break;
+        case SM_PAUSE_MP_SAVE_DATA_RESELECT:       EnterPauseMPSaveDataReselect();     break;
+        case SM_PAUSE_ONLINE:                      EnterPauseOnline();                 break;
+        case SM_PAUSE_ONLINE_VOTE_MAP:             EnterPauseOnlineVoteMap();          break;
+        case SM_PAUSE_ONLINE_VOTE_KICK:            EnterPauseOnlineVoteKick();         break;
+        case SM_PAUSE_ONLINE_FRIENDS:              EnterPauseOnlineFriends();          break;
+        case SM_PAUSE_ONLINE_PLAYERS:              EnterPauseOnlinePlayers();          break;
+        case SM_PAUSE_ONLINE_FEEDBACK:             EnterPauseOnlineFeedback();         break;
+        case SM_PAUSE_ONLINE_FEEDBACK_FRIEND:      EnterPauseOnlineFeedbackFriend();   break;
+        case SM_PAUSE_ONLINE_SERVER_CONFIG:        EnterPauseServerConfig();           break;
+        case SM_PAUSE_ONLINE_OPTIONS:              EnterPauseOnlineOptions();          break;
+        case SM_PAUSE_ONLINE_CONTROLS:             EnterPauseOnlineControls();         break;
+        case SM_PAUSE_ONLINE_SETTINGS:             EnterPauseOnlineSettings();         break;
+        case SM_PAUSE_ONLINE_AUDIO:                EnterPauseOnlineAudio();            break;
+        case SM_PAUSE_ONLINE_HEADSET:              EnterPauseOnlineHeadset();          break;
+        case SM_PAUSE_ONLINE_GRAPHICS:             EnterPauseOnlineGraphics();         break;
+        case SM_PAUSE_ONLINE_DISPLAY:              EnterPauseOnlineDisplay();          break;
+        case SM_PAUSE_ONLINE_LANGUAGE:             EnterPauseOnlineLanguage();         break;
+        case SM_PAUSE_ONLINE_SAVE_SELECT:          EnterPauseOnlineSaveSelect();       break;
+        case SM_PAUSE_ONLINE_SAVE_DATA_RESELECT:   EnterPauseOnlineSaveDataReselect(); break;
+        case SM_PAUSE_ONLINE_CHANGE_MAP:           EnterPauseOnlineChangeMap();        break;
+        case SM_PAUSE_ONLINE_KICK_PLAYER:          EnterPauseOnlineKickPlayer();       break;
+        case SM_PAUSE_ONLINE_TEAM_CHANGE:          EnterPauseOnlineTeamChange();       break;
+        case SM_PAUSE_ONLINE_RECONFIG_ONE:         EnterPauseOnlineReconfigOne();      break;
+        case SM_PAUSE_ONLINE_RECONFIG_TWO:         EnterPauseOnlineReconfigTwo();      break;
+        case SM_PAUSE_ONLINE_RECONFIG_MAP:         EnterPauseOnlineReconfigMap();      break;
+        case SM_PAUSE_ONLINE_SAVE_SETTINGS:        EnterPauseOnlineSaveSettings();     break;
+        case SM_PAUSE_MP_SCORE:                    EnterPauseMPScore();                break;
+        case SM_END_PAUSE:                         EnterEndPause();                    break;
+        case SM_AUTOSAVE_MENU:                     EnterAutosaveMenu();                break;
+        case SM_AUTOSAVE_PROFILE_RESELECT:         EnterAutosaveProfileReselect();     break;
+        case SM_END_AUTOSAVE:                      EnterEndAutosave();                 break;
+        case SM_POST_GAME:                         EnterPostGame();                    break;
+        case SM_EXIT_GAME:                         EnterExitGame();                    break;
+        case SM_ADVANCE_LEVEL:                     EnterAdvanceLevel();                break;
+        case SM_RELOAD_CHECKPOINT:                 EnterReloadCheckpoint();            break;
+        case SM_FINAL_SCORE:                       EnterFinalScore();                  break;
+#if CONFIG_IS_DEMO                                 
+        case SM_DEMO_EXIT:                         EnterDemoExit();                    break;
+#endif                                             
+        case SM_REPORT_ERROR:                      EnterReportError();                 break;
+        case SM_GAME_EXIT_PROMPT_FOR_SAVE:         EnterGameExitPromptForSave();       break;
+        case SM_GAME_EXIT_SAVE_SELECT:             EnterGameExitSaveSelect();          break;
+        case SM_GAME_EXIT_SAVE_DATA_RESELECT:      EnterGameExitSaveDataReselect();    break;
+        case SM_GAME_EXIT_SAVE_SETTINGS:           EnterGameExitSaveSettings();        break;
+        case SM_GAME_EXIT_SETTINGS_OVERWRITE:      EnterGameExitSettingsOverwrite();   break;
+        case SM_GAME_EXIT_SETTINGS_SELECT:         EnterGameExitSettingsSelect();      break;
+        case SM_GAME_EXIT_REDIRECT:                EnterGameExitRedirect();            break;
+        case SM_GAME_OVER:                         EnterGameOver();                    break;
+                                                   
+        case SM_ONLINE_LOGIN:                      EnterOnlineLogin();                 break;
+        case SM_FOLLOW_BUDDY:                      EnterFollowBuddy();                 break;
+        case SM_PLAYING_GAME:                      EnterPlayingGame();                 break;
 
         // No setup required
         default:
-            break;
+		{
+		}		
+        break;
     }
 }
 
@@ -1253,6 +1393,7 @@ void state_mgr::ExitState( sm_states State )
 {
     switch( State )
     {
+        case SM_STARTUP_INFO:                   ExitStartupInfo();              break;
         case SM_END_PAUSE:                      ExitEndPause();                 break;
         case SM_END_AUTOSAVE:                   ExitEndAutosave();              break;
         case SM_PAUSE_MP:                       ExitPauseMP();                  break;
@@ -1269,12 +1410,15 @@ void state_mgr::ExitState( sm_states State )
         case SM_CLIENT_SYNC:                    ExitClientSync();               break;
         case SM_PRESS_START_SCREEN:             ExitPressStart();               break;
         case SM_ONLINE_LOGIN:                   ExitOnlineLogin();              break;
+        case SM_NETWORK_DISCONNECT:             ExitNetworkDisconnect();        break;
         case SM_PLAYING_GAME:                   ExitPlayingGame();              break;
         case SM_ONLINE_QUICKMATCH:              ExitOnlineQuickMatch();         break;
 
         // No clean up required
         default:
-            break;
+		{
+		}		
+        break;
     }
 }
 
@@ -1287,80 +1431,86 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
     // Update
     switch( State )
     {
-        case SM_ESRB_NOTICE:                    UpdateESRBNotice();                 break;
-        case SM_STARTUP_INTRO:                  UpdateStartupIntro();               break;
-        case SM_MEMCARD_BOOT_CHECK:             UpdateMemcardBootCheck();           break;
-        case SM_PRESS_START_SCREEN:             UpdatePressStart();                 break;
-        case SM_MAIN_MENU:                      UpdateMainMenu();                   break;
-        case SM_SETTINGS_MENU:                  UpdateSettingsMenu();               break;
-        case SM_SETTINGS_HEADSET:               UpdateSettingsHeadset();            break;
-        case SM_SETTINGS_GRAPHICS:              UpdateSettingsGraphics();           break;		
-        case SM_SETTINGS_MEMCARD_SELECT:        UpdateSettingsMemcardSelect();      break;
+        case SM_STARTUP_INFO:                       UpdateStartupInfo( DeltaTime );     break;
+        case SM_STARTUP_INTRO:                      UpdateStartupIntro();               break;
+        case SM_SAVE_DATA_BOOT_CHECK:               UpdateSaveDataBootCheck();          break;
+        case SM_PRESS_START_SCREEN:                 UpdatePressStart();                 break;
+        case SM_MAIN_MENU:                          UpdateMainMenu();                   break;
+        case SM_SETTINGS_MENU:                      UpdateSettingsMenu();               break;
+        case SM_SETTINGS_AUDIO:                     UpdateSettingsAudio();              break;
+        case SM_SETTINGS_HEADSET:                   UpdateSettingsHeadset();            break;
+        case SM_SETTINGS_GRAPHICS:                  UpdateSettingsGraphics();           break;
+        case SM_SETTINGS_DISPLAY:                   UpdateSettingsDisplay();            break;
+        case SM_SETTINGS_LANGUAGE:                  UpdateSettingsLanguage();           break;
+        case SM_SETTINGS_SAVE_DATA_SELECT:          UpdateSettingsSaveDataSelect();     break;
+                                                    
+        case SM_MANAGE_PROFILES:                    UpdateManageProfiles();             break;
+        case SM_MANAGE_PROFILE_OPTIONS:             UpdateManageProfileOptions();       break;
+        case SM_MANAGE_PROFILE_CONTROLS:            UpdateManageProfileControls();      break;
+        case SM_MANAGE_PROFILE_AVATAR:              UpdateManageProfileAvatar();        break;
+        case SM_MANAGE_PROFILE_SAVE_SELECT:         UpdateManageProfileSaveSelect();    break;
+        case SM_MANAGE_PROFILE_SAVE_DATA_RESELECT:  UpdateManageSaveDataReselect();     break;
 
-        case SM_MANAGE_PROFILES:                UpdateManageProfiles();             break;
-        case SM_MANAGE_PROFILE_OPTIONS:         UpdateManageProfileOptions();       break;
-        case SM_MANAGE_PROFILE_CONTROLS:        UpdateManageProfileControls();      break;
-        case SM_MANAGE_PROFILE_AVATAR:          UpdateManageProfileAvatar();        break;
-        case SM_MANAGE_PROFILE_SAVE_SELECT:     UpdateManageProfileSaveSelect();    break;
-        case SM_MANAGE_PROFILE_MEMCARD_RESELECT:UpdateManageMemcardReselect();      break;
-
-        case SM_CAMPAIGN_MENU:                  UpdateCampaignMenu();               break;
-        case SM_CAMPAIGN_PROFILE_OPTIONS:       UpdateCampaignProfileOptions();     break;
-        case SM_CAMPAIGN_PROFILE_CONTROLS:      UpdateCampaignProfileControls();    break;
-        case SM_CAMPAIGN_PROFILE_AVATAR:        UpdateCampaignProfileAvatar();      break;
-        case SM_CAMPAIGN_PROFILE_SAVE_SELECT:   UpdateCampaignProfileSaveSelect();  break;
-        case SM_CAMPAIGN_MEMCARD_RESELECT:      UpdateCampaignMemcardReselect();    break;
-        case SM_LOAD_CAMPAIGN:                  UpdateLoadCampaign();               break;
-        case SM_SAVE_CAMPAIGN:                  UpdateSaveCampaign();               break;
-        case SM_LORE_MAIN_MENU:                 UpdateLoreMainMenu();               break;
-        case SM_SECRETS_MENU:                   UpdateSecretsMenu();                break;
-        case SM_EXTRAS_MENU:                    UpdateExtrasMenu();                 break;
-        case SM_CREDITS_SCREEN:                 UpdateCreditsScreen();              break;
-        case SM_PROFILE_SELECT:                 UpdateProfileSelect();              break;
-        case SM_PROFILE_OPTIONS:                UpdateProfileOptions();             break;
-        case SM_PROFILE_CONTROLS:               UpdateProfileControls();            break;
-        case SM_PROFILE_AVATAR:                 UpdateProfileAvatar();              break;
-        case SM_MULTI_PLAYER_MENU:              UpdateMultiPlayer();                break;
-        case SM_MULTI_PLAYER_OPTIONS:           UpdateMultiPlayerOptions();         break;
-        case SM_MULTI_PLAYER_EDIT:              UpdateMultiPlayerEdit();            break;
-        case SM_MP_LEVEL_SELECT:                UpdateMPLevelSelect();              break;
-        case SM_MP_SAVE_SETTINGS:               UpdateMPSaveSettings();             break;
-        case SM_PROFILE_CONTROLS_MP:            UpdateProfileControlsMP();          break;
-        case SM_PROFILE_AVATAR_MP:              UpdateProfileAvatarMP();            break;
-        case SM_PROFILE_SAVE_SELECT_MP:         UpdateProfileSaveSelectMP();        break;
-        case SM_MEMCARD_RESELECT_MP:            UpdateMemcardReselectMP();          break;
-        case SM_ONLINE_CONNECT:                 UpdateOnlineConnect();              break;
-        case SM_ONLINE_AUTHENTICATE:            UpdateOnlineAuthenticate();         break;
-        case SM_ONLINE_PROFILE_SELECT:          UpdateOnlineProfileSelect();        break;
-        case SM_ONLINE_PROFILE_OPTIONS:         UpdateOnlineProfileOptions();       break;
-        case SM_ONLINE_PROFILE_CONTROLS:        UpdateOnlineProfileControls();      break;
-        case SM_ONLINE_PROFILE_AVATAR:          UpdateOnlineProfileAvatar();        break;
-        case SM_ONLINE_PROFILE_SAVE_SELECT:     UpdateOnlineProfileSaveSelect();    break;
-        case SM_ONLINE_MEMCARD_RESELECT:        UpdateOnlineMemcardReselect();      break;
-        case SM_ONLINE_MAIN_MENU:               UpdateOnlineMain();                 break;
-        case SM_ONLINE_HOST_MENU:               UpdateOnlineHost();                 break;
-        case SM_ONLINE_HOST_MENU_OPTIONS:       UpdateOnlineHostOptions();          break;
-        case SM_HOST_SAVE_SETTINGS:             UpdateHostSaveSettings();           break;
-        case SM_ONLINE_QUICKMATCH:              UpdateOnlineQuickMatch();           break;
-        case SM_ONLINE_OPTIMATCH:               UpdateOnlineOptiMatch();            break;
-        case SM_ONLINE_JOIN_FILTER:             UpdateOnlineJoinFilter();           break;
-        case SM_ONLINE_JOIN_MENU:               UpdateOnlineJoin();                 break;
-        case SM_ONLINE_JOIN_SAVE_SETTINGS:      UpdateOnlineJoinSaveSettings();     break;
-        case SM_SERVER_PLAYERS_MENU:            UpdateServerPlayers();              break;
-        case SM_ONLINE_PLAYERS_MENU:            UpdateOnlinePlayers();              break;
-        case SM_ONLINE_FEEDBACK_MENU:           UpdateOnlineFeedback();             break;
-        case SM_ONLINE_FEEDBACK_MENU_FRIEND:    UpdateOnlineFeedbackFriend();       break;
-        case SM_ONLINE_FRIENDS_MENU:            UpdateOnlineFriends();              break;
-        case SM_ONLINE_STATS:                   UpdateOnlineStats();                break;
-        case SM_ONLINE_EDIT_PROFILE:            UpdateOnlineEditProfile();          break;
-        case SM_ONLINE_EDIT_CONTROLS:           UpdateOnlineEditControls();         break;
-        case SM_ONLINE_EDIT_AVATAR:             UpdateOnlineEditAvatar();           break;
-        case SM_HOST_LEVEL_SELECT:              UpdateHostLevelSelect();            break;
-#ifndef CONFIG_RETAIL
-        case SM_LEVEL_SELECT:                   UpdateLevelSelect();                break;
-#endif
-        case SM_RESUME_CAMPAIGN:                UpdateResumeCampaign();             break;
-        case SM_START_SAVE_GAME:                UpdateStartSaveGame();              break;
+        case SM_CAMPAIGN_MENU:                      UpdateCampaignMenu();               break;
+        case SM_CAMPAIGN_PROFILE_OPTIONS:           UpdateCampaignProfileOptions();     break;
+        case SM_CAMPAIGN_PROFILE_CONTROLS:          UpdateCampaignProfileControls();    break;
+        case SM_CAMPAIGN_PROFILE_AVATAR:            UpdateCampaignProfileAvatar();      break;
+        case SM_CAMPAIGN_PROFILE_SAVE_SELECT:       UpdateCampaignProfileSaveSelect();  break;
+        case SM_CAMPAIGN_SAVE_DATA_RESELECT:        UpdateCampaignSaveDataReselect();   break;
+        case SM_LOAD_CAMPAIGN:                      UpdateLoadCampaign();               break;
+        case SM_SAVE_CAMPAIGN:                      UpdateSaveCampaign();               break;
+        case SM_LORE_MAIN_MENU:                     UpdateLoreMainMenu();               break;
+        case SM_SECRETS_MENU:                       UpdateSecretsMenu();                break;
+        case SM_EXTRAS_MENU:                        UpdateExtrasMenu();                 break;
+        case SM_CREDITS_SCREEN:                     UpdateCreditsScreen();              break;
+        case SM_PROFILE_SELECT:                     UpdateProfileSelect();              break;
+        case SM_PROFILE_OPTIONS:                    UpdateProfileOptions();             break;
+        case SM_PROFILE_CONTROLS:                   UpdateProfileControls();            break;
+        case SM_PROFILE_AVATAR:                     UpdateProfileAvatar();              break;
+        case SM_PROFILE_MOUSE_CONTROLS:             UpdateProfileDeviceControls();      break;
+        case SM_PROFILE_GAMEPAD_CONTROLS:           UpdateProfileDeviceControls();      break;
+        case SM_MULTI_PLAYER_MENU:                  UpdateMultiPlayer();                break;
+        case SM_MULTI_PLAYER_OPTIONS:               UpdateMultiPlayerOptions();         break;
+        case SM_MULTI_PLAYER_EDIT:                  UpdateMultiPlayerEdit();            break;
+        case SM_MP_LEVEL_SELECT:                    UpdateMPLevelSelect();              break;
+        case SM_MP_SAVE_SETTINGS:                   UpdateMPSaveSettings();             break;
+        case SM_PROFILE_CONTROLS_MP:                UpdateProfileControlsMP();          break;
+        case SM_PROFILE_AVATAR_MP:                  UpdateProfileAvatarMP();            break;
+        case SM_PROFILE_SAVE_SELECT_MP:             UpdateProfileSaveSelectMP();        break;
+        case SM_SAVE_DATA_RESELECT_MP:              UpdateSaveDataReselectMP();         break;
+        case SM_ONLINE_CONNECT:                     UpdateOnlineConnect();              break;
+        case SM_NETWORK_DISCONNECT:                 UpdateNetworkDisconnect();          break;
+        case SM_ONLINE_AUTHENTICATE:                UpdateOnlineAuthenticate();         break;
+        case SM_ONLINE_PROFILE_SELECT:              UpdateOnlineProfileSelect();        break;
+        case SM_ONLINE_PROFILE_OPTIONS:             UpdateOnlineProfileOptions();       break;
+        case SM_ONLINE_PROFILE_CONTROLS:            UpdateOnlineProfileControls();      break;
+        case SM_ONLINE_PROFILE_AVATAR:              UpdateOnlineProfileAvatar();        break;
+        case SM_ONLINE_PROFILE_SAVE_SELECT:         UpdateOnlineProfileSaveSelect();    break;
+        case SM_ONLINE_SAVE_DATA_RESELECT:          UpdateOnlineSaveDataReselect();     break;
+        case SM_ONLINE_MAIN_MENU:                   UpdateOnlineMain();                 break;
+        case SM_ONLINE_HOST_MENU:                   UpdateOnlineHost();                 break;
+        case SM_ONLINE_HOST_MENU_OPTIONS:           UpdateOnlineHostOptions();          break;
+        case SM_HOST_SAVE_SETTINGS:                 UpdateHostSaveSettings();           break;
+        case SM_ONLINE_QUICKMATCH:                  UpdateOnlineQuickMatch();           break;
+        case SM_ONLINE_OPTIMATCH:                   UpdateOnlineOptiMatch();            break;
+        case SM_ONLINE_JOIN_FILTER:                 UpdateOnlineJoinFilter();           break;
+        case SM_ONLINE_JOIN_MENU:                   UpdateOnlineJoin();                 break;
+        case SM_ONLINE_JOIN_SAVE_SETTINGS:          UpdateOnlineJoinSaveSettings();     break;
+        case SM_SERVER_PLAYERS_MENU:                UpdateServerPlayers();              break;
+        case SM_ONLINE_PLAYERS_MENU:                UpdateOnlinePlayers();              break;
+        case SM_ONLINE_FEEDBACK_MENU:               UpdateOnlineFeedback();             break;
+        case SM_ONLINE_FEEDBACK_MENU_FRIEND:        UpdateOnlineFeedbackFriend();       break;
+        case SM_ONLINE_FRIENDS_MENU:                UpdateOnlineFriends();              break;
+        case SM_ONLINE_STATS:                       UpdateOnlineStats();                break;
+        case SM_ONLINE_EDIT_PROFILE:                UpdateOnlineEditProfile();          break;
+        case SM_ONLINE_EDIT_CONTROLS:               UpdateOnlineEditControls();         break;
+        case SM_ONLINE_EDIT_AVATAR:                 UpdateOnlineEditAvatar();           break;
+        case SM_HOST_LEVEL_SELECT:                  UpdateHostLevelSelect();            break;
+#ifndef CONFIG_RETAIL                               
+        case SM_LEVEL_SELECT:                       UpdateLevelSelect();                break;
+#endif                                              
+        case SM_RESUME_CAMPAIGN:                    UpdateResumeCampaign();             break;
+        case SM_START_SAVE_GAME:                    UpdateStartSaveGame();              break;
         //
         //  Loading and Unloading
         //
@@ -1378,74 +1528,86 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
         //
         // In game pause menu
         //
-        case SM_PAUSE_MAIN_MENU:                UpdatePauseMain();                  break;
-        case SM_PAUSE_OPTIONS:                  UpdatePauseOptions();               break;
-        case SM_PAUSE_CONTROLS:                 UpdatePauseControls();              break;
-        case SM_PAUSE_SETTINGS:                 UpdatePauseSettings();              break;
-        case SM_PAUSE_HEADSET:                  UpdatePauseHeadset();               break;
-        case SM_PAUSE_GRAPHICS:                 UpdatePauseGraphics();              break;		
-        case SM_PAUSE_SETTINGS_SELECT:          UpdatePauseSettingsSelect();        break;
-        case SM_PAUSE_PROFILE_SAVE_SELECT:      UpdatePauseMemcardSaveSelect();     break;
-        case SM_PAUSE_MEMCARD_RESELECT:         UpdatePauseMemcardReselect();       break;
-        case SM_PAUSE_MP:                       UpdatePauseMP();                    break;
-        case SM_PAUSE_MP_OPTIONS:               UpdatePauseMPOptions();             break;
-        case SM_PAUSE_MP_CONTROLS:              UpdatePauseMPControls();            break;
-        case SM_PAUSE_MP_SETTINGS:              UpdatePauseMPSettings();            break;
-        case SM_PAUSE_MP_HEADSET:               UpdatePauseMPHeadset();             break;
-        case SM_PAUSE_MP_GRAPHICS:              UpdatePauseMPGraphics();            break;		
-        case SM_PAUSE_MP_SETTINGS_SELECT:       UpdatePauseMPSettingsSelect();      break;
-        case SM_PAUSE_MP_PROFILE_SAVE_SELECT:   UpdatePauseMPMemcardSaveSelect();   break;
-        case SM_PAUSE_MP_MEMCARD_RESELECT:      UpdatePauseMPMemcardReselect();     break;
+        case SM_PAUSE_MAIN_MENU:                  UpdatePauseMain();                    break;
+        case SM_PAUSE_OPTIONS:                    UpdatePauseOptions();                 break;
+        case SM_PAUSE_CONTROLS:                   UpdatePauseControls();                break;
+        case SM_PAUSE_SETTINGS:                   UpdatePauseSettings();                break;
+        case SM_PAUSE_AUDIO:                      UpdatePauseAudio();                   break;
+        case SM_PAUSE_HEADSET:                    UpdatePauseHeadset();                 break;
+        case SM_PAUSE_GRAPHICS:                   UpdatePauseGraphics();                break;
+        case SM_PAUSE_DISPLAY:                    UpdatePauseDisplay();                 break;
+        case SM_PAUSE_LANGUAGE:                   UpdatePauseLanguage();                break;
+        case SM_PAUSE_SETTINGS_SELECT:            UpdatePauseSettingsSelect();          break;
+        case SM_PAUSE_PROFILE_SAVE_SELECT:        UpdatePauseSaveDataSaveSelect();      break;
+        case SM_PAUSE_SAVE_DATA_RESELECT:         UpdatePauseSaveDataReselect();        break;
+        case SM_PAUSE_MP:                         UpdatePauseMP();                      break;
+        case SM_PAUSE_MP_OPTIONS:                 UpdatePauseMPOptions();               break;
+        case SM_PAUSE_MP_CONTROLS:                UpdatePauseMPControls();              break;
+        case SM_PAUSE_MP_SETTINGS:                UpdatePauseMPSettings();              break;
+        case SM_PAUSE_MP_AUDIO:                   UpdatePauseMPAudio();                 break;
+        case SM_PAUSE_MP_HEADSET:                 UpdatePauseMPHeadset();               break;
+        case SM_PAUSE_MP_GRAPHICS:                UpdatePauseMPGraphics();              break;
+        case SM_PAUSE_MP_DISPLAY:                 UpdatePauseMPDisplay();               break;
+        case SM_PAUSE_MP_LANGUAGE:                UpdatePauseMPLanguage();              break;
+        case SM_PAUSE_MP_SETTINGS_SELECT:         UpdatePauseMPSettingsSelect();        break;
+        case SM_PAUSE_MP_PROFILE_SAVE_SELECT:     UpdatePauseMPSaveDataSaveSelect();    break;
+        case SM_PAUSE_MP_SAVE_DATA_RESELECT:      UpdatePauseMPSaveDataReselect();      break;
+                                                                                        
+        case SM_PAUSE_ONLINE:                     UpdatePauseOnline();                  break;
+        case SM_PAUSE_ONLINE_VOTE_MAP:            UpdatePauseOnlineVoteMap();           break;
+        case SM_PAUSE_ONLINE_VOTE_KICK:           UpdatePauseOnlineVoteKick();          break;
+        case SM_PAUSE_ONLINE_FRIENDS:             UpdatePauseOnlineFriends();           break;
+        case SM_PAUSE_ONLINE_PLAYERS:             UpdatePauseOnlinePlayers();           break;
+        case SM_PAUSE_ONLINE_FEEDBACK:            UpdatePauseOnlineFeedback();          break;
+        case SM_PAUSE_ONLINE_FEEDBACK_FRIEND:     UpdatePauseOnlineFeedbackFriend();    break;
+        case SM_PAUSE_ONLINE_SERVER_CONFIG:       UpdatePauseServerConfig();            break;
+        case SM_PAUSE_ONLINE_OPTIONS:             UpdatePauseOnlineOptions();           break;
+        case SM_PAUSE_ONLINE_CONTROLS:            UpdatePauseOnlineControls();          break;
+        case SM_PAUSE_ONLINE_SETTINGS:            UpdatePauseOnlineSettings();          break;
+        case SM_PAUSE_ONLINE_AUDIO:               UpdatePauseOnlineAudio();             break;
+        case SM_PAUSE_ONLINE_HEADSET:             UpdatePauseOnlineHeadset();           break;
+        case SM_PAUSE_ONLINE_GRAPHICS:            UpdatePauseOnlineGraphics();          break;
+        case SM_PAUSE_ONLINE_DISPLAY:             UpdatePauseOnlineDisplay();           break;
+        case SM_PAUSE_ONLINE_LANGUAGE:            UpdatePauseOnlineLanguage();          break;
+        case SM_PAUSE_ONLINE_SAVE_SELECT:         UpdatePauseOnlineSaveSelect();        break;
+        case SM_PAUSE_ONLINE_SAVE_DATA_RESELECT:  UpdatePauseOnlineSaveDataReselect();  break;
+        case SM_PAUSE_ONLINE_CHANGE_MAP:          UpdatePauseOnlineChangeMap();         break;
+        case SM_PAUSE_ONLINE_KICK_PLAYER:         UpdatePauseOnlineKickPlayer();        break;
+        case SM_PAUSE_ONLINE_TEAM_CHANGE:         UpdatePauseOnlineTeamChange();        break;
+        case SM_PAUSE_ONLINE_RECONFIG_ONE:        UpdatePauseOnlineReconfigOne();       break;
+        case SM_PAUSE_ONLINE_RECONFIG_TWO:        UpdatePauseOnlineReconfigTwo();       break;
+        case SM_PAUSE_ONLINE_RECONFIG_MAP:        UpdatePauseOnlineReconfigMap();       break;
+        case SM_PAUSE_ONLINE_SAVE_SETTINGS:       UpdatePauseOnlineSaveSettings();      break;
+        case SM_PAUSE_MP_SCORE:                   UpdatePauseMPScore();                 break;
+        case SM_END_PAUSE:                        UpdateEndPause();                     break;
+        case SM_AUTOSAVE_MENU:                    UpdateAutosaveMenu();                 break;
+        case SM_AUTOSAVE_PROFILE_RESELECT:        UpdateAutosaveProfileReselect();      break;
+        case SM_END_AUTOSAVE:                     UpdateEndAutosave();                  break;
+        case SM_EXIT_GAME:                        UpdateExitGame();                     break;
+        case SM_POST_GAME:                        UpdatePostGame();                     break;
+        case SM_ADVANCE_LEVEL:                    UpdateAdvanceLevel();                 break;
+        case SM_RELOAD_CHECKPOINT:                UpdateReloadCheckpoint();             break;
+        case SM_FINAL_SCORE:                      UpdateFinalScore();                   break;
+        case SM_GAME_OVER:                        UpdateGameOver();                     break;
+#if CONFIG_IS_DEMO                                                                      
+        case SM_DEMO_EXIT:                        UpdateDemoExit();                     break;
+#endif                                                                                  
+        case SM_REPORT_ERROR:                     UpdateReportError();                  break;
+        case SM_GAME_EXIT_PROMPT_FOR_SAVE:        UpdateGameExitPromptForSave();        break;
+        case SM_GAME_EXIT_SAVE_SELECT:            UpdateGameExitSaveSelect();           break;
+        case SM_GAME_EXIT_SAVE_DATA_RESELECT:     UpdateGameExitSaveDataReselect();     break;
+        case SM_GAME_EXIT_SAVE_SETTINGS:          UpdateGameExitSaveSettings();         break;
+        case SM_GAME_EXIT_SETTINGS_OVERWRITE:     UpdateGameExitSettingsOverwrite();    break;
+        case SM_GAME_EXIT_SETTINGS_SELECT:        UpdateGameExitSettingsSelect();       break;
+        case SM_GAME_EXIT_REDIRECT:               UpdateGameExitRedirect();             break;
+        case SM_ONLINE_LOGIN:                     UpdateOnlineLogin();                  break;
+        case SM_FOLLOW_BUDDY:                     UpdateFollowBuddy();                  break;
 
-        case SM_PAUSE_ONLINE:                   UpdatePauseOnline();                break;
-        case SM_PAUSE_ONLINE_VOTE_MAP:          UpdatePauseOnlineVoteMap();         break;
-        case SM_PAUSE_ONLINE_VOTE_KICK:         UpdatePauseOnlineVoteKick();        break;
-        case SM_PAUSE_ONLINE_FRIENDS:           UpdatePauseOnlineFriends();         break;
-        case SM_PAUSE_ONLINE_PLAYERS:           UpdatePauseOnlinePlayers();         break;
-        case SM_PAUSE_ONLINE_FEEDBACK:          UpdatePauseOnlineFeedback();        break;
-        case SM_PAUSE_ONLINE_FEEDBACK_FRIEND:   UpdatePauseOnlineFeedbackFriend();  break;
-        case SM_PAUSE_ONLINE_SERVER_CONFIG:     UpdatePauseServerConfig();          break;
-        case SM_PAUSE_ONLINE_OPTIONS:           UpdatePauseOnlineOptions();         break;
-        case SM_PAUSE_ONLINE_CONTROLS:          UpdatePauseOnlineControls();        break;
-        case SM_PAUSE_ONLINE_SETTINGS:          UpdatePauseOnlineSettings();        break;
-        case SM_PAUSE_ONLINE_HEADSET:           UpdatePauseOnlineHeadset();         break;
-        case SM_PAUSE_ONLINE_SAVE_SELECT:       UpdatePauseOnlineSaveSelect();      break;
-        case SM_PAUSE_ONLINE_MEMCARD_RESELECT:  UpdatePauseOnlineMemcardReselect(); break;
-        case SM_PAUSE_ONLINE_CHANGE_MAP:        UpdatePauseOnlineChangeMap();       break;
-        case SM_PAUSE_ONLINE_KICK_PLAYER:       UpdatePauseOnlineKickPlayer();      break;
-        case SM_PAUSE_ONLINE_TEAM_CHANGE:       UpdatePauseOnlineTeamChange();      break;
-        case SM_PAUSE_ONLINE_RECONFIG_ONE:      UpdatePauseOnlineReconfigOne();     break;
-        case SM_PAUSE_ONLINE_RECONFIG_TWO:      UpdatePauseOnlineReconfigTwo();     break;
-        case SM_PAUSE_ONLINE_RECONFIG_MAP:      UpdatePauseOnlineReconfigMap();     break;
-        case SM_PAUSE_ONLINE_SAVE_SETTINGS:     UpdatePauseOnlineSaveSettings();    break;
-        case SM_PAUSE_MP_SCORE:                 UpdatePauseMPScore();               break;
-        case SM_END_PAUSE:                      UpdateEndPause();                   break;
-        case SM_AUTOSAVE_MENU:                  UpdateAutosaveMenu();               break;
-        case SM_AUTOSAVE_PROFILE_RESELECT:      UpdateAutosaveProfileReselect();    break;
-        case SM_END_AUTOSAVE:                   UpdateEndAutosave();                break;
-        case SM_EXIT_GAME:                      UpdateExitGame();                   break;
-        case SM_POST_GAME:                      UpdatePostGame();                   break;
-        case SM_ADVANCE_LEVEL:                  UpdateAdvanceLevel();               break;
-        case SM_RELOAD_CHECKPOINT:              UpdateReloadCheckpoint();           break;
-        case SM_FINAL_SCORE:                    UpdateFinalScore();                 break;
-        case SM_GAME_OVER:                      UpdateGameOver();                   break;
-#if CONFIG_IS_DEMO
-        case SM_DEMO_EXIT:                      UpdateDemoExit();                   break;
-#endif
-        case SM_REPORT_ERROR:                   UpdateReportError();                break;
-        case SM_GAME_EXIT_PROMPT_FOR_SAVE:      UpdateGameExitPromptForSave();      break;
-        case SM_GAME_EXIT_SAVE_SELECT:          UpdateGameExitSaveSelect();         break;
-        case SM_GAME_EXIT_MEMCARD_RESELECT:     UpdateGameExitMemcardReselect();    break;
-        case SM_GAME_EXIT_SAVE_SETTINGS:        UpdateGameExitSaveSettings();       break;
-        case SM_GAME_EXIT_SETTINGS_OVERWRITE:   UpdateGameExitSettingsOverwrite();  break;
-        case SM_GAME_EXIT_SETTINGS_SELECT:      UpdateGameExitSettingsSelect();     break;
-        case SM_GAME_EXIT_REDIRECT:             UpdateGameExitRedirect();           break;
-        //case SM_ONLINE_DOWNLOAD:                UpdateOnlineDownload();             break;
-        case SM_ONLINE_LOGIN:                   UpdateOnlineLogin();                break;
-        case SM_FOLLOW_BUDDY:                   UpdateFollowBuddy();                break;
         // no update required
         default:
-            break;
+		{
+		}
+        break;
     }
 #if CONFIG_IS_DEMO
     // **** Coverdisk timeout ****
@@ -1482,8 +1644,7 @@ void state_mgr::SetPaused( xbool bPause, s32 PausingController )
         return;
     }
 
-    // check if we're doing any other memcard processing
-    if( g_UIMemCardMgr.IsActionDone() == FALSE )
+    if( g_SaveDataMgr.IsBusy() )
     {
         return;
     }
@@ -1533,28 +1694,16 @@ void state_mgr::SetPaused( xbool bPause, s32 PausingController )
     if( bPause )
     {
         ASSERT( PausingController != -1 );
+        CloseScoreboardOverlay();
+
         // set the initial state
         if( GameMgr.GetGameType() == GAME_CAMPAIGN )
         {
             if( m_State != SM_END_PAUSE )
             {
                 // set up the screen bars off screen
-                s32 XRes, YRes;
-                eng_GetRes( XRes, YRes );
-                irect initSize( -75, DIALOG_TOP, 512+75, DIALOG_BOTTOM );
-                        
-                // Adjust the size according to the resolution.
-                s32 midX = XRes>>1;
-                s32 dx = midX - 256;
-
-                // scale height of dialog
-                s32 Y = initSize.b - initSize.t;
-                Y = (s32)( (f32)Y * g_UiMgr->GetScaleY() );
-                // position it
-                initSize.t = (s32)((f32)initSize.t * g_UiMgr->GetScaleY());
-                initSize.t += SAFE_ZONE;
-                initSize.b = initSize.t + Y;
-                initSize.Translate( dx, 0 );
+                irect initSize( -75, DIALOG_TOP, ui_viewport::CONTENT_WIDTH + 75, DIALOG_BOTTOM );
+                initSize.Translate( 0, SAFE_ZONE );
 
                 g_UiMgr->SetScreenSize(initSize);       
             }
@@ -1564,7 +1713,14 @@ void state_mgr::SetPaused( xbool bPause, s32 PausingController )
         }
         else
         {
-            SetState( SM_PAUSE_MP_SCORE );
+            if( g_NetworkMgr.IsOnline() )
+            {
+                SetState( SM_PAUSE_ONLINE );
+            }
+            else
+            {
+                SetState( SM_PAUSE_MP_SCORE );
+            }
 
             // Pause Audio
         //  g_AudioMgr.PauseAll();
@@ -1676,8 +1832,8 @@ void state_mgr::ActivatePendingProfile( xbool MarkDirty )
         m_Profiles[m_PendingProfileIndex].MarkDirty();
     }
 
-    g_MatchMgr.ShowOnlineStatus( m_PendingProfile.m_bIsVisibleOnline );
-    if( m_PendingProfile.m_bIsVisibleOnline )
+    g_MatchMgr.ShowOnlineStatus( m_PendingProfile.GetVisibleOnline() );
+    if( m_PendingProfile.GetVisibleOnline() )
     {
         if( GameMgr.GameInProgress() )
         {
@@ -1700,7 +1856,7 @@ void state_mgr::ActivatePendingProfile( xbool MarkDirty )
     g_Difficulty = m_PendingProfile.GetDifficultyLevel();
 
     // set autosave flag
-    m_bAutosaveProfile = m_PendingProfile.m_bAutosaveOn;
+    m_bAutosaveProfile = m_PendingProfile.GetAutosaveOn();
 
     // finally clear the pending profile index
     m_PendingProfileIndex = -1;
@@ -1725,6 +1881,7 @@ void state_mgr::ResetProfileListIndex( void )
 // it's primary use is for split screen mode where the profiles occupy the
 // same slots as the initiating controller.
 // This needs to be called after all players have selected profiles. 
+
 void state_mgr::SetupProfileListIndex( void )
 {
     ResetProfileListIndex();
@@ -1793,19 +1950,9 @@ void state_mgr::ActivatePendingSettings( xbool MarkDirty )
 // profile game exit save callback
 void state_mgr::OnGameExitSaveProfileCB( void )
 {
-    // if the save was successful (OR user wants to continue without saving)
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 ); //MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
-
-    if( Condition.SuccessCode )
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
     {
         global_settings& ActiveSettings = GetActiveSettings();
-
-        // continue without saving?
-        if( Condition.bCancelled )
-        {
-            // flag the profile as not saved
-            g_StateMgr.SetProfileNotSaved( g_StateMgr.GetPendingProfileIndex(), TRUE ); 
-        }
 
         // update the changes in the profile
         g_StateMgr.ActivatePendingProfile();
@@ -1832,8 +1979,8 @@ void state_mgr::OnGameExitSaveProfileCB( void )
 
     // get the profile list
     xarray<profile_info*>& ProfileNames = g_StateMgr.GetProfileList();
-    // get the current list from the memcard manager
-    g_UIMemCardMgr.GetProfileNames( ProfileNames );
+    // get the current list from the save data manager
+    g_SaveDataMgr.GetProfileNames( ProfileNames );
 }
 
 //=========================================================================
@@ -1841,10 +1988,7 @@ void state_mgr::OnGameExitSaveProfileCB( void )
 // settings game exit save callback
 void state_mgr::OnGameExitSaveSettingsCB( void )
 {
-    // check if the save was successful (OR user wants to continue without saving)
-    MemCardMgr::condition& Condition1 = g_UIMemCardMgr.GetCondition( 0 ); //MemCardMgr::condition& Condition1 = g_UIMemCardMgr.GetCondition( g_StateMgr.GetSettingsCardSlot() );
-
-    if( Condition1.SuccessCode )
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
     {
         // activate the new settings
         g_StateMgr.ActivatePendingSettings();
@@ -1856,7 +2000,7 @@ void state_mgr::OnGameExitSaveSettingsCB( void )
     }
     else
     {
-        // save failed! - goto memcard select dialog
+        // save failed! - goto save data select dialog
         g_AudioMgr.Play( "Backup" );
         SetState( SM_GAME_EXIT_SETTINGS_SELECT );
     }
@@ -1952,41 +2096,47 @@ u32 state_mgr::GetTotalLoreAcquired( void )
 
 //=========================================================================
 
-void state_mgr::EnterESRBNotice( void )
+void state_mgr::EnterStartupInfo( void )
 {
-    // Create the ESRB screen
-    irect mainarea(16, 16, 512-16, 448-16);
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "ESRB", mainarea, NULL, ui_win::WF_VISIBLE);
-    g_UiMgr->SetUserBackground( g_UiUserID, "" );
+    g_UiMgr->LoadBackground( "startup info", "UI_WARNINGSCREEN.XBMP" );
+    g_UiMgr->SetUserBackground( g_UiUserID, "startup info" );
+
+    m_StartupInfoTime = 10.0f;
+    //m_StartupInfoVoiceID = g_AudioMgr.Play( "JanDemo" );
 }
 
 //=========================================================================
 
-void state_mgr::UpdateESRBNotice( void )
+void state_mgr::UpdateStartupInfo( f32 DeltaTime )
 {
-    // Get the current dialog state
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
+    m_StartupInfoTime -= DeltaTime;
 
-        if( ( DialogState == DIALOG_STATE_SELECT ) || ( CONFIG_IS_AUTOSERVER || CONFIG_IS_AUTOCLIENT || CONFIG_IS_AUTOCAMPAIGN || CONFIG_IS_AUTOSPLITSCREEN) )
-        {
-            SetState( SM_STARTUP_INTRO );
-        }
+    if( m_StartupInfoTime <= 0.0f )
+    {
+        SetState( SM_STARTUP_INTRO );
     }
 }
 
 //=========================================================================
 
-void state_mgr::ExitESRBNotice( void )
+void state_mgr::ExitStartupInfo( void )
 {
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    g_UiMgr->SetUserBackground( g_UiUserID, "" );
+    g_UiMgr->UnloadBackground( "startup info" );
+
+    //if( g_AudioMgr.IsValidVoiceId( m_StartupInfoVoiceID ) )
+    //{
+    //    g_AudioMgr.Release( m_StartupInfoVoiceID, 0.0f );
+    //    m_StartupInfoVoiceID = -1;
+    //}
+
 }
 
 //=========================================================================
 
 void state_mgr::EnterStartupIntro( void )
 {
+    m_StartupIntroMovieIndex = 0;
 }
 
 //=========================================================================
@@ -1994,54 +2144,178 @@ void state_mgr::EnterStartupIntro( void )
 xstring SelectBestClip( const char* pName )
 {
     return (const char*)xfs( "%s_640x480_%d", pName, 30 );
-    return pName;
+}
+
+//=========================================================================
+
+void state_mgr::QueueSimpleMovie( const char* pFilename,
+                                  const char* pFallbackMessage,
+                                  xbool       WaitForCompletion,
+                                  xbool       RestoreBackground )
+{
+    ASSERT( pFilename && pFilename[0] );
+    ASSERT( !m_bSimpleMoviePending );
+    ASSERT( !m_bSimpleMovieCompleted );
+
+    m_PendingSimpleMovieName          = pFilename;
+    m_PendingSimpleMovieFallback      = pFallbackMessage ? pFallbackMessage : "";
+    m_bSimpleMoviePending             = TRUE;
+    m_bSimpleMovieWaitForCompletion   = WaitForCompletion;
+    m_bRestoreBackgroundAfterSimpleMovie = RestoreBackground;
+}
+
+//=========================================================================
+
+xbool state_mgr::WaitForSimpleMovie( const char* pFilename,
+                                     const char* pFallbackMessage )
+{
+    if( m_bSimpleMovieCompleted )
+    {
+        if( x_strcmp( m_PendingSimpleMovieName, pFilename ) != 0 )
+        {
+            x_DebugMsg( "StateMgr: completed simple movie '%s' while waiting for '%s'\n",
+                        (const char*)m_PendingSimpleMovieName,
+                        pFilename );
+            ASSERT( FALSE );
+            return FALSE;
+        }
+
+        m_bSimpleMovieCompleted = FALSE;
+        m_PendingSimpleMovieName.Clear();
+        m_PendingSimpleMovieFallback.Clear();
+        return TRUE;
+    }
+
+    if( !m_bSimpleMoviePending )
+    {
+        QueueSimpleMovie( pFilename, pFallbackMessage, TRUE );
+    }
+    else
+    {
+        ASSERT( x_strcmp( m_PendingSimpleMovieName, pFilename ) == 0 );
+    }
+
+    return FALSE;
+}
+
+//=========================================================================
+
+xbool state_mgr::HasPendingSimpleMovie( void ) const
+{
+    return m_bSimpleMoviePending;
+}
+
+//=========================================================================
+
+void state_mgr::RequestSimpleMovie( const char* pFilename )
+{
+    QueueSimpleMovie( pFilename, NULL, FALSE, TRUE );
+}
+
+//=========================================================================
+
+void state_mgr::ProcessPendingSimpleMovie( void )
+{
+    if( !m_bSimpleMoviePending )
+    {
+        return;
+    }
+
+    if( m_bRestoreBackgroundAfterSimpleMovie )
+    {
+        DisableBackgoundMovie();
+    }
+
+    const xbool bPlayed = PlaySimpleMovie( m_PendingSimpleMovieName );
+    if( !bPlayed && (m_PendingSimpleMovieFallback.GetLength() > 0) )
+    {
+        DummyScreen( m_PendingSimpleMovieFallback, TRUE, 5 );
+    }
+
+    if( m_bRestoreBackgroundAfterSimpleMovie )
+    {
+        EnableBackgroundMovie();
+        m_bRestoreBackgroundAfterSimpleMovie = FALSE;
+    }
+
+    m_bSimpleMoviePending = FALSE;
+    if( m_bSimpleMovieWaitForCompletion )
+    {
+        m_bSimpleMovieCompleted = TRUE;
+    }
+    else
+    {
+        m_PendingSimpleMovieName.Clear();
+        m_PendingSimpleMovieFallback.Clear();
+    }
 }
 
 //=========================================================================
 
 void state_mgr::UpdateStartupIntro( void )
 {
-#if CONFIG_IS_DEMO
-  #if defined(USE_MOVIES)
-    // play intro movie
-    if( !PlaySimpleMovie(SelectBestClip("trailer")) )
+#ifdef USE_MOVIES
+    while( TRUE )
     {
-        DummyScreen( "Trailer Movie Here", TRUE, 5 );
-    }
-  #endif
+        const char* pMovieName      = NULL;
+        const char* pFallbackMessage = NULL;
 
+    #if CONFIG_IS_DEMO
+        if( m_StartupIntroMovieIndex == 0 )
+        {
+            pMovieName       = "trailer";
+            pFallbackMessage = "Trailer Movie Here";
+        }
+    #else
+        switch( m_StartupIntroMovieIndex )
+        {
+            case 0:
+                pMovieName       = "Inevitable";
+                pFallbackMessage = "Inevitable Movie Here";
+                break;
+
+            case 1:
+                pMovieName       = "Midway";
+                pFallbackMessage = "Midway Movie Here";
+                break;
+
+            case 2:
+                if( x_GetLocale() == XL_LANG_RUSSIAN )
+                {
+                    pMovieName       = "NewDisk";
+                    pFallbackMessage = "NewDisk Movie Here";
+                }
+                else
+                {
+                    m_StartupIntroMovieIndex++;
+                    continue;
+                }
+                break;
+
+            default:
+                break;
+        }
+    #endif
+
+        if( !pMovieName )
+        {
+            break;
+        }
+
+        if( !WaitForSimpleMovie( SelectBestClip( pMovieName ), pFallbackMessage ) )
+        {
+            return;
+        }
+
+        m_StartupIntroMovieIndex++;
+    }
+#endif
+
+#if CONFIG_IS_DEMO
     SetState( SM_PRESS_START_SCREEN );
 #else
-#ifdef USE_MOVIES
-    // play intro movies
-    if( !PlaySimpleMovie( SelectBestClip("Inevitable" )) )
-    {
-        DummyScreen( "Inevitable Movie Here", TRUE, 5 );
-    }
-
-    if( !PlaySimpleMovie( SelectBestClip("Midway" )) )
-    {
-        DummyScreen( "Midway Movie Here", TRUE, 5 );
-    }
-
-    // Play this stuff only on CIS locale systems
-    //if (pISO639_1 && (x_stricmp(pISO639_1, "ru") == 0))
-    //{
-    //    if( !PlaySimpleMovie( SelectBestClip("NewDisk" )) )
-    //    {
-    //        DummyScreen( "NewDisk Movie Here", TRUE, 5 );
-    //    }
-    //}    
-
-    // TODO:
-    //if( !PlaySimpleMovie( SelectBestClip("ProjectDreamland" )) )
-    //{
-    //    DummyScreen( "ProjectDreamland Movie Here", TRUE, 5 );
-    //}
-
-#endif
     // change the state
-    SetState( SM_MEMCARD_BOOT_CHECK );
+    SetState( SM_SAVE_DATA_BOOT_CHECK );
 //  SetState( SM_PRESS_START_SCREEN );
 #endif
 }
@@ -2054,19 +2328,17 @@ void state_mgr::ExitStartupIntro( void )
 
 //=========================================================================
 
-void state_mgr::EnterMemcardBootCheck( void )
+void state_mgr::EnterSaveDataBootCheck( void )
 {
-    // check the status of the memory cards
-    g_UIMemCardMgr.BootCheck();
+    g_SaveDataMgr.RefreshProfiles();
 }
 
 //=========================================================================
 
-void state_mgr::UpdateMemcardBootCheck( void )
+void state_mgr::UpdateSaveDataBootCheck( void )
 {
 
-    // did the check finish?
-    if( g_UIMemCardMgr.IsActionDone() )
+    if( !g_SaveDataMgr.IsBusy() )
     {
         // change the state
         SetState( SM_PRESS_START_SCREEN );
@@ -2075,7 +2347,7 @@ void state_mgr::UpdateMemcardBootCheck( void )
 
 //=========================================================================
 
-void state_mgr::ExitMemcardBootCheck( void )
+void state_mgr::ExitSaveDataBootCheck( void )
 {
 }
 
@@ -2086,7 +2358,7 @@ void state_mgr::EnterPressStart( void )
     // Create the press start screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     g_UiMgr->EnableUser( g_UiUserID, TRUE );
-    irect mainarea(16, 16, 512-16, 448-16);
+    irect mainarea( 16, 16, ui_viewport::CONTENT_WIDTH - 16, ui_viewport::CONTENT_HEIGHT - 16 );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "press start", mainarea, NULL, ui_win::WF_VISIBLE);//|ui_win::WF_BORDER );
 //    g_UiMgr->SetUserBackground( g_UiUserID, "titlescreen" );
     g_UiMgr->SetUserBackground( g_UiUserID, "" );
@@ -2117,22 +2389,8 @@ void state_mgr::UpdatePressStart( void )
 
         if( ( DialogState == DIALOG_STATE_SELECT ) || ( CONFIG_IS_AUTOSERVER || CONFIG_IS_AUTOCLIENT || CONFIG_IS_AUTOCAMPAIGN || CONFIG_IS_AUTOSPLITSCREEN) )
         {
-            s32 XRes, YRes;
-            eng_GetRes( XRes, YRes );
-            irect initSize( -75, DIALOG_TOP, 512+75, DIALOG_BOTTOM );
-                    
-            // Adjust the size according to the resolution.
-            s32 midX = XRes>>1;
-            s32 dx = midX - 256;
-
-            // scale height of dialog
-            s32 Y = initSize.b - initSize.t;
-            Y = (s32)( (f32)Y * g_UiMgr->GetScaleY() );
-            // position it
-            initSize.t = (s32)((f32)initSize.t * g_UiMgr->GetScaleY());
-            initSize.t += SAFE_ZONE;
-            initSize.b = initSize.t + Y;
-            initSize.Translate( dx, 0 );
+            irect initSize( -75, DIALOG_TOP, ui_viewport::CONTENT_WIDTH + 75, DIALOG_BOTTOM );
+            initSize.Translate( 0, SAFE_ZONE );
 
             g_UiMgr->SetScreenOn( FALSE );
             g_UiMgr->SetScreenSize( initSize );
@@ -2195,14 +2453,15 @@ void state_mgr::UpdateDemoExit( void )
 
     if( m_Timeout < (DEMO_ENDGAME_TIMEOUT-4.0f) )
     {
-		for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
+        for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
         {
-            const auto& pad = g_IngamePad[i];
-            if( pad.GetLogical( ingame_pad::UI_HELP ).GetIsValue() > 0.25f )
-			{
-				Reboot( REBOOT_QUIT );
-			}
-        } 
+            const frontend_pad& Pad = g_FrontendInput.GetPad( i );
+            if( (Pad.GetFrameLogical( frontend_pad::UI_HELP ).GetIsValue() > 0.25f) ||
+                (Pad.GetFrameLogical( frontend_pad::UI_HELP ).GetWasValue() > 0.25f) )
+            {
+                Reboot( REBOOT_QUIT );
+            }
+        }
     }
 }
 //=========================================================================
@@ -2216,14 +2475,9 @@ void state_mgr::ExitDemoExit( void )
 
 void state_mgr::EnterMainMenu( void )
 {
-    s32 i;
-
     // Make sure all pads are inactive for the game. They will be re-activated when
     // the game is actually started.
-    for( i=0; i<MAX_LOCAL_PLAYERS; i++ )
-    {
-        g_IngamePad[i].SetDeviceID(-1);
-    }
+    g_GameInput.ClearPlayerDevices();
 
 #ifdef USE_MOVIES
     // initialize movie player
@@ -2303,68 +2557,72 @@ void state_mgr::UpdateMainMenu( void )
         {
             u32 DialogState = m_CurrentDialog->GetState();
 
-            if( DialogState == DIALOG_STATE_SELECT )
+            switch( DialogState )
             {
-                s32 Control = m_CurrentDialog->GetControl();
-
-                switch( Control )
+                case DIALOG_STATE_SELECT:
                 {
-                    case IDC_MAIN_MENU_CAMPAIGN:
-                    {
-                        g_PendingConfig.SetGameTypeID( GAME_CAMPAIGN );
-                        g_PendingConfig.SetPlayerCount( 1 );
+                    s32 Control = m_CurrentDialog->GetControl();
 
-                        if( GetSelectedProfile(0) != 0 )
+                    switch( Control )
+                    {
+                        case IDC_MAIN_MENU_CAMPAIGN:
                         {
-                            SetState( SM_CAMPAIGN_MENU );
+                            g_PendingConfig.SetGameTypeID( GAME_CAMPAIGN );
+                            g_PendingConfig.SetPlayerCount( 1 );
+
+                            if( GetSelectedProfile( 0 ) != 0 )
+                            {
+                                SetState( SM_CAMPAIGN_MENU );
+                            }
+                            else
+                            {
+                                SetState( SM_PROFILE_SELECT );
+                            }
                         }
-                        else
+                        break;
+
+                        case IDC_MAIN_MENU_MULTI:
                         {
-                            SetState( SM_PROFILE_SELECT );
-                        }
-                    }
-                    break;
+                            // Clear the profiles and controller requests.
+                            // This will prevent issues associated with default profiles.
+                            for( s32 p = 0; p < SM_MAX_PLAYERS; p++ )
+                            {
+                                ClearSelectedProfile( p );
+                                SetControllerRequested( p, FALSE );
+                            }
 
-                    case IDC_MAIN_MENU_MULTI:
-                    {
-                        // clear the profiles and controller requests
-                        // this will prevent issues associated with default profiles.
-                        for(s32 p=0; p < SM_MAX_PLAYERS; p++)
+                            SetState( SM_MULTI_PLAYER_MENU );
+                        }
+                        break;
+
+                        case IDC_MAIN_MENU_ONLINE:
                         {
-                            ClearSelectedProfile( p );
-                            SetControllerRequested(p, FALSE);
+                            SetState( SM_ONLINE_CONNECT );
                         }
+                        break;
 
-                        SetState( SM_MULTI_PLAYER_MENU );
-                    }
-                    break;
+                        case IDC_MAIN_MENU_SETTINGS:
+                        {
+                            // Initialize pending settings.
+                            InitPendingSettings();
+                            SetState( SM_SETTINGS_MENU );
+                        }
+                        break;
 
-                    case IDC_MAIN_MENU_ONLINE:
-                    {
-                        SetState( SM_ONLINE_CONNECT );
-                    }
-                    break;
+                        case IDC_MAIN_MENU_PROFILES:
+                        {
+                            SetState( SM_MANAGE_PROFILES );
+                        }
+                        break;
 
-                    case IDC_MAIN_MENU_SETTINGS:
-                    {
-                        // init pending settings
-                        InitPendingSettings();
-                        SetState( SM_SETTINGS_MENU );
+                        case IDC_MAIN_MENU_CREDITS:
+                        {
+                            SetState( SM_CREDITS_SCREEN );
+                        }
+                        break;
                     }
-                    break;
-
-                    case IDC_MAIN_MENU_PROFILES:
-                    {
-                        SetState( SM_MANAGE_PROFILES );
-                    }
-                    break;
-
-                    case IDC_MAIN_MENU_CREDITS:
-                    {
-                        SetState( SM_CREDITS_SCREEN );
-                    }
-                    break;
                 }
+                break;
             }
         }
     }
@@ -2380,10 +2638,9 @@ void state_mgr::ExitMainMenu( void )
 
 void state_mgr::EnterSettingsMenu( void )
 {
-    //  create options main menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea(16, DIALOG_TOP, 496, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "av settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
 #endif
@@ -2409,20 +2666,44 @@ void state_mgr::UpdateSettingsMenu( void )
             {
                 s32 Control = m_CurrentDialog->GetControl();
 
-                if( Control == IDC_AV_HEADSET_TEST )
+                switch( Control )
                 {
-                    SetState( SM_SETTINGS_HEADSET );
-                }
-                else if( Control == IDC_AV_GRAPHICS_MENU )
-                {
-                    SetState( SM_SETTINGS_GRAPHICS );
+                    case IDC_SETTINGS_AUDIO:
+                    {
+                        SetState( SM_SETTINGS_AUDIO );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_HEADSET:
+                    {
+                        SetState( SM_SETTINGS_HEADSET );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_GRAPHICS:
+                    {
+                        SetState( SM_SETTINGS_GRAPHICS );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_DISPLAY:
+                    {
+                        SetState( SM_SETTINGS_DISPLAY );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_LANGUAGE:
+                    {
+                        SetState( SM_SETTINGS_LANGUAGE );
+                    }
+                    break;
                 }
             }
             break;
 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
-                SetState( SM_SETTINGS_MEMCARD_SELECT );
+                SetState( SM_SETTINGS_SAVE_DATA_SELECT );
             }
             break;
         }
@@ -2432,6 +2713,44 @@ void state_mgr::UpdateSettingsMenu( void )
 //=========================================================================
 
 void state_mgr::ExitSettingsMenu( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterSettingsAudio( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "audio settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+}
+
+//=========================================================================
+
+void state_mgr::UpdateSettingsAudio( void )
+{
+    if( m_CurrentDialog )
+    {
+        switch( m_CurrentDialog->GetState() )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_SETTINGS_MENU );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_SETTINGS_SAVE_DATA_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitSettingsAudio( void )
 {
 }
 
@@ -2461,6 +2780,12 @@ void state_mgr::UpdateSettingsHeadset( void )
             case DIALOG_STATE_BACK:
             {
                 SetState( SM_SETTINGS_MENU );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_SETTINGS_SAVE_DATA_SELECT );
             }
             break;
         }
@@ -2493,9 +2818,19 @@ void state_mgr::UpdateSettingsGraphics( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_BACK )
+        switch( DialogState )
         {
-            SetState( SM_SETTINGS_MENU );
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_SETTINGS_MENU );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_SETTINGS_SAVE_DATA_SELECT );
+            }
+            break;
         }
     }
 }
@@ -2508,38 +2843,126 @@ void state_mgr::ExitSettingsGraphics( void )
 
 //=========================================================================
 
-void state_mgr::EnterSettingsMemcardSelect( void )
+void state_mgr::EnterSettingsDisplay( void )
 {
-    //  Create memcard select screen 
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "display settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+#ifndef USE_MOVIES
+    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
+#endif
 }
 
 //=========================================================================
 
-void state_mgr::UpdateSettingsMemcardSelect( void )
+void state_mgr::UpdateSettingsDisplay( void )
 {
-    if( m_CurrentDialog != NULL )
+    if( m_CurrentDialog )
     {
-        u32 DialogState = m_CurrentDialog->GetState();
+        switch( m_CurrentDialog->GetState() )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_SETTINGS_MENU );
+            }
+            break;
 
-        if( DialogState == DIALOG_STATE_SELECT )
-        {
-            // save settings was successful
-            SetState( SM_MAIN_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // save failed or was aborted
-            SetState( SM_MAIN_MENU );
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_SETTINGS_SAVE_DATA_SELECT );
+            }
+            break;
         }
     }
 }
 
 //=========================================================================
 
-void state_mgr::ExitSettingsMemcardSelect( void )
+void state_mgr::ExitSettingsDisplay( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterSettingsLanguage( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "language settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+}
+
+//=========================================================================
+
+void state_mgr::UpdateSettingsLanguage( void )
+{
+    if( m_CurrentDialog )
+    {
+        u32 const DialogState = m_CurrentDialog->GetState();
+
+        switch( DialogState )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_SETTINGS_MENU );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_SETTINGS_SAVE_DATA_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitSettingsLanguage( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterSettingsSaveDataSelect( void )
+{
+    //  Create save data select screen
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_SAVE_SETTINGS );
+}
+
+//=========================================================================
+
+void state_mgr::UpdateSettingsSaveDataSelect( void )
+{
+    if( m_CurrentDialog != NULL )
+    {
+        u32 DialogState = m_CurrentDialog->GetState();
+
+        switch( DialogState )
+        {
+            case DIALOG_STATE_SELECT:
+            {
+                // save settings was successful
+                SetState( SM_MAIN_MENU );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // save failed or was aborted
+                SetState( SM_MAIN_MENU );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitSettingsSaveDataSelect( void )
 {
 }
 
@@ -2673,7 +3096,7 @@ void state_mgr::UpdateManageProfileOptions( void )
             }
             break;
 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 // save failed - select a profile to save to
                 SetState( SM_MANAGE_PROFILE_SAVE_SELECT ); 
@@ -2706,20 +3129,7 @@ void state_mgr::EnterManageProfileControls( void )
 
 void state_mgr::UpdateManageProfileControls( void )
 {
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-        case DIALOG_STATE_SELECT:
-        case DIALOG_STATE_BACK:
-            {
-                SetState( SM_MANAGE_PROFILE_OPTIONS );
-            }
-            break;
-        }
-    }
+    UpdateProfileControlsMenu( SM_MANAGE_PROFILE_OPTIONS, FALSE );
 }
 
 //=========================================================================
@@ -2751,9 +3161,15 @@ void state_mgr::UpdateManageProfileAvatar( void )
 
         switch( DialogState )
         {
-        case DIALOG_STATE_BACK:
+            case DIALOG_STATE_BACK:
             {
                 SetState( SM_MANAGE_PROFILE_OPTIONS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_MANAGE_PROFILE_SAVE_SELECT );
             }
             break;
         }
@@ -2808,7 +3224,7 @@ void state_mgr::UpdateManageProfileSaveSelect( void )
             case DIALOG_STATE_CREATE:
             {
                 // Select a card to save the profile to
-                SetState( SM_MANAGE_PROFILE_MEMCARD_RESELECT );
+                SetState( SM_MANAGE_PROFILE_SAVE_DATA_RESELECT );
             }
             break;
         }
@@ -2823,39 +3239,46 @@ void state_mgr::ExitManageProfileSaveSelect( void )
 
 //=========================================================================
 
-void state_mgr::EnterManageMemcardReselect( void )
+void state_mgr::EnterManageSaveDataReselect( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_CREATE_PROFILE );
 }
 
 //=========================================================================
 
-void state_mgr::UpdateManageMemcardReselect( void )
+void state_mgr::UpdateManageSaveDataReselect( void )
 {
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save profile was successful
-            SetState( SM_MANAGE_PROFILES );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_MANAGE_PROFILE_SAVE_SELECT );
+            case DIALOG_STATE_SELECT:
+            {
+                // Save profile was successful.
+                SetState( SM_MANAGE_PROFILES );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // The profile save failed or was aborted.
+                // Go back to the profile select menu.
+                SetState( SM_MANAGE_PROFILE_SAVE_SELECT );
+            }
+            break;
         }
     }
 }
 
 //=========================================================================
 
-void state_mgr::ExitManageMemcardReselect( void )
+void state_mgr::ExitManageSaveDataReselect( void )
 {
 }
 
@@ -2892,97 +3315,102 @@ void state_mgr::UpdateCampaignMenu( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            s32 Control = m_CurrentDialog->GetControl();
-
-            switch( Control )
+            case DIALOG_STATE_SELECT:
             {
-                case IDC_CAMPAIGN_MENU_NEW_CAMPAIGN:
+                s32 Control = m_CurrentDialog->GetControl();
+
+                switch( Control )
                 {
-                    // start new campaign
-                    player_profile& ActiveProfile = GetActiveProfile(0);
-                    // flag difficulty as unchanged
-                    ActiveProfile.m_bDifficultyChanged = FALSE;
+                    case IDC_CAMPAIGN_MENU_NEW_CAMPAIGN:
+                    {
+                        // Start new campaign.
+                        player_profile& ActiveProfile = GetActiveProfile(0);
+                        // Flag difficulty as unchanged.
+                        ActiveProfile.SetDifficultyChanged( FALSE );
 
-                    // set initial level
-                    const map_entry* pMapEntry = g_MapList.Find( -1, GAME_CAMPAIGN);
-                    ASSERTS( pMapEntry, "Cannot find a campaign map in the maplist" );
-                    g_PendingConfig.SetLevelID( pMapEntry->GetMapID() );
-                    g_PendingConfig.SetMaxPlayerCount( 1 );
-                    g_StateMgr.SetLevelIndex( 0 );
+                        // Set initial level.
+                        const map_entry* pMapEntry = g_MapList.Find( -1, GAME_CAMPAIGN);
+                        ASSERTS( pMapEntry, "Cannot find a campaign map in the maplist" );
+                        g_PendingConfig.SetLevelID( pMapEntry->GetMapID() );
+                        g_PendingConfig.SetMaxPlayerCount( 1 );
+                        g_StateMgr.SetLevelIndex( 0 );
 
-                    ASSERT( g_NetworkMgr.IsOnline()==FALSE );
-                    g_NetworkMgr.BecomeServer();
+                        ASSERT( g_NetworkMgr.IsOnline()==FALSE );
+                        g_NetworkMgr.BecomeServer();
 
-                    // set campaign game type
-                    m_CampaignType = SM_NEW_CAMPAIGN_GAME;
+                        // Set campaign game type.
+                        m_CampaignType = SM_NEW_CAMPAIGN_GAME;
 
-                    // set state to load it
-                    SetState( SM_START_GAME );
-                }
-                break;
+                        // Set state to load it.
+                        SetState( SM_START_GAME );
+                    }
+                    break;
 
-                case IDC_CAMPAIGN_MENU_RESUME_CAMPAIGN:
-                {
-                    // set campaign game type
-                    m_CampaignType = SM_LOAD_CAMPAIGN_GAME;
-                    // go to the campaign load screen
-//                    SetState( SM_LOAD_CAMPAIGN );
-                    SetState( SM_RESUME_CAMPAIGN );
-                }
-                break;
+                    case IDC_CAMPAIGN_MENU_RESUME_CAMPAIGN:
+                    {
+                        // Set campaign game type.
+                        m_CampaignType = SM_LOAD_CAMPAIGN_GAME;
+                        // Go to the campaign load screen.
+    //                    SetState( SM_LOAD_CAMPAIGN );
+                        SetState( SM_RESUME_CAMPAIGN );
+                    }
+                    break;
 
-                case IDC_CAMPAIGN_MENU_EDIT_PROFILE:
-                {
-                    // edit the currently active profile
-                    SetState( SM_CAMPAIGN_PROFILE_OPTIONS );
-                }
-                break;
+                    case IDC_CAMPAIGN_MENU_EDIT_PROFILE:
+                    {
+                        // Edit the currently active profile.
+                        SetState( SM_CAMPAIGN_PROFILE_OPTIONS );
+                    }
+                    break;
 
-                case IDC_CAMPAIGN_MENU_LORE:
-                {
-                    // go to the lore menu
-                    SetState( SM_LORE_MAIN_MENU );
-                }
-                break;
+                    case IDC_CAMPAIGN_MENU_LORE:
+                    {
+                        // Go to the lore menu.
+                        SetState( SM_LORE_MAIN_MENU );
+                    }
+                    break;
 
-                case IDC_CAMPAIGN_MENU_SECRETS:
-                {
-                    // go to the secrets menu
-                    SetState( SM_SECRETS_MENU );
-                }
-                break;
+                    case IDC_CAMPAIGN_MENU_SECRETS:
+                    {
+                        // Go to the secrets menu.
+                        SetState( SM_SECRETS_MENU );
+                    }
+                    break;
 
-                case IDC_CAMPAIGN_MENU_EXTRAS:
-                {
-                    // go to the extras menu
-                    SetState( SM_EXTRAS_MENU );
-                }
-                break;
+                    case IDC_CAMPAIGN_MENU_EXTRAS:
+                    {
+                        // Go to the extras menu.
+                        SetState( SM_EXTRAS_MENU );
+                    }
+                    break;
 #ifndef CONFIG_RETAIL
-                case IDC_CAMPAIGN_MENU_LEVEL_SELECT:
-                {
-                    // set campaign game type
-                    m_CampaignType = SM_DEBUG_SELECT_GAME;
-                    // debug only - select from the available levels
-                    SetState( SM_LEVEL_SELECT );
-                }
-                break;
+                    case IDC_CAMPAIGN_MENU_LEVEL_SELECT:
+                    {
+                        // Set campaign game type.
+                        m_CampaignType = SM_DEBUG_SELECT_GAME;
+                        // Debug only - select from the available levels.
+                        SetState( SM_LEVEL_SELECT );
+                    }
+                    break;
 #endif
+                }
             }
-        }
+            break;
 
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            if( GetSelectedProfile(0) != 0 )
+            case DIALOG_STATE_BACK:
             {
-                SetState( SM_MAIN_MENU );
+                if( GetSelectedProfile(0) != 0 )
+                {
+                    SetState( SM_MAIN_MENU );
+                }
+                else
+                {
+                    SetState( SM_PROFILE_SELECT );
+                }
             }
-            else
-            {
-                SetState( SM_PROFILE_SELECT );
-            }
+            break;
         }
     }
 }
@@ -3011,17 +3439,23 @@ void state_mgr::UpdateLoadCampaign( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // exit menu and restore save game data
-            g_PendingConfig.SetMaxPlayerCount( 1 );
+            case DIALOG_STATE_SELECT:
+            {
+                // Exit menu and restore save game data.
+                g_PendingConfig.SetMaxPlayerCount( 1 );
 
-            g_NetworkMgr.BecomeServer();
-            SetState( SM_START_SAVE_GAME );
-        }
-        else if( DialogState == DIALOG_STATE_BACK )
-        {
-            SetState( SM_CAMPAIGN_MENU );
+                g_NetworkMgr.BecomeServer();
+                SetState( SM_START_SAVE_GAME );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_CAMPAIGN_MENU );
+            }
+            break;
         }
     }
 }
@@ -3041,13 +3475,7 @@ void state_mgr::EnterSaveCampaign( void )
     irect mainarea( 96, DIALOG_TOP, 416, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save game", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
 
-    // scale height of dialog
-    s32 Y = mainarea.b - mainarea.t;
-    Y = (s32)( (f32)Y * g_UiMgr->GetScaleY() );
-    // position it
-    mainarea.t = (s32)((f32)mainarea.t * g_UiMgr->GetScaleY());
-    mainarea.t += SAFE_ZONE;
-    mainarea.b = mainarea.t + Y;
+    mainarea.Translate( 0, SAFE_ZONE );
 
     g_UiMgr->SetScreenSize(mainarea);       
 
@@ -3066,15 +3494,21 @@ void state_mgr::UpdateSaveCampaign( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // saving complete
-            SetState( SM_PLAYING_GAME );
-        }
-        else if( DialogState == DIALOG_STATE_BACK )
-        {
-            //Cancel saving and return to game
-            SetState( SM_PLAYING_GAME );
+            case DIALOG_STATE_SELECT:
+            {
+                // Saving complete.
+                SetState( SM_PLAYING_GAME );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // Cancel saving and return to game.
+                SetState( SM_PLAYING_GAME );
+            }
+            break;
         }
     }
 }
@@ -3112,20 +3546,26 @@ void state_mgr::UpdateResumeCampaign( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // The checkpoint is actually restored within the dialog code. But this is where
-            // we need to tell the statemgr that we're going to restore a level from a save
-            m_bStartSaveGame = TRUE;
-            g_PendingConfig.SetMaxPlayerCount( 1 );
+            case DIALOG_STATE_SELECT:
+            {
+                // The checkpoint is actually restored within the dialog code. But this is where
+                // we need to tell the statemgr that we're going to restore a level from a save.
+                m_bStartSaveGame = TRUE;
+                g_PendingConfig.SetMaxPlayerCount( 1 );
 
-            g_NetworkMgr.BecomeServer();
+                g_NetworkMgr.BecomeServer();
 
-            SetState( SM_START_SAVE_GAME );
-        }
-        else if( DialogState == DIALOG_STATE_BACK )
-        {
-            SetState( SM_CAMPAIGN_MENU );
+                SetState( SM_START_SAVE_GAME );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_CAMPAIGN_MENU );
+            }
+            break;
         }
     }
 }
@@ -3228,9 +3668,13 @@ void state_mgr::UpdateExtrasMenu( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_BACK )
+        switch( DialogState )
         {
-            SetState( SM_CAMPAIGN_MENU );
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_CAMPAIGN_MENU );
+            }
+            break;
         }
     }
 }
@@ -3247,7 +3691,7 @@ void state_mgr::EnterCreditsScreen( void )
 {
     // Create the press start screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea(16, DIALOG_TOP, 512-16, DIALOG_BOTTOM);
+    irect mainarea( 16, DIALOG_TOP, ui_viewport::CONTENT_WIDTH - 16, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "credits screen", mainarea, NULL, ui_win::WF_VISIBLE);//|ui_win::WF_BORDER );
     g_UiMgr->SetUserBackground( g_UiUserID, "" );
 }
@@ -3261,9 +3705,13 @@ void state_mgr::UpdateCreditsScreen( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_BACK ) 
+        switch( DialogState )
         {
-            SetState( SM_MAIN_MENU );
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_MAIN_MENU );
+            }
+            break;
         }
     }
 }
@@ -3337,7 +3785,7 @@ void state_mgr::UpdateCampaignProfileOptions( void )
             }
             break;
 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 // save failed - select a profile to save to
                 SetState( SM_CAMPAIGN_PROFILE_SAVE_SELECT );
@@ -3370,19 +3818,7 @@ void state_mgr::EnterCampaignProfileControls( void )
 
 void state_mgr::UpdateCampaignProfileControls( void )
 {
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_BACK:
-            {
-                SetState( SM_CAMPAIGN_PROFILE_OPTIONS );
-            }
-            break;
-        }
-    }
+    UpdateProfileControlsMenu( SM_CAMPAIGN_PROFILE_OPTIONS, FALSE );
 }
 
 //=========================================================================
@@ -3417,6 +3853,12 @@ void state_mgr::UpdateCampaignProfileAvatar( void )
             case DIALOG_STATE_BACK:
             {
                 SetState( SM_CAMPAIGN_PROFILE_OPTIONS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_CAMPAIGN_PROFILE_SAVE_SELECT );
             }
             break;
         }
@@ -3471,7 +3913,7 @@ void state_mgr::UpdateCampaignProfileSaveSelect( void )
             case DIALOG_STATE_CREATE:
             {
                 // Select a card to save the profile to
-                SetState( SM_CAMPAIGN_MEMCARD_RESELECT );
+                SetState( SM_CAMPAIGN_SAVE_DATA_RESELECT );
             }
             break;
         }
@@ -3486,40 +3928,47 @@ void state_mgr::ExitCampaignProfileSaveSelect( void )
 
 //=========================================================================
 
-void state_mgr::EnterCampaignMemcardReselect( void )
+void state_mgr::EnterCampaignSaveDataReselect( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_CREATE_PROFILE );
 }
 
 //=========================================================================
 
-void state_mgr::UpdateCampaignMemcardReselect( void )
+void state_mgr::UpdateCampaignSaveDataReselect( void )
 {
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save profile was successful
-            // goto the campaign menu
-            SetState( SM_CAMPAIGN_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_CAMPAIGN_PROFILE_SAVE_SELECT );
+            case DIALOG_STATE_SELECT:
+            {
+                // Save profile was successful.
+                // Go to the campaign menu.
+                SetState( SM_CAMPAIGN_MENU );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // The profile save failed or was aborted.
+                // Go back to the profile select menu.
+                SetState( SM_CAMPAIGN_PROFILE_SAVE_SELECT );
+            }
+            break;
         }
     }
 }
 
 //=========================================================================
 
-void state_mgr::ExitCampaignMemcardReselect( void )
+void state_mgr::ExitCampaignSaveDataReselect( void )
 {
 }
 
@@ -3634,7 +4083,7 @@ void state_mgr::UpdateProfileOptions( void )
             break;
 
             case DIALOG_STATE_BACK:
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 // abort create/edit profile
                 SetState( SM_PROFILE_SELECT );
@@ -3674,26 +4123,245 @@ void state_mgr::EnterProfileControls( void )
     
 void state_mgr::UpdateProfileControls( void )
 {
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_SELECT:
-            case DIALOG_STATE_BACK:
-            {
-                SetState( SM_PROFILE_OPTIONS );
-            }
-            break;
-        }
-    }
+    UpdateProfileControlsMenu( SM_PROFILE_OPTIONS, FALSE );
 }
 
 //=========================================================================
 
 void state_mgr::ExitProfileControls( void )
 {
+}
+
+//=========================================================================
+
+void state_mgr::EnterProfileMouseControls( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea( 26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "profile mouse controls", mainarea, NULL, ui_win::WF_VISIBLE | ui_win::WF_BORDER );
+#ifndef USE_MOVIES
+    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
+#endif
+
+    if( IsPaused() )
+    {
+        static_cast<dlg_profile_mouse_controls*>( m_CurrentDialog )->EnableBlackout();
+    }
+}
+
+//=========================================================================
+
+void state_mgr::EnterProfileGamepadControls( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea( 26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "profile gamepad controls", mainarea, NULL, ui_win::WF_VISIBLE | ui_win::WF_BORDER );
+#ifndef USE_MOVIES
+    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
+#endif
+
+    if( IsPaused() )
+    {
+        static_cast<dlg_profile_gamepad_controls*>( m_CurrentDialog )->EnableBlackout();
+    }
+}
+
+//=========================================================================
+
+void state_mgr::UpdateProfileDeviceControls( void )
+{
+    xbool const IsOnlineControls =
+        (m_PrevState == SM_ONLINE_PROFILE_CONTROLS) ||
+        (m_PrevState == SM_ONLINE_EDIT_CONTROLS) ||
+        (m_PrevState == SM_PAUSE_ONLINE_CONTROLS);
+
+    if( IsOnlineControls && CheckForDisconnect() )
+    {
+        return;
+    }
+
+    if( m_CurrentDialog == NULL )
+    {
+        return;
+    }
+
+    switch( m_CurrentDialog->GetState() )
+    {
+        case DIALOG_STATE_BACK:
+        {
+            SetState( m_PrevState );
+        }
+        break;
+
+        case DIALOG_STATE_SAVE_DATA_ERROR:
+        {
+            switch( m_PrevState )
+            {
+                case SM_PROFILE_CONTROLS:
+                {
+                    SetState( SM_PROFILE_SELECT );
+                }
+                break;
+
+                case SM_MANAGE_PROFILE_CONTROLS:
+                {
+                    SetState( SM_MANAGE_PROFILE_SAVE_SELECT );
+                }
+                break;
+
+                case SM_CAMPAIGN_PROFILE_CONTROLS:
+                {
+                    SetState( SM_CAMPAIGN_PROFILE_SAVE_SELECT );
+                }
+                break;
+
+                case SM_PROFILE_CONTROLS_MP:
+                {
+                    SetState( SM_PROFILE_SAVE_SELECT_MP );
+                }
+                break;
+
+                case SM_ONLINE_PROFILE_CONTROLS:
+                case SM_ONLINE_EDIT_CONTROLS:
+                {
+                    SetState( SM_ONLINE_PROFILE_SAVE_SELECT );
+                }
+                break;
+
+                case SM_PAUSE_CONTROLS:
+                {
+                    SetState( SM_PAUSE_PROFILE_SAVE_SELECT );
+                }
+                break;
+
+                case SM_PAUSE_MP_CONTROLS:
+                {
+                    SetState( SM_PAUSE_MP_PROFILE_SAVE_SELECT );
+                }
+                break;
+
+                case SM_PAUSE_ONLINE_CONTROLS:
+                {
+                    SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
+                }
+                break;
+
+                default:
+                {
+                    SetState( m_PrevState );
+                }
+                break;
+            }
+        }
+        break;
+    }
+}
+
+//=========================================================================
+
+void state_mgr::UpdateProfileControlsMenu( sm_states BackState, xbool CheckDisconnect )
+{
+    if( CheckDisconnect && CheckForDisconnect() )
+    {
+        return;
+    }
+
+    if( m_CurrentDialog == NULL )
+    {
+        return;
+    }
+
+    switch( m_CurrentDialog->GetState() )
+    {
+        case DIALOG_STATE_SELECT:
+        {
+            s32 const Control = m_CurrentDialog->GetControl();
+
+            switch( Control )
+            {
+                case IDC_CONTROLS_MOUSE_MENU:
+                {
+                    SetState( SM_PROFILE_MOUSE_CONTROLS );
+                }
+                break;
+
+                case IDC_CONTROLS_GAMEPAD_MENU:
+                {
+                    SetState( SM_PROFILE_GAMEPAD_CONTROLS );
+                }
+                break;
+            }
+        }
+        break;
+
+        case DIALOG_STATE_BACK:
+        {
+            SetState( BackState );
+        }
+        break;
+
+        case DIALOG_STATE_SAVE_DATA_ERROR:
+        {
+            switch( BackState )
+            {
+                case SM_MANAGE_PROFILE_OPTIONS:
+				{
+                    SetState( SM_MANAGE_PROFILE_SAVE_SELECT );
+                }
+				break;
+
+                case SM_PROFILE_OPTIONS:
+				{
+                    SetState( SM_PROFILE_SELECT );
+                }
+				break;
+
+                case SM_CAMPAIGN_PROFILE_OPTIONS:
+				{
+                    SetState( SM_CAMPAIGN_PROFILE_SAVE_SELECT );
+                }
+				break;
+
+                case SM_MULTI_PLAYER_EDIT:
+				{
+                    SetState( SM_PROFILE_SAVE_SELECT_MP );
+                }
+				break;
+
+                case SM_ONLINE_PROFILE_OPTIONS:
+                case SM_ONLINE_EDIT_PROFILE:
+				{
+                    SetState( SM_ONLINE_PROFILE_SAVE_SELECT );
+                }
+				break;
+
+                case SM_PAUSE_OPTIONS:
+				{
+                    SetState( SM_PAUSE_PROFILE_SAVE_SELECT );
+                }
+				break;
+
+                case SM_PAUSE_MP_OPTIONS:
+				{
+                    SetState( SM_PAUSE_MP_PROFILE_SAVE_SELECT );
+                }
+				break;
+
+                case SM_PAUSE_ONLINE_OPTIONS:
+				{
+                    SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
+                }
+				break;
+
+                default:
+				{
+                    SetState( BackState );
+                }
+				break;
+            }
+        }
+        break;
+    }
 }
 
 //=========================================================================
@@ -3722,6 +4390,12 @@ void state_mgr::UpdateProfileAvatar( void )
             case DIALOG_STATE_BACK:
             {
                 SetState( SM_PROFILE_OPTIONS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PROFILE_SELECT );
             }
             break;
         }
@@ -3913,7 +4587,7 @@ void state_mgr::UpdateMultiPlayerEdit( void )
             }
             break;
 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 // save failed - select a profile to save to
                 SetState( SM_PROFILE_SAVE_SELECT_MP );
@@ -3954,33 +4628,34 @@ void state_mgr::UpdateMPLevelSelect( void )
 
         switch( DialogState )
         {
-        case DIALOG_STATE_BACK:
+            case DIALOG_STATE_BACK:
             {
                 SetState( SM_MULTI_PLAYER_OPTIONS );
             }
             break;
-
-        case DIALOG_STATE_SELECT:
+            
+            case DIALOG_STATE_SELECT:
             {
-                // save to memcard and return to menu
+                // save to save data and return to menu
                 SetState( SM_MP_SAVE_SETTINGS );
             }
             break;
-
-        case DIALOG_STATE_ACTIVATE:
+            
+            case DIALOG_STATE_ACTIVATE:
             {
                 ASSERT( g_NetworkMgr.IsOnline()==FALSE );
-
+            
                 g_NetworkMgr.BecomeServer();
                 SetState( SM_START_GAME );
             }
             break;
-
-        case DIALOG_STATE_MEMCARD_ERROR:
+            
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 // save failed - select a profile to save to
                 SetState( SM_MP_SAVE_SETTINGS );
             }
+            break;
         }
     }
 }
@@ -3995,10 +4670,11 @@ void state_mgr::ExitMPLevelSelect( void )
 
 void state_mgr::EnterMPSaveSettings( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_SAVE_SETTINGS );
 }
 
 //=========================================================================
@@ -4009,21 +4685,27 @@ void state_mgr::UpdateMPSaveSettings( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save settings was successful
-            ASSERT( g_NetworkMgr.IsOnline()==FALSE );
+            case DIALOG_STATE_SELECT:
+            {
+                // Save settings was successful.
+                ASSERT( g_NetworkMgr.IsOnline()==FALSE );
 
-            g_NetworkMgr.BecomeServer();
-            SetState( SM_START_GAME );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // save settings failed or was aborted
-            ASSERT( g_NetworkMgr.IsOnline()==FALSE );
+                g_NetworkMgr.BecomeServer();
+                SetState( SM_START_GAME );
+            }
+            break;
 
-            g_NetworkMgr.BecomeServer();
-            SetState( SM_START_GAME );
+            case DIALOG_STATE_BACK:
+            {
+                // Save settings failed or was aborted.
+                ASSERT( g_NetworkMgr.IsOnline()==FALSE );
+
+                g_NetworkMgr.BecomeServer();
+                SetState( SM_START_GAME );
+            }
+            break;
         }
     }
 }
@@ -4051,20 +4733,7 @@ void state_mgr::EnterProfileControlsMP( void )
 
 void state_mgr::UpdateProfileControlsMP( void )
 {
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_SELECT:
-            case DIALOG_STATE_BACK:
-            {
-                SetState( SM_MULTI_PLAYER_EDIT );
-            }
-            break;
-        }
-    }
+    UpdateProfileControlsMenu( SM_MULTI_PLAYER_EDIT, FALSE );
 }
 
 //=========================================================================
@@ -4099,6 +4768,12 @@ void state_mgr::UpdateProfileAvatarMP( void )
             case DIALOG_STATE_BACK:
             {
                 SetState( SM_MULTI_PLAYER_EDIT );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PROFILE_SAVE_SELECT_MP );
             }
             break;
         }
@@ -4153,7 +4828,7 @@ void state_mgr::UpdateProfileSaveSelectMP( void )
             case DIALOG_STATE_CREATE:
             {
                 // Select a card to save the profile to
-                SetState( SM_MEMCARD_RESELECT_MP );
+                SetState( SM_SAVE_DATA_RESELECT_MP );
             }
             break;
         }
@@ -4168,40 +4843,47 @@ void state_mgr::ExitProfileSaveSelectMP( void )
 
 //=========================================================================
 
-void state_mgr::EnterMemcardReselectMP( void )
+void state_mgr::EnterSaveDataReselectMP( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_CREATE_PROFILE );
 }
 
 //=========================================================================
 
-void state_mgr::UpdateMemcardReselectMP( void )
+void state_mgr::UpdateSaveDataReselectMP( void )
 {
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save profile was successful
-            // goto the multiplayer main menu
-            SetState( SM_MULTI_PLAYER_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_PROFILE_SAVE_SELECT_MP );
+            case DIALOG_STATE_SELECT:
+            {
+                // Save profile was successful.
+                // Go to the multiplayer main menu.
+                SetState( SM_MULTI_PLAYER_MENU );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // The profile save failed or was aborted.
+                // Go back to the profile select menu.
+                SetState( SM_PROFILE_SAVE_SELECT_MP );
+            }
+            break;
         }
     }
 }
 
 //=========================================================================
 
-void state_mgr::ExitMemcardReselectMP( void )
+void state_mgr::ExitSaveDataReselectMP( void )
 {
 }
 
@@ -4217,7 +4899,7 @@ void state_mgr::EnterOnlineConnect( void )
 {
     // Create online main menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea(126, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    irect mainarea(76, DIALOG_TOP, 436, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "connect info", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
     ((dlg_online_connect*)m_CurrentDialog)->Configure( CONNECT_MODE_CONNECT );
 #ifndef USE_MOVIES
@@ -4229,12 +4911,6 @@ void state_mgr::EnterOnlineConnect( void )
 
 void state_mgr::UpdateOnlineConnect( void )
 {
-
-    if( m_BackgroundRendererRunning )
-    {
-        return;
-    }
-
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
@@ -4264,9 +4940,7 @@ void state_mgr::UpdateOnlineConnect( void )
 
             case DIALOG_STATE_BACK:
             {
-                DisconnectFromNetwork();
-                g_UiMgr->EndDialog( g_UiUserID, TRUE );
-                SetState( SM_MAIN_MENU );
+                BeginNetworkDisconnect( SM_MAIN_MENU );
             }
             break;
         }
@@ -4296,14 +4970,7 @@ void state_mgr::EnterOnlineProfileSelect( void )
 
 void state_mgr::UpdateOnlineProfileSelect( void )
 {
-    // Prevent reentrancy problems if we're disconnecting from
-    // the network.
-    if( m_BackgroundRendererRunning )
-    {
-        return;
-    }
-
-    if( m_CurrentDialog->GetState() != DIALOG_STATE_WAIT_FOR_MEMCARD )
+    if( m_CurrentDialog->GetState() != DIALOG_STATE_WAIT_FOR_SAVE_DATA )
     {
         if( CheckForDisconnect() )
         {
@@ -4326,8 +4993,7 @@ void state_mgr::UpdateOnlineProfileSelect( void )
 
             case DIALOG_STATE_BACK:
             {
-                DisconnectFromNetwork();
-                SetState( SM_MAIN_MENU );
+                BeginNetworkDisconnect( SM_MAIN_MENU );
             }
             break;
 
@@ -4443,24 +5109,7 @@ void state_mgr::EnterOnlineProfileControls( void )
 
 void state_mgr::UpdateOnlineProfileControls( void )
 {
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_BACK:
-            {
-                SetState( SM_ONLINE_PROFILE_OPTIONS );
-            }
-            break;
-        }
-    }
+    UpdateProfileControlsMenu( SM_ONLINE_PROFILE_OPTIONS, TRUE );
 }
 
 //=========================================================================
@@ -4502,6 +5151,12 @@ void state_mgr::UpdateOnlineProfileAvatar( void )
                 SetState( SM_ONLINE_PROFILE_OPTIONS );
             }
             break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_ONLINE_PROFILE_SAVE_SELECT );
+            }
+            break;
         }
     }
 }
@@ -4519,7 +5174,7 @@ void state_mgr::EnterOnlineAuthenticate( void )
 
     // Create online main menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea(126, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    irect mainarea(76, DIALOG_TOP, 436, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "connect info", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
@@ -4532,13 +5187,6 @@ void state_mgr::EnterOnlineAuthenticate( void )
 
 void state_mgr::UpdateOnlineAuthenticate( void )
 {
-    // Prevent reentrancy problems if we're disconnecting from
-    // the network.
-    if( m_BackgroundRendererRunning )
-    {
-        return;
-    }
-
     if( CheckForDisconnect() )
     {
         return;
@@ -4550,27 +5198,35 @@ void state_mgr::UpdateOnlineAuthenticate( void )
 
         switch( DialogState )
         {
-        case DIALOG_STATE_ACTIVE:
-            break;
-        case DIALOG_STATE_EXIT:
-            g_UiMgr->EndDialog( g_UiUserID, TRUE );
-            m_CurrentDialog = NULL;
-
-            SetState( SM_ONLINE_MAIN_MENU );
+            case DIALOG_STATE_ACTIVE:
+            {
+            }
             break;
 
-        case DIALOG_STATE_BACK:
-            g_UiMgr->EndDialog( g_UiUserID, TRUE );
-            m_CurrentDialog = NULL;
-
-            SetState( SM_MAIN_MENU );
+            case DIALOG_STATE_EXIT:
+            {
+                g_UiMgr->EndDialog( g_UiUserID, TRUE );
+                m_CurrentDialog = NULL;
+            
+                SetState( SM_ONLINE_MAIN_MENU );
+            }
             break;
-        default:
-            ASSERT( FALSE );
-            g_UiMgr->EndDialog( g_UiUserID, TRUE );
-            m_CurrentDialog = NULL;
-
-            SetState( SM_MAIN_MENU );
+            
+            case DIALOG_STATE_BACK:
+            {
+                g_UiMgr->EndDialog( g_UiUserID, TRUE );
+                m_CurrentDialog = NULL;
+                SetState( SM_MAIN_MENU );
+            }
+            break;
+            
+            default:
+            {
+                ASSERT( FALSE );
+                g_UiMgr->EndDialog( g_UiUserID, TRUE );
+                m_CurrentDialog = NULL;
+                SetState( SM_MAIN_MENU );
+            }
             break;
         }
     }
@@ -4624,7 +5280,7 @@ void state_mgr::UpdateOnlineProfileSaveSelect( void )
             case DIALOG_STATE_CREATE:
             {
                 // Select a card to save the profile to
-                SetState( SM_ONLINE_MEMCARD_RESELECT );
+                SetState( SM_ONLINE_SAVE_DATA_RESELECT );
             }
             break;
         }
@@ -4639,40 +5295,47 @@ void state_mgr::ExitOnlineProfileSaveSelect( void )
 
 //=========================================================================
 
-void state_mgr::EnterOnlineMemcardReselect( void )
+void state_mgr::EnterOnlineSaveDataReselect( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_CREATE_PROFILE );
 }
 
 //=========================================================================
 
-void state_mgr::UpdateOnlineMemcardReselect( void )
+void state_mgr::UpdateOnlineSaveDataReselect( void )
 {
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save profile was successful
-            // goto the online main menu
-            SetState( SM_ONLINE_MAIN_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_ONLINE_PROFILE_SAVE_SELECT );
+            case DIALOG_STATE_SELECT:
+            {
+                // Save profile was successful.
+                // Go to the online main menu.
+                SetState( SM_ONLINE_MAIN_MENU );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // The profile save failed or was aborted.
+                // Go back to the profile select menu.
+                SetState( SM_ONLINE_PROFILE_SAVE_SELECT );
+            }
+            break;
         }
     }
 }
 
 //=========================================================================
 
-void state_mgr::ExitOnlineMemcardReselect( void )
+void state_mgr::ExitOnlineSaveDataReselect( void )
 {
 }
 
@@ -4714,10 +5377,6 @@ void state_mgr::EnterOnlineMain( void )
 void state_mgr::UpdateOnlineMain( void )
 {
     if( CheckForDisconnect() )
-    {
-        return;
-    }
-    if( m_BackgroundRendererRunning )
     {
         return;
     }
@@ -4783,9 +5442,6 @@ void state_mgr::UpdateOnlineMain( void )
                         case IDC_ONLINE_VIEW_STATS:
                             SetState( SM_ONLINE_STATS );
                             break;
-                        //case IDC_ONLINE_DOWNLOAD:
-                        //    SetState( SM_ONLINE_DOWNLOAD );
-                        //    break;
                         default:
                             ASSERTS( FALSE, "Selection not supported!" );
                             break;
@@ -4795,9 +5451,7 @@ void state_mgr::UpdateOnlineMain( void )
 
                 case DIALOG_STATE_BACK:
                 {
-                    // disconnect
-                    DisconnectFromNetwork();
-                    SetState( SM_MAIN_MENU );
+                    BeginNetworkDisconnect( SM_MAIN_MENU );
                 }
                 break;
             }
@@ -4845,12 +5499,12 @@ void state_mgr::UpdateOnlineHost( void )
 
         switch( g_Config.AutoServerType )
         {
-        case GAME_DM:   g_PendingConfig.SetGameType( "Deathmatch" );        g_PendingConfig.SetShortGameType( "DM" );       break;
-        case GAME_TDM:  g_PendingConfig.SetGameType( "Team Deathmatch" );   g_PendingConfig.SetShortGameType( "TDM" );      break;
-        case GAME_CTF:  g_PendingConfig.SetGameType( "Capture the Flag" );  g_PendingConfig.SetShortGameType( "CTF" );      break;
-        case GAME_TAG:  g_PendingConfig.SetGameType( "Tag" );               g_PendingConfig.SetShortGameType( "Tag" );      break;
-        case GAME_INF:  g_PendingConfig.SetGameType( "Infection" );         g_PendingConfig.SetShortGameType( "Inf" );      break;
-        case GAME_CNH:  g_PendingConfig.SetGameType( "Capture and Hold" );  g_PendingConfig.SetShortGameType( "CNH" );      break;
+            case GAME_DM:   g_PendingConfig.SetGameType( "Deathmatch" );        g_PendingConfig.SetShortGameType( "DM" );       break;
+            case GAME_TDM:  g_PendingConfig.SetGameType( "Team Deathmatch" );   g_PendingConfig.SetShortGameType( "TDM" );      break;
+            case GAME_CTF:  g_PendingConfig.SetGameType( "Capture the Flag" );  g_PendingConfig.SetShortGameType( "CTF" );      break;
+            case GAME_TAG:  g_PendingConfig.SetGameType( "Tag" );               g_PendingConfig.SetShortGameType( "Tag" );      break;
+            case GAME_INF:  g_PendingConfig.SetGameType( "Infection" );         g_PendingConfig.SetShortGameType( "Inf" );      break;
+            case GAME_CNH:  g_PendingConfig.SetGameType( "Capture and Hold" );  g_PendingConfig.SetShortGameType( "CNH" );      break;
         }
 
         // tell the network manager that we want to be a server
@@ -4944,10 +5598,11 @@ void state_mgr::ExitOnlineHostOptions( void )
 
 void state_mgr::EnterHostSaveSettings( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_SAVE_SETTINGS );
 }
 
 //=========================================================================
@@ -4958,16 +5613,22 @@ void state_mgr::UpdateHostSaveSettings( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // start up the server
-            g_NetworkMgr.BecomeServer();
-            SetState( SM_START_GAME );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            g_NetworkMgr.BecomeServer();
-            SetState( SM_START_GAME );
+            case DIALOG_STATE_SELECT:
+            {
+                // Start up the server.
+                g_NetworkMgr.BecomeServer();
+                SetState( SM_START_GAME );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                g_NetworkMgr.BecomeServer();
+                SetState( SM_START_GAME );
+            }
+            break;
         }
     }
 }
@@ -5087,7 +5748,7 @@ void state_mgr::UpdateOnlineJoinFilter( void )
             }
             break;
 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 SetState( SM_ONLINE_JOIN_SAVE_SETTINGS );
             }
@@ -5114,7 +5775,7 @@ void state_mgr::EnterOnlineJoin( void )
 {
     // Create online join menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea(-20, DIALOG_TOP, 480, DIALOG_BOTTOM );
+    irect mainarea(6, DIALOG_TOP, 506, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "online join", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
@@ -5171,10 +5832,11 @@ void state_mgr::ExitOnlineJoin( void )
 
 void state_mgr::EnterOnlineJoinSaveSettings( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_SAVE_SETTINGS );
 }
 
 //=========================================================================
@@ -5185,17 +5847,23 @@ void state_mgr::UpdateOnlineJoinSaveSettings( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save was successful
-            // goto the online join (server list)
-            SetState( SM_ONLINE_JOIN_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // save failed or was aborted
-            // goto the online join (server list)
-            SetState( SM_ONLINE_JOIN_MENU );
+            case DIALOG_STATE_SELECT:
+            {
+                // Save was successful.
+                // Go to the online join (server list).
+                SetState( SM_ONLINE_JOIN_MENU );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // Save failed or was aborted.
+                // Go to the online join (server list).
+                SetState( SM_ONLINE_JOIN_MENU );
+            }
+            break;
         }
     }
 }
@@ -5212,7 +5880,7 @@ void state_mgr::EnterServerPlayers( void )
 {
     // Create server players menu - list of players on the selected server
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    irect mainarea(0, DIALOG_TOP, 512, DIALOG_BOTTOM );
+    irect mainarea( 0, DIALOG_TOP, ui_viewport::CONTENT_WIDTH, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "server players", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
@@ -5230,11 +5898,15 @@ void state_mgr::UpdateServerPlayers( void )
         switch( DialogState )
         {
             case DIALOG_STATE_BACK:
+            {
                 SetState( SM_ONLINE_JOIN_MENU );
+            }
             break;
 
             case DIALOG_STATE_SELECT:
+            {
                 StartLogin( &g_PendingConfig.GetConfig(), LOGIN_FROM_JOIN_MENU );
+            }
             break;
         }
     }
@@ -5468,9 +6140,13 @@ void state_mgr::UpdateOnlineStats( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_BACK )
+        switch( DialogState )
         {
-            SetState( SM_ONLINE_MAIN_MENU );
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_ONLINE_MAIN_MENU );
+            }
+            break;
         }
     }
 }
@@ -5551,7 +6227,7 @@ void state_mgr::UpdateOnlineEditProfile( void )
             }
             break;
 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 // save failed - select a profile to save to
                 SetState( SM_ONLINE_PROFILE_SAVE_SELECT );
@@ -5583,24 +6259,7 @@ void state_mgr::EnterOnlineEditControls( void )
 
 void state_mgr::UpdateOnlineEditControls( void )
 {
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_BACK:
-            {
-                SetState( SM_ONLINE_EDIT_PROFILE );
-            }
-            break;
-        }
-    }
+    UpdateProfileControlsMenu( SM_ONLINE_EDIT_PROFILE, TRUE );
 }
 
 //=========================================================================
@@ -5640,6 +6299,12 @@ void state_mgr::UpdateOnlineEditAvatar( void )
             case DIALOG_STATE_BACK:
             {
                 SetState( SM_ONLINE_EDIT_PROFILE );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_ONLINE_PROFILE_SAVE_SELECT );
             }
             break;
         }
@@ -5686,14 +6351,14 @@ void state_mgr::UpdateHostLevelSelect( void )
             }
             break;
 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
-#ifdef TARGET_PC
+#ifdef TARGET_DESKTOP
                 // advance to game
                 g_NetworkMgr.BecomeServer();
                 SetState( SM_START_GAME );
 #else
-                // save to memcard and return to menu
+                // save to save data and return to menu
                 SetState( SM_HOST_SAVE_SETTINGS );
 #endif
             }
@@ -5770,9 +6435,7 @@ void state_mgr::EnterStartSaveGame( void )
 {
     //  Start new game option
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-    irect mainarea(-75, DIALOG_TOP, XRes+75, DIALOG_BOTTOM );
+    irect mainarea( -75, DIALOG_TOP, ui_viewport::CONTENT_WIDTH + 75, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "start game", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
@@ -5787,10 +6450,14 @@ void state_mgr::UpdateStartSaveGame( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            m_bStartSaveGame = TRUE;
-            SetState( SM_SINGLE_PLAYER_LOAD_MISSION );
+            case DIALOG_STATE_SELECT:
+            {
+                m_bStartSaveGame = TRUE;
+                SetState( SM_SINGLE_PLAYER_LOAD_MISSION );
+            }
+            break;
         }
     }
 }
@@ -5805,7 +6472,6 @@ void state_mgr::ExitStartSaveGame( void )
 
 void state_mgr::EnterStartGame( void )
 {
-    ASSERT( m_BackgroundRendererRunning==FALSE );
     // prepare for loading the level
     m_bShowingScores = FALSE;
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
@@ -5814,6 +6480,7 @@ void state_mgr::EnterStartGame( void )
     g_RscMgr.Unload( "DX_FrontEnd.audiopkg"    );
     g_RscMgr.Unload( "SFX_FrontEnd.audiopkg"   );
     g_RscMgr.Unload( "MUSIC_FrontEnd.audiopkg" );
+    g_RscMgr.Unload( "DREAMLAND.audiopkg" );
     g_UiMgr->UnloadBackground( "titlescreen" );
 
 #ifdef USE_MOVIES
@@ -5823,9 +6490,7 @@ void state_mgr::EnterStartGame( void )
     m_bPlayMovie = FALSE;
 #endif
 
-    s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-    irect mainarea(-75, DIALOG_TOP, XRes+75, DIALOG_BOTTOM );
+    irect mainarea( -75, DIALOG_TOP, ui_viewport::CONTENT_WIDTH + 75, DIALOG_BOTTOM );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "start game", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
@@ -5840,22 +6505,30 @@ void state_mgr::UpdateStartGame( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // Calculate checksum for profile prior to starting game. This will mark the profile
-            // as having not been modified.
-            player_profile& ActiveProfile = GetActiveProfile( GetProfileListIndex(0) );
-            ActiveProfile.Checksum();
+            case DIALOG_STATE_SELECT:
+            {
+                // Calculate checksum for profile prior to starting game. This will mark the profile
+                // as having not been modified.
+                player_profile& ActiveProfile = GetActiveProfile( GetProfileListIndex(0) );
+                ActiveProfile.Checksum();
 
-            m_bStartSaveGame = FALSE;
-            s_FirstMap = TRUE;
+                m_bStartSaveGame = FALSE;
+                s_FirstMap = TRUE;
 
-            // advance to either a load screen, or a level description 
-            // screen (which also does loading in the background)
-            if( GameMgr.GetGameType() == GAME_CAMPAIGN )
-                SetState( SM_SINGLE_PLAYER_LOAD_MISSION );
-            else
-                SetState( SM_MULTI_PLAYER_LOAD_MISSION );
+                // Advance to either a load screen, or a level description
+                // screen (which also does loading in the background).
+                if( GameMgr.GetGameType() == GAME_CAMPAIGN )
+                {
+                    SetState( SM_SINGLE_PLAYER_LOAD_MISSION );
+                }
+                else
+                {
+                    SetState( SM_MULTI_PLAYER_LOAD_MISSION );
+                }
+            }
+            break;
         }
     }
 }
@@ -5885,6 +6558,7 @@ void state_mgr::EnterSinglePlayerLoadMission( void )
     g_RscMgr.Unload( "DX_FrontEnd.audiopkg"    );
     g_RscMgr.Unload( "SFX_FrontEnd.audiopkg"   );
     g_RscMgr.Unload( "MUSIC_FrontEnd.audiopkg" );
+    g_RscMgr.Unload( "DREAMLAND.audiopkg" );
     g_UiMgr->UnloadBackground( "titlescreen" );
 
 #ifdef USE_MOVIES
@@ -5911,37 +6585,46 @@ void state_mgr::EnterSinglePlayerLoadMission( void )
             switch( pEntry->GetMapID() )
             {
                 case 1000:
+				{
                     // Play intro movie before starting "One of them".
-                    if( !PlaySimpleMovie( SelectBestClip("CinemaIntro")) )
-                    {
-                        DummyScreen( "Intro Movie Here", TRUE, 5 );
-                    }
-                    break;
+                    QueueSimpleMovie( SelectBestClip("CinemaIntro"),
+                                      "Intro Movie Here",
+                                      FALSE );
+                }
+				break;
+
                 case 1020:
-                    // unlock a secret after deep underground
-                    {
-                        player_profile& ActiveProfile = GetActiveProfile(0);                    
-                        ActiveProfile.AcquireSecret();
-                        x_memcpy( &m_PendingProfile, &ActiveProfile, sizeof(ActiveProfile) );
-                    }
-                    break;
+                {
+					// unlock a secret after deep underground
+                    player_profile& ActiveProfile = GetActiveProfile(0);                    
+                    ActiveProfile.AcquireSecret();
+                    x_memcpy( &m_PendingProfile, &ActiveProfile, sizeof(ActiveProfile) );
+                }
+                break;
+
                 case 1060:
+				{
                     // Play infection movie before starting "One of them".
-                    if( !PlaySimpleMovie( SelectBestClip( "CinemaInfection" )) )
-                    {
-                        DummyScreen( "Infection Movie Here", TRUE, 5 );
-                    }
-                    break;
+                    QueueSimpleMovie( SelectBestClip( "CinemaInfection" ),
+                                      "Infection Movie Here",
+                                      FALSE );
+                }
+				break;
+
                 case 1115:
+				{
                     // Play Edgar movie before starting "The Grays".
-                    if( !PlaySimpleMovie( SelectBestClip( "CinemaEdgar")) )
-                    {
-                        DummyScreen( "Edgar Movie Here", TRUE, 5 );
-                    }
-                    break;
+                    QueueSimpleMovie( SelectBestClip( "CinemaEdgar" ),
+                                      "Edgar Movie Here",
+                                      FALSE );
+                }
+				break;
+
                 default:
+				{
                     // nothing to do!
-                    break;
+                }
+				break;
             }
         }
 #endif // USE_MOVIES
@@ -5958,9 +6641,6 @@ void state_mgr::EnterSinglePlayerLoadMission( void )
 
 void state_mgr::UpdateSinglePlayerLoadMission( void )
 {
-    if( IsBackgroundThreadRunning() )
-        return;
-
     dlg_load_game*  pLoadGame   = (dlg_load_game*)g_UiMgr->GetTopmostDialog(g_UiUserID);
     server_state    ServerState = g_NetworkMgr.GetServerObject().GetState();
     dialog_states   State       = pLoadGame->GetState();
@@ -5971,11 +6651,8 @@ void state_mgr::UpdateSinglePlayerLoadMission( void )
         {
             SetState( SM_SERVER_SYNC );
         }
-        else
-        {
-            // let the dialog know that we have finished loading the game
-            pLoadGame->LoadingComplete();
-        }
+        // let the dialog know that we have finished loading the game
+        pLoadGame->LoadingComplete();
     }
 }
 
@@ -6009,6 +6686,8 @@ void state_mgr::EnterPlayingGame( void )
 //=========================================================================
 void state_mgr::UpdatePlayingGame( void )
 {
+    UpdateScoreboardOverlay();
+
     if( g_ActiveConfig.GetExitReason()!=GAME_EXIT_CONTINUE )
     {
         if( g_NetworkMgr.IsServer() )
@@ -6025,6 +6704,79 @@ void state_mgr::UpdatePlayingGame( void )
 //=========================================================================
 void state_mgr::ExitPlayingGame( void )
 {
+    CloseScoreboardOverlay();
+}
+
+//=========================================================================
+
+void state_mgr::UpdateScoreboardOverlay( void )
+{
+    if( !g_NetworkMgr.IsOnline() )
+    {
+        CloseScoreboardOverlay();
+        return;
+    }
+
+    const xbool bShowScoreboard =
+        g_GameInput[0].GetFrameLogical( ingame_pad::ACTION_SCOREBOARD ).GetIsValue() > 0.25f;
+
+    if( bShowScoreboard )
+    {
+        OpenScoreboardOverlay();
+    }
+    else
+    {
+        CloseScoreboardOverlay();
+    }
+}
+
+//=========================================================================
+
+void state_mgr::OpenScoreboardOverlay( void )
+{
+    if( m_pScoreboardDialog != NULL )
+    {
+        return;
+    }
+
+    const game_score& ScoreData = GameMgr.GetScore();
+    const s32 PlayerCount = ScoreData.NPlayers;
+
+    if( PlayerCount > 16 )
+    {
+        irect MainArea( 8, DIALOG_TOP, 504, DIALOG_BOTTOM );
+        m_pScoreboardDialog = g_UiMgr->OpenDialog( g_UiUserID, "big leaderboard", MainArea, NULL, ui_win::WF_VISIBLE );
+    }
+    else if( ScoreData.IsTeamBased )
+    {
+        irect MainArea( 8, DIALOG_TOP, 504, ui_viewport::CONTENT_HEIGHT - 36 );
+        m_pScoreboardDialog = g_UiMgr->OpenDialog( g_UiUserID, "team leaderboard", MainArea, NULL, ui_win::WF_VISIBLE );
+    }
+    else
+    {
+        irect MainArea( 8, DIALOG_TOP, 504, DIALOG_BOTTOM );
+        m_pScoreboardDialog = g_UiMgr->OpenDialog( g_UiUserID, "leaderboard", MainArea, NULL, ui_win::WF_VISIBLE );
+    }
+
+    if( m_pScoreboardDialog == NULL )
+    {
+        return;
+    }
+
+    ((dlg_mp_score*)m_pScoreboardDialog)->Configure( LEADERBOARD_OVERLAY );
+}
+
+//=========================================================================
+
+void state_mgr::CloseScoreboardOverlay( void )
+{
+    if( m_pScoreboardDialog == NULL )
+    {
+        return;
+    }
+
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    m_pScoreboardDialog = NULL;
 }
 
 //=========================================================================
@@ -6041,8 +6793,6 @@ void state_mgr::EnterServerSync( void )
 
 void state_mgr::UpdateServerSync( void )
 {
-    if( IsBackgroundThreadRunning() )
-        return;
     server_state ServerState = g_NetworkMgr.GetServerObject().GetState();
     if( ServerState == STATE_SERVER_INGAME )
     {
@@ -6113,32 +6863,46 @@ void state_mgr::UpdatePauseMain( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            s32 Control = m_CurrentDialog->GetControl();
+            case DIALOG_STATE_SELECT:
+            {
+                s32 Control = m_CurrentDialog->GetControl();
 
-            if( Control == IDC_PAUSE_MENU_RESUME )
-            {
-                // return to game
-                SetState( SM_END_PAUSE );
+                switch( Control )
+                {
+                    case IDC_PAUSE_MENU_RESUME:
+                    {
+                        // Return to game.
+                        SetState( SM_END_PAUSE );
+                    }
+                    break;
+
+                    case IDC_PAUSE_MENU_QUIT:
+                    {
+                        // Exit from game to main menu.
+                        SetState( SM_EXIT_GAME );
+                    }
+                    break;
+
+                    case IDC_PAUSE_MENU_OPTIONS:
+                    {
+                        // Edit profile.
+                        g_StateMgr.InitPendingProfile( 0 );
+                        SetState( SM_PAUSE_OPTIONS );
+                    }
+                    break;
+
+                    case IDC_PAUSE_MENU_SETTINGS:
+                    {
+                        // Edit settings.
+                        InitPendingSettings();
+                        SetState( SM_PAUSE_SETTINGS );
+                    }
+                    break;
+                }
             }
-            else if( Control == IDC_PAUSE_MENU_QUIT )
-            {
-                // exit from game to main menu
-                SetState( SM_EXIT_GAME );
-            }
-            else if( Control == IDC_PAUSE_MENU_OPTIONS )
-            {
-                // edit profile
-                g_StateMgr.InitPendingProfile( 0 );
-                SetState( SM_PAUSE_OPTIONS );
-            }
-            else if( Control == IDC_PAUSE_MENU_SETTINGS )
-            {
-                // edit settings
-                InitPendingSettings();
-                SetState( SM_PAUSE_SETTINGS );
-            }
+            break;
         }
     }
 }
@@ -6208,7 +6972,7 @@ void state_mgr::UpdatePauseOptions( void )
             }
             break;
 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 // save failed - select a profile to save to
                 SetState( SM_PAUSE_PROFILE_SAVE_SELECT );
@@ -6243,19 +7007,7 @@ void state_mgr::EnterPauseControls( void )
 
 void state_mgr::UpdatePauseControls( void )
 {
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_BACK:
-            {
-                SetState( SM_PAUSE_OPTIONS );
-            }
-            break;
-        }
-    }
+    UpdateProfileControlsMenu( SM_PAUSE_OPTIONS, FALSE );
 }
 
 //=========================================================================
@@ -6268,14 +7020,13 @@ void state_mgr::ExitPauseControls( void )
 
 void state_mgr::EnterPauseSettings ( void )
 {
-    //  create options main menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea(16, DIALOG_TOP, 496, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "av settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
 #endif
-    ((dlg_av_settings*)m_CurrentDialog)->EnableBlackout();
+    ((dlg_settings*)m_CurrentDialog)->EnableBlackout();
 }
 
 //=========================================================================
@@ -6298,18 +7049,42 @@ void state_mgr::UpdatePauseSettings( void )
             {
                 s32 Control = m_CurrentDialog->GetControl();
 
-                if( Control == IDC_AV_HEADSET_TEST )
+                switch( Control )
                 {
-                    SetState( SM_PAUSE_HEADSET );
-                }
-                else if( Control == IDC_AV_GRAPHICS_MENU )
-                {
-                    SetState( SM_PAUSE_GRAPHICS );
+                    case IDC_SETTINGS_AUDIO:
+                    {
+                        SetState( SM_PAUSE_AUDIO );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_HEADSET:
+                    {
+                        SetState( SM_PAUSE_HEADSET );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_GRAPHICS:
+                    {
+                        SetState( SM_PAUSE_GRAPHICS );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_DISPLAY:
+                    {
+                        SetState( SM_PAUSE_DISPLAY );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_LANGUAGE:
+                    {
+                        SetState( SM_PAUSE_LANGUAGE );
+                    }
+                    break;
                 }
             }
             break;
 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 SetState( SM_PAUSE_SETTINGS_SELECT );
             }
@@ -6321,6 +7096,45 @@ void state_mgr::UpdatePauseSettings( void )
 //=========================================================================
 
 void state_mgr::ExitPauseSettings  ( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterPauseAudio( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "audio settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_audio_settings*)m_CurrentDialog)->EnableBlackout();
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseAudio( void )
+{
+    if( m_CurrentDialog )
+    {
+        switch( m_CurrentDialog->GetState() )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_SETTINGS_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseAudio( void )
 {
 }
 
@@ -6353,6 +7167,12 @@ void state_mgr::UpdatePauseHeadset ( void )
                 SetState( SM_PAUSE_SETTINGS );
             }
             break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_SETTINGS_SELECT );
+            }
+            break;
         }
     }
 }
@@ -6373,6 +7193,7 @@ void state_mgr::EnterPauseGraphics( void )
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
 #endif
+    ((dlg_graphics_settings*)m_CurrentDialog)->EnableBlackout();
 }
 
 //=========================================================================
@@ -6383,9 +7204,19 @@ void state_mgr::UpdatePauseGraphics( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_BACK )
+        switch( DialogState )
         {
-            SetState( SM_PAUSE_SETTINGS );
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_SETTINGS_SELECT );
+            }
+            break;
         }
     }
 }
@@ -6398,12 +7229,96 @@ void state_mgr::ExitPauseGraphics( void )
 
 //=========================================================================
 
+void state_mgr::EnterPauseDisplay( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "display settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+#ifndef USE_MOVIES
+    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
+#endif
+    ((dlg_display_settings*)m_CurrentDialog)->EnableBlackout();
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseDisplay( void )
+{
+    if( m_CurrentDialog )
+    {
+        switch( m_CurrentDialog->GetState() )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_SETTINGS_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseDisplay( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterPauseLanguage( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "language settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_language_settings*)m_CurrentDialog)->EnableBlackout();
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseLanguage( void )
+{
+    if( m_CurrentDialog )
+    {
+        u32 const DialogState = m_CurrentDialog->GetState();
+
+        switch( DialogState )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_SETTINGS_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseLanguage( void )
+{
+}
+
+//=========================================================================
+
 void state_mgr::EnterPauseSettingsSelect( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_SAVE_SETTINGS );
 }
 
 //=========================================================================
@@ -6414,15 +7329,21 @@ void state_mgr::UpdatePauseSettingsSelect( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save settings was successful
-            SetState( SM_PAUSE_MAIN_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // save failed or was aborted
-            SetState( SM_PAUSE_MAIN_MENU );
+            case DIALOG_STATE_SELECT:
+            {
+                // save settings was successful
+                SetState( SM_PAUSE_MAIN_MENU );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // save failed or was aborted
+                SetState( SM_PAUSE_MAIN_MENU );
+            }
+            break;
         }
     }
 }
@@ -6435,7 +7356,7 @@ void state_mgr::ExitPauseSettingsSelect( void )
 
 //=========================================================================
 
-void state_mgr::EnterPauseMemcardSaveSelect ( void )
+void state_mgr::EnterPauseSaveDataSaveSelect ( void )
 {
     // Create profile menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
@@ -6450,7 +7371,7 @@ void state_mgr::EnterPauseMemcardSaveSelect ( void )
 
 //=========================================================================
 
-void state_mgr::UpdatePauseMemcardSaveSelect( void )
+void state_mgr::UpdatePauseSaveDataSaveSelect( void )
 {
     // Get the current dialog state
     if( m_CurrentDialog != NULL )
@@ -6476,7 +7397,7 @@ void state_mgr::UpdatePauseMemcardSaveSelect( void )
             case DIALOG_STATE_CREATE:
             {
                 // Select a card to save the profile to
-                SetState( SM_PAUSE_MEMCARD_RESELECT );
+                SetState( SM_PAUSE_SAVE_DATA_RESELECT );
             }
             break;
         }
@@ -6485,46 +7406,53 @@ void state_mgr::UpdatePauseMemcardSaveSelect( void )
 
 //=========================================================================
 
-void state_mgr::ExitPauseMemcardSaveSelect  ( void )
+void state_mgr::ExitPauseSaveDataSaveSelect  ( void )
 {
 }
 
 //=========================================================================
 
-void state_mgr::EnterPauseMemcardReselect ( void )
+void state_mgr::EnterPauseSaveDataReselect ( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_CREATE_PROFILE );
 }
 
 //=========================================================================
 
-void state_mgr::UpdatePauseMemcardReselect( void )
+void state_mgr::UpdatePauseSaveDataReselect( void )
 {
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save profile was successful
-            // goto the campaign menu
-            SetState( SM_PAUSE_MAIN_MENU );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_PAUSE_PROFILE_SAVE_SELECT );
+            case DIALOG_STATE_SELECT:
+            {
+                // Save profile was successful.
+                // Go to the campaign menu.
+                SetState( SM_PAUSE_MAIN_MENU );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // The profile save failed or was aborted.
+                // Go back to the profile select menu.
+                SetState( SM_PAUSE_PROFILE_SAVE_SELECT );
+            }
+            break;
         }
     }
 }
 
 //=========================================================================
 
-void state_mgr::ExitPauseMemcardReselect  ( void )
+void state_mgr::ExitPauseSaveDataReselect  ( void )
 {
 }
 
@@ -6547,32 +7475,45 @@ void state_mgr::UpdatePauseMP( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            s32 Control = m_CurrentDialog->GetControl();
+            case DIALOG_STATE_SELECT:
+            {
+                s32 Control = m_CurrentDialog->GetControl();
 
-            if( Control == IDC_PAUSE_MP_QUIT )
-            {
-                // exit from game to main menu
-                SetState( SM_EXIT_GAME );
+                switch( Control )
+                {
+                    case IDC_PAUSE_MP_QUIT:
+                    {
+                        // Exit from game to main menu.
+                        SetState( SM_EXIT_GAME );
+                    }
+                    break;
+
+                    case IDC_PAUSE_MP_SCORE:
+                    {
+                        SetState( SM_PAUSE_MP_SCORE );
+                    }
+                    break;
+
+                    case IDC_PAUSE_MP_OPTIONS:
+                    {
+                        // Initialize pending profile for the player that paused the game.
+                        g_StateMgr.InitPendingProfile( GetActiveControllerID() );
+                        SetState( SM_PAUSE_MP_OPTIONS );
+                    }
+                    break;
+
+                    case IDC_PAUSE_MP_SETTINGS:
+                    {
+                        // Edit settings.
+                        InitPendingSettings();
+                        SetState( SM_PAUSE_MP_SETTINGS );
+                    }
+                    break;
+                }
             }
-            else if( Control == IDC_PAUSE_MP_SCORE )
-            {
-                // remove
-                SetState( SM_PAUSE_MP_SCORE );
-            }
-            else if( Control == IDC_PAUSE_MP_OPTIONS )
-            {
-                // init pending profile for the player that paused the game
-                g_StateMgr.InitPendingProfile( GetActiveControllerID() );
-                SetState( SM_PAUSE_MP_OPTIONS );
-            }
-            else if( Control == IDC_PAUSE_MP_SETTINGS )
-            {
-                // edit settings
-                InitPendingSettings();
-                SetState( SM_PAUSE_MP_SETTINGS );
-            }
+            break;
         }
     }
 }
@@ -6587,14 +7528,13 @@ void state_mgr::ExitPauseMP( void )
 
 void state_mgr::EnterPauseMPSettings( void )
 {
-    //  create options main menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea(16, DIALOG_TOP, 496, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "av settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
 #endif
-    ((dlg_av_settings*)m_CurrentDialog)->EnableBlackout();
+    ((dlg_settings*)m_CurrentDialog)->EnableBlackout();
 }
 
 //=========================================================================
@@ -6617,18 +7557,42 @@ void state_mgr::UpdatePauseMPSettings( void )
             {
                 s32 Control = m_CurrentDialog->GetControl();
 
-                if( Control == IDC_AV_HEADSET_TEST )
+                switch( Control )
                 {
-                    SetState( SM_PAUSE_MP_HEADSET );
-                }
-                else if( Control == IDC_AV_GRAPHICS_MENU )
-                {
-                    SetState( SM_PAUSE_MP_GRAPHICS );
+                    case IDC_SETTINGS_AUDIO:
+                    {
+                        SetState( SM_PAUSE_MP_AUDIO );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_HEADSET:
+                    {
+                        SetState( SM_PAUSE_MP_HEADSET );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_GRAPHICS:
+                    {
+                        SetState( SM_PAUSE_MP_GRAPHICS );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_DISPLAY:
+                    {
+                        SetState( SM_PAUSE_MP_DISPLAY );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_LANGUAGE:
+                    {
+                        SetState( SM_PAUSE_MP_LANGUAGE );
+                    }
+                    break;
                 }
             }
             break;
 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 SetState( SM_PAUSE_MP_SETTINGS_SELECT );
             }
@@ -6640,6 +7604,45 @@ void state_mgr::UpdatePauseMPSettings( void )
 //=========================================================================
 
 void state_mgr::ExitPauseMPSettings( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterPauseMPAudio( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "audio settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_audio_settings*)m_CurrentDialog)->EnableBlackout();
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseMPAudio( void )
+{
+    if( m_CurrentDialog )
+    {
+        switch( m_CurrentDialog->GetState() )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_MP_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_MP_SETTINGS_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseMPAudio( void )
 {
 }
 
@@ -6672,6 +7675,12 @@ void state_mgr::UpdatePauseMPHeadset ( void )
                 SetState( SM_PAUSE_MP_SETTINGS );
             }
             break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_MP_SETTINGS_SELECT );
+            }
+            break;
         }
     }
 }
@@ -6692,6 +7701,7 @@ void state_mgr::EnterPauseMPGraphics( void )
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
 #endif
+    ((dlg_graphics_settings*)m_CurrentDialog)->EnableBlackout();
 }
 
 //=========================================================================
@@ -6702,9 +7712,19 @@ void state_mgr::UpdatePauseMPGraphics( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_BACK )
+        switch( DialogState )
         {
-            SetState( SM_PAUSE_MP_SETTINGS );
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_MP_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_MP_SETTINGS_SELECT );
+            }
+            break;
         }
     }
 }
@@ -6717,12 +7737,96 @@ void state_mgr::ExitPauseMPGraphics( void )
 
 //=========================================================================
 
+void state_mgr::EnterPauseMPDisplay( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "display settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+#ifndef USE_MOVIES
+    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
+#endif
+    ((dlg_display_settings*)m_CurrentDialog)->EnableBlackout();
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseMPDisplay( void )
+{
+    if( m_CurrentDialog )
+    {
+        switch( m_CurrentDialog->GetState() )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_MP_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_MP_SETTINGS_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseMPDisplay( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterPauseMPLanguage( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "language settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_language_settings*)m_CurrentDialog)->EnableBlackout();
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseMPLanguage( void )
+{
+    if( m_CurrentDialog )
+    {
+        u32 const DialogState = m_CurrentDialog->GetState();
+
+        switch( DialogState )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_MP_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_MP_SETTINGS_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseMPLanguage( void )
+{
+}
+
+//=========================================================================
+
 void state_mgr::EnterPauseMPSettingsSelect( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_SAVE_SETTINGS );
 }
 
 //=========================================================================
@@ -6733,15 +7837,21 @@ void state_mgr::UpdatePauseMPSettingsSelect( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save settings was successful
-            SetState( SM_PAUSE_MP );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // save failed or was aborted
-            SetState( SM_PAUSE_MP );
+            case DIALOG_STATE_SELECT:
+            {
+                // save settings was successful
+                SetState( SM_PAUSE_MP );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // save failed or was aborted
+                SetState( SM_PAUSE_MP );
+            }
+            break;
         }
     }
 }
@@ -6811,7 +7921,7 @@ void state_mgr::UpdatePauseMPOptions( void )
             }
             break;
 
-        case DIALOG_STATE_MEMCARD_ERROR:
+        case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 // save failed - select a profile to save to
                 SetState( SM_PAUSE_MP_PROFILE_SAVE_SELECT );
@@ -6846,19 +7956,7 @@ void state_mgr::EnterPauseMPControls( void )
 
 void state_mgr::UpdatePauseMPControls( void )
 {
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_BACK:
-            {
-                SetState( SM_PAUSE_MP_OPTIONS );
-            }
-            break;
-        }
-    }
+    UpdateProfileControlsMenu( SM_PAUSE_MP_OPTIONS, FALSE );
 }
 
 //=========================================================================
@@ -6869,7 +7967,7 @@ void state_mgr::ExitPauseMPControls( void )
 
 //=========================================================================
 
-void state_mgr::EnterPauseMPMemcardSaveSelect( void )
+void state_mgr::EnterPauseMPSaveDataSaveSelect( void )
 {
     // Create profile menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
@@ -6884,7 +7982,7 @@ void state_mgr::EnterPauseMPMemcardSaveSelect( void )
 
 //=========================================================================
 
-void state_mgr::UpdatePauseMPMemcardSaveSelect( void )
+void state_mgr::UpdatePauseMPSaveDataSaveSelect( void )
 {
     // Get the current dialog state
     if( m_CurrentDialog != NULL )
@@ -6910,7 +8008,7 @@ void state_mgr::UpdatePauseMPMemcardSaveSelect( void )
             case DIALOG_STATE_CREATE:
             {
                 // Select a card to save the profile to
-                SetState( SM_PAUSE_MP_MEMCARD_RESELECT );
+                SetState( SM_PAUSE_MP_SAVE_DATA_RESELECT );
             }
             break;
         }
@@ -6919,44 +8017,51 @@ void state_mgr::UpdatePauseMPMemcardSaveSelect( void )
 
 //=========================================================================
 
-void state_mgr::ExitPauseMPMemcardSaveSelect( void )
+void state_mgr::ExitPauseMPSaveDataSaveSelect( void )
 {
 }
 
 //=========================================================================
 
-void state_mgr::EnterPauseMPMemcardReselect( void )
+void state_mgr::EnterPauseMPSaveDataReselect( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_CREATE_PROFILE );
 }
 
 //=========================================================================
 
-void state_mgr::UpdatePauseMPMemcardReselect( void )
+void state_mgr::UpdatePauseMPSaveDataReselect( void )
 {
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save profile was successful
-            SetState( SM_PAUSE_MP );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            SetState( SM_PAUSE_MP_PROFILE_SAVE_SELECT );
+            case DIALOG_STATE_SELECT:
+            {
+                // Save profile was successful.
+                SetState( SM_PAUSE_MP );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // The profile save failed or was aborted.
+                SetState( SM_PAUSE_MP_PROFILE_SAVE_SELECT );
+            }
+            break;
         }
     }
 }
 
 //=========================================================================
 
-void state_mgr::ExitPauseMPMemcardReselect( void )
+void state_mgr::ExitPauseMPSaveDataReselect( void )
 {
 }
 
@@ -6992,41 +8097,57 @@ void state_mgr::UpdatePauseOnline( void )
                 {
                     case IDC_PAUSE_ONLINE_SWITCH_TEAM:
                     case IDC_PAUSE_ONLINE_SUICIDE:
+                    {
                         // exit pause and rejoin game
                         SetPaused( FALSE, GetActiveControllerID() );
-                        break;
+                    }
+                    break;
 
                     case IDC_PAUSE_ONLINE_VOTE_MAP:
+                    {
                         SetState( SM_PAUSE_ONLINE_VOTE_MAP );
-                        break;
+                    }
+                    break;
 
                     case IDC_PAUSE_ONLINE_VOTE_KICK:
+                    {
                         SetState( SM_PAUSE_ONLINE_VOTE_KICK );
-                        break;
+                    }
+                    break;
 
                     case IDC_PAUSE_ONLINE_FRIENDS:
+                    {
                         SetState( SM_PAUSE_ONLINE_FRIENDS );
-                        break;
+                    }
+                    break;
 
                     case IDC_PAUSE_ONLINE_PLAYERS:
+                    {
                         SetState( SM_PAUSE_ONLINE_PLAYERS );
-                        break;
+                    }
+                    break;
 
                     case IDC_PAUSE_ONLINE_OPTIONS:
+                    {
                         // init pending profile
                         g_StateMgr.InitPendingProfile( 0 );
                         SetState( SM_PAUSE_ONLINE_OPTIONS );
-                        break;
+                    }  
+                    break;
 
                     case IDC_PAUSE_ONLINE_SETTINGS:
+                    {
                         // init pending settings
                         InitPendingSettings();
                         SetState( SM_PAUSE_ONLINE_SETTINGS );
-                        break;
+                    }
+                    break;
 
                     case IDC_PAUSE_ONLINE_CONFIG:
+                    {
                         SetState( SM_PAUSE_ONLINE_SERVER_CONFIG );
-                        break;
+                    }
+                    break;
                 }
             }
             break;
@@ -7303,7 +8424,7 @@ void state_mgr::UpdatePauseOnlineFeedbackFriend( void )
 
         switch( DialogState )
         {
-        case DIALOG_STATE_BACK:
+            case DIALOG_STATE_BACK:
             {
                 SetState( SM_PAUSE_ONLINE_FRIENDS );
             }
@@ -7376,7 +8497,7 @@ void state_mgr::UpdatePauseOnlineOptions( void )
             }
             break;
 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
                 // save failed - select a profile to save to
                 SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
@@ -7411,19 +8532,7 @@ void state_mgr::EnterPauseOnlineControls( void )
 
 void state_mgr::UpdatePauseOnlineControls( void )
 {
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-            case DIALOG_STATE_BACK:
-            {
-                SetState( SM_PAUSE_ONLINE_OPTIONS );
-            }
-            break;
-        }
-    }
+    UpdateProfileControlsMenu( SM_PAUSE_ONLINE_OPTIONS, FALSE );
 }
 
 //=========================================================================
@@ -7436,14 +8545,13 @@ void state_mgr::ExitPauseOnlineControls( void )
 
 void state_mgr::EnterPauseOnlineSettings( void )
 {
-    //  create options main menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea(16, DIALOG_TOP, 496, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "av settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
 #ifndef USE_MOVIES
     g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
 #endif
-    ((dlg_av_settings*)m_CurrentDialog)->EnableBlackout();
+    ((dlg_settings*)m_CurrentDialog)->EnableBlackout();
 }
 
 //=========================================================================
@@ -7464,7 +8572,46 @@ void state_mgr::UpdatePauseOnlineSettings( void )
 
             case DIALOG_STATE_SELECT:
             {
-                SetState( SM_PAUSE_ONLINE_HEADSET );
+                s32 Control = m_CurrentDialog->GetControl();
+
+                switch( Control )
+                {
+                    case IDC_SETTINGS_AUDIO:
+                    {
+                        SetState( SM_PAUSE_ONLINE_AUDIO );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_HEADSET:
+                    {
+                        SetState( SM_PAUSE_ONLINE_HEADSET );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_GRAPHICS:
+                    {
+                        SetState( SM_PAUSE_ONLINE_GRAPHICS );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_DISPLAY:
+                    {
+                        SetState( SM_PAUSE_ONLINE_DISPLAY );
+                    }
+                    break;
+
+                    case IDC_SETTINGS_LANGUAGE:
+                    {
+                        SetState( SM_PAUSE_ONLINE_LANGUAGE );
+                    }
+                    break;
+                }
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
             }
             break;
 
@@ -7475,6 +8622,45 @@ void state_mgr::UpdatePauseOnlineSettings( void )
 //=========================================================================
 
 void state_mgr::ExitPauseOnlineSettings( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterPauseOnlineAudio( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "audio settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_audio_settings*)m_CurrentDialog)->EnableBlackout();
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseOnlineAudio( void )
+{
+    if( m_CurrentDialog )
+    {
+        switch( m_CurrentDialog->GetState() )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_ONLINE_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseOnlineAudio( void )
 {
 }
 
@@ -7507,6 +8693,12 @@ void state_mgr::UpdatePauseOnlineHeadset ( void )
                 SetState( SM_PAUSE_ONLINE_SETTINGS );
             }
             break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
+            }
+            break;
         }
     }
 }
@@ -7514,6 +8706,131 @@ void state_mgr::UpdatePauseOnlineHeadset ( void )
 //=========================================================================
 
 void state_mgr::ExitPauseOnlineHeadset ( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterPauseOnlineGraphics( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "graphics settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+#ifndef USE_MOVIES
+    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
+#endif
+    ((dlg_graphics_settings*)m_CurrentDialog)->EnableBlackout();
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseOnlineGraphics( void )
+{
+    if( m_CurrentDialog )
+    {
+        switch( m_CurrentDialog->GetState() )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_ONLINE_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseOnlineGraphics( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterPauseOnlineDisplay( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "display settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+#ifndef USE_MOVIES
+    g_UiMgr->SetUserBackground( g_UiUserID, "background1" );
+#endif
+    ((dlg_display_settings*)m_CurrentDialog)->EnableBlackout();
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseOnlineDisplay( void )
+{
+    if( m_CurrentDialog )
+    {
+        switch( m_CurrentDialog->GetState() )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_ONLINE_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseOnlineDisplay( void )
+{
+}
+
+//=========================================================================
+
+void state_mgr::EnterPauseOnlineLanguage( void )
+{
+    g_UiMgr->EndDialog( g_UiUserID, TRUE );
+    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "language settings", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_language_settings*)m_CurrentDialog)->EnableBlackout();
+}
+
+//=========================================================================
+
+void state_mgr::UpdatePauseOnlineLanguage( void )
+{
+    if( m_CurrentDialog )
+    {
+        u32 const DialogState = m_CurrentDialog->GetState();
+
+        switch( DialogState )
+        {
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_ONLINE_SETTINGS );
+            }
+            break;
+
+            case DIALOG_STATE_SAVE_DATA_ERROR:
+            {
+                SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
+            }
+            break;
+        }
+    }
+}
+
+//=========================================================================
+
+void state_mgr::ExitPauseOnlineLanguage( void )
 {
 }
 
@@ -7560,7 +8877,7 @@ void state_mgr::UpdatePauseOnlineSaveSelect( void )
             case DIALOG_STATE_CREATE:
             {
                 // Select a card to save the profile to
-                SetState( SM_PAUSE_ONLINE_MEMCARD_RESELECT );
+                SetState( SM_PAUSE_ONLINE_SAVE_DATA_RESELECT );
             }
             break;
         }
@@ -7575,39 +8892,46 @@ void state_mgr::ExitPauseOnlineSaveSelect( void )
 
 //=========================================================================
 
-void state_mgr::EnterPauseOnlineMemcardReselect( void )
+void state_mgr::EnterPauseOnlineSaveDataReselect( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_CREATE_PROFILE );
 }
 
 //=========================================================================
 
-void state_mgr::UpdatePauseOnlineMemcardReselect( void )
+void state_mgr::UpdatePauseOnlineSaveDataReselect( void )
 {
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save profile was successful
-            SetState( SM_PAUSE_ONLINE );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
+            case DIALOG_STATE_SELECT:
+            {
+                // Save profile was successful.
+                SetState( SM_PAUSE_ONLINE );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // The profile save failed or was aborted.
+                // Go back to the profile select menu.
+                SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
+            }
+            break;
         }
     }
 }
 
 //=========================================================================
 
-void state_mgr::ExitPauseOnlineMemcardReselect( void )
+void state_mgr::ExitPauseOnlineSaveDataReselect( void )
 {
 }
 
@@ -7630,43 +8954,65 @@ void state_mgr::UpdatePauseServerConfig( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            s32 Control = m_CurrentDialog->GetControl();
-
-            switch( Control )
+            case DIALOG_STATE_SELECT:
             {
-                case IDC_SERVER_CONFIG_CHANGE_MAP:
-                    SetState( SM_PAUSE_ONLINE_CHANGE_MAP );
+                s32 Control = m_CurrentDialog->GetControl();
+
+                switch( Control )
+                {
+                    case IDC_SERVER_CONFIG_CHANGE_MAP:
+                    {
+                        SetState( SM_PAUSE_ONLINE_CHANGE_MAP );
+                    }
                     break;
 
-                case IDC_SERVER_CONFIG_KICK_PLAYER:
-                    SetState( SM_PAUSE_ONLINE_KICK_PLAYER );
+                    case IDC_SERVER_CONFIG_KICK_PLAYER:
+                    {
+                        SetState( SM_PAUSE_ONLINE_KICK_PLAYER );
+                    }
                     break;
 
-                case IDC_SERVER_CONFIG_CHANGE_TEAM:
-                    SetState( SM_PAUSE_ONLINE_TEAM_CHANGE );
+                    case IDC_SERVER_CONFIG_CHANGE_TEAM:
+                    {
+                        SetState( SM_PAUSE_ONLINE_TEAM_CHANGE );
+                    }
                     break;
 
-                case IDC_SERVER_CONFIG_RECONFIGURE:
-                    SetState( SM_PAUSE_ONLINE_RECONFIG_ONE );
+                    case IDC_SERVER_CONFIG_RECONFIGURE:
+                    {
+                        SetState( SM_PAUSE_ONLINE_RECONFIG_ONE );
+                    }
                     break;
 
-                case IDC_SERVER_CONFIG_SHUTDOWN:
-                    g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
-                    // Shutdown the server
+                    case IDC_SERVER_CONFIG_SHUTDOWN:
+                    {
+                        g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
+                        // Shutdown the server.
+                    }
                     break;
-                case IDC_SERVER_CONFIG_RESTART_MAP:
-                    g_ActiveConfig.SetExitReason( GAME_EXIT_RELOAD_LEVEL );
+
+                    case IDC_SERVER_CONFIG_RESTART_MAP:
+                    {
+                        g_ActiveConfig.SetExitReason( GAME_EXIT_RELOAD_LEVEL );
+                    }
                     break;
-                default:
-                    ASSERT( FALSE );
+
+                    default:
+                    {
+                        ASSERT( FALSE );
+                    }
+                    break;
+                }
             }
-        }
+            break;
 
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            SetState( SM_PAUSE_ONLINE );
+            case DIALOG_STATE_BACK:
+            {
+                SetState( SM_PAUSE_ONLINE );
+            }
+            break;
         }
     }
 }
@@ -7939,9 +9285,9 @@ void state_mgr::UpdatePauseOnlineReconfigMap( void )
             break;
 
 #if 0 
-            case DIALOG_STATE_MEMCARD_ERROR:
+            case DIALOG_STATE_SAVE_DATA_ERROR:
             {
-                // save to memcard and return to menu
+                // save to save data and return to menu
                 SetState( SM_PAUSE_ONLINE_SAVE_SETTINGS );
             }
             break;
@@ -7968,10 +9314,11 @@ void state_mgr::ExitPauseOnlineReconfigMap( void )
 
 void state_mgr::EnterPauseOnlineSaveSettings( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_SAVE_SETTINGS );
 }
 
 //=========================================================================
@@ -7982,17 +9329,23 @@ void state_mgr::UpdatePauseOnlineSaveSettings( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            SetState( SM_END_PAUSE );
-            // save profile was successful
-            // TODO: restart the game with the new settings
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // TODO: restart the game with the new settings
-            SetState( SM_END_PAUSE );
+            case DIALOG_STATE_SELECT:
+            {
+                SetState( SM_END_PAUSE );
+                // Save profile was successful.
+                // TODO: Restart the game with the new settings.
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // The profile save failed or was aborted.
+                // TODO: Restart the game with the new settings.
+                SetState( SM_END_PAUSE );
+            }
+            break;
         }
     }
 }
@@ -8025,7 +9378,7 @@ void state_mgr::EnterPauseMPScore( void )
     {
         if( ScoreData.IsTeamBased ) 
         {
-            irect mainarea(8, DIALOG_TOP, 504, 448-36);
+            irect mainarea( 8, DIALOG_TOP, 504, ui_viewport::CONTENT_HEIGHT - 36 );
             m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "team leaderboard", mainarea, NULL, ui_win::WF_VISIBLE );
             m_LeaderboardID = SM_TEAM_LEADERBOARD;
         }
@@ -8050,12 +9403,13 @@ void state_mgr::UpdatePauseMPScore( void )
     switch( m_LeaderboardID )
     {
         case SM_BIG_LEADERBOARD:
+        {
             if( playerCount < 17 )
             {
                 g_UiMgr->EndDialog( g_UiUserID, TRUE );
                 if( ScoreData.IsTeamBased ) 
                 {
-                    irect mainarea(8, DIALOG_TOP, 504, 448-36);
+                    irect mainarea( 8, DIALOG_TOP, 504, ui_viewport::CONTENT_HEIGHT - 36 );
                     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "team leaderboard", mainarea, NULL, ui_win::WF_VISIBLE );
                     m_LeaderboardID = SM_TEAM_LEADERBOARD;
                 }
@@ -8066,8 +9420,11 @@ void state_mgr::UpdatePauseMPScore( void )
                     m_LeaderboardID = SM_LEADERBOARD;
                 }
             }
-            break;
+        }
+        break;
+        
         default:
+        {
             if( playerCount > 16 )
             {
                 g_UiMgr->EndDialog( g_UiUserID, TRUE );
@@ -8075,7 +9432,8 @@ void state_mgr::UpdatePauseMPScore( void )
                 m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "big leaderboard", mainarea, NULL, ui_win::WF_VISIBLE );
                 m_LeaderboardID = SM_BIG_LEADERBOARD;
             }
-            break;
+        }
+        break;
     }
 
     if( m_CurrentDialog != NULL )
@@ -8113,7 +9471,9 @@ void state_mgr::UpdatePauseMPScore( void )
             break;
 
             default:
-                break;
+            {
+            }    
+            break;
         }
     }
 }
@@ -8131,9 +9491,7 @@ void state_mgr::EnterEndPause( void )
     // gracefully exit from the pause menu (kill all dialogs)
     g_UiMgr->EndUsersDialogs( g_UiUserID );
 
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-    irect mainarea( -75, DIALOG_TOP, XRes+75, DIALOG_BOTTOM );
+    irect mainarea( -75, DIALOG_TOP, ui_viewport::CONTENT_WIDTH + 75, DIALOG_BOTTOM );
 
     //restore UI control to all controllers
     g_UiMgr->SetUserController( g_UiUserID, -1 );
@@ -8150,9 +9508,13 @@ void state_mgr::UpdateEndPause( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            SetState( SM_PLAYING_GAME );
+            case DIALOG_STATE_SELECT:
+            {
+                SetState( SM_PLAYING_GAME );
+            }
+            break;
         }
     }
 }
@@ -8184,9 +9546,7 @@ void state_mgr::EnterExitGame( void )
 {
     // gracefully exit from the pause menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-    irect mainarea( -75, DIALOG_TOP, XRes+75, DIALOG_BOTTOM );
+    irect mainarea( -75, DIALOG_TOP, ui_viewport::CONTENT_WIDTH + 75, DIALOG_BOTTOM );
     g_UiMgr->EnableUser( g_UiUserID, TRUE );
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "end pause", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
     g_UiMgr->SetUserBackground( g_UiUserID, "" );
@@ -8198,12 +9558,11 @@ void state_mgr::EnterExitGame( void )
 
 void state_mgr::UpdateExitGame( void )
 {
-    // If any memory cards are currently processing, wait until it's done before quitting.
+    // Do not tear down state while a save data request owns captured state.
 #if (!CONFIG_IS_DEMO)
-    // If the save was successful OR user continues WITHOUT saving
-    if( g_UIMemCardMgr.IsActionDone()==FALSE  )
+    if( g_SaveDataMgr.IsBusy() )
     {
-        LOG_MESSAGE( "state_mgr::UpdateExitGame", "Delaying game exit due to memcard operation." );
+        LOG_MESSAGE( "state_mgr::UpdateExitGame", "Delaying game exit due to a save data operation." );
         return;
     }
 #endif
@@ -8212,9 +9571,13 @@ void state_mgr::UpdateExitGame( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            SetState( SM_IDLE );
+            case DIALOG_STATE_SELECT:
+            {
+                SetState( SM_IDLE );
+            }
+            break;
         }
     }
 }
@@ -8248,7 +9611,7 @@ void state_mgr::EnterPostGame( void )
         g_Input.Feedback( 0.0f, 0.0f, i );
     }
 
-    g_UIMemCardMgr.Clear();
+    g_SaveDataMgr.ClearCachedProfiles();
     g_UiMgr->EnableUser( g_UiUserID, TRUE );
 }
 
@@ -8275,51 +9638,60 @@ void state_mgr::UpdatePostGame( void )
 
     switch( g_ActiveConfig.GetExitReason() )
     {
-        //-----------------------------------------------------
-    case GAME_EXIT_ADVANCE_LEVEL:
-#if CONFIG_IS_DEMO
+        case GAME_EXIT_ADVANCE_LEVEL:
+        {
+        #if CONFIG_IS_DEMO
             g_StateMgr.SetState( SM_DEMO_EXIT );
-#else 
+        #else 
             // set the movie play flag to false!
             m_bPlayMovie = FALSE;
             g_StateMgr.SetState( SM_ADVANCE_LEVEL );
-#endif
+        #endif
+        }
+        break;
+    
+        case GAME_EXIT_RELOAD_CHECKPOINT:
+        {
+            // Tell the networkmgr we're about to re-enter the game. Then
+            // tell the statemgr we're going to do that too.
+            g_NetworkMgr.ReenterGame();
+            SetState( SM_RELOAD_CHECKPOINT );
+        }
         break;
 
-        //-----------------------------------------------------
-    case GAME_EXIT_RELOAD_CHECKPOINT:
-        // Tell the networkmgr we're about to re-enter the game. Then
-        // tell the statemgr we're going to do that too.
-        g_NetworkMgr.ReenterGame();
-        SetState( SM_RELOAD_CHECKPOINT );
+        case GAME_EXIT_RELOAD_LEVEL:
+        {
+            g_StateMgr.SetState( SM_ADVANCE_LEVEL );
+        }
         break;
-        //-----------------------------------------------------
-    case GAME_EXIT_RELOAD_LEVEL:
-        g_StateMgr.SetState( SM_ADVANCE_LEVEL );
+
+        case GAME_EXIT_PLAYER_DROPPED:
+        case GAME_EXIT_PLAYER_KICKED:
+        case GAME_EXIT_SESSION_ENDED:
+        case GAME_EXIT_CONNECTION_LOST:
+        case GAME_EXIT_SERVER_BUSY:
+        case GAME_EXIT_SERVER_SHUTDOWN:
+        case GAME_EXIT_NETWORK_DOWN:
+        case GAME_EXIT_DUPLICATE_LOGIN:
+        {
+            g_StateMgr.SetState( SM_REPORT_ERROR );
+            bClearControllers = TRUE;        
+        }
         break;
-        //-----------------------------------------------------
-    case GAME_EXIT_PLAYER_DROPPED:
-    case GAME_EXIT_PLAYER_KICKED:
-    case GAME_EXIT_SESSION_ENDED:
-    case GAME_EXIT_CONNECTION_LOST:
-    case GAME_EXIT_SERVER_BUSY:
-    case GAME_EXIT_SERVER_SHUTDOWN:
-    case GAME_EXIT_NETWORK_DOWN:
-    case GAME_EXIT_DUPLICATE_LOGIN:
-        g_StateMgr.SetState( SM_REPORT_ERROR );
-        bClearControllers = TRUE;        
+
+        case GAME_EXIT_GAME_COMPLETE:
+        {
+            g_StateMgr.SetState( SM_GAME_OVER );
+            bClearControllers = TRUE;        
+        }
         break;
-        //-----------------------------------------------------
-    case GAME_EXIT_GAME_COMPLETE:
-        g_StateMgr.SetState( SM_GAME_OVER );
-        bClearControllers = TRUE;        
-        break;
-        //-----------------------------------------------------
-    case GAME_EXIT_PLAYER_QUIT:
+
+        case GAME_EXIT_PLAYER_QUIT:
         {
             g_RscMgr.Load( PRELOAD_FILE("DX_FrontEnd.audiopkg"    ) );
             g_RscMgr.Load( PRELOAD_FILE("SFX_FrontEnd.audiopkg"   ) );
             g_RscMgr.Load( PRELOAD_FILE("MUSIC_FrontEnd.audiopkg" ) );
+            g_RscMgr.Load( PRELOAD_FILE("DREAMLAND.audiopkg" ) );
             // initialize audio volumes from global settings
             global_settings& Settings = g_StateMgr.GetActiveSettings();
             Settings.CommitAudio();
@@ -8333,9 +9705,9 @@ void state_mgr::UpdatePostGame( void )
             }
             else
             {
-#if CONFIG_IS_DEMO
+            #if CONFIG_IS_DEMO
                 SetState( SM_DEMO_EXIT );
-#else
+            #else
                 if( GameMgr.GetGameType() == GAME_CAMPAIGN )
                 {
                     // check if profile needs to be saved
@@ -8346,50 +9718,56 @@ void state_mgr::UpdatePostGame( void )
                     // split screen justs return to the split screen menu
                     SetState( SM_MULTI_PLAYER_MENU );
                 }
-#endif
+            #endif
             }
         }
         break;
-        //-----------------------------------------------------
-    case GAME_EXIT_BAD_PASSWORD:
-    case GAME_EXIT_SERVER_FULL:
-    case GAME_EXIT_CLIENT_BANNED:
-    case GAME_EXIT_CANNOT_CONNECT:
-    case GAME_EXIT_INVALID_MISSION:
-    case GAME_EXIT_LOGIN_REFUSED:
-        SetState( SM_REPORT_ERROR );
-        bClearControllers = TRUE;        
-        break;
-        //-----------------------------------------------------
-    case GAME_EXIT_FOLLOW_BUDDY:
-        
-        if( GameMgr.IsGameOnline()==FALSE )
+
+        case GAME_EXIT_BAD_PASSWORD:
+        case GAME_EXIT_SERVER_FULL:
+        case GAME_EXIT_CLIENT_BANNED:
+        case GAME_EXIT_CANNOT_CONNECT:
+        case GAME_EXIT_INVALID_MISSION:
+        case GAME_EXIT_INVALID_CAMPAIGN_MISSION:
+        case GAME_EXIT_LOGIN_REFUSED:
         {
-            m_bFollowBuddy = TRUE;
-            // clear the controller requests
-            // EXCEPT for the controller that was in the friends menu
-            for(s32 p=0; p < SM_MAX_PLAYERS; p++)
+            SetState( SM_REPORT_ERROR );
+            bClearControllers = TRUE;        
+        }
+        break;
+
+        case GAME_EXIT_FOLLOW_BUDDY:
+        {        
+            if( GameMgr.IsGameOnline()==FALSE )
             {
-                if( p != GetActiveControllerID() )
+                m_bFollowBuddy = TRUE;
+                // clear the controller requests
+                // EXCEPT for the controller that was in the friends menu
+                for(s32 p=0; p < SM_MAX_PLAYERS; p++)
                 {
-                    g_StateMgr.SetControllerRequested(p, FALSE);
+                    if( p != GetActiveControllerID() )
+                    {
+                        g_StateMgr.SetControllerRequested(p, FALSE);
+                    }
+                    // these all need to be reset - they will be reassigned.
+                    g_GameInput.ClearPlayerDevice( p );
                 }
-                // these all need to be reset - they will be reassigned.
-                g_IngamePad[p].SetDeviceID(-1);
+                game_config::Commit();
+                SetState( SM_ONLINE_CONNECT );
             }
-            game_config::Commit();
-            SetState( SM_ONLINE_CONNECT );
-        }
-        else
-        {
-            StartLogin( &g_PendingConfig.GetConfig(), LOGIN_FOLLOW_FRIEND );
+            else
+            {
+                StartLogin( &g_PendingConfig.GetConfig(), LOGIN_FOLLOW_FRIEND );
+            }
         }
         break;
-        //-----------------------------------------------------
-        // NOTE: DO NOT remove this assert. If we come out of the game with an unexpected error code,
-        // then we need to handle it gracefully and understand WHY this error code appeared.
-    default:
-        ASSERT(FALSE);
+
+        default:
+        {
+            // NOTE: DO NOT remove this assert. If we come out of the game with an unexpected error code,
+            // then we need to handle it gracefully and understand WHY this error code appeared.        
+            ASSERT(FALSE);
+        } 
         break;
     }
 
@@ -8402,7 +9780,7 @@ void state_mgr::UpdatePostGame( void )
         for(s32 p=0; p < SM_MAX_PLAYERS; p++)
         {
             g_StateMgr.SetControllerRequested(p, FALSE);
-            g_IngamePad[p].SetDeviceID(-1);
+            g_GameInput.ClearPlayerDevice( p );
         }
     }
 }
@@ -8423,22 +9801,8 @@ void state_mgr::EnterAutosaveMenu( void )
     g_AudioMgr.PauseAll();
 
     // set up the screen bars off screen
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-    irect initSize( -75, DIALOG_TOP, 512+75, DIALOG_BOTTOM );
-
-    // Adjust the size according to the resolution.
-    s32 midX = XRes>>1;
-    s32 dx = midX - 256;
-
-    // scale height of dialog
-    s32 Y = initSize.b - initSize.t;
-    Y = (s32)( (f32)Y * g_UiMgr->GetScaleY() );
-    // position it
-    initSize.t = (s32)((f32)initSize.t * g_UiMgr->GetScaleY());
-    initSize.t += SAFE_ZONE;
-    initSize.b = initSize.t + Y;
-    initSize.Translate( dx, 0 );
+    irect initSize( -75, DIALOG_TOP, ui_viewport::CONTENT_WIDTH + 75, DIALOG_BOTTOM );
+    initSize.Translate( 0, SAFE_ZONE );
 
     g_UiMgr->SetScreenSize(initSize);       
     g_UiMgr->EnableUser( g_UiUserID, TRUE );
@@ -8450,21 +9814,19 @@ void state_mgr::EnterAutosaveMenu( void )
     // intialize the pending profile
     InitPendingProfile(0);
 
-    // enable memcard dialogs
-    m_bDisableMemcardDialogs = FALSE;
+    // enable save data dialogs
 
     // Create the main pause dialog
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 106, DIALOG_TOP, 406, DIALOG_BOTTOM );
 
-    if (x_GetLocale() != XL_LANG_ENGLISH)
+    if( x_GetLocale() != XL_LANG_ENGLISH )
     {
         mainarea.l = 71;
         mainarea.r = 441;
     }
 
     m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "autosave", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-    ((dlg_autosave*)m_CurrentDialog)->SetCard( m_iCard );
     g_UiMgr->SetUserBackground( g_UiUserID, "" );
 
     // Pause Audio
@@ -8481,19 +9843,25 @@ void state_mgr::UpdateAutosaveMenu( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // pick a profile to save to
-            SetState( SM_AUTOSAVE_PROFILE_RESELECT );
-        }
-        else if( DialogState == DIALOG_STATE_BACK )
-        {
-            // continue without saving for now
-            g_StateMgr.SetProfileNotSaved( g_StateMgr.GetPendingProfileIndex(), TRUE );
-            // update the changes in the profile
-            g_StateMgr.ActivatePendingProfile();
-            // return to game
-            SetState( SM_END_AUTOSAVE );
+            case DIALOG_STATE_SELECT:
+            {
+                // Pick a profile to save to.
+                SetState( SM_AUTOSAVE_PROFILE_RESELECT );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // Continue without saving for now.
+                g_StateMgr.SetProfileNotSaved( g_StateMgr.GetPendingProfileIndex(), TRUE );
+                // Update the changes in the profile.
+                g_StateMgr.ActivatePendingProfile();
+                // Return to game.
+                SetState( SM_END_AUTOSAVE );
+            }
+            break;
         }
     }
 }
@@ -8568,9 +9936,7 @@ void state_mgr::EnterEndAutosave( void )
 {
     // gracefully exit from the pause menu
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-    irect mainarea( -75, DIALOG_TOP, XRes+75, DIALOG_BOTTOM );
+    irect mainarea( -75, DIALOG_TOP, ui_viewport::CONTENT_WIDTH + 75, DIALOG_BOTTOM );
 
     //restore UI control to all controllers
     g_UiMgr->SetUserController( g_UiUserID, -1 );
@@ -8589,9 +9955,13 @@ void state_mgr::UpdateEndAutosave( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            SetState( SM_PLAYING_GAME );
+            case DIALOG_STATE_SELECT:
+            {
+                SetState( SM_PLAYING_GAME );
+            }
+            break;
         }
     }
 }
@@ -8642,7 +10012,7 @@ void state_mgr::EnterFinalScore( void )
     {
         if( ScoreData.IsTeamBased ) 
         {
-            irect mainarea(8, DIALOG_TOP, 504, 448-36);
+            irect mainarea( 8, DIALOG_TOP, 504, ui_viewport::CONTENT_HEIGHT - 36 );
             m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "team leaderboard", mainarea, NULL, ui_win::WF_VISIBLE );
             m_LeaderboardID = SM_TEAM_LEADERBOARD;
             // configure for final score
@@ -8669,18 +10039,23 @@ void state_mgr::UpdateFinalScore( void )
 
         switch( DialogState )
         {
-        case DIALOG_STATE_ACTIVE:
+            case DIALOG_STATE_ACTIVE:
+            {
+            }
             break;
-        case DIALOG_STATE_BACK:
-        case DIALOG_STATE_SELECT:
-        {
-            // check if profile needs to be saved
-            SetState( SM_GAME_EXIT_PROMPT_FOR_SAVE );
-        }
-        break;
 
-        default:
-            ASSERT(FALSE);
+            case DIALOG_STATE_BACK:
+            case DIALOG_STATE_SELECT:
+            {
+                // check if profile needs to be saved
+                SetState( SM_GAME_EXIT_PROMPT_FOR_SAVE );
+            }
+            break;
+            
+            default:
+            {
+                ASSERT(FALSE);
+            }
             break;
         }
     }
@@ -8989,9 +10364,6 @@ void state_mgr::EnterMultiPlayerLoadMission( void )
     m_CurrentDialog = NULL;
     g_UiMgr->EnableUser( g_UiUserID, TRUE );
     ASSERT( m_pLeaderboardDialog == NULL );
-    //*** MUST BE IN A THREADSAFE STATE WHILE OPENING DIALOGS ***
-    ASSERT( IsBackgroundThreadRunning()==FALSE );
-
     //
     // Create score dialog
     //
@@ -9013,7 +10385,7 @@ void state_mgr::EnterMultiPlayerLoadMission( void )
     {
         if( ScoreData.IsTeamBased ) 
         {           
-            irect mainarea(8, DIALOG_TOP, 504, 448-36);
+            irect mainarea( 8, DIALOG_TOP, 504, ui_viewport::CONTENT_HEIGHT - 36 );
             m_pLeaderboardDialog = g_UiMgr->OpenDialog( g_UiUserID, "team leaderboard", mainarea, NULL, ui_win::WF_VISIBLE );
             m_LeaderboardID = SM_TEAM_LEADERBOARD;
             // configure for final score
@@ -9089,56 +10461,64 @@ void state_mgr::UpdateMultiPlayerLoadMission( void )
         ASSERT( (m_CurrentDialog->GetFlags() & ui_win::WF_VISIBLE)  != 0 );
         ASSERT( (m_CurrentDialog->GetFlags() & ui_win::WF_DISABLED) == 0 );
         dialog_states DialogState = m_CurrentDialog->GetState();
-        if( (DialogState == DIALOG_STATE_SELECT) && (!s_FirstMap) )
+        switch( DialogState )
         {
-            // goto the level description screen
-            m_CurrentDialog->SetState( DIALOG_STATE_ACTIVE );                   // Reset the pad pressed flag
-            m_CurrentDialog->SetFlag( ui_win::WF_VISIBLE, FALSE );                      // Make this dialog invisible
-            m_CurrentDialog->SetFlag( ui_win::WF_DISABLED, TRUE );
+            case DIALOG_STATE_SELECT:
+            {
+                if( !s_FirstMap )
+                {
+                    // Goto the level description screen
+                    m_CurrentDialog->SetState( DIALOG_STATE_ACTIVE );                   // Reset the pad pressed flag
+                    m_CurrentDialog->SetFlag( ui_win::WF_VISIBLE, FALSE );              // Make this dialog invisible
+                    m_CurrentDialog->SetFlag( ui_win::WF_DISABLED, TRUE );
 
-            m_pLeaderboardDialog->SetFlag( ui_win::WF_VISIBLE, TRUE );                  // Make the leaderboard visible
-            m_pLeaderboardDialog->SetFlag( ui_win::WF_DISABLED, FALSE );
-            g_UiMgr->EnableBackground( FALSE );
-            m_bShowingScores = TRUE;
+                    m_pLeaderboardDialog->SetFlag( ui_win::WF_VISIBLE, TRUE );          // Make the leaderboard visible
+                    m_pLeaderboardDialog->SetFlag( ui_win::WF_DISABLED, FALSE );
+                    g_UiMgr->EnableBackground( FALSE );
+                    m_bShowingScores = TRUE;
+                }
+            }
+            break;
         }
     }
     else
     {
         dialog_states DialogState = m_pLeaderboardDialog->GetState();
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // Make the background go away for now.
-            g_UiMgr->EnableBackground( TRUE );
-            // goto the level description
-            m_pLeaderboardDialog->SetState( DIALOG_STATE_ACTIVE );                   // Reset the pad pressed flag
-            m_pLeaderboardDialog->SetFlag( ui_win::WF_VISIBLE, FALSE );                      // Make this dialog invisible
-            m_pLeaderboardDialog->SetFlag( ui_win::WF_DISABLED, TRUE );
+            case DIALOG_STATE_SELECT:
+            {
+                // Make the background go away for now.
+                g_UiMgr->EnableBackground( TRUE );
+                // Goto the level description
+                m_pLeaderboardDialog->SetState( DIALOG_STATE_ACTIVE );                 // Reset the pad pressed flag
+                m_pLeaderboardDialog->SetFlag( ui_win::WF_VISIBLE, FALSE );             // Make this dialog invisible
+                m_pLeaderboardDialog->SetFlag( ui_win::WF_DISABLED, TRUE );
 
-            m_CurrentDialog->SetFlag( ui_win::WF_VISIBLE, TRUE );                           // Make the description visible
-            m_CurrentDialog->SetFlag( ui_win::WF_DISABLED, FALSE );
-            m_bShowingScores = FALSE;
+                m_CurrentDialog->SetFlag( ui_win::WF_VISIBLE, TRUE );                   // Make the description visible
+                m_CurrentDialog->SetFlag( ui_win::WF_DISABLED, FALSE );
+                m_bShowingScores = FALSE;
+            }
+            break;
         }
     }
 
-    if( IsBackgroundThreadRunning()==FALSE )
+    if( g_NetworkMgr.IsServer() )
     {
-        if( g_NetworkMgr.IsServer() )
+        server_state ServerState = g_NetworkMgr.GetServerObject().GetState();
+        if( ServerState != STATE_SERVER_LOAD_MISSION )
         {
-            server_state ServerState = g_NetworkMgr.GetServerObject().GetState();
-            if( ServerState != STATE_SERVER_LOAD_MISSION )
-            {
-                SetState( SM_SERVER_SYNC );
-            }
+            SetState( SM_SERVER_SYNC );
         }
-        if( g_NetworkMgr.IsClient() )
+    }
+    if( g_NetworkMgr.IsClient() )
+    {
+        client_state ClientState = g_NetworkMgr.GetClientObject().GetState();
+        if( (ClientState != STATE_CLIENT_LOAD_MISSION) &&
+            (ClientState != STATE_CLIENT_VERIFY_MISSION) &&
+            (ClientState != STATE_CLIENT_REQUEST_MISSION) )
         {
-            client_state ClientState = g_NetworkMgr.GetClientObject().GetState();
-            if( (ClientState != STATE_CLIENT_LOAD_MISSION) && 
-                (ClientState != STATE_CLIENT_VERIFY_MISSION) &&
-                (ClientState != STATE_CLIENT_REQUEST_MISSION) )
-            {
-                SetState( SM_CLIENT_SYNC );
-            }
+            SetState( SM_CLIENT_SYNC );
         }
     }
 }
@@ -9186,41 +10566,48 @@ void state_mgr::UpdateServerCooldown( void )
 {   
     server_state ServerState = g_NetworkMgr.GetServerObject().GetState();
     exit_reason Reason = g_ActiveConfig.GetExitReason();
+    
     if( ServerState != STATE_SERVER_COOLDOWN )
     {
         switch( Reason )
         {
-            //-----------------------------------------------------
-        case GAME_EXIT_ADVANCE_LEVEL:
-        case GAME_EXIT_RELOAD_LEVEL:
-        case GAME_EXIT_RELOAD_CHECKPOINT:
-            SetState( SM_POST_GAME );
+            case GAME_EXIT_ADVANCE_LEVEL:
+            case GAME_EXIT_RELOAD_LEVEL:
+            case GAME_EXIT_RELOAD_CHECKPOINT:
+            {
+                SetState( SM_POST_GAME );
+            }
             break;
-            //-----------------------------------------------------
-        case GAME_EXIT_NETWORK_DOWN:
-        case GAME_EXIT_DUPLICATE_LOGIN:
-        case GAME_EXIT_FOLLOW_BUDDY:
-        case GAME_EXIT_PLAYER_DROPPED:
-        case GAME_EXIT_PLAYER_KICKED:
-        case GAME_EXIT_SESSION_ENDED:
-        case GAME_EXIT_CONNECTION_LOST:
-        case GAME_EXIT_SERVER_BUSY:
-        case GAME_EXIT_PLAYER_QUIT:
-        case GAME_EXIT_SERVER_SHUTDOWN:
-        case GAME_EXIT_GAME_COMPLETE:
-        case GAME_EXIT_BAD_PASSWORD:
-        case GAME_EXIT_SERVER_FULL:
-        case GAME_EXIT_CLIENT_BANNED:
-        case GAME_EXIT_CANNOT_CONNECT:
-        case GAME_EXIT_INVALID_MISSION:
-        case GAME_EXIT_LOGIN_REFUSED:
-            SetState( SM_SERVER_DISCONNECT );
+            
+            case GAME_EXIT_NETWORK_DOWN:
+            case GAME_EXIT_DUPLICATE_LOGIN:
+            case GAME_EXIT_FOLLOW_BUDDY:
+            case GAME_EXIT_PLAYER_DROPPED:
+            case GAME_EXIT_PLAYER_KICKED:
+            case GAME_EXIT_SESSION_ENDED:
+            case GAME_EXIT_CONNECTION_LOST:
+            case GAME_EXIT_SERVER_BUSY:
+            case GAME_EXIT_PLAYER_QUIT:
+            case GAME_EXIT_SERVER_SHUTDOWN:
+            case GAME_EXIT_GAME_COMPLETE:
+            case GAME_EXIT_BAD_PASSWORD:
+            case GAME_EXIT_SERVER_FULL:
+            case GAME_EXIT_CLIENT_BANNED:
+            case GAME_EXIT_CANNOT_CONNECT:
+            case GAME_EXIT_INVALID_MISSION:
+            case GAME_EXIT_INVALID_CAMPAIGN_MISSION:
+            case GAME_EXIT_LOGIN_REFUSED:
+            {
+                SetState( SM_SERVER_DISCONNECT );
+            }
             break;
-            //-----------------------------------------------------
-            // NOTE: DO NOT remove this assert. If we come out of the game with an unexpected error code,
-            // then we need to handle it gracefully and understand WHY this error code appeared.
-        default:
-            ASSERT(FALSE);
+
+            default:
+            {
+                // NOTE: DO NOT remove this assert. If we come out of the game with an unexpected error code,
+                // then we need to handle it gracefully and understand WHY this error code appeared.
+                ASSERT(FALSE);
+            }
             break;
         }
     }
@@ -9252,37 +10639,43 @@ void state_mgr::UpdateClientCooldown( void )
     {
         switch( Reason )
         {
-            //-----------------------------------------------------
-        case GAME_EXIT_ADVANCE_LEVEL:
-        case GAME_EXIT_RELOAD_LEVEL:
-        case GAME_EXIT_RELOAD_CHECKPOINT:
-            SetState( SM_POST_GAME );
+            case GAME_EXIT_ADVANCE_LEVEL:
+            case GAME_EXIT_RELOAD_LEVEL:
+            case GAME_EXIT_RELOAD_CHECKPOINT:
+            {
+                SetState( SM_POST_GAME );
+            }
             break;
-            //-----------------------------------------------------
-        case GAME_EXIT_NETWORK_DOWN:
-        case GAME_EXIT_DUPLICATE_LOGIN:
-        case GAME_EXIT_FOLLOW_BUDDY:
-        case GAME_EXIT_PLAYER_DROPPED:
-        case GAME_EXIT_PLAYER_KICKED:
-        case GAME_EXIT_SESSION_ENDED:
-        case GAME_EXIT_CONNECTION_LOST:
-        case GAME_EXIT_SERVER_BUSY:
-        case GAME_EXIT_PLAYER_QUIT:
-        case GAME_EXIT_SERVER_SHUTDOWN:
-        case GAME_EXIT_GAME_COMPLETE:
-        case GAME_EXIT_BAD_PASSWORD:
-        case GAME_EXIT_SERVER_FULL:
-        case GAME_EXIT_CLIENT_BANNED:
-        case GAME_EXIT_CANNOT_CONNECT:
-        case GAME_EXIT_INVALID_MISSION:
-        case GAME_EXIT_LOGIN_REFUSED:
-            SetState( SM_CLIENT_DISCONNECT );
+
+            case GAME_EXIT_NETWORK_DOWN:
+            case GAME_EXIT_DUPLICATE_LOGIN:
+            case GAME_EXIT_FOLLOW_BUDDY:
+            case GAME_EXIT_PLAYER_DROPPED:
+            case GAME_EXIT_PLAYER_KICKED:
+            case GAME_EXIT_SESSION_ENDED:
+            case GAME_EXIT_CONNECTION_LOST:
+            case GAME_EXIT_SERVER_BUSY:
+            case GAME_EXIT_PLAYER_QUIT:
+            case GAME_EXIT_SERVER_SHUTDOWN:
+            case GAME_EXIT_GAME_COMPLETE:
+            case GAME_EXIT_BAD_PASSWORD:
+            case GAME_EXIT_SERVER_FULL:
+            case GAME_EXIT_CLIENT_BANNED:
+            case GAME_EXIT_CANNOT_CONNECT:
+            case GAME_EXIT_INVALID_MISSION:
+            case GAME_EXIT_INVALID_CAMPAIGN_MISSION:
+            case GAME_EXIT_LOGIN_REFUSED:
+            {
+                SetState( SM_CLIENT_DISCONNECT );
+            }
             break;
-            //-----------------------------------------------------
-            // NOTE: DO NOT remove this assert. If we come out of the game with an unexpected error code,
-            // then we need to handle it gracefully and understand WHY this error code appeared.
-        default:
-            ASSERT(FALSE);
+
+            default:
+            {
+                // NOTE: DO NOT remove this assert. If we come out of the game with an unexpected error code,
+                // then we need to handle it gracefully and understand WHY this error code appeared.
+                ASSERT(FALSE);
+            }
             break;
         }
     }
@@ -9673,15 +11066,11 @@ s32 state_mgr::GetMapCycleMapID( s32 Index )
 
 void state_mgr::EnterReportError( void )
 {
-    if( IsBackgroundThreadRunning() )
-    {
-        StopBackgroundRendering();
-        return;
-    }
     // reload the front-end sound effects
     g_RscMgr.Load( PRELOAD_FILE("DX_FrontEnd.audiopkg"    ) );
     g_RscMgr.Load( PRELOAD_FILE("SFX_FrontEnd.audiopkg"   ) );
     g_RscMgr.Load( PRELOAD_FILE("MUSIC_FrontEnd.audiopkg" ) );
+    g_RscMgr.Load( PRELOAD_FILE("DREAMLAND.audiopkg" ) );
     // initialize audio volumes from global settings
     global_settings& Settings = g_StateMgr.GetActiveSettings();
     Settings.CommitAudio();
@@ -9720,11 +11109,6 @@ void state_mgr::EnterReportError( void )
 
 void state_mgr::UpdateReportError( void )
 {
-    // Don't allow re-entrancy
-    if( m_BackgroundRendererRunning )
-    {
-        return;
-    }
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
@@ -9733,51 +11117,66 @@ void state_mgr::UpdateReportError( void )
         {
             switch( g_ActiveConfig.GetExitReason() )
             {
-                //-----------------------------------------------------
-            case GAME_EXIT_NETWORK_DOWN:
-            case GAME_EXIT_DUPLICATE_LOGIN:
-                DisconnectFromNetwork();
-                SetState( SM_GAME_EXIT_PROMPT_FOR_SAVE );
-                break;
-                //-----------------------------------------------------
-            case GAME_EXIT_PLAYER_DROPPED:
-            case GAME_EXIT_PLAYER_KICKED:
-            case GAME_EXIT_PLAYER_QUIT:
-            case GAME_EXIT_INVALID_MISSION:
-            case GAME_EXIT_SERVER_BUSY:
-            case GAME_EXIT_SERVER_SHUTDOWN:
-            case GAME_EXIT_CONNECTION_LOST:
-                if( m_LoginFailureDestination == LOGIN_FROM_MAIN )
+                case GAME_EXIT_NETWORK_DOWN:
+                case GAME_EXIT_DUPLICATE_LOGIN:
                 {
-                    // If the failure destination is the online main menu, then we need to go through
-                    // prompt for save to make sure any in-game data got saved before aborting.
-                    SetState( SM_GAME_EXIT_PROMPT_FOR_SAVE );
-                    break;
+                    BeginNetworkDisconnect( SM_GAME_EXIT_PROMPT_FOR_SAVE );
                 }
+                break;
+                
+                case GAME_EXIT_INVALID_CAMPAIGN_MISSION:
+                {
+                    g_ActiveConfig.SetExitReason( GAME_EXIT_CONTINUE );
+                    SetState( SM_CAMPAIGN_MENU );
+                }
+                break;
+                
+                case GAME_EXIT_PLAYER_DROPPED:
+                case GAME_EXIT_PLAYER_KICKED:
+                case GAME_EXIT_PLAYER_QUIT:
+                case GAME_EXIT_INVALID_MISSION:
+                case GAME_EXIT_SERVER_BUSY:
+                case GAME_EXIT_SERVER_SHUTDOWN:
+                case GAME_EXIT_CONNECTION_LOST:
+                {
+                    if( m_LoginFailureDestination == LOGIN_FROM_MAIN )
+                    {
+                        // If the failure destination is the online main menu, then we need to go through
+                        // prompt for save to make sure any in-game data got saved before aborting.
+                        SetState( SM_GAME_EXIT_PROMPT_FOR_SAVE );
+                        break;
+                    }
+                }
+                
+                //***** WARNING WARNING WARNING *****
                 //***** DELIBERATE FALLTHROUGH *****
-            case GAME_EXIT_SESSION_ENDED:
-            case GAME_EXIT_CANNOT_CONNECT:
-            case GAME_EXIT_BAD_PASSWORD:
-            case GAME_EXIT_SERVER_FULL:
-            case GAME_EXIT_CLIENT_BANNED:
-            case GAME_EXIT_LOGIN_REFUSED:
-                switch( m_LoginFailureDestination )
+
+                case GAME_EXIT_SESSION_ENDED:
+                case GAME_EXIT_CANNOT_CONNECT:
+                case GAME_EXIT_BAD_PASSWORD:
+                case GAME_EXIT_SERVER_FULL:
+                case GAME_EXIT_CLIENT_BANNED:
+                case GAME_EXIT_LOGIN_REFUSED:
                 {
-                case LOGIN_FROM_FRIENDS:        SetState( SM_ONLINE_FRIENDS_MENU );             break;
-                case LOGIN_FROM_PLAYERS:        SetState( SM_ONLINE_PLAYERS_MENU );             break;
-                case LOGIN_FROM_JOIN_MENU:      SetState( SM_ONLINE_JOIN_MENU );                break;
-                case LOGIN_FROM_INVITE:         SetState( SM_MAIN_MENU );                       break;
-                case LOGIN_FOLLOW_FRIEND:       SetState( SM_ONLINE_FRIENDS_MENU );             break;
-                case LOGIN_FROM_MAIN:           SetState( SM_ONLINE_MAIN_MENU );                break;
-                default:                        SetState( SM_ONLINE_MAIN_MENU ); ASSERT(FALSE); break;
-                                
+                    switch( m_LoginFailureDestination )
+                    {
+                        case LOGIN_FROM_FRIENDS:        SetState( SM_ONLINE_FRIENDS_MENU );             break;
+                        case LOGIN_FROM_PLAYERS:        SetState( SM_ONLINE_PLAYERS_MENU );             break;
+                        case LOGIN_FROM_JOIN_MENU:      SetState( SM_ONLINE_JOIN_MENU );                break;
+                        case LOGIN_FROM_INVITE:         SetState( SM_MAIN_MENU );                       break;
+                        case LOGIN_FOLLOW_FRIEND:       SetState( SM_ONLINE_FRIENDS_MENU );             break;
+                        case LOGIN_FROM_MAIN:           SetState( SM_ONLINE_MAIN_MENU );                break;
+                        default:                        SetState( SM_ONLINE_MAIN_MENU ); ASSERT(FALSE); break;             
+                    }
                 }
                 break;
-                //-----------------------------------------------------
-                // NOTE: DO NOT remove this assert. If we come out of the game with an unexpected error code,
-                // then we need to handle it gracefully and understand WHY this error code appeared.
-            default:
-                ASSERT(FALSE);
+
+                default:
+                {
+                    // NOTE: DO NOT remove this assert. If we come out of the game with an unexpected error code,
+                    // then we need to handle it gracefully and understand WHY this error code appeared.
+                    ASSERT(FALSE);
+                }
                 break;
             }
         }
@@ -9809,7 +11208,7 @@ void state_mgr::EnterGameExitPromptForSave( void )
 
             // changes have been made - prompt to save
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL );
 
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
@@ -9868,9 +11267,8 @@ void state_mgr::UpdateGameExitPromptForSave( void )
             else
             {
                 // attempt to save to the preserved profile
-                profile_info* pProfileInfo = &g_UIMemCardMgr.GetProfileInfo( 0 );
-                m_iCard = pProfileInfo->CardID;
-                g_UIMemCardMgr.SaveProfile( *pProfileInfo, 0, this, &state_mgr::OnGameExitSaveProfileCB );
+                profile_info* pProfileInfo = &g_SaveDataMgr.GetProfileInfo( 0 );
+                g_SaveDataMgr.SaveProfile( *pProfileInfo, 0, this, &state_mgr::OnGameExitSaveProfileCB );
                 // goto idle whilst we wait for the callback
                 SetState( SM_IDLE );
             }
@@ -9955,7 +11353,7 @@ void state_mgr::UpdateGameExitSaveSelect( void )
             case DIALOG_STATE_CREATE:
             {
                 // Select a card to save the profile to
-                SetState( SM_GAME_EXIT_MEMCARD_RESELECT );
+                SetState( SM_GAME_EXIT_SAVE_DATA_RESELECT );
             }
             break;
         }
@@ -9970,48 +11368,55 @@ void state_mgr::ExitGameExitSaveSelect( void )
 
 //=========================================================================
 
-void state_mgr::EnterGameExitMemcardReselect( void )
+void state_mgr::EnterGameExitSaveDataReselect( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_CREATE_PROFILE );
 }
 
 //=========================================================================
 
-void state_mgr::UpdateGameExitMemcardReselect( void )
+void state_mgr::UpdateGameExitSaveDataReselect( void )
 {
     if( m_CurrentDialog != NULL )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save profile was successful
-            global_settings& ActiveSettings = GetActiveSettings();
-            if( ActiveSettings.HasChanged() )
+            case DIALOG_STATE_SELECT:
             {
-                SetState( SM_GAME_EXIT_SAVE_SETTINGS );
+                // Save profile was successful.
+                global_settings& ActiveSettings = GetActiveSettings();
+                if( ActiveSettings.HasChanged() )
+                {
+                    SetState( SM_GAME_EXIT_SAVE_SETTINGS );
+                }
+                else
+                {
+                    // Go to redirect.
+                    SetState( SM_GAME_EXIT_REDIRECT );
+                }
             }
-            else
+            break;
+
+            case DIALOG_STATE_BACK:
             {
-                // goto redirect
-                SetState( SM_GAME_EXIT_REDIRECT );
+                // The profile save failed or was aborted.
+                // Go back to the profile select menu.
+                SetState( SM_GAME_EXIT_SAVE_SELECT );
             }
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // the profile save failed or was aborted
-            // go back to the profile select menu
-            SetState( SM_GAME_EXIT_SAVE_SELECT );
+            break;
         }
     }
 }
 
 //=========================================================================
 
-void state_mgr::ExitGameExitMemcardReselect( void )
+void state_mgr::ExitGameExitSaveDataReselect( void )
 {
 }
 
@@ -10023,7 +11428,7 @@ void state_mgr::EnterGameExitSaveSettings( void )
 
     // changes have been made to settings - prompt to save
     irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL );
 
     // set nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
@@ -10063,30 +11468,8 @@ void state_mgr::UpdateGameExitSaveSettings( void )
             // save changes
             g_AudioMgr.Play("Select_Norm");
 
-            // check if the settings are saved 
-            if( g_StateMgr.GetSettingsCardSlot() == -1 )
-            {
-                // check for corrupt settings
-                if( g_UIMemCardMgr.FoundSettings() )
-                {
-                    SetState( SM_GAME_EXIT_SETTINGS_OVERWRITE );
-                }
-                else
-                {
-                    // attempt to create settings
-                    g_StateMgr.SetSettingsCardSlot( 0 );
-                    g_UIMemCardMgr.CreateSettings( this, &state_mgr::OnGameExitSaveSettingsCB );
-                    // goto idle whilst we wait for the callback
-                    SetState( SM_IDLE );
-                }
-            }
-            else
-            {                            
-                // attempt to save the changes to the memcard
-                g_UIMemCardMgr.SaveSettings( this, &state_mgr::OnGameExitSaveSettingsCB );
-                // goto idle whilst we wait for the callback
-                SetState( SM_IDLE );
-            }
+            g_SaveDataMgr.SaveSettings( this, &state_mgr::OnGameExitSaveSettingsCB );
+            SetState( SM_IDLE );
         }
         break;
 
@@ -10115,7 +11498,7 @@ void state_mgr::EnterGameExitSettingsOverwrite( void )
 {
     // ask permission to overwrite old settings
     irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL );
 
     // set nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
@@ -10141,10 +11524,7 @@ void state_mgr::UpdateGameExitSettingsOverwrite( void )
         {
             // overwrite old settings file
             g_AudioMgr.Play("Select_Norm");
-            // set settings card slot
-            g_StateMgr.SetSettingsCardSlot( 0 );
-            // attempt to save the changes to the memcard
-            g_UIMemCardMgr.SaveSettings( this, &state_mgr::OnGameExitSaveSettingsCB );
+            g_SaveDataMgr.SaveSettings( this, &state_mgr::OnGameExitSaveSettingsCB );
             // goto idle whilst we wait for the callback
             SetState( SM_IDLE );
         }
@@ -10173,10 +11553,11 @@ void state_mgr::ExitGameExitSettingsOverwrite( void )
 
 void state_mgr::EnterGameExitSettingsSelect( void )
 {
-    //  Create memcard select screen 
+    //  Create save data select screen
     g_UiMgr->EndDialog( g_UiUserID, TRUE );
     irect mainarea( 46, DIALOG_TOP, 466, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "memcard select", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "save data", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
+    ((dlg_save_data*)m_CurrentDialog)->Configure( SAVE_DATA_DIALOG_SAVE_SETTINGS );
 }
 
 //=========================================================================
@@ -10187,15 +11568,21 @@ void state_mgr::UpdateGameExitSettingsSelect( void )
     {
         u32 DialogState = m_CurrentDialog->GetState();
 
-        if( DialogState == DIALOG_STATE_SELECT )
+        switch( DialogState )
         {
-            // save settings was successful
-            SetState( SM_GAME_EXIT_REDIRECT );
-        }
-        if( DialogState == DIALOG_STATE_BACK )
-        {
-            // save failed or was aborted
-            SetState( SM_GAME_EXIT_REDIRECT );
+            case DIALOG_STATE_SELECT:
+            {
+                // Save settings was successful.
+                SetState( SM_GAME_EXIT_REDIRECT );
+            }
+            break;
+
+            case DIALOG_STATE_BACK:
+            {
+                // Save failed or was aborted.
+                SetState( SM_GAME_EXIT_REDIRECT );
+            }
+            break;
         }
     }
 }
@@ -10221,45 +11608,59 @@ void state_mgr::UpdateGameExitRedirect( void )
     // redirect the flow based on the exit reason
     switch( g_ActiveConfig.GetExitReason() )
     {
-    case GAME_EXIT_PLAYER_QUIT:
-    case GAME_EXIT_GAME_COMPLETE:
-        if( g_NetworkMgr.IsOnline() )
+        case GAME_EXIT_PLAYER_QUIT:
+        case GAME_EXIT_GAME_COMPLETE:
+        {
+            if( g_NetworkMgr.IsOnline() )
+            {
+                SetState( SM_ONLINE_MAIN_MENU );
+            }
+            else
+            {
+                SetState( SM_CAMPAIGN_MENU );
+            }
+        }
+        break;
+        
+        case GAME_EXIT_NETWORK_DOWN:
+        case GAME_EXIT_DUPLICATE_LOGIN:
+        {
+            // This will only happen if the cable is pulled while quitting
+            // a game.
+            if( g_NetworkMgr.IsOnline() )
+            {
+                SetState( SM_REPORT_ERROR );
+                return;
+            }
+            else
+            {
+                SetState( SM_MAIN_MENU );
+            }
+        }
+        break;
+        
+        case GAME_EXIT_PLAYER_DROPPED:
+        case GAME_EXIT_PLAYER_KICKED:
+        case GAME_EXIT_SESSION_ENDED:
+        case GAME_EXIT_CONNECTION_LOST:
+        case GAME_EXIT_SERVER_BUSY:
+        case GAME_EXIT_SERVER_SHUTDOWN:
+        case GAME_EXIT_INVALID_MISSION:
         {
             SetState( SM_ONLINE_MAIN_MENU );
         }
-        else
+        break;
+        
+        case GAME_EXIT_INVALID_CAMPAIGN_MISSION:
         {
             SetState( SM_CAMPAIGN_MENU );
         }
         break;
-
-    case GAME_EXIT_NETWORK_DOWN:
-    case GAME_EXIT_DUPLICATE_LOGIN:
-        // This will only happen if the cable is pulled while quitting
-        // a game.
-        if( g_NetworkMgr.IsOnline() )
+        
+        default:
         {
-            SetState( SM_REPORT_ERROR );
-            return;
+            ASSERTS( FALSE, "Unexpected exit reason in redirect!" );
         }
-        else
-        {
-            SetState( SM_MAIN_MENU );
-        }
-        break;
-
-    case GAME_EXIT_PLAYER_DROPPED:
-    case GAME_EXIT_PLAYER_KICKED:
-    case GAME_EXIT_SESSION_ENDED:
-    case GAME_EXIT_CONNECTION_LOST:
-    case GAME_EXIT_SERVER_BUSY:
-    case GAME_EXIT_SERVER_SHUTDOWN:
-    case GAME_EXIT_INVALID_MISSION:
-        SetState( SM_ONLINE_MAIN_MENU );
-        break;
-
-    default:
-        ASSERTS( FALSE, "Unexpected exit reason in redirect!" );
         break;
     }
     g_ActiveConfig.SetExitReason( GAME_EXIT_CONTINUE );
@@ -10268,51 +11669,6 @@ void state_mgr::UpdateGameExitRedirect( void )
 //=========================================================================
 
 void state_mgr::ExitGameExitRedirect( void )
-{
-}
-
-//=========================================================================
-
-void state_mgr::EnterOnlineDownload( void )
-{
-    // Create online host menu
-    g_UiMgr->EndDialog( g_UiUserID, TRUE );
-
-    irect mainarea(26, DIALOG_TOP, 486, DIALOG_BOTTOM );
-    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID, "download", mainarea, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER );
-}
-
-//=========================================================================
-
-void state_mgr::UpdateOnlineDownload( void )
-{
-    if( CheckForDisconnect() )
-    {
-        return;
-    }
-
-    if( m_CurrentDialog != NULL )
-    {
-        u32 DialogState = m_CurrentDialog->GetState();
-
-        switch( DialogState )
-        {
-        case DIALOG_STATE_ACTIVE:
-            break;
-
-        case DIALOG_STATE_BACK:
-            SetState( SM_ONLINE_MAIN_MENU );
-            break;
-
-        default:
-            ASSERT( FALSE );
-        }
-    }
-}
-
-//=========================================================================
-
-void state_mgr::ExitOnlineDownload( void )
 {
 }
 
@@ -10337,50 +11693,59 @@ void state_mgr::UpdateOnlineLogin( void )
     {
         return;
     }
+
     if( m_CurrentDialog != NULL )
     {
         dialog_states DialogState = (dialog_states)m_CurrentDialog->GetState();
         switch( DialogState )
         {
-            // ------------------------------------------------
-            // Login continuing
-        case DIALOG_STATE_ACTIVE:
-            break;
-            // ------------------------------------------------
-            // Login succeeded
-        case DIALOG_STATE_SELECT:
-            LevelID = g_ActiveConfig.GetLevelID();
-            ASSERT( LevelID );
-            g_PendingConfig.SetLevelID( LevelID );
-            game_config::Commit();
-            SetState( SM_START_GAME );
-            break;
-
-            // ------------------------------------------------
-            // The child dialog sets the BACK state if any sort of error occurs. 
-            // The ReportError dialogs can deal with all the explicit messages.
-        case DIALOG_STATE_BACK:
-            ASSERT( g_ActiveConfig.GetExitReason() != GAME_EXIT_CONTINUE );
-            // Although this should be SM_REPORT_ERROR, SM_POST_GAME
-            // performs some cleanup of game objects that still needs
-            // to be performed when we drop out of the game early.
-            SetState( SM_POST_GAME );
-            break;
-            // ------------------------------------------------
-        case DIALOG_STATE_CANCEL:
-            // 'Cancel' (or back) was pressed
-            switch( m_LoginFailureDestination )
+            case DIALOG_STATE_ACTIVE:
             {
-            case LOGIN_FROM_FRIENDS:                SetState( SM_ONLINE_FRIENDS_MENU );         break;
-            case LOGIN_FROM_JOIN_MENU:              SetState( SM_ONLINE_JOIN_MENU );            break;
-            case LOGIN_FROM_INVITE:                 SetState( SM_ONLINE_MAIN_MENU );            break;
-            case LOGIN_FROM_PLAYERS:                SetState( SM_ONLINE_JOIN_MENU );            break;
-            case LOGIN_FOLLOW_FRIEND:               SetState( SM_ONLINE_FRIENDS_MENU );         break;
-            default:                                ASSERT( FALSE );                            break;
             }
             break;
-        default:
-            ASSERT(FALSE);
+
+            case DIALOG_STATE_SELECT:
+            {
+                LevelID = g_ActiveConfig.GetLevelID();
+                ASSERT( LevelID );
+                g_PendingConfig.SetLevelID( LevelID );
+                game_config::Commit();
+                SetState( SM_START_GAME );
+            }
+            break;
+            
+                // The child dialog sets the BACK state if any sort of error occurs. 
+                // The ReportError dialogs can deal with all the explicit messages.
+
+            case DIALOG_STATE_BACK:
+            {
+                ASSERT( g_ActiveConfig.GetExitReason() != GAME_EXIT_CONTINUE );
+                // Although this should be SM_REPORT_ERROR, SM_POST_GAME
+                // performs some cleanup of game objects that still needs
+                // to be performed when we drop out of the game early.
+                SetState( SM_POST_GAME );
+            }
+            break;
+
+            case DIALOG_STATE_CANCEL:
+            {
+                // 'Cancel' (or back) was pressed
+                switch( m_LoginFailureDestination )
+                {
+                    case LOGIN_FROM_FRIENDS:                SetState( SM_ONLINE_FRIENDS_MENU );         break;
+                    case LOGIN_FROM_JOIN_MENU:              SetState( SM_ONLINE_JOIN_MENU );            break;
+                    case LOGIN_FROM_INVITE:                 SetState( SM_ONLINE_MAIN_MENU );            break;
+                    case LOGIN_FROM_PLAYERS:                SetState( SM_ONLINE_JOIN_MENU );            break;
+                    case LOGIN_FOLLOW_FRIEND:               SetState( SM_ONLINE_FRIENDS_MENU );         break;
+                    default:                                ASSERT( FALSE );                            break;
+                }
+            }
+            break;
+
+            default:
+            {
+                ASSERT(FALSE);
+            }
             break;
         }
     }
@@ -10426,35 +11791,42 @@ void state_mgr::UpdateGameOver( void )
 {
 #ifdef USE_MOVIES
     // play the outro movie
-    if( !PlaySimpleMovie( SelectBestClip( "CinemaOutro" )) )
+    if( !WaitForSimpleMovie( SelectBestClip( "CinemaOutro" ),
+                             "End Credits Here (just don't make them lame)" ) )
     {
-        DummyScreen( "End Credits Here (just don't make them lame)", TRUE, 5 );
+        return;
     }
 #endif
 
     player_profile& ActiveProfile = GetActiveProfile( GetProfileListIndex(0) );
 
     // Set that player has finished the game. ( used to open up extra movie )
-    ActiveProfile.m_bGameFinished = TRUE;
+    ActiveProfile.SetGameFinished( TRUE );
 
     // check that the difficulty level was unchanged for the entire campaign
-    if( !ActiveProfile.m_bDifficultyChanged )
+    if( !ActiveProfile.GetDifficultyChanged() )
     {
         switch( ActiveProfile.GetDifficultyLevel() )
         {
             case DIFFICULTY_MEDIUM:
+            {
                 // unlock difficulty hard for completing the game on medium
-                ActiveProfile.m_bHardUnlocked = TRUE;
-                break;
+                ActiveProfile.SetHardUnlocked( TRUE );
+            }
+            break;
 
-            case DIFFICULTY_HARD:   
+            case DIFFICULTY_HARD:
+            {
                 // unlock alien avatars for completing the game on hard
-                ActiveProfile.m_bAlienAvatarsOn = TRUE;
-                break;
+                ActiveProfile.SetAlienAvatarsOn( TRUE );
+            }
+            break;
 
             default:
+            {
                 // you get nothing, nada, zip!
-                break;
+            }
+            break;
         }
     }
 
@@ -10465,6 +11837,7 @@ void state_mgr::UpdateGameOver( void )
     g_RscMgr.Load( PRELOAD_FILE("DX_FrontEnd.audiopkg"    ) );
     g_RscMgr.Load( PRELOAD_FILE("SFX_FrontEnd.audiopkg"   ) );
     g_RscMgr.Load( PRELOAD_FILE("MUSIC_FrontEnd.audiopkg" ) );
+    g_RscMgr.Load( PRELOAD_FILE("DREAMLAND.audiopkg" ) );    
     // initialize audio volumes from global settings
     global_settings& Settings = g_StateMgr.GetActiveSettings();
     Settings.CommitAudio();
@@ -10482,8 +11855,7 @@ void state_mgr::ExitGameOver( void )
 
 xbool state_mgr::CheckForDisconnect( void )
 {
-    // the memcard manager is doing something with the memcard  
-    if( !g_UIMemCardMgr.IsActionDone() || m_bDoSystemError )
+    if( g_SaveDataMgr.IsBusy() || m_bDoSystemError )
     {
         // if this is the case, don't check for a disconnect to force dialog 
         // shutdown or you'll hose everything.
@@ -10507,129 +11879,15 @@ xbool state_mgr::CheckForDisconnect( void )
 
 //=========================================================================
 
-static volatile xbool s_BackgroundRendererStop;
-static volatile xbool s_BackgroundRendererDone;
-
-//=========================================================================
-
-static void s_BackgroundRenderer( void )
-{
-    ASSERT( !s_BackgroundRendererDone );
-    ASSERT( !s_BackgroundRendererStop );
-    {
-        xthread* pThread = x_GetCurrentThread();
-        xtimer DeltaTime;
-        f32    Delta;
-
-        ASSERT( pThread );
-        DeltaTime.Start();
-
-        while( pThread->IsActive() && (!s_BackgroundRendererStop) )
-        {
-            Delta = g_DeltaMgr.ReadTimerDeltaToFallback( DeltaTime );
-            // The order in which this is performed is quite important. Since this thread will typically be started
-            // within the state_mgr Update() call, then, to preserve the order outlined at higher levels of the logic,
-            // we need to do the Render, then the pageflip (maybe in different order for xbox) then we do the updates
-            // as this may cause us to have a double update when the thread is first started as well as a render without
-            // update when the thread is killed.
-        #ifndef TARGET_PC
-            g_StateMgr.Render();
-            eng_PageFlip();
-        #endif
-            g_NetworkMgr.Update( Delta );
-
-            // Update input mgr
-            g_Input.SampleActionMaps( g_IngamePad, Delta, FRONTEND_CONTEXT );
-            g_Input.CommitActionMapsFrame( g_IngamePad );
-            g_Input.ClearActionMapsFixed( g_IngamePad );
-
-            // Update UI
-            g_StateMgr.Update( Delta );
-            //g_UiMgr->Update( Delta );
-
-        #if defined(X_LOGGING)
-            // This is a hack so that the lower priority thread gets a chance to run if logging is enabled since the
-            // higher priority thread may take too much processing time when flushing a log.
-            x_DelayThread(2);
-        #endif
-        }
-    }
-    s_BackgroundRendererDone = TRUE;
-}
-
-//=========================================================================
-
-void state_mgr::StartBackgroundRendering( void )
-{
-    s_BackgroundRendererStop = FALSE;
-    s_BackgroundRendererDone = FALSE;
-    {
-        ASSERT( m_BackgroundRendererRunning == FALSE );
-        ASSERT( m_pBackgroundRenderer == NULL );
-        m_BackgroundRendererRunning = TRUE;
-        m_pBackgroundRenderer = new xthread( s_BackgroundRenderer, "State Manager Background Renderer", 16384, 3 ); 
-        LOG_MESSAGE( "state_mgr::StartBackgroundRendering", "Background renderer started." );
-        ASSERT( m_pBackgroundRenderer );
-
-        // let scratchmem know that we are flipping in a thread other than the
-        // main thread
-        smem_SetThreadId( m_pBackgroundRenderer->GetId() );
-    }
-}
-
-//=========================================================================
-
-void state_mgr::StopBackgroundRendering( void )
-{
-    //** NOTE: The destructor will deal with trying to shutdown the thread gracefully.
-    ASSERT( m_pBackgroundRenderer );
-    ASSERT( m_BackgroundRendererRunning );
-    xtimer t;
-
-    t.Start();
-    delete m_pBackgroundRenderer;
-    m_pBackgroundRenderer = NULL;
-    m_BackgroundRendererRunning = FALSE;
-    t.Stop();
-
-    LOG_MESSAGE( "state_mgr::StopBackgroundRendering", "Background renderer stopped in %2.02fms.", t.ReadMs() );
-
-    // let scratchmem know that we are done flipping it on a separate thread
-    smem_SetThreadId( -1 );
-}
-
-//=========================================================================
-
-xbool state_mgr::IsBackgroundThreadRunning( void )
-{
-    return m_BackgroundRendererRunning;
-}
-
-//=========================================================================
 void state_mgr::SilentSaveProfileReturn( void )
 {
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 ); //MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
-
-    // If the save was successful OR user continues WITHOUT saving
-    if( Condition.SuccessCode )
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
     {
-        // continue without saving?
-        if( Condition.bCancelled )
-        {
-            // flag the profile as not saved
-            g_StateMgr.SetProfileNotSaved( 0, TRUE ); 
-        }
-        else
-        {
-            // update profile checksum
-            player_profile& ActiveProfile = GetActiveProfile( 0 );
-            ActiveProfile.Checksum();
-        }
+        player_profile& ActiveProfile = GetActiveProfile( 0 );
+        ActiveProfile.Checksum();
 
         // reset save in progress flag
         m_bAutosaveInProgress = FALSE;
-        // enable memcard dialogs
-        m_bDisableMemcardDialogs = FALSE;
     }
     else
     {
@@ -10695,7 +11953,7 @@ void state_mgr::SilentSaveProfile( void )
     // Store it and then start to save the profile
     *pOldestCheckpoint = g_CheckPointMgr.m_Level;
 
-    // attempt to save the changes to the memcard
+    // attempt to save the changes to the save data
     if( m_bAutosaveProfile)
     {
         // set save in progress flag
@@ -10703,9 +11961,8 @@ void state_mgr::SilentSaveProfile( void )
 
         profile_info* pProfileInfo=NULL;
         // This is the last saved profile information stored in the
-        // memory card subsystem.
-        pProfileInfo = &g_UIMemCardMgr.GetProfileInfo( 0 );
-        m_iCard = pProfileInfo->CardID;
+        // save data subsystem.
+        pProfileInfo = &g_SaveDataMgr.GetProfileInfo( 0 );
 
         LOG_MESSAGE( "state_mgr::SilentSaveProfile", "Profile '%s' save initiated", (const char*)xstring(pProfileInfo->Name) );
         // We need to copy the active profile to the pending profile. This is what will
@@ -10720,10 +11977,8 @@ void state_mgr::SilentSaveProfile( void )
         }
         else
         {
-            // disable memcard dialogs
-            m_bDisableMemcardDialogs = TRUE;
-            // attempt to save the changes to the memcard
-            g_UIMemCardMgr.SaveProfile( *pProfileInfo, 0, this, &state_mgr::SilentSaveProfileReturn );
+            // attempt to save the changes to the save data
+            g_SaveDataMgr.SaveProfile( *pProfileInfo, 0, this, &state_mgr::SilentSaveProfileReturn );
         }
     }
     else
@@ -10734,42 +11989,81 @@ void state_mgr::SilentSaveProfile( void )
 
 //=========================================================================
 
-void state_mgr::DisconnectFromNetwork( void )
+void state_mgr::BeginNetworkDisconnect( sm_states Destination )
 {
-    if( g_NetworkMgr.IsOnline() )
+    ASSERT( Destination != SM_NETWORK_DISCONNECT );
+
+    if( !g_NetworkMgr.IsOnline() )
     {
-        dlg_popup* pPopUp;
-        irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-        pPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_USE_ABSOLUTE|ui_win::WF_INPUTMODAL );
-
-        r = irect(0,0,300,160);
-
-        pPopUp->Configure( r,
-            1000.0f,
-            g_StringTableMgr( "ui", "IDS_NETWORK_POPUP"     ),
-            g_StringTableMgr( "ui", "IDS_ONLINE_DISCONNECTING"),
-            NULL );
-
-        KillFrontEndMusic();
-        StartBackgroundRendering();
-        g_NetworkMgr.SetOnline( FALSE );
-        StopBackgroundRendering();
-        InitFrontEndMusic("MUSIC_MenuBackground");
-        g_UiMgr->EndDialog( g_UiUserID, TRUE );
+        SetState( Destination );
+        return;
     }
+
+    m_NetworkDisconnectDestination = Destination;
+    SetState( SM_NETWORK_DISCONNECT );
+}
+
+//=========================================================================
+
+void state_mgr::EnterNetworkDisconnect( void )
+{
+    g_UiMgr->EndUsersDialogs( g_UiUserID );
+
+    irect r = g_UiMgr->GetUserBounds( g_UiUserID );
+    m_CurrentDialog = g_UiMgr->OpenDialog( g_UiUserID,
+                                          "popup",
+                                          r,
+                                          NULL,
+                                          ui_win::WF_VISIBLE |
+                                          ui_win::WF_BORDER |
+                                          ui_win::WF_DLG_CENTER |
+                                          ui_win::WF_INPUTMODAL );
+
+    r.Set( 0, 0, 300, 160 );
+
+    dlg_popup* pPopUp = (dlg_popup*)m_CurrentDialog;
+    pPopUp->Configure( r,
+                       1000.0f,
+                       g_StringTableMgr( "ui", "IDS_NETWORK_POPUP" ),
+                       g_StringTableMgr( "ui", "IDS_ONLINE_DISCONNECTING" ),
+                       NULL );
+    pPopUp->EnableBlackout( FALSE );
+
+    g_NetworkMgr.BeginOnlineStateChange( FALSE );
+}
+
+//=========================================================================
+
+void state_mgr::UpdateNetworkDisconnect( void )
+{
+    if( !g_NetworkMgr.IsOnlineStateChanging() )
+    {
+        g_NetworkMgr.BeginOnlineStateChange( FALSE );
+        return;
+    }
+
+    if( !g_NetworkMgr.IsOnlineStateChangeDone() )
+    {
+        return;
+    }
+
+    g_NetworkMgr.FinishOnlineStateChange();
+    SetState( m_NetworkDisconnectDestination );
+}
+
+//=========================================================================
+
+void state_mgr::ExitNetworkDisconnect( void )
+{
+    g_UiMgr->EndUsersDialogs( g_UiUserID );
 }
 
 //=========================================================================
 
 void state_mgr::Reboot( reboot_reason Reason )
 {
-    if( IsBackgroundThreadRunning() )
-    {
-        StopBackgroundRendering();
-    }
     g_AudioMgr.Kill();
     g_LevelLoader.UnmountDefaultFilesystems();
-    g_MemcardHardware.Kill();
     g_IoMgr.Kill();
     g_Input.Kill();
     eng_Reboot( Reason );
@@ -10810,7 +12104,7 @@ void state_mgr::EnterFollowBuddy( void )
 #endif
 
     irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL );
 
     // set nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));

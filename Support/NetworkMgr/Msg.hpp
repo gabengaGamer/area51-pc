@@ -14,7 +14,7 @@
 //==============================================================================
 
 #include "x_types.hpp"
-#include "x_Bitstream.hpp"
+#include "x_bitstream.hpp"
 
 #include "Messages.hpp"
 

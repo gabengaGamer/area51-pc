@@ -339,5 +339,4 @@ static s16 s_iicon_camera[] =
 };
 
 
-#define DRAW_ICON_CAMERA() draw_icon( NUM_FACETS_ICON_CAMERA, NUM_VERTICES_ICON_CAMERA, s_vicon_camera, s_iicon_camera )
 

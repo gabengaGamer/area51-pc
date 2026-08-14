@@ -1,10 +1,11 @@
+#include "Render/PrimitiveDebug.hpp"
 #include "Portal.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
 
 //=========================================================================
 // OBJECT DESCRIPTION
@@ -53,7 +54,7 @@ static struct zone_portal_desc : public object_desc
             Portal.RenderVolume();
         }
 #endif //X_RETAIL
-        return EDITOR_ICON_PORTAL;
+        return static_cast<s32>( EditorIcon::Portal );
     }
 
 #endif // X_EDITOR
@@ -115,9 +116,9 @@ xbool zone_portal::IsPortalValid( void )
 
 void zone_portal::OnRender( void )
 {
-    CONTEXT( "zone_portal::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "zone_portal::OnRender" );
 #ifndef X_EDITOR
-    draw_BBox    ( GetBBox(), xcolor(255,255,255,255) );
+    render::debug::Box    ( GetBBox(), xcolor(255,255,255,255) );
 #endif //X_EDITOR
 }
 
@@ -128,7 +129,7 @@ void zone_portal::OnRender( void )
 #ifndef X_RETAIL
 void zone_portal::RenderVolume( void )
 {
-    draw_BBox    ( GetBBox(), xcolor(255,255,255,255) );  
+    render::debug::Box    ( GetBBox(), xcolor(255,255,255,255) );  
 
     xcolor Clr;
 
@@ -140,9 +141,8 @@ void zone_portal::RenderVolume( void )
     if ( !IsPortalValid() )
         Clr.Set(255,255,0,128);
 
-    draw_SetL2W( GetL2W() );
-    draw_Volume( bbox( vector3(-m_Width/2,-m_Height/2,5), vector3(m_Width/2,m_Height/2,-5) ), Clr );
-    draw_ClearL2W();
+    render::debug::Volume( bbox( vector3(-m_Width/2,-m_Height/2,5), vector3(m_Width/2,m_Height/2,-5) ),
+                           GetL2W(), Clr );
 }
 #endif // X_RETAIL
 
@@ -152,7 +152,7 @@ void zone_portal::RenderVolume( void )
 void zone_portal::OnDebugRender( void )
 {
 #ifndef X_EDITOR
-    CONTEXT( "zone_portal::OnDebugRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "zone_portal::OnDebugRender" );
     RenderVolume();
 #endif //X_EDITOR
 }
@@ -166,7 +166,7 @@ void zone_portal::OnRenderTransparent( void )
 {
 #ifndef X_RETAIL
 #ifndef X_EDITOR
-    CONTEXT( "zone_portal::OnRenderTransparent" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "zone_portal::OnRenderTransparent" );
     RenderVolume();
 #endif //X_EDITOR
 #endif //X_RETAIL
@@ -253,8 +253,6 @@ xbool zone_portal::OnProperty( prop_query& I )
 
     return TRUE;
 }
-
-
 
 
 

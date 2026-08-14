@@ -9,14 +9,14 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\play_conversation.hpp"
+#include "../Support/Trigger/Actions/play_conversation.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "..\Support\Sound\EventSoundEmitter.hpp"
-#include "..\Support\Trigger\Trigger_Spatial_Object.hpp"
-#include "..\Support\Objects\Event.hpp"
-#include "..\Support\Objects\Player.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "../Support/Sound/EventSoundEmitter.hpp"
+#include "../Support/Trigger/Trigger_Spatial_Object.hpp"
+#include "../Support/Objects/Event.hpp"
+#include "../Support/Objects/Player/Player.hpp"
 #include "Entropy.hpp"
 
 
@@ -36,7 +36,7 @@ play_conversation::play_conversation ( guid ParentGuid ) : actions_base( ParentG
 
 void play_conversation::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * play_conversation::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * play_conversation::Execute" );
     ASSERT( pParent );
     (void) pParent;
     

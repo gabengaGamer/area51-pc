@@ -16,7 +16,7 @@
 #include "x_math.hpp"
 #endif
 
-#include "ui\ui_listbox.hpp"
+#include "UI/ui_listbox.hpp"
 
 //==============================================================================
 //  ui_friendlist
@@ -36,12 +36,7 @@ enum
     NUM_PRESENCE_ICONS,
 };
 
-// IMPORTANT NOTE! (JP)
-//
-// The following flags are used to provide extra voice information in a
-// buddy so that the players and friends list can be XBox TCR compliant.
-// These flags will be OR'd on top of the buddy_info.Flags, so to avoid
-// conflicts with the existing flags, they use the most significant bits.
+// Additional voice-state bits stored alongside buddy_info::Flags.
 
 enum
 {
@@ -69,14 +64,18 @@ public:
         FLAG_ITEM_SEPARATOR         = 0x00000004,                   // Separator item
     };
 
-                    ui_friendlist             ( void );
-    virtual        ~ui_friendlist             ( void );
+                    ui_friendlist           ( void );
+    virtual        ~ui_friendlist           ( void );
 
-    virtual void    Render                  ( s32 ox=0, s32 oy=0 );
+    xbool          Create                   ( s32           UserID,
+                                              ui_manager*   pManager,
+                                              const irect&  Position,
+                                              ui_win*       pParent,
+                                              s32           Flags );
 
     void            RenderString            ( irect r, u32 Flags, const xcolor& c1, const xcolor& c2, const char* pString );
     void            RenderString            ( irect r, u32 Flags, const xcolor& c1, const xcolor& c2, const xwchar* pString );
-    void            RenderTitle             ( irect r, u32 Flags, const xwchar* pString );
+    virtual void    RenderHeader            ( irect r );
     virtual void    RenderItem              ( irect r, const item& Item, const xcolor& c1, const xcolor& c2 );
 
     void            Configure               ( xbool IsFriendsList );

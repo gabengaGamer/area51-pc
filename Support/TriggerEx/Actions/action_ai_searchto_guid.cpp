@@ -9,7 +9,7 @@
 //=========================================================================
 
 #include "action_ai_searchto_guid.hpp"
-#include "..\Support\Characters\Character.hpp"
+#include "../Support/Characters/Character.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS

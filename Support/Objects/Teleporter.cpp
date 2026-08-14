@@ -8,11 +8,12 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Teleporter.hpp"
-#include "Objects\Player.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 //==============================================================================
 //  OBJECT DESCRIPTION
@@ -84,16 +85,16 @@ static struct teleporter_desc : public object_desc
             if( Arc )
                 P1 += Offset * x_sin( T * PI );
 
-            draw_Line( P0, P1, Color );
-            draw_Point( P1, Color );
+            render::debug::Line( P0, P1, Color );
+            render::debug::Point( P1, Color );
 
             P0 = P1;
         }
 
-        draw_Line( P0, End, Color );
+        render::debug::Line( P0, End, Color );
 
         if( !Arc )
-            draw_Marker( End, XCOLOR_YELLOW );
+            render::debug::Marker( End, XCOLOR_YELLOW );
     }
 
     //--------------------------------------------------------------------------
@@ -106,7 +107,7 @@ static struct teleporter_desc : public object_desc
         {
             bbox BBox = Object.GetLocalBBox();
             BBox.Translate( Object.GetPosition() );
-            draw_BBox( BBox );
+            render::debug::Box( BBox );
 
             vector3 Start = Teleporter.GetPosition();
 
@@ -147,8 +148,8 @@ static struct teleporter_desc : public object_desc
                     Velocity.GetY() -= (1000.0f    * g_MPTweaks.Gravity) * (1.0f/30.0f);
                                     // (Grav=cm/s) * (MP)                * (1/30th second);
 
-                    draw_Line( P0, P1, Toggle ? XCOLOR_YELLOW : XCOLOR_BLUE );
-                    draw_Point( P1 );
+                    render::debug::Line( P0, P1, Toggle ? XCOLOR_YELLOW : XCOLOR_BLUE );
+                    render::debug::Point( P1 );
 
                     Toggle = !Toggle;
                     P0     = P1;
@@ -156,7 +157,7 @@ static struct teleporter_desc : public object_desc
             }
         }
 
-        EditorIcon_Draw( EDITOR_ICON_MARKER, 
+        DrawEditorIcon( EditorIcon::Marker, 
                          Teleporter.GetL2W(), 
                          !!(Teleporter.GetAttrBits() & object::ATTR_EDITOR_SELECTED), 
                          XCOLOR_WHITE );
@@ -256,7 +257,7 @@ bbox teleporter::GetLocalBBox( void ) const
 
 //==============================================================================
 
-void teleporter::OnAdvanceLogic( f32 DeltaTime )
+void teleporter::OnAdvanceSimulation( f32 DeltaTime )
 {
     slot_id Loop    = SLOT_NULL;
     object* pObject = NULL;
@@ -404,10 +405,14 @@ void teleporter::Receive(       s32      PlayerIndex,
 
     // Do the actual player teleport.
     pPlayer->SetWayPoint( 1, NewPos );
-    pPlayer->Teleport( NewPos, NewPitch, NewYaw, FALSE, TRUE );
-    pPlayer->SetZone1( GetZone1() );
-    pPlayer->SetZone2( GetZone2() );
-    g_ZoneMgr.InitZoneTracking( *pPlayer, (zone_mgr::tracker&)pPlayer->GetZoneTracker() );
+    pPlayer->Teleport( NewPos,
+                       NewPitch,
+                       NewYaw,
+                       static_cast<zone_mgr::zone_id>( GetZone1() ),
+                       static_cast<zone_mgr::zone_id>( GetZone2() ),
+                       PlayerTeleportVelocityPolicy::Clear,
+                       FALSE,
+                       TRUE );
 
     vector3 Boost( DEG_TO_RAD( -m_BoostPitch ), DEG_TO_RAD( m_BoostYaw ) );
 

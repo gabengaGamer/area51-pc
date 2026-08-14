@@ -18,17 +18,16 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
-#include "alienglob.hpp"
-#include "e_Draw.hpp"
-#include "audiomgr\AudioMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "player.hpp"
-#include "animsurface.hpp"
-#include "turret.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "AlienGlob.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "Player/Player.hpp"
+#include "AnimSurface.hpp"
+#include "Turret.hpp"
 #include "Group.hpp"
-#include "Player.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "Debris\debris_meson_lash.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "Debris/debris_meson_lash.hpp"
 
 //=============================================================================
 // TWEAKS
@@ -416,8 +415,10 @@ bbox alien_glob::GetLocalBBox( void ) const
 
 //=============================================================================================
 
-void alien_glob::OnAdvanceLogic( f32 DeltaTime )
+void alien_glob::OnAdvanceSimulation( f32 DeltaTime )
 {
+    m_bThinking = FALSE;
+
     // If we're waiting to die just return
     if( GetAttrBits() & ATTR_DESTROY )
         return;
@@ -869,7 +870,14 @@ void alien_glob::BackupOldVelocities( void )
 
 void alien_glob::CalculateNewVelocities( void )
 {
-    m_Velocity = (m_Position - m_OldPosition) / m_DeltaTime;
+    if( m_DeltaTime > 0.0f )
+    {
+        m_Velocity = (m_Position - m_OldPosition) / m_DeltaTime;
+    }
+    else
+    {
+        m_Velocity.Zero();
+    }
 
     // Be sure we peg the max velocity
     f32 Speed = m_Velocity.Length();
@@ -932,7 +940,12 @@ void alien_glob::Scatter( const vector3& Direction, xbool bDeleteSelf, s32 nStag
                     pGlob->m_JumpDelayBaseTime = JumpDelayTime;
                     pGlob->m_bHasLanded     = FALSE;
                     pGlob->SetZones( GetZones() );
-                    g_ZoneMgr.InitZoneTracking( *this, pGlob->m_ZoneTracker );
+                    g_ZoneMgr.RebaseZoneTracking( *pGlob,
+                                                  pGlob->m_ZoneTracker,
+                                                  pGlob->GetPosition(),
+                                                  pGlob->GetZone1(),
+                                                  pGlob->GetZone2(),
+                                                  zone_mgr::SeedSource::Object );
                     pGlob->OnMove( m_Position );
 
                     // Create random velocity
@@ -1205,7 +1218,7 @@ void alien_glob::OnMove( const vector3& NewPos )
     object::OnMove( NewPos );
 
     // Update zone tracking
-    g_ZoneMgr.UpdateZoneTracking( *this, m_ZoneTracker, NewPos );
+    g_ZoneMgr.AdvanceZoneTracking( *this, m_ZoneTracker, NewPos );
 }
 
 //=============================================================================================
@@ -1216,7 +1229,7 @@ void alien_glob::OnTransform( const matrix4& L2W )
     object::OnTransform(L2W) ;
 
     // Update zone tracking
-    g_ZoneMgr.UpdateZoneTracking( *this, m_ZoneTracker, L2W.GetTranslation() );
+    g_ZoneMgr.AdvanceZoneTracking( *this, m_ZoneTracker, L2W.GetTranslation() );
 }
 
 //=========================================================================
@@ -1254,11 +1267,6 @@ void alien_glob::UpdateColor( void )
             f32 R = FloorColor.R/255.0f;
             f32 G = FloorColor.G/255.0f;
             f32 B = FloorColor.B/255.0f;
-            #ifdef TARGET_PS2
-                R *= 2.0f;
-                G *= 2.0f;
-                B *= 2.0f;
-            #endif
             
             FloorBrightness = x_sqrt(R*R + G*G + B*B);
         }
@@ -1309,15 +1317,15 @@ void alien_glob::OnRenderTransparent( void )
     if (m_bCommitedToAttack)
         C.Random();
 
-    //draw_Sphere( m_RenderPosition, m_RenderRadius, C );
+    //render::debug::Sphere( m_RenderPosition, m_RenderRadius, C );
     
 /*
 #if (defined X_EDITOR) && (defined shird)
-    draw_Line( GetPosition(), m_TargetPosOnPlane, XCOLOR_YELLOW );
-    draw_Sphere( m_TargetPosOnPlane, 5, XCOLOR_YELLOW );
+    render::debug::Line( GetPosition(), m_TargetPosOnPlane, XCOLOR_YELLOW );
+    render::debug::Sphere( m_TargetPosOnPlane, 5, XCOLOR_YELLOW );
 
-    draw_Line( GetPosition(), m_JumpDest, XCOLOR_GREEN );
-    draw_Sphere( m_JumpDest, 5, XCOLOR_GREEN );
+    render::debug::Line( GetPosition(), m_JumpDest, XCOLOR_GREEN );
+    render::debug::Sphere( m_JumpDest, 5, XCOLOR_GREEN );
 #endif
 */
 
@@ -1334,34 +1342,28 @@ void alien_glob::OnRenderTransparent( void )
     //m_hNucleusFX.SetScale( vector3(Scale,Scale,Scale) );
     m_hNucleusFX.Render();
 
-    //draw_Sphere( m_Position, m_CollRadius*3, XCOLOR_RED );
+    //render::debug::Sphere( m_Position, m_CollRadius*3, XCOLOR_RED );
 
 #if (defined X_EDITOR) && (defined shird)
     {        
         xcolor Clr = m_FloorProperties.GetColor();
-//#ifdef TARGET_PS2
-        Clr += Clr;
-//#endif
-        draw_Marker( GetPosition() + (m_GroundNormal * m_RenderRadius * 1.5f), Clr );
+
+        render::debug::Marker( GetPosition() + (m_GroundNormal * m_RenderRadius * 1.5f), Clr );
 
         if (m_bThinking)
         {
-            draw_Marker( GetPosition() + (m_GroundNormal * m_RenderRadius * 3.0f), XCOLOR_RED );
-            m_bThinking = FALSE;
+            render::debug::Marker( GetPosition() + (m_GroundNormal * m_RenderRadius * 3.0f), XCOLOR_RED );
         }
         if (m_bIsLeader)
         {
-            draw_Marker( GetPosition() + (m_GroundNormal * m_RenderRadius * 2.25), XCOLOR_YELLOW );
-            m_bThinking = FALSE;
+            render::debug::Marker( GetPosition() + (m_GroundNormal * m_RenderRadius * 2.25), XCOLOR_YELLOW );
         }
-
-        draw_ClearL2W();
         if ((m_LeaderGuid != NULL_GUID))// && (!m_bFleeFromTarget))
         {
             object* pObj = g_ObjMgr.GetObjectByGuid( m_LeaderGuid );
             if (pObj)
             {
-                draw_Line( m_Position, pObj->GetL2W().GetTranslation(), XCOLOR_WHITE );
+                render::debug::Line( m_Position, pObj->GetL2W().GetTranslation(), XCOLOR_WHITE );
             }
         }
     }
@@ -1375,7 +1377,7 @@ void alien_glob::OnEnumProp      ( prop_enum&    List )
     object::OnEnumProp( List );
 
     List.PropEnumHeader( "Glob",                "Alien Glob Properties",    0 );
-    List.PropEnumButton( "Glob\\Scatter",       "Scatters bones",           PROP_TYPE_EXPOSE | PROP_TYPE_DONT_SHOW | PROP_TYPE_DONT_SAVE | PROP_TYPE_DONT_EXPORT | PROP_TYPE_DONT_SAVE_MEMCARD  );
+    List.PropEnumButton( "Glob\\Scatter",       "Scatters bones",           PROP_TYPE_EXPOSE | PROP_TYPE_DONT_SHOW | PROP_TYPE_DONT_SAVE | PROP_TYPE_DONT_EXPORT | PROP_TYPE_DONT_SAVE_GAME  );
     List.PropEnumGuid  ( "Glob\\Target Guid",   "Target to head towards",   PROP_TYPE_EXPOSE );
     List.PropEnumInt   ( "Glob\\Stage",         "Stage of life",            PROP_TYPE_EXPOSE );
     List.PropEnumBool  ( "Glob\\IsActive",      "Is the glob active?",      PROP_TYPE_EXPOSE );
@@ -1405,7 +1407,12 @@ xbool alien_glob::OnProperty      ( prop_query&   I    )
         // Initialize the zone tracker
         if( I.IsVar( "Base\\Position" )) 
         {
-            g_ZoneMgr.InitZoneTracking( *this, m_ZoneTracker );
+            g_ZoneMgr.RebaseZoneTracking( *this,
+                                          m_ZoneTracker,
+                                          GetPosition(),
+                                          GetZone1(),
+                                          GetZone2(),
+                                          zone_mgr::SeedSource::Object );
         }
     }
     else if ( I.VarGUID( "Glob\\Target", m_TargetGuid ))

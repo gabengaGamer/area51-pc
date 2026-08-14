@@ -8,9 +8,10 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "condition_within_range.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
 
 //=========================================================================
@@ -145,19 +146,19 @@ void condition_within_range::OnDebugRender ( s32 Index )
 
         if (pObject1)
         {
-            draw_Line( pObject1->GetBBox().GetCenter(), pObject2->GetBBox().GetCenter(), XCOLOR_PURPLE );
-            draw_BBox( pObject1->GetBBox(), XCOLOR_PURPLE );
+            render::debug::Line( pObject1->GetBBox().GetCenter(), pObject2->GetBBox().GetCenter(), XCOLOR_PURPLE );
+            render::debug::Box( pObject1->GetBBox(), XCOLOR_PURPLE );
         }
 
-        draw_Sphere(pObject2->GetBBox().GetCenter(), m_fDistance, XCOLOR_PURPLE);
+        render::debug::Sphere(pObject2->GetBBox().GetCenter(), m_fDistance, XCOLOR_PURPLE);
 
         if (!GetElse())
         {
-            draw_Label( pObject2->GetPosition(), XCOLOR_PURPLE, xfs("[If %d]%s", Index, Info.Get()) );
+            render::debug::Label( pObject2->GetPosition(), XCOLOR_PURPLE, xfs("[If %d]%s", Index, Info.Get()) );
         }
         else
         {
-            draw_Label( pObject2->GetPosition(), XCOLOR_PURPLE, xfs("[Else If %d]%s", Index, Info.Get()) );
+            render::debug::Label( pObject2->GetPosition(), XCOLOR_PURPLE, xfs("[Else If %d]%s", Index, Info.Get()) );
         }
     }
 }

@@ -213,7 +213,7 @@ bbox    nav_connection2_editor::GetLocalBBox ( void ) const
 void    nav_connection2_editor::Reset  ( void )
 {
     m_Width             = 25.0f; 
-    m_Flags             = ng_connection2::HINT_NONE ;
+    m_flags             = ng_connection2::HINT_NONE ;
     m_ClearLineOfSight  = TRUE;
 
     m_Anchor[0] = m_Anchor[1] = 0;
@@ -408,18 +408,18 @@ xbool   nav_connection2_editor::OnProperty ( prop_query& I )
     {
         if(I.IsRead() )
         {
-            I.SetVarBool( m_Flags & ng_connection2::HINT_JUMP );
+            I.SetVarBool( m_flags & ng_connection2::HINT_JUMP );
             
         }
         else
         {
             if( I.GetVarBool() )
             {
-                m_Flags |= ng_connection2::HINT_JUMP;
+                m_flags |= ng_connection2::HINT_JUMP;
             }
             else
             {
-                m_Flags &= ~ng_connection2::HINT_JUMP;
+                m_flags &= ~ng_connection2::HINT_JUMP;
             }
         }
         return TRUE;
@@ -430,18 +430,18 @@ xbool   nav_connection2_editor::OnProperty ( prop_query& I )
     {
         if(I.IsRead() )
         {
-            I.SetVarBool( m_Flags & ng_connection2::HINT_DARK );
+            I.SetVarBool( m_flags & ng_connection2::HINT_DARK );
             
         }
         else
         {
             if( I.GetVarBool() )
             {
-                m_Flags |= ng_connection2::HINT_DARK;
+                m_flags |= ng_connection2::HINT_DARK;
             }
             else
             {
-                m_Flags &= ~ng_connection2::HINT_DARK;
+                m_flags &= ~ng_connection2::HINT_DARK;
             }
         }
         return TRUE;
@@ -451,18 +451,18 @@ xbool   nav_connection2_editor::OnProperty ( prop_query& I )
     {
         if(I.IsRead() )
         {
-            I.SetVarBool( m_Flags & ng_connection2::HINT_COVER );
+            I.SetVarBool( m_flags & ng_connection2::HINT_COVER );
             
         }
         else
         {
             if( I.GetVarBool() )
             {
-                m_Flags |= ng_connection2::HINT_COVER;
+                m_flags |= ng_connection2::HINT_COVER;
             }
             else
             {
-                m_Flags &= ~ng_connection2::HINT_COVER;
+                m_flags &= ~ng_connection2::HINT_COVER;
             }
         }
         return TRUE;
@@ -473,18 +473,18 @@ xbool   nav_connection2_editor::OnProperty ( prop_query& I )
     {
         if(I.IsRead() )
         {
-            I.SetVarBool( m_Flags & ng_connection2::HINT_SNEAKY );
+            I.SetVarBool( m_flags & ng_connection2::HINT_SNEAKY );
             
         }
         else
         {
             if( I.GetVarBool() )
             {
-                m_Flags |= ng_connection2::HINT_SNEAKY;
+                m_flags |= ng_connection2::HINT_SNEAKY;
             }
             else
             {
-                m_Flags &= ~ng_connection2::HINT_SNEAKY;
+                m_flags &= ~ng_connection2::HINT_SNEAKY;
             }
         }
         return TRUE;
@@ -494,18 +494,18 @@ xbool   nav_connection2_editor::OnProperty ( prop_query& I )
     {
         if(I.IsRead() )
         {
-            I.SetVarBool( m_Flags & ng_connection2::HINT_ONE_WAY );
+            I.SetVarBool( m_flags & ng_connection2::HINT_ONE_WAY );
             
         }
         else
         {
             if( I.GetVarBool() )
             {
-                m_Flags |= ng_connection2::HINT_ONE_WAY;
+                m_flags |= ng_connection2::HINT_ONE_WAY;
             }
             else
             {
-                m_Flags &= ~ng_connection2::HINT_ONE_WAY;
+                m_flags &= ~ng_connection2::HINT_ONE_WAY;
             }
         }
         return TRUE;
@@ -515,18 +515,18 @@ xbool   nav_connection2_editor::OnProperty ( prop_query& I )
     {
         if(I.IsRead() )
         {
-            I.SetVarBool( m_Flags & ng_connection2::HINT_SMALL_NPC );
+            I.SetVarBool( m_flags & ng_connection2::HINT_SMALL_NPC );
             
         }
         else
         {
             if( I.GetVarBool() )
             {
-                m_Flags |= ng_connection2::HINT_SMALL_NPC;
+                m_flags |= ng_connection2::HINT_SMALL_NPC;
             }
             else
             {
-                m_Flags &= ~ng_connection2::HINT_SMALL_NPC;
+                m_flags &= ~ng_connection2::HINT_SMALL_NPC;
             }
         }
         return TRUE;
@@ -541,7 +541,7 @@ xbool   nav_connection2_editor::OnProperty ( prop_query& I )
 
 void   nav_connection2_editor::OnMove ( const vector3& NewPos )
 {
-    m_Flags |= FLAG_MOVING;
+    m_flags |= FLAG_MOVING;
     
     vector3 OriginalPos = GetPosition();
     object::OnMove(NewPos);
@@ -576,14 +576,14 @@ void   nav_connection2_editor::OnMove ( const vector3& NewPos )
 
     RecalcPosition(FALSE);
 
-    m_Flags &= (~FLAG_MOVING);
+    m_flags &= (~FLAG_MOVING);
 }
 
 //========================================================================
 
 void    nav_connection2_editor::RecalcPosition ( xbool callOnMove  )
 {
-    if (!(m_Flags & FLAG_ANCHORS_DIRTY))
+    if (!(m_flags & FLAG_ANCHORS_DIRTY))
         return;
     
     object* tempObject = NULL;
@@ -619,11 +619,11 @@ void    nav_connection2_editor::RecalcPosition ( xbool callOnMove  )
 
     m_Length =  ( m_AnchorPosition[0] - m_AnchorPosition[1] ).Length();
 
-    m_Flags &= (~FLAG_ANCHORS_DIRTY);
+    m_flags &= (~FLAG_ANCHORS_DIRTY);
     
     object::OnMove( ( m_AnchorPosition[0] + m_AnchorPosition[1] )/2.0f );
         /*
-    if( callOnMove && (!(m_Flags & FLAG_MOVING)) )
+    if( callOnMove && (!(m_flags & FLAG_MOVING)) )
         OnMove( ( m_AnchorPosition[0] + m_AnchorPosition[1] )/2.0f );
 */
     BuildCorners();    
@@ -740,7 +740,7 @@ void    nav_connection2_editor::RenderNavConnection( void )
     {
         currentColor = selected;
     }
-    else if ( m_Flags & ng_connection2::HINT_PATROL_ROUTE )
+    else if ( m_flags & ng_connection2::HINT_PATROL_ROUTE )
     {
         currentColor = patrol;
     }
@@ -776,7 +776,7 @@ void    nav_connection2_editor::RenderNavConnection( void )
         RecalcPosition();
     }
 
-    if (m_Flags & FLAG_ANCHORS_DIRTY)
+    if (m_flags & FLAG_ANCHORS_DIRTY)
         RecalcPosition(TRUE);
 
     Draw_Volume( currentColor );
@@ -786,7 +786,7 @@ void    nav_connection2_editor::RenderNavConnection( void )
 
 void    nav_connection2_editor::OnColCheck      ( void )
 {
-    if (m_Flags & FLAG_ANCHORS_DIRTY)
+    if (m_flags & FLAG_ANCHORS_DIRTY)
         RecalcPosition(TRUE);
     
     g_CollisionMgr.StartApply( GetGuid() );
@@ -808,7 +808,7 @@ void    nav_connection2_editor::OnColNotify ( object& Object )
 void nav_connection2_editor::OnKill(void )
 {
     
-    m_Flags |= FLAG_DYING;
+    m_flags |= FLAG_DYING;
     
     if( m_Anchor[0] != 0 )
     {
@@ -833,10 +833,10 @@ void nav_connection2_editor::OnKill(void )
 
 void nav_connection2_editor::BuildCorners( void )
 { 
-    if (m_Flags & FLAG_ANCHORS_DIRTY)
+    if (m_flags & FLAG_ANCHORS_DIRTY)
         RecalcPosition(TRUE);
 
-    if (!(m_Flags & FLAG_CORNERS_DIRTY))
+    if (!(m_flags & FLAG_CORNERS_DIRTY))
         return;
 
     vector3& point1  = m_AnchorPosition[0];
@@ -965,7 +965,7 @@ void nav_connection2_editor::BuildCorners( void )
         m_LocalRenderBBox.AddVerts( &Temp, 1 );
     }
     SetFlagBits( GetFlagBits() | FLAG_DIRTY_TRANSFORM );
-    m_Flags &= (~FLAG_CORNERS_DIRTY);
+    m_flags &= (~FLAG_CORNERS_DIRTY);
 }
 
 
@@ -982,110 +982,49 @@ vector3* nav_connection2_editor::GetRenderCorners( xbool bForceUpdate )
 
 void nav_connection2_editor::Draw_Volume( xcolor aColor )
 {
-//    BuildCorners( point1, point2, boxSize );    
-    
     xcolor selectionHotSpotColor( 128,255,128);
     selectionHotSpotColor.A = s_nav_connection2_editor.m_HandleAlpha;
-    draw_ClearL2W();
-    draw_Begin( DRAW_QUADS , DRAW_USE_ALPHA | DRAW_NO_ZWRITE );
+    static const u16 VolumeIndices[36] =
     {
+        0, 1, 3, 0, 3, 2,
+        6, 7, 5, 6, 5, 4,
+        4, 5, 1, 4, 1, 0,
+        6, 2, 3, 6, 3, 7,
+        6, 4, 0, 6, 0, 2,
+        3, 1, 5, 3, 5, 7
+    };
+    const render::primitive_draw_desc Material( NULL,
+                                                render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                render::PRIMITIVE_BLEND_ALPHA,
+                                                render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch Batch( Material );
+    render::primitive_vertex Vertices[8];
 
-        draw_Color( aColor );
+    for( s32 i = 0; i < 8; ++i )
+        Vertices[i] = render::primitive_vertex( m_RenderCorners[i], vector2( 0.0f, 0.0f ), aColor );
+    Batch.AppendIndexed( Vertices, ARRAYSIZE( Vertices ), VolumeIndices, ARRAYSIZE( VolumeIndices ) );
 
-        //  draw the ends
-        draw_Vertex ( m_RenderCorners[0] );
-        draw_Vertex ( m_RenderCorners[1] );
-        draw_Vertex ( m_RenderCorners[3] );
-        draw_Vertex ( m_RenderCorners[2] );
- 
-       
-        draw_Vertex ( m_RenderCorners[6] );
-        draw_Vertex ( m_RenderCorners[7] );
-        draw_Vertex ( m_RenderCorners[5] );
-        draw_Vertex ( m_RenderCorners[4] );
+    for( s32 i = 0; i < 8; ++i )
+        Vertices[i] = render::primitive_vertex( m_CollisionCorners[i], vector2( 0.0f, 0.0f ), selectionHotSpotColor );
+    Batch.AppendIndexed( Vertices, ARRAYSIZE( Vertices ), VolumeIndices, ARRAYSIZE( VolumeIndices ) );
 
-
-        // draw the top and bottom
-        draw_Vertex ( m_RenderCorners[4] );
-        draw_Vertex ( m_RenderCorners[5] );
-        draw_Vertex ( m_RenderCorners[1] );
-        draw_Vertex ( m_RenderCorners[0] );
-
-        draw_Vertex ( m_RenderCorners[6] );
-        draw_Vertex ( m_RenderCorners[2] );
-        draw_Vertex ( m_RenderCorners[3] );
-        draw_Vertex ( m_RenderCorners[7] );
-
-        //  draw the sides
-        draw_Vertex ( m_RenderCorners[6] );
-        draw_Vertex ( m_RenderCorners[4] );
-        draw_Vertex ( m_RenderCorners[0] );
-        draw_Vertex ( m_RenderCorners[2] );
-
-        draw_Vertex ( m_RenderCorners[3] );
-        draw_Vertex ( m_RenderCorners[1] );
-        draw_Vertex ( m_RenderCorners[5] );
-        draw_Vertex ( m_RenderCorners[7] );
-
-
-                
-        draw_Color( selectionHotSpotColor );
-        
-        //  draw the ends
-        draw_Vertex ( m_CollisionCorners[0] );
-        draw_Vertex ( m_CollisionCorners[1] );
-        draw_Vertex ( m_CollisionCorners[3] );
-        draw_Vertex ( m_CollisionCorners[2] );
- 
-       
-        draw_Vertex ( m_CollisionCorners[6] );
-        draw_Vertex ( m_CollisionCorners[7] );
-        draw_Vertex ( m_CollisionCorners[5] );
-        draw_Vertex ( m_CollisionCorners[4] );
-
-
-        // draw the top and bottom
-        draw_Vertex ( m_CollisionCorners[4] );
-        draw_Vertex ( m_CollisionCorners[5] );
-        draw_Vertex ( m_CollisionCorners[1] );
-        draw_Vertex ( m_CollisionCorners[0] );
-
-        draw_Vertex ( m_CollisionCorners[6] );
-        draw_Vertex ( m_CollisionCorners[2] );
-        draw_Vertex ( m_CollisionCorners[3] );
-        draw_Vertex ( m_CollisionCorners[7] );
-
-        //  draw the sides
-        draw_Vertex ( m_CollisionCorners[6] );
-        draw_Vertex ( m_CollisionCorners[4] );
-        draw_Vertex ( m_CollisionCorners[0] );
-        draw_Vertex ( m_CollisionCorners[2] );
-
-        draw_Vertex ( m_CollisionCorners[3] );
-        draw_Vertex ( m_CollisionCorners[1] );
-        draw_Vertex ( m_CollisionCorners[5] );
-        draw_Vertex ( m_CollisionCorners[7] );
-    }
-    draw_End();
-
-    if (m_Flags & ng_connection2::HINT_ONE_WAY)
+    if (m_flags & ng_connection2::HINT_ONE_WAY)
     {
-        draw_Begin( DRAW_TRIANGLES, DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_CULL_NONE );
-        {
-            draw_Color( xcolor(200,200,0,aColor.A) );
-
-            //  draw the ends
-            draw_Vertex ( m_RenderCorners[1] );
-            draw_Vertex ( m_RenderCorners[0] );
-
-            vector3 EndPt = m_RenderCorners[5] - m_RenderCorners[4];
-            EndPt *= 0.5f;
-            EndPt += m_RenderCorners[4];
-
-            draw_Vertex( EndPt );
-        }
-        draw_End();
+        vector3 EndPt = m_RenderCorners[5] - m_RenderCorners[4];
+        EndPt *= 0.5f;
+        EndPt += m_RenderCorners[4];
+        const xcolor DirectionColor( 200, 200, 0, aColor.A );
+        Batch.AddTriangle( render::primitive_vertex( m_RenderCorners[1], vector2( 0.0f, 0.0f ), DirectionColor ),
+                           render::primitive_vertex( m_RenderCorners[0], vector2( 0.0f, 0.0f ), DirectionColor ),
+                           render::primitive_vertex( EndPt, vector2( 0.0f, 0.0f ), DirectionColor ) );
     }
+
+    matrix4 Identity;
+    Identity.Identity();
+    Batch.Submit( Identity );
 }
 
 
@@ -1121,7 +1060,7 @@ void nav_connection2_editor::MoveAnchor(s32 iAnchor, const vector3& Pos )
 
 f32 nav_connection2_editor::GetWidth( void )
 {
-    if (m_Flags & FLAG_ANCHORS_DIRTY)
+    if (m_flags & FLAG_ANCHORS_DIRTY)
         RecalcPosition(TRUE);
     return m_Width;    
 }
@@ -1129,7 +1068,7 @@ f32 nav_connection2_editor::GetWidth( void )
 
 f32 nav_connection2_editor::GetLength( void )
 {
-    if (m_Flags & FLAG_ANCHORS_DIRTY)
+    if (m_flags & FLAG_ANCHORS_DIRTY)
         RecalcPosition(TRUE);
     return m_Length;    
 }
@@ -1137,7 +1076,7 @@ f32 nav_connection2_editor::GetLength( void )
 
 radian nav_connection2_editor::GetYaw( void )
 {
-    if (m_Flags & FLAG_ANCHORS_DIRTY)
+    if (m_flags & FLAG_ANCHORS_DIRTY)
         RecalcPosition(TRUE);
 
     vector3 Ray = m_AnchorPosition[1] - m_AnchorPosition[0];
@@ -1148,7 +1087,7 @@ radian nav_connection2_editor::GetYaw( void )
 
 plane nav_connection2_editor::GetPlane( void )
 {
-    if (m_Flags & FLAG_ANCHORS_DIRTY)
+    if (m_flags & FLAG_ANCHORS_DIRTY)
         RecalcPosition(TRUE);
 
     BuildCorners();
@@ -1172,7 +1111,7 @@ plane nav_connection2_editor::GetPlane( void )
 
 vector3 nav_connection2_editor::GetAnchorPosition( s32 iAnchor )
 {
-    if (m_Flags & FLAG_ANCHORS_DIRTY)
+    if (m_flags & FLAG_ANCHORS_DIRTY)
         RecalcPosition(TRUE);
 
     iAnchor = MINMAX(0,iAnchor,1);
@@ -1231,16 +1170,16 @@ void nav_connection2_editor::SetEnabled( xbool bOnOff )
 void nav_connection2_editor::SetInitiallyEnabled( xbool bOnOff )
 {
     if (bOnOff)
-        m_Flags &= (~ng_connection2::HINT_DISABLED);        
+        m_flags &= (~ng_connection2::HINT_DISABLED);        
     else
-        m_Flags |= ng_connection2::HINT_DISABLED;
+        m_flags |= ng_connection2::HINT_DISABLED;
 
     m_bIsEnabled = bOnOff;
 }
 
 xbool nav_connection2_editor::GetInitiallyEnabled ( void )
 {
-    return !(m_Flags & ng_connection2::HINT_DISABLED);
+    return !(m_flags & ng_connection2::HINT_DISABLED);
 }
 
 xbool nav_connection2_editor::GetEnabled          ( void )

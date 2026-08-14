@@ -1,14 +1,16 @@
 
+#include "Render/PrimitiveDebug.hpp"
 #include "ClothObject.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "Render\Render.hpp"
-#include "Objects\BaseProjectile.hpp"
-#include "NetworkMgr\NetObj.hpp"
-#include "Objects\Actor\Actor.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "Render/Render.hpp"
+#include "Objects/BaseProjectile.hpp"
+#include "NetworkMgr/NetObj.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Objects/Player/Player.hpp"
 
 
 //=============================================================================
@@ -119,8 +121,8 @@ void cloth_object::OnInit( void )
     object::OnInit() ;
 
     // Reset cloth
-    m_Cloth.SetObjectGuid( GetGuid() );
-    m_Cloth.Reset() ;
+    m_ClothSim.SetObjectGuid( GetGuid() );
+    m_ClothSim.Reset() ;
     m_ActiveTimer = 0.0f ;
 }
 
@@ -128,7 +130,8 @@ void cloth_object::OnInit( void )
 
 void cloth_object::OnKill( void )
 {
-    m_Cloth.Kill();
+    m_ClothRender.Kill();
+    m_ClothSim.Kill();
 
     // Call base class
     object::OnKill() ;
@@ -136,15 +139,22 @@ void cloth_object::OnKill( void )
 
 //=============================================================================
 
-bbox cloth_object::GetLocalBBox( void ) const 
-{ 
-    return m_Cloth.GetLocalBBox() ;
+bbox cloth_object::GetLocalBBox( void ) const
+{
+    return m_ClothSim.GetLocalBBox() ;
 }
 
 //=============================================================================
 
-void cloth_object::OnAdvanceLogic( f32 DeltaTime )
+void cloth_object::OnAdvanceSimulation( f32 DeltaTime )
 {
+    player* pViewingPlayer = SMP_UTIL_GetActivePlayer();
+    if( pViewingPlayer &&
+        (pViewingPlayer->GetSimulationView().BBoxInView( GetBBox() ) != view::VISIBLE_NONE) )
+    {
+        m_ActiveTimer = CLOTH_OBJECT_ACTIVE_TIME;
+    }
+
     // Is cloth active?
     m_ActiveTimer -= DeltaTime ;
     if (m_ActiveTimer <= 0)
@@ -163,29 +173,29 @@ void cloth_object::OnAdvanceLogic( f32 DeltaTime )
         object* pObject = g_ObjMgr.GetObjectBySlot(SlotID) ;
         ASSERT(pObject) ;
 
-        // Only collide with actors
-        if (!pObject->IsKindOf( actor::GetRTTI() ))
-            continue ;
+        // Only collide with actors.
+        if( pObject->IsKindOf( actor::GetRTTI() ) )
+        {
+            // Get actor.
+            actor& Actor = actor::GetSafeType( *pObject );
 
-        // Get actor
-        actor& Actor = actor::GetSafeType( *pObject );   
+            // Get loco.
+            loco* pLoco = Actor.GetLocoPointer();
+            if( pLoco )
+            {
+                // Get physics.
+                character_physics& Physics = pLoco->m_Physics;
 
-        // Get loco
-        loco* pLoco = Actor.GetLocoPointer() ;
-        if (!pLoco)
-            continue ;
+                // Compute capped collision cylinder.
+                vector3 Bottom = Physics.GetPosition();
+                vector3 Top    = Bottom;
+                Top.GetY() += Physics.GetColHeight();
+                f32     Radius = Physics.GetColRadius() * 2.0f;
 
-        // Get physics
-        character_physics& Physics = pLoco->m_Physics ;
-
-        // Compute capped collision cylinder
-        vector3 Bottom = Physics.GetPosition() ;
-        vector3 Top    = Bottom ;
-        Top.GetY() += Physics.GetColHeight() ;
-        f32     Radius = Physics.GetColRadius() * 2.0f ;
-
-        // Collide with the cloth
-        m_Cloth.ApplyCappedCylinderColl(Bottom, Top, Radius) ;
+                // Collide with the cloth.
+                m_ClothSim.ApplyCappedCylinderColl( Bottom, Top, Radius );
+            }
+        }
 
         // Check next object
         SlotID = g_ObjMgr.GetNextResult(SlotID) ;
@@ -193,7 +203,7 @@ void cloth_object::OnAdvanceLogic( f32 DeltaTime )
     g_ObjMgr.EndLoop();
 
     // Update the cloth simulation
-    m_Cloth.Advance(DeltaTime) ;
+    m_ClothSim.Advance(DeltaTime) ;
 
     // Force transform to update
     SetFlagBits( GetFlagBits() | FLAG_DIRTY_TRANSFORM );
@@ -203,54 +213,38 @@ void cloth_object::OnAdvanceLogic( f32 DeltaTime )
 
 void cloth_object::OnRender( void )
 {
-    CONTEXT( "cloth_object::OnRender" );
-
-    // Trigger cloth to be active
-    m_ActiveTimer = CLOTH_OBJECT_ACTIVE_TIME;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "cloth_object::OnRender" );
 
     // Must have geometry
-    if (m_Cloth.GetRigidInst().GetGeom() == NULL)
+    if (m_ClothRender.GetRigidInst().GetGeom() == NULL)
         return ;
 
     // Compute render flags
     u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
     Flags |= GetRenderMode();
 
-#ifdef TARGET_XBOX
-
-    // Just render the rigid geometry now - the cloth part will get rendered later so fog works
-    m_Cloth.RenderRigidGeometry( Flags );
-    
-#else
-
     // Render rigid geometry and cloth geometry
-    m_Cloth.RenderRigidGeometry( Flags );
-    m_Cloth.RenderClothGeometry();
-    
-#endif
-
+    m_ClothRender.RenderRigidGeometry( m_ClothSim, Flags );
+    m_ClothRender.RenderClothGeometry( m_ClothSim, 0, Flags );
 
 #ifdef X_EDITOR
 
     // Draw debug info
     if( ( m_bDrawDebug ) || ( GetAttrBits() & ATTR_EDITOR_SELECTED ) )
     {
-        m_Cloth.RenderSkeleton() ;
-    }        
+        m_ClothRender.RenderSkeleton( m_ClothSim ) ;
+    }
 
 #endif // X_EDITOR
 }
 
 //=============================================================================
 
-#ifdef TARGET_XBOX    
-
-void cloth_object::OnRenderCloth( void )
+void cloth_object::OnRenderShadowCast( u64 ProjMask )
 {
-    m_Cloth.RenderClothGeometry();
+    if( m_ClothRender.GetRigidInst().GetGeom() )
+        m_ClothRender.RenderShadowCast( m_ClothSim, 0, ProjMask );
 }
-
-#endif    
 
 //=============================================================================
 
@@ -260,20 +254,20 @@ void cloth_object::OnPain ( const pain& Pain )
     Pain.ComputeDamageAndForce( "COKE_CAN", GetGuid(), GetBBox().GetCenter() );
 
     // Let cloth handle it
-    m_Cloth.OnPain( Pain );
+    m_ClothSim.OnPain( Pain );
 }
 
 //=============================================================================
 
 void cloth_object::OnColCheck ( void )
 {
-    CONTEXT("cloth_object::OnColCheck");    
+    X_PROFILE_SCOPE_CATEGORY( "Context", "cloth_object::OnColCheck");
 
     // Collide with geometry
-    rigid_inst& RigidInst  = m_Cloth.GetRigidInst();
-    RigidGeom_ApplyCollision( GetGuid(), 
+    rigid_inst& RigidInst  = m_ClothRender.GetRigidInst();
+    RigidGeom_ApplyCollision( GetGuid(),
                               GetBBox(),
-                              m_Cloth.GetRenderMask(),
+                              m_ClothRender.GetRenderMask(),
                               &GetL2W(),
                               RigidInst.GetRigidGeom() );
 
@@ -282,7 +276,7 @@ void cloth_object::OnColCheck ( void )
     if( g_CollisionMgr.IsEditorSelectRay() )
     {
         // Let the cloth do it's thing...
-        m_Cloth.OnColCheck( GetGuid(), GetMaterial() );
+        m_ClothSim.OnColCheck( GetGuid(), GetMaterial() );
         return;
     }
 #endif // X_EDITOR
@@ -290,15 +284,15 @@ void cloth_object::OnColCheck ( void )
     // Get moving object
     guid    MovingGuid = g_CollisionMgr.GetMovingObjGuid() ;
     object* pObject    = g_ObjMgr.GetObjectByGuid(MovingGuid) ;
-    
+
     // Collide with bullets, projectiles, or melee?
-    if (        ( pObject ) 
+    if (        ( pObject )
             &&  (       ( pObject->IsKindOf( base_projectile::GetRTTI() ) )     // Normal projectiles
                     ||  ( pObject->IsKindOf( net_proj::GetRTTI() ) )            // Net projectiles
                     ||  ( pObject->IsKindOf( actor::GetRTTI() ) ) ) )           // For melee
     {
         // Let the cloth do it's thing...
-        m_Cloth.OnColCheck( GetGuid(), GetMaterial() ) ;
+        m_ClothSim.OnColCheck( GetGuid(), GetMaterial() ) ;
     }
 }
 
@@ -306,11 +300,11 @@ void cloth_object::OnColCheck ( void )
 
 void cloth_object::OnPolyCacheGather( void )
 {
-    RigidGeom_GatherToPolyCache( GetGuid(), 
-                                 GetBBox(), 
-                                 m_Cloth.GetRenderMask(),
-                                 &GetL2W(), 
-                                 m_Cloth.GetRigidInst().GetRigidGeom() );
+    RigidGeom_GatherToPolyCache( GetGuid(),
+                                 GetBBox(),
+                                 m_ClothRender.GetRenderMask(),
+                                 &GetL2W(),
+                                 m_ClothRender.GetRigidInst().GetRigidGeom() );
 }
 
 //=============================================================================
@@ -320,12 +314,12 @@ xbool cloth_object::GetColDetails( s32 Key, detail_tri& Tri )
     if( Key == -1 )
         return( FALSE );
 
-    rigid_inst& Inst       = m_Cloth.GetRigidInst();
+    rigid_inst& Inst       = m_ClothRender.GetRigidInst();
     rigid_geom* pRigidGeom = Inst.GetRigidGeom();
     if( !pRigidGeom )
         return( FALSE );
 
-    if( !pRigidGeom->m_Collision.nHighClusters )
+    if( !pRigidGeom->m_collision.nHighClusters )
         return( FALSE );
 
     return RigidGeom_GetColDetails( pRigidGeom,
@@ -340,14 +334,14 @@ xbool cloth_object::GetColDetails( s32 Key, detail_tri& Tri )
 #ifndef X_RETAIL
 void cloth_object::OnColRender( xbool bRenderHigh )
 {
-    m_Cloth.RenderSkeleton() ;
+    m_ClothRender.RenderSkeleton( m_ClothSim ) ;
 
     RigidGeom_RenderCollision( &GetL2W(),
-                               m_Cloth.GetRigidInst().GetRigidGeom(),
+                               m_ClothRender.GetRigidInst().GetRigidGeom(),
                                bRenderHigh,
-                               m_Cloth.GetRenderMask() );
+                               m_ClothRender.GetRenderMask() );
 
-    draw_BBox( GetBBox() );
+    render::debug::Box( GetBBox() );
 }
 #endif // X_RETAIL
 
@@ -355,12 +349,12 @@ void cloth_object::OnColRender( xbool bRenderHigh )
 
 void cloth_object::OnProjectileImpact( const object&    Projectile,
                                        const vector3&   Velocity,
-                                             u32        CollPrimKey, 
+                                             u32        CollPrimKey,
                                        const vector3&   CollPoint,
-                                             xbool      PunchDamageHole,       
-                                             f32        ManualImpactForce )                                                                                                   
+                                             xbool      PunchDamageHole,
+                                             f32        ManualImpactForce )
 {
-    m_Cloth.OnProjectileImpact( Projectile, Velocity, CollPrimKey, CollPoint, PunchDamageHole, ManualImpactForce );
+    m_ClothSim.OnProjectileImpact( Projectile, Velocity, CollPrimKey, CollPoint, PunchDamageHole, ManualImpactForce );
 }
 
 //=============================================================================
@@ -389,7 +383,7 @@ void cloth_object::OnMove( const vector3& NewPos )
     object::OnMove(NewPos) ;
 
     // Update cloth
-    m_Cloth.SetL2W(GetL2W()) ;
+    m_ClothSim.SetL2W(GetL2W()) ;
 }
 
 //=============================================================================
@@ -400,7 +394,7 @@ void cloth_object::OnTransform( const matrix4& L2W )
     object::OnTransform(L2W) ;
 
     // Update cloth
-    m_Cloth.SetL2W(L2W) ;
+    m_ClothSim.SetL2W(L2W) ;
 }
 
 //=============================================================================
@@ -412,13 +406,16 @@ void cloth_object::OnEnumProp( prop_enum& List )
 
     // Cloth object properties
     List.PropEnumHeader ( "ClothObject", "Properties of cloth object", 0 );
-    
-#ifdef X_EDITOR    
+
+#ifdef X_EDITOR
     List.PropEnumBool   ( "ClothObject\\DrawDebug", "Display debug info", PROP_TYPE_DONT_SAVE );
 #endif
 
-    // Enumerate cloth
-    m_Cloth.OnEnumProp( List );
+    // Enumerate cloth - geometry counts, then RenderInst (triggers geometry load),
+    // then the rest of the cloth properties (order matters, see cloth::OnEnumProp)
+    m_ClothSim.OnEnumPropGeometry( List );
+    m_ClothRender.OnEnumProp( List );
+    m_ClothSim.OnEnumProp( List );
 }
 
 //=============================================================================
@@ -430,8 +427,8 @@ xbool cloth_object::OnProperty( prop_query& I )
     {
         return TRUE ;
     }
-    
-#ifdef X_EDITOR    
+
+#ifdef X_EDITOR
     // Cloth object properties
     if ( I.VarBool( "ClothObject\\DrawDebug", m_bDrawDebug ) )
     {
@@ -439,8 +436,8 @@ xbool cloth_object::OnProperty( prop_query& I )
     }
 #endif
 
-    // Check cloth properties
-    if ( m_Cloth.OnProperty( I ) )
+    // Check render (RenderInst) properties
+    if ( m_ClothRender.OnProperty( I, m_ClothSim ) )
     {
         // Was cloth just initialized from geometry?
         if( ( I.IsRead() == FALSE ) && ( I.IsVar( "RenderInst\\File" ) ) )
@@ -448,10 +445,16 @@ xbool cloth_object::OnProperty( prop_query& I )
             // Force bounds to be recomputed
             SetFlagBits( GetFlagBits() | object::FLAG_DIRTY_TRANSFORM );
 
-            // Make sure polycache is updated to exclude cloth mesh            
+            // Make sure polycache is updated to exclude cloth mesh
             g_PolyCache.InvalidateCells( GetBBox(), GetGuid() );
         }
-    
+
+        return TRUE;
+    }
+
+    // Check cloth simulation properties
+    if ( m_ClothSim.OnProperty( I ) )
+    {
         return TRUE;
     }
 
@@ -459,4 +462,3 @@ xbool cloth_object::OnProperty( prop_query& I )
 }
 
 //=============================================================================
-

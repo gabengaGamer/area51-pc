@@ -316,5 +316,4 @@ static s16 s_iicon_portal[] =
 };
 
 
-#define DRAW_ICON_PORTAL() draw_icon( NUM_FACETS_ICON_PORTAL, NUM_VERTICES_ICON_PORTAL, s_vicon_portal, s_iicon_portal )
 

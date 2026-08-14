@@ -49,6 +49,8 @@ rigid_body::rigid_body()
     m_WorldInvInertia.Identity();
     m_LinearVelocity.Zero();
     m_AngularVelocity.Zero();
+    m_SplitLinearVelocity.Zero();
+    m_SplitAngularVelocity.Zero();
 
     // Computed quantities about center of mass
     m_Force.Zero();
@@ -59,7 +61,7 @@ rigid_body::rigid_body()
     m_CollisionID       = -1;
     m_CollisionBit      = 0xFFFFFFFF;
     m_CollisionMask     = 0xFFFFFFFF;
-    m_CollisionSpeedSqr = 0.0f;
+    m_ImpactSpeedSqr = 0.0f;
 
     // Constraint info
     m_pPivotConstraint = NULL;
@@ -83,7 +85,7 @@ rigid_body::~rigid_body()
 
 //==============================================================================
 
-void rigid_body::SetCollisionShape( collision_shape* pCollisionShape, f32 Mass, f32 InertiaMax )
+void rigid_body::SetCollisionShape( collision_shape* pCollisionShape, f32 Mass, f32 MinInertiaExtent )
 {
     // Setup inertia
     if( Mass != 0.0f )
@@ -96,9 +98,9 @@ void rigid_body::SetCollisionShape( collision_shape* pCollisionShape, f32 Mass, 
         f32     Z         = Size.GetZ();
 
         // Keep physics stable
-        X = x_max( X, InertiaMax );
-        Y = x_max( Y, InertiaMax );
-        Z = x_max( Z, InertiaMax );
+        X = x_max( X, MinInertiaExtent );
+        Y = x_max( Y, MinInertiaExtent );
+        Z = x_max( Z, MinInertiaExtent );
         
         // Setup approximate inertia based off box
         vector3 I;
@@ -177,12 +179,8 @@ void rigid_body::SetL2W( const matrix4& L2W )
 
 //==============================================================================
 
-void rigid_body::ComputeForces( f32 DeltaTime )
+void rigid_body::ComputeForces( void )
 {
-    // Add damping
-    m_Force  -= m_LinearDamping  * m_LinearVelocity * m_Mass * DeltaTime;
-    m_Torque -= m_AngularDamping * m_AngularVelocity * m_Mass * DeltaTime;
-
     // Add gravity
     if( HasCollided() ) // Reduce gravity if colliding with something to reduce jitter some!
         AddWorldForce( m_Mass * g_PhysicsMgr.m_Settings.m_Gravity * 0.5f );
@@ -215,8 +213,6 @@ void SetupAngularVelocityMatrix( matrix4& M, const vector3& Vel )
     M( 3, 2 ) =  0.0f;
     M( 3, 3 ) =  0.0f;
 }
-
-//==============================================================================
 
 void rigid_body::IntegratePosition( f32 DeltaTime )
 {
@@ -270,9 +266,55 @@ void rigid_body::IntegrateVelocity( f32 DeltaTime )
     // Integrate
     m_LinearVelocity  += ( DeltaTime * m_InvMass ) * m_Force;
     m_AngularVelocity += m_WorldInvInertia.RotateVector( DeltaTime * m_Torque );
+
+    // Apply damping
+    m_LinearVelocity  *= x_exp( -m_LinearDamping  * DeltaTime );
+    m_AngularVelocity *= x_exp( -m_AngularDamping * DeltaTime );
     
     // Clamp velocities to keep stable
     ClampVelocities();
+}
+
+//==============================================================================
+
+void rigid_body::ClearSplitVelocity( void )
+{
+    m_SplitLinearVelocity.Zero();
+    m_SplitAngularVelocity.Zero();
+}
+
+//==============================================================================
+
+void rigid_body::ApplySplitImpulse( const vector3& Impulse, const vector3& Position )
+{
+    if( m_Mass == 0.0f )
+        return;
+
+    m_SplitLinearVelocity  += Impulse * m_InvMass;
+    m_SplitAngularVelocity += m_WorldInvInertia.RotateVector( v3_Cross( Position, Impulse ) );
+}
+
+//==============================================================================
+
+void rigid_body::IntegrateSplitPosition( f32 DeltaTime )
+{
+    if( (m_Mass == 0.0f) ||
+        ((m_SplitLinearVelocity.LengthSquared() <= 0.0f) &&
+         (m_SplitAngularVelocity.LengthSquared() <= 0.0f)) )
+    {
+        return;
+    }
+
+    vector3 Position = m_L2W.GetTranslation();
+    m_L2W.ClearTranslation();
+    Position += DeltaTime * m_SplitLinearVelocity;
+
+    matrix4 DeltaRotation;
+    SetupAngularVelocityMatrix( DeltaRotation, m_SplitAngularVelocity * DeltaTime );
+    m_L2W += DeltaRotation * m_L2W;
+    m_L2W.Orthogonalize();
+    m_L2W.SetTranslation( Position );
+    ComputeWorldInvInertia();
 }
 
 //==============================================================================

@@ -13,9 +13,9 @@
 //=========================================================================
 
 #include "x_types.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
-#include "..\TriggerEx_Conditionals.hpp"
-#include "Inventory\Inventory2.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
+#include "../TriggerEx_Conditionals.hpp"
+#include "Inventory/Inventory2.hpp"
 
 //=========================================================================
 // Check Property

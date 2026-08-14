@@ -748,5 +748,4 @@ static s16 s_iicon_particle_emitter[] =
 };
 
 
-#define DRAW_ICON_PARTICLE_EMITTER() draw_icon( NUM_FACETS_ICON_PARTICLE_EMITTER, NUM_VERTICES_ICON_PARTICLE_EMITTER, s_vicon_particle_emitter, s_iicon_particle_emitter )
 

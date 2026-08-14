@@ -8,8 +8,8 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
-#include "obj_mgr\obj_mgr.hpp"
-#include "objects\render\rigidinst.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Render/RigidInst.hpp"
 
 //=============================================================================
 // DEFINES
@@ -29,7 +29,7 @@ public:
     virtual s32                 GetMaterial         ( void ) const;
     virtual void                OnInit              ( void );
 
-    virtual void                OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void                OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void                OnRender            ( void );
 
     virtual const object_desc&  GetTypeDesc         ( void ) const;

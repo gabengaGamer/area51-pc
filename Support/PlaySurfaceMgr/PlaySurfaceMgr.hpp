@@ -5,10 +5,10 @@
 // INCLUDES
 //=========================================================================
 
-#include "ZoneMgr\ZoneMgr.hpp"
-#include "Render\Render.hpp"
-#include "Objects\Object.hpp"
-#include "Objects\Render\RenderInst.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
+#include "Render/Render.hpp"
+#include "Objects/object.hpp"
+#include "Objects/Render/RenderInst.hpp"
 
 class proxy_playsurface;
 
@@ -19,20 +19,16 @@ class proxy_playsurface;
 class playsurface_mgr
 {
 public:
-    #ifdef TARGET_PC
     enum { VERSION = 16 };
-    #else
-    enum { VERSION = 5 };
-    #endif
 
     struct surface
     {
         // must keep this structure 16-byte aligned!!!!
-        matrix4             L2W     PS2_ALIGNMENT(16);
+        matrix4             L2W;
         bbox                WorldBBox;
         u32                 AttrBits;       // copy of specific attr bits
         s32                 ColorOffset;
-        render::hgeom_inst  RenderInst;     // only valid if resolved
+        render::GeometryInstanceHandle  RenderInst;     // only valid if resolved
         union
         {
             u32           * pColor32;
@@ -77,7 +73,8 @@ public:
     void UnloadZone         ( zone_mgr::zone_id Zone );
     void LoadZone           ( zone_mgr::zone_id Zone );
     void SaveFile           ( platform  PlatformType );
-    void LoadAllZones       ( void );
+    void BeginLoadAllZones  ( void );
+    xbool UpdateLoadAllZones( void );
     void CloseFile          ( void );
 
     //---------------------------------------------------------------------
@@ -278,6 +275,7 @@ protected:
     xarray<geom_name>   m_Geoms;
     X_FILE*             m_File;
     xbool               m_Loading;
+    s32                 m_NextLoadZone;
     dbase               m_SpatialDBase;
     u32                 m_QueryNumber;
     guid                m_ProxyPlaySurface;

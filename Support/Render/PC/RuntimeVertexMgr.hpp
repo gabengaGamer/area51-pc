@@ -1,6 +1,6 @@
 //=========================================================================
 //
-//  Runtime Vertex Manager for PC
+//  RuntimeVertexMgr.hpp
 //
 //=========================================================================
 
@@ -8,133 +8,65 @@
 #define RUNTIME_VERTEX_MANAGER_HPP
 
 //=========================================================================
-//  PLATFORM CHECK
+//  BASE INCLUDES
 //=========================================================================
 
 #include "x_types.hpp"
-
-#if !defined(TARGET_PC)
-#error "This is only for the PC target platform. Please check build exclusion rules"
-#endif
 
 //=========================================================================
 // INCLUDES
 //=========================================================================
 
-#include "Entropy.hpp"
+#include "e_RenderBuffer.hpp"
+#include "e_RenderDraw.hpp"
 
 //=========================================================================
 // CLASS
 //=========================================================================
 
-class runtime_vertex_mgr
+class RuntimeVertexMgr
 {
-
-//=========================================================================
-
 public:
-
     struct primitive
     {
-        const void*                 pVertex;
-        const u16*                  pIndex;
-        s32                         nVertices;
-        s32                         nIndices;
-        D3D11_PRIMITIVE_TOPOLOGY    Topology;
+        void const* pVertex;
+        u16 const*  pIndex;
+        s32         nVertices;
+        s32         nIndices;
+    
+        primitive( void ) : pVertex( NULL ), pIndex( NULL ), nVertices( 0 ), nIndices( 0 )
+        {
+        }
     };
-
-//=========================================================================
 
 public:
-
-                runtime_vertex_mgr   ( void );
-
-    void        Init                    ( s32 VStride,
-                                          s32 MaxVertices = 8192,
-                                          s32 MaxIndices  = 24576 );
-    void        Kill                    ( void );
-    void        BeginRender             ( void );
-    xbool       DrawPrimitive           ( const primitive& Primitive );
-
-    s32         GetVertexStride         ( void ) const;
-    s32         GetMaxVertices          ( void ) const;
-    s32         GetMaxIndices           ( void ) const;
+    RuntimeVertexMgr( void );
+    
+    xbool Init ( s32 vStride, s32 initialVertices = 8192, s32 initialIndices = 24576 );
+    void  Kill ( void );
+    
+    xbool Reserve         ( s32 nVertices, s32 nIndices );
+    xbool UploadPrimitive ( primitive const& primitive );
+    xbool BindBuffers     ( void ) const;
+    xbool DrawIndexed     ( s32 indexCount, s32 startIndex, s32 baseVertex ) const;
 
 protected:
-
-    struct draw_buffer
-    {
-        void*   pVertex;
-        u16*    pIndex;
-        s32     iVertex;
-        s32     iIndex;
-        s32     nVertices;
-        s32     nIndices;
-    };
-
-    xbool       MapBuffers              ( D3D11_MAP MapType );
-    void        UnmapBuffers            ( void );
-    xbool       EnsureSpace             ( s32 nVertices,
-                                          s32 nIndices );
-    xbool       Alloc                   ( s32 nVertices,
-                                          s32 nIndices,
-                                          draw_buffer& DrawBuffer );
-    void        Flush                   ( void );
-    void        Bind                    ( void );
-    void        Draw                    ( s32 iVertex,
-                                          s32 iIndex,
-                                          s32 nIndices,
-                                          D3D11_PRIMITIVE_TOPOLOGY Topology );
+    xbool EnsureCapacity ( s32 requiredVertices, s32 requiredIndices );
+    xbool CreateBuffers  ( s32 maxVertices, s32 maxIndices );
+    void  DestroyBuffers ( void );
 
 protected:
-
-    ID3D11Buffer*   m_pVertexBuffer;
-    ID3D11Buffer*   m_pIndexBuffer;
-    byte*           m_pSystemVertexData;
-    u16*            m_pSystemIndexData;
-    byte*           m_pMappedVertexData;
-    u16*            m_pMappedIndexData;
-
-    s32             m_VertexStride;
-    s32             m_MaxVertices;
-    s32             m_MaxIndices;
-    s32             m_iVertex;
-    s32             m_iIndex;
-
-    xbool           m_bMapped;
-    xbool           m_bHasDrawn;
-    xbool           m_bStreamsBound;
+    rbuffer m_vertexBuffer;
+    rbuffer m_indexBuffer;
+    
+    s32   m_vertexStride;
+    s32   m_maxVertices;
+    s32   m_MaxIndices;
+    s32   m_uploadedVertices;
+    s32   m_uploadedIndices;
+    xbool m_isInitialized;
 };
 
 //=========================================================================
-//  GLOBAL INSTANCE
-//=========================================================================
-
-extern runtime_vertex_mgr g_RuntimeVertexMgr;
-
-//=========================================================================
-// INLINE
-//=========================================================================
-
-inline s32 runtime_vertex_mgr::GetVertexStride( void ) const
-{
-    return m_VertexStride;
-}
-
-//=========================================================================
-
-inline s32 runtime_vertex_mgr::GetMaxVertices( void ) const
-{
-    return m_MaxVertices;
-}
-
-//=========================================================================
-
-inline s32 runtime_vertex_mgr::GetMaxIndices( void ) const
-{
-    return m_MaxIndices;
-}
-
-//=========================================================================
-#endif
+#endif // RUNTIME_VERTEX_MANAGER_HPP
 //=========================================================================

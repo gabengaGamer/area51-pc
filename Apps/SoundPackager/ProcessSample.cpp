@@ -271,7 +271,12 @@ u32 CompressAudioFile( X_FILE* in, X_FILE* out, s32 Temperature, s32* NumChannel
                     break;
 
                 case EXPORT_PS2:
+#if defined( A51_SOUND_PACKAGER_NO_ENCVAG )
+                    x_printf( "PS2 ADPCM export is unavailable in this architecture.\\n" );
+                    return 0;
+#else
                     return CompressAudioFilePS2_ADPCM( in, out, NumChannels, &SyncSize );
+#endif
                     break;
 
                 case EXPORT_GCN:
@@ -759,24 +764,6 @@ xbool LoadTrueMultiChannelFile( file_info& File, multi_channel_data* Data, xbool
             }
             break;
 
-        case WARM:
-            switch( File.NumChannels[ Target ] )
-            {
-                case 1:
-                    ASSERT( 0 );
-                    return FALSE;
-                    break;
-                case 2:
-                    ASSERT( 0 );
-                    return FALSE;
-                    break;
-                default:
-                    ASSERT( 0 );
-                    return FALSE;
-                    break;
-            }
-            break;
-
         case COLD:
             switch( File.NumChannels[ Target ] )
             {
@@ -789,6 +776,11 @@ xbool LoadTrueMultiChannelFile( file_info& File, multi_channel_data* Data, xbool
                     return FALSE;
                     break;
             }
+            break;
+
+        default:
+            ASSERT( 0 );
+            return FALSE;
             break;
     }
 
@@ -1487,14 +1479,14 @@ xbool ProcessMultiChannelAudio( void )
                     }
                     break;
 
-                case WARM:
-                    // TODO: Put in warm sample support.
-                    ASSERT( 0 );
-                    break;
-
                 case COLD:
                     if( !InterleaveStreamedAudio( File, Target ) )
                         return FALSE;
+                    break;
+
+                default:
+                    ASSERT( 0 );
+                    return FALSE;
                     break;
             }
         }
@@ -1685,4 +1677,3 @@ void DumpSamples( void )
         }
     }
 }
-

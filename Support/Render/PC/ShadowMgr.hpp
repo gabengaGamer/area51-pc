@@ -10,14 +10,11 @@
 #define PC_SHADOW_MGR_HPP
 
 //==============================================================================
-//  PLATFORM CHECK
+//  BASE INCLUDES
 //==============================================================================
 
 #include "x_types.hpp"
-
-#if !defined(TARGET_PC)
-#error "This is only for the PC target platform. Please check build exclusion rules"
-#endif
+#include "x_array.hpp"
 
 //==============================================================================
 //  INCLUDES
@@ -25,26 +22,15 @@
 
 #include "x_math.hpp"
 
-#include "../ProjTextureMgr.hpp"
 #include "../ShadowMapMgr.hpp"
+#include "../RenderPipelineCache.hpp"
 
-#include "Entropy/D3DEngine/d3deng_rtarget.hpp"
-#include "Entropy/D3DEngine/d3deng_shader.hpp"
+#include "e_Engine.hpp"
 
 class material;
-
-//==============================================================================
-//  CONSTANTS
-//==============================================================================
-
-enum
-{
-    PC_PROJ_LIGHT_TEX_SLOT   = 4,
-    PC_PROJ_SHADOW_TEX_SLOT  = PC_PROJ_LIGHT_TEX_SLOT + proj_texture_mgr::MAX_PROJ_LIGHTS,
-    PC_SHADOW_ATLAS_TEX_SLOT = 20,
-    PC_SHADOW_ATLAS_SAMP_SLOT= 8,
-    PC_SHADOW_BUFFER_SLOT    = 5,
-};
+class texture;
+struct geometry_draw_item;
+struct dynamic_geometry_shadow_draw;
 
 //==============================================================================
 //  CONSTANT BUFFER LAYOUTS
@@ -53,34 +39,57 @@ enum
 struct cb_shadow_cast
 {
     matrix4 ShadowViewProjection;
-    matrix4 World;
+    u32     Padding[4];
 };
+
+static_assert( sizeof( cb_shadow_cast ) == 80, "cbShadowCast layout must match HLSL" );
 
 //------------------------------------------------------------------------------
 
 struct cb_shadow_alpha
 {
-    u32     MaterialFlags;
-    f32     AlphaRef;
-    f32     UVOffset[2];
+    f32 AlphaRef;
+    f32 Padding;
+    f32 UVOffset[2];
 };
+
+static_assert( sizeof( cb_shadow_alpha ) == 16, "cbShadowAlpha layout must match HLSL" );
 
 //------------------------------------------------------------------------------
 
-struct cb_shadow_maps
+struct cb_shadow_filter
 {
-    matrix4 FaceShadowMatrix[MAX_SHADOW_SOURCES];
+    vector4 TextureParams;          // xy = input texel size, zw = output texel size
+    vector4 SourceClampRect;        // xy = minimum source texel center, zw = maximum source texel center
+    vector4 FilterParams;           // x/y = EVSM exponents, z = EVSM blur scale
+    vector4 DepthParams;            // x/y = projection near/far, z = light radius, w = point-face flag
+    vector4 SourceProjectionParams; // xy = source UV center, z = UV-to-NDC scale, w = corner coverage cosine
+};
+
+static_assert( sizeof( cb_shadow_filter ) == 80, "cbShadowFilter layout must match HLSL" );
+
+//------------------------------------------------------------------------------
+
+struct cb_shadow_map_data
+{
     vector4 FaceShadowLightPosRadius[MAX_SHADOW_SOURCES];
     vector4 FaceShadowLightDirFalloff[MAX_SHADOW_SOURCES];
-    vector4 FaceShadowLightData[MAX_SHADOW_SOURCES];   // x = cone/coverage cosine, y = receive near z, z = far z, w = 0 spot / 1 point face
+    vector4 FaceShadowLightData[MAX_SHADOW_SOURCES]; // x = cone/coverage cosine, y = receive near z, z = far z, w = 0
+                                                     // spot / 1 point face
+    vector4 FaceShadowProjectionData[MAX_SHADOW_SOURCES]; // x/y = projection near/far z
+    vector4 FaceShadowAtlasRect[MAX_SHADOW_SOURCES]; // xy/zw = moment-texel inset minimum/maximum
     vector4 PointShadowLightPosRadius[MAX_SHADOW_LIGHTS];
     vector4 PointShadowLightData[MAX_SHADOW_LIGHTS];   // x = falloff, y = receive near z, z = far z
     vector4 PointShadowLightParams[MAX_SHADOW_LIGHTS]; // x = first face source, y = face count
     u32     FaceShadowCount;
     u32     PointShadowLightCount;
     f32     Padding[2];
-    vector4 ShadowParams;                          // z = min variance, w = light bleed reduction
+    vector4 ShadowParams;       // x = depth-atlas texel size, y = normal bias, z = seam blend width, w = filter type
+    vector4 ShadowFilterParams; // x = sampled-atlas texel size, y/z = EVSM exponents, w = light-bleed reduction
+    vector4 ShadowContactParams; // x = EVSM filter radius in moment texels
 };
+
+static_assert( sizeof( cb_shadow_map_data ) == 5568, "ShadowMapData layout must match HLSL" );
 
 //==============================================================================
 //  SHADOW MANAGER
@@ -89,108 +98,167 @@ struct cb_shadow_maps
 class shadow_mgr
 {
 public:
+    struct caster_stats
+    {
+        u32 InputDrawCount;
+        u32 PreparedDrawCount;
+        u32 PacketCount;
+        u32 GpuDrawCount;
+        u32 RigidInstanceCount;
+        u32 SkinInstanceCount;
+        u32 RigidPacketCount;
+        u32 SkinPacketCount;
+        u32 AlphaPacketCount;
+        u32 SourceStateChangeCount;
+        u32 SkinPaletteCount;
+        u32 SkinPaletteMatrixCount;
+        u32 MaxPacketInstanceCount;
+        u32 RigidIndirectRunCount;
+        u32 RigidIndirectCommandCount;
+        u32 SkinIndirectRunCount;
+        u32 SkinIndirectCommandCount;
+        u32 BufferReallocationCount;
+        u64 UploadBytes;
+        u64 SubmittedIndexCount;
+
+        caster_stats( void )
+            : InputDrawCount( 0 ), PreparedDrawCount( 0 ), PacketCount( 0 ), GpuDrawCount( 0 ), RigidInstanceCount( 0 ),
+              SkinInstanceCount( 0 ), RigidPacketCount( 0 ), SkinPacketCount( 0 ), AlphaPacketCount( 0 ),
+              SourceStateChangeCount( 0 ), SkinPaletteCount( 0 ), SkinPaletteMatrixCount( 0 ),
+              MaxPacketInstanceCount( 0 ), RigidIndirectRunCount( 0 ), RigidIndirectCommandCount( 0 ),
+              SkinIndirectRunCount( 0 ), SkinIndirectCommandCount( 0 ), BufferReallocationCount( 0 ), UploadBytes( 0 ),
+              SubmittedIndexCount( 0 )
+        {
+        }
+    };
 
     //--------------------------------------------------------------------------
     // Lifetime
     //--------------------------------------------------------------------------
 
-                shadow_mgr               ( void );
-               ~shadow_mgr               ( void );
+    shadow_mgr  ( void );
+    ~shadow_mgr ( void );
 
-    void        Init                     ( void );
-    void        Kill                     ( void );
+    void Init ( void );
+    void Kill ( void );
 
     //--------------------------------------------------------------------------
     // Shadow Caster Pipeline
     //--------------------------------------------------------------------------
 
-    void        BeginShadowShaders       ( void );
-    void        EndShadowShaders         ( void );
-    void        BeginCastPass            ( void );
-    void        EndCastPass              ( void );
-    void        RenderRigidCaster        ( xhandle         hDList,
-                                           const matrix4*  pL2W,
-                                           const material* pMaterial,
-                                           u8              UOffset,
-                                           u8              VOffset,
-                                           s32             SourceIndex );
-    void        RenderSkinCaster         ( xhandle         hDList,
-                                           const matrix4*  pBones,
-                                           const material* pMaterial,
-                                           u8              UOffset,
-                                           u8              VOffset,
-                                           s32             SourceIndex );
+    void BeginShadowShaders ( void );
+    void EndShadowShaders   ( void );
+    void BeginCastPass      ( void );
+    void EndCastPass        ( void );
+    void RenderCasters      ( xarray<geometry_draw_item const*> const& draws,
+                              xarray<dynamic_geometry_shadow_draw> const& dynamicDraws );
 
     //--------------------------------------------------------------------------
     // Runtime Queries
     //--------------------------------------------------------------------------
 
-    ID3D11ShaderResourceView* GetShadowAtlasSRV ( void ) const;
-    f32         GetShadowFilterRadius    ( void ) const;
-    f32         GetShadowMinVariance     ( void ) const;
-    f32         GetShadowLightBleedReduction( void ) const;
-    f32         GetAtlasTexelSize        ( void ) const;
+    rtarget const*      GetShadowSampleAtlasTarget ( void ) const;
+    rtarget const*      GetShadowDepthAtlasTarget  ( void ) const;
+    f32                 GetShadowNormalBiasTexels  ( void ) const;
+    f32                 GetShadowSeamBlendTexels   ( void ) const;
+    f32                 GetAtlasTexelSize          ( void ) const;
+    vector4             GetShadowFilterParams      ( void ) const;
+    caster_stats const& GetLastCasterStats         ( void ) const;
 
 private:
-
     //--------------------------------------------------------------------------
     // Internal Helpers
     //--------------------------------------------------------------------------
 
-    void        EnsureAtlas              ( void );
-    xbool       SetShadowCastConstants   ( const matrix4&  ShadowViewProjection,
-                                           const matrix4*  pWorld = NULL );
-    xbool       SetShadowAlphaConstants  ( const material* pMaterial,
-                                           u8              UOffset,
-                                           u8              VOffset );
-    void        ApplySource              ( s32 SourceIndex,
-                                           s32             CasterShader );
-    void        BlurAtlas                ( void );
-    void        UnbindShadowSRVs         ( void );
+    void  EnsureAtlas             ( void );
+    xbool FilterShadowAtlas       ( void );
+    xbool RunEVSMBlurPass         ( rtarget const& source, rtarget const& destination, xbool horizontal );
+    xbool SetShadowCastConstants  ( u32 uniformSlot, matrix4 const& shadowViewProjection );
+    xbool SetShadowAlphaConstants ( texture const& diffuseTexture, xbool bPunchThru, u8 uOffset, u8 vOffset );
+    void  ApplySource             ( s32 sourceIndex, s32 casterShader, xbool bAlphaTest, xbool bTwoSided );
+    void  ApplyDynamicSource      ( s32 sourceIndex );
 
 private:
-
     //--------------------------------------------------------------------------
     // Runtime State
     //--------------------------------------------------------------------------
 
-    xbool                   m_bInitialized;
-    xbool                   m_bTargetsPushed;
-    xbool                   m_bViewportSaved;
-    xbool                   m_bRasterizerSaved;
-    u32                     m_SavedViewportCount;
-    D3D11_VIEWPORT          m_SavedViewport;
-    ID3D11RasterizerState*  m_pSavedRasterizerState;
-    s32                     m_CurrentSource;
-    s32                     m_CurrentCasterShader;
-    s32                     m_ShadowAtlasSize;
+    xbool        m_isInitialized;
+    xbool        m_isCastPassActive;
+    s32          m_currentSource;
+    s32          m_currentCasterVariant;
+    s32          m_shadowAtlasSize;
+    s32          m_shadowMomentAtlasSize;
+    xbool        m_isShadowSampleAtlasReady;
+    caster_stats m_lastCasterStats;
 
     //--------------------------------------------------------------------------
     // GPU Resources
     //--------------------------------------------------------------------------
 
-    rtarget                 m_ShadowAtlas;
-    rtarget                 m_ShadowBlurAtlas;
-    rtarget                 m_ShadowDepthAtlas;
-    ID3D11VertexShader*     m_pRigidVertexShader;
-    ID3D11VertexShader*     m_pSkinVertexShader;
-    ID3D11PixelShader*      m_pMomentPixelShader;
-    ID3D11PixelShader*      m_pBlurHPixelShader;
-    ID3D11PixelShader*      m_pBlurVPixelShader;
-    ID3D11InputLayout*      m_pRigidInputLayout;
-    ID3D11InputLayout*      m_pSkinInputLayout;
-    ID3D11Buffer*           m_pShadowCastBuffer;
-    ID3D11Buffer*           m_pShadowAlphaBuffer;
-    ID3D11Buffer*           m_pShadowBlurBuffer;
-    ID3D11RasterizerState*  m_pShadowCasterRasterizer;
+    rtarget             m_shadowAtlas;
+    rtarget             m_shadowMomentAtlas;
+    rtarget             m_shadowMomentTempAtlas;
+    shader              m_rigidVertexShader;
+    shader              m_skinVertexShader;
+    shader              m_dynamicVertexShader;
+    shader              m_dynamicPixelShader;
+    shader              m_opaqueDepthPixelShader;
+    shader              m_alphaDepthPixelShader;
+    shader              m_evsmVertexShader;
+    shader              m_evsmConvertPixelShader;
+    shader              m_evsmBlurHorizontalPixelShader;
+    shader              m_evsmBlurVerticalPixelShader;
+    RenderPipelineCache m_casterPipelines;
+    RenderPipelineCache m_evsmPipelines;
+    rstate_sampler      m_diffuseSampler;
+    rstate_sampler      m_evsmPointSampler;
+    rstate_sampler      m_evsmLinearSampler;
+    rstate_raster_desc  m_shadowSingleSidedRasterizerDesc;
+    rstate_raster_desc  m_shadowTwoSidedRasterizerDesc;
+    rbuffer             m_rigidInstanceBuffer;
+    rbuffer             m_rigidInstanceIndexBuffer;
+    rbuffer             m_rigidIndirectBuffer;
+    rbuffer             m_skinBoneBuffer;
+    rbuffer             m_skinBoneBaseBuffer;
+    rbuffer             m_skinIndirectBuffer;
+    rbuffer             m_dynamicVertexBuffer;
+    rbuffer             m_dynamicIndexBuffer;
+    u32                 m_rigidInstanceCapacity;
+    u32                 m_rigidInstanceIndexCapacity;
+    u32                 m_rigidIndirectCapacity;
+    u32                 m_skinBoneCapacity;
+    u32                 m_skinBoneBaseCapacity;
+    u32                 m_skinIndirectCapacity;
+    u32                 m_dynamicVertexCapacity;
+    u32                 m_dynamicIndexCapacity;
+
+    //--------------------------------------------------------------------------
+    // Reflected shader slots
+    //--------------------------------------------------------------------------
+
+    u32 m_rigidCastConstantsSlot;
+    u32 m_rigidInstanceSlot;
+    u32 m_skinCastConstantsSlot;
+    u32 m_skinBoneSlot;
+    u32 m_dynamicCastConstantsSlot;
+    u32 m_dynamicDiffuseTextureSlot;
+    u32 m_dynamicDamageTextureSlot;
+    u32 m_alphaConstantsSlot;
+    u32 m_alphaTextureSlot;
+    u32 m_evsmConvertConstantsSlot;
+    u32 m_evsmConvertTextureSlot;
+    u32 m_evsmBlurHorizontalConstantsSlot;
+    u32 m_evsmBlurHorizontalTextureSlot;
+    u32 m_evsmBlurVerticalConstantsSlot;
+    u32 m_evsmBlurVerticalTextureSlot;
 
     //--------------------------------------------------------------------------
     // Shadow Tuning
     //--------------------------------------------------------------------------
 
-    f32                     m_ShadowFilterRadius;
-    f32                     m_ShadowMinVariance;
-    f32                     m_ShadowLightBleedReduction;
+    f32 m_shadowNormalBiasTexels;
+    f32 m_shadowSeamBlendTexels;
 };
 
 //==============================================================================

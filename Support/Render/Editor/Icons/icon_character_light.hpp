@@ -480,5 +480,4 @@ static s16 s_iicon_character_light[] =
 };
 
 
-#define DRAW_ICON_CHARACTER_LIGHT() draw_icon( NUM_FACETS_ICON_CHARACTER_LIGHT, NUM_VERTICES_ICON_CHARACTER_LIGHT, s_vicon_character_light, s_iicon_character_light )
 

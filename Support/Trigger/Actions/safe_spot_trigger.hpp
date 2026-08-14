@@ -12,7 +12,7 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Trigger_Actions.hpp"
+#include "../Support/Trigger/Trigger_Actions.hpp"
 
 //=========================================================================
 // safe_spot_trigger : When hit, marks this as the last safe spot

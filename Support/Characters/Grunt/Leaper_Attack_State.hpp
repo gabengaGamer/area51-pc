@@ -1,7 +1,7 @@
 #ifndef __LEAPER_ATTACK_STATE_HPP
 #define __LEAPER_ATTACK_STATE_HPP
 
-#include "characters\basestates\character_attack_state.hpp"
+#include "Characters/BaseStates/Character_Attack_State.hpp"
 
 
 class leaper_attack_state : public character_attack_state

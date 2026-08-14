@@ -7,8 +7,8 @@
 #include "x_files/x_types.hpp"
 
 #include "LoreList.hpp"
-#include "stringmgr/stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 #include "StateMgr/StateMgr.hpp"
 
 //=========================================================================
@@ -311,6 +311,8 @@ lore_vault* lore_list::GetVaultByLoreID( s32 LoreID, s32& Index, s32& LoreIndex 
     
     return NULL;
 }
+
+//=========================================================================
 
 s32 lore_list::GetLoreIDByVault( lore_vault *pVault, s32 Index)
 {

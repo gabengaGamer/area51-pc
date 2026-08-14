@@ -1,21 +1,28 @@
 //==============================================================================
-// SOUND EMITTERS
+//
+// SoundEmitter.cpp 
+//
 //==============================================================================
 
 //==============================================================================
 // INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "SoundEmitter.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\CollisionPrimatives.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "..\ZoneMgr\ZoneMgr.hpp"
-#include "gamelib\StatsMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/CollisionPrimatives.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "../ZoneMgr/ZoneMgr.hpp"
+#include "GameLib/StatsMgr.hpp"
+
+//==============================================================================
+// DEFINES
+//==============================================================================
 
 #define STREAM_EMITTER      (1<<1)
 #define TRIGGER_ACTIVATE    (1<<2)
@@ -23,7 +30,6 @@
 #define CONTINUE            (1<<4)
 #define DEACTIVATE          (1<<5)
 #define DESTROY             (1<<6)
-
 
 //=========================================================================
 // GLOBALS
@@ -36,11 +42,49 @@ xcolor g_EmitterSel         =   XCOLOR_AQUA;
 xcolor g_Emitter            =   XCOLOR_GREY;
 
 //=========================================================================
+// HELPER FUNCTIONS
+//=========================================================================
+
+static const f32 k_MinModulationSpeed = 0.1f;
+static const f32 k_MinFadeTime        = 0.001f;
+
+static 
+f32 SanitizeModulationSpeed( f32 Speed )
+{
+    if( !x_isvalid( Speed ) || (Speed < k_MinModulationSpeed) )
+        return k_MinModulationSpeed;
+
+    return Speed;
+}
+
+//=========================================================================
+
+static 
+f32 SanitizeModulationDepth( f32 Depth )
+{
+    if( !x_isvalid( Depth ) )
+        return 0.0f;
+
+    return MAX( 0.0f, MIN( 1.0f, Depth ) );
+}
+
+//=========================================================================
+
+static 
+f32 SanitizeModulationVariance( f32 Variance )
+{
+    if( !x_isvalid( Variance ) || (Variance < 0.0f) )
+        return 0.0f;
+
+    return Variance;
+}
+
+//=========================================================================
 // OBJECT DESCRIPTION
 //=========================================================================
 
-//=========================================================================
-static struct sound_emitter_desc : public object_desc
+static 
+struct sound_emitter_desc : public object_desc
 {
     sound_emitter_desc( void ) : object_desc( 
         object::TYPE_SND_EMITTER, 
@@ -73,9 +117,9 @@ static struct sound_emitter_desc : public object_desc
         
         if( (Object. GetAttrBits() & object::ATTR_EDITOR_SELECTED) || 
             (Object.GetAttrBits() & object::ATTR_EDITOR_PLACEMENT_OBJECT) )
-            EditorIcon_Draw(EDITOR_ICON_SPEAKER, Object.GetL2W(), TRUE, XCOLOR_WHITE );
+            DrawEditorIcon(EditorIcon::Speaker, Object.GetL2W(), TRUE, XCOLOR_WHITE );
         else
-            EditorIcon_Draw(EDITOR_ICON_SPEAKER, Object.GetL2W(), FALSE, XCOLOR_WHITE );
+            DrawEditorIcon(EditorIcon::Speaker, Object.GetL2W(), FALSE, XCOLOR_WHITE );
         
         Object.OnDebugRender();
 
@@ -99,11 +143,8 @@ const object_desc&  sound_emitter::GetObjectType( void )
     return s_SoundEmitter_Desc;
 }
 
-
 //=========================================================================
 // FUNCTIONS
-//=========================================================================
-
 //=========================================================================
 
 sound_emitter::sound_emitter( void ) 
@@ -146,8 +187,6 @@ sound_emitter::sound_emitter( void )
 
     m_AmbientTransition = 0.0f;
     m_VolumeFadeTime    = 1.0f;
-    m_bReverbEnable     = FALSE;
-    m_WetDryMix         = 0.20f;
     
     m_EnableEndingRoutineCheck = FALSE;
     
@@ -315,7 +354,7 @@ void sound_emitter::OnTriggerTransform( const matrix4& L2W )
 #ifndef X_RETAIL
 void sound_emitter::OnDebugRender( void )
 {
-    CONTEXT( "sound_emitter::OnDebugRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "sound_emitter::OnDebugRender" );
 
     if( !(GetAttrBits() & ATTR_EDITOR_SELECTED) && !(GetAttrBits() & ATTR_EDITOR_PLACEMENT_OBJECT) )
     {
@@ -336,13 +375,11 @@ void sound_emitter::OnDebugRender( void )
     {
         if( m_EmitterShape == SHAPE_SPHERE )
         {
-            draw_Sphere( GetPosition(), (m_AudioMgrNearClip), g_NearClipColor ); 
-            draw_Sphere( GetPosition(), (m_AudioMgrFarClip), g_FarClipColor ); 
+            render::debug::Sphere( GetPosition(), (m_AudioMgrNearClip), g_NearClipColor ); 
+            render::debug::Sphere( GetPosition(), (m_AudioMgrFarClip), g_FarClipColor ); 
         }
         else
         {
-            draw_SetL2W( GetL2W() );
-
             // Get our boxes which are axis aligned.
             bbox Near( vector3(0.0f,0.0f,0.0f),m_AudioMgrNearClip);
             bbox Far( vector3(0.0f,0.0f,0.0f),m_AudioMgrFarClip);
@@ -359,18 +396,16 @@ void sound_emitter::OnDebugRender( void )
             Far.Max = Scale * Far.Max;
             Far.Min = Scale * Far.Min;
 
-            draw_BBox( Near, g_NearClipColor );
-            draw_BBox( Far, g_FarClipColor );
-            
-            draw_ClearL2W();
+            render::debug::Box( Near, GetL2W(), g_NearClipColor );
+            render::debug::Box( Far, GetL2W(), g_FarClipColor );
         }
     }
     else
     {
         if (m_EmitterShape == SHAPE_SPHERE )
-            draw_Sphere( WorldBox.GetCenter(), WorldBox.GetRadius(), XCOLOR_WHITE );
+            render::debug::Sphere( WorldBox.GetCenter(), WorldBox.GetRadius(), XCOLOR_WHITE );
         else
-            draw_BBox(WorldBox, XCOLOR_WHITE );
+            render::debug::Box(WorldBox, XCOLOR_WHITE );
     }
 
     if( m_Debug )
@@ -384,27 +419,27 @@ void sound_emitter::OnDebugRender( void )
             //x_printfxy( 0,0, "X:%f , Y:%f , Z:%f ", Pos.X, Pos.Y, Pos.Z );
             //x_printfxy( 0,1, "Label:%s", m_Label );
 
-            //draw_Marker( Pos, XCOLOR_BLUE );
-            draw_Line( TestPoint, TestPoint2, XCOLOR_GREEN );
-            draw_Line( TestPoint, TestPoint3, XCOLOR_GREEN );
-            draw_Marker( TestPoint, XCOLOR_YELLOW );
-            draw_Marker( TestPoint2, XCOLOR_WHITE );
+            //render::debug::Marker( Pos, XCOLOR_BLUE );
+            render::debug::Line( TestPoint, TestPoint2, XCOLOR_GREEN );
+            render::debug::Line( TestPoint, TestPoint3, XCOLOR_GREEN );
+            render::debug::Marker( TestPoint, XCOLOR_YELLOW );
+            render::debug::Marker( TestPoint2, XCOLOR_WHITE );
         }
         else
         {
-            draw_Marker( TestPoint3, XCOLOR_RED );
-            //draw_BBox( FarDraw, XCOLOR_BLUE );
-            draw_Marker( TestPoint, XCOLOR_GREEN );
+            render::debug::Marker( TestPoint3, XCOLOR_RED );
+            //render::debug::Box( FarDraw, XCOLOR_BLUE );
+            render::debug::Marker( TestPoint, XCOLOR_GREEN );
         }
         
-        //draw_Marker( m_FinalPosTest, XCOLOR_BLUE );
-        //draw_Marker( m_PojectectedFinalPosTest, XCOLOR_BLUE );
-        //draw_Line( g_AudioManager.GetPlayerPos(), m_FinalPosTest, XCOLOR_RED );
-        //draw_Line( g_AudioManager.GetPlayerPos(), m_PojectectedFinalPosTest, XCOLOR_RED );        
+        //render::debug::Marker( m_FinalPosTest, XCOLOR_BLUE );
+        //render::debug::Marker( m_PojectectedFinalPosTest, XCOLOR_BLUE );
+        //render::debug::Line( g_AudioManager.GetPlayerPos(), m_FinalPosTest, XCOLOR_RED );
+        //render::debug::Line( g_AudioManager.GetPlayerPos(), m_PojectectedFinalPosTest, XCOLOR_RED );        
     }
 
 #ifdef sansari
-    draw_BBox( GetBBox(), XCOLOR_RED );
+    render::debug::Box( GetBBox(), XCOLOR_RED );
 #endif
 }
 #endif // X_RETAIL
@@ -438,9 +473,9 @@ void sound_emitter::OnTeleportActivate( const vector3& Position )
 
 //=========================================================================
 
-void sound_emitter::OnAdvanceLogic ( f32 DeltaTime )
+void sound_emitter::OnAdvanceSimulation ( f32 DeltaTime )
 {
-    CONTEXT( "sound_emitter::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "sound_emitter::OnAdvanceSimulation" );
 
     LOG_STAT(k_stats_Sound);
 
@@ -486,6 +521,12 @@ void sound_emitter::OnAdvanceLogic ( f32 DeltaTime )
         }                    
     }
     
+    if( !x_isvalid( DeltaTime ) || (DeltaTime <= 0.0f) )
+        return;
+
+    if( !x_isvalid( m_VolumeFadeTime ) || (m_VolumeFadeTime < k_MinFadeTime) )
+        m_VolumeFadeTime = k_MinFadeTime;
+
     m_CurrentPitchTime += DeltaTime;
     m_CurrentVolumeTime += DeltaTime;
 
@@ -567,9 +608,6 @@ void sound_emitter::OnAdvanceLogic ( f32 DeltaTime )
     }
     else
     {
-        if( m_bReverbEnable )
-            g_AudioMgr.SetReverbWetDryMix( m_WetDryMix );
-
         if( m_AmbientTransition < m_VolumeFadeTime )
         {
             m_AmbientTransition += DeltaTime;
@@ -623,15 +661,23 @@ void sound_emitter::OnAdvanceLogic ( f32 DeltaTime )
         // Check if the sound is already playing.
         Update2DSound( VolumeFade );
 
-        f32 Pitch = 1.0f - (m_PitchDepth * x_sin( (m_CurrentPitchTime/m_PitchSpeed) * (2*PI) ));
+        m_PitchDepth = SanitizeModulationDepth( m_PitchDepth );
+        m_PitchSpeed = SanitizeModulationSpeed( m_PitchSpeed );
 
-        // Get the new Depth and Volume setttings.
-        if( m_CurrentPitchTime > m_PitchSpeed )
+        // Get the new Depth and Volume settings. Use a modulus so a hitch
+        // cannot leave the phase multiple periods behind.
+        if( m_CurrentPitchTime >= m_PitchSpeed )
         {
-            m_CurrentPitchTime = m_CurrentPitchTime - m_PitchSpeed;
-            m_PitchDepth = m_PitchBaseDepth + x_frand( -m_PitchDepthVar, m_PitchDepthVar );
-            m_PitchSpeed = m_PitchBaseSpeed + x_frand( -m_PitchSpeedVar, m_PitchSpeedVar );
+            m_CurrentPitchTime = x_fmod( m_CurrentPitchTime, m_PitchSpeed );
+            m_PitchDepth = SanitizeModulationDepth( m_PitchBaseDepth + x_frand( -m_PitchDepthVar, m_PitchDepthVar ) );
+            m_PitchSpeed = SanitizeModulationSpeed( m_PitchBaseSpeed + x_frand( -m_PitchSpeedVar, m_PitchSpeedVar ) );
+            if( m_CurrentPitchTime >= m_PitchSpeed )
+                m_CurrentPitchTime = x_fmod( m_CurrentPitchTime, m_PitchSpeed );
         }
+
+        f32 Pitch = 1.0f;
+        if( m_PitchDepth > 0.0f )
+            Pitch -= m_PitchDepth * x_sin( (m_CurrentPitchTime/m_PitchSpeed) * (2*PI) );
 
         // Keep the pitch in range 2^-6  -->  2^2
         if( Pitch < 0.015625f )
@@ -639,15 +685,23 @@ void sound_emitter::OnAdvanceLogic ( f32 DeltaTime )
         else if( Pitch > 4.0f )
             Pitch = 4.0f;
 
-        f32 Volume = 1.0f - (m_VolumeDepth * x_sin( (m_CurrentVolumeTime/m_VolumeSpeed) * (2*PI) ));
-        
-        // Get the new Depth and Volume setttings.
-        if( m_CurrentVolumeTime > m_VolumeSpeed )
+        m_VolumeDepth = SanitizeModulationDepth( m_VolumeDepth );
+        m_VolumeSpeed = SanitizeModulationSpeed( m_VolumeSpeed );
+
+        // Get the new Depth and Volume settings. Use a modulus so a hitch
+        // cannot leave the phase multiple periods behind.
+        if( m_CurrentVolumeTime >= m_VolumeSpeed )
         {
-            m_CurrentVolumeTime = m_CurrentVolumeTime - m_VolumeSpeed;
-            m_VolumeDepth = m_VolumeBaseDepth + x_frand( -m_VolumeDepthVar, m_VolumeDepthVar );
-            m_VolumeSpeed = m_VolumeBaseSpeed + x_frand( -m_VolumeSpeedVar, m_VolumeSpeedVar );
+            m_CurrentVolumeTime = x_fmod( m_CurrentVolumeTime, m_VolumeSpeed );
+            m_VolumeDepth = SanitizeModulationDepth( m_VolumeBaseDepth + x_frand( -m_VolumeDepthVar, m_VolumeDepthVar ) );
+            m_VolumeSpeed = SanitizeModulationSpeed( m_VolumeBaseSpeed + x_frand( -m_VolumeSpeedVar, m_VolumeSpeedVar ) );
+            if( m_CurrentVolumeTime >= m_VolumeSpeed )
+                m_CurrentVolumeTime = x_fmod( m_CurrentVolumeTime, m_VolumeSpeed );
         }
+
+        f32 Volume = 1.0f;
+        if( m_VolumeDepth > 0.0f )
+            Volume -= m_VolumeDepth * x_sin( (m_CurrentVolumeTime/m_VolumeSpeed) * (2*PI) );
 
         // Keep the volume in range 0.0f -> 1.0f
         if( Volume < 0.0f )
@@ -667,7 +721,7 @@ void sound_emitter::OnAdvanceLogic ( f32 DeltaTime )
     }
     
     if( (m_MaxInterval > 0.0f) && (m_IntervalTime < 0.0f) )
-        m_IntervalTime = x_frand( m_MinInterval, m_MaxInterval );
+        m_IntervalTime += x_frand( m_MinInterval, m_MaxInterval );
 
     if( IsSoundActive() ==  FALSE )
         m_IntervalTime -= DeltaTime;
@@ -988,12 +1042,6 @@ void sound_emitter::OnEnumProp( prop_enum& List )
             List.PropEnumFloat   ( "Sound Emitter\\Volume Modulation\\Depth Var", "Variation in depth", 0 );
             List.PropEnumFloat   ( "Sound Emitter\\Volume Modulation\\Speed Var", "Variation in speed", 0 );
 
-            List.PropEnumBool    ( "Sound Emitter\\Reverb Enable", "Does this emitter affect reverb wet/dry mix?", PROP_TYPE_MUST_ENUM );
-
-            if( m_bReverbEnable )
-            {
-                List.PropEnumFloat( "Sound Emitter\\Reverb Wet/Dry Mix", "Reverb wet/dry mix", 0 );
-            }
         }
     }
 
@@ -1562,18 +1610,15 @@ xbool sound_emitter::OnProperty( prop_query& I )
 
     if( I.VarFloat ( "Sound Emitter\\VolumeFadeTime", m_VolumeFadeTime ) )
     {
-        if( m_VolumeFadeTime < 0.0f )
-            m_VolumeFadeTime = 0.0f;
+        if( !x_isvalid( m_VolumeFadeTime ) || (m_VolumeFadeTime < k_MinFadeTime) )
+            m_VolumeFadeTime = k_MinFadeTime;
 
         return TRUE;
     }
     
     if( I.VarFloat ( "Sound Emitter\\Pitch Modulation\\Depth", m_PitchBaseDepth ) )
     {
-        if( m_PitchBaseDepth < 0.0f )
-            m_PitchBaseDepth = 0.0f;
-        else if( m_PitchBaseDepth > 1.0f )
-            m_PitchBaseDepth = 1.0f;
+        m_PitchBaseDepth = SanitizeModulationDepth( m_PitchBaseDepth );
         
         m_PitchDepth = m_PitchBaseDepth;
 
@@ -1582,8 +1627,7 @@ xbool sound_emitter::OnProperty( prop_query& I )
 
     if( I.VarFloat ( "Sound Emitter\\Pitch Modulation\\Speed", m_PitchBaseSpeed ) )
     {
-        if( m_PitchBaseSpeed < 0.1f )
-            m_PitchBaseSpeed = 0.1f;
+        m_PitchBaseSpeed = SanitizeModulationSpeed( m_PitchBaseSpeed );
 
         m_PitchSpeed = m_PitchBaseSpeed;                
 
@@ -1592,20 +1636,19 @@ xbool sound_emitter::OnProperty( prop_query& I )
 
     if( I.VarFloat ( "Sound Emitter\\Pitch Modulation\\Depth Var", m_PitchDepthVar ) )
     {
+        m_PitchDepthVar = SanitizeModulationVariance( m_PitchDepthVar );
         return TRUE;
     }
 
     if( I.VarFloat ( "Sound Emitter\\Pitch Modulation\\Speed Var", m_PitchSpeedVar ) )
     {
+        m_PitchSpeedVar = SanitizeModulationVariance( m_PitchSpeedVar );
         return TRUE;
     }            
 
     if( I.VarFloat ( "Sound Emitter\\Volume Modulation\\Depth", m_VolumeBaseDepth ) )
     {
-        if( m_VolumeBaseDepth < 0.0f )
-            m_VolumeBaseDepth = 0.0f;
-        else if( m_VolumeBaseDepth > 1.0f )
-            m_VolumeBaseDepth = 1.0f;
+        m_VolumeBaseDepth = SanitizeModulationDepth( m_VolumeBaseDepth );
         
         m_VolumeDepth = m_VolumeBaseDepth;
 
@@ -1614,8 +1657,7 @@ xbool sound_emitter::OnProperty( prop_query& I )
 
     if( I.VarFloat ( "Sound Emitter\\Volume Modulation\\Speed", m_VolumeBaseSpeed ) )
     {
-        if( m_VolumeBaseSpeed < 0.1f )
-            m_VolumeBaseSpeed = 0.1f;
+        m_VolumeBaseSpeed = SanitizeModulationSpeed( m_VolumeBaseSpeed );
 
         m_VolumeSpeed = m_VolumeBaseSpeed;
 
@@ -1624,11 +1666,13 @@ xbool sound_emitter::OnProperty( prop_query& I )
 
     if( I.VarFloat ( "Sound Emitter\\Volume Modulation\\Depth Var", m_VolumeDepthVar ) )
     {
+        m_VolumeDepthVar = SanitizeModulationVariance( m_VolumeDepthVar );
         return TRUE;
     }
 
     if( I.VarFloat ( "Sound Emitter\\Volume Modulation\\Speed Var", m_VolumeSpeedVar ) )
     {
+        m_VolumeSpeedVar = SanitizeModulationVariance( m_VolumeSpeedVar );
         return TRUE;
     }            
 
@@ -1713,34 +1757,6 @@ xbool sound_emitter::OnProperty( prop_query& I )
         else
         {
             m_bCollisionActivate = I.GetVarBool();
-        }
-
-        return TRUE;
-    }
-
-    if( I.IsVar( "Sound Emitter\\Reverb Enable" ) )
-    {
-        if( I.IsRead () )
-        {
-            I.SetVarBool( m_bReverbEnable );
-        }
-        else
-        {
-            m_bReverbEnable = I.GetVarBool();
-        }
-
-        return TRUE;
-    }
-
-    if( I.IsVar( "Sound Emitter\\Reverb Wet/Dry Mix" ) )
-    {
-        if( I.IsRead () )
-        {
-            I.SetVarFloat( m_WetDryMix);
-        }
-        else
-        {
-            m_WetDryMix = I.GetVarFloat();
         }
 
         return TRUE;

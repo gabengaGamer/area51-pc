@@ -4,17 +4,17 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_PauseMain.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
 #include "Configuration/GameConfig.hpp"
 
 #ifdef CONFIG_VIEWER
@@ -23,14 +23,12 @@
 #include "../../Apps/GameApp/Config.hpp"	
 #endif
 
-// always display build info (for now!)
-#ifndef CONFIG_RETAIL
+// display build info
 #define DISPLAY_BUILD_INFO
-#endif
 
 #if defined( DISPLAY_DEBUG_INFO )
-#include "objects\player.hpp"
-#include "StateMgr/mapList.hpp"
+#include "Objects/Player/Player.hpp"
+#include "StateMgr/MapList.hpp"
 #endif
 
 extern          s32         g_Changelist;
@@ -45,36 +43,34 @@ static const s32 IcY = FrY + 9; // Friends Invite Icons Y
 ui_manager::control_tem PauseMenuControls[] = 
 {
 #if CONFIG_IS_DEMO
-    { IDC_PAUSE_MENU_RESUME,    "IDS_PAUSE_MENU_RESUME",    "button",   60,  70, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MENU_QUIT,      "IDS_PAUSE_MENU_QUIT",      "button",   60, 130, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MENU_INVERTY,   "IDS_PAUSE_MENU_INVERTY",   "button",   60, 190, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MENU_VIBRATION, "IDS_RUMBLE",               "button",   60, 250, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MENU_NAV_TEXT,  "IDS_NULL",                 "text",      0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PAUSE_MENU_RESUME,    "IDS_PAUSE_MENU_RESUME",    "button",   60,  70, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MENU_QUIT,      "IDS_PAUSE_MENU_QUIT",      "button",   60, 130, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MENU_INVERTY,   "IDS_PAUSE_MENU_INVERTY",   "button",   60, 190, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MENU_VIBRATION, "IDS_RUMBLE",               "button",   60, 250, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
 #else
     // Frames.
-    { IDC_PAUSE_MENU_RESUME,    "IDS_PAUSE_MENU_RESUME",    "button",   60,  60, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MENU_QUIT,      "IDS_PAUSE_MENU_QUIT",      "button",   60, 100, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MENU_OPTIONS,   "IDS_PAUSE_MENU_OPTIONS",   "button",   60, 140, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MENU_SETTINGS,  "IDS_PAUSE_MENU_SETTINGS",  "button",   60, 180, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PAUSE_MENU_RESUME,    "IDS_PAUSE_MENU_RESUME",    "button",   60,  60, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MENU_QUIT,      "IDS_PAUSE_MENU_QUIT",      "button",   60, 100, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MENU_OPTIONS,   "IDS_PAUSE_MENU_OPTIONS",   "button",   60, 140, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MENU_SETTINGS,  "IDS_PAUSE_MENU_SETTINGS",  "button",   60, 180, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
 #ifdef TARGET_XBOX
-    { IDC_PAUSE_MENU_FRIENDS,   "IDS_PAUSE_MENU_FRIENDS",   "button",   60, FrY, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PAUSE_MENU_FRIENDS,   "IDS_PAUSE_MENU_FRIENDS",   "button",   60, FrY, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE },
 #endif
-    { IDC_PAUSE_MENU_NAV_TEXT,  "IDS_NULL",                 "text",      0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 #endif
 
 #if defined(DISPLAY_DEBUG_INFO)
-    { IDC_PAUSE_MENU_INVERTY,   "IDS_NULL",                 "text",     60,  30, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MENU_ZONE,      "IDS_NULL",                 "text",     60, 260, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MENU_LEVEL,     "IDS_NULL",                 "text",     60, 280, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PAUSE_MENU_INVERTY,   "IDS_NULL",                 "text",     60,  30, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MENU_ZONE,      "IDS_NULL",                 "text",     60, 260, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MENU_LEVEL,     "IDS_NULL",                 "text",     60, 280, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 #endif
 #if defined(DISPLAY_BUILD_INFO)
-    { IDC_PAUSE_MENU_CHANGE,    "IDS_NULL",                 "text",     60, 300, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MENU_BUILDDATE, "IDS_NULL",                 "text",     60, 320, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PAUSE_MENU_CHANGE,    "IDS_NULL",                 "text",     60, 300, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MENU_BUILDDATE, "IDS_NULL",                 "text",     60, 320, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 #endif
 
 #if defined( TARGET_XBOX )
-    { IDC_PAUSE_MENU_FRIEND_INV,  "IDS_NULL",             "bitmap",   34, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PAUSE_MENU_GAME_INV,    "IDS_NULL",             "bitmap",  182, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PAUSE_MENU_FRIEND_INV,  "IDS_NULL",             "bitmap",   34, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MENU_GAME_INV,    "IDS_NULL",             "bitmap",  182, IcY,  26, 26, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 #endif
 };
 
@@ -165,7 +161,6 @@ xbool dlg_pause_main::Create( s32                        UserID,
     // get button handles
     m_pButtonResume     = (ui_button*)  FindChildByID( IDC_PAUSE_MENU_RESUME    );
     m_pButtonQuit       = (ui_button*)  FindChildByID( IDC_PAUSE_MENU_QUIT      );
-    m_pNavText          = (ui_text*)    FindChildByID( IDC_PAUSE_MENU_NAV_TEXT  );
 
 #if defined( DISPLAY_DEBUG_INFO )
     m_pInvertYText      = (ui_text*)    FindChildByID( IDC_PAUSE_MENU_INVERTY   );
@@ -230,7 +225,6 @@ xbool dlg_pause_main::Create( s32                        UserID,
     // switch off the buttons to start
     m_pButtonResume  ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pButtonQuit    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText       ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 #if defined( DISPLAY_DEBUG_INFO )
     m_pInvertYText   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pZoneText      ->SetFlag(ui_win::WF_VISIBLE, FALSE);
@@ -244,15 +238,13 @@ xbool dlg_pause_main::Create( s32                        UserID,
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_UNPAUSE" );   
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // set up debug info text
 #if defined( DISPLAY_DEBUG_INFO )
     // invertY toggle
     player_profile& Profile = g_StateMgr.GetActiveProfile( 0 );
-    if( Profile.m_bInvertY )
+    if( Profile.IsAxisInverted( profile_control_device::Gamepad, profile_control_axis::Y ) )
     {
         m_pInvertYText->SetLabel( xwstring( "Y-Axis INVERTED" ) );
     }
@@ -269,8 +261,7 @@ xbool dlg_pause_main::Create( s32                        UserID,
     xstring zone = "";
     if( pPlayer )
     {
-        vector3 pos = pPlayer->GetPosition();
-        s32 playerZone = (s32)g_ZoneMgr.FindZone(pos);
+        s32 playerZone = static_cast<s32>( pPlayer->GetPlayerObjectZone() );
         zone.Format("Zone: %d", playerZone);
     }
     zoneText = zone;
@@ -335,14 +326,7 @@ void dlg_pause_main::Render( s32 ox, s32 oy )
     irect rb;
 
     // render background filter
-    s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+    rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
@@ -398,7 +382,7 @@ void dlg_pause_main::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_pause_main::OnPadSelect( ui_win* pWin )
+void dlg_pause_main::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -419,7 +403,7 @@ void dlg_pause_main::OnPadSelect( ui_win* pWin )
             {
                 // Open a dialog to confirm quitting the online game component
                 irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
                 // get message text
                 xwstring Message( g_StringTableMgr( "ui", "IDS_QUIT_DESTRUCTIVE_MSG" )); 
@@ -427,7 +411,7 @@ void dlg_pause_main::OnPadSelect( ui_win* pWin )
                 // set nav text
                 xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
                 navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                SetNavTextVisible( FALSE );
 
                 m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_QUIT_POPUP" ), TRUE, TRUE, FALSE, Message, navText, &m_PopUpResult );
             }
@@ -437,14 +421,15 @@ void dlg_pause_main::OnPadSelect( ui_win* pWin )
         {
             // toggle invert Y
             player_profile& Profile = g_StateMgr.GetActiveProfile(0);
-            Profile.m_bInvertY = !Profile.m_bInvertY;
+            xbool const IsInverted = Profile.IsAxisInverted( profile_control_device::Gamepad, profile_control_axis::Y );
+            Profile.SetAxisInverted( profile_control_device::Gamepad, profile_control_axis::Y, !IsInverted );
         }
         else if( pWin == m_pButtonVibration )
         {
             // toggle invert Y
             player_profile& Profile = g_StateMgr.GetActiveProfile(0);
-            Profile.m_bVibration = !Profile.m_bVibration;
-            g_Input.EnableFeedback( Profile.m_bVibration );
+            Profile.SetVibration( !Profile.GetVibration() );
+            g_Input.EnableFeedback( Profile.GetVibration() );
         }
 #else
         else if( pWin == (ui_win*)m_pButtonOptions )
@@ -474,7 +459,7 @@ void dlg_pause_main::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_pause_main::OnPadBack( ui_win* pWin )
+void dlg_pause_main::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 }
@@ -523,8 +508,11 @@ void dlg_pause_main::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 #if CONFIG_IS_DEMO
     player_profile& Profile = g_StateMgr.GetActiveProfile( 0 );
 
-    xfs Vibration( "Vibration %s", Profile.m_bVibration?"Enabled":"Disabled" );
-    xfs InvertY  ( "Invert Y %s", Profile.m_bInvertY?"Enabled":"Disabled" );
+    xfs Vibration( "Vibration %s", Profile.GetVibration() ? "Enabled" : "Disabled" );
+    xfs InvertY  ( "Invert Y %s",
+                   Profile.IsAxisInverted( profile_control_device::Gamepad, profile_control_axis::Y )
+                       ? "Enabled"
+                       : "Disabled" );
 
     m_pButtonVibration->SetLabel( (const xwchar*)xwstring( (const char*)Vibration ) );
     m_pButtonInvert->SetLabel( (const xwchar*)xwstring( (const char*)InvertY ) );
@@ -539,7 +527,6 @@ void dlg_pause_main::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             // turn on the buttons
             m_pButtonResume     ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pButtonQuit       ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText          ->SetFlag(ui_win::WF_VISIBLE, TRUE);    
 #if CONFIG_IS_DEMO
             m_pButtonVibration  ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pButtonInvert     ->SetFlag( ui_win::WF_VISIBLE, TRUE );
@@ -568,8 +555,7 @@ void dlg_pause_main::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             xstring zone = "";
             if( pPlayer )
             {
-                vector3 pos = pPlayer->GetPosition();
-                s32 playerZone = (s32)g_ZoneMgr.FindZone(pos);
+                s32 playerZone = static_cast<s32>( pPlayer->GetPlayerObjectZone() );
                 zone.Format("Zone: %d", playerZone);
             }
             zoneText = zone;
@@ -584,14 +570,12 @@ void dlg_pause_main::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             //if( (iControl == -1) || (GotoControl(iControl)==NULL) )
             //{
                 GotoControl( (ui_control*)m_pButtonResume );
-                m_pButtonResume->SetFlag(WF_HIGHLIGHT, TRUE);        
                 g_UiMgr->SetScreenHighlight( m_pButtonResume->GetPosition() );
                 m_CurrentControl =  IDC_PAUSE_MENU_RESUME;
             //}
             //else
             //{
             //    ui_control* pControl = GotoControl( iControl );
-            //    pControl->SetFlag(WF_HIGHLIGHT, TRUE);
             //    g_UiMgr->SetScreenHighlight(pControl->GetPosition() );
             //    m_CurrentControl = iControl;
             //}
@@ -629,48 +613,48 @@ void dlg_pause_main::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp = NULL;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
         }
     }
 
     // update the glow bar
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
-    if( m_pButtonResume->GetFlags(WF_HIGHLIGHT) )
+    if( m_pButtonResume->IsFocused() )
     {
         highLight = 0;
         g_UiMgr->SetScreenHighlight( m_pButtonResume->GetPosition() );
     }
-    else if( m_pButtonQuit->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonQuit->IsFocused() )
     {
         highLight = 1;
         g_UiMgr->SetScreenHighlight( m_pButtonQuit->GetPosition() );
     }
 #if CONFIG_IS_DEMO
-    else if( m_pButtonInvert->GetFlags( WF_HIGHLIGHT ) )
+    else if( m_pButtonInvert->IsFocused() )
     {
         highLight = 2;
         g_UiMgr->SetScreenHighlight( m_pButtonInvert->GetPosition() );
 
     }
-    else if( m_pButtonVibration->GetFlags( WF_HIGHLIGHT ) )
+    else if( m_pButtonVibration->IsFocused() )
     {
         highLight = 3;
         g_UiMgr->SetScreenHighlight( m_pButtonVibration->GetPosition() );
     }
 #else
-    else if( m_pButtonOptions->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonOptions->IsFocused() )
     {
         highLight = 2;
         g_UiMgr->SetScreenHighlight( m_pButtonOptions->GetPosition() );
     }
-    else if( m_pButtonSettings->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonSettings->IsFocused() )
     {
         highLight = 3;
         g_UiMgr->SetScreenHighlight( m_pButtonSettings->GetPosition() );
     }
 #ifdef TARGET_XBOX
-    else if( m_pButtonFriends->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonFriends->IsFocused() )
     {
         highLight = 4;
         g_UiMgr->SetScreenHighlight( m_pButtonFriends->GetPosition() );

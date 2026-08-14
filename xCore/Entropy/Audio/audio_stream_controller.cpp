@@ -1,6 +1,18 @@
-#include "audio_stream_controller.hpp"
+//==============================================================================
+//
+//  audio_stream_controller.cpp
+//
+//==============================================================================
 
-//------------------------------------------------------------------------------
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
+#include "Audio/audio_stream_controller.hpp"
+
+//==============================================================================
+//  IMPLEMENTATION
+//==============================================================================
 
 audio_stream_controller::audio_stream_controller( void )
 {
@@ -12,19 +24,19 @@ audio_stream_controller::audio_stream_controller( void )
     }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 audio_stream_controller::~audio_stream_controller( void )
 {
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_stream_controller::Init( void )
 {
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_stream_controller::Kill( void )
 {
@@ -36,16 +48,22 @@ void audio_stream_controller::Kill( void )
 
     // Give em up!
     if( m_nStreams )
-        g_AudioStreamMgr.UnReserveStreams( m_nStreams );
+        g_AudioMgr.UnReserveStreams( m_nStreams );
 
     // None left!
     m_nStreams = 0;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_stream_controller::ReserveStreams( s32 nStreams )
 {
+    if( (nStreams < 0) || (nStreams > MAX_AUDIO_STREAMS) )
+    {
+        ASSERT( 0 );
+        return;
+    }
+
     // Kill any audio playing
     for( s32 i=0 ; i<m_nStreams ; i++ )
     {
@@ -54,11 +72,17 @@ void audio_stream_controller::ReserveStreams( s32 nStreams )
 
     // Free up any currently reserved streams.
     if( m_nStreams )
-        g_AudioStreamMgr.UnReserveStreams( m_nStreams );
+        g_AudioMgr.UnReserveStreams( m_nStreams );
 
     // Now reserve the streams.
-    g_AudioStreamMgr.ReserveStreams( nStreams );
-    m_nStreams = nStreams;
+    if( g_AudioMgr.ReserveStreams( nStreams ) )
+    {
+        m_nStreams = nStreams;
+    }
+    else
+    {
+        m_nStreams = 0;
+    }
     
     // Reset.
     for( s32 i=0 ; i<m_nStreams ; i++ )
@@ -68,7 +92,7 @@ void audio_stream_controller::ReserveStreams( s32 nStreams )
     }
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 voice_id audio_stream_controller::Play( const char* pIdentifier,
                                         xbool       AutoStart )
@@ -78,7 +102,7 @@ voice_id audio_stream_controller::Play( const char* pIdentifier,
     return Play( pIdentifier, AutoStart, DummyRef, -1, FALSE, FALSE );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 voice_id audio_stream_controller::Play( const char*     pIdentifier,
                                         const vector3&  Position,
@@ -88,7 +112,7 @@ voice_id audio_stream_controller::Play( const char*     pIdentifier,
     return Play( pIdentifier, AutoStart, Position, ZoneID, TRUE, FALSE );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 voice_id audio_stream_controller::PlayVolumeClipped( const char*    pIdentifier,
                                                      const vector3& Position,
@@ -98,7 +122,7 @@ voice_id audio_stream_controller::PlayVolumeClipped( const char*    pIdentifier,
     return Play( pIdentifier, AutoStart, Position, ZoneID, TRUE, TRUE );
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 voice_id audio_stream_controller::Play( const char*    pIdentifier, 
                                         xbool          AutoStart, 
@@ -142,7 +166,7 @@ voice_id audio_stream_controller::Play( const char*    pIdentifier,
         if( LowStream != -1 )
         {
             // Attempt to play the sound.
-            Result = g_AudioMgr.PlayInternal( pIdentifier, AutoStart, Position, ZoneID, IsPositional, bVolumeClip );
+            Result = g_AudioMgr.PlayInternal( pIdentifier, AutoStart, Position, ZoneID, IsPositional, bVolumeClip, TRUE );
 
             // Success?
             if( Result )
@@ -163,7 +187,7 @@ voice_id audio_stream_controller::Play( const char*    pIdentifier,
     else
     {
         // Attempt to play the sound.
-        Result = g_AudioMgr.PlayInternal( pIdentifier, AutoStart, Position, ZoneID, IsPositional, bVolumeClip );
+        Result = g_AudioMgr.PlayInternal( pIdentifier, AutoStart, Position, ZoneID, IsPositional, bVolumeClip, TRUE );
 
         // Success?
         if( Result )
@@ -180,7 +204,7 @@ voice_id audio_stream_controller::Play( const char*    pIdentifier,
     return Result;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 s32 audio_stream_controller::GetAvailableStreams( void )
 {
@@ -189,8 +213,8 @@ s32 audio_stream_controller::GetAvailableStreams( void )
     // Ok lets look for an available stream.
     for( s32 i=0 ; i<m_nStreams ; i++ )
     {
-        // Valid voice?
-        if( g_AudioMgr.IsValidVoiceId( m_Data[ i ].VoiceID ) )
+        // Available stream?
+        if( !g_AudioMgr.IsValidVoiceId( m_Data[ i ].VoiceID ) )
         {
             Result++;
         }
@@ -199,14 +223,14 @@ s32 audio_stream_controller::GetAvailableStreams( void )
     return Result;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 s32 audio_stream_controller::GetMaxStreams( void )
 {
     return m_nStreams;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 void audio_stream_controller::ClearStreams( void )
 {
     // Ok lets look for an available stream.

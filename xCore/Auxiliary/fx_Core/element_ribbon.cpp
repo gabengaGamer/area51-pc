@@ -1,5 +1,6 @@
 #include "controller.hpp"
 #include "element_ribbon.hpp"
+#include "PreviewRender.hpp"
 #include "effect.hpp"
 
 namespace fx_core
@@ -123,37 +124,16 @@ void element_ribbon::Render( f32 T )
 
         GetColorAtTime( T, Color );
 
-        // Determine blend mode
-        s32 DrawBlendMode = 0;
-        switch( m_CombineMode )
-        {
-            case COMBINEMODE_ADDITIVE:
-                DrawBlendMode = DRAW_BLEND_ADD;
-                break;
-            case COMBINEMODE_SUBTRACTIVE:
-                DrawBlendMode = DRAW_BLEND_SUB;
-                break;
-        }
-
-        // Set L2W
         L2W.Identity();
-        draw_SetL2W( L2W );
-
-        // draw flags
-        u32 DrawFlags       = DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE | DrawBlendMode;
-        if ( !m_ZRead )     { DrawFlags |= DRAW_NO_ZBUFFER; }
-
-        // Start drawing
-        draw_Begin( DRAW_TRIANGLES, DrawFlags );
 
         // Setup bitmap
         if ( m_BitmapName.IsEmpty() )
             m_BitmapName = "fx_default.xbmp";
 
         g_pTextureMgr->ActivateBitmap( m_BitmapName );
-
-        // Draw the ribbon
-        draw_Color( Color );
+        const render::primitive_draw_desc material =
+            CreatePreviewMaterial( g_pTextureMgr->GetTexture( m_BitmapName ), m_CombineMode, m_ZRead );
+        render::PrimitiveBatch batch( material );
 
         s32 NumKeys = m_pTranslation->GetKeyCount();
 
@@ -249,26 +229,23 @@ void element_ribbon::Render( f32 T )
                 BottomLeft  = ( Twist1 * vector3( 0, -HalfHeight1, 0 ) ) + Pos1;
                 BottomRight = ( Twist2 * vector3( 0, -HalfHeight2, 0 ) ) + Pos2;
 
-                // Draw UV Quad
-                draw_UV( u1, v1 );    draw_Vertex( TopLeft     );
-                draw_UV( u1, v2 );    draw_Vertex( BottomLeft  );
-                draw_UV( u2, v2 );    draw_Vertex( BottomRight );
-
-                draw_UV( u1, v1 );    draw_Vertex( TopLeft     );
-                draw_UV( u2, v2 );    draw_Vertex( BottomRight );
-                draw_UV( u2, v1 );    draw_Vertex( TopRight    );
+                batch.AddTriangle(
+                    render::primitive_vertex( TopLeft,     vector2( u1, v1 ), Color ),
+                    render::primitive_vertex( BottomLeft,  vector2( u1, v2 ), Color ),
+                    render::primitive_vertex( BottomRight, vector2( u2, v2 ), Color ) );
+                batch.AddTriangle(
+                    render::primitive_vertex( TopLeft,     vector2( u1, v1 ), Color ),
+                    render::primitive_vertex( BottomRight, vector2( u2, v2 ), Color ),
+                    render::primitive_vertex( TopRight,    vector2( u2, v1 ), Color ) );
             }
         }
 
-        // End drawing
-        draw_End();
+        batch.Submit( L2W );
 
         // Render element bbox
         GetL2WAtTime( T, L2W   );
         RenderBBox( T );
 
-        // Reset L2W
-        draw_ClearL2W();
     }
 
     // Render the translation path of the object

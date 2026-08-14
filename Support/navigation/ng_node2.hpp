@@ -9,7 +9,7 @@
 //============================================================================
 #ifndef NG_NODE2_HPP
 #define NG_NODE2_HPP
-#include "nav_map.hpp"
+#include "Nav_Map.hpp"
 #include "ng_connection2.hpp"
 
 

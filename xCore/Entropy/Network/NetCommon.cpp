@@ -4,10 +4,6 @@
 //
 //=============================================================================
 
-#ifdef WIN32
-#include <winsock.h>
-#endif
-
 #include "x_files.hpp"
 #include "e_Network.hpp"
 #include "Network/NetStream.hpp"

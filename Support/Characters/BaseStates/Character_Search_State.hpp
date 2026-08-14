@@ -1,7 +1,7 @@
 #ifndef _CHARACTER_SEARCH_STATE_HPP_
 #define _CHARACTER_SEARCH_STATE_HPP_
 
-#include "..\CharacterState.hpp"
+#include "../CharacterState.hpp"
 
 class character_search_state : public character_state
 {
@@ -39,7 +39,6 @@ public:
 protected:
     f32     m_TimeTillBored;
     f32     m_LookAroundTime;
-    f32     m_TimeAtLocationOfInterest;
 
     xbool   m_SpottedSurpriseDone;
 };

@@ -145,11 +145,11 @@
 //==============================================================================
 
 #ifndef X_MATH_HPP
-#include "..\x_math.hpp"
+#include "../x_math.hpp"
 #endif
 
 #ifndef X_DEBUG_HPP
-#include "..\x_debug.hpp"
+#include "../x_debug.hpp"
 #endif
 
 //==============================================================================

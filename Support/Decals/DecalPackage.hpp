@@ -18,7 +18,6 @@
 // Includes
 //==============================================================================
 
-#include "Auxiliary\MiscUtils\Fileio.hpp"
 #include "DecalDefinition.hpp"
 
 //==============================================================================
@@ -33,18 +32,11 @@ void ForceDecalLoaderLink( void );
 class decal_package
 {
 public:
-    enum
-    {
-        DECAL_PACKAGE_VERSION = 0x0004
-    };
-
     //==========================================================================
     // Constructors/destructors
     //==========================================================================
             decal_package       ( void );
-            decal_package       ( fileio& File );
             ~decal_package      ( void );
-    void    FileIO              ( fileio& File );
 
     //==========================================================================
     // Get/Set functions
@@ -59,6 +51,8 @@ public:
     s32                 GetNDecalDefs   ( void                  )  const;
     decal_definition&   GetDecalDef     ( s32         iDecalDef )  const;
     s32                 GetNDecalDefs   ( s32         iGroup    )  const;
+    s32                 GetGroupDecalDefStart
+                                        ( s32         iGroup    )  const;
     decal_definition&   GetDecalDef     ( s32         iGroup,
                                           s32         iDecalDef )  const;
     decal_definition*   GetDecalDef     ( const char* Name,
@@ -67,14 +61,12 @@ public:
     //==========================================================================
     // Functions used by the decal compiler.
     //==========================================================================
-    #ifdef TARGET_PC
     void    AllocGroups          ( s32 nGroups    ); // DO NOT USE IN-GAME!!!!
     void    AllocDecals          ( s32 nDecals    ); // DO NOT USE IN-GAME!!!!
     void    SetGroupDecalDefStart( s32 iGroup,
                                    s32 iDecalDef  ); // DO NOT USE IN-GAME!!!!
     void    SetGroupDecalDefCount( s32 iGroup,
                                    s32 nDecalDefs ); // DO NOT USE IN-GAME!!!!
-    #endif
         
 protected:
     //==========================================================================
@@ -82,8 +74,6 @@ protected:
     //==========================================================================
     struct group
     {
-        void    FileIO  ( fileio& File );
-
         char    Name[32];
         xcolor  Color;
         s32     nDecalDefs;
@@ -93,7 +83,6 @@ protected:
     //==========================================================================
     // Decal data
     //==========================================================================
-    s32                 m_Version;
     s32                 m_nGroups;
     group*              m_pGroups;
     s32                 m_nDecalDefs;
@@ -162,6 +151,14 @@ inline s32 decal_package::GetNDecalDefs( s32 iGroup ) const
 {
     ASSERT( (iGroup>=0) && (iGroup < m_nGroups) );
     return m_pGroups[iGroup].nDecalDefs;
+}
+
+//==============================================================================
+
+inline s32 decal_package::GetGroupDecalDefStart( s32 iGroup ) const
+{
+    ASSERT( (iGroup>=0) && (iGroup < m_nGroups) );
+    return m_pGroups[iGroup].iDecalDef;
 }
 
 //==============================================================================

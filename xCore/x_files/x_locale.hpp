@@ -79,11 +79,12 @@ const x_language          x_GetConsoleLanguage( void );
 
 const x_console_territory x_GetConsoleRegion  ( void );
 
-      void                x_SetLocale         ( x_language const lang );
+      void                x_SetLocale         ( x_language const Language );
 const x_language          x_GetLocale         ( void );
 
-const char *              x_GetLocaleString   ( x_locale_code_format const format = XL_LOCALE_CODE_ISO_639_2 );
-const char *              x_GetLocaleString   ( x_language const lang, x_locale_code_format const format = XL_LOCALE_CODE_ISO_639_2 );
+const char*               x_GetLocaleString   ( x_locale_code_format Format = XL_LOCALE_CODE_ISO_639_2 );
+const char*               x_GetLocaleString   ( x_language Language,
+                                                x_locale_code_format Format = XL_LOCALE_CODE_ISO_639_2 );
 
       void                x_SetTerritory      ( x_console_territory const territory );
 const x_console_territory x_GetTerritory      ( void );

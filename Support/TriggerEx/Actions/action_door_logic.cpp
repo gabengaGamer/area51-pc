@@ -8,11 +8,12 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_door_logic.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 static const xcolor s_LogicColor          (200,200,0);
 
@@ -57,15 +58,15 @@ void action_door_logic::OnDebugRender ( s32 Index )
     object* pObject = m_ObjectAffecter.GetObjectPtr();
     if( pObject && pObject->IsKindOf( door::GetRTTI() ) == TRUE )
     {
-        draw_Line( GetPositionOwner(), pObject->GetPosition(), s_LogicColor );
-        draw_BBox( pObject->GetBBox(), s_LogicColor );
+        render::debug::Line( GetPositionOwner(), pObject->GetPosition(), s_LogicColor );
+        render::debug::Box( pObject->GetBBox(), s_LogicColor );
         if (!GetElse())
         {
-            draw_Label( pObject->GetPosition(), s_LogicColor, xfs("[%d]Door Logic", Index) );
+            render::debug::Label( pObject->GetPosition(), s_LogicColor, xfs("[%d]Door Logic", Index) );
         }
         else
         {
-            draw_Label( pObject->GetPosition(), s_LogicColor, xfs("[Else %d]Door Logic", Index) );
+            render::debug::Label( pObject->GetPosition(), s_LogicColor, xfs("[Else %d]Door Logic", Index) );
         }
     }
 }

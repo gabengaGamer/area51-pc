@@ -12,10 +12,10 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "..\Support\Trigger\Trigger_Conditionals.hpp"
-#include "..\Support\Trigger\Trigger_Actions.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/Trigger/Trigger_Conditionals.hpp"
+#include "../Support/Trigger/Trigger_Actions.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 class trigger_mngr;
 

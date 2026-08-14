@@ -71,7 +71,7 @@ public:
                                                     
     virtual void                OnEnumProp          ( prop_enum&    List );
     virtual xbool               OnProperty          ( prop_query&   I    );
-    virtual void                OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void                OnAdvanceSimulation      ( f32 DeltaTime );
                                                     
             rigid_inst&         GetRigidInst        ( void ) { return( m_Inst); }
                                                     

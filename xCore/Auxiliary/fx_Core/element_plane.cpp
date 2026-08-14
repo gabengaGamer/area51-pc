@@ -1,5 +1,6 @@
 #include "controller.hpp"
 #include "element_plane.hpp"
+#include "PreviewRender.hpp"
 #include "effect.hpp"
 
 namespace fx_core
@@ -141,67 +142,38 @@ void element_plane::Render( f32 T )
         GetL2WAtTime  ( T, L2W   );
         GetColorAtTime( T, Color );
 
-        // Determine blend mode
-        s32 DrawBlendMode = 0;
-        switch( m_CombineMode )
-        {
-            case COMBINEMODE_ADDITIVE:
-                DrawBlendMode = DRAW_BLEND_ADD;
-                break;
-            case COMBINEMODE_SUBTRACTIVE:
-                DrawBlendMode = DRAW_BLEND_SUB;
-                break;
-        }
-
-        // Set L2W
-        draw_SetL2W( L2W );
-
-        // draw flags
-        u32 DrawFlags = DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE | DrawBlendMode;
-
-        if ( (m_MappingTileU == 1.0f) && (m_MappingScrollU == 0.0f) )   { DrawFlags |= DRAW_U_CLAMP;    }
-        if ( (m_MappingTileV == 1.0f) && (m_MappingScrollV == 0.0f) )   { DrawFlags |= DRAW_V_CLAMP;    }
-        if ( !m_ZRead )                                                 { DrawFlags |= DRAW_NO_ZBUFFER; }
-
-        // Start drawing
-        draw_Begin( DRAW_TRIANGLES, DrawFlags );
-
         // Setup bitmap
         if ( m_BitmapName.IsEmpty() )
             m_BitmapName = "fx_default.xbmp";
 
         g_pTextureMgr->ActivateBitmap( m_BitmapName );
+        const xbool clampU = (m_MappingTileU == 1.0f) && (m_MappingScrollU == 0.0f);
+        const xbool clampV = (m_MappingTileV == 1.0f) && (m_MappingScrollV == 0.0f);
+        const render::primitive_draw_desc material =
+            CreatePreviewMaterial( g_pTextureMgr->GetTexture( m_BitmapName ), m_CombineMode, m_ZRead, clampU, clampV );
+        render::PrimitiveBatch batch( material );
 
         // UV scroll starts at LifeStart...we multiply by 0.033333333 for 30fps
         f32 MapScrollTime       = ( T - (f32)m_LifeStartFrame ) * 0.03333333f;
-        f32 MapScrollU          = m_MappingScrollU * MapScrollTime;
-        f32 MapScrollV          = m_MappingScrollV * MapScrollTime;
-
         f32 u1 = ( m_MappingScrollU * MapScrollTime );
         f32 u2 = ( m_MappingScrollU * MapScrollTime ) + m_MappingTileU;
 
         f32 v1 = ( m_MappingScrollV * MapScrollTime );
         f32 v2 = ( m_MappingScrollV * MapScrollTime ) + m_MappingTileV;
 
-        // Draw the plane
-        draw_Color( Color );
-
-        draw_UV( u2, v2 );      draw_Vertex( vector3(  0.5f, -0.5f, 0.0f ) );
-        draw_UV( u1, v2 );      draw_Vertex( vector3( -0.5f, -0.5f, 0.0f ) );
-        draw_UV( u1, v1 );      draw_Vertex( vector3( -0.5f,  0.5f, 0.0f ) );
-
-        draw_UV( u2, v2 );      draw_Vertex( vector3(  0.5f, -0.5f, 0.0f ) );
-        draw_UV( u1, v1 );      draw_Vertex( vector3( -0.5f,  0.5f, 0.0f ) );
-        draw_UV( u2, v1 );      draw_Vertex( vector3(  0.5f,  0.5f, 0.0f ) );
-
-        // End drawing
-        draw_End();
+        batch.AddTriangle(
+            render::primitive_vertex( vector3(  0.5f, -0.5f, 0.0f ), vector2( u2, v2 ), Color ),
+            render::primitive_vertex( vector3( -0.5f, -0.5f, 0.0f ), vector2( u1, v2 ), Color ),
+            render::primitive_vertex( vector3( -0.5f,  0.5f, 0.0f ), vector2( u1, v1 ), Color ) );
+        batch.AddTriangle(
+            render::primitive_vertex( vector3(  0.5f, -0.5f, 0.0f ), vector2( u2, v2 ), Color ),
+            render::primitive_vertex( vector3( -0.5f,  0.5f, 0.0f ), vector2( u1, v1 ), Color ),
+            render::primitive_vertex( vector3(  0.5f,  0.5f, 0.0f ), vector2( u2, v1 ), Color ) );
+        batch.Submit( L2W );
 
         // Render element bbox
         RenderBBox( T );
 
-        // Reset L2W
-        draw_ClearL2W();
     }
 
     // Render the translation path of the object

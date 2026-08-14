@@ -14,10 +14,10 @@
 
 #include "MsgClient.hpp"
 #include "GameMgr.hpp"
-#include "Objects\HudObject.hpp"
+#include "Objects/HudObject.hpp"
 #include "NetworkMgr.hpp"
 #include "Inventory/Inventory2.hpp"
-#include "PerceptionMgr\PerceptionMgr.hpp"
+#include "PerceptionMgr/PerceptionMgr.hpp"
 
 //==============================================================================
 //  STORAGE
@@ -255,7 +255,8 @@ inline xbool msg_client::ReplaceArg( const msg&      Msg,
     }
 
     // Override "you" substitution if this is not in English.
-    if( (ArgType == ARG_PLAYER) && (x_GetLocale() != XL_LANG_ENGLISH) )
+    if( (ArgType == ARG_PLAYER) &&
+        (x_GetLocale() != XL_LANG_ENGLISH) )
     {
         ArgType = ARG_PLAYER_NAME;
     }
@@ -385,7 +386,7 @@ inline xbool msg_client::ReplaceArg( const msg&      Msg,
         {
             InsertNumber( ArgVal, pMessage, CursorPos );
 
-            if( x_GetLocale() == XL_LANG_ENGLISH ) 
+            if( x_GetLocale() == XL_LANG_ENGLISH )
             {
                 if(  IN_RANGE(  1, ArgVal % 10,   3 ) &&
                     !IN_RANGE( 11, ArgVal % 100, 13 ) )

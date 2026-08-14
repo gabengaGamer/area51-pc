@@ -17,7 +17,7 @@
 #include "UpdateMgr.hpp"
 #include "GameMgr.hpp"
 #include "x_log.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
 
 //==============================================================================
 //  TWEAKABLES

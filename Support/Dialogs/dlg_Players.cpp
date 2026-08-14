@@ -4,21 +4,21 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_blankbox.hpp"
-#include "ui\ui_friendlist.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_blankbox.hpp"
+#include "UI/ui_friendlist.hpp"
 
 #include "dlg_Players.hpp"
 #include "dlg_SubMenu.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "NetworkMgr\Voice\VoiceMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "NetworkMgr/Voice/VoiceMgr.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
@@ -31,18 +31,16 @@ enum controls
     IDC_PLAYER_NAME_TEXT,
     IDC_PLAYER_GAME_TEXT,
     IDC_PLAYER_STATUS_TEXT,
-    IDC_PLAYER_NAV_TEXT,
 };
 
 
 ui_manager::control_tem PlayersControls[] = 
 {
     // Frames.
-    { IDC_PLAYER_LIST,          "IDS_NULL",         "friendlist",  40,  40, 416, 222, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PLAYER_DETAILS,       "IDS_NULL",         "blankbox",    40, 272, 416,  60, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PLAYER_GAME_TEXT,     "IDS_NULL",         "text",        48, 294, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PLAYER_STATUS_TEXT,   "IDS_NULL",         "text",        48, 310, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_PLAYER_NAV_TEXT,      "IDS_NULL",         "text",         0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_PLAYER_LIST,          "IDS_NULL",         "friendlist",  40,  40, 416, 222, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PLAYER_DETAILS,       "IDS_NULL",         "blankbox",    40, 272, 416,  60, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PLAYER_GAME_TEXT,     "IDS_NULL",         "text",        48, 294, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_PLAYER_STATUS_TEXT,   "IDS_NULL",         "text",        48, 310, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 };
 
 
@@ -124,7 +122,7 @@ xbool dlg_players::Create( s32                        UserID,
 
     m_pPlayerList = (ui_friendlist*)FindChildByID( IDC_PLAYER_LIST );
     m_pPlayerList->SetLineHeight( 32 );
-    m_pPlayerList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pPlayerList->SetActive( TRUE );
     m_pPlayerList->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pPlayerList->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pPlayerList->EnableHeaderBar();
@@ -140,12 +138,8 @@ xbool dlg_players::Create( s32                        UserID,
     m_pPlayerList->Configure( FALSE );
 
     // set up nav text
-    m_pNavText = (ui_text*) FindChildByID( IDC_PLAYER_NAV_TEXT );
     
-    m_pNavText->SetLabel( "" );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);    
+    SetNavText( "" );
 
     // get server details box
     m_pPlayerDetails = (ui_blankbox*)FindChildByID( IDC_PLAYER_DETAILS );
@@ -233,14 +227,7 @@ void dlg_players::Render( s32 ox, s32 oy )
     
     if( m_bRenderBlackout )
     {
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-        // Nasty hack to force PS2 to draw to rb.l = 0
-        rb.Set( -1, 0, XRes, YRes );
-#else
-        rb.Set( 0, 0, XRes, YRes );
-#endif
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
             xcolor(0,0,0,180),
             xcolor(0,0,0,180),
@@ -300,31 +287,14 @@ void dlg_players::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_players::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_players::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    (void)pWin;
-    (void)pSender;
-    (void)Command;
-    (void)pData;
-
-    if ( m_State == DIALOG_STATE_ACTIVE )
-    {
-        if (Command == WN_LIST_ACCEPTED)
-        {
-        }
-    } 
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 }
 
 //=========================================================================
 
-void dlg_players::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
-{
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
-}
-
-//=========================================================================
-
-void dlg_players::OnPadSelect( ui_win* pWin )
+void dlg_players::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -424,7 +394,7 @@ void dlg_players::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_players::OnPadBack( ui_win* pWin )
+void dlg_players::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -463,7 +433,6 @@ void dlg_players::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             // activate text
             m_pPlayerGame       ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pPlayerStatus     ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText          ->SetFlag(ui_win::WF_VISIBLE, TRUE);
         }
     }
 
@@ -550,12 +519,12 @@ void dlg_players::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                             {                            
                                 // Confirm to send attachment. (XBOX only)
                                 irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
                                 // set nav text
                                 xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
                                 navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                                m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                                SetNavTextVisible( FALSE );
 
                                 // configure message
                                 m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_ADD_ATTACHMENT" ), 
@@ -609,9 +578,9 @@ void dlg_players::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     // Setup to record a voice message.
                     irect r;
                     r.Set(0,0,460,200);
-                    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
-                    m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                    SetNavTextVisible( FALSE );
  
                     // configure message
                     m_PopUp->ConfigureRecordDialog( r,
@@ -629,14 +598,14 @@ void dlg_players::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     g_MatchMgr.AddBuddy( m_Buddy );
                     ActivateSyncPopup(SYNC_MODE_ADD_BUDDY);
                     m_PopUp = NULL;
-                    m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+                    SetNavTextVisible( TRUE );
                 }
             }
             else // ? record go well?
             {
                 // Buddy Request is sent.
                 m_PopUp = NULL;
-                m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+                SetNavTextVisible( TRUE );
                 
                 if ( m_PopUpResult == DLG_POPUP_OTHER )
                 {
@@ -884,7 +853,7 @@ void dlg_players::PopulatePlayerInfo( void )
 
     HelpText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
 
-    m_pNavText->SetLabel( HelpText );
+    SetNavText( HelpText );
 
     m_pPlayerDetails->SetLabel( buff );
 }
@@ -897,7 +866,7 @@ void dlg_players::ActivateSyncPopup( s32 SyncMode )
 
     // Confirm to send attachment. (XBOX only)
     irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-    m_SyncPopup = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+    m_SyncPopup = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
     // message
     xwstring Message;

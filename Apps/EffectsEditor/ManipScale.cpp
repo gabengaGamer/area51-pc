@@ -3,6 +3,8 @@
 
 #include "stdafx.h"
 #include "ManipScale.h"
+#include "Render/PrimitiveBatch.hpp"
+#include "Render/PrimitiveDebug.hpp"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -115,46 +117,39 @@ void CManipScale::RenderPlane( const vector3& Origin, const vector3& Axis1, cons
         cFill2      = xcolor(255,255,255,96);
     }
 
-    // Reset transform
-    draw_ClearL2W();
+    const render::primitive_draw_desc fillMaterial( NULL,
+                                                    render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                    render::PRIMITIVE_BLEND_ALPHA,
+                                                    render::PRIMITIVE_DEPTH_DISABLED,
+                                                    render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                    render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                    render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch fillBatch( fillMaterial );
+    const vector2 uv( 0.0f, 0.0f );
+    fillBatch.AddTriangle( render::primitive_vertex( Origin,      uv, cFill1 ),
+                           render::primitive_vertex( Origin + v1, uv, cFill1 ),
+                           render::primitive_vertex( Origin + v2, uv, cFill1 ) );
+    fillBatch.AddTriangle( render::primitive_vertex( Origin + v1, uv, cFill2 ),
+                           render::primitive_vertex( Origin + v3, uv, cFill2 ),
+                           render::primitive_vertex( Origin + v2, uv, cFill2 ) );
+    fillBatch.AddTriangle( render::primitive_vertex( Origin + v2, uv, cFill2 ),
+                           render::primitive_vertex( Origin + v4, uv, cFill2 ),
+                           render::primitive_vertex( Origin + v3, uv, cFill2 ) );
+    matrix4 identity;
+    identity.Identity();
+    fillBatch.Submit( identity );
 
-    // Draw alpha blended plane
-    draw_Begin( DRAW_TRIANGLES, DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_NO_ZWRITE );
-
-    draw_Color( cFill1 );
-    draw_Vertex( Origin );
-    draw_Vertex( Origin+v1 );
-    draw_Vertex( Origin+v2 );
-    draw_Vertex( Origin );
-    draw_Vertex( Origin+v2 );
-    draw_Vertex( Origin+v1 );
-
-    draw_Color( cFill2 );
-    draw_Vertex( Origin+v1 );
-    draw_Vertex( Origin+v3 );
-    draw_Vertex( Origin+v2 );
-    draw_Vertex( Origin+v1 );
-    draw_Vertex( Origin+v2 );
-    draw_Vertex( Origin+v3 );
-
-    draw_Vertex( Origin+v2 );
-    draw_Vertex( Origin+v4 );
-    draw_Vertex( Origin+v3 );
-    draw_Vertex( Origin+v2 );
-    draw_Vertex( Origin+v3 );
-    draw_Vertex( Origin+v4 );
-
-    draw_End();
-
-    // Draw lines for outline
-    draw_Begin( DRAW_LINES, DRAW_NO_ZBUFFER|DRAW_NO_ZWRITE );
-    draw_Color( cOutline1 );
-    draw_Vertex( Origin+v1 );
-    draw_Vertex( Origin+v2 );
-    draw_Color( cOutline2 );
-    draw_Vertex( Origin+v3 );
-    draw_Vertex( Origin+v4 );
-    draw_End();
+    const render::primitive_draw_desc lineMaterial( NULL,
+                                                    render::PRIMITIVE_TOPOLOGY_LINE_LIST,
+                                                    render::PRIMITIVE_BLEND_OPAQUE,
+                                                    render::PRIMITIVE_DEPTH_DISABLED,
+                                                    render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                    render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                    render::PRIMITIVE_LAYER_SURFACE );
+    render::PrimitiveBatch lineBatch( lineMaterial );
+    lineBatch.AddLine( Origin + v1, Origin + v2, cOutline1, cOutline1 );
+    lineBatch.AddLine( Origin + v3, Origin + v4, cOutline2, cOutline2 );
+    lineBatch.Submit( identity );
 }
 
 //============================================================================
@@ -163,61 +158,13 @@ void CManipScale::RenderArrow( const vector3& Origin, const vector3& Direction, 
 {
     f32 Length      = Size * ARROW_LENGTH;
 
-    // Build matrix to translate arrow to Origin
-    matrix4 m;
-    m.Identity();
-    m.SetTranslation( Origin );
+    render::debug::Line( Origin, Origin + Direction * Length,
+                         Highlight ? XCOLOR_YELLOW : Color, render::PRIMITIVE_DEPTH_DISABLED );
 
-    // Build rotation into matrix to align arrow with Direction
-    vector3     ArrowDir(0,0,1);
-    quaternion  q1;
-    q1.Setup( ArrowDir, Direction );
-    m.SetRotation( q1 );
-
-    // Render it
-    draw_Begin(DRAW_LINES );
-    draw_SetL2W( m );
-    draw_Color( Highlight ? XCOLOR_YELLOW : Color );
-    draw_Vertex( vector3(0,0,0) );
-    draw_Vertex( vector3(0,0,1) * ARROW_LENGTH * Size );
-    draw_End();
-
-    draw_Begin( DRAW_QUADS, DRAW_NO_ZBUFFER );
     f32 s = m_RenderSize*BOX_SIZE/2.0f;
-    f32 o = ARROW_LENGTH * Size - s;
-    draw_Color( Color );
-
-    draw_Vertex( vector3(-s, s,o+s) );
-    draw_Vertex( vector3( s, s,o+s) );
-    draw_Vertex( vector3( s, s,o-s) );
-    draw_Vertex( vector3(-s, s,o-s) );
-
-    draw_Vertex( vector3( s,-s,o+s) );
-    draw_Vertex( vector3(-s,-s,o+s) );
-    draw_Vertex( vector3(-s,-s,o-s) );
-    draw_Vertex( vector3( s,-s,o-s) );
-
-    draw_Vertex( vector3( s, s,o+s) );
-    draw_Vertex( vector3(-s, s,o+s) );
-    draw_Vertex( vector3(-s,-s,o+s) );
-    draw_Vertex( vector3( s,-s,o+s) );
-
-    draw_Vertex( vector3( s,-s,o-s) );
-    draw_Vertex( vector3(-s,-s,o-s) );
-    draw_Vertex( vector3(-s, s,o-s) );
-    draw_Vertex( vector3( s, s,o-s) );
-
-    draw_Vertex( vector3( s,-s,o+s) );
-    draw_Vertex( vector3( s,-s,o-s) );
-    draw_Vertex( vector3( s, s,o-s) );
-    draw_Vertex( vector3( s, s,o+s) );
-
-    draw_Vertex( vector3(-s, s,o+s) );
-    draw_Vertex( vector3(-s, s,o-s) );
-    draw_Vertex( vector3(-s,-s,o-s) );
-    draw_Vertex( vector3(-s,-s,o+s) );
-
-    draw_End();
+    const vector3 center = Origin + Direction * ( Length - s );
+    render::debug::SolidBox( bbox( center - vector3( s, s, s ), center + vector3( s, s, s ) ),
+                             Color, render::PRIMITIVE_DEPTH_DISABLED );
 }
 
 //============================================================================

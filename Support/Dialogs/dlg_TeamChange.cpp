@@ -4,21 +4,21 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_blankbox.hpp"
-#include "ui\ui_playerlist.hpp"
-#include "ui\ui_text.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_blankbox.hpp"
+#include "UI/ui_playerlist.hpp"
+#include "UI/ui_text.hpp"
 
 #include "dlg_PopUp.hpp"
 #include "dlg_TeamChange.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 
 
 //=========================================================================
@@ -37,23 +37,21 @@ enum controls
     IDC_OMEGA_TEAM_SCORE,
     IDC_OMEGA_TEAM_LISTBOX,
 
-    IDC_TEAM_CHANGE_NAV_TEXT,
 };
 
 ui_manager::control_tem TeamChangeControls[] = 
 {
     // Frames.
-    { IDC_ALPHA_TEAM_HEADER,    "IDS_NULL",     "blankbox",      40,  40, 165,  26,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ALPHA_TEAM_NAME,      "IDS_NULL",     "text",          45,  40, 105,  20,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ALPHA_TEAM_SCORE,     "IDS_NULL",     "text",         170 , 40,  45,  20,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ALPHA_TEAM_LISTBOX,   "IDS_NULL",     "playerlist",    40,  66, 180, 222,  0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_ALPHA_TEAM_HEADER,    "IDS_NULL",     "blankbox",      40,  40, 165,  26,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ALPHA_TEAM_NAME,      "IDS_NULL",     "text",          45,  40, 105,  20,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ALPHA_TEAM_SCORE,     "IDS_NULL",     "text",         170 , 40,  45,  20,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ALPHA_TEAM_LISTBOX,   "IDS_NULL",     "playerlist",    40,  66, 180, 222,  0, 0, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_OMEGA_TEAM_HEADER,    "IDS_NULL",     "blankbox",     240,  40, 165,  26,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_OMEGA_TEAM_NAME,      "IDS_NULL",     "text",         245,  40, 105,  20,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_OMEGA_TEAM_SCORE,     "IDS_NULL",     "text",         370,  40,  45,  20,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_OMEGA_TEAM_LISTBOX,   "IDS_NULL",     "playerlist",   240,  66, 180, 222,  1, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_OMEGA_TEAM_HEADER,    "IDS_NULL",     "blankbox",     240,  40, 165,  26,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_OMEGA_TEAM_NAME,      "IDS_NULL",     "text",         245,  40, 105,  20,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_OMEGA_TEAM_SCORE,     "IDS_NULL",     "text",         370,  40,  45,  20,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_OMEGA_TEAM_LISTBOX,   "IDS_NULL",     "playerlist",   240,  66, 180, 222,  1, 0, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_TEAM_CHANGE_NAV_TEXT, "IDS_NULL",     "text",           0,   0,   0,   0,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 ui_manager::dialog_tem TeamChangeDialog =
@@ -76,8 +74,6 @@ ui_manager::dialog_tem TeamChangeDialog =
 //=========================================================================
 //  Data
 //=========================================================================
-extern const char* HDD_MANIFEST_FILENAME;
-
 //=========================================================================
 //  Registration function
 //=========================================================================
@@ -144,19 +140,15 @@ xbool dlg_team_change::Create( s32                        UserID,
     m_pOmegaTeamName    = (ui_text*)        FindChildByID( IDC_OMEGA_TEAM_NAME      );
     m_pOmegaTeamScore   = (ui_text*)        FindChildByID( IDC_OMEGA_TEAM_SCORE     );
 
-    m_pNavText          = (ui_text*)        FindChildByID( IDC_TEAM_CHANGE_NAV_TEXT );
  
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);    
+    SetNavText( navText );
 
 
     // set up alpha team 
-    m_pAlphaTeamList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pAlphaTeamList->SetActive( TRUE );
     m_pAlphaTeamList->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pAlphaTeamList->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pAlphaTeamList->DisableFrame();
@@ -249,14 +241,7 @@ void dlg_team_change::Render( s32 ox, s32 oy )
 	irect rb;
 
     // render background filter
-    s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+    rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
         xcolor(0,0,0,180),
         xcolor(0,0,0,180),
@@ -308,19 +293,18 @@ void dlg_team_change::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_team_change::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_team_change::OnNotify( ui_notification const& Event )
 {
-    (void)pWin;
-    (void)pSender;
-    (void)Command;
-    (void)pData;
+    (void)Event.m_pSender;
+    (void)Event.m_Type;
+    (void)Event.m_pText;
 
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
-        if (Command == WN_LIST_ACCEPTED)
+        if (Event.m_Type == ui_notification_type::ListAccepted)
         {
             // check which listbox
-            if ( pSender == (ui_win*)m_pAlphaTeamList )
+            if ( Event.m_pSender == (ui_win*)m_pAlphaTeamList )
             {
                 if( m_pAlphaTeamList->GetItemCount() > 0 )
                 {
@@ -344,14 +328,14 @@ void dlg_team_change::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, voi
 
 //=========================================================================
 
-void dlg_team_change::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_team_change::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 }
 
 //=========================================================================
 
-void dlg_team_change::OnPadBack( ui_win* pWin )
+void dlg_team_change::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -385,7 +369,6 @@ void dlg_team_change::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pOmegaTeamName    ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pOmegaTeamScore   ->SetFlag( ui_win::WF_VISIBLE, TRUE );
 
-            m_pNavText          ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             
             GotoControl( (ui_control*)m_pAlphaTeamList );
             g_UiMgr->SetScreenHighlight( m_pAlphaTeamList->GetPosition() );
@@ -404,7 +387,7 @@ void dlg_team_change::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp = NULL;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
         }
     }
 
@@ -414,7 +397,7 @@ void dlg_team_change::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
     s32 Highlight = 0;
 
-    if (m_pAlphaTeamList->GetFlags() & ui_win::WF_SELECTED)
+    if (m_pAlphaTeamList->IsActive())
     {
         Highlight = 0;
     }

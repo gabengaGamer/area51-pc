@@ -4,7 +4,7 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 #include "ui_control.hpp"
 #include "ui_manager.hpp"
 
@@ -33,7 +33,6 @@ ui_control::ui_control( void )
 
 ui_control::~ui_control( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -66,7 +65,7 @@ void ui_control::Render( s32 ox, s32 oy )
         {
             Color = XCOLOR_GREY;
         }
-        else if( m_Flags & (WF_HIGHLIGHT|WF_SELECTED) )
+        else if( ShouldRenderHighlight() || IsActive() )
         {
             Color = xcolor(255,0,0,255);
         }
@@ -87,7 +86,17 @@ void ui_control::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-const irect& ui_control::GetNavPos( void )
+void ui_control::OnPointerDown( ui_win* pWin, s32 x, s32 y )
+{
+    (void)x;
+    (void)y;
+
+    OnAccept( pWin );
+}
+
+//=========================================================================
+
+const irect& ui_control::GetNavPos( void ) const
 {
     return m_NavPos;
 }
@@ -97,6 +106,32 @@ const irect& ui_control::GetNavPos( void )
 void ui_control::SetNavPos( const irect& r )
 {
     m_NavPos = r;
+}
+
+//=========================================================================
+
+ui_control::visual_state ui_control::GetVisualState( xbool Active ) const
+{
+    if( m_Flags & WF_DISABLED )
+    {
+        return CS_DISABLED;
+    }
+
+    if( ShouldRenderHighlight() )
+    {
+        return Active ? CS_HIGHLIGHTED_ACTIVE
+                      : CS_HIGHLIGHTED;
+    }
+
+    return Active ? CS_ACTIVE
+                  : CS_NORMAL;
+}
+
+//=========================================================================
+
+xbool ui_control::ShouldRenderHighlight( void ) const
+{
+    return IsFocused() || IsHovered() || IsPressed();
 }
 
 //=========================================================================

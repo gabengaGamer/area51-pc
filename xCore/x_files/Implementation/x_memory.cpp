@@ -9,7 +9,7 @@
 //==============================================================================
 
 #ifndef X_MEMORY_HPP
-#include "..\x_memory.hpp"
+#include "../x_memory.hpp"
 #endif
 
 #ifndef X_FILES_PRIVATE_HPP
@@ -17,16 +17,16 @@
 #endif
 
 #ifndef X_STDIO_HPP
-#include "..\x_stdio.hpp"
+#include "../x_stdio.hpp"
 #endif
 
 #ifndef X_STRING_HPP
-#include "..\x_string.hpp"
+#include "../x_string.hpp"
 #endif
 
-#include "..\x_threads.hpp"
+#include "../x_threads.hpp"
 
-#include "..\x_log.hpp"
+#include "../x_log.hpp"
 
 #include <stdio.h>
 
@@ -291,12 +291,7 @@ void x_MemInit( void )
         nOwnerStrings   = 1;
         OwnerStackSize  = 0;
     #else
-        #ifdef TARGET_PC
-            // Not supported by PC compiler
-            Anchor.pFunction    = "unknown" ;
-        #else
-            Anchor.pFunction    = __PRETTY_FUNCTION__;
-        #endif // TARGET_PC
+        Anchor.pFunction    = __func__;
     #endif // defined(USE_OWNER_STACK)
 
     #if PAD_BYTES > 0
@@ -1567,11 +1562,6 @@ s32 x_MemGetFree(void)
 
 s32 x_MemGetUsed(void)
 {
-#if defined(TARGET_PC)
+    // The allocator has no portable system-level usage query.
     return 0;
-#else
-    mallinfo m = dlmallinfo(0);
-
-    return m.uordblks;
-#endif
 }

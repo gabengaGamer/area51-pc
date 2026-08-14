@@ -4,14 +4,14 @@
 #ifndef __FRIENDLYSCIENTIST_H
 #define __FRIENDLYSCIENTIST_H
 
-#include "Characters\Character.hpp"
-#include "Characters\Scientist\FriendlyScientistLoco.hpp"
-#include "Characters\BaseStates\Character_Idle_State.hpp"
-#include "Characters\BaseStates\Character_Alert_State.hpp"
-#include "Characters\BaseStates\Character_Flee_State.hpp"
-#include "Characters\BaseStates\Character_Cover_State.hpp"
-#include "Characters\BaseStates\Character_Alarm_State.hpp"
-#include "Characters\BaseStates\Character_Death_State.hpp"
+#include "Characters/Character.hpp"
+#include "Characters/Scientist/FriendlyScientistLoco.hpp"
+#include "Characters/BaseStates/Character_Idle_State.hpp"
+#include "Characters/BaseStates/Character_Alert_State.hpp"
+#include "Characters/BaseStates/Character_Flee_State.hpp"
+#include "Characters/BaseStates/Character_Cover_State.hpp"
+#include "Characters/BaseStates/Character_Alarm_State.hpp"
+#include "Characters/BaseStates/Character_Death_State.hpp"
 
 //=====================================================================================
 // friendly_scientist class

@@ -39,7 +39,6 @@ private:
     s64             m_FirstByte;                          // Offset of the cached data
     io_open_file*   m_pFile;                              // File this cache is associated with.
     char            Filename[ IO_DEVICE_FILENAME_LIMIT ]; //
-    s32             m_LastThreadID;                       // Last thread to access this cache.
     s32             m_BytesCached;                        // Number of "valid" bytes in the cache.
     s32             m_CacheSize;                          // Physical size of the cache.
     xbool           m_IsCacheValid;                       // Is the cache valid?
@@ -59,8 +58,6 @@ public:
     inline void             SetTicks                    ( s64 Ticks )           { m_Ticks = Ticks; }
     inline s64              GetFirstByte                ( void )                { return m_FirstByte; }
     inline void             SetFirstByte                ( s64 FirstByte )       { m_FirstByte = FirstByte; }
-    inline s32              GetThreadID                 ( void )                { return m_LastThreadID; }
-    inline void             SetThreadID                 ( s32 ThreadID )        { m_LastThreadID = ThreadID; }
     inline s32              GetBytesCached              ( void )                { return m_IsCacheValid ? m_BytesCached : 0; }
     inline s32              GetCacheSize                ( void )                { return m_CacheSize; }
     inline xbool            IsCacheValid                ( void )                { return m_IsCacheValid; }

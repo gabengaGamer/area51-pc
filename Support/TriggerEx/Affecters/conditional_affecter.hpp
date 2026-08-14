@@ -11,8 +11,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "..\Support\TriggerEx\TriggerEx_Conditionals.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "../Support/TriggerEx/TriggerEx_Conditionals.hpp"
 
 //=========================================================================
 // Check Property

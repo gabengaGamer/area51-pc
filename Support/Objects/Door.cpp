@@ -7,13 +7,14 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "Door.hpp"
-#include "..\Support\Zonemgr\ZoneMgr.hpp"
-#include "..\Support\Objects\Portal.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "x_context.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "NetworkMgr\NetObjMgr.hpp"
+#include "../Support/ZoneMgr/ZoneMgr.hpp"
+#include "../Support/Objects/Portal.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "x_profile.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "NetworkMgr/NetObjMgr.hpp"
 
 //=========================================================================
 
@@ -252,10 +253,10 @@ void door::OnDebugRender( void )
 
     for( s32 i = 0; i < m_AnimPlayer.GetNBones(); i++ )
     {
-        draw_Marker( pBone[i].GetTranslation() );
+        render::debug::Marker( pBone[i].GetTranslation() );
     }
 
-    draw_BBox( GetBBox(), XCOLOR_WHITE );
+    render::debug::Box( GetBBox(), XCOLOR_WHITE );
 }
 #endif // X_RETAIL
 
@@ -263,7 +264,7 @@ void door::OnDebugRender( void )
 
 void door::OnRender( void )
 {
-    CONTEXT( "door::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "door::OnRender" );
     anim_surface::OnRender();
 
 #ifdef X_EDITOR
@@ -272,7 +273,7 @@ void door::OnRender( void )
 
     if( m_bUseProximityBox )
     {
-        draw_BBox( GetDoorBBox(), XCOLOR_BLUE );
+        render::debug::Box( GetDoorBBox(), XCOLOR_BLUE );
     }
 #endif
 }
@@ -368,9 +369,9 @@ void door::OverRideLogic( xbool bRunLogic )
 
 //=========================================================================
 
-void door::OnAdvanceLogic ( f32 DeltaTime )
+void door::OnAdvanceSimulation ( f32 DeltaTime )
 {
-    CONTEXT( "door::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "door::OnAdvanceSimulation" );
    
     // The first time the door tries to do it logic set the portal state so we know that every thing is loaded at
     // this point.
@@ -417,7 +418,7 @@ void door::OnAdvanceLogic ( f32 DeltaTime )
 
     UpdateState( DeltaTime );
 
-    anim_surface::OnAdvanceLogic( DeltaTime );
+    anim_surface::OnAdvanceSimulation( DeltaTime );
 }
 
 //==============================================================================
@@ -447,7 +448,7 @@ xbool door::CheckProximity( void )
 void door::UpdateState ( f32 DeltaTime )
 {
     //Update the active state for the door.
-    CONTEXT("door::UpdateState");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "door::UpdateState");
     
     switch ( m_CurrentState )
     {
@@ -462,7 +463,7 @@ void door::UpdateState ( f32 DeltaTime )
         case LOCKED:
         {   
             // Force the bbox to update.
-            OnMove( GetPosition() );
+            UpdateSpatialState( GetPosition() );
 
             // Only a trigger can set the state to unlocking.
 //            if( (m_TargetState == OPEN) || (m_TargetState == CLOSED) )
@@ -520,7 +521,7 @@ void door::UpdateState ( f32 DeltaTime )
             g_ZoneMgr.TurnPortalOff( m_PortalGuid ); 
 
             // Force the bbox to update.
-            OnMove( GetPosition() );
+            UpdateSpatialState( GetPosition() );
         }
         break;   
         case PRECLOSE:
@@ -953,13 +954,13 @@ xbool door::OnProperty( prop_query& rPropQuery )
 */
     if( rPropQuery.VarBool( "Door\\Use Proximity Box", m_bUseProximityBox ) )
     {
-        OnMove( GetPosition() );
+        UpdateSpatialState( GetPosition() );
         return TRUE;
     }
 
     if( rPropQuery.VarBBox( "Door\\Proximity Box", m_ProximityBox ) )
     {
-        OnMove( GetPosition() );
+        UpdateSpatialState( GetPosition() );
         return TRUE;
     }
 
@@ -971,7 +972,7 @@ xbool door::OnProperty( prop_query& rPropQuery )
             m_BBoxScale.Max( 0.0f );
 
             // Force the world box to update.
-            OnMove( GetPosition() );
+            UpdateSpatialState( GetPosition() );
         }
 
         return TRUE;

@@ -24,19 +24,11 @@
 #include "Configuration/GameConfig.hpp"
 #include "GameServer.hpp"
 #include "GameClient.hpp"
+#include "InputMgr\GamePad.hpp"
 #include "Voice/VoiceMgr.hpp"
 #include "GameLib/LevelLoader.hpp"
 #include "StateMgr/StateMgr.hpp"
 #include "StateMgr/MapList.hpp"
-
-#if defined(TARGET_PS2)
-#   include "e_Audio.hpp"
-#   include "ps2/iopmanager.hpp"
-#   include "IOManager/io_mgr.hpp"
-#   include "Audio/audio_hardware.hpp"
-#   include "e_Memcard.hpp"
-#   include "MemCardMgr/MemCardMgr.hpp"
-#endif
 
 //==============================================================================
 //  GLOBALS
@@ -53,6 +45,8 @@ network_mgr::network_mgr( void )
 {
     m_LocalSocket.Clear();
     m_IsOnline         = FALSE;
+    m_RequestedOnlineState = FALSE;
+    m_OnlineStateChangeJob = xhandle( HNULL );
     m_pServer          = NULL;
     m_pClient          = NULL;
     m_LocalPlayerCount = 0;
@@ -81,6 +75,7 @@ network_mgr::network_mgr( void )
 
 network_mgr::~network_mgr( void )
 {
+    ASSERT( m_OnlineStateChangeJob.IsNull() );
 }
 
 //==============================================================================
@@ -89,19 +84,24 @@ network_mgr::~network_mgr( void )
 
 void network_mgr::Init( void )
 {
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
-    // On Xbox, net_Init is called early so silent sign-in can happen before
-    // the main menu.  On PC we do the same — the call is harmless if the
-    // network layer is already up.
+#if defined(TARGET_DESKTOP)
+    // Keep the network library alive for the lifetime of the application so
+    // local networking remains available outside the online state.
     net_Init();
 #endif
+    net_SetVersionKey( g_ServerVersion );
 }
 
 //==============================================================================
 
 void network_mgr::Kill( void )
 {
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
+    if( m_OnlineStateChangeJob.IsNonNull() )
+    {
+        FinishOnlineStateChange();
+    }
+
+#if defined(TARGET_DESKTOP)
     g_MatchMgr.Kill();
     net_Kill();
 #endif
@@ -111,6 +111,11 @@ void network_mgr::Kill( void )
 
 void network_mgr::SetOnline( xbool IsOnline )
 {
+    if( m_IsOnline == IsOnline )
+    {
+        return;
+    }
+
     // -------------------------------------------------------------------------
     // Tear down the socket and notify the match manager.
     // -------------------------------------------------------------------------
@@ -120,152 +125,96 @@ void network_mgr::SetOnline( xbool IsOnline )
         {
             m_LocalSocket.Close();
         }
-#if defined(TARGET_PS2) || defined(TARGET_PC)
+#if defined(TARGET_DESKTOP)
         g_MatchMgr.Kill();
-        net_Kill();
-#else
-        g_MatchMgr.SetState( MATCH_IDLE );
 #endif
     }
 
-    // -------------------------------------------------------------------------
-    // Reboot the IOP module when switching online state.
-    // -------------------------------------------------------------------------
-#if defined(TARGET_PS2)
-    if( m_IsOnline != IsOnline )
-    {
-    #if !defined(TARGET_DEV)
-        g_RscMgr.Unload( "DX_FrontEnd.audiopkg"    );
-        g_RscMgr.Unload( "SFX_FrontEnd.audiopkg"   );
-        g_RscMgr.Unload( "MUSIC_FrontEnd.audiopkg" );
-
-        g_AudioMgr.UnloadAllPackages();
-        g_AudioMgr.Kill();
-        g_LevelLoader.UnmountDefaultFilesystems();
-
-        // Poll memory cards before rebooting the IOP.
-        g_UIMemCardMgr.Repoll( this, &network_mgr::OnRepollCB );
-        g_UIMemCardMgr.Update( 0.001f );
-        while( !g_UIMemCardMgr.IsActionDone() )
-        {
-            x_DelayThread( 1 );
-        }
-
-        g_MemcardHardware.Kill();
-        g_IoMgr.Kill();
-        g_Input.Kill();
-        g_IopManager.Reboot( TRUE, FALSE, "DNAS300.IMG" );
-        g_Input.Init();
-        g_MemcardHardware.Init();
-
-        // Immediately remount to clear spurious "card changed" errors.
-        g_UIMemCardMgr.RebootCheck();
-        g_UIMemCardMgr.Update( 0.001f );
-        while( !g_UIMemCardMgr.IsActionDone() )
-        {
-            x_DelayThread( 1 );
-        }
-    #endif // !TARGET_DEV
-    }
-
-    // Going online — (re)initialise the network layer.
-    if( !m_IsOnline && IsOnline )
-    {
-        net_Init();
-    }
-
-    // Reload front-end audio packages after the network is up (PS2 memory layout
-    // is different depending on online vs offline mode).
-    if( m_IsOnline != IsOnline )
-    {
-    #if !defined(TARGET_DEV)
-        g_IoMgr.Init();
-        g_LevelLoader.MountDefaultFilesystems();
-
-        g_AudioMgr.Init( 5512 * 1024 );
-        g_RscMgr.Load( PRELOAD_FILE("DX_FrontEnd.audiopkg"    ) );
-        g_RscMgr.Load( PRELOAD_FILE("SFX_FrontEnd.audiopkg"   ) );
-        g_RscMgr.Load( PRELOAD_FILE("MUSIC_FrontEnd.audiopkg" ) );
-
-        global_settings& Settings = g_StateMgr.GetActiveSettings();
-        Settings.CommitAudio();
-    #endif // !TARGET_DEV
-    }
-#endif // TARGET_PS2
-
-    // -------------------------------------------------------------------------
-    // Verify interface after init and reinitialise if needed.
-    // -------------------------------------------------------------------------
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
-    if( !m_IsOnline && IsOnline )
-    {
-        net_Init();
-
-        interface_info Info;
-        net_GetInterfaceInfo( -1, Info );
-        if( Info.NeedsServicing )
-        {
-            // Interface needs another cycle to come up cleanly.
-            net_Kill();
-            net_Init();
-        }
-    }
-#endif
-
-    net_SetVersionKey( g_ServerVersion );
     m_IsOnline = IsOnline;
 }
 
 //==============================================================================
 
-void network_mgr::Update( f32 DeltaTime )
+void network_mgr::OnlineStateChangeJob( void* pData )
 {
-    xbool       Used       = FALSE;
+    network_mgr* pNetworkMgr = (network_mgr*)pData;
+
+    ASSERT( pNetworkMgr );
+    pNetworkMgr->SetOnline( pNetworkMgr->m_RequestedOnlineState );
+}
+
+//==============================================================================
+
+xbool network_mgr::BeginOnlineStateChange( xbool IsOnline )
+{
+    ASSERT( m_OnlineStateChangeJob.IsNull() );
+    ASSERTS( x_WorkersIsInit(), "Online state changes require x_workers to be initialized" );
+
+    if( m_OnlineStateChangeJob.IsNonNull() || !x_WorkersIsInit() )
+    {
+        return FALSE;
+    }
+
+    m_RequestedOnlineState = IsOnline;
+    return x_WorkerJobSubmit( OnlineStateChangeJob,
+                              this,
+                              IsOnline ? "Network Online" : "Network Offline",
+                              m_OnlineStateChangeJob );
+}
+
+//==============================================================================
+
+xbool network_mgr::IsOnlineStateChangeDone( void ) const
+{
+    ASSERT( m_OnlineStateChangeJob.IsNonNull() );
+
+    return m_OnlineStateChangeJob.IsNonNull() &&
+           x_WorkerJobIsDone( m_OnlineStateChangeJob );
+}
+
+//==============================================================================
+
+void network_mgr::FinishOnlineStateChange( void )
+{
+    ASSERT( m_OnlineStateChangeJob.IsNonNull() );
+
+    if( m_OnlineStateChangeJob.IsNull() )
+    {
+        return;
+    }
+
+    x_WorkerJobWait( m_OnlineStateChangeJob );
+    x_WorkerJobRelease( m_OnlineStateChangeJob );
+    m_OnlineStateChangeJob = xhandle( HNULL );
+}
+
+//==============================================================================
+
+void network_mgr::BeginFrame( f32 RealDeltaTime )
+{
+    if( m_OnlineStateChangeJob.IsNonNull() )
+    {
+        return;
+    }
+
+    xbool       Used = FALSE;
     net_address Remote;
     netstream   BitStream;
-    exit_reason ExitReason;
 
-#if defined(TARGET_PS2)
-    extern xbool g_RebootPending;
-    if( g_RebootPending )
+    if( RealDeltaTime > 0.5f )
     {
-        scePrintf( "<<<POWEROFF SILENCED>>>\n" );
-        g_StateMgr.Reboot( REBOOT_HALT );
-    }
-#endif
-
-    if( DeltaTime > 0.5f )
-    {
-        LOG_WARNING( "network_mgr::Update", "Long frame: %2.02fsec between updates", DeltaTime );
+        LOG_WARNING( "network_mgr::BeginFrame", "Long frame: %2.02fsec between updates", RealDeltaTime );
     }
 
-    // -------------------------------------------------------------------------
-    // Run game logic — skip if split-screen game is paused.
-    // -------------------------------------------------------------------------
-    const xbool bIsSplitScreen       = ( GetLocalPlayerCount() > 1 );
-    const xbool bIsPaused            = g_StateMgr.IsPaused();
-    const xbool bIsSplitScreenPaused = bIsSplitScreen && bIsPaused;
-
-    if( !bIsSplitScreenPaused && GameMgr.GameInProgress() )
-    {
-        GameMgr.Logic( DeltaTime );
-        NetObjMgr.Logic( DeltaTime );
-    }
-
-    g_VoiceMgr.Update( DeltaTime );
-
-#if defined(TARGET_XBOX)
-    // PS2/PC runs the match manager on a separate thread; Xbox do not.
-    g_MatchMgr.Update( DeltaTime );
-#endif
+    g_VoiceMgr.Update( RealDeltaTime );
 
     // -------------------------------------------------------------------------
     // Receive network packets
     // -------------------------------------------------------------------------
     s32 MaxCount = 0;
-    ExitReason   = g_ActiveConfig.GetExitReason();
+    exit_reason const ExitReason = g_ActiveConfig.GetExitReason();
 
-#if defined(TARGET_XBOX) || defined(TARGET_PC)
+#if defined(TARGET_DESKTOP)
     if( m_IsOnline && m_LocalSocket.IsConnected() )
     {
         // Check for interface loss (cable pull, network down, duplicate login).
@@ -315,7 +264,7 @@ void network_mgr::Update( f32 DeltaTime )
                 // Bail out if we're spending too long in the receive loop.
                 if( ++MaxCount > 20 )
                 {
-                    LOG_WARNING( "network_mgr::Update",
+                    LOG_WARNING( "network_mgr::BeginFrame",
                                  "Receive loop bail-out. Packets:%d  Time:%2.02fms",
                                  MaxCount, t.ReadMs() );
                     break;
@@ -323,12 +272,39 @@ void network_mgr::Update( f32 DeltaTime )
             }
         }
     }
-#endif // TARGET_XBOX || TARGET_PC
+#endif // TARGET_DESKTOP
+}
+
+//==============================================================================
+
+void network_mgr::AdvanceSimulation( f32 DeltaTime )
+{
+    if( m_OnlineStateChangeJob.IsNonNull() )
+    {
+        return;
+    }
+
+    xbool const IsSplitScreenPaused = (GetLocalPlayerCount() > 1) && g_StateMgr.IsPaused();
+    if( !IsSplitScreenPaused && GameMgr.GameInProgress() )
+    {
+        GameMgr.Logic( DeltaTime );
+        NetObjMgr.Logic( DeltaTime );
+    }
+}
+
+//==============================================================================
+
+void network_mgr::EndFrame( f32 RealDeltaTime )
+{
+    if( m_OnlineStateChangeJob.IsNonNull() )
+    {
+        return;
+    }
 
     // -------------------------------------------------------------------------
     // Advance level or detect game completion.
     // -------------------------------------------------------------------------
-    ExitReason = GAME_EXIT_CONTINUE;
+    exit_reason ExitReason = GAME_EXIT_CONTINUE;
 
     if( m_pServer )
     {
@@ -356,13 +332,13 @@ void network_mgr::Update( f32 DeltaTime )
             }
         }
 
-        ExitReason = m_pServer->Update( DeltaTime );
+        ExitReason = m_pServer->Update( RealDeltaTime );
     }
 
     if( m_pClient )
     {
         ASSERT( m_pServer == NULL );
-        ExitReason = m_pClient->Update( DeltaTime );
+        ExitReason = m_pClient->Update( RealDeltaTime );
     }
 
     // Propagate exit reason if nothing higher-priority already set it.
@@ -377,10 +353,16 @@ void network_mgr::Update( f32 DeltaTime )
 
 //==============================================================================
 
+void network_mgr::UpdateFrame( f32 RealDeltaTime )
+{
+    BeginFrame( RealDeltaTime );
+    EndFrame( RealDeltaTime );
+}
+
+//==============================================================================
+
 void network_mgr::LoadMissionComplete( void )
 {
-    ASSERT( g_StateMgr.IsBackgroundThreadRunning() == FALSE );
-
     if( m_pServer ) { m_pServer->LoadComplete(); }
     if( m_pClient ) { m_pClient->LoadComplete(); }
 }
@@ -456,6 +438,14 @@ void network_mgr::Disconnect( void )
         delete m_pClient;
         m_pClient = NULL;
     }
+}
+
+//==============================================================================
+
+voice_proxy& network_mgr::GetVoiceProxy( s32 ClientIndex )
+{
+    ASSERT( m_pServer );
+    return m_pServer->GetVoiceProxy( ClientIndex );
 }
 
 //==============================================================================
@@ -593,14 +583,6 @@ pain_queue* network_mgr::GetPainQueue( void )
 
 //==============================================================================
 
-voice_proxy& network_mgr::GetVoiceProxy( s32 ClientIndex )
-{
-    ASSERT( m_pServer );
-    return m_pServer->GetVoiceProxy( ClientIndex );
-}
-
-//==============================================================================
-
 xbool network_mgr::IsServerABuddy( const char* pSearch )
 {
     ASSERT( m_pServer );
@@ -656,12 +638,3 @@ xbool network_mgr::IsRequestingMission( void )
 
     return ( m_pClient->GetState() == STATE_CLIENT_REQUEST_MISSION );
 }
-
-//==============================================================================
-
-#if defined(TARGET_PS2)
-void network_mgr::OnRepollCB( void )
-{
-    // do nothing!
-}
-#endif

@@ -1,15 +1,47 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "Coupler.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "e_ScratchMem.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "e_Draw.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 #include "Objects/AnimSurface.hpp"
 #include "Objects/Actor/Actor.hpp"
-#include "TriggerEX/TriggerEx_Object.hpp"
+#include "TriggerEx/TriggerEx_Object.hpp"
+
+namespace
+{
+static const f32 COUPLER_TIME_STEP = 1.0f / 30.0f;
+
+void RenderAttachPointWedge( const matrix4& LocalToWorld, xcolor color )
+{
+    vector3 LocalPositions[4] =
+    {
+        vector3( 0.0f, 0.0f, -400.0f ),
+        vector3( 0.0f, 0.0f,    0.0f ),
+        vector3( 50.0f, 0.0f,   0.0f ),
+        vector3( -50.0f, 0.0f,  0.0f )
+    };
+    render::primitive_vertex Vertices[4];
+    for( s32 i = 0; i < 4; ++i )
+    {
+        const xcolor VertexColor = ( i >= 2 ) ? XCOLOR_BLUE : color;
+        Vertices[i] = render::primitive_vertex( LocalPositions[i], vector2( 0.0f, 0.0f ), VertexColor );
+    }
+    const u16 Indices[6] = { 0, 1, 2, 0, 3, 1 };
+    const render::primitive_draw_desc Material( NULL,
+                                                render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                render::PRIMITIVE_BLEND_OPAQUE,
+                                                render::PRIMITIVE_DEPTH_READ_WRITE,
+                                                render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                render::PRIMITIVE_LAYER_SURFACE );
+    render::SubmitPrimitives( Material, LocalToWorld, Vertices, ARRAYSIZE( Vertices ),
+                              Indices, ARRAYSIZE( Indices ) );
+}
+}
 
 //=========================================================================
 // OBJECT DESCRIPTION
@@ -41,7 +73,7 @@ static struct coupler_desc : public object_desc
     { 
         // Call default render
         object_desc::OnEditorRender( Object );        
-        return EDITOR_ICON_COUPLER; 
+        return static_cast<s32>( EditorIcon::Coupler );
     }
 
 #endif // X_EDITOR
@@ -825,7 +857,7 @@ void coupler::OnInit( void )
 void coupler::OnDebugRender  ( void )
 {
 #ifdef X_EDITOR
-    CONTEXT("coupler::OnDebugRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "coupler::OnDebugRender" );
 
     matrix4 ParentL2W;
     vector3 ParentAP(0,0,0);
@@ -843,33 +875,7 @@ void coupler::OnDebugRender  ( void )
                 {
                     ParentAP = ParentL2W.GetTranslation();
 
-                    draw_Begin( DRAW_TRIANGLES, DRAW_CULL_NONE );
-                    
-                    vector3 Temp[4];
-                    
-                    Temp[0].Set(0,0,-400);
-                    Temp[1].Set(0,0,0);
-                    Temp[2].Set(50,0,0);
-                    Temp[3].Set(-50,0,0);
-
-                    vector3 Out[4];
-    
-                    ParentL2W.Transform(Out,Temp,4);
-
-                    draw_Color(XCOLOR_RED);
-                    draw_Vertex(Out[0]);
-                    draw_Vertex(Out[1]);
-                    draw_Color(XCOLOR_BLUE);
-                    draw_Vertex(Out[2]);
-
-                    draw_Color(XCOLOR_RED);
-                    draw_Vertex(Out[0]);
-                    draw_Color(XCOLOR_BLUE);
-                    draw_Vertex(Out[3]);
-                    draw_Color(XCOLOR_RED);
-                    draw_Vertex(Out[1]);
-
-                    draw_End();
+                    RenderAttachPointWedge( ParentL2W, XCOLOR_RED );
                 }
             }
         }
@@ -889,33 +895,7 @@ void coupler::OnDebugRender  ( void )
             {
                 if (pChildObj->GetAttachPointData( m_Child[i].m_AttachPtID, ChildL2W, object::ATTACH_USE_WORLDSPACE ))
                 {
-                    draw_Begin( DRAW_TRIANGLES, DRAW_CULL_NONE );
-                    
-                    vector3 Temp[4];
-                    
-                    Temp[0].Set(0,0,-400);
-                    Temp[1].Set(0,0,0);
-                    Temp[2].Set(50,0,0);
-                    Temp[3].Set(-50,0,0);
-
-                    vector3 Out[4];
-    
-                    ChildL2W.Transform(Out,Temp,4);
-
-                    draw_Color(XCOLOR_GREEN);
-                    draw_Vertex(Out[0]);
-                    draw_Vertex(Out[1]);
-                    draw_Color(XCOLOR_BLUE);
-                    draw_Vertex(Out[2]);
-
-                    draw_Color(XCOLOR_GREEN);
-                    draw_Vertex(Out[0]);
-                    draw_Color(XCOLOR_BLUE);
-                    draw_Vertex(Out[3]);
-                    draw_Color(XCOLOR_GREEN);
-                    draw_Vertex(Out[1]);
-
-                    draw_End();
+                    RenderAttachPointWedge( ChildL2W, XCOLOR_GREEN );
                 }
             }
 
@@ -924,8 +904,8 @@ void coupler::OnDebugRender  ( void )
                 child_phys  P = m_pChildPhys[ i ];
                 child       C = m_Child[ i ];
 
-                draw_Sphere( P.m_FreeEnd, 15, XCOLOR_RED );
-                draw_Line( ParentAP, P.m_FreeEnd, XCOLOR_RED );
+                render::debug::Sphere( P.m_FreeEnd, 15, XCOLOR_RED );
+                render::debug::Line( ParentAP, P.m_FreeEnd, XCOLOR_RED );
 
             }
         }
@@ -982,7 +962,7 @@ s32 coupler::OnValidateProperties( xstring& ErrorMsg )
 
 //=========================================================================
 
-void coupler::OnAdvanceLogic( f32 DeltaTime )
+void coupler::OnAdvanceSimulation( f32 DeltaTime )
 {       
     (void) DeltaTime;
 
@@ -1060,12 +1040,15 @@ void coupler::OnAdvanceLogic( f32 DeltaTime )
     u16 NewZone1 = pDestObj->GetZone1();
     u16 NewZone2 = pDestObj->GetZone2();
 
+    if( m_bChildPhysics && m_pChildPhys )
+    {
+        AdvancePhysics( DeltaTime );
+    }
+
     for (i=0;i<m_nChild;i++)
     {
         if (m_bChildPhysics && m_pChildPhys)
         {
-            AdvancePhysics( DeltaTime );
-        
             object* pTargetObj = g_ObjMgr.GetObjectByGuid( m_Child[i].m_Guid );
             if (NULL == pTargetObj)
                 continue;
@@ -1465,7 +1448,7 @@ s32 coupler::GetChildIDByGuid( guid ChildGuid )
 
 void coupler::AdvancePhysics( f32 DeltaTime )
 {
-    if (DeltaTime == 0)
+    if (DeltaTime <= 0.0f)
         return;
     if (m_ParentGuid == 0)
         return;
@@ -1539,7 +1522,8 @@ void coupler::AdvancePhysics( f32 DeltaTime )
         if (NULL == pChild)
             continue;
 
-        P.m_LastVelocity *= (P.m_Dampening * DeltaTime);
+        f32 const Damping = x_pow( MAX( 0.0f, P.m_Dampening ), DeltaTime / COUPLER_TIME_STEP );
+        P.m_LastVelocity *= Damping * DeltaTime;
 
         vector3  OrigFreeEndPos = P.m_FreeEnd;
 

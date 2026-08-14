@@ -1,13 +1,14 @@
+#include "Render/PrimitiveDebug.hpp"
 #include "DamageField.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
-#include "Objects\Player.hpp"
-#include "characters\character.hpp"
-#include "Objects\propsurface.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Characters/Character.hpp"
+#include "Objects/PropSurface.hpp"
 
 //=========================================================================
 // OBJECT DESCRIPTION
@@ -76,13 +77,13 @@ static struct damage_field_desc : public object_desc
 
             if (Field.m_DrawActivationIcon)
             {
-                EditorIcon_Draw( EDITOR_ICON_LOOP, Field.GetL2W(), FALSE, XCOLOR_PURPLE );
-                EditorIcon_Draw( EDITOR_ICON_DAMAGE, Field.GetL2W(), FALSE, XCOLOR_PURPLE );
+                DrawEditorIcon( EditorIcon::Loop, Field.GetL2W(), FALSE, XCOLOR_PURPLE );
+                DrawEditorIcon( EditorIcon::Damage, Field.GetL2W(), FALSE, XCOLOR_PURPLE );
                 Field.m_DrawActivationIcon = FALSE;
                 return -1;
             }
         }
-        return EDITOR_ICON_DAMAGE; 
+        return static_cast<s32>( EditorIcon::Damage ); 
     }
 
 #endif // X_EDITOR
@@ -403,11 +404,11 @@ void damage_field::OnRenderSpatial( void )
     {
     case SPATIAL_TYPE_AXIS_CUBE:       
         // Renders a volume given a BBox
-        draw_Volume ( GetBBox(), xcolor(DrawColor.R, DrawColor.G, DrawColor.B, 90));
-        draw_BBox   ( GetBBox(), DrawColor);  
+        render::debug::Volume ( GetBBox(), xcolor(DrawColor.R, DrawColor.G, DrawColor.B, 90));
+        render::debug::Box   ( GetBBox(), DrawColor);
         break;
     case SPATIAL_TYPE_SPHERICAL:         
-        draw_Sphere( object::GetPosition(), m_Dimensions[0], DrawColor );
+        render::debug::Sphere( object::GetPosition(), m_Dimensions[0], DrawColor );
         break;
     }
 }
@@ -676,9 +677,9 @@ xbool damage_field::QueryObjectInVolume( object* pObject, xbool bDoDamage )
 
 //=============================================================================
 
-void damage_field::OnAdvanceLogic( f32 DeltaTime )
+void damage_field::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "damage_field::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "damage_field::OnAdvanceSimulation" );
 
     if (m_TimeSinceLastDamage < 0.0f)
         m_TimeSinceLastDamage = 0.0f;

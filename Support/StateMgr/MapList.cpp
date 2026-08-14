@@ -6,10 +6,10 @@
 
 #include "x_files/x_types.hpp"
 
-#include "mapList.hpp"
-#include "Parsing/textin.hpp"
-#include "stringmgr/stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "MapList.hpp"
+#include "Parsing/TextIn.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 #include "NetworkMgr/GameMgr.hpp"
 #include "StateMgr/StateMgr.hpp"
 
@@ -80,7 +80,8 @@ void map_list::LoadDefault( void )
 
     Clear();
     //VERIFY( Manifest.LoadFile( xfs("%s\\%s_DiskMaps.txt", g_RscMgr.GetRootDirectory(), x_GetLocaleString()) ) );
-	VERIFY( Manifest.LoadFile( xfs("%s_DiskMaps.txt", x_GetLocaleString()) ) );
+	VERIFY( Manifest.LoadFile( xfs( "%s_DiskMaps.txt",
+                                   x_GetLocaleString() ) ) );
     Parse( (const char*)Manifest, MF_NOT_PRESENT, -1 );
     // Note: We do NOT add the HDD maps at the moment as the likelihood of the hard drive
     // having completed initialization at this point is zero. This should be done

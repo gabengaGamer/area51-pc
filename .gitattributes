@@ -86,3 +86,8 @@
 #*.props     merge=binary
 #*.filters   merge=binary
 #*.vcxitems  merge=binary
+
+* text=auto
+*.cpp text eol=crlf
+* text=auto eol=lf
+*.hpp text eol=crlf

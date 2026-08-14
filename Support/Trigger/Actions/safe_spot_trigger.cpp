@@ -9,13 +9,13 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\safe_spot_trigger.hpp"
+#include "../Support/Trigger/Actions/safe_spot_trigger.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "..\Support\Characters\Character.hpp"
-#include "objects\Player.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "../Support/Characters/Character.hpp"
+#include "Objects/Player/Player.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 #include "Entropy.hpp"
 
@@ -35,7 +35,7 @@ void safe_spot_trigger::Execute ( trigger_object* pParent )
 {
     ( void ) pParent;
 
-    TRIGGER_CONTEXT( "ACTION * safe_spot_trigger::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * safe_spot_trigger::Execute" );
       
     if ( pParent->GetTriggerActor() ==NULL )
         return;

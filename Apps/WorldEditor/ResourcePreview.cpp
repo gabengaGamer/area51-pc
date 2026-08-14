@@ -78,7 +78,6 @@ void CResourcePreview::OnPaint()
     //    eng_End();
     //}
 	//
-    //eng_PageFlip();
 
 //    g_pd3dDevice->Clear( 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
 //                         0x00000000, 1.0f, 0L ); 

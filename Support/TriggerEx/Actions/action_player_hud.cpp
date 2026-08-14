@@ -9,12 +9,12 @@
 //=========================================================================
 
 #include "action_player_hud.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "..\Support\Zonemgr\ZoneMgr.hpp"
-#include "..\Support\Objects\HudObject.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/ZoneMgr/ZoneMgr.hpp"
+#include "../Support/Objects/HudObject.hpp"
 
 
 //=========================================================================

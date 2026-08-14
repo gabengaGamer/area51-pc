@@ -7,15 +7,16 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "TeamLight.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "x_context.hpp"
-#include "NetworkMgr\NetObjMgr.hpp"
-#include "Player.hpp"
-#include "Render\LightMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "x_profile.hpp"
+#include "NetworkMgr/NetObjMgr.hpp"
+#include "Player/Player.hpp"
+#include "Render/LightMgr.hpp"
 
 #ifndef X_EDITOR
-#include "GameLib\RenderContext.hpp"
+#include "GameLib/RenderContext.hpp"
 #endif
 
 //=========================================================================
@@ -50,7 +51,7 @@ static struct team_light_desc : public object_desc
     virtual s32 OnEditorRender( object& Object ) const
     { 
 
-        draw_Marker( Object.GetPosition(), XCOLOR_GREEN );
+        render::debug::Marker( Object.GetPosition(), XCOLOR_GREEN );
 
         if( Object.IsKindOf( team_light::GetRTTI() ) )
         {
@@ -66,14 +67,14 @@ static struct team_light_desc : public object_desc
             L2W.RotateZ( R_180 );
             L2W.Translate(  Translation );
 
-            EditorIcon_Draw( EDITOR_ICON_LIGHT, 
+            DrawEditorIcon( EditorIcon::Light, 
                 L2W, 
                 !!(TeamLight.GetAttrBits() & object::ATTR_EDITOR_SELECTED), 
                 Color );
 
             if(Object.GetAttrBits() & object::ATTR_EDITOR_SELECTED)
             {
-                draw_BBox( Object.GetBBox(), XCOLOR_WHITE );
+                render::debug::Box( Object.GetBBox(), XCOLOR_WHITE );
             }
 
             if( mp_settings::s_Selected )
@@ -134,67 +135,12 @@ team_light::team_light( void )
     m_RenderBBox.Min.Set( -m_Radius * 2.0f, -m_Radius * 2.0f, -m_Radius * 2.0f );
     m_RenderBBox.Max.Set(  m_Radius * 2.0f,  m_Radius * 2.0f,  m_Radius * 2.0f );
 
-    InvalidateRenderState();
 }
 
 //=========================================================================
 
 team_light::~team_light( void )
 { 
-}
-
-//=========================================================================
-
-void team_light::InvalidateRenderState( void )
-{
-    InitTransformInterpCache( m_RenderCache );
-}
-
-//=========================================================================
-
-void team_light::CaptureRenderInterpState( void )
-{
-    transform_interp_state Snapshot;
-    CaptureTransformInterpState( Snapshot, GetL2W() );
-    if( CaptureTransformInterpCache( m_RenderCache, Snapshot ) == INTERP_CAPTURE_CHANGED )
-        RegisterRenderInterpUpdate();
-}
-
-//=========================================================================
-
-void team_light::UpdateRenderInterpState( f32 Alpha )
-{
-    UpdateTransformInterpCache( m_RenderCache, Alpha );
-}
-
-//=========================================================================
-
-void team_light::ClearRenderInterpState( void )
-{
-    ClearTransformInterpCache( m_RenderCache );
-}
-
-//=========================================================================
-
-void team_light::InvalidateRenderInterpState( void )
-{
-    object::InvalidateRenderInterpState();
-    InvalidateTransformInterpCache( m_RenderCache );
-}
-
-//=========================================================================
-
-void team_light::SnapRenderInterpState( void )
-{
-    object::SnapRenderInterpState();
-    SnapTransformInterpCache( m_RenderCache, GetL2W() );
-}
-
-//=========================================================================
-
-const matrix4& team_light::GetRenderL2W( void ) const
-{
-    return GetTransformInterpCacheL2W( m_RenderCache, GetL2W() );
 }
 
 //=========================================================================
@@ -242,7 +188,7 @@ void team_light::OnRender( void )
 void team_light::OnCollectLight( void )
 {
 #ifndef X_EDITOR
-    CONTEXT( "team_light::OnCollectLight" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "team_light::OnCollectLight" );
 
     if( m_Circuit.GetCircuit() == 15 )
     {
@@ -282,7 +228,7 @@ void team_light::OnCollectLight( void )
                                  m_TransitionValue );
     f32 InnerRadius = MAX( 0.0f, m_Radius * ( 1.0f - m_Falloff ) );
 
-    g_LightMgr.AddDynamicLight( GetRenderL2W().GetTranslation(),
+    g_LightMgr.AddDynamicLight( GetPosition(),
                                 Color,
                                 m_Radius,
                                 m_Intensity,
@@ -297,10 +243,9 @@ void team_light::OnCollectLight( void )
 
 //=========================================================================
 
-void team_light::OnAdvanceLogic ( f32 DeltaTime )
+void team_light::OnAdvanceSimulation ( f32 DeltaTime )
 {
-    CONTEXT( "team_light::OnAdvanceLogic" );
-    (void) DeltaTime;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "team_light::OnAdvanceSimulation" );
 
     u32 TeamBits = m_Circuit.GetTeamBits();
 
@@ -387,5 +332,3 @@ xbool team_light::OnProperty( prop_query& rPropQuery )
 
     return( FALSE );
 }
-
-//=============================================================================

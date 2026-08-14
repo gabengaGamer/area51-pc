@@ -73,7 +73,7 @@ BOOL EDRscDesc_Doc::OnNewDocument()
 //=========================================================================
 void EDRscDesc_Doc::OnProjectOpen( void )
 {
-    CONTEXT( "EDRscDesc_Doc::OnProjectOpen" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "EDRscDesc_Doc::OnProjectOpen" );
 
     Refresh();
 }
@@ -280,7 +280,7 @@ void EDRscDesc_Doc::GetTypeList( xarray<xstring>& Types )
 
 void EDRscDesc_Doc::RefreshViews( xbool bAllViews )
 {
-    CONTEXT( "EDRscDesc_Doc::RefreshViews" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "EDRscDesc_Doc::RefreshViews" );
 
     // Update all the views
     POSITION Pos = s_RegRscEditor.m_pTemplate->GetFirstDocPosition() ;

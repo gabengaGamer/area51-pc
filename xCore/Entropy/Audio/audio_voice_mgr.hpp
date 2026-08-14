@@ -1,7 +1,12 @@
 #ifndef AUDIO_VOICE_MGR_HPP
 #define AUDIO_VOICE_MGR_HPP
 
-#include "audio_private.hpp"
+#include "Audio/audio_element_channel_runtime.hpp"
+#include "Audio/audio_stream_voice_binder.hpp"
+#include "Audio/audio_types.hpp"
+
+class audio_mgr;
+struct audio_runtime;
 
 class audio_voice_mgr
 {
@@ -9,6 +14,8 @@ class audio_voice_mgr
 friend class audio_channel_mgr;
 friend class audio_package;
 friend class audio_mgr;
+friend class audio_descriptor_runtime;
+friend class audio_stream_voice_binder;
 
 //------------------------------------------------------------------------------
 // Public functions.
@@ -18,14 +25,13 @@ public:
                         audio_voice_mgr             ( void );
                        ~audio_voice_mgr             ( void );
                                                     
-        void            Init                        ( void );
+        void            Init                        ( audio_runtime&    Runtime );
         void            Kill                        ( void );
                                                     
         voice*          AcquireVoice                ( s32               Priority,
                                                       f32               AbsoluteVolume );
         void            ReleaseVoice                ( voice*            pVoice,
                                                       f32               Time );
-        void            ReleaseVoiceLoop            ( voice*            pVoice );
         void            ReleaseAllVoices            ( void );
 
         void            ReleasePackagesVoices       ( audio_package*    pPackage );
@@ -116,8 +122,6 @@ inline  s32             GetNumVoices                ( void )                { re
 inline  s32             GetNumElements              ( void )                { return m_NumElements; }
 inline  voice*          GetVoiceBuffer              ( void )                { return m_FirstVoice; }
         f32             GetVoiceTime                ( voice* pVoice );
-        void            Lock                        ( void )                { m_Mutex.Acquire(); m_LockLevel++; }
-        void            Unlock                      ( void )                { m_Mutex.Release(); m_LockLevel--; }
         void            UpdateCheckQueued           ( void );
         void            SetPitchLock                ( voice* pVoice, xbool bPitchLock );
 
@@ -126,14 +130,25 @@ inline  voice*          GetVoiceBuffer              ( void )                { re
 
 private:
 
+enum voice_dirty_bits
+{
+    VOICE_DB_ELEMENT_CHANGE      = (1<<0),
+    VOICE_DB_PAN_CHANGE          = (1<<1),
+    VOICE_DB_VOLUME_CHANGE       = (1<<2),
+    VOICE_DB_PITCH_CHANGE        = (1<<3),
+    VOICE_DB_EFFECTSEND_CHANGE   = (1<<4),
+    VOICE_DB_RELEASE_TIME_CHANGE = (1<<5),
+};
+
 inline  voice*          FreeVoices              ( void )    { return &m_FreeVoices; }
 inline  voice*          UsedVoices              ( void )    { return &m_UsedVoices; }
 inline  element*        FreeElements            ( void )    { return &m_FreeElements; }
 inline  element*        UsedElements            ( void )    { return &m_UsedElements; }
+inline  audio_runtime&  Runtime                 ( void )    { ASSERT( m_pRuntime ); return *m_pRuntime; }
         void            PrioritizeVoice         ( voice* pVoice, xbool RemoveFromList );
-        void            FreeVoice               ( voice* pVoice, xbool PutInFreeList );
-        element*        AquireElement           ( void );
-        void            ReleaseElement          ( element* pElement, xbool ReleaseChannel );
+        xbool           FreeVoice               ( voice* pVoice, xbool PutInFreeList );
+        element*        AcquireElement          ( void );
+        xbool           ReleaseElement          ( element* pElement, xbool ReleaseChannel );
 inline  void            StartElement            ( element* pElement );
 inline  void            PauseElement            ( element* pElement );
 inline  void            ResumeElement           ( element* pElement );
@@ -160,7 +175,6 @@ inline  voice*          UpdateCheckStreams      ( voice* pVoice );
         void            UpdateVoiceEffectSend   ( audio_package* pPackage );
         void            SetPackageVoicesDirty   ( audio_package* pPackage, u32 Bits );
         void            AppendElementToVoice    ( element* pElement, voice* pVoice );
-        void            InstantiateStreamSample ( audio_stream* pStream, s32 WhichChannel );
 
 //------------------------------------------------------------------------------
 // Private variables.
@@ -177,11 +191,11 @@ inline  voice*          UpdateCheckStreams      ( voice* pVoice );
         element*        m_FirstElement;
         element*        m_LastElement;
 
-        xmutex          m_Mutex;
-public:
-        s32             m_LockLevel;
+        audio_element_channel_runtime
+                        m_ElementChannels;
+        audio_stream_voice_binder
+                        m_StreamBinder;
+        audio_runtime*  m_pRuntime;
 };
-
-extern audio_voice_mgr g_AudioVoiceMgr;
 
 #endif

@@ -9,11 +9,12 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\ai_modify_behavior_targeted.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/ai_modify_behavior_targeted.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "..\Support\Characters\Character.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "../Support/Characters/Character.hpp"
 
 #include "Entropy.hpp"
 
@@ -33,7 +34,7 @@ m_DesiredBehavior(character_state::STATE_IDLE)
 
 void ai_modify_behavior_targeted::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * ai_modify_behavior_targeted::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * ai_modify_behavior_targeted::Execute" );
 
     (void) pParent;
     
@@ -61,9 +62,9 @@ void ai_modify_behavior_targeted::OnRender ( void )
 
 #ifdef TARGET_PC
     vector3 MyPosition =  GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
-    draw_Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_AIColor );
-    draw_BBox( ObjectPtr.m_pObject->GetBBox(), s_AIColor );
-    draw_Label( ObjectPtr.m_pObject->GetPosition(), s_AIColor, GetTypeName() );
+    render::debug::Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_AIColor );
+    render::debug::Box( ObjectPtr.m_pObject->GetBBox(), s_AIColor );
+    render::debug::Label( ObjectPtr.m_pObject->GetPosition(), s_AIColor, GetTypeName() );
 #endif
 }
 

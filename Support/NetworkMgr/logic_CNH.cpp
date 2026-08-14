@@ -25,7 +25,7 @@ TO DO:
 
 #include "Objects/CapPoint.hpp"
 #include "Objects/GameProp.hpp"
-#include "Objects/Player.hpp"               // For class actor/player.
+#include "Objects/Player/Player.hpp"               // For class actor/player.
 
 //==============================================================================
 //  TYPES
@@ -416,7 +416,8 @@ void logic_cnh::AdvanceTime( f32 DeltaTime )
             {
                 m_RespawnDelay[i] -= DeltaTime;
             }
-            else
+
+            if( m_RespawnDelay[i] <= 0.0f )
             {
                 m_RespawnDelay[i] = 0.0f;
                 if( GameMgr.m_Score.Player[i].IsInGame )

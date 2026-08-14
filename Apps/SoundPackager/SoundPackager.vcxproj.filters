@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="ADPCM">
@@ -29,7 +29,7 @@
     </ClInclude>
     <ClInclude Include="aiff_file.hpp" />
     <ClInclude Include="audio_file.hpp" />
-    <ClInclude Include="audio_private_pkg.hpp" />
+    <ClInclude Include="packages/audio_package_format.hpp" />
     <ClInclude Include="Compress.hpp" />
     <ClInclude Include="DspTool.hpp" />
     <ClInclude Include="ENCVAG.H" />

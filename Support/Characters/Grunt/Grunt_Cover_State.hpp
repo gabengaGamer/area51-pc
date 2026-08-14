@@ -1,7 +1,7 @@
 #ifndef _GRUNT_COVER_STATE_HPP_
 #define _GRUNT_COVER_STATE_HPP_
 
-#include "Characters\BaseStates\Character_Cover_State.hpp"
+#include "Characters/BaseStates/Character_Cover_State.hpp"
 
 class grunt_cover_state : public character_cover_state
 {

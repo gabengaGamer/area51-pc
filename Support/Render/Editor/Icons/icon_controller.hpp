@@ -214,5 +214,4 @@ static s16 s_iicon_controller[] =
 };
 
 
-#define DRAW_ICON_CONTROLLER() draw_icon( NUM_FACETS_ICON_CONTROLLER, NUM_VERTICES_ICON_CONTROLLER, s_vicon_controller, s_iicon_controller )
 

@@ -9,13 +9,13 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\lock_player_view.hpp"
+#include "../Support/Trigger/Actions/lock_player_view.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 
 #include "Entropy.hpp"
-#include "Objects\Player.hpp"
+#include "Objects/Player/Player.hpp"
 
 static const xcolor s_ActivateColor         (0,255,0);
 
@@ -23,14 +23,15 @@ static const xcolor s_ActivateColor         (0,255,0);
 // lock_player_view
 //=========================================================================
 
-lock_player_view::lock_player_view ( guid ParentGuid ) : actions_base( ParentGuid )
+lock_player_view::lock_player_view( guid ParentGuid ) :
+    actions_base( ParentGuid )
 {}
 
 //=============================================================================
 
 void lock_player_view::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * lock_player_view::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * lock_player_view::Execute" );
 
     (void) pParent;
 

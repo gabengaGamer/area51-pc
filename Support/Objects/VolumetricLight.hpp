@@ -12,9 +12,8 @@
 #ifndef __VOLUMETRICLIGHT_HPP__
 #define __VOLUMETRICLIGHT_HPP__
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Objects\Interpolation\TransformInterpolation.hpp"
-#include "Render\Texture.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
 
 class volumetric_light_obj : public object
 {
@@ -40,13 +39,6 @@ protected:
     virtual void            OnRender            ( void );
     virtual void            OnRenderTransparent ( void );
 
-    virtual void            CaptureRenderInterpState  ( void );
-    virtual void            UpdateRenderInterpState   ( f32 Alpha );
-    virtual void            ClearRenderInterpState    ( void );
-    virtual void            InvalidateRenderInterpState( void );
-    virtual void            SnapRenderInterpState     ( void );
-            void            InvalidateRenderState( void );
-    const   matrix4&        GetRenderL2W        ( void ) const;
 
     void                    SetupData( void );
 
@@ -61,7 +53,6 @@ protected:
 
     s32                     m_nBytesAlloced;
     byte*                   m_pData;
-    transform_interp_cache  m_RenderCache;
 
 };
 

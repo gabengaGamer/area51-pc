@@ -11,7 +11,7 @@
 #include "logic_Campaign.hpp"
 #include "Objects/Actor/Actor.hpp"  // For actor class
 #include "Objects/Render/PostEffectMgr.hpp"
-#include "StateMgr\StateMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
 
 //==============================================================================
 //    FUNCTIONS
@@ -92,7 +92,8 @@ void logic_campaign::AdvanceTime( f32 DeltaTime )
     {
         m_RespawnDelay -= DeltaTime;
     }
-    else
+
+    if( m_RespawnDelay <= 0.0f )
     {
         m_RespawnDelay = 0.0f;
 
@@ -141,18 +142,15 @@ void logic_campaign::BeginGame( void )
 
         if( pPlayer )
         {
-            // Setting position in orientation
-            matrix4 L2W;
-            L2W.Identity();
-            L2W.RotateY( m_PlayerSpawnYaw );
-            L2W.Translate( m_PlayerSpawnPosition );
-            pPlayer->OnTransform( L2W );
-
-            // set this player up
-            pPlayer->SetPitch( m_PlayerSpawnPitch    );
-            pPlayer->SetZone1( m_PlayerSpawnZone     );
-            pPlayer->SetZone2( 0 );
-            pPlayer->InitZoneTracking();
+            // Set this player up.
+            pPlayer->Teleport( m_PlayerSpawnPosition,
+                               m_PlayerSpawnPitch,
+                               m_PlayerSpawnYaw,
+                               static_cast<zone_mgr::zone_id>( m_PlayerSpawnZone ),
+                               0,
+                               PlayerTeleportVelocityPolicy::Clear,
+                               FALSE,
+                               FALSE );
         }
     }
     else
@@ -181,12 +179,14 @@ void logic_campaign::BeginGame( void )
                 pSpawnPoint->GetSpawnInfo( pPlayer->GetGuid(), Position, Rotation, Zone1, Zone2 );
 
                 // Set this player up.
-                pPlayer->Teleport( Position );
-                pPlayer->SetPitch( Rotation.Pitch );
-                pPlayer->SetYaw  ( Rotation.Yaw   ); 
-                pPlayer->SetZone1( Zone1 );
-                pPlayer->SetZone2( Zone2 );
-                pPlayer->InitZoneTracking();
+                pPlayer->Teleport( Position,
+                                   Rotation.Pitch,
+                                   Rotation.Yaw,
+                                   static_cast<zone_mgr::zone_id>( Zone1 ),
+                                   static_cast<zone_mgr::zone_id>( Zone2 ),
+                                   PlayerTeleportVelocityPolicy::Clear,
+                                   FALSE,
+                                   FALSE );
             }
         }
     }

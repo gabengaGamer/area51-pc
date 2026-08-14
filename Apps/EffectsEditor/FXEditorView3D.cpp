@@ -1,6 +1,7 @@
 // FXEditorView3D.cpp : implementation file
 //
 
+#include "Render\PrimitiveDebug.hpp"
 #include "stdafx.h"
 #include "FXEditorView3D.h"
 
@@ -93,9 +94,27 @@ void CFXEditorView3D::OnDraw(CDC* pDC)
 
     // Prepare the Entropy engine to render this viewport & start rendering
     PreRenderSetup();
+
+    if( !eng_BeginFrame() )
     {
-        eng_Begin( "FX_EditorView3D" );
+        return;
+    }
+
+    rtarget_backbuffer_pass_desc PassDesc;
+    PassDesc.bUseDepth = FALSE;
+    if( !rtarget_BeginBackBufferPass( PassDesc ) )
+    {
+        eng_ResetAfterException();
+        return;
+    }
+    rtarget_EndPass();
+
+    {
+        if( eng_Begin( "FX_EditorView3D" ) )
         {
+            VERIFY( render::BeginPrimitiveRender() );
+            render::BeginNormalRender();
+
             if( m_ShowBackground )
             {
                 pDoc->m_Effect.RenderBackground( GlobalTime );
@@ -116,24 +135,31 @@ void CFXEditorView3D::OnDraw(CDC* pDC)
             /******************************         DEBUG STUFF           ***********************************/
             /************************************************************************************************/
 
-            draw_Point( vector3(0,0,0),          xcolor(255,255,255,255) ); // Origin
-            draw_Point( vector3(50,0,50),        xcolor(  0,  0,255,255) ); // Orbit Point
-            draw_Point( m_Camera.GetTargetPos(), xcolor(255,255,  0,255) ); // Camera Target
+            render::debug::Point( vector3(0,0,0),          xcolor(255,255,255,255) ); // Origin
+            render::debug::Point( vector3(50,0,50),        xcolor(  0,  0,255,255) ); // Orbit Point
+            render::debug::Point( m_Camera.GetTargetPos(), xcolor(255,255,  0,255) ); // Camera Target
 
-            draw_BBox( bbox(vector3(0,0,0), 50), xcolor(0,255,0,255) );
+            render::debug::Box( bbox(vector3(0,0,0), 50), xcolor(0,255,0,255) );
 
             /************************************************************************************************/
 
+            render::EndNormalRender();
+            render::EndPrimitiveRender();
+            render::ExecuteForwardRender();
             eng_End();
         }
-        
-        eng_PageFlip(); // Done rendering all 3D stuff
+
     }
 
     // Draw Transform Gizmos
     if( m_ShowTransformGizmos )
     {
         g_ManipulatorMgr.Render( m_View );
+    }
+
+    if( !eng_EndFrame() )
+    {
+        return;
     }
 
     /************************************************************************************************/
@@ -428,4 +454,3 @@ CFXEditorView3D::NavMode    CFXEditorView3D::GetNavMode( void )
 
     return NAV_NONE;
 }
-

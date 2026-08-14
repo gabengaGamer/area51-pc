@@ -9,8 +9,8 @@
 //=========================================================================
 
 #include "trigger_meta_goto.hpp"
-#include "..\TriggerEx_Object.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "../TriggerEx_Object.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS

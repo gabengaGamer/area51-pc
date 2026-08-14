@@ -11,8 +11,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\TriggerEx_Conditionals.hpp"
-#include "..\Affecters\object_affecter.hpp"
+#include "../TriggerEx_Conditionals.hpp"
+#include "../Affecters/object_affecter.hpp"
 
 //=========================================================================
 // Check Health

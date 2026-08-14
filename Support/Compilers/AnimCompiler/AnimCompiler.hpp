@@ -12,8 +12,8 @@
 //=========================================================================
 
 #include "AnimData.hpp"
-#include "meshutil/rawanim.hpp"
-#include "meshutil/rawmesh2.hpp"
+#include "MeshUtil/RawAnim.hpp"
+#include "MeshUtil/RawMesh2.hpp"
 #include "x_bitstream.hpp"
 
 //=========================================================================

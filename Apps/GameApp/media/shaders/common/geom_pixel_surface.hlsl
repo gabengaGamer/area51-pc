@@ -9,17 +9,21 @@
 #ifndef GEOM_PIXEL_SURFACE_HLSL
 #define GEOM_PIXEL_SURFACE_HLSL
 
+//==============================================================================
+//  FUNCTIONS
+//==============================================================================
+
 GeomDiffuseResult GeomEvaluateDiffuse( GEOM_PIXEL_INPUT input, uint materialFlags, float alphaRef )
 {
     GeomDiffuseResult result;
-    result.Sample = txDiffuse.Sample( samLinear, input.UV );
+    result.Sample = txDiffuse.Sample( samDiffuse, input.UV );
     result.Color  = result.Sample;
 
     if( materialFlags & MATERIAL_FLAG_DETAIL )
     {
         float  detailScale = max( UVAnim.z, 1.0f );
-        float4 detailColor = txDetail.Sample( samLinear, input.UV * detailScale );
-        result.Color *= detailColor * 2.0;
+        float4 detailColor = txDetail.Sample( samDetail, input.UV * detailScale );
+        result.Color *= detailColor * 2.0f;
     }
 
 #if GEOM_HAS_VERTEX_COLOR
@@ -32,7 +36,9 @@ GeomDiffuseResult GeomEvaluateDiffuse( GEOM_PIXEL_INPUT input, uint materialFlag
     if( materialFlags & MATERIAL_FLAG_ALPHA_TEST )
     {
         if( result.Sample.a < alphaRef )
+        {
             discard;
+        }
     }
 
     result.Alpha = result.Color.a;
@@ -48,12 +54,12 @@ void GeomApplyEnvironment( inout GeomDiffuseResult diffuse, uint materialFlags, 
     if( materialFlags & MATERIAL_FLAG_ENVIRONMENT )
     {
         float3 worldNormal = normalize( normal );
-        float3 envColor    = 0.0;
+        float3 envColor    = 0.0f;
 
         if( materialFlags & MATERIAL_FLAG_ENV_CUBEMAP )
         {
             float3 cubeDir = normalize( viewVector );
-            envColor = txEnvironmentCube.Sample( samLinear, cubeDir ).rgb;
+            envColor = txEnvironmentCube.Sample( samEnvironmentCube, cubeDir ).rgb;
         }
         else
         {
@@ -71,7 +77,7 @@ void GeomApplyEnvironment( inout GeomDiffuseResult diffuse, uint materialFlags, 
             envVector = normalize( envVector );
 
             float2 envUV = envVector.xy * 0.5f + 0.5f;
-            envColor = txEnvironment.Sample( samLinear, envUV ).rgb;
+            envColor = txEnvironment.Sample( samEnvironment, envUV ).rgb;
         }
 
         float envStrength = 1.0f;
@@ -114,18 +120,31 @@ float4 GeomComputeGlow( GEOM_PIXEL_INPUT input,
                         inout float4 finalColor,
                         float4 diffuseSample )
 {
-    float4 glow = float4( 0.0, 0.0, 0.0, 0.0 );
-    const bool bUseDiffuse           = (materialFlags & MATERIAL_FLAG_ILLUM_USE_DIFFUSE) != 0;
-    const bool bDiffusePerPixelIllum = (materialFlags & MATERIAL_FLAG_DIFF_PERPIXEL_ILLUM) != 0;
-    const bool bAlphaPerPixelIllum   = (materialFlags & MATERIAL_FLAG_ALPHA_PERPIXEL_ILLUM) != 0;
-    const bool bAlphaPerPolyIllum    = (materialFlags & MATERIAL_FLAG_ALPHA_PERPOLY_ILLUM) != 0;
+    float4 glow = float4( 0.0f, 0.0f, 0.0f, 0.0f );
+    const float4 ambient = GeomGetLightAmbCol( input );
+
+    if( materialFlags & INSTANCE_FLAG_GLOWING )
+    {
+        const float3 forcedGlowColor = saturate( ambient.rgb * diffuseSample.rgb * 2.0f );
+        finalColor.rgb = forcedGlowColor;
+        glow.rgb = forcedGlowColor;
+        glow.a   = 1.0f;
+        return glow;
+    }
+
+    const bool bUseDiffuse           = ( materialFlags & MATERIAL_FLAG_ILLUM_USE_DIFFUSE ) != 0;
+    const bool bDiffusePerPixelIllum = ( materialFlags & MATERIAL_FLAG_DIFF_PERPIXEL_ILLUM ) != 0;
+    const bool bAlphaPerPixelIllum   = ( materialFlags & MATERIAL_FLAG_ALPHA_PERPIXEL_ILLUM ) != 0;
+    const bool bAlphaPerPolyIllum    = ( materialFlags & MATERIAL_FLAG_ALPHA_PERPOLY_ILLUM ) != 0;
 
     if( bAlphaPerPixelIllum )
     {
         glow = diffuseSample;
 
         if( !bUseDiffuse )
+        {
             finalColor.rgb = diffuseSample.rgb;
+        }
     }
     else if( bDiffusePerPixelIllum || bAlphaPerPolyIllum )
     {

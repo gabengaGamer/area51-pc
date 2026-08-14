@@ -10,8 +10,8 @@
 //==============================================================================
 //==============================================================================
 
-#include "x_Files.hpp"
-#include "x_Color.hpp"
+#include "x_files.hpp"
+#include "x_color.hpp"
 #include "e_Network.hpp"
 #include "x_bitstream.hpp"
 #include "GameServer.hpp"
@@ -71,7 +71,7 @@ void game_client::EnterState( client_state NewState )
         // XBox requires the voice manager to be initialized differently because
         // Headset must be usable during the frontend menus for voice attachments.
         #ifndef TARGET_XBOX
-        g_VoiceMgr.Init( FALSE, TRUE );
+        g_VoiceMgr.Init( TRUE );
         #endif
 
 //      m_UpdateMgr.Init( m_ClientIndex );  // Don't know the ClientIndex yet!

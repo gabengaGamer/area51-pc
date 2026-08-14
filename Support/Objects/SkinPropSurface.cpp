@@ -1,19 +1,20 @@
+#include "Render/PrimitiveDebug.hpp"
 #include "SkinPropSurface.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "Render\Render.hpp"
-#include "EventMgr\EventMgr.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Render/Render.hpp"
+#include "EventMgr/EventMgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 xstring g_SkinPropSurfaceStringList;
-//=============================================================================
+
 //=============================================================================
 
 skin_prop_surface::anim_pair        skin_prop_surface::s_PairTable[] = 
 {        
         anim_pair("NORMAL",                     skin_prop_surface::ANIM_NORMAL),
         anim_pair("DESTORY_ONCE_FINISH",        skin_prop_surface::ANIM_DESTORY_ONCE_FINISH),
-     
+
         anim_pair( k_EnumEndStringConst,        skin_prop_surface::ANIM_INVLAID),  //**MUST BE LAST**//
 };
 
@@ -96,7 +97,6 @@ const object_desc&  skin_prop_surface::GetObjectType( void )
 
 skin_prop_surface::skin_prop_surface( void )  
 {
-    InvalidateRenderState();
     m_iMaterial = MAT_TYPE_NULL; 
     m_iBackupAnimString = -1;
 
@@ -107,73 +107,6 @@ skin_prop_surface::skin_prop_surface( void )
 
 skin_prop_surface::~skin_prop_surface( void )
 {
-}
-
-//=============================================================================
-
-void skin_prop_surface::InvalidateRenderState( void )
-{
-    InitSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=============================================================================
-
-void skin_prop_surface::CaptureRenderInterpState( void )
-{
-    if( CaptureSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer ) == INTERP_CAPTURE_CHANGED )
-        RegisterRenderInterpUpdate();
-}
-
-//=============================================================================
-
-void skin_prop_surface::UpdateRenderInterpState( f32 Alpha )
-{
-    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
-}
-
-//=============================================================================
-
-void skin_prop_surface::ClearRenderInterpState( void )
-{
-    ClearSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=============================================================================
-
-void skin_prop_surface::InvalidateRenderInterpState( void )
-{
-    object::InvalidateRenderInterpState();
-    InvalidateSimpleAnimInterpCache( m_RenderCache );
-}
-
-//=============================================================================
-
-void skin_prop_surface::SnapRenderInterpState( void )
-{
-    object::SnapRenderInterpState();
-    SnapSimpleAnimInterpCache( m_RenderCache, GetL2W(), m_AnimPlayer );
-}
-
-//=============================================================================
-
-const matrix4& skin_prop_surface::GetRenderL2W( void ) const
-{
-    return GetSimpleAnimInterpCacheL2W( m_RenderCache, GetL2W() );
-}
-
-//=============================================================================
-
-xbool skin_prop_surface::GetRenderBoneL2W( s32 iBone, matrix4& L2W )
-{
-    if( GetSimpleAnimInterpCacheBoneL2W( m_RenderCache, iBone, L2W ) )
-        return TRUE;
-
-    const matrix4* pBone = m_AnimPlayer.GetBoneL2W( iBone, FALSE );
-    if( !pBone )
-        return FALSE;
-
-    L2W = *pBone;
-    return TRUE;
 }
 
 //=============================================================================
@@ -206,7 +139,7 @@ bbox skin_prop_surface::GetLocalBBox( void ) const
 
 void skin_prop_surface::OnRender( void )
 {
-    CONTEXT( "skin_prop_surface::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "skin_prop_surface::OnRender" );
 
     if( m_Inst.GetSkinGeom() && (m_hAnimGroup.IsLoaded() == TRUE) )
     {
@@ -216,8 +149,7 @@ void skin_prop_surface::OnRender( void )
             return;
 
         // Compute LOD mask
-        const matrix4& RenderL2W = GetRenderL2W();
-        u64 LODMask = m_Inst.GetLODMask( RenderL2W ) ;
+        u64 LODMask = m_Inst.GetLODMask(GetL2W());
         if (LODMask == 0)
             return ;
 
@@ -226,71 +158,60 @@ void skin_prop_surface::OnRender( void )
 
         // compute bones
         s32 nActiveBones = m_AnimPlayer.GetNBones();
-        const matrix4* pMatrices = NULL;
-        if( m_hAnimGroup.GetPointer() )
-            pMatrices = BuildSimpleAnimInterpCacheMatrices( m_RenderCache, *m_hAnimGroup.GetPointer(), nActiveBones );
-        if( !pMatrices )
-            pMatrices = m_AnimPlayer.GetBoneL2Ws() ;
+        const matrix4* pMatrices = m_AnimPlayer.GetBoneL2Ws();
         if (!pMatrices)
             return ;
 
         // Render
-        m_Inst.Render(&RenderL2W, 
-                          pMatrices, 
-                          nActiveBones,
-                          Flags,
-                          LODMask,
-                          GetFloorColor());
+        m_Inst.Render(&GetL2W(),
+                      pMatrices, 
+                      nActiveBones,
+                      Flags,
+                      LODMask,
+                      GetFloorColor());
     }
     else
     {
 #ifdef X_EDITOR
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif // X_EDITOR
     }
-//    draw_BBox( GetBBox() );
+//    render::debug::Box( GetBBox() );
 }
 
 //=============================================================================
 
-void skin_prop_surface::OnRenderShadowCast( u64 ProjMask )
+void skin_prop_surface::OnRenderShadowCast(u64 ProjMask)
 {
-    // Lookup skin geometry
-    if( !m_Inst.GetSkinGeom() )
-        return;
+    if (m_Inst.GetSkinGeom() && (m_hAnimGroup.IsLoaded() == TRUE))
+    {
+        // Lookup skin geometry
+        skin_geom* pSkinGeom = m_Inst.GetSkinGeom();
+        if (!pSkinGeom)
+            return;
 
-    // Make sure animation data is loaded.
-    if( m_hAnimGroup.IsLoaded() != TRUE )
-        return;
+        // Compute LOD mask
+        u64 LODMask = m_Inst.GetLODMask(GetL2W());
+        if (LODMask == 0)
+            return;
 
-    // Compute LOD mask for the shadow render (by forcing 0 for the screen size
-    // we are sure to get the lowest LOD)
-    u64 ShadLODMask = m_Inst.GetLODMask( 0 );
-    if( ShadLODMask == 0 )
-        return;
+        // Setup render flags
+        u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
 
-    // Setup render flags
-    u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
+        // compute bones
+        s32 nActiveBones = m_AnimPlayer.GetNBones();
+        const matrix4* pMatrices = m_AnimPlayer.GetBoneL2Ws();
+        if (!pMatrices)
+            return;
 
-    // Compute bones
-    s32 nActiveBones = m_AnimPlayer.GetNBones();
-    const matrix4* pMatrices = NULL;
-    if( m_hAnimGroup.GetPointer() )
-        pMatrices = BuildSimpleAnimInterpCacheMatrices( m_RenderCache, *m_hAnimGroup.GetPointer(), nActiveBones );
-    if( !pMatrices )
-        pMatrices = m_AnimPlayer.GetBoneL2Ws();
-    if( !pMatrices )
-        return;
-
-    const matrix4& RenderL2W = GetRenderL2W();
-
-    // Render
-    m_Inst.RenderShadowCast( &RenderL2W,
-                             pMatrices,
-                             nActiveBones,
-                             Flags,
-                             ShadLODMask,
-                             ProjMask );
+        // Render
+        m_Inst.RenderShadowCast(&GetL2W(),
+            pMatrices,
+            nActiveBones,
+            Flags,
+            LODMask,
+            ProjMask);
+    }
 }
 
 //=============================================================================
@@ -308,7 +229,7 @@ void skin_prop_surface::OnColCheck ( void )
 void skin_prop_surface::OnColRender     ( xbool bRenderHigh )
 {
     (void)bRenderHigh;
-    draw_BBox( GetBBox() );
+    render::debug::Box( GetBBox() );
 }
 #endif // X_RETAIL
 
@@ -331,9 +252,9 @@ void skin_prop_surface::OnTransform( const matrix4& L2W )
 
 //=============================================================================
 
-void skin_prop_surface::OnAdvanceLogic( f32 DeltaTime )
+void skin_prop_surface::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "skin_prop_surface::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "skin_prop_surface::OnAdvanceSimulation" );
 
     if( m_hAnimGroup.IsLoaded() )
     {        
@@ -551,60 +472,60 @@ xbool skin_prop_surface::OnProperty( prop_query& I )
 
 //=============================================================================
 
-void skin_prop_surface::EnumAttachPoints( xstring& String ) const
+void skin_prop_surface::EnumAttachPoints(xstring& String) const
 {
-    String = "BaseObject~"; 
+    String = "BaseObject~";
 
     s32 i;
 
-    if ( m_hAnimGroup.IsLoaded() )
-    {          
+    if (m_hAnimGroup.IsLoaded())
+    {
         const anim_group* pGroup = m_hAnimGroup.GetPointer();
         if (NULL != pGroup)
-        {            
-            s32 nBones = pGroup->GetNBones();    
+        {
+            s32 nBones = pGroup->GetNBones();
 
-            for (i=0;i<nBones;i++)
+            for (i = 0; i < nBones; i++)
             {
-                const anim_bone& Bone = pGroup->GetBone( i );
+                const anim_bone& Bone = pGroup->GetBone(i);
 
                 String += Bone.Name;
                 String += "~";
-            }        
+            }
         }
     }
 
 
-    for( i=0; String[i]; i++ )
+    for (i = 0; String[i]; i++)
     {
-        if( String[i] == '~' )
+        if (String[i] == '~')
             String[i] = 0;
     }
 }
 
 //=============================================================================
 
-s32 skin_prop_surface::GetAttachPointIDByName( const char* pName ) const
+s32 skin_prop_surface::GetAttachPointIDByName(const char* pName) const
 {
-    if (x_stricmp(pName,"BaseObject")==0)
+    if (x_stricmp(pName, "BaseObject") == 0)
         return 0;
 
-    if ( m_hAnimGroup.IsLoaded() )
-    {          
+    if (m_hAnimGroup.IsLoaded())
+    {
         const anim_group* pGroup = m_hAnimGroup.GetPointer();
         if (NULL != pGroup)
-        {            
-            s32 nBones = pGroup->GetNBones();    
+        {
+            s32 nBones = pGroup->GetNBones();
             s32 i;
-            for (i=0;i<nBones;i++)
+            for (i = 0; i < nBones; i++)
             {
-                const anim_bone& Bone = pGroup->GetBone( i );
+                const anim_bone& Bone = pGroup->GetBone(i);
 
-                if (x_stricmp( pName, Bone.Name ) == 0)
+                if (x_stricmp(pName, Bone.Name) == 0)
                 {
-                    return i+1;
-                }            
-            }      
+                    return i + 1;
+                }
+            }
         }
     }
 
@@ -614,26 +535,26 @@ s32 skin_prop_surface::GetAttachPointIDByName( const char* pName ) const
 
 //=============================================================================
 
-xstring skin_prop_surface::GetAttachPointNameByID( s32 iAttachPt ) const
+xstring skin_prop_surface::GetAttachPointNameByID(s32 iAttachPt) const
 {
     if (iAttachPt == 0)
         return xstring("BaseObject");
 
-    if ( m_hAnimGroup.IsLoaded() )
-    {          
+    if (m_hAnimGroup.IsLoaded())
+    {
         const anim_group* pGroup = m_hAnimGroup.GetPointer();
         if (NULL != pGroup)
-        {               
+        {
             // Decrement by one to bring it into the range [0,nbones)
             iAttachPt -= 1;
             s32 nBones = pGroup->GetNBones();
-            if ( (iAttachPt >= 0) &&
-                (iAttachPt < nBones ))
+            if ((iAttachPt >= 0) &&
+                (iAttachPt < nBones))
             {
-                const anim_bone& Bone = pGroup->GetBone( iAttachPt );
+                const anim_bone& Bone = pGroup->GetBone(iAttachPt);
 
                 return Bone.Name;
-            }       
+            }
         }
     }
 
@@ -642,94 +563,82 @@ xstring skin_prop_surface::GetAttachPointNameByID( s32 iAttachPt ) const
 
 //=============================================================================
 
-void skin_prop_surface::OnAttachedMove( s32             iAttachPt,
-                                  const matrix4&  L2W )
+void skin_prop_surface::OnAttachedMove(s32             iAttachPt,
+    const matrix4& L2W)
 {
     if (iAttachPt == 0)
-    {                
-        OnTransform( L2W );
+    {
+        OnTransform(L2W);
     }
     else
-        if ( m_hAnimGroup.IsLoaded() )
-        {          
+        if (m_hAnimGroup.IsLoaded())
+        {
             const anim_group* pGroup = m_hAnimGroup.GetPointer();
             if (NULL != pGroup)
-            {                 
+            {
                 // Decrement by one to bring it into the range [0,nbones)
                 iAttachPt -= 1;
                 s32 nBones = pGroup->GetNBones();
-                if ( (iAttachPt >= 0) &&
-                    (iAttachPt < nBones ))
+                if ((iAttachPt >= 0) &&
+                    (iAttachPt < nBones))
                 {
-                    const matrix4* pTempL2W = m_AnimPlayer.GetBoneL2W( iAttachPt );
+                    const matrix4* pTempL2W = m_AnimPlayer.GetBoneL2W(iAttachPt);
                     if (pTempL2W)
                     {
                         matrix4 BoneL2W = *pTempL2W;
-                        BoneL2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
+                        BoneL2W.PreTranslate(m_AnimPlayer.GetBoneBindPosition(iAttachPt));
 
                         vector3 BonePos = BoneL2W.GetTranslation();
                         BonePos -= GetPosition();
 
                         matrix4 NewL2W = L2W;
-                        NewL2W.Translate( -BonePos );
+                        NewL2W.Translate(-BonePos);
 
-                        OnTransform( NewL2W );
+                        OnTransform(NewL2W);
                     }
-                }        
+                }
             }
         }
 }
 
-
-
 //=============================================================================
 
-xbool skin_prop_surface::GetAttachPointData( s32      iAttachPt,
-                                       matrix4& L2W,
-                                       u32      Flags )
+xbool skin_prop_surface::GetAttachPointData(s32      iAttachPt,
+    matrix4& L2W,
+    u32      Flags)
 {
     if (iAttachPt == 0)
     {
-        L2W = GetRenderL2W();
+        L2W = GetL2W();
         return TRUE;
     }
 
-    if ( m_hAnimGroup.IsLoaded() )
-    {          
+    if (m_hAnimGroup.IsLoaded())
+    {
         const anim_group* pGroup = m_hAnimGroup.GetPointer();
         if (NULL != pGroup)
-        {   
+        {
             // Decrement by one to bring it into the range [0,nbones)
             iAttachPt -= 1;
             s32 nBones = pGroup->GetNBones();
-            if ( (iAttachPt >= 0) &&
-                (iAttachPt < nBones ))
+            if ((iAttachPt >= 0) &&
+                (iAttachPt < nBones))
             {
-                if( HasSimpleAnimInterpCache( m_RenderCache ) && GetRenderBoneL2W( iAttachPt, L2W ) )
-                {
-                    if( !(Flags & ATTACH_USE_WORLDSPACE) )
-                        L2W = L2W * pGroup->GetBoneBindInvMatrix( iAttachPt );
-                }
-                else
-                {
-                    const matrix4* pL2W = m_AnimPlayer.GetBoneL2W( iAttachPt, TRUE );            
+                const matrix4* pL2W = m_AnimPlayer.GetBoneL2W(iAttachPt, TRUE);
 
-                    if ( NULL != pL2W )
-                        L2W = *pL2W;
-                    else
-                        L2W.Identity();
-                  
-                    if (Flags & ATTACH_USE_WORLDSPACE)
-                        L2W.PreTranslate( m_AnimPlayer.GetBoneBindPosition( iAttachPt ) );
-                }
+                if (NULL != pL2W)
+                    L2W = *pL2W;
+                else
+                    L2W.Identity();
+
+                if (Flags & ATTACH_USE_WORLDSPACE)
+                    L2W.PreTranslate(m_AnimPlayer.GetBoneBindPosition(iAttachPt));
 
 
                 return TRUE;
-            }        
+            }
         }
     }
 
     return FALSE;
 }
-
-//=============================================================================

@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "DebugTicker.hpp"
-#include "x_threads.hpp"
 #include "x_log.hpp"
 
 //==============================================================================
@@ -89,8 +88,6 @@ void debug_ticker::Update( f32 DeltaTime )
     Count        = 0;
     SayWeResumed = FALSE;
 
-    xthread* pCurrent = x_GetCurrentThread();
-
     // We're going to send a packet every 100ms.  However, if we need to wait 
     // for a debug tick to come in from another source, then we wait a bit 
     // longer before sending another pulse.
@@ -153,31 +150,14 @@ void debug_ticker::Update( f32 DeltaTime )
             // Only enable debug ticker if the remote machine is on the same 
             // network. This will allow us to debug machines outside of the 
             // local net.
-#if defined(TARGET_PS2)
-            if(    (m_RemoteAddress.GetIP() & Info.Netmask) 
-                == (Info.Address & Info.Netmask) )
-#endif
-            {
-                m_LocalSocket.Send( m_RemoteAddress, REMOTE_ENABLED, 
-                                    x_strlen(REMOTE_ENABLED)+1 );
-                #ifdef VERBOSE_DEBUG_TICKS
-                LOG_MESSAGE( "debug_ticker::Update", 
-                             "Sending debug tick to %s through %s.",
-                             m_RemoteAddress.GetStrAddress(), 
-                             m_LocalSocket.GetStrAddress() );
-                #endif
-            }
-#if defined(TARGET_PS2)
-            else
-            {
-                if( m_WasNotified == FALSE )
-                {
-                    LOG_WARNING( "debug_ticker::Update",
-                                "Remote machine not on local subnet. Ticker disabled." );
-                    m_WasNotified = TRUE;
-                }
-            }
-#endif
+            m_LocalSocket.Send( m_RemoteAddress, REMOTE_ENABLED, 
+                                x_strlen(REMOTE_ENABLED)+1 );
+            #ifdef VERBOSE_DEBUG_TICKS
+            LOG_MESSAGE( "debug_ticker::Update", 
+                         "Sending debug tick to %s through %s.",
+                         m_RemoteAddress.GetStrAddress(), 
+                         m_LocalSocket.GetStrAddress() );
+            #endif
             m_TickTimer = 0.0f;
         }
         WaitForTick = (m_LastTickTimer > 0.400f) && m_RemoteIsListening;
@@ -199,10 +179,6 @@ void debug_ticker::Update( f32 DeltaTime )
             DeltaTime   = 0.01f;
             SendTimeout = 0.50f;
             LOG_FLUSH();
-        }
-        if( pCurrent->IsActive()==FALSE )
-        {
-            break;
         }
     } while( WaitForTick );
 

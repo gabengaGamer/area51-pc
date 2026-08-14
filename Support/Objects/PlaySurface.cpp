@@ -1,14 +1,14 @@
 
+#include "Render/PrimitiveDebug.hpp"
 #include "PlaySurface.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "Render\Render.hpp"
-#include "Debris\Debris_mgr.hpp"
-#include "Objects\Interpolation\InterpolationMath.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "Render/Render.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 xbool ShowCollision = FALSE;
 
@@ -84,18 +84,8 @@ const object_desc&  play_surface::GetObjectType( void )
 // FUNCTIONS
 //=============================================================================
 
-static xbool ShouldSnapPlaySurfaceState( const matrix4& Prev, const matrix4& Curr )
-{
-    return ShouldSnapInterpL2W( Prev, Curr );
-}
-
 play_surface::play_surface( void )
 {
-    m_RenderPrevL2W.Identity();
-    m_RenderCurrL2W.Identity();
-    m_RenderInterpL2W.Identity();
-    m_RenderStateValid   = FALSE;
-    m_RenderInterpActive = FALSE;
 }
 
 //=============================================================================
@@ -126,14 +116,14 @@ bbox play_surface::GetLocalBBox( void ) const
     // The geometry bbox should incorporate both the collision and render
     // geometry (which doesn't always match up). Unfortunately, since we use
     // the same bbox for both operations, we have to go with the bigger one.
-    return pRigidGeom->m_BBox; 
+    return pRigidGeom->m_BBox;
 }
 
 //=============================================================================
 
 void play_surface::OnRender( void )
 {
-    CONTEXT( "play_surface::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "play_surface::OnRender" );
 
 #ifndef X_RETAIL
     if( ShowCollision )
@@ -147,7 +137,7 @@ void play_surface::OnRender( void )
     
     if( pRigidGeom )
     {
-        const matrix4& RenderL2W = GetRenderL2W();
+        const matrix4& RenderL2W = GetL2W();
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         if( GetAttrBits() & object::ATTR_DISABLE_PROJ_SHADOWS )
             Flags |= render::DISABLE_PROJ_SHADOWS;
@@ -188,7 +178,7 @@ void play_surface::OnRender( void )
     else
     {
 #ifdef X_EDITOR
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif // X_EDITOR
     }
 }
@@ -197,7 +187,7 @@ void play_surface::OnRender( void )
 
 void play_surface::DoColCheck ( const matrix4* pBone )
 {
-    CONTEXT("play_surface::DoColCheck");    
+    X_PROFILE_SCOPE_CATEGORY( "Context", "play_surface::DoColCheck");
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
 
     RigidGeom_ApplyCollision( GetGuid(), 
@@ -257,7 +247,7 @@ xbool play_surface::GetColDetails( s32 Key, detail_tri& Tri )
     if( !pRigidGeom )
         return( FALSE );
 
-    if( !pRigidGeom->m_Collision.nHighClusters )
+    if( !pRigidGeom->m_collision.nHighClusters )
         return( FALSE );
 
     return RigidGeom_GetColDetails( pRigidGeom,
@@ -272,7 +262,7 @@ xbool play_surface::GetColDetails( s32 Key, detail_tri& Tri )
 const matrix4* play_surface::GetBoneL2Ws( void )
 {
     // Just 1 bone in a play surface
-    return &GetRenderL2W() ;
+    return &GetL2W() ;
 }
 
 //=============================================================================
@@ -311,89 +301,7 @@ void play_surface::OnKill( void )
     object::OnKill();
 }
 
-//==============================================================================
-
-const matrix4& play_surface::GetRenderL2W( void ) const
-{
-    if( m_RenderInterpActive )
-        return m_RenderInterpL2W;
-
-    return GetL2W();
-}
-
-//==============================================================================
-
-void play_surface::CaptureRenderInterpState( void )
-{
-    const matrix4& L2W = GetL2W();
-
-    if( !m_RenderStateValid )
-    {
-        m_RenderPrevL2W      = L2W;
-        m_RenderCurrL2W      = L2W;
-        m_RenderInterpL2W    = L2W;
-        m_RenderStateValid   = TRUE;
-        m_RenderInterpActive = FALSE;
-        return;
-    }
-
-    m_RenderPrevL2W = m_RenderCurrL2W;
-    m_RenderCurrL2W = L2W;
-
-    if( ShouldSnapPlaySurfaceState( m_RenderPrevL2W, m_RenderCurrL2W ) )
-        m_RenderPrevL2W = m_RenderCurrL2W;
-
-    if( x_memcmp( &m_RenderPrevL2W, &m_RenderCurrL2W, sizeof( matrix4 ) ) != 0 )
-        RegisterRenderInterpUpdate();
-}
-
-//==============================================================================
-
-void play_surface::UpdateRenderInterpState( f32 Alpha )
-{
-    if( !m_RenderStateValid )
-    {
-        m_RenderInterpActive = FALSE;
-        return;
-    }
-
-    Alpha = MAX( 0.0f, MIN( Alpha, 1.0f ) );
-    m_RenderInterpL2W = InterpMatrix( m_RenderPrevL2W, m_RenderCurrL2W, Alpha );
-    m_RenderInterpActive = TRUE;
-}
-
-//==============================================================================
-
-void play_surface::ClearRenderInterpState( void )
-{
-    m_RenderInterpActive = FALSE;
-}
-
-//==============================================================================
-
-void play_surface::InvalidateRenderInterpState( void )
-{
-    object::InvalidateRenderInterpState();
-
-    m_RenderStateValid   = FALSE;
-    m_RenderInterpActive = FALSE;
-}
-
-//==============================================================================
-
-void play_surface::SnapRenderInterpState( void )
-{
-    object::SnapRenderInterpState();
-
-    const matrix4& L2W = GetL2W();
-    m_RenderPrevL2W      = L2W;
-    m_RenderCurrL2W      = L2W;
-    m_RenderInterpL2W    = L2W;
-    m_RenderStateValid   = TRUE;
-    m_RenderInterpActive = FALSE;
-}
-
-//==============================================================================
+//=============================================================================
 
 void play_surface::OnTransform( const matrix4& L2W )
 {
@@ -405,6 +313,3 @@ void play_surface::OnTransform( const matrix4& L2W )
     object::OnTransform(L2W);
 #endif
 }
-
-//=============================================================================
-

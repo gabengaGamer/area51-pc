@@ -1,12 +1,12 @@
-#include "audio_voice_mgr.hpp"
-#include "audio_channel_mgr.hpp"
-#include "audio_hardware.hpp"
-#include "audio_private.hpp"
-#include "audio_package.hpp"
-#include "audio_inline.hpp"
+#include "Audio/audio_voice_mgr.hpp"
+#include "Audio/audio_runtime.hpp"
+#include "Audio/audio_channel_mgr.hpp"
+#include "Audio/backend/audio_backend.hpp"
+#include "Audio/audio_types.hpp"
+#include "Audio/audio_package.hpp"
+#include "Audio/audio_helpers.hpp"
+#include "Audio/audio_spatial_mgr.hpp"
 #include "e_Audio.hpp"
-#include "audio_stream_mgr.hpp"
-#include "x_bytestream.hpp"
 #include "x_log.hpp"
 
 #if defined(rbrannon)
@@ -31,29 +31,12 @@ extern f32      g_DebugTime;
 #define ELEMENT_EXPIRE_DELAY    (0.250f)
 #endif
 //------------------------------------------------------------------------------
-// Enums.
-
-enum voice_dirty_bits
-{
-    VOICE_DB_ELEMENT_CHANGE      = (1<<0),
-    VOICE_DB_PAN_CHANGE          = (1<<1),
-    VOICE_DB_VOLUME_CHANGE       = (1<<2),
-    VOICE_DB_PITCH_CHANGE        = (1<<3),
-    VOICE_DB_EFFECTSEND_CHANGE   = (1<<4),
-    VOICE_DB_RELEASE_TIME_CHANGE = (1<<5),
-};
-
-//------------------------------------------------------------------------------
 // Static variables.
 
 static xbool        s_IsInitialized = FALSE;    // Semaphore.
 static xbool        s_UpdatePriority;           // Update flag.
 static voice        s_Voices[ MAX_VOICES ];     // Voice buffer.
 static element      s_Elements[ MAX_ELEMENTS ]; // Element buffer.
-
-//------------------------------------------------------------------------------
-
-audio_voice_mgr g_AudioVoiceMgr;
 
 //------------------------------------------------------------------------------
 
@@ -65,6 +48,7 @@ audio_voice_mgr::audio_voice_mgr( void )
     m_LastElement  = &s_Elements[MAX_ELEMENTS-1];
     m_NumVoices    = MAX_VOICES;
     m_NumElements  = MAX_ELEMENTS;
+    m_pRuntime     = NULL;
 }
 
 //------------------------------------------------------------------------------
@@ -75,7 +59,7 @@ audio_voice_mgr::~audio_voice_mgr( void )
 
 //------------------------------------------------------------------------------
 
-void audio_voice_mgr::Init( void )
+void audio_voice_mgr::Init( audio_runtime& AudioRuntime )
 {
     s32 i;
     voice* pVoice;
@@ -86,10 +70,10 @@ void audio_voice_mgr::Init( void )
     // Error check
     ASSERT( s_IsInitialized == FALSE );
 
-    m_LockLevel = 0;
+    m_pRuntime = &AudioRuntime;
+    m_ElementChannels.Init( AudioRuntime );
+    m_StreamBinder.Init( AudioRuntime );
 
-    // Snag the mutex.
-    Lock();
 
     // It's initialized!
     s_IsInitialized = TRUE;
@@ -157,8 +141,6 @@ void audio_voice_mgr::Init( void )
     FreeElements()->Link.pPrev = pElement;
     FreeElements()->Link.pNext = s_Elements;
 
-    // Release it.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
@@ -168,19 +150,18 @@ void audio_voice_mgr::Kill( void )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // No longer initialized.
     s_IsInitialized = FALSE;
+    m_StreamBinder.Kill();
+    m_ElementChannels.Kill();
+    m_pRuntime = NULL;
 
-    // Release it.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
 
-element* audio_voice_mgr::AquireElement( void )
+element* audio_voice_mgr::AcquireElement( void )
 {
     element* pHead;
     element* pResult;
@@ -210,46 +191,26 @@ element* audio_voice_mgr::AquireElement( void )
 
 //------------------------------------------------------------------------------
 
-void audio_voice_mgr::ReleaseElement( element* pElement, xbool ReleaseChannel )
+xbool audio_voice_mgr::ReleaseElement( element* pElement, xbool ReleaseChannel )
 {
     // Error check.
-    ASSERT( VALID_ELEMENT( pElement ) );
+    ASSERT( IsValidElement( pElement ) );
 
 #if defined(rbrannon)
-    ASSERT( m_LockLevel > 0 );
 #endif
 
     // Release the hardware channel?
     if( ReleaseChannel && pElement->pChannel )
     {
-#if defined(rbrannon)
-        if( pElement == g_DebugElement )
-        {
-            LOG_WARNING( "AudioDebug(audio_voice_mgr::ReleaseElement)",
-                            "Freed g_DebugElement!" );
-            LOG_FLUSH();
-        }
-#endif
-
-        // Acquire the audio hardware.
-        g_AudioHardware.Lock();
-
-        // Give up the hardware resource.
-        g_AudioHardware.ReleaseChannel( pElement->pChannel );
-        
-        // Now remove it from the channel list damnit.
-        RemoveChannelFromList( pElement->pChannel );
-        InsertChannelIntoList( pElement->pChannel, g_AudioChannelMgr.FreeList() );
-
-        // Release it.
-        g_AudioHardware.Unlock();
+        if( !m_ElementChannels.ReleaseChannel( *this, pElement ) )
+            return FALSE;
     }
 
     // Does the element have a voice?    
     if( pElement->pVoice )
     {
         // Error check.
-        ASSERT( VALID_VOICE(pElement->pVoice) );
+        ASSERT( IsValidVoice(pElement->pVoice) );
 
         // Notify the voice that an element has changed.
         pElement->pVoice->Dirty |= VOICE_DB_ELEMENT_CHANGE;
@@ -265,130 +226,57 @@ void audio_voice_mgr::ReleaseElement( element* pElement, xbool ReleaseChannel )
 
     // Put the element into the free list.
     InsertElementIntoList( pElement, FreeElements() );
+
+    return TRUE;
 }
 
 //------------------------------------------------------------------------------
 
 inline void audio_voice_mgr::PauseElement( element* pElement )
 {
-    // Error check.
-    ASSERT( VALID_ELEMENT( pElement ) );
-
-    // Stop the channel!
-    if( VALID_CHANNEL( pElement->pChannel ) && (pElement->pChannel->State == STATE_RUNNING) )
-    {
-        // Pause it!
-        g_AudioChannelMgr.Pause( pElement->pChannel );
-
-        // Its not playing.
-        pElement->State = ELEMENT_PAUSED;
-    }
+    m_ElementChannels.PauseElement( *this, pElement );
 }
 
 //------------------------------------------------------------------------------
 
 inline void audio_voice_mgr::ResumeElement( element* pElement )
 {
-    // Error check.
-    ASSERT( VALID_ELEMENT( pElement ) );
-
-    // Stop the channel!
-    if( VALID_CHANNEL( pElement->pChannel ) && (pElement->pChannel->State == STATE_PAUSED) )
-    {
-        g_AudioChannelMgr.Resume( pElement->pChannel );
-
-        // Its playing.
-        pElement->State = ELEMENT_PLAYING;
-    }
+    m_ElementChannels.ResumeElement( *this, pElement );
 }
 
 //------------------------------------------------------------------------------
 
 inline void audio_voice_mgr::ApplyElementVolume( element* pElement )
 {
-    // Error check.
-    ASSERT( VALID_ELEMENT( pElement ) );
-    ASSERT( VALID_CHANNEL( pElement->pChannel ) );
-
-    // Set the volume.
-    g_AudioChannelMgr.SetVolume( pElement->pChannel, pElement->Volume );
+    m_ElementChannels.ApplyElementVolume( *this, pElement );
 }
 
 //------------------------------------------------------------------------------
 
 inline void audio_voice_mgr::ApplyElementPan( element* pElement )
 {
-    // Error check.
-    ASSERT( VALID_ELEMENT( pElement ) );
-    ASSERT( VALID_CHANNEL( pElement->pChannel ) );
-    ASSERT( pElement->pVoice );
-
-    // If its not positional, then use the stereo pan?
-    if( !pElement->pVoice->IsPositional )
-    {
-        g_AudioMgr.Calculate2dPan( pElement->Params.Pan2d, pElement->Params.Pan3d );
-    }
-
-    // Set the actual pan now.
-    g_AudioChannelMgr.SetPan( pElement->pChannel, pElement->Params.Pan3d );
+    m_ElementChannels.ApplyElementPan( *this, pElement );
 }
 
 //------------------------------------------------------------------------------
 
 inline void audio_voice_mgr::ApplyElementPitch( element* pElement )
 {
-    // Error check.
-    ASSERT( VALID_ELEMENT( pElement ) );
-    ASSERT( VALID_CHANNEL( pElement->pChannel ) );
-
-    // Set the pitch.
-    g_AudioChannelMgr.SetPitch( pElement->pChannel, pElement->Pitch );
+    m_ElementChannels.ApplyElementPitch( *this, pElement );
 }
 
 //------------------------------------------------------------------------------
 
 inline void audio_voice_mgr::ApplyElementEffectSend( element* pElement )
 {
-    // Error check.
-    ASSERT( VALID_ELEMENT( pElement ) );
-    ASSERT( VALID_CHANNEL( pElement->pChannel ) );
-
-    // Set the effect send.
-    g_AudioChannelMgr.SetEffectSend( pElement->pChannel, pElement->EffectSend );
+    m_ElementChannels.ApplyElementEffectSend( *this, pElement );
 }
 
 //------------------------------------------------------------------------------
 
 inline void audio_voice_mgr::StartElement( element* pElement )
 {
-    channel* pChannel = pElement->pChannel;
-
-    // Error check.
-    ASSERT( VALID_ELEMENT( pElement ) );
-    ASSERT( VALID_CHANNEL( pChannel ) );
-
-    // Calculate volume, pitch and effect send.
-    pElement->Volume     = CalculateElementVolume( pElement );
-    pElement->Pitch      = CalculateElementPitch( pElement );
-    pElement->EffectSend = CalculateElementEffectSend( pElement );
-
-    // If its not positional, then use the stereo pan.
-    if( !pElement->pVoice->IsPositional )
-    {
-        g_AudioMgr.Calculate2dPan( pElement->Params.Pan2d, pElement->Params.Pan3d );
-    }
-
-    // Set the channel parameters.
-    g_AudioChannelMgr.SetVolume( pChannel, pElement->Volume );
-    g_AudioChannelMgr.SetPitch( pChannel, pElement->Pitch );
-    g_AudioChannelMgr.SetPan( pChannel, pElement->Params.Pan3d );
-    g_AudioChannelMgr.SetEffectSend( pChannel, pElement->EffectSend );
-
-    // Start up the sound!
-    g_AudioChannelMgr.Start( pChannel );
-
-    // Its playing now!
-    pElement->State = ELEMENT_PLAYING;
+    m_ElementChannels.StartElement( *this, pElement );
 }
 
 //------------------------------------------------------------------------------
@@ -402,9 +290,6 @@ voice* audio_voice_mgr::AcquireVoice( s32 Priority, f32 AbsoluteVolume )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
-
     // Get a voice from the free list.
     pVoice = FreeVoices()->Link.pNext;
 
@@ -413,7 +298,7 @@ voice* audio_voice_mgr::AcquireVoice( s32 Priority, f32 AbsoluteVolume )
     {
         // Get oldest, lowest priority voice.
         pVoice = UsedVoices()->Link.pPrev;
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
 
         // Which voice is more important?
         if( (pVoice->Params.Priority <= Priority) /*|| ((pVoice->Params.Priority == Priority) && (pVoice->Volume < AbsoluteVolume))*/ ) 
@@ -425,12 +310,12 @@ voice* audio_voice_mgr::AcquireVoice( s32 Priority, f32 AbsoluteVolume )
                              "Freed - g_DebugVoice" );
             }
 #endif // defined(rbrannon)
-            // Free the voice, don't put it in the free list.
-            FreeVoice( pVoice, FALSE );
+            if( !FreeVoice( pVoice, FALSE ) )
+                pVoice = NULL;
         }
         else
         {
-            // Cannot aquire a voice...
+            // Cannot acquire a voice...
             //AudioDebug( xfs( "Cannot acquire voice! Priority = %d, Voice Priority = %d\n", Priority, pVoice->Params.Priority) );
             pVoice = NULL;
         }
@@ -438,11 +323,11 @@ voice* audio_voice_mgr::AcquireVoice( s32 Priority, f32 AbsoluteVolume )
     else
     {
         // Take it out of the free list.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         RemoveVoiceFromList( pVoice );
     }
 
-    // Was a voice aquired?
+    // Was a voice acquired?
     if( pVoice )
     {
         // Set the voices priority directly for the priority insertion.
@@ -459,8 +344,6 @@ voice* audio_voice_mgr::AcquireVoice( s32 Priority, f32 AbsoluteVolume )
         PrioritizeVoice( pVoice, FALSE );  
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world
     return( pVoice );
@@ -475,8 +358,6 @@ f32 audio_voice_mgr::GetVoiceTime( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag it.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
@@ -485,7 +366,7 @@ f32 audio_voice_mgr::GetVoiceTime( voice* pVoice )
         element* pHead;
 
         // Error check.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
 
         // Get start of element list.
         pHead    = (element*)&pVoice->Elements;
@@ -518,8 +399,6 @@ f32 audio_voice_mgr::GetVoiceTime( voice* pVoice )
         // TODO: Warning message.
     }
 
-    // Release it.
-    Unlock();
     return Result;
 }
 
@@ -530,7 +409,6 @@ f32 audio_voice_mgr::GetLipSync( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    Lock();
 
     // Only if its valid.
     if( pVoice )
@@ -542,7 +420,7 @@ f32 audio_voice_mgr::GetLipSync( voice* pVoice )
         if( (pVoice->State == STATE_RUNNING) || (pVoice->State == STATE_PAUSED) )
         {
             // Error check.
-            ASSERT( VALID_VOICE(pVoice) );
+            ASSERT( IsValidVoice(pVoice) );
 
             // Get start of element list.
             pHead    = (element*)&pVoice->Elements;
@@ -565,7 +443,6 @@ f32 audio_voice_mgr::GetLipSync( voice* pVoice )
                     Index = (s32)(dTime * 30.0f);
                         
                     Result = (s32)pLipSync[Index];
-                    Unlock();
                     return (f32)Result / 255.0f;
                 }
             }
@@ -576,7 +453,6 @@ f32 audio_voice_mgr::GetLipSync( voice* pVoice )
         // TODO: Warning message.
     }
 
-    Unlock();
     return 0.0f;
 }
 
@@ -588,8 +464,6 @@ xbool audio_voice_mgr::HasLipSync( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Acquire mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
@@ -598,7 +472,7 @@ xbool audio_voice_mgr::HasLipSync( voice* pVoice )
         element* pHead;
 
         // Error check.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
 
         // Get start of element list.
         pHead    = (element*)&pVoice->Elements;
@@ -608,7 +482,6 @@ xbool audio_voice_mgr::HasLipSync( voice* pVoice )
         if( pElement != pHead )
         {
             xbool Result = pElement->Sample.pHotSample->LipSyncOffset != 0xffffffff;
-            Unlock();
             return Result;
         }
     }
@@ -617,7 +490,6 @@ xbool audio_voice_mgr::HasLipSync( voice* pVoice )
         // TODO: Warning message.
     }
 
-    Unlock();
     return FALSE;
 }
 
@@ -630,8 +502,6 @@ s32 audio_voice_mgr::GetBreakPoints( voice* pVoice, f32* & BreakPoints )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Acquire mutex.
-    Lock();
 
     // Default is not any...
     BreakPoints = NULL;
@@ -643,7 +513,7 @@ s32 audio_voice_mgr::GetBreakPoints( voice* pVoice, f32* & BreakPoints )
         element* pHead;
 
         // Error check.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
 
         // Get start of element list.
         pHead    = (element*)&pVoice->Elements;
@@ -659,7 +529,6 @@ s32 audio_voice_mgr::GetBreakPoints( voice* pVoice, f32* & BreakPoints )
                 
                 Result      = *pBreakPoints++;
                 BreakPoints = (f32*)pBreakPoints;
-                Unlock();
                 return Result;
             }
         }
@@ -670,7 +539,6 @@ s32 audio_voice_mgr::GetBreakPoints( voice* pVoice, f32* & BreakPoints )
     }
 
     // No break points!
-    Unlock();
     return Result;
 }
 
@@ -681,8 +549,6 @@ f32 audio_voice_mgr::GetCurrentPlayTime( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
@@ -694,7 +560,7 @@ f32 audio_voice_mgr::GetCurrentPlayTime( voice* pVoice )
         if( (pVoice->State == STATE_RUNNING) || (pVoice->State == STATE_PAUSED) )
         {
             // Error check.
-            ASSERT( VALID_VOICE(pVoice) );
+            ASSERT( IsValidVoice(pVoice) );
 
             // Get start of element list.
             pHead    = (element*)&pVoice->Elements;
@@ -703,7 +569,7 @@ f32 audio_voice_mgr::GetCurrentPlayTime( voice* pVoice )
             // Only if it has elements...
             if( pElement != pHead && pElement->pChannel )
             {
-                u32 nSamples = g_AudioHardware.GetSamplesPlayed( pElement->pChannel );
+                u32 nSamples = Runtime().Backend.GetSamplesPlayed( pElement->pChannel );
 #ifdef PLAY_TIME_LOGGING
                 LOG_MESSAGE( PLAY_TIME_LOGGING, "nSamples: %d, nSamplesMax: %d", nSamples, pElement->pChannel->Sample.pHotSample->nSamples );
 #endif
@@ -711,7 +577,6 @@ f32 audio_voice_mgr::GetCurrentPlayTime( voice* pVoice )
                     nSamples = (u32)pElement->pChannel->Sample.pHotSample->nSamples;
 
                 f32 Result = (f32)nSamples / (f32)pElement->pChannel->Sample.pHotSample->SampleRate;
-                Unlock();
                 return Result;
             }
         }
@@ -721,7 +586,6 @@ f32 audio_voice_mgr::GetCurrentPlayTime( voice* pVoice )
         // TODO: Warning message.
     }
 
-    Unlock();
     return 0.0f;
 }
 
@@ -734,14 +598,11 @@ const char* audio_voice_mgr::GetVoiceDescriptor( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag mutex.
-    Lock();
 
     // Grab descriptor if voice if valid
     if( pVoice )
         pDescriptor = pVoice->pDescriptorName;
 
-    Unlock();
     
     return pDescriptor;
 }
@@ -753,7 +614,6 @@ xbool audio_voice_mgr::GetIsReady( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    Lock();
 
     // Only if its valid.
     if( pVoice )
@@ -765,7 +625,7 @@ xbool audio_voice_mgr::GetIsReady( voice* pVoice )
         if( (pVoice->State == STATE_RUNNING) || (pVoice->State == STATE_PAUSED) || (pVoice->State == STATE_NOT_STARTED) )
         {
             // Error check.
-            ASSERT( VALID_VOICE(pVoice) );
+            ASSERT( IsValidVoice(pVoice) );
 
             // Get start of element list.
             pHead    = (element*)&pVoice->Elements;
@@ -775,7 +635,6 @@ xbool audio_voice_mgr::GetIsReady( voice* pVoice )
             if( pElement != pHead )
             {
                 xbool Result = pElement->State == ELEMENT_READY;
-                Unlock();
                 return Result;
             }
         }
@@ -785,7 +644,6 @@ xbool audio_voice_mgr::GetIsReady( voice* pVoice )
         // TODO: Warning message.
     }
 
-    Unlock();
     return FALSE;
 }
 
@@ -796,8 +654,6 @@ void audio_voice_mgr::ReleaseVoice( voice* pVoice, f32 Time )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
@@ -805,7 +661,7 @@ void audio_voice_mgr::ReleaseVoice( voice* pVoice, f32 Time )
         xbool    bFreeImmediate = TRUE;
         
         // Gotta be valid.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
 
         // If the voice is just starting or already running then use the release time provided,
         // otherwise just kill it immediately.
@@ -818,7 +674,7 @@ void audio_voice_mgr::ReleaseVoice( voice* pVoice, f32 Time )
         if( (Time <= 0.0f) || bFreeImmediate )
         {
             // Free the voice, put it in the free list.
-            FreeVoice( pVoice, TRUE );
+            (void)FreeVoice( pVoice, TRUE );
         }
         else
         {
@@ -832,8 +688,6 @@ void audio_voice_mgr::ReleaseVoice( voice* pVoice, f32 Time )
         // TODO: Warning message.
     }
 
-    // Release it.
-    Unlock();
 }
                                    
 //------------------------------------------------------------------------------
@@ -847,8 +701,6 @@ void audio_voice_mgr::ReleaseAllVoices( void )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Get head/tail of active voices, first active voice
     pHeadVoice = UsedVoices();
@@ -858,18 +710,16 @@ void audio_voice_mgr::ReleaseAllVoices( void )
     while( pVoice != pHeadVoice )
     {
         // Get next voice.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         pNextVoice = pVoice->Link.pNext;
 
         // Free the voice, put it in the free list.
-        FreeVoice( pVoice, TRUE );
+        (void)FreeVoice( pVoice, TRUE );
 
         // Walk the list...
         pVoice = pNextVoice;
     }
 
-    // Release it.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
@@ -883,8 +733,6 @@ void audio_voice_mgr::ReleasePackagesVoices( audio_package* pPackage )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Get head/tail of active voices, first active voice
     pHeadVoice = UsedVoices();
@@ -894,22 +742,20 @@ void audio_voice_mgr::ReleasePackagesVoices( audio_package* pPackage )
     while( pVoice != pHeadVoice )
     {
         // Get next voice.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         pNextVoice = pVoice->Link.pNext;
 
         // Packages match?
         if( pVoice->pPackage == pPackage )
         {
             // Free the voice, put it in the free list.
-            FreeVoice( pVoice, TRUE );
+            (void)FreeVoice( pVoice, TRUE );
         }
 
         // Walk the list...
         pVoice = pNextVoice;
     }
 
-    // Release it.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
@@ -919,14 +765,12 @@ void audio_voice_mgr::StartVoice( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
         // Make it start...
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         if( pVoice->State == STATE_NOT_STARTED )
         {
             pVoice->State = STATE_STARTING;
@@ -941,8 +785,6 @@ void audio_voice_mgr::StartVoice( voice* pVoice )
         // TODO: Warning message.
     }
 
-    // Release it.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
@@ -953,17 +795,15 @@ xbool audio_voice_mgr::Segue( voice* pVoice, voice* pVoiceToQ )
 
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
         // Make it start...
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         if( pVoiceToQ )
         {
-            ASSERT( VALID_VOICE(pVoiceToQ) );
+            ASSERT( IsValidVoice(pVoiceToQ) );
             pVoiceToQ->StartQ          = 0;
             pVoiceToQ->pSegueVoicePrev = pVoice;
         }
@@ -976,8 +816,6 @@ xbool audio_voice_mgr::Segue( voice* pVoice, voice* pVoiceToQ )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     return Result;
 }
@@ -990,14 +828,12 @@ xbool audio_voice_mgr::SetReleaseTime( voice* pVoice, f32 Time )
 
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
         // Make it start...
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         if( Time <= 0.0f )
             Time = 0.0f;
         pVoice->ReleaseTime = Time;
@@ -1010,8 +846,6 @@ xbool audio_voice_mgr::SetReleaseTime( voice* pVoice, f32 Time )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     return Result;
 }
@@ -1023,14 +857,12 @@ void audio_voice_mgr::PauseVoice( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
         // Make it start...
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         if( pVoice->State == STATE_RUNNING )
         {
             pVoice->State = STATE_PAUSING;
@@ -1045,8 +877,6 @@ void audio_voice_mgr::PauseVoice( voice* pVoice )
         // TODO: Warning message.
     }
 
-    // Release it.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
@@ -1056,14 +886,12 @@ void audio_voice_mgr::ResumeVoice( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
         // Make it start...
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         if( pVoice->State == STATE_PAUSED )
         {
             pVoice->State = STATE_RESUMING;
@@ -1078,8 +906,6 @@ void audio_voice_mgr::ResumeVoice( voice* pVoice )
         // TODO: Warning message.
     }
 
-    // Release it.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
@@ -1093,8 +919,6 @@ void audio_voice_mgr::PauseAllVoices( void )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Get head/tail of active voices, first active voice
     pHeadVoice = UsedVoices();
@@ -1104,7 +928,7 @@ void audio_voice_mgr::PauseAllVoices( void )
     while( pVoice != pHeadVoice )
     {
         // Get next voice.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         pNextVoice = pVoice->Link.pNext;
 
         // What to do?
@@ -1123,8 +947,6 @@ void audio_voice_mgr::PauseAllVoices( void )
         pVoice = pNextVoice;
     }
 
-    // Release it.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
@@ -1138,8 +960,6 @@ void audio_voice_mgr::ResumeAllVoices( void )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Get head/tail of active voices, first active voice
     pHeadVoice = UsedVoices();
@@ -1149,7 +969,7 @@ void audio_voice_mgr::ResumeAllVoices( void )
     while( pVoice != pHeadVoice )
     {
         // Get next voice.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         pNextVoice = pVoice->Link.pNext;
 
         // What to do?
@@ -1168,8 +988,6 @@ void audio_voice_mgr::ResumeAllVoices( void )
         pVoice = pNextVoice;
     }
 
-    // Release it.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
@@ -1181,13 +999,11 @@ xbool audio_voice_mgr::IsVoicePlaying( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         Result = (pVoice->State == STATE_RUNNING);
     }
     else
@@ -1196,8 +1012,6 @@ xbool audio_voice_mgr::IsVoicePlaying( voice* pVoice )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1212,13 +1026,11 @@ xbool audio_voice_mgr::IsVoiceStarting( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         Result = (pVoice->State == STATE_STARTING);
     }
     else
@@ -1227,8 +1039,6 @@ xbool audio_voice_mgr::IsVoiceStarting( voice* pVoice )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1243,8 +1053,6 @@ xbool audio_voice_mgr::IsVoiceReleasing( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
@@ -1257,8 +1065,6 @@ xbool audio_voice_mgr::IsVoiceReleasing( voice* pVoice )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1273,13 +1079,12 @@ xbool audio_voice_mgr::IsVoiceReady( voice* pVoice )
 
     xbool Result = FALSE;
 
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
         // Error check.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
 
         // Get start of element list.
         element* pHead    = (element*)&pVoice->Elements;
@@ -1292,7 +1097,6 @@ xbool audio_voice_mgr::IsVoiceReady( voice* pVoice )
         }
     }
 
-    Unlock();
 
     return Result;
 }
@@ -1305,13 +1109,11 @@ s32 audio_voice_mgr::GetVoicePriority( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         Result = pVoice->Params.Priority;
     }
     else
@@ -1320,8 +1122,6 @@ s32 audio_voice_mgr::GetVoicePriority( voice* pVoice )
         Result = -1;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1336,13 +1136,11 @@ f32 audio_voice_mgr::GetVoiceUserVolume( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         Result = pVoice->UserVolume;
     }
     else
@@ -1351,8 +1149,6 @@ f32 audio_voice_mgr::GetVoiceUserVolume( voice* pVoice )
         Result = 0.0f;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1367,13 +1163,11 @@ xbool audio_voice_mgr::SetVoiceUserVolume( voice* pVoice, f32 Volume )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         pVoice->UserVolume = Volume;
         pVoice->Dirty |= VOICE_DB_VOLUME_CHANGE;
         Result = TRUE;
@@ -1384,8 +1178,6 @@ xbool audio_voice_mgr::SetVoiceUserVolume( voice* pVoice, f32 Volume )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1400,13 +1192,11 @@ f32 audio_voice_mgr::GetVoiceRelativeVolume( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         Result = pVoice->Params.Volume;
     }
     else
@@ -1415,8 +1205,6 @@ f32 audio_voice_mgr::GetVoiceRelativeVolume( voice* pVoice )
         Result = 0.0f;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1431,13 +1219,11 @@ xbool audio_voice_mgr::SetVoiceRelativeVolume( voice* pVoice, f32 Volume )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         pVoice->Params.Volume = Volume;
         pVoice->Dirty |= VOICE_DB_VOLUME_CHANGE;
         Result =  TRUE;
@@ -1448,8 +1234,6 @@ xbool audio_voice_mgr::SetVoiceRelativeVolume( voice* pVoice, f32 Volume )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1464,13 +1248,11 @@ f32 audio_voice_mgr::GetVoicePan( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         Result = pVoice->Params.Pan2d;
     }
     else
@@ -1479,8 +1261,6 @@ f32 audio_voice_mgr::GetVoicePan( voice* pVoice )
         Result = 0.0f;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1495,18 +1275,16 @@ xbool audio_voice_mgr::SetVoicePan( voice* pVoice, f32 Pan )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
 
         if( pVoice->IsPanChangeable )
         {
             pVoice->Params.Pan2d = Pan;
-            g_AudioMgr.Calculate2dPan( pVoice->Params.Pan2d, pVoice->Params.Pan3d );
+            Runtime().Spatial.Calculate2dPan( pVoice->Params.Pan2d, pVoice->Params.Pan3d );
             pVoice->Dirty |= VOICE_DB_PAN_CHANGE;
             Result = TRUE;
         }
@@ -1522,8 +1300,6 @@ xbool audio_voice_mgr::SetVoicePan( voice* pVoice, f32 Pan )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1538,13 +1314,11 @@ f32 audio_voice_mgr::GetVoiceUserPitch( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         Result = pVoice->UserPitch;
     }
     else
@@ -1553,8 +1327,6 @@ f32 audio_voice_mgr::GetVoiceUserPitch( voice* pVoice )
         Result = 0.0f;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1569,13 +1341,11 @@ xbool audio_voice_mgr::SetVoiceUserPitch( voice* pVoice, f32 Pitch )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         pVoice->UserPitch = Pitch;
         pVoice->Dirty |= VOICE_DB_PITCH_CHANGE;
         Result = TRUE;
@@ -1586,8 +1356,6 @@ xbool audio_voice_mgr::SetVoiceUserPitch( voice* pVoice, f32 Pitch )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1602,13 +1370,11 @@ f32 audio_voice_mgr::GetVoiceRelativePitch( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         Result = pVoice->Params.Pitch;
     }
     else
@@ -1617,8 +1383,6 @@ f32 audio_voice_mgr::GetVoiceRelativePitch( voice* pVoice )
         Result = 0.0f;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1633,13 +1397,11 @@ xbool audio_voice_mgr::SetVoiceRelativePitch( voice* pVoice, f32 Pitch )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         pVoice->Params.Pitch = Pitch;
         pVoice->Dirty |= VOICE_DB_PITCH_CHANGE;
         Result = TRUE;
@@ -1650,8 +1412,6 @@ xbool audio_voice_mgr::SetVoiceRelativePitch( voice* pVoice, f32 Pitch )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1666,13 +1426,11 @@ f32 audio_voice_mgr::GetVoiceUserEffectSend( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         Result = pVoice->UserEffectSend;
     }
     else
@@ -1681,8 +1439,6 @@ f32 audio_voice_mgr::GetVoiceUserEffectSend( voice* pVoice )
         Result = 0.0f;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1697,13 +1453,11 @@ xbool audio_voice_mgr::SetVoiceUserEffectSend ( voice* pVoice, f32 EffectSend )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         pVoice->UserEffectSend = EffectSend;
         pVoice->Dirty |= VOICE_DB_EFFECTSEND_CHANGE;
         Result = TRUE;
@@ -1714,8 +1468,6 @@ xbool audio_voice_mgr::SetVoiceUserEffectSend ( voice* pVoice, f32 EffectSend )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1730,13 +1482,11 @@ f32 audio_voice_mgr::GetVoiceRelativeEffectSend( voice* pVoice )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         Result = pVoice->Params.EffectSend;
     }
     else
@@ -1745,8 +1495,6 @@ f32 audio_voice_mgr::GetVoiceRelativeEffectSend( voice* pVoice )
         Result = 0.0f;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1761,13 +1509,11 @@ xbool audio_voice_mgr::SetVoiceRelativeEffectSend ( voice* pVoice, f32 EffectSen
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         pVoice->Params.EffectSend = EffectSend;
         pVoice->Dirty |= VOICE_DB_EFFECTSEND_CHANGE;
         Result = TRUE;
@@ -1778,8 +1524,6 @@ xbool audio_voice_mgr::SetVoiceRelativeEffectSend ( voice* pVoice, f32 EffectSen
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1794,13 +1538,11 @@ xbool audio_voice_mgr::GetVoicePosition( voice* pVoice, vector3& Position, s32& 
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         if( pVoice->IsPositional )
         {
             Position = pVoice->Position;
@@ -1819,8 +1561,6 @@ xbool audio_voice_mgr::GetVoicePosition( voice* pVoice, vector3& Position, s32& 
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1835,13 +1575,11 @@ xbool audio_voice_mgr::SetVoicePosition( voice* pVoice, const vector3& Position,
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         if( pVoice->IsPositional )
         {
             pVoice->Position = Position;
@@ -1860,8 +1598,6 @@ xbool audio_voice_mgr::SetVoicePosition( voice* pVoice, const vector3& Position,
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1876,13 +1612,11 @@ xbool audio_voice_mgr::SetVoiceUserFalloff( voice* pVoice, f32 Near, f32 Far )
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         if( pVoice->IsPositional )
         {
             pVoice->UserFarFalloff  = Far;
@@ -1901,8 +1635,6 @@ xbool audio_voice_mgr::SetVoiceUserFalloff( voice* pVoice, f32 Near, f32 Far )
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1917,13 +1649,11 @@ xbool audio_voice_mgr::SetVoiceRelativeFalloff( voice* pVoice, f32 Near, f32 Far
     // Error check.
     ASSERT( s_IsInitialized );
 
-    // Snag the mutex.
-    Lock();
 
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         if( pVoice->IsPositional )
         {
             pVoice->Params.FarFalloff  = Far;
@@ -1944,8 +1674,6 @@ xbool audio_voice_mgr::SetVoiceRelativeFalloff( voice* pVoice, f32 Near, f32 Far
         Result = FALSE;
     }
 
-    // Release it.
-    Unlock();
 
     // Tell the world.
     return Result;
@@ -1961,7 +1689,7 @@ xbool audio_voice_mgr::SetVoiceUserDiffuse( voice* pVoice, f32 Near, f32 Far )
     // Only if its valid.
     if( pVoice )
     {
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         if( pVoice->IsPositional )
         {
             pVoice->UserFarDiffuse  = Far;
@@ -1987,7 +1715,7 @@ xbool audio_voice_mgr::SetVoiceUserDiffuse( voice* pVoice, f32 Near, f32 Far )
 
 inline void audio_voice_mgr::UpdateStartPending( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateStartPending" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateStartPending" );
 
     element* pElement;
     element* pHeadElement;
@@ -2019,8 +1747,8 @@ inline void audio_voice_mgr::UpdateStartPending( voice* pVoice )
                     // Should not have a channel...
                     if( pElement->pChannel == NULL )
                     {
-                        // Attempt to aquire a hardware channel.
-                        if( g_AudioChannelMgr.Acquire( pElement ) )
+                        // Attempt to acquire a hardware channel.
+                        if( Runtime().Channels.Acquire( pElement ) )
                         {
 #if defined(rbrannon)
                             if( (pVoice == g_DebugVoice) && (g_DebugElement == NULL) )
@@ -2080,7 +1808,7 @@ inline void audio_voice_mgr::UpdateStartPending( voice* pVoice )
 
 inline voice* audio_voice_mgr::UpdateCheckElements( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateCheckElements" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateCheckElements" );
 
     element* pElement;
     element* pHead;
@@ -2093,7 +1821,8 @@ inline voice* audio_voice_mgr::UpdateCheckElements( voice* pVoice )
     if( pElement == pHead )
     {
         // Free it
-        FreeVoice( pVoice, TRUE );
+        if( !FreeVoice( pVoice, TRUE ) )
+            return pVoice;
 
         // Its dead!
         return( NULL );
@@ -2143,7 +1872,7 @@ inline voice* audio_voice_mgr::UpdateCheckElements( voice* pVoice )
 
 void audio_voice_mgr::UpdateReleaseTime( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateReleaseTime" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateReleaseTime" );
     element* pElement;
     element* pHead;
 
@@ -2173,7 +1902,7 @@ void audio_voice_mgr::UpdateReleaseTime( voice* pVoice )
 
 inline voice* audio_voice_mgr::UpdateStateStarting( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateStateStarting" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateStateStarting" );
 
     // Calculate voice priority, find the next pending element...
     pVoice = UpdateCheckElements( pVoice );
@@ -2192,7 +1921,7 @@ inline voice* audio_voice_mgr::UpdateStateStarting( voice* pVoice )
 
 inline voice* audio_voice_mgr::UpdateStateResuming( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateStateResuming" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateStateResuming" );
 
     // Calculate voice priority, find the next pending element...
     pVoice = UpdateCheckElements( pVoice );
@@ -2212,7 +1941,7 @@ inline voice* audio_voice_mgr::UpdateStateResuming( voice* pVoice )
         while( pHead != pElement )
         {
             // Resume each element.
-            ASSERT( VALID_ELEMENT( pElement ) );
+            ASSERT( IsValidElement( pElement ) );
             if( pElement->State == ELEMENT_PAUSED )
                 ResumeElement( pElement );
 
@@ -2228,7 +1957,7 @@ inline voice* audio_voice_mgr::UpdateStateResuming( voice* pVoice )
 
 inline void audio_voice_mgr::UpdateVoice3d( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateVoice3d" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateVoice3d" );
 
     element* pHead;
     element* pElement;
@@ -2247,7 +1976,7 @@ inline void audio_voice_mgr::UpdateVoice3d( voice* pVoice )
     while( pHead != pElement )
     {
         // Stop each element.
-        ASSERT( VALID_ELEMENT( pElement ) );
+        ASSERT( IsValidElement( pElement ) );
 
         // Calculate the falloffs.
         f32 Near = CalculateElementNearFalloff( pElement );
@@ -2258,7 +1987,7 @@ inline void audio_voice_mgr::UpdateVoice3d( voice* pVoice )
         f32 FarDiffuse  = CalculateElementFarDiffuse( pElement );
 
         // Calculate the 3d volume and pan.
-        g_AudioMgr.Calculate3dVolumeAndPan( Near, Far, pElement->Params.RolloffCurve, 
+        Runtime().Spatial.Calculate3dVolumeAndPan( Near, Far, pElement->Params.RolloffCurve,
                                             NearDiffuse, FarDiffuse, pVoice->Position, pVoice->ZoneID,
                                             pElement->PositionalVolume, pElement->Params.Pan3d, 
                                             pVoice->DegreesToSound, pVoice->PrevDegreesToSound,
@@ -2266,7 +1995,7 @@ inline void audio_voice_mgr::UpdateVoice3d( voice* pVoice )
 
         // Now calculate it. (rmb - I think this call is redundant....)
         // TODO: rmb - Check to see if this line can be removed.
-        pElement->Volume = CalculateElementVolume( pElement );
+        pElement->Volume = CalculateElementVolume( pElement, Runtime().AudioDuckLevel > 0 );
         
         // Walk the list.
         pElement = pElement->Link.pNext;
@@ -2280,13 +2009,15 @@ inline void audio_voice_mgr::UpdateVoice3d( voice* pVoice )
 
 inline void audio_voice_mgr::UpdateVoiceVolumeAndPan ( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateVoiceVolumeAndPan" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateVoiceVolumeAndPan" );
 
     element* pHead;
     element* pElement;
 
     // Calculate the voices volume.
-    pVoice->Volume = CalculateVoiceVolume( pVoice );
+    xbool AudioDuckingEnabled = (Runtime().AudioDuckLevel > 0);
+
+    pVoice->Volume = CalculateVoiceVolume( pVoice, AudioDuckingEnabled );
 
     // For every element in the list...
     pHead    = (element*)&pVoice->Elements;
@@ -2294,10 +2025,10 @@ inline void audio_voice_mgr::UpdateVoiceVolumeAndPan ( voice* pVoice )
     while( pHead != pElement )
     {
         // Stop each element.
-        ASSERT( VALID_ELEMENT( pElement ) );
+        ASSERT( IsValidElement( pElement ) );
 
         // Calculate and apply the volume.
-        pElement->Volume = CalculateElementVolume( pElement );
+        pElement->Volume = CalculateElementVolume( pElement, AudioDuckingEnabled );
         if( pElement->State == ELEMENT_PLAYING ) 
         {
             ApplyElementVolume( pElement );
@@ -2327,13 +2058,15 @@ inline void audio_voice_mgr::UpdateVoiceVolumeAndPan ( voice* pVoice )
 
 inline void audio_voice_mgr::UpdateVoiceVolume( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateVoiceVolume" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateVoiceVolume" );
 
     element* pHead;
     element* pElement;
 
     // Calculate the voices volume.
-    pVoice->Volume = CalculateVoiceVolume( pVoice );
+    xbool AudioDuckingEnabled = (Runtime().AudioDuckLevel > 0);
+
+    pVoice->Volume = CalculateVoiceVolume( pVoice, AudioDuckingEnabled );
 
     // For every element in the list...
     pHead    = (element*)&pVoice->Elements;
@@ -2341,10 +2074,10 @@ inline void audio_voice_mgr::UpdateVoiceVolume( voice* pVoice )
     while( pHead != pElement )
     {
         // Stop each element.
-        ASSERT( VALID_ELEMENT( pElement ) );
+        ASSERT( IsValidElement( pElement ) );
 
         // Calculate and apply the volume.
-        pElement->Volume = CalculateElementVolume( pElement );
+        pElement->Volume = CalculateElementVolume( pElement, AudioDuckingEnabled );
         if( pElement->State == ELEMENT_PLAYING ) 
         {
             ApplyElementVolume( pElement );
@@ -2359,7 +2092,7 @@ inline void audio_voice_mgr::UpdateVoiceVolume( voice* pVoice )
 
 inline void audio_voice_mgr::UpdateVoicePan( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateVoicePan" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateVoicePan" );
 
     element* pHead;
     element* pElement;
@@ -2370,7 +2103,7 @@ inline void audio_voice_mgr::UpdateVoicePan( voice* pVoice )
     while( pHead != pElement )
     {
         // Stop each element.
-        ASSERT( VALID_ELEMENT( pElement ) );
+        ASSERT( IsValidElement( pElement ) );
 
         // Do something.
         if( pElement->IsPanChangeable )
@@ -2396,7 +2129,7 @@ inline void audio_voice_mgr::UpdateVoicePan( voice* pVoice )
 
 inline void audio_voice_mgr::UpdateVoicePitch( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateVoicePitch" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateVoicePitch" );
 
     element* pHead;
     element* pElement;
@@ -2410,7 +2143,7 @@ inline void audio_voice_mgr::UpdateVoicePitch( voice* pVoice )
     while( pHead != pElement )
     {
         // Stop each element.
-        ASSERT( VALID_ELEMENT( pElement ) );
+        ASSERT( IsValidElement( pElement ) );
 
         // Calculate and apply the elements pitch.
         pElement->Pitch = CalculateElementPitch( pElement );
@@ -2428,7 +2161,7 @@ inline void audio_voice_mgr::UpdateVoicePitch( voice* pVoice )
 
 inline void audio_voice_mgr::UpdateVoiceEffectSend( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateVoiceEffectSend" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateVoiceEffectSend" );
 
     element* pHead;
     element* pElement;
@@ -2442,7 +2175,7 @@ inline void audio_voice_mgr::UpdateVoiceEffectSend( voice* pVoice )
     while( pHead != pElement )
     {
         // Stop each element.
-        ASSERT( VALID_ELEMENT( pElement ) );
+        ASSERT( IsValidElement( pElement ) );
 
         // Calculate and apply the elements pitch.
         pElement->EffectSend = CalculateElementEffectSend( pElement );
@@ -2460,7 +2193,7 @@ inline void audio_voice_mgr::UpdateVoiceEffectSend( voice* pVoice )
 
 inline voice* audio_voice_mgr::UpdateStateRunning( voice* pVoice, f32 DeltaTime )
 {
-    CONTEXT( "audio_voice_mgr::UpdateStateRunning" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateStateRunning" );
 
     u32 Dirty;
 
@@ -2475,8 +2208,10 @@ inline voice* audio_voice_mgr::UpdateStateRunning( voice* pVoice, f32 DeltaTime 
         if( pVoice->Params.Volume <= 0.0f )
         {
             // Free the voice, put it in the free list.
-            FreeVoice( pVoice, TRUE );
-            return NULL;
+            if( FreeVoice( pVoice, TRUE ) )
+                return NULL;
+
+            return pVoice;
         }
         else
         {
@@ -2590,7 +2325,7 @@ inline voice* audio_voice_mgr::UpdateStateRunning( voice* pVoice, f32 DeltaTime 
 
 inline void audio_voice_mgr::UpdateStatePausing( voice* pVoice, f32 Time )
 {
-    CONTEXT( "audio_voice_mgr::UpdateStatePausing" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::UpdateStatePausing" );
 
     element* pHead;
     element* pElement;
@@ -2601,7 +2336,7 @@ inline void audio_voice_mgr::UpdateStatePausing( voice* pVoice, f32 Time )
     while( pHead != pElement )
     {
         // Stop each element.
-        ASSERT( VALID_ELEMENT( pElement ) );
+        ASSERT( IsValidElement( pElement ) );
         if( pElement->State == ELEMENT_PLAYING )
             PauseElement( pElement );
 
@@ -2618,224 +2353,19 @@ inline void audio_voice_mgr::UpdateStatePausing( voice* pVoice, f32 Time )
 
 inline voice* audio_voice_mgr::UpdateCheckStreams( voice* pVoice )
 {
-    CONTEXT( "audio_voice_mgr::UpdateCheckStreams" );
-
-    element* pHead;
-    element* pElement;
-
-    // For every element in the list...
-    pHead    = (element*)&pVoice->Elements;
-    pElement = pHead->Link.pNext;
-    while( pHead != pElement )
-    {
-        pElement->bProcessed = FALSE;
-        pElement = pElement->Link.pNext;
-    }
-
-    // For every element in the list...
-    pHead    = (element*)&pVoice->Elements;
-    pElement = pHead->Link.pNext;
-    while( pHead != pElement )
-    {
-        if( pElement->bProcessed == FALSE )
-        {
-            pElement->bProcessed = TRUE;
-
-            // Element need to warm up?
-            ASSERT( VALID_ELEMENT( pElement ) );
-            if( pElement->State == ELEMENT_NEEDS_TO_LOAD )
-            {
-                ASSERT( pElement->Type == COLD_SAMPLE );
-                
-                // Time to warm it up?
-                if( (pVoice->CursorTime + 1.5f) >= pElement->DeltaTime )
-                {
-                    audio_stream* pStream        = NULL;
-                    element*      pLeftElement   = NULL;
-                    element*      pRightElement  = NULL;
-                    channel*      pLeftChannel   = NULL;
-                    channel*      pRightChannel  = NULL;
-                    
-                    // Attempt to aquire a hardware channel.
-                    if( pElement->pChannel == NULL )
-                    {
-                        pLeftElement = pElement;
-                        pLeftElement->Params.Priority = 255;
-
-                        if( g_AudioChannelMgr.Acquire( pLeftElement ) )
-                        {
-                            // Get left channel
-                            pLeftChannel = pLeftElement->pChannel;
-
-                            if( (pRightElement = pElement->pStereoElement) != NULL )
-                            {
-                                pRightElement->Params.Priority = 255;
-                                if( g_AudioChannelMgr.Acquire( pRightElement ) )
-                                {
-                                    // Get right channel
-                                    pRightChannel = pRightElement->pChannel;
-
-                                    // Mark it processed
-                                    pRightElement->bProcessed = TRUE;
-                                }
-                                else
-                                {
-                                    g_AudioChannelMgr.Release( pLeftElement->pChannel );
-                                    pLeftElement->pChannel = NULL;
-                                    return NULL;
-                                    // Should NEVER get here!
-                                    ASSERT( 0 );
-                                }
-                            }
-                        }
-                        else
-                        {
-                            return NULL;
-                            BREAK;
-                            // Should NEVER get here!
-                            ASSERT( 0 );
-                        }
-                    }
-                    else
-                    {
-                        pLeftElement = pElement;
-                        pLeftChannel = pLeftElement->pChannel;
-                        if( (pRightElement = pElement->pStereoElement) != NULL )
-                            pRightChannel = pRightElement->pChannel;
-                    }
-
-                    // Try to aquire a stream.
-                    pStream = g_AudioStreamMgr.AcquireStream( pElement->Sample.pColdSample->WaveformOffset,
-                                                            pElement->Sample.pColdSample->WaveformLength,
-                                                            pLeftChannel, pRightChannel );
-
-                    if( pStream == COOLING_STREAM )
-                    {
-                        // Its cooling, so just chill out for a bit...
-                    }
-                    else if( pStream == NULL )
-                    {
-                        // Nuke the voice, put it in the freelist if the stream can't be started.
-                        // TODO: Fix this so it just removes the elements.
-                        FreeVoice( pVoice, TRUE );
-                        return NULL;
-                    }
-                    else
-                    {
-                        // AHA! A stream is available!!!
-                        ASSERT( pStream->pChannel[ LEFT_CHANNEL ] );
-                        if( pStream->pChannel[ LEFT_CHANNEL ] )
-                        {
-                            // Instantiate the sample.
-                            InstantiateStreamSample( pStream, LEFT_CHANNEL );
-
-                            // Mark left as loading, set the aram
-                            pLeftElement->State                        = ELEMENT_LOADING;
-                            pLeftChannel->StreamData.pStream           = pStream;
-                            pLeftChannel->StreamData.StreamControl     = TRUE;
-                            pLeftChannel->StreamData.bStopLoop         = TRUE;
-                            pLeftChannel->Sample.pHotSample->AudioRam  = pStream->ARAM[LEFT_CHANNEL][0];
-                            pLeftChannel->Sample.pHotSample->LoopStart = 0;
-                            pLeftChannel->Sample.pHotSample->LoopEnd   = STREAM_BUFFER_SIZE * 2;
-
-                            // Init the channel.
-                            g_AudioHardware.InitChannelStreamed( pLeftChannel );
-                        }
-                        else
-                        {
-                            FreeVoice( pVoice, TRUE );
-                            return NULL;
-                        }
-
-                        /// Stereo?
-                        if( pRightElement )
-                        {
-                            // Right channel will be the control.
-                            // *** This important cause the right channel is operated on   ***
-                            // *** last in the update.  The last channel to be operated on *** 
-                            // *** MUST be the control!!!!                                 *** 
-                            pLeftChannel->StreamData.StreamControl = FALSE;
-
-                            // Instantiate the sample.
-                            ASSERT( pStream->pChannel[RIGHT_CHANNEL] );
-                            if( pStream->pChannel[RIGHT_CHANNEL] )
-                            {
-                                InstantiateStreamSample( pStream, RIGHT_CHANNEL );
-
-                                // Mark right channel as loading, set the aram
-                                pRightElement->State                        = ELEMENT_LOADING;
-                                pRightChannel->StreamData.pStream           = pStream;
-                                pRightChannel->StreamData.StreamControl     = TRUE;
-                                pRightChannel->StreamData.bStopLoop         = TRUE;
-                                pRightChannel->Sample.pHotSample->AudioRam  = pStream->ARAM[RIGHT_CHANNEL][0]; 
-                                pRightChannel->Sample.pHotSample->LoopStart = 0;
-                                pRightChannel->Sample.pHotSample->LoopEnd   = STREAM_BUFFER_SIZE * 2;
-
-                                // Init the channel.
-                                g_AudioHardware.InitChannelStreamed( pRightChannel );
-                            }
-                            else
-                            {
-                                FreeVoice( pVoice, TRUE );
-                                return NULL;
-                            }
-                        }
-
-                        // Warm it up!
-                        pStream->bOpenStream = TRUE;
-                    }
-                }
-            }
-            // Finished loading?
-            else if( pElement->State == ELEMENT_LOADED )
-            {
-                // Start loading the the second buffer.
-                ASSERT( pElement->pChannel->StreamData.pStream );
-                if( (!pElement->pChannel) ||
-                    (!pElement->pChannel->StreamData.pStream) )
-                {
-                    FreeVoice( pVoice, TRUE );
-                    return NULL;
-                }
-                if( (pElement->pChannel->StreamData.pStream->CompressionType != MP3) &&
-                    !pElement->pChannel->StreamData.pStream->StreamDone )
-                {
-                    g_AudioStreamMgr.ReadStream( pElement->pChannel->StreamData.pStream );
-                }
-
-                // Mark it as ready.
-                pElement->State = ELEMENT_READY;
-
-                // Stereo? If so, mark stereo element as ready.
-                if( pElement->pStereoElement )
-                    pElement->pStereoElement->State = ELEMENT_READY;
-
-                // Element has changed.
-                pVoice->Dirty |= VOICE_DB_ELEMENT_CHANGE;
-
-            }
-        }
-
-        // Walk the list.
-        pElement = pElement->Link.pNext;
-    }
-    
-    // Its all good!
-    return pVoice;
+    return m_StreamBinder.UpdateCheckStreams( *this, pVoice );
 }
 
 //------------------------------------------------------------------------------
 
 void audio_voice_mgr::Update( f32 DeltaTime )
 {
-    CONTEXT( "audio_voice_mgr::Update" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::Update" );
 
     voice*   pHeadVoice;
     voice*   pVoice;
     voice*   pNextVoice;
 
-    // Snag mutex.
-    Lock();
 
     // Get head/tail of active voices, first active voice
     pHeadVoice = UsedVoices();
@@ -2845,13 +2375,13 @@ void audio_voice_mgr::Update( f32 DeltaTime )
     while( pVoice != pHeadVoice )
     {
         // Get next voice.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         pNextVoice = pVoice->Link.pNext;
 
         if( (void*)pVoice->Elements.pNext == (void*)&pVoice->Elements )
         {
-            FreeVoice( pVoice, TRUE );
-            pVoice = NULL;
+            if( FreeVoice( pVoice, TRUE ) )
+                pVoice = NULL;
         }
         else
         {
@@ -2877,7 +2407,7 @@ void audio_voice_mgr::Update( f32 DeltaTime )
                     pVoice = UpdateStateStarting( pVoice );
                     if( pVoice )
                     {
-                        pVoice->StartTime  = g_AudioMgr.m_Time;
+                        pVoice->StartTime  = Runtime().Audio.GetAudioTime();
                         pVoice = UpdateStateRunning( pVoice, 0.0f );
                     }
                     break;
@@ -2889,7 +2419,7 @@ void audio_voice_mgr::Update( f32 DeltaTime )
                     pVoice = UpdateStateResuming( pVoice );
                     if( pVoice )
                     {
-                        pVoice->StartTime = g_AudioMgr.m_Time-pVoice->StopTime;
+                        pVoice->StartTime = Runtime().Audio.GetAudioTime()-pVoice->StopTime;
                         pVoice = UpdateStateRunning( pVoice, 0.0f );
                     }
                     break;
@@ -2907,7 +2437,7 @@ void audio_voice_mgr::Update( f32 DeltaTime )
 #ifdef UPDATE_STATE_LOGGING
                     LOG_MESSAGE( UPDATE_STATE_LOGGING, "pVoice: %08x, State: STATE_PAUSING", pVoice );
 #endif
-                    UpdateStatePausing( pVoice, g_AudioMgr.m_Time );
+                    UpdateStatePausing( pVoice, Runtime().Audio.GetAudioTime() );
                     break;
  
                 case STATE_PAUSED:
@@ -2929,8 +2459,6 @@ void audio_voice_mgr::Update( f32 DeltaTime )
         pVoice = pNextVoice;
     }
 
-    // Release it.
-    Unlock();
 }
 
 
@@ -2941,8 +2469,6 @@ void audio_voice_mgr::UpdateCheckQueued( void )
     voice* pVoice;
     voice* pHeadVoice;
 
-    // Snag mutex.
-    Lock();
 
     // Get head/tail of active voices, first active voice
     pHeadVoice = UsedVoices();
@@ -2952,7 +2478,7 @@ void audio_voice_mgr::UpdateCheckQueued( void )
     while( pVoice != pHeadVoice )
     {
         // Get next voice.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
 
         if( pVoice->StartQ == 1 )
         {
@@ -2970,8 +2496,6 @@ void audio_voice_mgr::UpdateCheckQueued( void )
         pVoice = pVoice->Link.pNext;
     }
 
-    // Release it.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
@@ -2981,7 +2505,7 @@ s32 VOICE_PRIORITY_MISS=0;
 void audio_voice_mgr::PrioritizeVoice( voice* pVoice, xbool RemoveFromList )
 {
     // Error check.
-    ASSERT( VALID_VOICE(pVoice) );
+    ASSERT( IsValidVoice(pVoice) );
 
     // Check if where it currently is is valid
     xbool bRelocate = !RemoveFromList;
@@ -3039,24 +2563,21 @@ void audio_voice_mgr::PrioritizeVoice( voice* pVoice, xbool RemoveFromList )
 
 //------------------------------------------------------------------------------
 
-void audio_voice_mgr::FreeVoice( voice* pVoice, xbool PutInFreeList )
+xbool audio_voice_mgr::FreeVoice( voice* pVoice, xbool PutInFreeList )
 {
-    CONTEXT( "audio_voice_mgr::FreeVoice" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_voice_mgr::FreeVoice" );
 
     element* pElement;
     element* pHead;
     u32      Sequence;
 
     // Error check.
-    ASSERT( VALID_VOICE(pVoice) );
+    ASSERT( IsValidVoice(pVoice) );
 
     // Free up any elements in the voice.
     pHead    = (element*)&pVoice->Elements;
     pElement = pHead->Link.pNext;
     ASSERT( pElement );
-
-    // Lock the audio hardware while we free the entire voice.
-    g_AudioHardware.Lock();
 
     // For every element...
     while( pElement != pHead )
@@ -3064,14 +2585,12 @@ void audio_voice_mgr::FreeVoice( voice* pVoice, xbool PutInFreeList )
         element* pNextElement = pElement->Link.pNext;
     
         // Release this element and the elements channel.
-        ReleaseElement( pElement, TRUE );
+        if( !ReleaseElement( pElement, TRUE ) )
+            return FALSE;
 
         // Walk the list
         pElement = pNextElement;
     }
-
-    // Let the hardware go.
-    g_AudioHardware.Unlock();
 
     // Remove voice from the used list
     RemoveVoiceFromList( pVoice );
@@ -3093,6 +2612,8 @@ void audio_voice_mgr::FreeVoice( voice* pVoice, xbool PutInFreeList )
         // I'm free!!!!
         InsertVoiceIntoList( pVoice, FreeVoices() );
     }
+
+    return TRUE;
 }
 
 //------------------------------------------------------------------------------
@@ -3110,7 +2631,7 @@ void audio_voice_mgr::SetPackageVoicesDirty( audio_package* pPackage, u32 Bits )
     while( pVoice != pHeadVoice )
     {
         // Get next voice.
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         
         // Does this voice belong to the package?
         if( pVoice->pPackage == pPackage )
@@ -3173,8 +2694,6 @@ void audio_voice_mgr::InitSingleVoice( voice* pVoice, audio_package* pPackage )
     ASSERT( pVoice );
     ASSERT( pPackage );
 
-    // Snag mutex.
-    Lock();
 
     // Set the voices package.
     pVoice->pPackage = pPackage;
@@ -3188,6 +2707,7 @@ void audio_voice_mgr::InitSingleVoice( voice* pVoice, audio_package* pPackage )
     pVoice->State           = STATE_NOT_STARTED; 
     pVoice->CursorTime      = 0.0f;
     pVoice->IsReleasing     = FALSE;
+    pVoice->UseReservedStream = FALSE;
     pVoice->DeltaVolume     = 0.0f;
 
     // Init the recursion depth
@@ -3204,7 +2724,7 @@ void audio_voice_mgr::InitSingleVoice( voice* pVoice, audio_package* pPackage )
     pVoice->FarFalloff  = CalculateVoiceFarFalloff( pVoice );
     pVoice->NearDiffuse = CalculateVoiceNearDiffuse( pVoice );
     pVoice->FarDiffuse  = CalculateVoiceFarDiffuse( pVoice );
-    pVoice->Volume      = CalculateVoiceVolume( pVoice );
+    pVoice->Volume      = CalculateVoiceVolume( pVoice, Runtime().AudioDuckLevel > 0 );
     pVoice->Pitch       = CalculateVoicePitch( pVoice );
     pVoice->EffectSend  = CalculateVoiceEffectSend( pVoice );
 
@@ -3216,8 +2736,6 @@ void audio_voice_mgr::InitSingleVoice( voice* pVoice, audio_package* pPackage )
                     VOICE_DB_EFFECTSEND_CHANGE +
                     VOICE_DB_ELEMENT_CHANGE;
 
-    // Release it.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
@@ -3227,8 +2745,6 @@ void audio_voice_mgr::InitSingleElement( element* pElement )
     s32 n;
     f32 Sign;
 
-    // Snag mutex.
-    Lock();
 
     // Calculate the elements parameters.
     pElement->PositionalVolume = 1.0f;
@@ -3280,57 +2796,17 @@ void audio_voice_mgr::InitSingleElement( element* pElement )
         }
 
         // Set the pitch variance.
-        pElement->PitchVariance = 1.0f + (Sign * ((f32)(n % 100)) / 100.0f * pElement->Params.VolumeVariance);
+        pElement->PitchVariance = 1.0f + (Sign * ((f32)(n % 100)) / 100.0f * pElement->Params.PitchVariance);
     }
     else
     {
         pElement->PitchVariance = 1.0f;
     }
 
-    pElement->Volume           = CalculateElementVolume( pElement );
+    pElement->Volume           = CalculateElementVolume( pElement, Runtime().AudioDuckLevel > 0 );
     pElement->Pitch            = CalculateElementPitch( pElement );
     pElement->EffectSend       = CalculateElementEffectSend( pElement );
 
-    // Release it.
-    Unlock();
-}
-
-//------------------------------------------------------------------------------
-
-void audio_voice_mgr::InstantiateStreamSample ( audio_stream* pStream, s32 WhichChannel )
-{
-    CONTEXT( "audio_voice_mgr::InstantiateStreamSample" );
-
-    switch( WhichChannel )
-    {
-        case LEFT_CHANNEL:
-                ASSERT( pStream->pChannel[LEFT_CHANNEL] );
-
-                // Make a copy of the sample
-                pStream->Samples[LEFT_CHANNEL].Sample = *(pStream->pChannel[LEFT_CHANNEL]->Sample.pHotSample);
-
-                // Point channel to the copy now
-                pStream->pChannel[LEFT_CHANNEL]->Sample.pHotSample = &pStream->Samples[LEFT_CHANNEL].Sample;
-                break;
-
-        case RIGHT_CHANNEL:
-                ASSERT( pStream->pChannel[RIGHT_CHANNEL] );
-
-                if( pStream->pChannel[RIGHT_CHANNEL] )
-                {
-                    // Make a copy of the sample
-                    pStream->Samples[RIGHT_CHANNEL].Sample = *(pStream->pChannel[RIGHT_CHANNEL]->Sample.pHotSample);
-
-                    // Point channel to the copy now
-                    pStream->pChannel[RIGHT_CHANNEL]->Sample.pHotSample = &pStream->Samples[RIGHT_CHANNEL].Sample;
-                }
-                break;
-
-        default:
-            // Should never get here.
-            ASSERT( 0 );
-            break;
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -3340,8 +2816,6 @@ void audio_voice_mgr::UpdateAllVoiceVolumes( void )
     voice*   pHeadVoice;
     voice*   pVoice;
 
-    // Snag the mutex.
-    Lock();
 
     // Get head/tail of active voices, first active voice
     pHeadVoice = UsedVoices();
@@ -3351,7 +2825,7 @@ void audio_voice_mgr::UpdateAllVoiceVolumes( void )
     while( pVoice != pHeadVoice )
     {
         // Gotta be valid...
-        ASSERT( VALID_VOICE(pVoice) );
+        ASSERT( IsValidVoice(pVoice) );
         
         // Set the dirty bit.
         pVoice->Dirty |= VOICE_DB_VOLUME_CHANGE;
@@ -3360,21 +2834,14 @@ void audio_voice_mgr::UpdateAllVoiceVolumes( void )
         pVoice = pVoice->Link.pNext;
     }
 
-    // Release mutex.
-    Unlock();
 }
 
 //------------------------------------------------------------------------------
 
 void audio_voice_mgr::SetPitchLock( voice* pVoice, xbool bPitchLock )
 {
-    // Snag the mutex.
-    Lock();
 
     // Lock or unlock the pitch (as the case may be...)
     pVoice->bPitchLock = bPitchLock;
 
-    // Release mutex.
-    Unlock();
 }
-

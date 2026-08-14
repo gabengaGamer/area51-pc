@@ -1,185 +1,79 @@
 //=========================================================================
-//  
-//  SkinGeom.cpp  
+//
+//  SkinGeom.cpp
 //
 //=========================================================================
 
 //=========================================================================
-//  Includes
+//  INCLUDES
 //=========================================================================
 
 #include "SkinGeom.hpp"
+#include "GeomFile.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 //=========================================================================
-
-skin_geom::skin_geom( void ) : geom()
-{
-}
-
+//  RESOURCE LOADER
 //=========================================================================
 
-skin_geom::skin_geom( fileio& File ) : geom( File )
+static struct skin_geom_loader : public rsc_loader
 {
-    (void)File;
-}
-
-//=========================================================================
-
-void skin_geom::uv_ps2::FileIO( fileio& File )
-{
-    File.Static( U );
-    File.Static( V );
-}
-
-//=========================================================================
-
-void skin_geom::pos_ps2::FileIO( fileio& File )
-{
-    File.Static( Pos, 3 );
-    File.Static( ADC );
-}
-
-//=========================================================================
-
-void skin_geom::boneindex_ps2::FileIO( fileio& File )
-{
-    File.Static( B0 );
-    File.Static( B1 );
-    File.Static( W0 );
-    File.Static( W1 );
-}
-
-//=========================================================================
-
-void skin_geom::normal_ps2::FileIO( fileio& File )
-{
-    File.Static( Normal[0] );
-    File.Static( Normal[1] );
-    File.Static( Normal[2] );
-    File.Static( Pad );
-}
-
-//=========================================================================
-
-void skin_geom::command_ps2::FileIO( fileio& File )
-{
-    File.StaticEnum ( Cmd );
-    File.Static     ( Arg1 );
-    File.Static     ( Arg2 );
-}
-
-//=========================================================================
-
-void skin_geom::dlist_ps2::FileIO( fileio& File )
-{
-    File.Static( nCmds );
-    File.Static( pCmd, nCmds );
-
-    File.Static( nUVs );
-    File.Static( pUV, nUVs );
-    
-    File.Static( nPos );
-    File.Static( pPos, nPos );
-
-    File.Static( nBoneIndices );
-    File.Static( pBoneIndex, nBoneIndices );
-
-    File.Static( nNormals );
-    File.Static( pNormal, nNormals );
-}
-
-//=========================================================================
-
-void skin_geom::vertex_pc::FileIO( fileio& File )
-{
-    File.Static( Position );
-    File.Static( Normal );
-    File.Static( UVWeights );
-}
-
-//=========================================================================
-
-void skin_geom::command_pc::FileIO( fileio& File )
-{
-    File.StaticEnum ( Cmd );
-    File.Static     ( Arg1 );
-    File.Static     ( Arg2 );
-}
-
-//=========================================================================
-
-void skin_geom::dlist_pc::FileIO( fileio& File )
-{
-    File.Static( nIndices );
-    File.Static( pIndex, nIndices );
-
-    File.Static( nVertices );
-    File.Static( pVertex, nVertices );
-
-    File.Static( nCommands );
-    File.Static( pCmd, nCommands );
-}
-
-//=========================================================================
-
-void skin_geom::command_xbox::FileIO( fileio& File )
-{
-    File.StaticEnum ( Cmd );
-    File.Static     ( Arg1 );
-    File.Static     ( Arg2 );
-}
-
-//=========================================================================
-
-void skin_geom::vertex_xbox::FileIO( fileio& File )
-{
-    File.Static( Pos          );
-    File.Static( PackedNormal );
-    File.Static( UV           );
-    File.Static( Weights      );
-    File.Static( Bones        );
-}
-
-//=========================================================================
-
-void skin_geom::dlist_xbox::FileIO( fileio& File )
-{
-    File.Static ( nIndices );
-    File.Static ( pIndex, nIndices );
-    File.Static ( nPushSize );
-    File.Static ( pPushBuffer,nPushSize );
-    File.Static ( nVerts );
-    File.Dynamic( pVert, nVerts );
-    File.Static ( nCommands );
-    File.Static ( pCmd, nCommands );
-}
-
-//=========================================================================
-
-void skin_geom::FileIO( fileio& File )
-{
-    geom::FileIO( File );
-
-    File.Static( m_Version );
-    File.Static( m_nDList  );
-    File.Static( m_nBones  );
-
-    switch( m_Platform )
+    skin_geom_loader( void ) : rsc_loader( "SKIN GEOM", ".skingeom" )
     {
-        case PLATFORM_XBOX :
-            File.Static( m_System.pXbox, m_nDList );
-            break;
-
-        case PLATFORM_PS2 :
-            File.Static( m_System.pPS2, m_nDList );
-            break;
-
-        case PLATFORM_PC :
-            File.Static( m_System.pPC, m_nDList );
-            break;
-
-        default :
-            ASSERT( 0 );
-            break;
     }
+
+    //--------------------------------------------------------------------------
+
+    virtual void* PreLoad( X_FILE* pFile )
+    {
+        MEMORY_OWNER( "SKIN GEOM DATA" );
+
+        skin_geom* pGeom = NULL;
+        xstring    error;
+        if ( !geom_file::LoadSkin( pFile, pGeom, error ) )
+        {
+            x_DebugMsg( "SKINGEOM: load failed: %s\n", (char const*)error );
+            x_throw( (char const*)error );
+        }
+
+        return ( pGeom );
+    }
+
+    //--------------------------------------------------------------------------
+
+    virtual void* Resolve( void* pData )
+    {
+        return ( pData );
+    }
+
+    //--------------------------------------------------------------------------
+
+    virtual void Unload( void* pData )
+    {
+        skin_geom* pSkinGeom = static_cast<skin_geom*>( pData );
+        ASSERT( pSkinGeom );
+
+        delete pSkinGeom;
+    }
+
+} s_SkinGeomLoader;
+
+//=========================================================================
+//  SKIN GEOM
+//=========================================================================
+
+skin_geom::skin_geom( void )
+    : geom(), m_nSections( 0 ), m_pSection( NULL ), m_nIndices( 0 ), m_pIndex( NULL ), m_nVertexData( 0 ),
+      m_pVertex( NULL ), m_nBonePalette( 0 ), m_pBonePalette( NULL )
+{
+}
+
+//=========================================================================
+
+skin_geom::~skin_geom( void )
+{
+    delete[] m_pSection;
+    delete[] m_pIndex;
+    delete[] m_pVertex;
+    delete[] m_pBonePalette;
 }

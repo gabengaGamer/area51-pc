@@ -5,29 +5,30 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "WeaponMutation.hpp"
 #include "ProjectileBullett.hpp"
-#include "render\LightMgr.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "objects\Render\PostEffectMgr.hpp"
-#include "objects\ProjectileHoming.hpp"
-#include "objects\ProjectileMutantContagion.hpp"
-#include "Objects\ProjectileMutantTendril.hpp"
-#include "player.hpp"
-#include "Characters\character.hpp"
-#include "Characters\GenericNPC\GenericNPC.hpp"
-#include "Characters\MutantTank\Mutant_Tank.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "Objects\Corpse.hpp"
+#include "Render/LightMgr.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Objects/Render/PostEffectMgr.hpp"
+#include "Objects/ProjectileHoming.hpp"
+#include "Objects/ProjectileMutantContagion.hpp"
+#include "Objects/ProjectileMutantTendril.hpp"
+#include "Player/Player.hpp"
+#include "Characters/Character.hpp"
+#include "Characters/GenericNPC/GenericNPC.hpp"
+#include "Characters/MutantTank/Mutant_Tank.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/Corpse.hpp"
 #if !defined(X_EDITOR)
 #include "NetworkMgr/NetworkMgr.hpp"
 #endif
-#include "Gamelib/DebugCheats.hpp"
-#include "PerceptionMgr\PerceptionMgr.hpp"
-#include "objects\ProjectileMutantParasite2.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "GameLib/DebugCheats.hpp"
+#include "PerceptionMgr/PerceptionMgr.hpp"
+#include "Objects/ProjectileMutantParasite2.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 //=========================================================================
 // DEFINES and CONSTS
@@ -236,12 +237,12 @@ void weapon_mutation::OnRenderTransparent(void)
                 {
                     if( i == CORPSE_PIN )
                     {
-                        draw_Sphere( m_ConstraintPosition[i], g_TendrilConstraintSize, XCOLOR_YELLOW );
+                        render::debug::Sphere( m_ConstraintPosition[i], g_TendrilConstraintSize, XCOLOR_YELLOW );
                     }
                     else
                     {
                         // this is where WE think we are
-                        draw_Sphere( m_ConstraintPosition[i], g_TendrilConstraintSize, XCOLOR_BLUE );
+                        render::debug::Sphere( m_ConstraintPosition[i], g_TendrilConstraintSize, XCOLOR_BLUE );
                     }
                 }
             }
@@ -268,15 +269,15 @@ void weapon_mutation::OnRenderTransparent(void)
         theRotation.NormalizeAndScale( PAIN_RADIUS );
         vector3 TargetPos = MyPos + theRotation;
 
-        draw_Line(MyPos, TargetPos);
-        draw_Sphere(TargetPos, PAIN_RADIUS);
+        render::debug::Line(MyPos, TargetPos);
+        render::debug::Sphere(TargetPos, PAIN_RADIUS);
 
         // now look for anything damageable because we found nothing living
         g_CollisionMgr.SphereSetup( pPlayer->GetGuid(), MyPos, TargetPos, PAIN_RADIUS );
         g_CollisionMgr.AddToIgnoreList( m_HostPlayerGuid );
         g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, object::ATTR_DAMAGEABLE, object::ATTR_COLLISION_PERMEABLE);
 
-        draw_Sphere(g_CollisionMgr.m_Collisions[0].Point, 20.0f, XCOLOR_RED);
+        render::debug::Sphere(g_CollisionMgr.m_Collisions[0].Point, 20.0f, XCOLOR_RED);
     }
 #endif
 }
@@ -423,7 +424,7 @@ xbool weapon_mutation::RetractTendril( xbool bLeft )
 
 xbool weapon_mutation::FireWeaponProtected( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint )
 {
-    CONTEXT( "mutation::FireWeaponProtected" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "mutation::FireWeaponProtected" );
 
     ( void )InitPos;
     ( void )Power;
@@ -637,7 +638,7 @@ xbool weapon_mutation::TriggerContagion( void )
 
 xbool weapon_mutation::FireSecondaryProtected( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint )
 {
-    CONTEXT( "mutation::FireSecondaryProtected" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "mutation::FireSecondaryProtected" );
 	( void )Power;
     ( void )iFirePoint;
     ( void )InitPos;    // we don't need InitPos because this weapon fires from its FIRE_POINT
@@ -664,7 +665,7 @@ xbool weapon_mutation::FireSecondaryProtected( const vector3& InitPos , const ve
     if ( pOwnerObject->GetType() == TYPE_PLAYER )
     {
         // we need to override the given rotation and just use the player's view
-        view View( ((player*)pOwnerObject)->GetInterpView() );
+        view View( ((player*)pOwnerObject)->GetSimulationView() );
         L2W = View.GetV2W();
     }
     else
@@ -979,9 +980,9 @@ void weapon_mutation::Setup( const guid& PlayerGuid, const player::animation_sta
 
 //==============================================================================
 
-void weapon_mutation::OnAdvanceLogic( f32 DeltaTime )
+void weapon_mutation::OnAdvanceSimulation( f32 DeltaTime )
 {    
-    new_weapon::OnAdvanceLogic( DeltaTime );
+    new_weapon::OnAdvanceSimulation( DeltaTime );
 
     object *playerObject = g_ObjMgr.GetObjectByGuid( m_HostPlayerGuid );
 
@@ -1177,7 +1178,7 @@ void weapon_mutation::GetCorpseDirection( vector3 &StartPos, vector3 &EndPos )
     {
         player *pPlayer = (player*)pOwner;
         StartPos = pPlayer->GetEyesPosition();
-        EndPos   = StartPos + (pPlayer->GetInterpView().GetViewZ() * TendrilReachDistanceTweak.GetF32());
+        EndPos   = StartPos + (pPlayer->GetSimulationView().GetViewZ() * TendrilReachDistanceTweak.GetF32());
     }
     else
     {

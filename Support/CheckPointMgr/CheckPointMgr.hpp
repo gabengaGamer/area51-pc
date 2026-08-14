@@ -1,8 +1,8 @@
 #ifndef CHECK_POINT_MGR_HPP
 #define CHECK_POINT_MGR_HPP
 
-#include "Inventory\Inventory2.hpp"
-#include "Objects\Player.hpp"
+#include "Inventory/Inventory2.hpp"
+#include "Objects/Player/Player.hpp"
 
 #define MAX_LEVELS      (18)
 #define MAX_CHECKPOINTS (6)

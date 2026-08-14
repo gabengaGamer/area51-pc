@@ -13,10 +13,10 @@
 //==------------------------------------------------------------------------
 // Includes
 //==------------------------------------------------------------------------
-#include "obj_mgr\obj_mgr.hpp"
-#include "..\Auxiliary\fx_RunTime\Fx_Mgr.hpp"
-#include "audiomgr\AudioMgr.hpp"
-#include "objects\superdestructible.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "FX/fx_Mgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Objects/SuperDestructible.hpp"
 
 //==------------------------------------------------------------------------
 // Defines
@@ -44,7 +44,7 @@ public:
     virtual bbox        GetLocalBBox        ( void ) const;
 
     virtual void        OnInit              ( void );
-    virtual void        OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void        OnPain              ( const pain& Pain );
 
     virtual void        OnDebugRender       ( void );

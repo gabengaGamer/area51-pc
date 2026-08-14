@@ -12,11 +12,11 @@
 //=========================================================================
 
 #include "x_types.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
 
 #ifdef X_EDITOR
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #endif
 
 //=========================================================================

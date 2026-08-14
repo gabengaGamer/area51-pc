@@ -4,69 +4,39 @@
 //
 //==============================================================================
 
-#include "..\x_context.hpp"
-
 #ifndef X_PLUS_HPP
-#include "..\x_time.hpp"
+#include "../x_time.hpp"
 #endif
 
 #ifndef X_DEBUG_HPP
-#include "..\x_debug.hpp"
+#include "../x_debug.hpp"
 #endif
 
+#include <chrono>
+
 //==============================================================================
-//  PLATFORM SPECIFIC CODE
-//==============================================================================
-//
-//  Must provide the following:
-//    - Functions x_TimeInit(), x_TimeKill(), and x_GetTime().
-//    - Definition for XTICKS_PER_MS which is one millisecond in xticks.
-//  
+//  TIME SOURCE
 //==============================================================================
 
-//******************************************************************************
-#ifdef TARGET_PC
-//==============================================================================
+namespace
+{
+    using x_clock = std::chrono::steady_clock;
 
-#if defined(TARGET_PC)
-#include <windows.h>
-#else
-#ifdef CONFIG_RETAIL
-#   define D3DCOMPILE_PUREDEVICE 1    
-#endif
-#include <xtl.h>
-#endif
+    // x_GetTime() is an elapsed-time API, not a wall-clock API. Keep its
+    // representation identical on every desktop platform.
+    constexpr s64 TICKS_PER_MS     = 1000;
+    constexpr s64 TICKS_PER_SECOND = 1000000;
+    constexpr xtick ONE_HOUR_TICKS = (xtick)TICKS_PER_SECOND * 60 * 60;
+    constexpr xtick ONE_DAY_TICKS  = ONE_HOUR_TICKS * 24;
 
-// Global variables for time system
-f64     g_PCFrequency     = 0.0;
-f64     g_PCFrequency2    = 0.0;
-f64     g_PCInvFrequency  = 0.0;        // Inverse frequency for faster division
-f64     g_PCInvFrequency2 = 0.0;        // Inverse frequency for seconds
-xtick   g_BaseTimeTick    = 0;
-xtick   g_LastTicks       = 0;
-
-#define XTICKS_PER_MS       g_PCFrequency
-#define XTICKS_PER_SECOND   g_PCFrequency2
+    x_clock::time_point g_BaseTime = x_clock::now();
+}
 
 //==============================================================================
 
 void x_TimeInit( void )
-{    
-    LARGE_INTEGER F, C;
-
-    // Get frequency first
-    QueryPerformanceFrequency( &F );
-    g_PCFrequency2 = (f64)F.QuadPart;
-    g_PCFrequency  = g_PCFrequency2 / 1000.0;
-    
-    // Pre-calculate inverse frequencies for faster division
-    g_PCInvFrequency  = 1000.0 / g_PCFrequency2;
-    g_PCInvFrequency2 = 1.0 / g_PCFrequency2;
-    
-    // Get base time
-    QueryPerformanceCounter( &C );
-    g_BaseTimeTick = (xtick)C.QuadPart;
-    g_LastTicks = 0;
+{
+    g_BaseTime = x_clock::now();
 
 #ifdef X_DEBUG
     x_TimeUpdateDebugVars();
@@ -76,43 +46,19 @@ void x_TimeInit( void )
 //==============================================================================
 
 void x_TimeKill( void )
-{    
-    // Reset all global variables
-    g_PCFrequency     = 0.0;
-    g_PCFrequency2    = 0.0;
-    g_PCInvFrequency  = 0.0;
-    g_PCInvFrequency2 = 0.0;
-    g_BaseTimeTick    = 0;
-    g_LastTicks       = 0;
+{
+    g_BaseTime = x_clock::now();
 }
 
 //==============================================================================
 
 xtick x_GetTime( void )
 {
-    LARGE_INTEGER C;
-    QueryPerformanceCounter( &C );
-    
-    xtick Ticks = (xtick)(C.QuadPart) - g_BaseTimeTick;
-
-    // Ensure monotonic time progression
-    if( Ticks < g_LastTicks )     
-        Ticks = g_LastTicks + 1;
-
-    g_LastTicks = Ticks;
-    return Ticks;
+    const x_clock::duration Elapsed = x_clock::now() - g_BaseTime;
+    return (xtick)std::chrono::duration_cast<std::chrono::microseconds>( Elapsed ).count();
 }
 
 //==============================================================================
-#endif // TARGET_PC
-//******************************************************************************
-
-//==============================================================================
-//  PLATFORM INDEPENDENT CODE
-//==============================================================================
-
-#define ONE_HOUR_TICKS ((s64)XTICKS_PER_MS * 1000 * 60 * 60)
-#define ONE_DAY_TICKS  ((s64)XTICKS_PER_MS * 1000 * 60 * 60 * 24)
 
 // Debug variables for easier inspection
 #ifdef X_DEBUG
@@ -122,7 +68,7 @@ xtick g_XTICKS_PER_HOUR = 0;
 
 void x_TimeUpdateDebugVars( void )
 {
-    g_XTICKS_PER_MS   = (xtick)XTICKS_PER_MS;
+    g_XTICKS_PER_MS   = (xtick)TICKS_PER_MS;
     g_XTICKS_PER_DAY  = (xtick)ONE_DAY_TICKS;
     g_XTICKS_PER_HOUR = (xtick)ONE_HOUR_TICKS;
 }
@@ -132,14 +78,14 @@ void x_TimeUpdateDebugVars( void )
 
 s64 x_GetTicksPerMs( void )
 {
-    return (s64)XTICKS_PER_MS;
+    return TICKS_PER_MS;
 }
 
 //==============================================================================
 
 s64 x_GetTicksPerSecond( void )
 {
-    return (s64)XTICKS_PER_SECOND;
+    return TICKS_PER_SECOND;
 }
 
 //==============================================================================
@@ -150,24 +96,14 @@ f32 x_TicksToMs( xtick Ticks )
         ASSERT( Ticks < ONE_DAY_TICKS );
     #endif
     
-    #ifdef TARGET_PC
-        // Use pre-calculated inverse frequency for faster conversion
-        return (f32)((f64)Ticks * g_PCInvFrequency);
-    #else
-        return (f32)((f64)Ticks / (f64)XTICKS_PER_MS);
-    #endif
+    return (f32)((f64)Ticks / (f64)TICKS_PER_MS);
 }
 
 //==============================================================================
 
 f64 x_TicksToSec( xtick Ticks )
 {
-    #ifdef TARGET_PC
-        // Use pre-calculated inverse frequency for faster conversion
-        return (f64)Ticks * g_PCInvFrequency2;
-    #else
-        return ((f64)Ticks) / ((f64)(XTICKS_PER_MS * 1000));
-    #endif
+    return ((f64)Ticks) / (f64)TICKS_PER_SECOND;
 }
 
 //==============================================================================

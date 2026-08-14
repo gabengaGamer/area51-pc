@@ -11,10 +11,10 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "NetworkMgr\NetObj.hpp"
-#include "Objects\Render\RigidInst.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "NetworkMgr/NetObj.hpp"
+#include "Objects/Render/RigidInst.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 #include "ZoneMgr/ZoneMgr.hpp"
 
 //==============================================================================
@@ -72,7 +72,7 @@ virtual         void            OnMove                  ( const vector3& NewPos 
 
 virtual         void            OnRender                ( void );
 virtual         void            OnRenderTransparent     ( void );
-virtual         void            OnAdvanceLogic          ( f32 DeltaTime );
+virtual         void            OnAdvanceSimulation          ( f32 DeltaTime );
 
 virtual         xbool           GetDoCollisions         ( void )        { return TRUE; }
 virtual         void            OnImpact                ( collision_mgr::collision& Coll, object* pTarget );
@@ -110,7 +110,6 @@ virtual         void            net_ProvideStart        (       bitstream& BitSt
 //------------------------------------------------------------------------------
 
 protected:
-                matrix4             m_RenderL2W;
 
                 guid                m_OriginGuid;
                 s32                 m_OriginNetSlot;

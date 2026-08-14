@@ -1,13 +1,24 @@
+//==============================================================================
+//
+//  audio_stream_controller.hpp
+//
+//==============================================================================
+
 #ifndef AUDIO_STREAM_CONTROLLER_HPP
 #define AUDIO_STREAM_CONTROLLER_HPP
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
 
 #ifndef AUDIO_MGR_HPP
 #include "e_Audio.hpp"
 #endif // AUDIO_MGR_HPP
+#include "Audio/audio_package_format.hpp"
 
-#ifndef AUDIO_STREAM_MGR_HPP
-#include "audio_stream_mgr.hpp"
-#endif AUDIO_STREAM_MGR_HPP
+//==============================================================================
+//  AUDIO STREAM CONTROLLER CLASS
+//==============================================================================
 
 class audio_stream_controller 
 {
@@ -17,11 +28,7 @@ class audio_stream_controller
         s32         Priority;
     };
 
-    //------------------------------------------------------------------------------
-    // Public functions.
-
 public:
-
     audio_stream_controller             ( void );
     ~audio_stream_controller            ( void );
 
@@ -57,10 +64,11 @@ public:
     void            ClearStreams        ( void );
 
 private:
-
     s32             m_nStreams;         
     controller_data m_Data[ MAX_AUDIO_STREAMS ];
 
 };
 
+//==============================================================================
 #endif // AUDIO_STREAM_CONTROLLER_HPP
+//==============================================================================

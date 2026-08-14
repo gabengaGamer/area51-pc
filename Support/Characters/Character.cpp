@@ -10,51 +10,53 @@
 
 
 #ifndef X_EDITOR
-#include "NetworkMgr\GameMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
 #endif
 
 #include "Character.hpp"
-#include "Navigation\CoverNode.hpp"
-#include "Navigation\AlarmNode.hpp"
-#include "..\MiscUtils\TrajectoryGenerator.hpp"
-#include "objects\GrenadeProjectile.hpp"
-#include "objects\GravChargeProjectile.hpp"
-#include "Objects\Player.hpp"
-#include "Objects\Group.hpp"
-#include "GameLib\StatsMgr.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "Objects\Event.hpp"
-#include "EventMgr\EventMgr.hpp"
+#include "Navigation/CoverNode.hpp"
+#include "Navigation/AlarmNode.hpp"
+#include "../MiscUtils/TrajectoryGenerator.hpp"
+#include "Objects/GrenadeProjectile.hpp"
+#include "Objects/GravChargeProjectile.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/Group.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "UI/ui_renderer.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Objects/Event.hpp"
+#include "EventMgr/EventMgr.hpp"
 #include "CharacterState.hpp"
 #include "God.hpp"
-#include "Triggerex\triggerex_object.hpp"
-#include "Objects\Spawner\SpawnerObject.hpp"
-#include "Debris\debris_rigid.hpp"
-#include "objects\Corpse.hpp"
-#include "Characters\TaskSystem\character_task_set.hpp"
-#include "TriggerEx\TriggerEx_Object.hpp"
-#include "TriggerEx\Actions\action_ai_base.hpp"
-#include "TriggerEx\Actions\action_ai_attack_guid.hpp"
-#include "TriggerEx\Actions\action_ai_pathto_guid.hpp"
-#include "TriggerEx\Actions\action_ai_lookat_guid.hpp"
-#include "TriggerEx\Actions\action_ai_play_anim.hpp"
-#include "TriggerEx\Actions\action_ai_dialog_line.hpp"
-#include "TriggerEx\Actions\action_ai_searchto_guid.hpp"
-#include "TriggerEx\Actions\action_ai_death.hpp"
-#include "Characters\BaseStates\Character_Cover_state.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
-#include "objects\NewWeapon.hpp"
-#include "objects\turret.hpp"
-#include "Sound\EventSoundEmitter.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Animation\AnimData.hpp"
-#include "Characters\ActorEffects.hpp"
-#include "OccluderMgr\OccluderMgr.hpp"
-#include "Characters\Soldiers\Soldier.hpp"
-#include "Characters\MutantTank\Mutant_Tank.hpp"
-#include "Objects\AlienGlob.hpp"
-#include "characters\scientist\friendlyscientist.hpp"
+#include "TriggerEx/TriggerEx_Object.hpp"
+#include "Objects/Spawner/SpawnerObject.hpp"
+#include "Debris/debris_rigid.hpp"
+#include "Objects/Corpse.hpp"
+#include "Characters/TaskSystem/character_task_set.hpp"
+#include "TriggerEx/TriggerEx_Object.hpp"
+#include "TriggerEx/Actions/action_ai_base.hpp"
+#include "TriggerEx/Actions/action_ai_attack_guid.hpp"
+#include "TriggerEx/Actions/action_ai_pathto_guid.hpp"
+#include "TriggerEx/Actions/action_ai_lookat_guid.hpp"
+#include "TriggerEx/Actions/action_ai_play_anim.hpp"
+#include "TriggerEx/Actions/action_ai_dialog_line.hpp"
+#include "TriggerEx/Actions/action_ai_searchto_guid.hpp"
+#include "TriggerEx/Actions/action_ai_death.hpp"
+#include "Characters/BaseStates/Character_Cover_State.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "Objects/Turret.hpp"
+#include "Sound/EventSoundEmitter.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Animation/AnimData.hpp"
+#include "Characters/ActorEffects.hpp"
+#include "OccluderMgr/OccluderMgr.hpp"
+#include "Characters/Soldiers/Soldier.hpp"
+#include "Characters/MutantTank/Mutant_Tank.hpp"
+#include "Objects/AlienGlob.hpp"
+#include "Characters/Scientist/FriendlyScientist.hpp"
 
 xbool SPLIT_LONG_LOS = FALSE;
 const f32 k_VerySmallNumber = 0.00000001f;
@@ -468,7 +470,6 @@ m_FollowState   ( *this, character_state::STATE_FOLLOW )
     m_CloakDecloakTimer     = 0.0f;
     m_TimeSinceLastTargetUpdate = 0.0f;
     m_TimeSinceLastCoverCheck = 0.0f;
-    m_TimeSinceLastRender   = 10.0f;
     m_AimToTargetYaw        = 0.0f;
     m_GoalRetreatToConnectionSlot = NULL_NAV_SLOT;
     m_CurrentConnectionSlot = NULL_NAV_SLOT;
@@ -1308,14 +1309,14 @@ void character::AdvanceAIState( f32 DeltaTime )
                     GetStateName( m_pActiveState->GetStateType() ), 
                     m_pActiveState->m_TimeInState,
                     GetStateName( m_DesiredState ),
-                    x_GetTimeSec() ) );
+                    g_ObjMgr.GetSimulationTimeSeconds() ) );
 #endif
             }
             else
             {
                 LOG_MESSAGE("Character::StateChange","First State %s:",GetStateName(m_DesiredState));
 #ifndef X_RETAIL
-                AddToStateChangeList( xfs("First State %s: Time %f:",GetStateName(m_DesiredState),x_GetTimeSec()) );
+                AddToStateChangeList( xfs("First State %s: Time %f:",GetStateName(m_DesiredState),g_ObjMgr.GetSimulationTimeSeconds()) );
 #endif
             }
         }
@@ -1449,9 +1450,9 @@ xbool character::WeaponReady()
 
 xbool g_RunCharacterLogic = TRUE;
 
-void character::OnAdvanceLogic( f32 DeltaTime )
+void character::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "character::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "character::OnAdvanceSimulation" );
 
     if( m_bWasPlayingFullBodyLipSync && !IsPlayingFullBodyLipSync() && m_PostLipsyncState != character_state::STATE_NULL )
     {
@@ -1605,7 +1606,7 @@ void character::OnAdvanceLogic( f32 DeltaTime )
         if( g_NetworkMgr.IsOnline() )
         {
             // Let base class deal with re-spawning
-            actor::OnAdvanceLogic( DeltaTime );
+            actor::OnAdvanceSimulation( DeltaTime );
 
             // Nothing else to do
             return;
@@ -1784,7 +1785,7 @@ void character::OnAdvanceLogic( f32 DeltaTime )
     m_CoverChanged          = FALSE;
 
     // Call base class
-    actor::OnAdvanceLogic(DeltaTime);
+    actor::OnAdvanceSimulation(DeltaTime);
 
     // Stuff for network support.
     #ifndef X_EDITOR
@@ -2515,7 +2516,7 @@ void character::SetupDebugTextBlock( s32 nLines, s32 nCharsWide, xcolor Color )
         (s32) m_ScreenBlockCursor.Y, 
         (s32)(m_ScreenBlockCursor.X + Width), 
         (s32)(m_ScreenBlockCursor.Y + Height) );
-    draw_Rect( R, Color, FALSE, DRAW_UI_RTARGET );
+    g_UIRenderer.DrawRect( R, Color );
 
     m_nPreviousRequestedLines = 0;
 }
@@ -2595,11 +2596,8 @@ void character::OnDebugRender( void )
         return ;
 
     // Render bboxes
-    draw_ClearL2W();
-    draw_SetL2W( GetL2W() );
-    draw_BBox( m_BBox, XCOLOR_GREEN );
-    draw_ClearL2W();
-    draw_BBox( GetBBox(), XCOLOR_RED );
+    render::debug::Box( m_BBox, GetL2W(), XCOLOR_GREEN );
+    render::debug::Box( GetBBox(), XCOLOR_RED );
 
     //
     // Fire a sphere out from the eye the correct distance w/offset and 
@@ -2613,14 +2611,14 @@ void character::OnDebugRender( void )
         // load up start, end and radius for melee
         GetMeleeInfo( StartPos, EndPos, MeleeSphereRadius );   
 
-        draw_Line( StartPos, EndPos, XCOLOR_RED );
-        draw_Sphere( EndPos, MeleeSphereRadius, XCOLOR_RED);
+        render::debug::Line( StartPos, EndPos, XCOLOR_RED );
+        render::debug::Sphere( EndPos, MeleeSphereRadius, XCOLOR_RED);
     }
 
     // Draw current pain radius
     if( m_CurrentPainRadius > 0.1f )
     {
-        draw_Sphere( m_CurrentPainCenter, m_CurrentPainRadius, XCOLOR_RED);
+        render::debug::Sphere( m_CurrentPainCenter, m_CurrentPainRadius, XCOLOR_RED);
     }
     m_CurrentPainRadius = 0.0f;
 
@@ -2637,13 +2635,13 @@ void character::OnDebugRender( void )
     
     // Show type of pathing
     if( m_PathFindStruct.m_bStraightPath )
-        draw_Label( GetPosition(), XCOLOR_WHITE, "S" );
+        render::debug::Label( GetPosition(), XCOLOR_WHITE, "S" );
     else        
-        draw_Label( GetPosition(), XCOLOR_WHITE, "p" );
+        render::debug::Label( GetPosition(), XCOLOR_WHITE, "p" );
 
     if( !CanReachTarget() )
     {    
-        draw_Label( GetPositionWithOffset( OFFSET_TOP_OF_BBOX ), XCOLOR_WHITE, "Can't reach target!" );
+        render::debug::Label( GetPositionWithOffset( OFFSET_TOP_OF_BBOX ), XCOLOR_WHITE, "Can't reach target!" );
     }
 
 #endif
@@ -2684,7 +2682,7 @@ void character::OnDebugRender( void )
                         {
                             vShootAt = GetLastSeenLocationOfTarget();
                         }
-                        draw_Line( FirePoint, vShootAt, XCOLOR_PURPLE );                
+                        render::debug::Line( FirePoint, vShootAt, XCOLOR_PURPLE );                
                     }
                 }
 
@@ -2700,15 +2698,15 @@ void character::OnDebugRender( void )
                     {
                         coverColor = XCOLOR_RED;
                     }
-                    draw_Line( GetPosition(), coverObject->GetPosition(),coverColor );
-                    draw_BBox( bbox(coverObject->GetPosition(),50.0f), coverColor );
+                    render::debug::Line( GetPosition(), coverObject->GetPosition(),coverColor );
+                    render::debug::Box( bbox(coverObject->GetPosition(),50.0f), coverColor );
 
                 }
-                draw_Label( GetTargetPosWithOffset(OFFSET_TOP_OF_BBOX), XCOLOR_WHITE, xfs("Hit Chance: [%d]", GetHitChance()) );
+                render::debug::Label( GetTargetPosWithOffset(OFFSET_TOP_OF_BBOX), XCOLOR_WHITE, xfs("Hit Chance: [%d]", GetHitChance()) );
             }
 
             // Location stuff
-            draw_Sphere( m_LastSeenLocationOfTarget, 25, XCOLOR_YELLOW );
+            render::debug::Sphere( m_LastSeenLocationOfTarget, 25, XCOLOR_YELLOW );
             PrintToTextBlock( XCOLOR_YELLOW, "Health:%.2f", GetHealth() );
             if (m_pActiveState)
                 PrintToTextBlock( XCOLOR_YELLOW, GetStateName(m_pActiveState->m_State) );
@@ -2878,11 +2876,11 @@ void character::OnDebugRender( void )
 
             // Draw sight info
             radian ArcYaw = GetLocoPointer()->GetSightYaw();
-            draw_Arc( GetPosition() + vector3(0,10,0), m_LightSightRadius, ArcYaw, m_IdleSightFOV,  XCOLOR_BLUE     );
-            draw_Arc( GetPosition() + vector3(0,20,0), m_DarkSightRadius,  ArcYaw, m_IdleSightFOV,  XCOLOR_PURPLE   );
-            draw_Arc( GetPosition() + vector3(0,10,0), m_LightSightRadius, ArcYaw, m_AlertSightFOV, XCOLOR_YELLOW   );
-            draw_Arc( GetPosition() + vector3(0,20,0), m_DarkSightRadius,  ArcYaw, m_AlertSightFOV, XCOLOR_RED      );
-            draw_Arc( GetPosition() + vector3(0,10,0), m_SoundRange,       ArcYaw, 2.0f*PI,         XCOLOR_WHITE    );
+            render::debug::Arc( GetPosition() + vector3(0,10,0), m_LightSightRadius, ArcYaw, m_IdleSightFOV,  XCOLOR_BLUE     );
+            render::debug::Arc( GetPosition() + vector3(0,20,0), m_DarkSightRadius,  ArcYaw, m_IdleSightFOV,  XCOLOR_PURPLE   );
+            render::debug::Arc( GetPosition() + vector3(0,10,0), m_LightSightRadius, ArcYaw, m_AlertSightFOV, XCOLOR_YELLOW   );
+            render::debug::Arc( GetPosition() + vector3(0,20,0), m_DarkSightRadius,  ArcYaw, m_AlertSightFOV, XCOLOR_RED      );
+            render::debug::Arc( GetPosition() + vector3(0,10,0), m_SoundRange,       ArcYaw, 2.0f*PI,         XCOLOR_WHITE    );
 
             // Show grenade path
             if (1)
@@ -2909,10 +2907,10 @@ void character::OnDebugRender( void )
                 Pos += vector3( VelH.GetX() * T,
                     SpeedV * T + 0.5f * Gravity * T*T,
                     VelH.GetZ() * T );
-                draw_Sphere( Pos, 15.0f, XCOLOR_GREEN );
+                render::debug::Sphere( Pos, 15.0f, XCOLOR_GREEN );
 
-                draw_Sphere( m_GrenadeDestination, 15.0f, XCOLOR_GREEN );
-                draw_Sphere( m_GrenadeThrowStart, 15.0f, XCOLOR_GREEN );
+                render::debug::Sphere( m_GrenadeDestination, 15.0f, XCOLOR_GREEN );
+                render::debug::Sphere( m_GrenadeThrowStart, 15.0f, XCOLOR_GREEN );
 
                 s32 i;
                 s32 nPoints = 20;
@@ -2927,7 +2925,7 @@ void character::OnDebugRender( void )
                         SpeedV * T + 0.5f * Gravity * T*T,
                         VelH.GetZ() * T );
 
-                    draw_Sphere( Pos, 10.0f, XCOLOR_RED );  
+                    render::debug::Sphere( Pos, 10.0f, XCOLOR_RED );  
 
                     g_CollisionMgr.LineOfSightSetup( GetGuid(), Pos, Pos+vector3(0,-10000,0) );
                     // Only need one collision to say that we can't throw there
@@ -2937,19 +2935,19 @@ void character::OnDebugRender( void )
                     g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, object::ATTR_BLOCKS_LARGE_PROJECTILES, (object::object_attr)( object::ATTR_COLLISION_PERMEABLE ) );
                     if ( g_CollisionMgr.m_nCollisions != 0 )
                     {
-                        draw_Line(Pos,g_CollisionMgr.m_Collisions[0].Point,XCOLOR_RED);
-                        draw_Sphere( g_CollisionMgr.m_Collisions[0].Point, 10.0f, XCOLOR_PURPLE );
+                        render::debug::Line(Pos,g_CollisionMgr.m_Collisions[0].Point,XCOLOR_RED);
+                        render::debug::Sphere( g_CollisionMgr.m_Collisions[0].Point, 10.0f, XCOLOR_PURPLE );
                     }
 
-                    draw_Line( Pos, LastPos, XCOLOR_RED );
+                    render::debug::Line( Pos, LastPos, XCOLOR_RED );
                     LastPos = Pos;
                 }
             }
 
             /*            // Draw target related info
-            draw_Label( GetLastSeenLocationOfTarget(), xcolor(255,100,100), "TargetSeenLast" );
-            draw_Label( GetLastKnownLocationOfTarget(), xcolor(255,100,100), "TargetKnownLast" );
-            draw_Label( GetLastLocationOfInterest(), xcolor(100,100,255), "Interest" );
+            render::debug::Label( GetLastSeenLocationOfTarget(), xcolor(255,100,100), "TargetSeenLast" );
+            render::debug::Label( GetLastKnownLocationOfTarget(), xcolor(255,100,100), "TargetKnownLast" );
+            render::debug::Label( GetLastLocationOfInterest(), xcolor(100,100,255), "Interest" );
             */
 
             // Render state
@@ -2971,10 +2969,10 @@ void character::OnDebugRender( void )
                 {                
                     for(i=0;i<m_PointsPerSpline;i++)
                     {
-                        draw_Sphere(m_SplinePointList[i],20.0f,xcolor( 255, (u8)(255*((f32)i)/((f32)m_PointsPerSpline)), 0 ));
+                        render::debug::Sphere(m_SplinePointList[i],20.0f,xcolor( 255, (u8)(255*((f32)i)/((f32)m_PointsPerSpline)), 0 ));
                     }
                 }
-                draw_Sphere(m_NextPathPoint,20.0f,XCOLOR_WHITE);
+                render::debug::Sphere(m_NextPathPoint,20.0f,XCOLOR_WHITE);
 
                 // Render path
                 m_PathFindStruct.RenderPath( GetLocoPointer()->m_Physics.GetColRadius() );
@@ -3001,7 +2999,7 @@ void character::OnDebugRender( void )
                     P1 += vector3(0,50,0);
                     P2 += vector3(0,50,0);
 
-                    draw_Line(P1,P2,XCOLOR_RED);
+                    render::debug::Line(P1,P2,XCOLOR_RED);
                 }
 
                 for (i=0;i<m_PathFindStruct.m_nSteps;i++)
@@ -3014,7 +3012,7 @@ void character::OnDebugRender( void )
                         radian FacingYaw = GetLocoPointer()->m_Player.GetFacingYaw();
                         vector3 vFacingYaw(0,0,-1000);
                         vFacingYaw.RotateY( FacingYaw );
-                        draw_Line( Pos, Pos+vFacingYaw, XCOLOR_YELLOW );
+                        render::debug::Line( Pos, Pos+vFacingYaw, XCOLOR_YELLOW );
                     }
 
                     vector3 RemoteEnd;
@@ -3035,16 +3033,16 @@ void character::OnDebugRender( void )
                         GetLocoPointer()->m_Physics.GetColRadius(),
                         vMoveTo );
 
-                    draw_Line(MyPos,vMoveTo,XCOLOR_GREEN);
+                    render::debug::Line(MyPos,vMoveTo,XCOLOR_GREEN);
                     MyPos = vMoveTo;
                 }
-                draw_Line(MyPos,m_PathFindStruct.m_vEndPoint,XCOLOR_GREEN);
+                render::debug::Line(MyPos,m_PathFindStruct.m_vEndPoint,XCOLOR_GREEN);
 
                 if (m_JumpTimeRemaining > 0)
                 {
-                    draw_Line( m_JumpStartPos, m_JumpApexPos, XCOLOR_YELLOW );
-                    draw_Line( m_JumpApexPos, m_JumpLandPos, XCOLOR_BLUE );
-                    draw_Label( m_JumpApexPos, XCOLOR_YELLOW, "APEX" );
+                    render::debug::Line( m_JumpStartPos, m_JumpApexPos, XCOLOR_YELLOW );
+                    render::debug::Line( m_JumpApexPos, m_JumpLandPos, XCOLOR_BLUE );
+                    render::debug::Label( m_JumpApexPos, XCOLOR_YELLOW, "APEX" );
                 }
             }
         }
@@ -3081,21 +3079,19 @@ void character::OnDebugRender( void )
 
             // Show on PS2?
             if (s_bDebugInGame)
-                draw_Label( GetPosition(), 
+                render::debug::Label( GetPosition(), 
                 XCOLOR_WHITE, 
                 xfs("Meshes:%d\nVerts:%d\nFaces:%d\nBones:%d", nMeshes, nVerts, nFaces, nActiveBones) ) ;
         }
-        // Reset transform
-        draw_ClearL2W();
         if (s_bDebugAI)
         {
 //            RenderHitLocations();
             radian ArcYaw = GetLocoPointer()->GetSightYaw();
-            draw_Arc( GetPosition() + vector3(0,10,0), m_LightSightRadius, ArcYaw, m_IdleSightFOV,  XCOLOR_BLUE     );
-            draw_Arc( GetPosition() + vector3(0,20,0), m_DarkSightRadius,  ArcYaw, m_IdleSightFOV,  XCOLOR_PURPLE   );
-            draw_Arc( GetPosition() + vector3(0,10,0), m_LightSightRadius, ArcYaw, m_AlertSightFOV, XCOLOR_YELLOW   );
-            draw_Arc( GetPosition() + vector3(0,20,0), m_DarkSightRadius,  ArcYaw, m_AlertSightFOV, XCOLOR_RED      );
-            draw_Arc( GetPosition() + vector3(0,10,0), m_SoundRange,       ArcYaw, 2.0f*PI,         XCOLOR_WHITE    );
+            render::debug::Arc( GetPosition() + vector3(0,10,0), m_LightSightRadius, ArcYaw, m_IdleSightFOV,  XCOLOR_BLUE     );
+            render::debug::Arc( GetPosition() + vector3(0,20,0), m_DarkSightRadius,  ArcYaw, m_IdleSightFOV,  XCOLOR_PURPLE   );
+            render::debug::Arc( GetPosition() + vector3(0,10,0), m_LightSightRadius, ArcYaw, m_AlertSightFOV, XCOLOR_YELLOW   );
+            render::debug::Arc( GetPosition() + vector3(0,20,0), m_DarkSightRadius,  ArcYaw, m_AlertSightFOV, XCOLOR_RED      );
+            render::debug::Arc( GetPosition() + vector3(0,10,0), m_SoundRange,       ArcYaw, 2.0f*PI,         XCOLOR_WHITE    );
 
 
             // Draw leash info
@@ -3104,8 +3100,8 @@ void character::OnDebugRender( void )
                 object* pObj = g_ObjMgr.GetObjectByGuid( m_LeashGuid );
                 if (pObj)
                 {
-                    draw_Arc( pObj->GetPosition(), m_LeashDistance, 0, R_360, XCOLOR_AQUA );
-                    draw_Label( pObj->GetPosition(), XCOLOR_AQUA, "LEASH" );
+                    render::debug::Arc( pObj->GetPosition(), m_LeashDistance, 0, R_360, XCOLOR_AQUA );
+                    render::debug::Label( pObj->GetPosition(), XCOLOR_AQUA, "LEASH" );
                 }
             }
 
@@ -3116,7 +3112,7 @@ void character::OnDebugRender( void )
     // Draw selection
     if (GetAttrBits() & ATTR_EDITOR_SELECTED)
     {
-        draw_BBox(GetBBox(), XCOLOR_RED );
+        render::debug::Box(GetBBox(), XCOLOR_RED );
 
         if (GetLocoPointer())
         {
@@ -3124,7 +3120,7 @@ void character::OnDebugRender( void )
 
             BBox.Transform( GetL2W() );
 
-            draw_BBox(BBox, XCOLOR_GREEN );
+            render::debug::Box(BBox, XCOLOR_GREEN );
         }
     }
 
@@ -3185,49 +3181,7 @@ void character::OnRender( void )
             isHit = FALSE;
         }
 
-        draw_Line(firePosition, shotDest, XCOLOR_RED);
-    }
-#endif
-
-#ifdef nmreed // draw collision volume
-    {
-        s32 nSlices = 20;
-        s32 nPoints = 16;
-        vector3 Position = GetPosition();
-        f32 Height = GetCollisionHeight();
-
-        draw_Begin( DRAW_LINES );
-        draw_ClearL2W();
-        draw_Color( XCOLOR_GREEN );
-        for( s32 S=0; S<nSlices; S++ )
-        {
-
-            f32 ST = (f32)S / (f32)(nSlices-1);
-            f32 Radius = x_sin(R_180*ST)*GetCollisionRadius();
-            f32 Y      = ST * Height;
-
-            vector3 PrevPos;
-            for( s32 P=0; P<nPoints; P++ )
-            {
-                f32 PT = (f32)P/(f32)(nPoints-1);
-                vector3 Pos(0,Y,Radius);
-                Pos.RotateY( PT*R_360 );
-                Pos += Position;
-
-                if( P>0 )
-                {
-                    draw_Vertex(PrevPos);
-                    draw_Vertex(Pos);
-                }
-                PrevPos = Pos;
-            }
-
-        }
-
-        draw_Vertex( Position );
-        draw_Vertex( Position + vector3( 0.0f, Height, 0.0f ) );
-        draw_End();
-
+        render::debug::Line(firePosition, shotDest, XCOLOR_RED);
     }
 #endif
 
@@ -3235,14 +3189,14 @@ void character::OnRender( void )
     {
         xbool bOccluded = g_OccluderMgr.IsBBoxOccluded( GetBBox() );
         #if defined(athyssen) && defined(X_EDITOR)
-            draw_BBox( GetBBox(), XCOLOR_RED );
+            render::debug::Box( GetBBox(), XCOLOR_RED );
             if( bOccluded )
             {
-                draw_Line( GetPosition() - vector3(0,2000,0), GetPosition() + vector3(0,2000,0), XCOLOR_YELLOW );
+                render::debug::Line( GetPosition() - vector3(0,2000,0), GetPosition() + vector3(0,2000,0), XCOLOR_YELLOW );
             }
             else
             {
-                draw_Line( GetPosition() - vector3(0,2000,0), GetPosition() + vector3(0,2000,0), XCOLOR_AQUA );
+                render::debug::Line( GetPosition() - vector3(0,2000,0), GetPosition() + vector3(0,2000,0), XCOLOR_AQUA );
             }
         #endif
         if( bOccluded )
@@ -3255,9 +3209,6 @@ void character::OnRender( void )
 
     // Call base class render
     actor::OnRender();
-
-    // Reset timer
-    m_TimeSinceLastRender = 0.0f;    
 
     // Debug in game too?
 #if !defined(X_RETAIL) || defined(X_QA)
@@ -4545,7 +4496,7 @@ const char* character::GetGoalFailedReasonName() const
     case FAILED_GOAL_ACTOR_COLLISION:
         return "FAILED_GOAL_ACTOR_COLLISION";
     default:
-        return "FAILED_UNKNOWN_ENUM_TYPE";
+        return "FAILED_UNKNOWN_ENUm_Type";
     }
 }
 
@@ -4773,7 +4724,7 @@ void character::ChangeGoal( void )
         break;        
     }
 #ifndef X_RETAIL
-    AddToGoalChangeList( xfs("New Goal %s: Time %f",GetGoalTypeName(),x_GetTimeSec()) );
+    AddToGoalChangeList( xfs("New Goal %s: Time %f",GetGoalTypeName(),g_ObjMgr.GetSimulationTimeSeconds()) );
 #endif
 }
 
@@ -4783,7 +4734,7 @@ void character::ChangeGoal( void )
 /// has completed and updates the current goal
 xbool character::UpdateGoal( f32 DeltaTime )
 {
-    CONTEXT( "character::UpdateGoal" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "character::UpdateGoal" );
 
     vector3 toLocation;
     f32 horizDistToLocation = 0.0f;
@@ -5323,7 +5274,7 @@ void character::UpdateVoice( f32 DeltaTime )
 
 void character::UpdateCurrentConnection()
 {   
-    CONTEXT( "character::UpdateCurrentConnection" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "character::UpdateCurrentConnection" );
 
     m_InNavMap = FALSE;
     nav_connection_slot_id newConnection = m_CurrentConnectionSlot; 
@@ -5390,7 +5341,7 @@ void character::UpdateCurrentConnection()
 
 void character::UpdateAimToTarget()
 {
-    CONTEXT( "character::UpdateAimToTarget" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "character::UpdateAimToTarget" );
 
     vector3 Delta = GetTargetPosWithOffset() - GetPosition();
     Delta.GetY() = 0;
@@ -5549,7 +5500,7 @@ void character::AttemptToAvoidActorCollision( f32 DeltaTime )
 
 void character::UpdateMoveTo( f32 DeltaTime )
 {
-    CONTEXT( "character::UpdateMoveTo" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "character::UpdateMoveTo" );
 
     if( DoingMovementGoal() )
     {
@@ -5741,7 +5692,7 @@ void character::SwitchLookatMode()
 
 void character::UpdateLookAt( )
 {
-    CONTEXT( "character::UpdateLookAt" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "character::UpdateLookAt" );
 
     vector3 Pos = GetPosition();
     radian  Yaw = GetLocoPointer()->m_Player.GetFacingYaw();
@@ -10396,9 +10347,9 @@ void character::OnEnumProp ( prop_enum& List )
 
     List.PropEnumFloat(     "Character\\Tweaks\\Shoot Delay", "Min time between bursts", PROP_TYPE_EXPOSE ) ;
 
-    List.PropEnumInt(       "Character\\Tweaks\\Accuracy", "How accurate is the AI with its weapons? 0-100", PROP_TYPE_EXPOSE | PROP_TYPE_DONT_SHOW | PROP_TYPE_DONT_EXPORT | PROP_TYPE_DONT_SAVE | PROP_TYPE_DONT_SAVE_MEMCARD );
+    List.PropEnumInt(       "Character\\Tweaks\\Accuracy", "How accurate is the AI with its weapons? 0-100", PROP_TYPE_EXPOSE | PROP_TYPE_DONT_SHOW | PROP_TYPE_DONT_EXPORT | PROP_TYPE_DONT_SAVE | PROP_TYPE_DONT_SAVE_GAME );
 
-    List.PropEnumInt(       "Character\\Tweaks\\Moving Target Accuracy", "How accurate is the AI with its weapons vs a running target? 0-100", PROP_TYPE_EXPOSE | PROP_TYPE_DONT_SHOW | PROP_TYPE_DONT_EXPORT | PROP_TYPE_DONT_SAVE | PROP_TYPE_DONT_SAVE_MEMCARD );
+    List.PropEnumInt(       "Character\\Tweaks\\Moving Target Accuracy", "How accurate is the AI with its weapons vs a running target? 0-100", PROP_TYPE_EXPOSE | PROP_TYPE_DONT_SHOW | PROP_TYPE_DONT_EXPORT | PROP_TYPE_DONT_SAVE | PROP_TYPE_DONT_SAVE_GAME );
 
     List.PropEnumInt(       "Character\\Tweaks\\Weapon Drop Percent", "Deprecated", PROP_TYPE_EXPOSE );
 
@@ -12399,7 +12350,7 @@ nav_connection_slot_id character::GetNewRetreatPath( const vector3& vRetreatFrom
         {
             player &targetPlayer = player::GetSafeType( *targetObject );
             radian pitch,yaw;
-            targetPlayer.GetInterpView().GetPitchYaw(pitch,yaw);
+            targetPlayer.GetSimulationView().GetPitchYaw(pitch,yaw);
             dotCompareVector = vector3( 0.0f,yaw );
         }
         else
@@ -12619,7 +12570,7 @@ xbool character::SetupRetreatInsideConnection( const vector3& vRetreatFrom )
 /*
 void character::UpdateLookahead( void )
 {
-    CONTEXT( "character::UpdateLookahead" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "character::UpdateLookahead" );
 
     // only update the lookahead if we are moving.
     if( GetLocoPointer()->GetState() != loco::STATE_MOVE )
@@ -12766,7 +12717,7 @@ void character::CalculateSplinePoints()
 
 void character::UpdatePathing( void )
 {
-    CONTEXT( "character::UpdatePathing" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "character::UpdatePathing" );
 
     // we should only path if we are going somewhere...
     if( !DoingMovementGoal() )

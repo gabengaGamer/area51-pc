@@ -2,7 +2,7 @@
 //
 //  MoviePlayer_WebM_Audio.cpp
 //
-//  Audio decoding for WebM playback using XAudio2.9.
+//  Audio decoding for WebM playback using SDL3.
 //
 //==============================================================================
 
@@ -22,10 +22,7 @@
 //  INCLUDES
 //==============================================================================
 
-#include <windows.h>
-#include <objbase.h>
-#include <xaudio2.h>
-#include <mmreg.h>
+#include "SDL3/SDL.h"
 
 #include "x_files.hpp"
 #include "x_threads.hpp"
@@ -44,32 +41,8 @@ namespace
 {
     static const s32 MAX_OPUS_FRAME_MS       = 120;
     static const s32 AUDIO_SUBMIT_TIMEOUT_MS = 500;
+    static const s32 AUDIO_MAX_QUEUED_MS     = 250;
 }
-
-//==============================================================================
-// XAudio2 Voice Callback
-//==============================================================================
-
-class audio_decoder::voice_callback : public IXAudio2VoiceCallback
-{
-public:
-                    voice_callback   (void) {}
-                   ~voice_callback   (void) {}
-
-    void __stdcall  OnVoiceProcessingPassStart(UINT32) override {}
-    void __stdcall  OnVoiceProcessingPassEnd(void) override {}
-    void __stdcall  OnStreamEnd(void) override {}
-    void __stdcall  OnBufferStart(void*) override {}
-    void __stdcall  OnBufferEnd(void* pBufferContext) override
-    {
-        if (pBufferContext)
-        {
-            x_free(pBufferContext);
-        }
-    }
-    void __stdcall  OnLoopEnd(void*) override {}
-    void __stdcall  OnVoiceError(void*, HRESULT) override {}
-};
 
 //==============================================================================
 // CONSTRUCTION / DESTRUCTION
@@ -82,14 +55,10 @@ audio_decoder::audio_decoder(void)
     m_Channels             = 0;
     m_SampleRate           = 0;
     m_BitsPerSample        = 16;
-    m_bInitialized         = FALSE;
-    m_bVoiceStarted        = FALSE;
-    m_ComInitialized       = FALSE;
-
-    m_pXAudio2             = NULL;
-    m_pMasterVoice         = NULL;
-    m_pSourceVoice         = NULL;
-    m_pVoiceCallback       = NULL;
+    m_isInitialized         = FALSE;
+    m_SdlInitialized       = FALSE;
+    m_pAudioStream         = NULL;
+    m_MaxQueuedBytes       = 0;
 
     m_pOpusDecoder         = NULL;
     m_pOpusMSDecoder       = NULL;
@@ -132,7 +101,6 @@ xbool audio_decoder::Initialize(const player_config& Config)
         return TRUE;
 
     m_Volume        = 1.0f;
-    m_bVoiceStarted = FALSE;
     m_CodecType     = CODEC_NONE;
     m_Channels      = (Config.AudioChannels > 0) ? Config.AudioChannels : 2;
     m_SampleRate    = (Config.AudioSampleRate > 0) ? Config.AudioSampleRate : 48000;
@@ -175,19 +143,13 @@ xbool audio_decoder::Initialize(const player_config& Config)
         return FALSE;
     }
 
-    if (!InitializeXAudio())
+    if (!InitializeSDL())
     {
         Shutdown();
         return FALSE;
     }
 
-    if (!CreateSourceVoice())
-    {
-        Shutdown();
-        return FALSE;
-    }
-
-    m_bInitialized = TRUE;
+    m_isInitialized = TRUE;
     SetVolume(1.0f);
     return TRUE;
 }
@@ -198,28 +160,24 @@ void audio_decoder::Shutdown(void)
 {
     DestroyOpus();
     DestroyVorbis();
-    DestroySourceVoice();
-    ShutdownXAudio();
+    ShutdownSDL();
 
     m_CompressedBuffer.Clear();
     m_PCMBuffer.Clear();
 
     m_CodecType      = CODEC_NONE;
-    m_bInitialized   = FALSE;
-    m_bVoiceStarted  = FALSE;
+    m_isInitialized   = FALSE;
     m_MaxFrameSamples= 0;
+    m_MaxQueuedBytes = 0;
 }
 
 //==============================================================================
 
 void audio_decoder::Flush(void)
 {
-    if (m_pSourceVoice)
+    if (m_pAudioStream)
     {
-        m_pSourceVoice->Stop(0);
-        m_pSourceVoice->FlushSourceBuffers();
-        m_pSourceVoice->Discontinuity();
-        m_bVoiceStarted = FALSE;
+        SDL_ClearAudioStream(m_pAudioStream);
     }
 
     ResetDecoders();
@@ -231,11 +189,11 @@ void audio_decoder::Flush(void)
 
 xbool audio_decoder::DecodeSample(const sample& Sample, mkvparser::IMkvReader* pReader)
 {
-    ASSERT(m_bInitialized);
+    ASSERT(m_isInitialized);
     ASSERT(Sample.pBlock);
     ASSERT(pReader);
 
-    if (!m_bInitialized || !Sample.pBlock || !pReader)
+    if (!m_isInitialized || !Sample.pBlock || !pReader)
         return FALSE;
 
     const mkvparser::Block* pBlock = Sample.pBlock;
@@ -280,52 +238,56 @@ void audio_decoder::SetVolume(f32 Volume)
 
     m_Volume = Volume;
 
-    if (m_pMasterVoice)
-        m_pMasterVoice->SetVolume(m_Volume);
+    if (m_pAudioStream && !SDL_SetAudioStreamGain(m_pAudioStream, m_Volume))
+    {
+        x_DebugMsg("MoviePlayer_WebM: SDL_SetAudioStreamGain failed: %s\n", SDL_GetError());
+    }
 }
 
 //==============================================================================
 // INTERNAL HELPERS
 //==============================================================================
 
-xbool audio_decoder::InitializeXAudio(void)
+xbool audio_decoder::InitializeSDL(void)
 {
-    if (m_pXAudio2)
+    if (m_pAudioStream)
         return TRUE;
 
-    HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    if (SUCCEEDED(hr))
+    if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
     {
-        m_ComInitialized = TRUE;
-    }
-    else if (hr == S_FALSE)
-    {
-        m_ComInitialized = FALSE;
-    }
-    else if (hr == RPC_E_CHANGED_MODE)
-    {
-        x_DebugMsg("MoviePlayer_WebM: CoInitializeEx failed (RPC_E_CHANGED_MODE).\n");
-        m_ComInitialized = FALSE;
-    }
-    else
-    {
-        x_DebugMsg("MoviePlayer_WebM: CoInitializeEx failed (0x%08X).\n", hr);
+        x_DebugMsg("MoviePlayer_WebM: SDL_InitSubSystem(SDL_INIT_AUDIO) failed: %s\n", SDL_GetError());
         return FALSE;
     }
 
-    hr = XAudio2Create(&m_pXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
-    if (FAILED(hr))
+    m_SdlInitialized = TRUE;
+
+    SDL_AudioSpec spec;
+    x_memset(&spec, 0, sizeof(spec));
+    spec.format   = SDL_AUDIO_S16;
+    spec.channels = m_Channels;
+    spec.freq     = m_SampleRate;
+
+    m_pAudioStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL);
+    if (!m_pAudioStream)
     {
-        x_DebugMsg("MoviePlayer_WebM: XAudio2Create failed (0x%08X).\n", hr);
-        ShutdownXAudio();
+        x_DebugMsg("MoviePlayer_WebM: SDL_OpenAudioDeviceStream failed: %s\n", SDL_GetError());
+        ShutdownSDL();
         return FALSE;
     }
 
-    hr = m_pXAudio2->CreateMasteringVoice(&m_pMasterVoice);
-    if (FAILED(hr))
+    m_MaxQueuedBytes = ((m_SampleRate * AUDIO_MAX_QUEUED_MS) / 1000) * m_Channels * (s32)sizeof(s16);
+    if (m_MaxQueuedBytes <= 0)
+        m_MaxQueuedBytes = m_SampleRate * m_Channels * (s32)sizeof(s16);
+
+    if (!SDL_SetAudioStreamGain(m_pAudioStream, m_Volume))
     {
-        x_DebugMsg("MoviePlayer_WebM: Failed to create mastering voice (0x%08X).\n", hr);
-        ShutdownXAudio();
+        x_DebugMsg("MoviePlayer_WebM: SDL_SetAudioStreamGain failed: %s\n", SDL_GetError());
+    }
+
+    if (!SDL_ResumeAudioStreamDevice(m_pAudioStream))
+    {
+        x_DebugMsg("MoviePlayer_WebM: SDL_ResumeAudioStreamDevice failed: %s\n", SDL_GetError());
+        ShutdownSDL();
         return FALSE;
     }
 
@@ -334,126 +296,19 @@ xbool audio_decoder::InitializeXAudio(void)
 
 //==============================================================================
 
-void audio_decoder::ShutdownXAudio(void)
+void audio_decoder::ShutdownSDL(void)
 {
-    if (m_pMasterVoice)
+    if (m_pAudioStream)
     {
-        m_pMasterVoice->DestroyVoice();
-        m_pMasterVoice = NULL;
+        SDL_PauseAudioStreamDevice(m_pAudioStream);
+        SDL_DestroyAudioStream(m_pAudioStream);
+        m_pAudioStream = NULL;
     }
 
-    if (m_pXAudio2)
+    if (m_SdlInitialized)
     {
-        m_pXAudio2->Release();
-        m_pXAudio2 = NULL;
-    }
-
-    if (m_ComInitialized)
-    {
-        CoUninitialize();
-        m_ComInitialized = FALSE;
-    }
-}
-
-//==============================================================================
-
-xbool audio_decoder::CreateSourceVoice(void)
-{
-    ASSERT(m_pXAudio2);    
-
-    if (!m_pXAudio2)
-        return FALSE;
-
-    DestroySourceVoice();
-
-    m_pVoiceCallback = new voice_callback();
-    if (!m_pVoiceCallback)
-        return FALSE;
-
-    HRESULT hr = S_OK;
-
-    if (m_Channels <= 2)
-    {
-        WAVEFORMATEX wfx;
-        x_memset(&wfx, 0, sizeof(wfx));
-        wfx.wFormatTag      = WAVE_FORMAT_PCM;
-        wfx.nChannels       = (WORD)m_Channels;
-        wfx.nSamplesPerSec  = (DWORD)m_SampleRate;
-        wfx.wBitsPerSample  = (WORD)m_BitsPerSample;
-        wfx.nBlockAlign     = (WORD)((wfx.nChannels * wfx.wBitsPerSample) / 8);
-        wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
-
-        hr = m_pXAudio2->CreateSourceVoice(&m_pSourceVoice, &wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, m_pVoiceCallback);
-    }
-    else
-    {
-        WAVEFORMATEXTENSIBLE wfx;
-        x_memset(&wfx, 0, sizeof(wfx));
-        wfx.Format.wFormatTag      = WAVE_FORMAT_EXTENSIBLE;
-        wfx.Format.nChannels       = (WORD)m_Channels;
-        wfx.Format.nSamplesPerSec  = (DWORD)m_SampleRate;
-        wfx.Format.wBitsPerSample  = (WORD)m_BitsPerSample;
-        wfx.Format.nBlockAlign     = (WORD)((wfx.Format.nChannels * wfx.Format.wBitsPerSample) / 8);
-        wfx.Format.nAvgBytesPerSec = wfx.Format.nSamplesPerSec * wfx.Format.nBlockAlign;
-        wfx.Format.cbSize          = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
-        wfx.Samples.wValidBitsPerSample = wfx.Format.wBitsPerSample;
-        wfx.dwChannelMask          = GetChannelMask(m_Channels);
-        wfx.SubFormat              = KSDATAFORMAT_SUBTYPE_PCM;
-
-        hr = m_pXAudio2->CreateSourceVoice(&m_pSourceVoice, reinterpret_cast<WAVEFORMATEX*>(&wfx), 0, XAUDIO2_DEFAULT_FREQ_RATIO, m_pVoiceCallback);
-    }
-
-    if (FAILED(hr) || !m_pSourceVoice)
-    {
-        x_DebugMsg("MoviePlayer_WebM: Failed to create source voice (0x%08X).\n", hr);
-        DestroySourceVoice();
-        return FALSE;
-    }
-
-    m_bVoiceStarted = FALSE;
-    return TRUE;
-}
-
-//==============================================================================
-
-void audio_decoder::DestroySourceVoice(void)
-{
-    if (m_pSourceVoice)
-    {
-        m_pSourceVoice->Stop(0);
-        m_pSourceVoice->FlushSourceBuffers();
-        m_pSourceVoice->DestroyVoice();
-        m_pSourceVoice = NULL;
-    }
-
-    if (m_pVoiceCallback)
-    {
-        delete m_pVoiceCallback;
-        m_pVoiceCallback = NULL;
-    }
-
-    m_bVoiceStarted = FALSE;
-}
-
-
-//==============================================================================
-
-u32 audio_decoder::GetChannelMask(s32 ChannelCount) const
-{
-    switch (ChannelCount)
-    {
-        case 1: return SPEAKER_FRONT_CENTER;
-        case 2: return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
-        case 3: return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER;
-        case 4: return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT    | SPEAKER_BACK_RIGHT;
-        case 5: return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER | SPEAKER_BACK_LEFT     | SPEAKER_BACK_RIGHT;
-        case 6: return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT;
-        default:
-        {
-            if (ChannelCount >= 2)
-                return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
-            return SPEAKER_FRONT_CENTER;
-        }
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        m_SdlInitialized = FALSE;
     }
 }
 
@@ -989,18 +844,15 @@ void audio_decoder::ResetDecoders(void)
 
 xbool audio_decoder::SubmitPCM(const s16* pSamples, s32 SampleCount)
 {
-    ASSERT(m_pSourceVoice);
+    ASSERT(m_pAudioStream);
     ASSERT(pSamples);
     ASSERT(SampleCount > 0);    
     
-    if (!m_pSourceVoice || !pSamples || (SampleCount <= 0))
+    if (!m_pAudioStream || !pSamples || (SampleCount <= 0))
         return TRUE;
 
-    XAUDIO2_VOICE_STATE state;
-    m_pSourceVoice->GetState(&state);
-
     s32 waitMs = 0;
-    while (state.BuffersQueued >= 6)
+    while (SDL_GetAudioStreamQueued(m_pAudioStream) >= m_MaxQueuedBytes)
     {
         if (waitMs >= AUDIO_SUBMIT_TIMEOUT_MS)
         {
@@ -1009,43 +861,13 @@ xbool audio_decoder::SubmitPCM(const s16* pSamples, s32 SampleCount)
         }
         x_DelayThread(1);
         ++waitMs;
-        m_pSourceVoice->GetState(&state);
     }
 
     const s32 bytes = SampleCount * m_Channels * (s32)sizeof(s16);
-    u8* pBuffer = (u8*)x_malloc(bytes);
-    if (!pBuffer)
-        return FALSE;
-
-    x_memcpy(pBuffer, pSamples, bytes);
-
-    XAUDIO2_BUFFER Buffer;
-    x_memset(&Buffer, 0, sizeof(Buffer));
-    Buffer.AudioBytes = bytes;
-    Buffer.pAudioData = pBuffer;
-    Buffer.pContext   = pBuffer;
-
-    HRESULT hr = m_pSourceVoice->SubmitSourceBuffer(&Buffer);
-    if (FAILED(hr))
+    if (!SDL_PutAudioStreamData(m_pAudioStream, pSamples, bytes))
     {
-        x_free(pBuffer);
-        x_DebugMsg("MoviePlayer_WebM: SubmitSourceBuffer failed (0x%08X).\n", hr);
+        x_DebugMsg("MoviePlayer_WebM: SDL_PutAudioStreamData failed: %s\n", SDL_GetError());
         return FALSE;
-    }
-
-    if (!m_bVoiceStarted)
-    {
-        hr = m_pSourceVoice->Start(0);
-        if (FAILED(hr))
-        {
-            x_DebugMsg("MoviePlayer_WebM: Failed to start source voice (0x%08X).\n", hr);
-            m_pSourceVoice->FlushSourceBuffers();
-            return FALSE;
-        }
-        else
-        {
-            m_bVoiceStarted = TRUE;
-        }
     }
 
     return TRUE;

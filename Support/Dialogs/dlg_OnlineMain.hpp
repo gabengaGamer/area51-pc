@@ -11,12 +11,11 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
 #include "dlg_PopUp.hpp"
-#include "NetworkMgr/Downloader/Downloader.hpp"
 
 //==============================================================================
 //  DEFINES
@@ -31,17 +30,6 @@ enum online_main_controls
     IDC_ONLINE_EDIT_PROFILE,
     IDC_ONLINE_VIEW_STATS,
     IDC_ONLINE_SIGN_OUT,
-    IDC_ONLINE_DOWNLOAD,
-    IDC_ONLINE_NAV_TEXT,
-};
-
-enum version_check
-{
-    VERSION_CHECK_INIT = 0,
-    VERSION_CHECK_CONTENT_AVAILABLE,
-    VERSION_CHECK_IS_NOTIFYING,
-    VERSION_CHECK_NO_CONTENT_AVAILABLE,
-    VERSION_CHECK_HAS_BEEN_NOTIFIED,
 };
 
 //==============================================================================
@@ -70,8 +58,8 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
 protected:
@@ -83,12 +71,7 @@ protected:
     ui_button*          m_pButtonEditProfile;
     ui_button*          m_pButtonViewStats;
     ui_button*          m_pButtonSignOut;
-    ui_button*          m_pButtonDownload;
-    ui_text*            m_pNavText;
     s32                 m_CurrHL;
-static version_check    m_VersionCheckState;
-
-    s32                 m_NotifyDelay;
     dlg_popup*          m_pPopUp;
     s32                 m_PopUpResult;
 };

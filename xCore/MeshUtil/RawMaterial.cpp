@@ -1,7 +1,3 @@
-#ifdef TARGET_PC
-#include <crtdbg.h>
-#endif
-
 #include "RawMaterial.hpp"
 #include "TextIn.hpp"
 #include "TextOut.hpp"

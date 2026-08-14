@@ -11,9 +11,9 @@
 //#define CRT_SANITY      ASSERT(_CrtCheckMemory())
 #define CRT_SANITY      
 
-#include "animdata.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Geometry\geom.hpp"
+#include "AnimData.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Geometry/geom.hpp"
 
 static s32 CHUNK_SIZE = 64*1024*1024;
 

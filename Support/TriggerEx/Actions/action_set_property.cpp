@@ -8,11 +8,12 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_set_property.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "Entropy.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "Objects\Group.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Objects/Group.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS
@@ -223,16 +224,16 @@ void action_set_property::OnDebugRender ( s32 Index )
     {
         xcolor Color = xcolor(128,0,255);
 
-        draw_Line( GetPositionOwner(), pObject->GetPosition(), Color );
-        draw_BBox( pObject->GetBBox(), Color );
+        render::debug::Line( GetPositionOwner(), pObject->GetPosition(), Color );
+        render::debug::Box( pObject->GetBBox(), Color );
 
         if (!GetElse())
         {
-            draw_Label( pObject->GetPosition(), Color, xfs("[%d]Change Property", Index) );
+            render::debug::Label( pObject->GetPosition(), Color, xfs("[%d]Change Property", Index) );
         }
         else
         {
-            draw_Label( pObject->GetPosition(), Color, xfs("[Else %d]Change Property", Index) );
+            render::debug::Label( pObject->GetPosition(), Color, xfs("[Else %d]Change Property", Index) );
         }
     }
 }

@@ -1,6 +1,6 @@
 #include "Character_Search_State.hpp"
-#include "..\Character.hpp"
-#include "Navigation\ng_node2.hpp"
+#include "../Character.hpp"
+#include "Navigation/ng_node2.hpp"
 //=========================================================================
 // constants
 //=========================================================================
@@ -38,7 +38,6 @@ void character_search_state::OnInit( void )
 void character_search_state::OnEnter( void )
 {
     m_LookAroundTime = 0.0f;
-    m_TimeAtLocationOfInterest = 0.0f;
     character_state::OnEnter();
 }
 
@@ -46,7 +45,6 @@ void character_search_state::OnEnter( void )
 
 s32 character_search_state::UpdatePhase( f32 DeltaTime )
 {
-    (void)DeltaTime;
     s32 newPhase = PHASE_NONE;
 
     switch( m_CurrentPhase )
@@ -55,7 +53,6 @@ s32 character_search_state::UpdatePhase( f32 DeltaTime )
         newPhase = PHASE_SEARCH_GOTO_INTEREST;
         break;
     case PHASE_SEARCH_GOTO_INTEREST:
-        m_TimeAtLocationOfInterest += DeltaTime/2.0f;
         if( m_CharacterBase.GetGoalCompleted() )
         {
             m_LookAroundTime = 0.0f;
@@ -67,8 +64,7 @@ s32 character_search_state::UpdatePhase( f32 DeltaTime )
         }
         break;
     case PHASE_SEARCH_LOOK_AROUND:
-//        m_LookAroundTime += DeltaTime;
-        m_TimeAtLocationOfInterest += DeltaTime;
+        m_LookAroundTime += DeltaTime;
         if( m_LookAroundTime >= k_MaxLookAroundTime )
         {
             newPhase = PHASE_SEARCH_WALK_AROUND;
@@ -83,7 +79,6 @@ s32 character_search_state::UpdatePhase( f32 DeltaTime )
         }
         break;
     case PHASE_SEARCH_IDLE_MOMENTARILY:
-        m_TimeAtLocationOfInterest += DeltaTime;
         if( m_TimeInPhase > k_MinTimeIdling )
         {
             newPhase = PHASE_SEARCH_LOOK_AROUND;
@@ -94,7 +89,6 @@ s32 character_search_state::UpdatePhase( f32 DeltaTime )
         }
         break;
     case PHASE_SEARCH_WALK_AROUND:
-        m_TimeAtLocationOfInterest += DeltaTime;
         if( m_CharacterBase.GetGoalCompleted() )
         {
             m_LookAroundTime = 0.0f;
@@ -129,7 +123,6 @@ void character_search_state::ChangePhase( s32 newPhase )
     switch( newPhase ) 
     {
     case PHASE_SEARCH_GOTO_INTEREST:
-        m_TimeAtLocationOfInterest = 0.0f;
         m_CharacterBase.SetGotoLocationGoal( m_CharacterBase.GetLastLocationOfInterest() );
     	break;
     case PHASE_SEARCH_IDLE_MOMENTARILY:

@@ -125,16 +125,9 @@ void dist_rule::Render( particle Particles[], xbool bBonesOnly /*= TRUE*/ )
     particle& P0 = *(particle*) ( (u32)&Particles[0] + m_ParticleOffset[0] );
     particle& P1 = *(particle*) ( (u32)&Particles[0] + m_ParticleOffset[1] );
 
-    // Draw
-    draw_ClearL2W() ;
-    draw_Begin(DRAW_LINES, DRAW_NO_ZBUFFER) ;
-    draw_Color( m_Color ) ;
-    draw_Vertex( P0.m_Pos ) ;
-    draw_Vertex( P1.m_Pos ) ;
-    draw_End() ;
+    render::debug::Line( P0.m_Pos, P1.m_Pos, m_Color, render::PRIMITIVE_DEPTH_DISABLED );
 }
 
 #endif
 
 //==============================================================================
-

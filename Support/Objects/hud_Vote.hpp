@@ -14,8 +14,8 @@
 //==============================================================================
 
 #include "hud_Renderable.hpp"
-#include "x_bitmap.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "Render/Texture.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 //==============================================================================
 // CLASS
@@ -28,18 +28,19 @@ public:
     virtual        ~hud_vote        ( void ) {};
 
     virtual void    OnRender        ( player*       pPlayer );
-    virtual void    OnAdvanceLogic  ( player*       pPlayer, f32 DeltaTime );
+    virtual void    OnAdvanceSimulation  ( player*       pPlayer, f32 DeltaTime );
 
     xbool           IsActive        ( void );
 
 protected:
-    rhandle<xbitmap>        m_ControllerBmp;
-    rhandle<xbitmap>        m_EndcapBmp;
+    rhandle<texture>        m_ControllerBmp;
 
     xbool                   m_bKeyOn;
     f32                     m_KeyOpacity;
 
     xbool                   m_bTallyOn;
+    xbool                   m_CanVote;
+    xbool                   m_VoteInProgress;
     f32                     m_TallyOpacity;
 
     f32                     m_PercentOnScreen;
@@ -65,3 +66,5 @@ protected:
 //==============================================================================
 #endif
 //==============================================================================
+
+

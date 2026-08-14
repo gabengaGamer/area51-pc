@@ -13,7 +13,7 @@
 
 #include "x_stdio.hpp"
 #include "x_math.hpp"
-#include "spatial_user.hpp"     // User must provided this file
+#include "Spatial_user.hpp"     // User must provided this file
 
 //==============================================================================
 // DEFINES
@@ -109,6 +109,7 @@ public:
                                                 s32&  MinX, s32 &MinY, s32& MinZ,
                                                 s32&  MaxX, s32 &MaxY, s32& MaxZ ) const;
 
+        xbool           TryGetBBoxLevel ( const bbox& BBox, s32& Level ) const;
         s32             GetBBoxLevel    ( const bbox& BBox ) const;
         s32             GetCellCount    ( void ) { return m_nCells; }
 

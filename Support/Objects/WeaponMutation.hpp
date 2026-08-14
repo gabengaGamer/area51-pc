@@ -8,7 +8,7 @@
 // INCLUDES
 //=========================================================================
 #include "NewWeapon.hpp"
-#include "Objects\Player.hpp"
+#include "Objects/Player/Player.hpp"
 
 #define MAX_TENDRIL_CONSTRAINTS 3
 #define CORPSE_PIN              0
@@ -59,7 +59,7 @@ public:
     //---------------------------------------------------------------------
     void            Setup               ( const guid& PlayerGuid, const player::animation_state& AnimState );
     radian          GetXFOV             ( void );
-    virtual void    OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void    OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void    TendrilLogic        ( player *pPlayer, f32 DeltaTime );
 
     void            DoExtremeMelee      ( void );

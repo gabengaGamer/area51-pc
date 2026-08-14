@@ -1,5 +1,6 @@
 #include "entropy.hpp"
 #include "convex_hull.hpp"
+#include "Render/PrimitiveBatch.hpp"
 
 //============================================================================
 // Constructor
@@ -178,26 +179,36 @@ void convex_hull::Render( const matrix4& L2W )
             VisibleFaces.Append( i );
     }
 
-    // Begin rendering of triangles
-    draw_Begin ( DRAW_TRIANGLES, DRAW_USE_ALPHA|DRAW_NO_ZBUFFER|DRAW_NO_ZWRITE );
-    draw_SetL2W( L2W );
-    draw_Color ( xcolor(255,255,255,48) );
+    const render::primitive_draw_desc FillMaterial(
+        NULL,
+        render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        render::PRIMITIVE_BLEND_ALPHA,
+        render::PRIMITIVE_DEPTH_DISABLED,
+        render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+        render::PRIMITIVE_SAMPLER_LINEAR_WRAP,
+        render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch FillBatch( FillMaterial );
 
-    // Render all the faces
     for( i=0 ; i<VisibleFaces.GetCount() ; i++ )
     {
         face& Face = m_Faces[VisibleFaces[i]];
-
-        draw_Vertex( m_Verts[Face.v[0]] );
-        draw_Vertex( m_Verts[Face.v[2]] );
-        draw_Vertex( m_Verts[Face.v[1]] );
+        const xcolor Color( 255, 255, 255, 48 );
+        VERIFY( FillBatch.AddTriangle(
+            render::primitive_vertex( m_Verts[Face.v[0]], vector2(0,0), Color ),
+            render::primitive_vertex( m_Verts[Face.v[2]], vector2(0,0), Color ),
+            render::primitive_vertex( m_Verts[Face.v[1]], vector2(0,0), Color ) ) );
     }
-    draw_End();
+    VERIFY( FillBatch.Submit( L2W ) );
 
-    // Begin rendering of lines
-    draw_Begin( DRAW_LINES, DRAW_NO_ZBUFFER|DRAW_NO_ZWRITE );
-    draw_SetL2W( L2W );
-    draw_Color( xcolor(128,128,128) );
+    const render::primitive_draw_desc LineMaterial(
+        NULL,
+        render::PRIMITIVE_TOPOLOGY_LINE_LIST,
+        render::PRIMITIVE_BLEND_ALPHA,
+        render::PRIMITIVE_DEPTH_DISABLED,
+        render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+        render::PRIMITIVE_SAMPLER_LINEAR_WRAP,
+        render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch LineBatch( LineMaterial );
 
     // Render all visible edges
     for( i=0 ; i<m_RenderEdges.GetCount() ; i++ )
@@ -225,9 +236,11 @@ void convex_hull::Render( const matrix4& L2W )
         // If visible then render it
         if( Visible )
         {
-            draw_Vertex( m_Verts[Edge.v[0]] );
-            draw_Vertex( m_Verts[Edge.v[1]] );
+            VERIFY( LineBatch.AddLine( m_Verts[Edge.v[0]],
+                                       m_Verts[Edge.v[1]],
+                                       xcolor(128,128,128),
+                                       xcolor(128,128,128) ) );
         }
     }
-    draw_End();
+    VERIFY( LineBatch.Submit( L2W ) );
 }

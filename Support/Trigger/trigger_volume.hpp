@@ -11,7 +11,7 @@
 #ifndef TRIGGER_VOLUME_HPP
 #define TRIGGER_VOLUME_HPP
 
-#include "object\spatial_volume.hpp"
+#include "object/spatial_volume.hpp"
 
 class trigger_volume : public trigger
 {

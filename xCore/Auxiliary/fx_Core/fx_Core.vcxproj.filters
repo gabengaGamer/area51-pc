@@ -58,6 +58,9 @@
     <ClCompile Include="MeshViewer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PreviewRender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="TextureMgr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -115,6 +118,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="MeshViewer.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PreviewRender.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="TextureMgr.hpp">

@@ -15,8 +15,8 @@
 //==============================================================================
 
 #include "DecalDefinition.hpp"
+#include "Render/DecalBatch.hpp"
 #include "Render/Texture.hpp"
-#include "Auxiliary\MiscUtils\Fileio.hpp"
 
 //==============================================================================
 // forward references
@@ -78,6 +78,9 @@ public:
                                       xbool                   Wireframe );
 
     void    OnRender                ( void );
+#ifdef X_EDITOR
+    void    OnRenderEditorWireframes( void );
+#endif
     void    OnUpdate                ( f32 DeltaTime );
 
     //==========================================================================
@@ -276,21 +279,18 @@ protected:
     //==========================================================================
     friend s32 DecalEdgeSortFn( const void* pA, const void* pB );
 
+public:
     //==========================================================================
     // The hardware-friendly data structures
     //==========================================================================
     struct position_data
     {
-        void    FileIO( fileio& File );
-
         vector3p Pos;
         u32      Flags;
     };
 
     struct uv_data
     {
-        void FileIO( fileio& File );
-
         s16     U;
         s16     V;
     };
@@ -300,12 +300,8 @@ protected:
     //==========================================================================
     struct static_data
     {
-        enum { STATIC_DECAL_VERSION = 3 };
-
         struct package
         {
-            void FileIO( fileio& File );
-
             char    PackageName[256];
             s32     iDefinition;
             s32     nDefinitions;
@@ -313,8 +309,6 @@ protected:
 
         struct definition
         {
-            void FileIO( fileio& File );
-
             s32     iGroup;
             s32     iDecalDef;
             s32     iZoneInfo;
@@ -323,18 +317,14 @@ protected:
 
         struct zone_info
         {
-            void FileIO( fileio& File );
-
             s32     iVert;
             s32     nVerts;
             u32     Zone;
         };
 
                     static_data ( void );
-                    static_data ( fileio& File );
-        void        FileIO      ( fileio& File );
+                   ~static_data ( void );
 
-        s32             Version;
         s32             nPackages;
         package*        pPackage;
         s32             nDefinitions;
@@ -345,6 +335,22 @@ protected:
         position_data*  pPos;
         uv_data*        pUV;
         u32*            pColor;
+    };
+
+protected:
+    struct decal_span
+    {
+        decal_span( void );
+
+        s32     SourceStart;
+        s32     SourceCount;
+        s32     DecalStart;
+        s32     DecalCount;
+        u32     Zone;
+        bbox    Bounds;
+        vector3 GeometricNormal;
+        xcolor  Ambient;
+        xbool   IsValid;
     };
 
     //==========================================================================
@@ -368,7 +374,11 @@ protected:
         uv_data*            m_pUVs;
         u32*                m_pColors;
         f32*                m_pElapsedTimes;
-        rhandle<texture>    m_Bitmap;
+        decal_span*         m_pDynamicSpans;
+        s32                 m_nDynamicSpans;
+        s32                 m_nDynamicSpansAllocated;
+        s32                 m_NextDynamicSpan;
+        rhandle<texture>    m_bitmap;
         u16                 m_BlendMode;
         s32                 m_Flags;
         f32                 m_FadeoutTime;
@@ -383,6 +393,8 @@ protected:
         #endif
 
         s32                 m_StaticDataOffset;
+        s32                 m_StaticSpanStart;
+        s32                 m_StaticSpanCount;
     };
 
     enum { MAX_DECAL_RESOURCES = 128 };
@@ -438,14 +450,22 @@ protected:
     //==========================================================================
     // Rendering functions
     //==========================================================================
-    void        RenderVerts         ( s32                nVerts,
-                                      position_data*     pPos,
-                                      uv_data*           pUV,
-                                      u32*               pColor );
-    void        RenderEditorStatics ( registration_info& RegInfo,
-                                      u32                DrawFlags );
-    void        RenderStaticDecals  ( registration_info& RegInfo );
-    void        RenderDynamicDecals ( registration_info& RegInfo );
+    xbool       BuildSpan            ( decal_span& Span, s32 SourceStart, s32 SourceCount,
+                                       s32 DecalStart, s32 DecalCount, u32 Zone,
+                                       const position_data* pPos ) const;
+    void        BuildDynamicSpans    ( registration_info& RegInfo, s32 DecalStart, s32 nVerts );
+    void        BuildStaticSpans     ( void );
+    xcolor      SampleSpanAmbient    ( const decal_span& Span ) const;
+    xbool       IsDynamicSpanActive  ( const registration_info& RegInfo, const decal_span& Span ) const;
+    xbool       SubmitSpan           ( const registration_info& RegInfo, const decal_span& Span,
+                                       const position_data* pPos, const uv_data* pUV, const u32* pColor,
+                                       const texture& Texture ) const;
+    xbool       RenderStaticDecals   ( registration_info& RegInfo, const texture& Texture );
+    xbool       RenderDynamicDecals  ( registration_info& RegInfo, const texture& Texture );
+    void        ReserveRenderCapacity( void ) const;
+#ifdef X_EDITOR
+    void        RenderEditorStaticWireframes( void );
+#endif
 
     //==========================================================================
     // Update functions
@@ -465,6 +485,7 @@ protected:
     queue_element               m_DynamicQueue[DYNAMIC_QUEUE_SIZE];
     xharray<registration_info>  m_RegisteredDefs;
     static_data*                m_pStaticData;
+    xarray<decal_span>         m_StaticSpans;
 
     uv_data                     m_TriangleTemplateUV[3];
 };

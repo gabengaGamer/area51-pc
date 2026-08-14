@@ -4,18 +4,18 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_ServerConfig.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
@@ -24,14 +24,13 @@
 ui_manager::control_tem ServerConfigControls[] = 
 {
     // Frames.
-    { IDC_SERVER_CONFIG_CHANGE_MAP,	    "IDS_CONFIG_CHANGE_MAP",            "button",  110,  40, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_SERVER_CONFIG_KICK_PLAYER,	"IDS_CONFIG_KICK_PLAYER",           "button",  110,  75, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_SERVER_CONFIG_CHANGE_TEAM,	"IDS_CONFIG_TEAM_CHANGE",           "button",  110, 110, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_SERVER_CONFIG_RESTART_MAP,	"IDS_CONFIG_RESTART_MAP",           "button",  110, 145, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_SERVER_CONFIG_RECONFIGURE,	"IDS_CONFIG_RECONFIGURE_SERVER",    "button",  110, 180, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_SERVER_CONFIG_SHUTDOWN,	    "IDS_CONFIG_SHUTDOWN_SERVER",       "button",  110, 215, 120, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_SERVER_CONFIG_CHANGE_MAP,	    "IDS_CONFIG_CHANGE_MAP",            "button",  110,  40, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SERVER_CONFIG_KICK_PLAYER,	"IDS_CONFIG_KICK_PLAYER",           "button",  110,  75, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SERVER_CONFIG_CHANGE_TEAM,	"IDS_CONFIG_TEAM_CHANGE",           "button",  110, 110, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SERVER_CONFIG_RESTART_MAP,	"IDS_CONFIG_RESTART_MAP",           "button",  110, 145, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SERVER_CONFIG_RECONFIGURE,	"IDS_CONFIG_RECONFIGURE_SERVER",    "button",  110, 180, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SERVER_CONFIG_SHUTDOWN,	    "IDS_CONFIG_SHUTDOWN_SERVER",       "button",  110, 215, 120, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE },
 	
-	{ IDC_SERVER_CONFIG_NAV_TEXT,       "IDS_NULL",                         "text",      0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -119,7 +118,6 @@ xbool dlg_server_config::Create( s32                        UserID,
     m_pButtonRestartMap     = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_RESTART_MAP ); 		    
     m_pButtonReconfigure    = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_RECONFIGURE ); 		
 	m_pButtonShutdown       = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_SHUTDOWN    ); 	
-    m_pNavText 	            = (ui_text*)    FindChildByID( IDC_SERVER_CONFIG_NAV_TEXT    );
 
     s32 iControl = g_StateMgr.GetCurrentControl();
     if( (iControl == -1) || (GotoControl(iControl)==NULL) )
@@ -142,14 +140,11 @@ xbool dlg_server_config::Create( s32                        UserID,
     m_pButtonRestartMap     ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pButtonReconfigure    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pButtonShutdown       ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText              ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );   
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // check for team based game
     const game_score& ScoreData = GameMgr.GetScore();
@@ -198,14 +193,7 @@ void dlg_server_config::Render( s32 ox, s32 oy )
 
 
     // render background filter
-	s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+	rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
@@ -261,7 +249,7 @@ void dlg_server_config::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_server_config::OnPadSelect( ui_win* pWin )
+void dlg_server_config::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -297,12 +285,12 @@ void dlg_server_config::OnPadSelect( ui_win* pWin )
 
             // open confirmation dialog
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
 
 
             m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_GAMEMGR_POPUP" ), 
@@ -330,12 +318,12 @@ void dlg_server_config::OnPadSelect( ui_win* pWin )
       
             // open confirmation dialog
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
             
 
             m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_GAMEMGR_POPUP" ), 
@@ -352,7 +340,7 @@ void dlg_server_config::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_server_config::OnPadBack( ui_win* pWin )
+void dlg_server_config::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -384,13 +372,11 @@ void dlg_server_config::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pButtonRestartMap     ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pButtonReconfigure    ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pButtonShutdown       ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText              ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 
             s32 iControl = g_StateMgr.GetCurrentControl();
             if( (iControl == -1) || (GotoControl(iControl)==NULL) )
             {
                 GotoControl( (ui_control*)m_pButtonChangeMap );
-                m_pButtonChangeMap->SetFlag(WF_HIGHLIGHT, TRUE);        
                 g_UiMgr->SetScreenHighlight( m_pButtonChangeMap->GetPosition() );
                 m_CurrentControl =  IDC_SERVER_CONFIG_CHANGE_MAP;
             }
@@ -398,7 +384,6 @@ void dlg_server_config::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             {
                 ui_control* pControl = GotoControl( iControl );
                 ASSERT( pControl );
-                pControl->SetFlag(WF_HIGHLIGHT, TRUE);
                 g_UiMgr->SetScreenHighlight(pControl->GetPosition() );
                 m_CurrentControl = iControl;
             }
@@ -434,9 +419,9 @@ void dlg_server_config::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         if( Count == 0 )
         {
             // nobody to kick!
-            if( m_pButtonKickPlayer->GetFlags(WF_HIGHLIGHT) )
+            if( m_pButtonKickPlayer->IsFocused() )
             {
-                OnPadNavigate( this, ui_manager::NAV_UP, 1, 0 );
+                OnNavigate( this, ui_navigation::Up, 1, 0 );
             }
             m_pButtonKickPlayer->SetFlag( WF_DISABLED, TRUE );
         }
@@ -474,39 +459,39 @@ void dlg_server_config::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp = NULL;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
         }
     }
 
     // update the glow bar
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
-    if( m_pButtonChangeMap->GetFlags(WF_HIGHLIGHT) )
+    if( m_pButtonChangeMap->IsFocused() )
     {
         highLight = 0;
         g_UiMgr->SetScreenHighlight( m_pButtonChangeMap->GetPosition() );
     }
-    else if( m_pButtonKickPlayer->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonKickPlayer->IsFocused() )
     {
         highLight = 1;
         g_UiMgr->SetScreenHighlight( m_pButtonKickPlayer->GetPosition() );
     }
-    else if( m_pButtonChangeTeam->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonChangeTeam->IsFocused() )
     {
         highLight = 2;
         g_UiMgr->SetScreenHighlight( m_pButtonChangeTeam->GetPosition() );
     }
-    else if( m_pButtonRestartMap->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonRestartMap->IsFocused() )
     {
         highLight = 3;
         g_UiMgr->SetScreenHighlight( m_pButtonRestartMap->GetPosition() );
     }
-    else if( m_pButtonReconfigure->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonReconfigure->IsFocused() )
     {
         highLight = 4;
         g_UiMgr->SetScreenHighlight( m_pButtonReconfigure->GetPosition() );
     }
-    else if( m_pButtonShutdown->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonShutdown->IsFocused() )
     {
         highLight = 5;
         g_UiMgr->SetScreenHighlight( m_pButtonShutdown->GetPosition() );

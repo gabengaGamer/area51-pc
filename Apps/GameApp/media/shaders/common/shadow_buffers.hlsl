@@ -9,26 +9,151 @@
 #ifndef SHADOW_BUFFERS_HLSL
 #define SHADOW_BUFFERS_HLSL
 
+//==============================================================================
+//  DEFINES
+//==============================================================================
+
 #define MAX_SHADOW_SOURCES 64
 #define MAX_SHADOW_LIGHTS 8
 #define POINT_SHADOW_FACE_COUNT 6
 
 //==============================================================================
+//  INCLUDES
+//==============================================================================
 
-cbuffer cbShadowMaps : register(b5)
+#include "shader_bindings.hlsl"
+
+//==============================================================================
+
+#if defined(A51_SHADER_BINDING_SDL) && defined(A51_SHADER_STAGE_PIXEL)
+    #ifndef A51_GEOM_SHADOW_MATRICES_BINDING
+        #define A51_GEOM_SHADOW_MATRICES_BINDING 10
+    #endif
+    #ifndef A51_GEOM_SHADOW_DATA_BINDING
+        #define A51_GEOM_SHADOW_DATA_BINDING 11
+    #endif
+#else
+    #ifndef A51_GEOM_SHADOW_MATRICES_BINDING
+        #define A51_GEOM_SHADOW_MATRICES_BINDING 3
+    #endif
+    #ifndef A51_GEOM_SHADOW_DATA_BINDING
+        #define A51_GEOM_SHADOW_DATA_BINDING 4
+    #endif
+#endif
+
+//==============================================================================
+//  RESOURCES
+//==============================================================================
+
+A51_STORAGE_BUFFER_ATTR(27, A51_GEOM_SHADOW_MATRICES_BINDING)
+StructuredBuffer<float4x4> FaceShadowMatrices
+    A51_STORAGE_BUFFER_BIND(27, A51_GEOM_SHADOW_MATRICES_BINDING);
+
+A51_STORAGE_BUFFER_ATTR(28, A51_GEOM_SHADOW_DATA_BINDING)
+StructuredBuffer<float4> ShadowMapData
+    A51_STORAGE_BUFFER_BIND(28, A51_GEOM_SHADOW_DATA_BINDING);
+
+#define SHADOW_FACE_POS_OFFSET        0u
+#define SHADOW_FACE_DIR_OFFSET       ( SHADOW_FACE_POS_OFFSET + MAX_SHADOW_SOURCES )
+#define SHADOW_FACE_DATA_OFFSET      ( SHADOW_FACE_DIR_OFFSET + MAX_SHADOW_SOURCES )
+#define SHADOW_FACE_PROJECTION_OFFSET ( SHADOW_FACE_DATA_OFFSET + MAX_SHADOW_SOURCES )
+#define SHADOW_FACE_RECT_OFFSET      ( SHADOW_FACE_PROJECTION_OFFSET + MAX_SHADOW_SOURCES )
+#define SHADOW_POINT_POS_OFFSET      ( SHADOW_FACE_RECT_OFFSET + MAX_SHADOW_SOURCES )
+#define SHADOW_POINT_DATA_OFFSET     ( SHADOW_POINT_POS_OFFSET + MAX_SHADOW_LIGHTS )
+#define SHADOW_POINT_PARAMS_OFFSET   ( SHADOW_POINT_DATA_OFFSET + MAX_SHADOW_LIGHTS )
+#define SHADOW_COUNTS_OFFSET         ( SHADOW_POINT_PARAMS_OFFSET + MAX_SHADOW_LIGHTS )
+#define SHADOW_PARAMS_OFFSET         ( SHADOW_COUNTS_OFFSET + 1u )
+#define SHADOW_FILTER_PARAMS_OFFSET  ( SHADOW_PARAMS_OFFSET + 1u )
+#define SHADOW_CONTACT_PARAMS_OFFSET ( SHADOW_FILTER_PARAMS_OFFSET + 1u )
+
+float4 GetFaceShadowLightPosRadius( uint index )
 {
-    float4x4 FaceShadowMatrix[MAX_SHADOW_SOURCES];
-    float4   FaceShadowLightPosRadius[MAX_SHADOW_SOURCES];
-    float4   FaceShadowLightDirFalloff[MAX_SHADOW_SOURCES];
-    float4   FaceShadowLightData[MAX_SHADOW_SOURCES];        // x = cone/coverage cosine, y = receive near z, z = far z, w = 0 spot / 1 point face
-    float4   PointShadowLightPosRadius[MAX_SHADOW_LIGHTS];
-    float4   PointShadowLightData[MAX_SHADOW_LIGHTS];        // x = falloff, y = receive near z, z = far z
-    float4   PointShadowLightParams[MAX_SHADOW_LIGHTS];      // x = first face source, y = face count
-    uint     FaceShadowCount;
-    uint     PointShadowLightCount;
-    float2   ShadowPadding;
-    float4   ShadowParams;                         // z = min variance, w = light bleed reduction
-};
+    return ShadowMapData[SHADOW_FACE_POS_OFFSET + index];
+}
+
+//==============================================================================
+
+float4 GetFaceShadowLightDirFalloff( uint index )
+{
+    return ShadowMapData[SHADOW_FACE_DIR_OFFSET + index];
+}
+
+//==============================================================================
+
+float4 GetFaceShadowLightData( uint index )
+{
+    return ShadowMapData[SHADOW_FACE_DATA_OFFSET + index];
+}
+
+//==============================================================================
+
+float4 GetFaceShadowProjectionData( uint index )
+{
+    return ShadowMapData[SHADOW_FACE_PROJECTION_OFFSET + index];
+}
+
+//==============================================================================
+
+float4 GetFaceShadowAtlasRect( uint index )
+{
+    return ShadowMapData[SHADOW_FACE_RECT_OFFSET + index];
+}
+
+//==============================================================================
+
+float4 GetPointShadowLightPosRadius( uint index )
+{
+    return ShadowMapData[SHADOW_POINT_POS_OFFSET + index];
+}
+
+//==============================================================================
+
+float4 GetPointShadowLightData( uint index )
+{
+    return ShadowMapData[SHADOW_POINT_DATA_OFFSET + index];
+}
+
+//==============================================================================
+
+float4 GetPointShadowLightParams( uint index )
+{
+    return ShadowMapData[SHADOW_POINT_PARAMS_OFFSET + index];
+}
+
+//==============================================================================
+
+uint GetFaceShadowCount()
+{
+    return asuint( ShadowMapData[SHADOW_COUNTS_OFFSET].x );
+}
+
+//==============================================================================
+
+uint GetPointShadowLightCount()
+{
+    return asuint( ShadowMapData[SHADOW_COUNTS_OFFSET].y );
+}
+
+//==============================================================================
+
+float4 GetShadowParams()
+{
+    return ShadowMapData[SHADOW_PARAMS_OFFSET];
+}
+
+//==============================================================================
+
+float4 GetShadowFilterParams()
+{
+    return ShadowMapData[SHADOW_FILTER_PARAMS_OFFSET];
+}
+
+//==============================================================================
+
+float4 GetShadowContactParams()
+{
+    return ShadowMapData[SHADOW_CONTACT_PARAMS_OFFSET];
+}
 
 //==============================================================================
 #endif // SHADOW_BUFFERS_HLSL

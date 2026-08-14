@@ -4,8 +4,8 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
-#include "..\AudioMgr\audioMgr.hpp"
+#include "Entropy.hpp"
+#include "../AudioMgr/AudioMgr.hpp"
 #include "ui_check.hpp"
 #include "ui_manager.hpp"
 #include "ui_font.hpp"
@@ -47,7 +47,6 @@ ui_check::ui_check( void )
 
 ui_check::~ui_check( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -69,52 +68,14 @@ xbool ui_check::Create( s32 UserID, ui_manager* pManager, const irect& Position,
 
 void ui_check::Render( s32 ox, s32 oy )
 {
-    s32     State = ui_manager::CS_NORMAL;
-
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
-        xcolor  TextColor1 = XCOLOR_WHITE;
-        xcolor  TextColor2 = XCOLOR_BLACK;
-
         // Calculate rectangle
         irect    r;
         r.Set( (m_Position.l+ox), (m_Position.t+oy), (m_Position.r+ox), (m_Position.b+oy) );
 
-        // Render appropriate state
-        if( m_Flags & WF_DISABLED )
-        {
-            State = ui_manager::CS_DISABLED;
-            TextColor1 = XCOLOR_GREY;
-            TextColor2 = xcolor(0,0,0,0);
-        }
-        else if( m_Flags & WF_HIGHLIGHT )
-        {
-            if( m_bIsChecked )
-            {
-                State = ui_manager::CS_HIGHLIGHT_SELECTED;
-                TextColor1 = XCOLOR_WHITE;
-                TextColor2 = XCOLOR_BLACK;
-            }
-            else
-            {
-                State = ui_manager::CS_HIGHLIGHT;
-                TextColor1 = XCOLOR_WHITE;
-                TextColor2 = XCOLOR_BLACK;
-            }
-        }
-        else if( m_bIsChecked )
-        {
-            State = ui_manager::CS_SELECTED;
-            TextColor1 = XCOLOR_WHITE;
-            TextColor2 = XCOLOR_BLACK;
-        }
-        else
-        {
-            State = ui_manager::CS_NORMAL;
-            TextColor1 = XCOLOR_WHITE;
-            TextColor2 = XCOLOR_BLACK;
-        }
+        s32 const State = GetVisualState( m_bIsChecked );
         m_pManager->RenderElement( m_iElement, r, State );
 
         // Render children
@@ -127,18 +88,16 @@ void ui_check::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void ui_check::OnPadSelect( ui_win* pWin )
+void ui_check::OnAccept( ui_win* pWin )
 {
     if( pWin == (ui_win*)this )
     {
-        m_Flags ^= WF_SELECTED;
         m_bIsChecked = !m_bIsChecked;
 
         // Notify Parent
         if( m_pParent )
-            m_pParent->OnNotify( m_pParent, this, WN_CHECK_CHANGE, (void*)(uaddr)(m_Flags & WF_SELECTED) );
+            Notify( ui_notification_type::CheckChanged, static_cast<s32>( m_bIsChecked  ) );
 
-        //g_AudioMgr.Play("OptionSelect");
     }
 }
 
@@ -154,16 +113,4 @@ void ui_check::SetChecked( xbool State )
 xbool ui_check::IsChecked( void ) const
 {
     return m_bIsChecked;
-}
-
-//=========================================================================
-
-void ui_check::OnLBDown ( ui_win* pWin )
-{
-#ifndef TARGET_PC
-    (void)pWin;
-    return;
-#else
-    OnPadSelect( pWin );
-#endif
 }

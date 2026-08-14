@@ -178,5 +178,4 @@ static s16 s_iicon_bp_bag[] =
 };
 
 
-#define DRAW_ICON_BP_BAG() draw_icon( NUM_FACETS_ICON_BP_BAG, NUM_VERTICES_ICON_BP_BAG, s_vicon_bp_bag, s_iicon_bp_bag )
 

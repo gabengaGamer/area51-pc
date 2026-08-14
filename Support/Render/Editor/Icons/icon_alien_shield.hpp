@@ -243,5 +243,4 @@ static s16 s_iicon_alien_shield[] =
 };
 
 
-#define DRAW_ICON_ALIEN_SHIELD() draw_icon( NUM_FACETS_ICON_ALIEN_SHIELD, NUM_VERTICES_ICON_ALIEN_SHIELD, s_vicon_alien_shield, s_iicon_alien_shield )
 

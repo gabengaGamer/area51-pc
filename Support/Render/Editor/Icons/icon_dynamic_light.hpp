@@ -286,5 +286,4 @@ static s16 s_iicon_dynamic_light[] =
 };
 
 
-#define DRAW_ICON_DYNAMIC_LIGHT() draw_icon( NUM_FACETS_ICON_DYNAMIC_LIGHT, NUM_VERTICES_ICON_DYNAMIC_LIGHT, s_vicon_dynamic_light, s_iicon_dynamic_light )
 

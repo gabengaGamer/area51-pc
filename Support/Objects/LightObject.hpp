@@ -5,9 +5,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Objects\Interpolation\TransformInterpolation.hpp"
-#include "Render\Texture.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
 
 //=========================================================================
 // LIGHT
@@ -43,13 +42,6 @@ public:
     static  const object_desc&  GetObjectType   ( void );
 
 protected:
-    virtual void            CaptureRenderInterpState  ( void );
-    virtual void            UpdateRenderInterpState   ( f32 Alpha );
-    virtual void            ClearRenderInterpState    ( void );
-    virtual void            InvalidateRenderInterpState( void );
-    virtual void            SnapRenderInterpState     ( void );
-            void            InvalidateRenderState( void );
-    const   matrix4&        GetRenderL2W        ( void ) const;
     
     virtual void            OnCollectLight  ( void );
     virtual void            OnRender        ( void );
@@ -63,7 +55,6 @@ protected:
     xcolor                  m_Ambient;
     f32                     m_Intensity;
     xbool                   m_bAccentAngle;
-    transform_interp_cache  m_RenderCache;
 
 // Make friends here
 };
@@ -95,7 +86,7 @@ public:
     virtual void            OnEnumProp          ( prop_enum&  List      );
     virtual void            OnActivate          ( xbool       Flag      );
     virtual xbool           OnProperty          ( prop_query& I         );
-    virtual void            OnAdvanceLogic      ( f32         DeltaTime );
+    virtual void            OnAdvanceSimulation      ( f32         DeltaTime );
     virtual void            OnCollectLight      ( void );
     virtual void            OnRender            ( void );
     virtual xbool           IsDynamic           ( void ) { return TRUE; }
@@ -166,11 +157,13 @@ protected:
     void    ActivateRandom      ( xbool Flag );
     void    ActivateOneShotFade ( xbool Flag );
 
-    void    FadingLogic         ( f32 DeltaTime );
+    f32     FadingLogic         ( f32 DeltaTime );
     void    ConstantLogic       ( f32 DeltaTime );
     void    FlashingLogic       ( f32 DeltaTime );
     void    RandomLogic         ( f32 DeltaTime );
     void    OneShotFadeLogic    ( f32 DeltaTime );
+
+    void    AdvanceFlashLogic   ( f32 DeltaTime, xbool bRandom );
 
     s32             m_EmitterType;
     f32             m_Falloff;

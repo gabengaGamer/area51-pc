@@ -240,5 +240,4 @@ static s16 s_iicon_projector[] =
 };
 
 
-#define DRAW_ICON_PROJECTOR() draw_icon( NUM_FACETS_ICON_PROJECTOR, NUM_VERTICES_ICON_PROJECTOR, s_vicon_projector, s_iicon_projector )
 

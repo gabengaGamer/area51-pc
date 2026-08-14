@@ -7,8 +7,8 @@
 //==============================================================================
 
 #include "ConversationMgr.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Audio\audio_stream_controller.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Audio/audio_stream_controller.hpp"
 
 audio_stream_controller g_ConversationStreamControl;
 

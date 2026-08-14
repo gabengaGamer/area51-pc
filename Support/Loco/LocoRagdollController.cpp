@@ -90,7 +90,7 @@ void loco_ragdoll_controller::GetInterpKeys( const info& Info, anim_key* pKey )
 // Mixes the anims keyframes into the dest keyframes
 void loco_ragdoll_controller::MixKeys( const info& Info, anim_key* pDestKey )
 {
-    CONTEXT("loco_ragdoll_controller::MixKeys") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "loco_ragdoll_controller::MixKeys") ;
 
     s32 i ;
 

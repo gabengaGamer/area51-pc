@@ -239,8 +239,6 @@ void conn_mgr::Init( net_socket&        Local,
     m_VoiceSocket.Bind( Remote.GetPort(), NET_FLAGS_VDP );
     m_RemoteVoiceAddress.Clear();
 #endif
-//  m_VoiceFifo.Init(m_VoiceBuffer,sizeof(m_VoiceBuffer));
-
     /*
     m_pUpdateMgr->Init(ClientIndex);
     */
@@ -294,6 +292,7 @@ void conn_mgr::ClearConnection( void )
 
     m_HeartbeatsSent        =  0;
     m_AveragePing           = 16;
+    m_LastPing              = 0.0f;
 
     ResetTimeouts();
 
@@ -333,7 +332,6 @@ void conn_mgr::Kill( void )
     m_IsConnected   = FALSE;
     m_IsInitialized = FALSE;
     ClearConnection();
-//  m_VoiceFifo.Kill();
     m_RemoteAddress.Clear();
     m_pUpdateMgr->Kill();
 }
@@ -869,8 +867,6 @@ void conn_mgr::ProcessHeartbeatResponse( netstream& BitStream )
         x_printf("\n");
     }
 
-    UpdateShipInterval();
-
     //if( m_AveragePing > 10000 )
     //    m_AveragePing = (f32)Time;
     //else
@@ -1121,7 +1117,6 @@ void conn_mgr::ResetTimeouts( void )
 void conn_mgr::SendHeartbeat( void )
 {
     m_HeartbeatsSent++;
-    m_HeartbeatInterval = HEARTBEAT_INTERVAL;
 
     // If the connection has not received any data for a second, then we start to increment
     // the calculated ping time. This will throttle the connection to the client should no
@@ -1254,18 +1249,11 @@ void conn_mgr::WriteManagerData( conn_packet& Packet, netstream& BitStream )
 
     Cursor = BitStream.GetCursor();
 
-    // This is temporary until we get the correct mechanism
-    // for sending voice over the network.
 #if defined(TARGET_XBOX)
     {
-        // Write port # to be used for voice data
         BitStream.WriteS16( m_VoiceSocket.GetPort() );
 
         netstream BS;
-        // The first two bytes will be 0 in the control stream. This tells the xbox
-        // packet send layer that there are no encrypted blocks of data within this
-        // VDP packet. The provide update function will deal with padding out this
-        // control data when necessary.
         BS.WriteS16(2);
         if( m_pVoiceProxy )
         {
@@ -1281,8 +1269,12 @@ void conn_mgr::WriteManagerData( conn_packet& Packet, netstream& BitStream )
             m_VoiceSocket.Send( m_RemoteVoiceAddress, BS );
         }
     }
-#else
-    if( m_pVoiceProxy )
+#endif
+
+#if defined(TARGET_PC)
+    // Desktop voice travels in the reliable connection packet.  The server
+    // owns one proxy per client; a client sends its local headset data.
+    if( m_pVoiceProxy != NULL )
     {
         m_pVoiceProxy->ProvideUpdate( BitStream );
     }
@@ -1401,7 +1393,6 @@ void conn_mgr::ProcessManagerData( netstream& BitStream )
         HasData = m_VoiceSocket.Receive( Remote, BS );
         while( HasData )
         {
-        
             if( Remote==m_RemoteVoiceAddress )
             {
                 BS.ReadS16( HeaderLength );
@@ -1419,10 +1410,15 @@ void conn_mgr::ProcessManagerData( netstream& BitStream )
             HasData = m_VoiceSocket.Receive( Remote, BS );
         }
     }
-#else
+#endif
+
+#if defined(TARGET_PC)
+    // This mirrors the desktop voice payload written above.  Server-side
+    // connections terminate in a voice proxy; the local client terminates in
+    // the global voice manager.
     if( IsServer() )
     {
-        ASSERT( m_pVoiceProxy );
+        ASSERT( m_pVoiceProxy != NULL );
         m_pVoiceProxy->AcceptUpdate( BitStream );
     }
     else
@@ -1540,7 +1536,7 @@ f32 conn_mgr::GetShipInterval(void)
 
 //==============================================================================
 
-void conn_mgr::UpdateShipInterval(void)
+void conn_mgr::UpdateShipInterval( f32 DeltaTime )
 {
     f32 interval;
 
@@ -1552,13 +1548,14 @@ void conn_mgr::UpdateShipInterval(void)
     if (interval > MAX_SHIP_INTERVAL)
         interval = MAX_SHIP_INTERVAL;
 
-    if ( interval < m_PacketShipInterval)
+    f32 const Adjustment = SHIP_INTERVAL_ADJUSTMENT_RATE * DeltaTime;
+    if( interval < m_PacketShipInterval )
     {
-        m_PacketShipInterval -= (SHIP_INTERVAL_INCREMENT/3);
+        m_PacketShipInterval = MAX( interval, m_PacketShipInterval - Adjustment );
     }
-    if ( interval > m_PacketShipInterval)
+    else if( interval > m_PacketShipInterval )
     {
-        m_PacketShipInterval += (SHIP_INTERVAL_INCREMENT/3);
+        m_PacketShipInterval = MIN( interval, m_PacketShipInterval + Adjustment );
     }
 
     if (m_LastPing > 600.0f)
@@ -1594,9 +1591,10 @@ void conn_mgr::Update(f32 DeltaTime)
 #endif
 
     m_HeartbeatInterval -= DeltaTime;
-    if (m_HeartbeatInterval < 0.0f)
+    if( (m_HeartbeatInterval <= 0.0f) && (DeltaTime > 0.0f) )
     {
         SendHeartbeat();
+        m_HeartbeatInterval += HEARTBEAT_INTERVAL;
     }
 
     m_ConfirmAliveTimeout -= DeltaTime;
@@ -1609,7 +1607,7 @@ void conn_mgr::Update(f32 DeltaTime)
         return;
     }
 
-    UpdateShipInterval();
+    UpdateShipInterval( DeltaTime );
 
     // Stat processing.
     m_StatsClock += DeltaTime;
@@ -1676,16 +1674,15 @@ void conn_mgr::Update(f32 DeltaTime)
 
 void conn_mgr::QueueVoice(const byte* pData, s32 Length)
 {
-    (void)pData;
-    (void)Length;
-    ASSERT(FALSE);
-    /*
-    if (Length)
+    if( (pData == NULL) || (Length <= 0) )
     {
-        LOG_MESSAGE("conn_mgr::QueueVoice","Queued %d bytes to client %d",Length, m_ClientIndex);
+        return;
     }
-    m_VoiceFifo.Insert(pData,Length);
-    */
+
+    if( m_pVoiceProxy != NULL )
+    {
+        m_pVoiceProxy->Write( pData, Length );
+    }
 }
 
 //==============================================================================

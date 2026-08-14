@@ -71,7 +71,7 @@ public:
     void Render ( particle Particles[], xbool bBonesOnly = TRUE ) ;
 #endif
 
-} PS2_ALIGNMENT(16);
+};
 
 //==============================================================================
 

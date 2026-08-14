@@ -4017,7 +4017,7 @@ static byte s_pBuffer[ 420 * 15 ];  // Encoded data takes 420 bytes per second
 void XBoxLiveTest( void )
 {
     g_MatchMgr.Init();
-    g_VoiceMgr.Init( TRUE, TRUE );
+    g_VoiceMgr.Init( TRUE );
 
     f32 DeltaTime = 1.0f / 30.0f;
 

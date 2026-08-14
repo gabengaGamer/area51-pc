@@ -14,7 +14,7 @@
 //==============================================================================
 
 #include "Trigger.hpp"
-#include "LuaLib\LuaMgr.hpp"
+#include "LuaLib/LuaMgr.hpp"
 
 
 //=========================================================================
@@ -101,11 +101,11 @@ xbool trigger::OnActivate( slot_ID ID )
 
 
 //==============================================================================
-void trigger::OnAdvanceLogic  ( f32 DeltaTime )
+void trigger::OnAdvanceSimulation  ( f32 DeltaTime )
 {
-    CONTEXT( "trigger::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "trigger::OnAdvanceSimulation" );
 
-    object::OnAdvanceLogic(DeltaTime);
+    object::OnAdvanceSimulation(DeltaTime);
     
     //  increase how much time since we activated
     m_LastActivationTime += DeltaTime;

@@ -4,20 +4,20 @@
 //
 //=========================================================================
  
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_blankbox.hpp"
-#include "ui\ui_friendlist.hpp" 
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_blankbox.hpp"
+#include "UI/ui_friendlist.hpp" 
 
 #include "dlg_Friends.hpp"
 #include "dlg_SubMenu.hpp"  
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp" 
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\Voice\VoiceMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp" 
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/Voice/VoiceMgr.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
@@ -37,7 +37,6 @@ enum controls
     IDC_FRIEND_NAME_TEXT,
     IDC_FRIEND_GAME_TEXT,
     IDC_FRIEND_STATUS_TEXT,
-    IDC_FRIEND_NAV_TEXT,
 };
 
 enum local_msg_type
@@ -60,11 +59,10 @@ enum local_msg_type
 ui_manager::control_tem FriendsControls[] = 
 {
     // Frames.
-    { IDC_FRIEND_LIST,          "IDS_NULL",         "friendlist",  40,  40, 416, 222, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_FRIEND_DETAILS,       "IDS_NULL",         "blankbox",    40, 272, 416,  60, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_FRIEND_GAME_TEXT,     "IDS_NULL",         "text",        48, 294, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_FRIEND_STATUS_TEXT,   "IDS_NULL",         "text",        48, 310, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_FRIEND_NAV_TEXT,      "IDS_NULL",         "text",         0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_FRIEND_LIST,          "IDS_NULL",         "friendlist",  40,  40, 416, 222, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_FRIEND_DETAILS,       "IDS_NULL",         "blankbox",    40, 272, 416,  60, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_FRIEND_GAME_TEXT,     "IDS_NULL",         "text",        48, 294, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_FRIEND_STATUS_TEXT,   "IDS_NULL",         "text",        48, 310, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 };
 
 
@@ -146,7 +144,7 @@ xbool dlg_friends::Create( s32                        UserID,
     
     m_pFriendList = (ui_friendlist*)FindChildByID( IDC_FRIEND_LIST );
     m_pFriendList->SetLineHeight( 32 );
-    m_pFriendList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pFriendList->SetActive( TRUE );
     m_pFriendList->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pFriendList->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pFriendList->EnableHeaderBar();
@@ -162,11 +160,7 @@ xbool dlg_friends::Create( s32                        UserID,
     m_pFriendList->Configure( TRUE );
 
     // set up nav text
-    m_pNavText = (ui_text*) FindChildByID( IDC_FRIEND_NAV_TEXT );
     
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);    
 
     // get server details box
     m_pFriendDetails = (ui_blankbox*)FindChildByID( IDC_FRIEND_DETAILS );
@@ -258,14 +252,7 @@ void dlg_friends::Render( s32 ox, s32 oy )
     
     if( m_bRenderBlackout )
     {
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-        // Nasty hack to force PS2 to draw to rb.l = 0
-        rb.Set( -1, 0, XRes, YRes );
-#else
-        rb.Set( 0, 0, XRes, YRes );
-#endif
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
             xcolor(0,0,0,180),
             xcolor(0,0,0,180),
@@ -325,31 +312,14 @@ void dlg_friends::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_friends::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_friends::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    (void)pWin;
-    (void)pSender;
-    (void)Command;
-    (void)pData;
-
-    if ( m_State == DIALOG_STATE_ACTIVE )
-    {
-        if (Command == WN_LIST_ACCEPTED)
-        {
-        }
-    } 
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 }
 
 //=========================================================================
 
-void dlg_friends::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
-{
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
-}
-
-//=========================================================================
-
-void dlg_friends::OnPadSelect( ui_win* pWin )
+void dlg_friends::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -583,7 +553,7 @@ const char* dlg_friends::GetMessageString( s32 MessageID ) const
 
 //=========================================================================
 
-void dlg_friends::OnPadBack( ui_win* pWin )
+void dlg_friends::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -690,7 +660,7 @@ void dlg_friends::AcceptInvite( void )
     {
         // Player invited me but now the session is over.
         irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-        m_DefaultPopUp = (dlg_popup*)g_UiMgr->OpenDialog( g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+        m_DefaultPopUp = (dlg_popup*)g_UiMgr->OpenDialog( g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
         xwstring InviteGameSessionOverMsgText(g_StringTableMgr( "ui", "IDS_ONLINE_SESSION_ENDED" ));                        
         m_DefaultPopUp->Configure( g_StringTableMgr( "ui", "IDS_ACCEPT" ), 
             FALSE, 
@@ -729,7 +699,6 @@ void dlg_friends::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             // activate text
             m_pFriendGame       ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pFriendStatus     ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText          ->SetFlag(ui_win::WF_VISIBLE, TRUE);
         }
     }
 
@@ -777,7 +746,7 @@ void dlg_friends::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
             // Remove the popup
             m_PopUp = NULL;
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
         }
 
         // Popup is active so skip over the sub menu
@@ -801,13 +770,13 @@ void dlg_friends::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                         if( g_StateMgr.IsPaused() )
                         {
                             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
                             m_PopUpType = FRIEND_POPUP_JOIN;
 
                             // set nav text
                             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
                             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                            SetNavTextVisible( FALSE );
 
                             if( g_NetworkMgr.IsOnline() )
                             {                       
@@ -862,12 +831,12 @@ void dlg_friends::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                         {                   
                             // confirm to 
                             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                            m_AttachPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                            m_AttachPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
                             // set nav text
                             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
                             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                            SetNavTextVisible( FALSE );
 
                             // configure message
                             m_AttachPopUp->Configure( g_StringTableMgr( "ui", "IDS_ADD_ATTACHMENT" ), 
@@ -902,13 +871,13 @@ void dlg_friends::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                         if( g_StateMgr.IsPaused() )
                         {
                             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
                             m_PopUpType = FRIEND_POPUP_ACCEPT_INVITE;
 
                             // set nav text
                             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
                             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                            SetNavTextVisible( FALSE );
 
                             if( g_NetworkMgr.IsOnline() )
                             {                       
@@ -974,13 +943,13 @@ void dlg_friends::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     case LOCAL_MSG_BLOCK_FRIEND_REQ:
                     {
                         irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
                         m_PopUpType = FRIEND_POPUP_REMOVE;
 
                         // set nav text
                         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
                         navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                        m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                        SetNavTextVisible( FALSE );
 
                         // configure message
                         m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_BLOCK_REQUEST_TITLE" ), 
@@ -1002,13 +971,13 @@ void dlg_friends::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     case LOCAL_MSG_REMOVE_FRIEND:
                     {
                         irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
                         m_PopUpType = FRIEND_POPUP_REMOVE;
 
                         // set nav text
                         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
                         navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                        m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                        SetNavTextVisible( FALSE );
 
                         // configure message
                         m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_REMOVE_FRIEND_TITLE" ), 
@@ -1026,12 +995,12 @@ void dlg_friends::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                         // Setup to record a voice message.
                         irect r;
                         r.Set(0,0,400,200);
-                        m_PlayAttachPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                        m_PlayAttachPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
                         xwstring navText( g_StringTableMgr( "ui", "IDS_PLAY_ATTACHMENT_FROM" ) );
                         navText += " ";
                         navText += m_Buddy.Name;
-                        m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                        SetNavTextVisible( FALSE );
 
                         // configure message
                         m_PlayAttachPopUp->ConfigurePlayDialog( r,
@@ -1077,7 +1046,7 @@ void dlg_friends::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     // Setup to record a voice message.
                     irect r;
                     r.Set(0,0,460,200);
-                    m_AttachPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                    m_AttachPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
                     // configure message
                     m_AttachPopUp->ConfigureRecordDialog( r,
@@ -1095,7 +1064,7 @@ void dlg_friends::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     g_MatchMgr.InviteBuddy( m_Buddy );            // send game invite to friend
                     ActivateSyncPopup(SYNC_MODE_INVITE_BUDDY);
                     m_AttachPopUp = NULL;
-                    m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+                    SetNavTextVisible( TRUE );
                 }                
             }
             else // ? record go well?
@@ -1230,7 +1199,7 @@ void dlg_friends::FillFriendsList( void )
     }
 
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-    m_pNavText->SetLabel( navText );
+    SetNavText( navText );
 }
 
 //=========================================================================
@@ -1293,7 +1262,7 @@ void dlg_friends::ActivateSyncPopup( s32 SyncMode )
 
     // Confirm to send attachment. (XBOX only)
     irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-    m_SyncPopup = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+    m_SyncPopup = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
     // message
     xwstring Message;

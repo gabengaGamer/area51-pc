@@ -4,7 +4,7 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 #include "ui_bitmap.hpp"
 #include "ui_manager.hpp"
 
@@ -45,7 +45,6 @@ ui_bitmap::ui_bitmap( void )
 
 ui_bitmap::~ui_bitmap( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -80,11 +79,11 @@ void ui_bitmap::Render( s32 ox, s32 oy )
         {
             if( m_bIsElement )
             {
-                g_UiMgr->RenderElement( m_BitmapID, r, m_RenderState, GetLabelColor() );
+                m_pManager->RenderElement( m_BitmapID, r, m_RenderState, GetLabelColor() );
             }
             else
             {
-                g_UiMgr->RenderBitmap( m_BitmapID, r, GetLabelColor() );
+                m_pManager->RenderBitmap( m_BitmapID, r, GetLabelColor() );
             }
         }
 
@@ -98,13 +97,6 @@ void ui_bitmap::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void ui_bitmap::OnUpdate( f32 DeltaTime )
-{
-    (void)DeltaTime;
-}
-
-//=========================================================================
-
 void ui_bitmap::SetBitmap( s32 BitmapID, xbool bIsElement, s32 State )
 {
     m_BitmapID    = BitmapID; 
@@ -113,4 +105,3 @@ void ui_bitmap::SetBitmap( s32 BitmapID, xbool bIsElement, s32 State )
 }
 
 //=========================================================================
-														 

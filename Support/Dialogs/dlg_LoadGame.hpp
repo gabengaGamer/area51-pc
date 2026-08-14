@@ -11,8 +11,7 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "x_bitmap.hpp"
+#include "UI/ui_dialog.hpp"
 
 //==============================================================================
 //  dlg_load_game
@@ -45,7 +44,7 @@ public:
     virtual void        Destroy             ( void );
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
             void        StartLoadingProcess ( void );
@@ -74,10 +73,10 @@ protected:
         f32     StartFadeOut;
         f32     EndFadeOut;
         xcolor  SlideColor;
-        xbool   HasImage;
-        xbitmap BMP;
+        xstring BitmapName;
     };
 
+    void                ReleaseSlide          ( slide_info& Slide );
     void                ResetSlides          ( void );
     void                ReleaseSlides        ( void );
     void                ResetSlideshowClock  ( void );

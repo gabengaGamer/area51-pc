@@ -1,5 +1,6 @@
 #include "controller.hpp"
 #include "element_shockwave.hpp"
+#include "PreviewRender.hpp"
 #include "effect.hpp"
 
 namespace fx_core
@@ -157,39 +158,15 @@ void element_shockwave::Render( f32 T )
         GetL2WAtTime  ( T, L2W   );
         GetColorAtTime( T, Color );
 
-        // Determine blend mode
-        s32 DrawBlendMode = 0;
-        switch( m_CombineMode )
-        {
-            case COMBINEMODE_ADDITIVE:
-                DrawBlendMode = DRAW_BLEND_ADD;
-                break;
-            case COMBINEMODE_SUBTRACTIVE:
-                DrawBlendMode = DRAW_BLEND_SUB;
-                break;
-        }
-
-        // Set L2W
-        draw_SetL2W( L2W );
-
-        // draw flags
-        u32 DrawFlags = DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_CULL_NONE | DRAW_USE_ALPHA | DrawBlendMode;
-
-        if ( (m_MappingTileV == 1.0f) && (m_MappingScrollV == 0.0f) )   { DrawFlags |= DRAW_V_CLAMP;   }
-        //if ( DrawBlendMode != 0 )                                       { DrawFlags |= DRAW_NO_ZWRITE; }
-        if ( !m_ZRead )                                                 { DrawFlags |= DRAW_NO_ZBUFFER; }
-
-        // Start drawing
-        draw_Begin( DRAW_TRIANGLES, DrawFlags );
-
         // Setup bitmap
         if ( m_BitmapName.IsEmpty() )
             m_BitmapName = "fx_default.xbmp";
 
         g_pTextureMgr->ActivateBitmap( m_BitmapName );
-
-        // Draw the shockwave
-        draw_Color( Color );
+        const xbool clampV = (m_MappingTileV == 1.0f) && (m_MappingScrollV == 0.0f);
+        const render::primitive_draw_desc material =
+            CreatePreviewMaterial( g_pTextureMgr->GetTexture( m_BitmapName ), m_CombineMode, m_ZRead, FALSE, clampV );
+        render::PrimitiveBatch batch( material );
 
         // Setup for drawing
         f32 RadiusOut           = 0.5f;
@@ -235,6 +212,16 @@ void element_shockwave::Render( f32 T )
 
         f32 u[6];
         f32 v[6];
+
+        const auto AddTriangle = [&]( s32 i0, f32 y0, xcolor c0,
+                                      s32 i1, f32 y1, xcolor c1,
+                                      s32 i2, f32 y2, xcolor c2 )
+        {
+            batch.AddTriangle(
+                render::primitive_vertex( vector3( x[i0], y0, z[i0] ), vector2( u[i0], v[i0] ), c0 ),
+                render::primitive_vertex( vector3( x[i1], y1, z[i1] ), vector2( u[i1], v[i1] ), c1 ),
+                render::primitive_vertex( vector3( x[i2], y2, z[i2] ), vector2( u[i2], v[i2] ), c2 ) );
+        };
 
         // UV Mapping - Pre-compute V if we're not doing planar mapping
         if( !m_MapPlanar )
@@ -350,14 +337,8 @@ void element_shockwave::Render( f32 T )
                     u[3] = MapScrollU + ( MappingPerSegmentU * (i + 1.0f) );    // Right In
                 }
 
-                // Draw 2 triangles for segment
-                draw_UV( u[0], v[0] );   draw_Color( OuterColor );   draw_Vertex( x[0], 0.0f, z[0] ); // Left  Out
-                draw_UV( u[1], v[1] );   draw_Color( OuterColor );   draw_Vertex( x[1], 0.0f, z[1] ); // Right Out
-                draw_UV( u[2], v[2] );   draw_Color( InnerColor );   draw_Vertex( x[2], 0.0f, z[2] ); // Left  In
-
-                draw_UV( u[1], v[1] );   draw_Color( OuterColor );   draw_Vertex( x[1], 0.0f, z[1] ); // Right Out
-                draw_UV( u[2], v[2] );   draw_Color( InnerColor );   draw_Vertex( x[2], 0.0f, z[2] ); // Left  In
-                draw_UV( u[3], v[3] );   draw_Color( InnerColor );   draw_Vertex( x[3], 0.0f, z[3] ); // Right In
+                AddTriangle( 0, 0.0f, OuterColor, 1, 0.0f, OuterColor, 2, 0.0f, InnerColor );
+                AddTriangle( 1, 0.0f, OuterColor, 2, 0.0f, InnerColor, 3, 0.0f, InnerColor );
             }
             else
             {
@@ -403,50 +384,22 @@ void element_shockwave::Render( f32 T )
                     u[5] = MapScrollU + ( MappingPerSegmentU * (i + 0.5f) );    // Right In
                 }
 
-                // Draw top segment
-                draw_UV( u[2], v[2] );    draw_Color( MiddleColor );    draw_Vertex( x[2],  0.5f, z[2] ); // Left  Mid
-                draw_UV( u[1], v[1] );    draw_Color( OuterColor  );    draw_Vertex( x[1],  0.0f, z[1] ); // Right Out
-                draw_UV( u[0], v[0] );    draw_Color( OuterColor  );    draw_Vertex( x[0],  0.0f, z[0] ); // Left  Out
-
-                draw_UV( u[2], v[2] );    draw_Color( MiddleColor );    draw_Vertex( x[2],  0.5f, z[2] ); // Left  Mid
-                draw_UV( u[3], v[3] );    draw_Color( MiddleColor );    draw_Vertex( x[3],  0.5f, z[3] ); // Right Mid
-                draw_UV( u[1], v[1] );    draw_Color( OuterColor  );    draw_Vertex( x[1],  0.0f, z[1] ); // Right Out
-
-                draw_UV( u[2], v[2] );    draw_Color( MiddleColor );    draw_Vertex( x[2],  0.5f, z[2] ); // Left  Mid
-                draw_UV( u[4], v[4] );    draw_Color( InnerColor  );    draw_Vertex( x[4],  0.0f, z[4] ); // Left  In
-                draw_UV( u[5], v[5] );    draw_Color( InnerColor  );    draw_Vertex( x[5],  0.0f, z[5] ); // Right In
-
-                draw_UV( u[2], v[2] );    draw_Color( MiddleColor );    draw_Vertex( x[2],  0.5f, z[2] ); // Left  Mid
-                draw_UV( u[5], v[5] );    draw_Color( InnerColor  );    draw_Vertex( x[5],  0.0f, z[5] ); // Right In
-                draw_UV( u[3], v[3] );    draw_Color( MiddleColor );    draw_Vertex( x[3],  0.5f, z[3] ); // Right Mid
-
-                // Draw bottom segment
-                draw_UV( u[2], v[2] );    draw_Color( MiddleColor );    draw_Vertex( x[2], -0.5f, z[2] ); // Left  Mid
-                draw_UV( u[0], v[0] );    draw_Color( OuterColor  );    draw_Vertex( x[0],  0.0f, z[0] ); // Left  Out
-                draw_UV( u[1], v[1] );    draw_Color( OuterColor  );    draw_Vertex( x[1],  0.0f, z[1] ); // Right Out
-
-                draw_UV( u[2], v[2] );    draw_Color( MiddleColor );    draw_Vertex( x[2], -0.5f, z[2] ); // Left  Mid
-                draw_UV( u[1], v[1] );    draw_Color( OuterColor  );    draw_Vertex( x[1],  0.0f, z[1] ); // Right Out
-                draw_UV( u[3], v[3] );    draw_Color( MiddleColor );    draw_Vertex( x[3], -0.5f, z[3] ); // Right Mid
-
-                draw_UV( u[2], v[2] );    draw_Color( MiddleColor );    draw_Vertex( x[2], -0.5f, z[2] ); // Left  Mid
-                draw_UV( u[5], v[5] );    draw_Color( InnerColor  );    draw_Vertex( x[5],  0.0f, z[5] ); // Right In
-                draw_UV( u[4], v[4] );    draw_Color( InnerColor  );    draw_Vertex( x[4],  0.0f, z[4] ); // Left  In
-
-                draw_UV( u[2], v[2] );    draw_Color( MiddleColor );    draw_Vertex( x[2], -0.5f, z[2] ); // Left  Mid
-                draw_UV( u[3], v[3] );    draw_Color( MiddleColor );    draw_Vertex( x[3], -0.5f, z[3] ); // Right Mid
-                draw_UV( u[5], v[5] );    draw_Color( InnerColor  );    draw_Vertex( x[5],  0.0f, z[5] ); // Right In
+                AddTriangle( 2,  0.5f, MiddleColor, 1, 0.0f, OuterColor, 0, 0.0f, OuterColor );
+                AddTriangle( 2,  0.5f, MiddleColor, 3, 0.5f, MiddleColor, 1, 0.0f, OuterColor );
+                AddTriangle( 2,  0.5f, MiddleColor, 4, 0.0f, InnerColor, 5, 0.0f, InnerColor );
+                AddTriangle( 2,  0.5f, MiddleColor, 5, 0.0f, InnerColor, 3, 0.5f, MiddleColor );
+                AddTriangle( 2, -0.5f, MiddleColor, 0, 0.0f, OuterColor, 1, 0.0f, OuterColor );
+                AddTriangle( 2, -0.5f, MiddleColor, 1, 0.0f, OuterColor, 3, -0.5f, MiddleColor );
+                AddTriangle( 2, -0.5f, MiddleColor, 5, 0.0f, InnerColor, 4, 0.0f, InnerColor );
+                AddTriangle( 2, -0.5f, MiddleColor, 3, -0.5f, MiddleColor, 5, 0.0f, InnerColor );
             }
         }
 
-        // End drawing
-        draw_End();
+        batch.Submit( L2W );
 
         // Render element bbox
         RenderBBox( T );
 
-        // Reset L2W
-        draw_ClearL2W();
     }
 
     // Render the translation path of the object

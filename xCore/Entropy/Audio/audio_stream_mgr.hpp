@@ -1,12 +1,12 @@
 #ifndef AUDIO_STREAM_MGR_HPP
 #define AUDIO_STREAM_MGR_HPP
 
-#include "..\IOManager\io_mgr.hpp"
-#include "audio_private.hpp"
-#include "audio_channel_mgr.hpp"
-#include "..\IOManager\io_request.hpp"
+#include "IOManager/io_mgr.hpp"
+#include "Audio/audio_types.hpp"
+#include "Audio/audio_channel_mgr.hpp"
+#include "IOManager/io_request.hpp"
 
-extern void audio_stream_read_callback( io_request* pRequest, audio_stream* pStream, s32 ReadBufferIndex );
+struct audio_runtime;
 
 class audio_stream_mgr
 {
@@ -19,34 +19,32 @@ public:
                             audio_stream_mgr        ( void );
                            ~audio_stream_mgr        ( void );
                                                     
-            void            Init                    ( void );
+            void            Init                    ( audio_runtime& Runtime );
             void            Kill                    ( void );
 
             void            Update                  ( void );
-            void            SetRequest              ( audio_stream* pStream, io_request::callback_fn* pCallback );
+            void            QueueStreamOpen         ( audio_stream* pStream );
 
             audio_stream*   AcquireStream           ( u32           WaveformOffset,
                                                       u32           WaveformLength,
                                                       channel*      pLeft,
                                                       channel*      pRight );
             void            ReleaseStream           ( audio_stream* pStream );
-            xbool           WarmStream              ( audio_stream* pStream, io_request::callback_fn* pCallback = NULL );
-            xbool           ReadStream              ( audio_stream* pStream, io_request::callback_fn* pCallback = NULL );
             xbool           ReserveStreams          ( s32           nStreams );
             xbool           UnReserveStreams        ( s32           nStreams );
 
 //------------------------------------------------------------------------------
 
+private:
+
+inline      audio_runtime&  Runtime                 ( void ) { ASSERT( m_pRuntime ); return *m_pRuntime; }
+
             audio_stream    m_AudioStreams[ MAX_AUDIO_STREAMS ];
+            audio_runtime*  m_pRuntime;
             uaddr           m_ARAM;
-            uaddr           m_MainRam;
-            uaddr           m_ReadBuffers[2];
-            u32             m_ActiveReadBuffer;
             s32             m_nReservedStreams;
 };
 
 //------------------------------------------------------------------------------
-
-extern audio_stream_mgr g_AudioStreamMgr;
 
 #endif // AUDIO_STREAM_MGR_HPP

@@ -1,244 +1,134 @@
-#include "audio_stream_mgr.hpp"
-#include "audio_channel_mgr.hpp"
-#include "audio_hardware.hpp"
-#include "audio_package.hpp"
-#include "audio_voice_mgr.hpp"
-#include "audio_mp3_mgr.hpp"
-#include "e_Virtual.hpp"
+//==============================================================================
+//
+//  audio_stream_mgr.cpp
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
+#include "Audio/audio_stream_mgr.hpp"
+#include "Audio/audio_runtime.hpp"
+#include "Audio/audio_channel_mgr.hpp"
+#include "Audio/backend/audio_backend.hpp"
+#include "Audio/audio_package.hpp"
+#include "Audio/audio_voice_mgr.hpp"
+#include "Audio/audio_stream_decoder_factory.hpp"
+#include "Audio/audio_stream_runtime.hpp"
 #include "x_log.hpp"
 #include "x_bytestream.hpp"
+
+//==============================================================================
+//  DEFINES
+//==============================================================================
 
 #if defined(rbrannon)
 #define LOG_AUDIO_STREAM_ACQUIRE_SUCCESS "stream_mgr::Acquire"
 #define LOG_AUDIO_STREAM_ACQUIRE_FAIL    "stream_mgr::Acquire"
-#define LOG_AUDIO_STREAM_WARM_STREAM     "stream_mgr::WarmStream"
-#define LOG_AUDIO_STREAM_READ_STREAM     "stream_mgr::ReadStream"
 #define LOG_AUDIO_STREAM_UPDATE          "stream_mgr::Update"
 #define LOG_AUDIO_STREAM_RELEASE         "stream_mgr::ReleaseStream"
 #endif
 
 #define VALID_STREAM( pStream ) ((pStream >= &m_AudioStreams[0]) && (pStream <= &m_AudioStreams[MAX_AUDIO_STREAMS-1]))
 
-//------------------------------------------------------------------------------
-
-static void read_callback_0_0( io_request* pRequest );
-static void read_callback_1_0( io_request* pRequest );
-static void read_callback_2_0( io_request* pRequest );
-static void read_callback_3_0( io_request* pRequest );
-static void read_callback_0_1( io_request* pRequest );
-static void read_callback_1_1( io_request* pRequest );
-static void read_callback_2_1( io_request* pRequest );
-static void read_callback_3_1( io_request* pRequest );
-static void warm_callback_0_0( io_request* pRequest );
-static void warm_callback_1_0( io_request* pRequest );
-static void warm_callback_2_0( io_request* pRequest );
-static void warm_callback_3_0( io_request* pRequest );
-static void warm_callback_0_1( io_request* pRequest );
-static void warm_callback_1_1( io_request* pRequest );
-static void warm_callback_2_1( io_request* pRequest );
-static void warm_callback_3_1( io_request* pRequest );
-static void audio_stream_warm_callback( io_request* pRequest, audio_stream* pStream, s32 ReadBufferIndex );
-
-//------------------------------------------------------------------------------
-
-io_request::callback_fn* read_callbacks[MAX_AUDIO_STREAMS][2] = 
-{
-    {read_callback_0_0, read_callback_0_1 },
-    {read_callback_1_0, read_callback_1_1 },
-    {read_callback_2_0, read_callback_2_1 },
-    {read_callback_3_0, read_callback_3_1 }
-};
-
-//------------------------------------------------------------------------------
-
-io_request::callback_fn* warm_callbacks[MAX_AUDIO_STREAMS][2] = 
-{
-    { warm_callback_0_0, warm_callback_0_1 },
-    { warm_callback_1_0, warm_callback_1_1 },
-    { warm_callback_2_0, warm_callback_2_1 },
-    { warm_callback_3_0, warm_callback_3_1 },
-};
-
-//------------------------------------------------------------------------------
-
-audio_stream_mgr g_AudioStreamMgr;
-
-//------------------------------------------------------------------------------
-// Helper functions.
-
-static void audio_stream_close_file( audio_stream* pStream )
-{
-    ASSERT( pStream );
-
-#if defined(TARGET_PC)
-    if( (pStream->CompressionType == MP3) && pStream->HandleMP3 )
-        g_AudioMP3Mgr.Close( pStream );
-#endif
-
-    if( pStream->FileHandle )
-    {
-        g_IOFSMgr.Close( pStream->FileHandle );
-        pStream->FileHandle = NULL;
-    }
-}
-
-//------------------------------------------------------------------------------
-
-static void read_callback_0_0( io_request* pRequest )
-{
-    audio_stream_read_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[0], 0 );
-}
-
-//------------------------------------------------------------------------------
-
-static void read_callback_1_0( io_request* pRequest )
-{
-    audio_stream_read_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[1], 0 );
-}
-
-//------------------------------------------------------------------------------
-
-static void read_callback_2_0( io_request* pRequest )
-{
-    audio_stream_read_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[2], 0 );
-}
-
-//------------------------------------------------------------------------------
-
-static void read_callback_3_0( io_request* pRequest )
-{
-    audio_stream_read_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[3], 0 );
-}
-
-//------------------------------------------------------------------------------
-
-static void read_callback_0_1( io_request* pRequest )
-{
-    audio_stream_read_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[0], 1 );
-}
-
-//------------------------------------------------------------------------------
-
-static void read_callback_1_1( io_request* pRequest )
-{
-    audio_stream_read_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[1], 1 );
-}
-
-//------------------------------------------------------------------------------
-
-static void read_callback_2_1( io_request* pRequest )
-{
-    audio_stream_read_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[2], 1 );
-}
-
-//------------------------------------------------------------------------------
-
-static void read_callback_3_1( io_request* pRequest )
-{
-    audio_stream_read_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[3], 1 );
-}
-
-//------------------------------------------------------------------------------
-
-static void warm_callback_0_0( io_request* pRequest )
-{
-    audio_stream_warm_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[0], 0 );
-}
-
-//------------------------------------------------------------------------------
-
-static void warm_callback_1_0( io_request* pRequest )
-{
-    audio_stream_warm_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[1], 0 );
-}
-
-//------------------------------------------------------------------------------
-
-static void warm_callback_2_0( io_request* pRequest )
-{
-    audio_stream_warm_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[2], 0 );
-}
-
-//------------------------------------------------------------------------------
-
-static void warm_callback_3_0( io_request* pRequest )
-{
-    audio_stream_warm_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[3], 0 );
-}
-
-//------------------------------------------------------------------------------
-
-static void warm_callback_0_1( io_request* pRequest )
-{
-    audio_stream_warm_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[0], 1 );
-}
-
-//------------------------------------------------------------------------------
-
-static void warm_callback_1_1( io_request* pRequest )
-{
-    audio_stream_warm_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[1], 1 );
-}
-
-//------------------------------------------------------------------------------
-
-static void warm_callback_2_1( io_request* pRequest )
-{
-    audio_stream_warm_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[2], 1 );
-}
-
-//------------------------------------------------------------------------------
-
-static void warm_callback_3_1( io_request* pRequest )
-{
-    audio_stream_warm_callback( pRequest, &g_AudioStreamMgr.m_AudioStreams[3], 1 );
-}
-
-//------------------------------------------------------------------------------
-
-static void audio_stream_warm_callback( io_request* pRequest, audio_stream* pStream, s32 ReadBufferIndex )
-{
-    // Normal read callback.
-    audio_stream_read_callback( pRequest, pStream, ReadBufferIndex );
-
-    // Ok to start up the stream now!
-    pStream->bStartStream = TRUE;
-}
-
-//------------------------------------------------------------------------------
-// Class functions.
+//==============================================================================
+//  IMPLEMENTATION
+//==============================================================================
 
 audio_stream_mgr::audio_stream_mgr( void )
 {
     // Nuke the audio streams.
     x_memset( m_AudioStreams, 0, sizeof( m_AudioStreams ) );
+    m_pRuntime        = NULL;
     m_ARAM             = 0;
-    m_MainRam          = 0;
-    m_ReadBuffers[0]   = 0;
-    m_ReadBuffers[1]   = 0;
-    m_ActiveReadBuffer = 0;
     m_nReservedStreams = 0;
-
-    // Save the index
-    for( s32 i=0 ; i<MAX_AUDIO_STREAMS ; i++ )
-        m_AudioStreams[ i ].Index = i;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 audio_stream_mgr::~audio_stream_mgr( void )
 {
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
+
+void audio_stream_mgr::Init( audio_runtime& AudioRuntime )
+{
+    s32 nBytes;
+    uaddr BaseRam;
+    s32 i;
+
+    // Nuke 'em.
+    x_memset( m_AudioStreams, 0, sizeof( m_AudioStreams ) );
+    m_pRuntime = &AudioRuntime;
+
+    Runtime().StreamRuntime.Init( Runtime() );
+
+    // Allocate the aram
+    nBytes = MAX_AUDIO_STREAMS * MAX_STREAM_CHANNELS * STREAM_BUFFER_SIZE * 2;
+    m_ARAM = (uaddr)Runtime().Backend.AllocAudioRam( nBytes );
+
+    // Asign aram to the stream buffers
+    BaseRam = m_ARAM;
+    for( i=0 ; i<MAX_AUDIO_STREAMS ; i++ )
+    {
+        Runtime().StreamRuntime.RegisterStream( i, &m_AudioStreams[i] );
+
+        // Stream has an io_request for a member.
+        m_AudioStreams[ i ].pIoRequest = new io_request[1];
+
+        // Asign ARAM to each stream channel.
+        for( s32 j=0 ; j<MAX_STREAM_CHANNELS ; j++ )
+        {
+            // Asign both buffers.
+            m_AudioStreams[ i ].ARAM[ j ][ 0 ] = BaseRam;
+            BaseRam += STREAM_BUFFER_SIZE;
+            m_AudioStreams[ i ].ARAM[ j ][ 1 ] = BaseRam;
+            BaseRam += STREAM_BUFFER_SIZE;
+        }
+    }
+}
+
+//==============================================================================
+
+void audio_stream_mgr::Kill( void )
+{
+    // For each stream...
+    for( s32 i=0 ; i<MAX_AUDIO_STREAMS ; i++ )
+    {
+        Runtime().StreamRuntime.CloseFile( &m_AudioStreams[i] );
+
+        // Delete the streams io_request.
+        delete [] m_AudioStreams[ i ].pIoRequest;
+    }
+
+    Runtime().Backend.FlushRenderCommands();
+
+    // Free up the aram buffers.
+    Runtime().Backend.FreeAudioRam( (void*)m_ARAM );
+
+    Runtime().StreamRuntime.Kill();
+
+    // Nuke it!
+    x_memset( m_AudioStreams, 0, MAX_AUDIO_STREAMS*sizeof(audio_stream) );
+    m_pRuntime = NULL;
+}
+
+//==============================================================================
 
 audio_stream* audio_stream_mgr::AcquireStream( u32 WaveformOffset, u32 WaveformLength, channel* pLeft, channel* pRight )
 {
-    CONTEXT( "audio_stream_mgr::AcquireStream" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "audio_stream_mgr::AcquireStream" );
 
-    audio_stream* pStream          = NULL;
-    xbool         bStreamAvailable = FALSE;
-    s32           CompressionType  = pLeft->pElement->Sample.pColdSample->CompressionType;
+    audio_stream* pStream                 = NULL;
+    xbool         bCoolingStreamAvailable = FALSE;
+    s32           nFreeStreams            = 0;
+    s32           nReservedStreamsInUse   = 0;
+    voice*        pVoice                  = pLeft->pElement->pVoice;
+    xbool         UseReservedStream       = pVoice && pVoice->UseReservedStream;
+    xbool         bWaitingForReservedStream = FALSE;
+    s32           CompressionType         = pLeft->pElement->Sample.pColdSample->CompressionType;
 
     // Error check.
     ASSERT( WaveformLength );
@@ -247,33 +137,67 @@ audio_stream* audio_stream_mgr::AcquireStream( u32 WaveformOffset, u32 WaveformL
     // Find a free stream...
     for( s32 i=0 ; i<MAX_AUDIO_STREAMS ; i++ )
     {
-        // Is it marked free?
-        if( m_AudioStreams[ i ].Type == INACTIVE )
+        if( m_AudioStreams[ i ].UseReservedSlot && (m_AudioStreams[ i ].State != STREAM_FREE) )
         {
-            // At least one is marked free.
-            bStreamAvailable = TRUE;
+            nReservedStreamsInUse++;
+        }
 
+        // Is it marked free?
+        if( (m_AudioStreams[ i ].Type == INACTIVE) && (m_AudioStreams[ i ].State == STREAM_FREE) )
+        {
             // Get the streams io_request status.
             io_request::status Status = m_AudioStreams[ i ].pIoRequest->GetStatus();
 
             // Is the streams io_request in a stable state?
-            if( (Status != io_request::QUEUED) && (Status != io_request::PENDING) && (Status != io_request::IN_PROGRESS) && (m_AudioStreams[i].FileHandle==NULL) )
+            if( (Status != io_request::QUEUED) &&
+                (Status != io_request::PENDING) &&
+                (Status != io_request::IN_PROGRESS) &&
+                (m_AudioStreams[i].FileHandle==NULL) )
             {
+                nFreeStreams++;
+
                 // Found one!
-                pStream = &m_AudioStreams[ i ];
-                break;
+                if( pStream == NULL )
+                    pStream = &m_AudioStreams[ i ];
+            }
+            else
+            {
+                bCoolingStreamAvailable = TRUE;
             }
         }
     }
 
+    if( pStream )
+    {
+        if( UseReservedStream )
+        {
+            if( (m_nReservedStreams <= 0) || (nReservedStreamsInUse >= m_nReservedStreams) )
+            {
+                bWaitingForReservedStream = (m_nReservedStreams > 0);
+                pStream = NULL;
+            }
+        }
+        else
+        {
+            s32 nReservedStreamsAvailable = m_nReservedStreams - nReservedStreamsInUse;
+            if( nReservedStreamsAvailable < 0 )
+                nReservedStreamsAvailable = 0;
+
+            if( nFreeStreams <= nReservedStreamsAvailable )
+                pStream = NULL;
+        }
+    }
+
+    if( UseReservedStream && (m_nReservedStreams > 0) && (pStream == NULL) )
+    {
+        bWaitingForReservedStream = TRUE;
+    }
+
     // Make sure a stream is available!
-    if( !bStreamAvailable )
+    if( (nFreeStreams == 0) && !bCoolingStreamAvailable && !bWaitingForReservedStream )
     {
 #ifdef LOG_AUDIO_STREAM_ACQUIRE_FAIL
         {
-            voice* pVoice = NULL;
-            if( pLeft && pLeft->pElement )
-                pVoice = pLeft->pElement->pVoice;
             LOG_WARNING( LOG_AUDIO_STREAM_ACQUIRE_FAIL, "Failed! pVoice: 0x%08x", pVoice );
             if( pVoice )
             {
@@ -287,17 +211,25 @@ audio_stream* audio_stream_mgr::AcquireStream( u32 WaveformOffset, u32 WaveformL
     // Find one?
     if( pStream )
     {
+        pStream->UseReservedSlot = UseReservedStream;
+
         // Left and right channel specified?
         if( pLeft && pRight )
         {
             // Its a stereo stream.
             pStream->Type = STEREO_STREAM;
-            switch( CompressionType )
+            if( Runtime().Decoders.UsesRuntimeDecode( (compression_types)CompressionType ) )
             {
-                case ADPCM: pStream->ReadBufferSize = STREAM_BUFFER_SIZE * 2; break;
-                case MP3:   pStream->ReadBufferSize = MP3_BUFFER_SIZE; break;
-                case PCM:   pStream->ReadBufferSize = STREAM_BUFFER_SIZE * 2; break;
-                default:    ASSERT( 0 ); break;
+                pStream->ReadBufferSize = 0;
+            }
+            else
+            {
+                switch( CompressionType )
+                {
+                    case ADPCM: pStream->ReadBufferSize = STREAM_BUFFER_SIZE * 2; break;
+                    case PCM:   pStream->ReadBufferSize = STREAM_BUFFER_SIZE * 2; break;
+                    default:    ASSERT( 0 ); break;
+                }
             }
         }
         // Only left channel specified?
@@ -305,19 +237,24 @@ audio_stream* audio_stream_mgr::AcquireStream( u32 WaveformOffset, u32 WaveformL
         {
             // Its a mono stream.
             pStream->Type = MONO_STREAM;
-            switch( CompressionType )
+            if( Runtime().Decoders.UsesRuntimeDecode( (compression_types)CompressionType ) )
             {
-                case ADPCM: pStream->ReadBufferSize = STREAM_BUFFER_SIZE; break;
-                case MP3:   pStream->ReadBufferSize = MP3_BUFFER_SIZE; break;
-                case PCM:   pStream->ReadBufferSize = STREAM_BUFFER_SIZE; break;
-                default:    ASSERT( 0 ); break;
+                pStream->ReadBufferSize = 0;
+            }
+            else
+            {
+                switch( CompressionType )
+                {
+                    case ADPCM: pStream->ReadBufferSize = STREAM_BUFFER_SIZE; break;
+                    case PCM:   pStream->ReadBufferSize = STREAM_BUFFER_SIZE; break;
+                    default:    ASSERT( 0 ); break;
+                }
             }
         }
         else
         {
             // Dunno what it is...
             pStream->Type    = INACTIVE;
-            bStreamAvailable = FALSE;
             pStream          = NULL;
         }
     
@@ -325,16 +262,17 @@ audio_stream* audio_stream_mgr::AcquireStream( u32 WaveformOffset, u32 WaveformL
         if( pStream )
         {
             // Fill it out.
-            pStream->bOpenStream                = FALSE;
-            pStream->bStartStream               = FALSE;
-            pStream->bStopStream                = FALSE;
-            pStream->HandleMP3                  = NULL;
+            pStream->State                      = STREAM_RESERVED;
+            pStream->pDecoder                   = NULL;
             pStream->CompressionType            = (compression_types)CompressionType;
             pStream->StreamDone                 = FALSE;
             pStream->FileHandle                 = NULL;
             pStream->WaveformOffset             = WaveformOffset;
             pStream->WaveformLength             = WaveformLength;
             pStream->WaveformCursor             = 0;
+            pStream->DecodeWriteCursor          = 0;
+            pStream->DecodedFrames              = 0;
+            pStream->DecodedEndFrame            = 0;
             pStream->pChannel[ LEFT_CHANNEL ]   = pLeft;
             pStream->pChannel[ RIGHT_CHANNEL ]  = pRight;
 
@@ -350,14 +288,17 @@ audio_stream* audio_stream_mgr::AcquireStream( u32 WaveformOffset, u32 WaveformL
     }
 
     // Is one cooling?
-    if( bStreamAvailable && (pStream == NULL) )
+    if( bWaitingForReservedStream ||
+        (bCoolingStreamAvailable && (pStream == NULL)) )
+    {
         pStream = COOLING_STREAM;
+    }
 
     // Tell the world.
     return pStream;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_stream_mgr::ReleaseStream( audio_stream* pStream )
 {
@@ -368,133 +309,33 @@ void audio_stream_mgr::ReleaseStream( audio_stream* pStream )
     LOG_MESSAGE( LOG_AUDIO_STREAM_RELEASE, "Released! pStream: 0x%08x", pStream );
 #endif // LOG_AUDIO_STREAM_RELEASE
 
-    // TODO: Error check.
-    pStream->Type = INACTIVE;
 
-    if( pStream->CompressionType == MP3 )
+    if( (pStream->State != STREAM_FREE) && (pStream->State != STREAM_CLOSING) )
     {
-        pStream->bOpenStream  = FALSE;
-        pStream->bStartStream = FALSE;
-        pStream->bStopStream  = FALSE;
-        pStream->StreamDone   = TRUE;
-        audio_stream_close_file( pStream );
-        return;
+        pStream->Type       = INACTIVE;
+        pStream->StreamDone = TRUE;
+        pStream->State      = STREAM_STOPPING;
     }
 
-    // Stop it now..
-    pStream->bStopStream = TRUE;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
-xbool audio_stream_mgr::WarmStream( audio_stream* pStream, io_request::callback_fn* pCallback )
+void audio_stream_mgr::QueueStreamOpen( audio_stream* pStream )
 {
-    CONTEXT( "audio_stream_mgr::WarmStream" );
-
-#ifdef LOG_AUDIO_STREAM_WARM_STREAM
-    voice* pVoice = NULL;
-    if( pStream->pChannel[0] && pStream->pChannel[0]->pElement )
-        pVoice = pStream->pChannel[0]->pElement->pVoice;
-    LOG_MESSAGE( LOG_AUDIO_STREAM_WARM_STREAM, "pStream: 0x%08x, pVoice: 0x%08x", pStream, pVoice );
-#endif
-
-    xbool Result = FALSE;
-
-    // Error check.
-    ASSERT( VALID_STREAM( pStream ) );
-    
-    io_request::status status = pStream->pIoRequest->GetStatus();
-#if !defined(TARGET_DEV)
-    ASSERT( status == io_request::NOT_QUEUED || status == io_request::COMPLETED || status == io_request::FAILED );
-    ASSERT( pStream->Type != INACTIVE );
-#endif
-    if( (pStream->Type != INACTIVE) && (status == io_request::NOT_QUEUED || status == io_request::COMPLETED || status == io_request::FAILED) )
-    {
-        // Start again...
-        pStream->WaveformCursor  = 0;
-        pStream->ARAMWriteBuffer = 0;
-
-        // And this too...
-        x_memset( (void*)pStream->MainRAM[0], 0, MP3_BUFFER_SIZE );
-        x_memset( (void*)pStream->MainRAM[1], 0, MP3_BUFFER_SIZE );
-
-        // Check the callback
-        if( pCallback == NULL )
-        {
-            ASSERT( (pStream->Index >= 0) && (pStream->Index < MAX_AUDIO_STREAMS) );
-            pCallback = warm_callbacks[ pStream->Index ][ m_ActiveReadBuffer ];
-        }
-
-        // Read from the stream.
-        return ReadStream( pStream, pCallback );
-    }
-
-    return Result;
-}
-
-//------------------------------------------------------------------------------
-
-xbool audio_stream_mgr::ReadStream( audio_stream* pStream, io_request::callback_fn* pCallback )
-{
-    CONTEXT( "audio_stream_mgr::ReadStream" );
-
-#ifdef LOG_AUDIO_STREAM_READ_STREAM
-    voice* pVoice = NULL;
-    if( pStream->pChannel[0] && pStream->pChannel[0]->pElement )
-        pVoice = pStream->pChannel[0]->pElement->pVoice;
-    LOG_MESSAGE( LOG_AUDIO_STREAM_READ_STREAM, "pStream: 0x%08x, pVoice: 0x%08x", pStream, pVoice );
-#endif
-
-    xbool Result = FALSE;
-
-    // Error check.
     ASSERT( VALID_STREAM( pStream ) );
 
-    io_request::status status = pStream->pIoRequest->GetStatus();
-#if !defined(TARGET_DEV)
-    ASSERT( status == io_request::NOT_QUEUED || status == io_request::COMPLETED || status == io_request::FAILED );
-    ASSERT( pStream->Type != INACTIVE );
-#endif // !defined(TARGET_DEV)
 
-    if( (pStream->Type != INACTIVE) && (status == io_request::NOT_QUEUED || status == io_request::COMPLETED || status == io_request::FAILED) )
-    {
-        // Check the callback.
-        if( pCallback == NULL )
-        {
-            ASSERT( (pStream->Index >= 0) && (pStream->Index < MAX_AUDIO_STREAMS) );
-            pCallback = read_callbacks[ pStream->Index ][ m_ActiveReadBuffer ];
-        }
+    if( (pStream->Type != INACTIVE) && (pStream->State == STREAM_RESERVED) )
+        pStream->State = STREAM_OPENING;
 
-        // Now set the request up.
-        SetRequest( pStream, pCallback );
-
-        // Switch read buffers.
-        m_ActiveReadBuffer ^= 1;
-
-        // Update the waveform cursor
-        pStream->WaveformCursor += pStream->ReadBufferSize;
-
-        // Stream done?
-        if( pStream->WaveformCursor >= pStream->WaveformLength )
-        {
-            // Mark stream as done.
-            pStream->StreamDone = TRUE;
-        }
-
-        // Queue the io request.
-        g_IoMgr.QueueRequest( pStream->pIoRequest );
-
-        // It's all good.
-        Result = TRUE;
-    }
-    return Result;
 }
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 void audio_stream_mgr::Update( void )
 {
-    audio_stream* pStream  = g_AudioStreamMgr.m_AudioStreams;
+    audio_stream* pStream  = m_AudioStreams;
     s32           i;
 
     // Check out all the streams...
@@ -518,12 +359,7 @@ void audio_stream_mgr::Update( void )
 
 
         // Need to open the stream?
-        if( pStream->bOpenStream && (pStream->Type == INACTIVE) )
-        {
-            pStream->bOpenStream = FALSE;
-        }
-
-        if( pStream->bOpenStream )
+        if( pStream->State == STREAM_OPENING )
         {
 #ifdef LOG_AUDIO_STREAM_UPDATE
             voice* pVoice = NULL;
@@ -531,41 +367,17 @@ void audio_stream_mgr::Update( void )
                 pVoice = pStream->pChannel[0]->pElement->pVoice;
             LOG_MESSAGE( LOG_AUDIO_STREAM_UPDATE, "Open! pStream: 0x%08x, pVoice: 0x%08x", pStream, pVoice  );
 #endif            
-            g_AudioHardware.Lock();
-
-            // Reset flag.
-            pStream->bOpenStream = FALSE;
-
-            // Open the file.
-            ASSERT( pStream->FileHandle == NULL );
-            if( (pStream->Type != INACTIVE) &&
-                pStream->pChannel[0] &&
-                VALID_CHANNEL( pStream->pChannel[0] ) &&
-                pStream->pChannel[0]->pElement &&
-                pStream->pChannel[0]->pElement->pVoice &&
-                pStream->pChannel[0]->pElement->pVoice->pPackage )
+            if( Runtime().StreamRuntime.OpenFile( pStream ) )
             {
-                // Open the file to stream from.
-                pStream->FileHandle = g_IOFSMgr.Open( pStream->pChannel[0]->pElement->pVoice->pPackage->m_Filename, "rb" ); 
-                ASSERT( pStream->FileHandle );
-
-                if( pStream->FileHandle )
+                if( Runtime().Decoders.UsesRuntimeDecode( pStream ) )
                 {
-                    g_IOFSMgr.EnableChecksum( pStream->FileHandle, FALSE );
-
-                    if( pStream->CompressionType == MP3 )
-                    {
-                        pStream->bStartStream = TRUE;
-                    }
-                    else
-                    {
-                        // Now warm up the stream.
-                        g_AudioStreamMgr.WarmStream( pStream );
-                    }
+                    pStream->State = STREAM_STARTING;
                 }
                 else
                 {
-                    pStream->bStopStream = TRUE;
+                    // Now warm up the stream.
+                    if( !Runtime().StreamRuntime.Warm( pStream ) )
+                        pStream->State = STREAM_STOPPING;
                 }
             }
             else
@@ -576,13 +388,12 @@ void audio_stream_mgr::Update( void )
                     pVoice = pStream->pChannel[0]->pElement->pVoice;
                 LOG_MESSAGE( LOG_AUDIO_STREAM_UPDATE, "Open Failed! pStream: 0x%08x, pVoice: 0x%08x", pStream, pVoice  );
 #endif            
+                pStream->State = STREAM_STOPPING;
             }
-
-            g_AudioHardware.Unlock();
         }
 
         // Start the stream?
-        if( pStream->bStartStream && (pStream->Type != INACTIVE) )
+        if( (pStream->State == STREAM_STARTING) && (pStream->Type != INACTIVE) )
         {
 #ifdef LOG_AUDIO_STREAM_UPDATE
             voice* pVoice = NULL;
@@ -591,42 +402,51 @@ void audio_stream_mgr::Update( void )
             LOG_MESSAGE( LOG_AUDIO_STREAM_UPDATE, "Start! pStream: 0x%08x, pVoice: 0x%08x", pStream, pVoice  );
 #endif
             
-            g_AudioHardware.Lock();
 
-            if( pStream->Type == INACTIVE )
+            if( (pStream->Type == INACTIVE) || (pStream->State != STREAM_STARTING) )
             {
-                g_AudioHardware.Unlock();
                 continue;
             }
-
-            // Clear the flag
-            pStream->bStartStream = FALSE;
             
-#if defined(TARGET_PC)
-            // Handle mp3 streams.
-            if( pStream->CompressionType == MP3 )
+            // Handle runtime decoded streams.
+            if( Runtime().Decoders.UsesRuntimeDecode( pStream ) )
             {
-                g_AudioMP3Mgr.Open( pStream );
-
-                // Pre-decompress half of the PCM ring before playback starts.
-                for( s32 i=0 ; i<(STREAM_BUFFER_SIZE/(512*sizeof(s16))) ; i++ )
+                if( Runtime().Decoders.Open( pStream ) )
                 {
-                    g_AudioHardware.UpdateMP3( pStream );
+                    // Pre-decode half of the PCM ring before playback starts.
+
+                    for( s32 i=0 ; i<(STREAM_BUFFER_SIZE/(512*sizeof(s16))) ; i++ )
+                    {
+                        Runtime().StreamRuntime.UpdateDecoded( pStream );
+                    }
+
+
+                    if( (pStream->Type == INACTIVE) ||
+                        ((pStream->State != STREAM_STARTING) && (pStream->State != STREAM_DRAINING)) )
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    pStream->State = STREAM_STOPPING;
                 }
             }
-#endif
 
             // Set up the
             switch( pStream->Type )
             {
                 case MONO_STREAM: 
-                    // Mark left channel as loaded.
-                    ASSERT( pStream->pChannel[LEFT_CHANNEL] );
-			        ASSERT( pStream->pChannel[LEFT_CHANNEL]->pElement);
-
-                    if( pStream->pChannel[LEFT_CHANNEL] )
+                    if( pStream->State != STREAM_STOPPING )
                     {
-                        pStream->pChannel[LEFT_CHANNEL]->pElement->State = ELEMENT_LOADED;
+                        // Mark left channel as loaded.
+                        ASSERT( pStream->pChannel[LEFT_CHANNEL] );
+                        ASSERT( pStream->pChannel[LEFT_CHANNEL]->pElement);
+
+                        if( pStream->pChannel[LEFT_CHANNEL] )
+                        {
+                            pStream->pChannel[LEFT_CHANNEL]->pElement->State = ELEMENT_LOADED;
+                        }
                     }
                     break;
 
@@ -653,29 +473,23 @@ void audio_stream_mgr::Update( void )
                     // Is something wrong?
                     if( bLeftBad || bRightBad || bStereoBad )
                     {
-                        // No hardware updates!
-                        g_AudioHardware.Lock();
-                        
                         // Stop the stream.
-                        pStream->bStopStream = TRUE;
+                        pStream->State = STREAM_STOPPING;
 
                         if( (bRightBad || bStereoBad) && pStream->pChannel[LEFT_CHANNEL] )
                         {
-                            g_AudioHardware.ReleaseChannel( pStream->pChannel[LEFT_CHANNEL] );
-                            pStream->pChannel[LEFT_CHANNEL] = 0;
+                            if( Runtime().Backend.ReleaseChannel( pStream->pChannel[LEFT_CHANNEL] ) )
+                                pStream->pChannel[LEFT_CHANNEL] = 0;
                         }
 
                         if( (bLeftBad || bStereoBad) && pStream->pChannel[RIGHT_CHANNEL] )
                         {
-                            g_AudioHardware.ReleaseChannel( pStream->pChannel[RIGHT_CHANNEL] );
-                            pStream->pChannel[RIGHT_CHANNEL] = 0;
+                            if( Runtime().Backend.ReleaseChannel( pStream->pChannel[RIGHT_CHANNEL] ) )
+                                pStream->pChannel[RIGHT_CHANNEL] = 0;
                         }
-                    
-                        // Ok for audio updates
-                        g_AudioHardware.Unlock();
                     }
 
-                    if( !pStream->bStopStream )
+                    if( pStream->State != STREAM_STOPPING )
                     {
                         // Mark left channel as loaded.
                         if( pStream->pChannel[LEFT_CHANNEL] )
@@ -696,10 +510,12 @@ void audio_stream_mgr::Update( void )
                     break;
             }
 
-            g_AudioHardware.Unlock();
+            if( pStream->State == STREAM_STARTING )
+                pStream->State = STREAM_RUNNING;
+
         }
         // Stop the stream?
-        else if( pStream->bStopStream )
+        else if( pStream->State == STREAM_STOPPING )
         {
             s32 Status = (s32)pStream->pIoRequest->GetStatus();
 #ifdef LOG_AUDIO_STREAM_UPDATE
@@ -714,49 +530,72 @@ void audio_stream_mgr::Update( void )
                 (Status != io_request::PENDING) && 
                 (Status != io_request::IN_PROGRESS) )
             {
-                
-                // Clear flag
-                pStream->bStopStream = FALSE;
-                pStream->bOpenStream  = FALSE;
-                pStream->bStartStream = FALSE;
-                audio_stream_close_file( pStream );
+                pStream->Type       = INACTIVE;
+                pStream->StreamDone = TRUE;
+                pStream->State      = STREAM_CLOSING;
+
+                Runtime().StreamRuntime.CloseFile( pStream );
+
+                pStream->pChannel[LEFT_CHANNEL]  = NULL;
+                pStream->pChannel[RIGHT_CHANNEL] = NULL;
+                pStream->WaveformCursor          = 0;
+                pStream->DecodeWriteCursor       = 0;
+                pStream->DecodedFrames           = 0;
+                pStream->DecodedEndFrame         = 0;
+                pStream->UseReservedSlot         = FALSE;
+                pStream->State                   = STREAM_FREE;
             }
         }
         // If its active, then just do the hardware stream update...
-        else if( pStream->Type != INACTIVE )
+        else if( ((pStream->State == STREAM_RUNNING) || (pStream->State == STREAM_DRAINING)) && (pStream->Type != INACTIVE) )
         {
             switch( pStream->Type )
             {
                 case MONO_STREAM:
-                    g_AudioHardware.UpdateStream( pStream->pChannel[LEFT_CHANNEL] );
+                    Runtime().Backend.UpdateStream( pStream->pChannel[LEFT_CHANNEL] );
                     break;
 
                 case STEREO_STREAM:
-                    g_AudioHardware.UpdateStream( pStream->pChannel[RIGHT_CHANNEL] );
-                    g_AudioHardware.UpdateStream( pStream->pChannel[LEFT_CHANNEL] );
+                    Runtime().Backend.UpdateStream( pStream->pChannel[RIGHT_CHANNEL] );
+                    Runtime().Backend.UpdateStream( pStream->pChannel[LEFT_CHANNEL] );
                     break;
 
                 default:
                     ASSERT( 0 );
                     break;
             }
+
+            if( (pStream->State == STREAM_RUNNING) && Runtime().Decoders.IsOpen( pStream ) )
+                Runtime().StreamRuntime.UpdateDecoded( pStream );
         }
     }
 }
 
+//==============================================================================
+
 xbool audio_stream_mgr::ReserveStreams( s32 nStreams )
 {
+    if( (nStreams < 0) || ((m_nReservedStreams + nStreams) > MAX_AUDIO_STREAMS) )
+    {
+        ASSERT( 0 );
+        return FALSE;
+    }
+
     m_nReservedStreams += nStreams;
-    ASSERT( m_nReservedStreams <= MAX_AUDIO_STREAMS );
-    ASSERT( m_nReservedStreams >= 0 );
     return TRUE;
 }
 
+//==============================================================================
+
 xbool audio_stream_mgr::UnReserveStreams( s32 nStreams )
 {
+    if( (nStreams < 0) || ((m_nReservedStreams - nStreams) < 0) )
+    {
+        ASSERT( 0 );
+        return FALSE;
+    }
+
     m_nReservedStreams -= nStreams;
-    ASSERT( m_nReservedStreams <= MAX_AUDIO_STREAMS );
-    ASSERT( m_nReservedStreams >= 0 );
     return TRUE;
 }
 

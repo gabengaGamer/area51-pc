@@ -1,9 +1,10 @@
-#include "mutanttank_attack_state.hpp"
-#include "mutant_tank.hpp"
-#include "Objects\WeaponSMP.hpp"
-#include "Objects\WeaponShotgun.hpp"
-#include "Objects\SuperDestructible.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "MutantTank_Attack_State.hpp"
+#include "Mutant_Tank.hpp"
+#include "Objects/WeaponSMP.hpp"
+#include "Objects/WeaponShotgun.hpp"
+#include "Objects/SuperDestructible.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 //=========================================================================
 // DEFINES
@@ -1562,10 +1563,9 @@ void mutanttank_attack_state::OnDebugRender( void )
         vector3 End( m_ChargeLineEnd + Offset );
         
         // Render
-        draw_ClearL2W();
-        draw_Sphere( Start, 15.0f, XCOLOR_GREEN );
-        draw_Sphere( End,   15.0f, XCOLOR_GREEN );
-        draw_Line( Start, End, XCOLOR_GREEN );
+        render::debug::Sphere( Start, 15.0f, XCOLOR_GREEN );
+        render::debug::Sphere( End,   15.0f, XCOLOR_GREEN );
+        render::debug::Line( Start, End, XCOLOR_GREEN );
     }
 }
 

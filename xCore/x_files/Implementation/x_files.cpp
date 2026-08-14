@@ -21,7 +21,6 @@
 #endif
 
 #include "../x_threads.hpp"
-#include "../x_context.hpp"
 
 //------------------------------------------------------------------------------
 
@@ -86,11 +85,12 @@ void x_Init( s32 argc, char** argv )
         x_IOInit();
         x_MemInit();
         x_TimeInit();
-        x_ContextInit();
         //
         // Initialize the x_files within the current thread.
         //
         x_InitThreads(argc,argv);
+        x_GetProfiler().Init();
+        x_WorkersInit( X_WORKERS_DEFAULT_WORKERS );
     }
     s_Initialized++;
 
@@ -107,8 +107,9 @@ void x_Kill( void )
 
     if( s_Initialized == 1 )
     {
+        x_WorkersKill();
+        x_GetProfiler().Kill();
         x_KillThreads();
-        x_ContextKill();
         x_TimeKill();
         x_MemKill();
         x_IOKill();

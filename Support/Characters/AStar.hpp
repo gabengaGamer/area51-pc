@@ -1,9 +1,9 @@
 #ifndef ASTAR_HPP
 #define ASTAR_HPP
 
-#include "Navigation\ng_node2.hpp"
-#include "Navigation\ng_connection2.hpp"
-#include "..\MiscUtils\PriorityQueue.hpp"
+#include "Navigation/ng_node2.hpp"
+#include "Navigation/ng_connection2.hpp"
+#include "../MiscUtils/PriorityQueue.hpp"
 #include "AStarNode.hpp"
 
 

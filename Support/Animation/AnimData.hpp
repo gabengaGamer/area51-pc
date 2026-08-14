@@ -13,7 +13,7 @@
 #include "x_files.hpp"
 #include "x_math.hpp"
 #include "x_bytestream.hpp"
-#include "..\ResourceMgr\ResourceMgr.hpp"
+#include "../ResourceMgr/ResourceMgr.hpp"
 
 
 
@@ -99,8 +99,8 @@ struct anim_key
 public:
 
     void Interpolate( const anim_key& Key0, const anim_key& Key1, f32 T );
-    void Identity( void ) ;
-    void Setup( matrix4& M ) ;
+    void Identity( void );
+    void Setup( matrix4& M );
 
 //-------------------------------------------------------------------------
 public:
@@ -170,15 +170,20 @@ struct anim_key_stream
 
 private:
 
-    void            GrabKey                 ( s32 iFrame, anim_key& Key );
+    struct decode_context
+    {
+        byte*               pData;
+        s32                 SO;
+        s32                 RO;
+        s32                 TO;
+        anim_key_format     SF;
+        anim_key_format     RF;
+        anim_key_format     TF;
+    };
 
-    static  s32     s_SF;
-    static  s32     s_RF;
-    static  s32     s_TF;
-    static  s32     s_SO;
-    static  s32     s_RO;
-    static  s32     s_TO;
-    static  byte*   s_pData;
+    void            GrabKey                 ( const decode_context& Context,
+                                              s32                   iFrame,
+                                              anim_key&             Key ) const;
 };
 
 //=========================================================================
@@ -215,8 +220,10 @@ private:
     // Only returns bone streams
     xbool   IsBoneMasked        ( const anim_group& AnimGroup, s32 iBone ) const;
     void    GetRawKeys          ( const anim_group& AnimGroup, s32 iFrame, anim_key* pKey ) const;
+    void    GetRawKeys          ( const anim_group& AnimGroup, s32 iFrame, anim_key* pKey, s32 iBoneMin, s32 iBoneMax ) const;
     void    GetInterpKeys       ( const anim_group& AnimGroup, f32  Frame, anim_key* pKey ) const;
     void    GetInterpKeys       ( const anim_group& AnimGroup, f32  Frame, anim_key* pKey, s32 nBones ) const;
+    void    GetInterpKeys       ( const anim_group& AnimGroup, f32  Frame, anim_key* pKey, s32 iBoneMin, s32 iBoneMax ) const;
 
     // Can return bone or prop streams
     void    GetRawKey           ( const anim_group& AnimGroup, s32 iFrame, s32 iStream, anim_key& Key ) const;
@@ -382,8 +389,10 @@ public:
     void        GetRawKey               ( s32 iFrame, s32 iBone, anim_key& Key ) const;
     void        GetInterpKey            ( f32  Frame, s32 iBone, anim_key& Key ) const;
     void        GetRawKeys              ( s32 iFrame, anim_key* pKey ) const;
+    void        GetRawKeys              ( s32 iFrame, anim_key* pKey, s32 iBoneMin, s32 iBoneMax ) const;
     void        GetInterpKeys           ( f32  Frame, anim_key* pKey ) const;
     void        GetInterpKeys           ( f32  Frame, anim_key* pKey, s32 nBones ) const;
+    void        GetInterpKeys           ( f32  Frame, anim_key* pKey, s32 iBoneMin, s32 iBoneMax ) const;
     
     // Misc
     radian      GetTotalMoveDir         ( void ) const;
@@ -443,11 +452,11 @@ private:
     
     anim_group*     m_pAnimGroup;           // Owner animation group
     
-    s32             m_nAnims ;              // Number of consecutive anims with this name
-    f32             m_AnimsWeight ;         // Total weight of all consecutive anims with this name
+    s32             m_nAnims;               // Number of consecutive anims with this name
+    f32             m_AnimsWeight;          // Total weight of all consecutive anims with this name
 
     char            m_Name[32];             // Reference name
-    f32             m_Weight ;              // Influence random select weight
+    f32             m_Weight;               // Influence random select weight
     f32             m_BlendTime;            // Blend time to use (-1 = use default)
     
     s16             m_nChainFramesMin;      // Min frames to play before chaining
@@ -774,7 +783,7 @@ private:
         s16 iBone;
     };
 
-    bbox            m_BBox ;    // Bounding box of bind pose geom pushed through all animations
+    bbox            m_BBox;    // Bounding box of bind pose geom pushed through all animations
 
     char            m_FileName[60];
     hash_entry*     m_pHashTable;
@@ -822,7 +831,7 @@ friend anim_info;
 friend anim_keys;
 
 public:
-    typedef rhandle<anim_group> handle ;
+    typedef rhandle<anim_group> handle;
 };
 
 //=========================================================================
@@ -872,7 +881,7 @@ s32 anim_info::GetPropParentBoneIndex( s32 iChannel ) const
 inline
 s32 anim_info::GetNAnims( void ) const
 {
-    return m_nAnims ;
+    return m_nAnims;
 }
 
 //=========================================================================
@@ -880,7 +889,7 @@ s32 anim_info::GetNAnims( void ) const
 inline
 f32 anim_info::GetAnimsWeight( void ) const
 {
-    return m_AnimsWeight ;
+    return m_AnimsWeight;
 }
 
 //=========================================================================
@@ -896,7 +905,7 @@ const char* anim_info::GetName( void ) const
 inline
 f32 anim_info::GetWeight( void ) const
 {
-    return m_Weight ;
+    return m_Weight;
 }
 
 //=========================================================================
@@ -952,7 +961,7 @@ s32 anim_info::GetFPS( void ) const
 inline
 xbool anim_info::DoesLoop( void ) const
 {
-    return ((m_Flags & ANIM_DATA_FLAG_LOOPING) != 0) ;
+    return ((m_Flags & ANIM_DATA_FLAG_LOOPING) != 0);
 }
 
 //=========================================================================
@@ -960,7 +969,7 @@ xbool anim_info::DoesLoop( void ) const
 inline
 xbool anim_info::HasMasks( void ) const
 {
-    return ((m_Flags & ANIM_DATA_FLAG_HAS_MASKS) != 0) ;
+    return ((m_Flags & ANIM_DATA_FLAG_HAS_MASKS) != 0);
 }
 
 //=========================================================================
@@ -968,7 +977,7 @@ xbool anim_info::HasMasks( void ) const
 inline
 xbool anim_info::AccumHorizMotion( void ) const
 {
-    return ((m_Flags & ANIM_DATA_FLAG_ACCUM_HORIZ_MOTION) != 0) ;
+    return ((m_Flags & ANIM_DATA_FLAG_ACCUM_HORIZ_MOTION) != 0);
 }
 
 //=========================================================================
@@ -976,7 +985,7 @@ xbool anim_info::AccumHorizMotion( void ) const
 inline
 xbool anim_info::AccumVertMotion( void ) const
 {
-    return ((m_Flags & ANIM_DATA_FLAG_ACCUM_VERT_MOTION) != 0) ;
+    return ((m_Flags & ANIM_DATA_FLAG_ACCUM_VERT_MOTION) != 0);
 }
 
 //=========================================================================
@@ -984,7 +993,7 @@ xbool anim_info::AccumVertMotion( void ) const
 inline
 xbool anim_info::AccumYawMotion( void ) const
 {
-    return ((m_Flags & ANIM_DATA_FLAG_ACCUM_YAW_MOTION) != 0) ;
+    return ((m_Flags & ANIM_DATA_FLAG_ACCUM_YAW_MOTION) != 0);
 }
 
 //=========================================================================
@@ -992,7 +1001,7 @@ xbool anim_info::AccumYawMotion( void ) const
 inline
 xbool anim_info::Gravity( void ) const
 {
-    return ((m_Flags & ANIM_DATA_FLAG_GRAVITY) != 0) ;
+    return ((m_Flags & ANIM_DATA_FLAG_GRAVITY) != 0);
 }
 
 //=========================================================================
@@ -1000,7 +1009,7 @@ xbool anim_info::Gravity( void ) const
 inline
 xbool anim_info::WorldCollision( void ) const
 {
-    return ((m_Flags & ANIM_DATA_FLAG_WORLD_COLLISION) != 0) ;
+    return ((m_Flags & ANIM_DATA_FLAG_WORLD_COLLISION) != 0);
 }
 
 //=========================================================================
@@ -1008,7 +1017,7 @@ xbool anim_info::WorldCollision( void ) const
 inline
 xbool anim_info::ChainCyclesInteger( void ) const
 {
-    return ((m_Flags & ANIM_DATA_FLAG_CHAIN_CYCLES_INTEGER) != 0) ;
+    return ((m_Flags & ANIM_DATA_FLAG_CHAIN_CYCLES_INTEGER) != 0);
 }
 
 //=========================================================================
@@ -1125,7 +1134,7 @@ void anim_info::SetEventData( s32 iEvent, const event_data& EventData )
 inline
 const bbox& anim_group::GetBBox( void ) const
 {
-    return m_BBox ;
+    return m_BBox  ;
 }
 
 //=========================================================================
@@ -1185,8 +1194,6 @@ extern s32 g_extern_anim_link;
 //=========================================================================
 #endif // END ANIM_DATA_HPP
 //=========================================================================
-
-
 
 
 

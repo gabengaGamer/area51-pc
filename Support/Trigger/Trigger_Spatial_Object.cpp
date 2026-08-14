@@ -8,17 +8,18 @@
 //  INCLUDES
 //=========================================================================
 
-#include "Trigger\Trigger_Spatial_Object.hpp"
-#include "Trigger\Trigger_Manager.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Trigger/Trigger_Spatial_Object.hpp"
+#include "Trigger/Trigger_Manager.hpp"
 #include "Entropy.hpp"
 
-#include "Render\Editor\editor_icons.hpp"
-#include "Objects\BaseProjectile.hpp"
-#include "Objects\Player.hpp"
-#include "characters\character.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "Objects/BaseProjectile.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Characters/Character.hpp"
 
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "..\Support\Inputmgr\GamePad.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "../Support/InputMgr/GamePad.hpp"
 
 //=========================================================================
 // STATIC DEFINITIONS AND CONSTS
@@ -104,8 +105,8 @@ static struct trigger_spatial_object_desc : public object_desc
     virtual s32  OnEditorRender( object& Object ) const
     {
         object_desc::OnEditorRender( Object );
-        draw_Label( Object.GetPosition(), XCOLOR_RED, "<<OBSOLETE>>" );    
-        return EDITOR_ICON_TRIGGER;
+        render::debug::Label( Object.GetPosition(), XCOLOR_RED, "<<OBSOLETE>>" );    
+        return static_cast<s32>( EditorIcon::Trigger );
     }
 
 #endif // X_EDITOR
@@ -260,13 +261,13 @@ void trigger_spatial_object::OnDebugRender ( void )
         
             vEndpoint = M*vEndpoint;
         
-            draw_Line( object::GetPosition(), vEndpoint, DrawColor );  
+            render::debug::Line( object::GetPosition(), vEndpoint, DrawColor );  
         }
         break;
 
     case TYPE_PLANE:    
         {
-            const s32 NumPoints = 6;
+            const s32 NumPoints = 4;
 
             vector3 vPoints[NumPoints];
         
@@ -277,15 +278,11 @@ void trigger_spatial_object::OnDebugRender ( void )
             vPoints[1] = vector3(    HalfWidth,    -HalfHeight,0);
             vPoints[2] = vector3(   -HalfWidth,    -HalfHeight,0);
             vPoints[3] = vector3(   -HalfWidth,     HalfHeight,0);
-            vPoints[4] = vector3(    HalfWidth,     HalfHeight,0);
-            vPoints[5] = vector3(   -HalfWidth,    -HalfHeight,0);
-
             const matrix4 M = GetL2W();
         
             M.Transform( vPoints, vPoints, NumPoints );
         
-            // Renders a wire polygon
-            SMP_UTIL_draw_Polygon( vPoints, NumPoints, DrawColor, TRUE );
+            render::debug::Ngon( vPoints, NumPoints, DrawColor, TRUE );
         }
 
         break;
@@ -296,11 +293,10 @@ void trigger_spatial_object::OnDebugRender ( void )
         
             const matrix4 M = GetL2W();
         
-            // Renders a wire polygon
-            SMP_UTIL_draw_Cube ( Halves, M, DrawColor );
+            render::debug::Box( bbox( -Halves, Halves ), M, DrawColor );
 
             // Renders a volume given a BBox
-            draw_Volume ( GetBBox(), DrawColor);
+            render::debug::Volume ( GetBBox(), DrawColor);
         }
      
          break;
@@ -310,16 +306,16 @@ void trigger_spatial_object::OnDebugRender ( void )
             if( GetAttrBits() & ATTR_EDITOR_SELECTED )
             {
                 // Renders a volume given a BBox
-                draw_Volume ( GetBBox(), xcolor(DrawColor.R, DrawColor.G,DrawColor.B, 50));
+                render::debug::Volume ( GetBBox(), xcolor(DrawColor.R, DrawColor.G,DrawColor.B, 50));
             } 
 
-            draw_BBox( GetBBox(), DrawColor);  
+            render::debug::Box( GetBBox(), DrawColor);  
         }
     
         break;
 
     case TYPE_SPHERICAL:         
-        draw_Sphere( object::GetPosition(), m_Dimensions[0], DrawColor );
+        render::debug::Sphere( object::GetPosition(), m_Dimensions[0], DrawColor );
         break;
 
     default:
@@ -594,7 +590,7 @@ void trigger_spatial_object::StartPlayerPolling ( void )
 
 void trigger_spatial_object::ExecuteLogic ( f32 DeltaTime )
 {    
-   TRIGGER_CONTEXT("trigger_spatial_object::ExecuteLogic");
+   X_PROFILE_SCOPE_CATEGORY( "Trigger", "trigger_spatial_object::ExecuteLogic");
 
     //Logic for spatial triggers..
     // -Only activated once spatial conditions are meet
@@ -794,7 +790,7 @@ xbool trigger_spatial_object::ExecutePlayerPolling ( f32 DeltaTime )
 
 void trigger_spatial_object::LogicCheckOnActivate ( void )
 {    
-    TRIGGER_CONTEXT("trigger_spatial_object::ForceLogicCheckOnActivate");
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "trigger_spatial_object::ForceLogicCheckOnActivate");
     
     if (!m_OnActivate)
         return;
@@ -1133,7 +1129,7 @@ xbool trigger_spatial_object::CheckForUseEvent( void )
 
         player& Player = player::GetSafeType( *pObj );
       
-        if( g_IngamePad[ Player.GetActivePlayerPad() ].GetLogical( ingame_pad::ACTION_USE ).GetWasValue() > 0.25f )
+        if( g_GameInput[ Player.GetActivePlayerPad() ].GetFrameLogical( ingame_pad::ACTION_USE ).GetWasValue() > 0.25f )
         {
             return TRUE;
         }

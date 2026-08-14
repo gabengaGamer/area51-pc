@@ -10,7 +10,7 @@
 
 #include "NetRocket.hpp"
 #include "Inevitable.hpp"
-#include "Network\NetBitStream.hpp"
+#include "Network/NetBitStream.hpp"
 
 #include "x_log.hpp"
 

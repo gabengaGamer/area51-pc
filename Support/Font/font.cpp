@@ -4,81 +4,75 @@
 //
 //=========================================================================
 
+//=========================================================================
+//  INCLUDES
+//=========================================================================
+
 #include "font.hpp"
 
-#include "Bitmap\aux_bitmap.hpp"
+#include "Bitmap/aux_Bitmap.hpp"
 
-#include "ui/ui_manager.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_renderer.hpp"
 
+//=========================================================================
+//  GLOBAL INSTANCE
 //=========================================================================
 
 font g_Font;
 
 //=========================================================================
+//  DEFINES
+//=========================================================================
 
-#define OFFSET_X    (2048-(512/2))
-#define OFFSET_Y    (2048-(512/2))
 #define CHAR_WIDTH  13
 #define CHAR_HEIGHT 18
 #define XBORDER      8
 #define YBORDER      8
 
 //=========================================================================
-
-
-
- #ifdef TARGET_PS2
-
-
-struct header
-{
-    	dmatag  DMA;        // DMA tag
-	giftag  PGIF;       // GIF for setting PRIM register
-	s64     Prim;       // PRIM register
-    s64     Dummy;
-	giftag  GIF;		// GIF for actual primitives
-};
-
-struct char_info
-{
-	s64     Color1;		// RGBAQ register
-    s64     T0;
-    s64     P0;
-    s64     T1;
-    s64     P1;
-	s64     Color2;		// RGBAQ register
-    s64     T2;
-    s64     P2;
-    s64     T3;
-    s64     P3;
-};
-
-#endif
-
+//  HELPER FUNCTIONS
 //=========================================================================
 
-#ifdef TARGET_PS2
+static 
+void DrawFontGlyph( const texture& Texture,
+                    const vector2& Position,
+                    const vector2& Size,
+                    const vector2& UV0,
+                    const vector2& UV1,
+                    const xcolor& TopColor,
+                    const xcolor& BottomColor )
+{
+    const ui_vertex Vertices[4] =
+    {
+        ui_vertex( Position,                                      vector2( UV0.X, UV0.Y ), TopColor    ),
+        ui_vertex( vector2( Position.X + Size.X, Position.Y ),     vector2( UV1.X, UV0.Y ), TopColor    ),
+        ui_vertex( Position + Size,                               vector2( UV1.X, UV1.Y ), BottomColor ),
+        ui_vertex( vector2( Position.X, Position.Y + Size.Y ),     vector2( UV0.X, UV1.Y ), BottomColor )
+    };
+    static const u32 Indices[6] = { 0, 1, 2, 2, 3, 0 };
 
-static header*          s_pHeader;
-static s32              s_NChars;
-static giftag           s_GIF       PS2_ALIGNMENT(16);
-static giftag           s_PGIF      PS2_ALIGNMENT(16);
-
-#endif
+    g_UIRenderer.GetDrawList().AddTriangles( ui_material( Texture,
+                                                          UI_BLEND_ALPHA,
+                                                          UI_SAMPLER_POINT_CLAMP ),
+                                             Vertices,
+                                             4,
+                                             Indices,
+                                             6 );
+}
 
 //=========================================================================
-//  HUD Font
+//  IMPLEMENTATION
 //=========================================================================
 
 xbool font::Load( const char* pPathName )
 {
-    xbitmap *pBitmap;
-    
-    // Load font image
-    //VERIFY( m_Bitmap.Load( pPathName ) );
-    // SetName
-    m_Bitmap.SetName( pPathName );
-    pBitmap = m_Bitmap.GetPointer();
+    m_bitmap.SetName( pPathName );
+    texture* pTexture = m_bitmap.GetPointer();
+    if( !pTexture )
+        return FALSE;
+
+    const xbitmap* pBitmap = &pTexture->m_bitmap;
 
 
     // Setup info
@@ -108,24 +102,12 @@ xbool font::Load( const char* pPathName )
         {
             // Scan registration marks for character
             s32 x2 = x1+1;
-#ifdef TARGET_PS2
-            // HACK FIX - registration marks get hosed when converting from 32 to 8 bit
-            while( (x2 < m_BmWidth) && !(pBitmap->GetPixelColor( x2, y ).R < 32) )
-                x2++;
-#elif defined( TARGET_XBOX )
-            while( (x2 < m_BmWidth) && !(pBitmap->GetPixelColor( x2, y ).R < 32) )
-            {
-                x2++;
-                ;;
-            }
-#else
             while( (x2 < m_BmWidth) && !(pBitmap->GetPixelColor( x2, y ).R < 32) )
                 x2++;
 
             // Skip out if nothing on the row
 #if !defined(X_EDITOR)
             ASSERT( x2 < m_BmWidth );
-#endif
 #endif
 
             // Add character
@@ -174,9 +156,6 @@ xbool font::Load( const char* pPathName )
     // Set AvgWidth
     m_AvgWidth = m_Characters['x'].W;
 
-    // Register the bitmap
-    //vram_Register( m_Bitmap );
-
     // Return success
     return TRUE;
 }
@@ -186,8 +165,7 @@ xbool font::Load( const char* pPathName )
 
 void font::Kill( void )
 {
-    // UnRegister the bitmap
-    m_Bitmap.Destroy(); // Make sure this guy actually unloads
+    m_bitmap.Destroy();
 }
 
 //=========================================================================
@@ -319,19 +297,22 @@ s32 font::TextWidth( const xwchar* pString, s32 Count ) const
             }
 
             // Check for Control Code
-            else if( c == 0xAB ) // '«'
+            else if( c == 0xAB ) // 'Â«'
             {
 
 #if !defined(APP_EDITOR)
                 // If this is a ButtonIcon then Add Sprite Width
-                if( g_UiMgr->LookUpButtonCode( pString, 0 ) != -1 )
+                if( g_UiMgr->LookUpButtonCode( pString,
+                                               0,
+                                               g_Input.GetCurrentInputDevice(),
+                                               g_Input.GetCurrentInputPlatform() ) != -1 )
                 {
                     Width += BUTTON_SPRITE_WIDTH; break;
                 }
 #endif
 
                 // Loop past control code.
-                while( c != 0xBB ) // '»'
+                while( c != 0xBB ) // 'Â»'
                 {
                     c = *pString++;
                 }
@@ -342,12 +323,7 @@ s32 font::TextWidth( const xwchar* pString, s32 Count ) const
             {
 
                 Width += m_Characters[c].W;
-
-#ifdef TARGET_XBOX
-                Width += 2;
-#else
                 Width += 1;
-#endif
             }             
 
             // Decrease character count.
@@ -363,7 +339,6 @@ s32 font::TextWidth( const xwchar* pString, s32 Count ) const
 
 //=========================================================================
 
-//=========================================================================
 const xwchar* font::TextWrap( const xwchar* pString, const irect& Rect ) const
 {
     static xwstring WrappedString;
@@ -407,12 +382,7 @@ const xwchar* font::TextWrap( const xwchar* pString, const irect& Rect ) const
                 {
 
                     Width += m_Characters[c].W;
-
-#ifdef TARGET_XBOX
-                    Width += 2;
-#else
                     Width += 1;
-#endif
 
                     // Width still in range?
                     if( Width < FieldWidth )
@@ -542,50 +512,16 @@ void font::RenderText( const irect&  Rect,
         Color2.G = (Color2.G + BrightnessDelta) > 255 ? 255 : Color2.G + BrightnessDelta;
         Color2.B = (Color2.B + BrightnessDelta) > 255 ? 255 : Color2.B + BrightnessDelta;
     }
-    xbitmap* pBitmap =  m_Bitmap.GetPointer();
+    texture* pFontTexture = m_bitmap.GetPointer();
+    if( !pFontTexture )
+        return;
 
-    #if defined TARGET_PC || defined TARGET_XBOX
-        vector2 uv0;
-        vector2 uv1;   
-        vector2 Size( 0, (f32)m_Height );
-//        f32     BmWidth  = 1.0f / (f32)m_BmWidth;
-//        f32     BmHeight = 1.0f / (f32)m_BmHeight;
-
-        // Prepare to draw characters.
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
-        draw_SetTexture( *pBitmap );
-
-        // Turn off BILINEAR.
-//        g_pd3dDevice->SetTextureStageState( 0, D3DTSS_MINFILTER, D3DTEXF_POINT );
-//        g_pd3dDevice->SetTextureStageState( 0, D3DTSS_MAGFILTER, D3DTEXF_POINT );
-//        g_pd3dDevice->SetTextureStageState( 0, D3DTSS_MIPFILTER, D3DTEXF_POINT );
-    #endif
-
-    #ifdef TARGET_PS2
-        // Setup Texture
-        //vram_Activate( m_Bitmap );
-
-        vram_Activate( *pBitmap );
-
-
-        gsreg_Begin();
-        gsreg_SetClamping( TRUE );
-        gsreg_SetMipEquation( FALSE, 1.0f, 0, MIP_MAG_POINT, MIP_MIN_POINT );
-        gsreg_SetAlphaBlend( ALPHA_BLEND_MODE(C_SRC, C_DST, A_SRC, C_DST) );
-        gsreg_SetZBuffer(FALSE);
-        gsreg_End();
-
-        // Build GIF Tags
-        s_PGIF.Build( GIF_MODE_REGLIST, 2, 1, 0, 0, 0, 1 );
-        s_PGIF.Reg  ( GIF_REG_PRIM, GIF_REG_NOP );
-        s_GIF.Build ( GIF_MODE_REGLIST, 10, 0, 0, 0, 0, 1 );
-        s_GIF.Reg   ( GIF_REG_RGBAQ, GIF_REG_UV, GIF_REG_XYZ3, GIF_REG_UV, GIF_REG_XYZ3, 
-                        GIF_REG_RGBAQ, GIF_REG_UV, GIF_REG_XYZ2, GIF_REG_UV, GIF_REG_XYZ2  );
-
-        // Compute size of header and skip over
-        s_pHeader = DLStruct(header);
-        s_NChars  = 0;
-    #endif
+    vector2 uv0;
+    vector2 uv1;
+    vector2 Size( 0, (f32)m_Height );
+    const xbool ClipText = (Flags & clip_character) != 0;
+    if( ClipText )
+        g_UIRenderer.PushClipRect( Rect );
 
     // Get size for vertical positioning.
     Height = TextHeight( pString );
@@ -656,12 +592,15 @@ void font::RenderText( const irect&  Rect,
                 iStart++;
 #if !defined(APP_EDITOR)
                 // get the button code
-                s32 buttonCode = g_UiMgr->LookUpButtonCode( pString, iStart );
+                s32 buttonCode = g_UiMgr->LookUpButtonCode( pString,
+                                                            iStart,
+                                                            g_Input.GetCurrentInputDevice(),
+                                                            g_Input.GetCurrentInputPlatform() );
 #else
                 s32 buttonCode = -1;
 #endif
 
-                while( (0xFFFF & c) != 0x00BB ) // '»'
+                while( (0xFFFF & c) != 0x00BB ) // 'Â»'
                 {
                     iStart++;
                     c = pString[iStart];
@@ -671,7 +610,7 @@ void font::RenderText( const irect&  Rect,
                 // If we found a button code then render it.
                 if( buttonCode > -1 )
                 {
-                    while( (c & 0xFFFF) != 0x00BB ) // '»'
+                    while( (c & 0xFFFF) != 0x00BB ) // 'Â»'
                     {
                         iStart++;
                         c = pString[iStart];
@@ -682,28 +621,12 @@ void font::RenderText( const irect&  Rect,
                         ASSERTS( FALSE, "Too many buttons in this string!" );
                         continue;
                     }
-                    //draw_End();
-                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
-                    
-                    //xbitmap* button = g_UiMgr->GetButtonTexture( buttonCode );
-        		    //draw_SetTexture( *button );
-
                     ButtonCodes[ NumButtons ] = buttonCode;
                     Button_X[ NumButtons ] = (f32)tx;
-	        	    Button_Y[ NumButtons ] = (f32)ty;
-
-                    //draw_Sprite( vector3((f32)tx+1, (f32)ty+1, 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(0,0,0,255) );
-	        	    //draw_Sprite( vector3((f32)tx, (f32)ty, 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(255,255,255) );
+	        	Button_Y[ NumButtons ] = (f32)ty;
                     tx += BUTTON_SPRITE_WIDTH;
-                
-                    //draw_End();
                     
                     NumButtons++;
-
-                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
-		            
-                    //xbitmap* pBitmap = m_Bitmap.GetPointer();
-                    //draw_SetTexture( *pBitmap );
                 }
                 continue;
             }
@@ -736,52 +659,21 @@ void font::RenderText( const irect&  Rect,
 
             //Color.A = 255;
 
-            #if defined TARGET_PC || defined TARGET_XBOX
-            {
-                f32 u0 = (x            + 0.1f) / m_BmWidth;
-                f32 u1 = (x + w        + 0.1f) / m_BmWidth;
-                f32 v0 = (y            + 0.1f) / m_BmHeight;
-                f32 v1 = (y + m_Height + 0.1f) / m_BmHeight;
+            const f32 u0 = (f32)x                / m_BmWidth;
+            const f32 u1 = (f32)(x + w)          / m_BmWidth;
+            const f32 v0 = (f32)y                / m_BmHeight;
+            const f32 v1 = (f32)(y + m_Height)   / m_BmHeight;
 
-                Size.X = (f32)w;
-                uv0.Set( u0, v0 );
-                uv1.Set( u1, v1 );
-
-                // aharp TODO need to add gradient font
-                draw_SpriteUV( vector3((f32)tx,(f32)ty,10.0f), Size, uv0, uv1, Color1 );
-            }
-            #endif
-            
-            #ifdef TARGET_PS2
-            {
-	            s32         X0,Y0,X1,Y1;
-                char_info*  pCH;
-
-	            X0 = (OFFSET_X<<4) + ((tx)<<4);
-	            Y0 = (OFFSET_Y<<4) + ((ty)<<4);
-	            X1 = (OFFSET_X<<4) + ((tx+w)<<4);
-	            Y1 = (OFFSET_Y<<4) + ((ty+m_Height)<<4);
-
-
-                pCH         = DLStruct(char_info);
-	            
-                pCH->Color1 = SCE_GS_SET_RGBAQ( Color2.R>>1, Color2.G>>1, Color2.B>>1, Color2.A>>1, 0x3F800000 );	                
-                pCH->T0     = SCE_GS_SET_UV( (x<<4)+8, (y<<4)+8 );
-	            pCH->P0     = SCE_GS_SET_XYZ(X0,Y0,0xFFFFFFFF);
-	            
-                pCH->T1     = SCE_GS_SET_UV( ((x+w)<<4)+8, (y<<4)+8 );
-	            pCH->P1     = SCE_GS_SET_XYZ(X1,Y0,0xFFFFFFFF);
-
-	            pCH->Color2 = SCE_GS_SET_RGBAQ( Color1.R>>1, Color1.G>>1, Color1.B>>1, Color1.A>>1, 0x3F800000 );	                
-                pCH->T2     = SCE_GS_SET_UV( (x<<4)+8, ((y+m_Height)<<4)+8 );
-	            pCH->P2     = SCE_GS_SET_XYZ(X0,Y1,0xFFFFFFFF);
-	            
-                pCH->T3     = SCE_GS_SET_UV( ((x+w)<<4)+8, ((y+m_Height)<<4)+8 );
-	            pCH->P3     = SCE_GS_SET_XYZ(X1,Y1,0xFFFFFFFF);
-
-                s_NChars++;
-            }
-            #endif
+            Size.X = (f32)w;
+            uv0.Set( u0, v0 );
+            uv1.Set( u1, v1 );
+            DrawFontGlyph( *pFontTexture,
+                           vector2( (f32)tx, (f32)ty ),
+                           Size,
+                           uv0,
+                           uv1,
+                           Color2,
+                           Color1 );
 
             tx += w + 1;
         }
@@ -794,55 +686,41 @@ void font::RenderText( const irect&  Rect,
         }
     }
 
-    #if defined TARGET_PC || defined TARGET_XBOX
-    draw_End();
-    #endif
-
-    #ifdef TARGET_PS2
-    // Render
-    s_pHeader->DMA.SetCont( sizeof(header) - sizeof(dmatag) + (s_NChars * sizeof(char_info)) );
-    s_pHeader->DMA.MakeDirect();
-    s_pHeader->PGIF      = s_PGIF;
-    s_pHeader->GIF       = s_GIF;
-    s_pHeader->GIF.NLOOP = s_NChars; 
-
-    s_pHeader->Prim = SCE_GS_SET_PRIM(
-                            GIF_PRIM_TRIANGLESTRIP,    // type of primitive
-                            1,    // shading method (flat, gouraud)
-                            1,    // texture mapping (off, on)
-                            0,    // fogging (off, on)
-                            1,    // alpha blending (off, on)
-                            0,    // 1 pass anti-aliasing (off, on)
-                            1,    // tex-coord spec method (STQ, UV)
-                            0,    // context (1 or 2)
-                            0 );  // fragment value control (normal, fixed)
-    #endif
-
 #if !defined(APP_EDITOR)
     if( NumButtons > 0 && UseGradient )
     {
-        // now draw the buttons
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
-
         s32 i;
         for( i = 0; i < NumButtons; i++ )
         {
-                        
-            xbitmap* button = g_UiMgr->GetButtonTexture( ButtonCodes[ i ] );
-            draw_SetTexture( *button );
+            texture* pButton = g_UiMgr->GetButtonTexture( ButtonCodes[i] );
+            if( !pButton )
+                continue;
 
-            /*
-            Button_X[ NumButtons ] = tx;
-	        Button_Y[ NumButtons ] = ty;
-            */
-
-            draw_Sprite( vector3(Button_X[ i ]+1, Button_Y[ i ]+1, 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(0,0,0,255) );
-	        draw_Sprite( vector3(Button_X[ i ]  , Button_Y[ i ]  , 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(255,255,255) );
+            g_UIRenderer.DrawImage( *pButton,
+                                    vector2( Button_X[i] + 1.0f, Button_Y[i] + 1.0f ),
+                                    vector2( BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH ),
+                                    vector2( 0.0f, 0.0f ),
+                                    vector2( 1.0f, 1.0f ),
+                                    xcolor( 0, 0, 0, 255 ),
+                                    0.0f,
+                                    UI_BLEND_ALPHA,
+                                    UI_SAMPLER_LINEAR_CLAMP );
+            g_UIRenderer.DrawImage( *pButton,
+                                    vector2( Button_X[i], Button_Y[i] ),
+                                    vector2( BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH ),
+                                    vector2( 0.0f, 0.0f ),
+                                    vector2( 1.0f, 1.0f ),
+                                    XCOLOR_WHITE,
+                                    0.0f,
+                                    UI_BLEND_ALPHA,
+                                    UI_SAMPLER_LINEAR_CLAMP );
             tx += BUTTON_SPRITE_WIDTH;              
         }
-        draw_End();
     }
 #endif
+
+    if( ClipText )
+        g_UIRenderer.PopClipRect();
 }
 
 //=========================================================================
@@ -867,6 +745,3 @@ void font::RenderText( const irect&  R,
     xwstring t( pString );
     RenderText( R, Flags, Color, (const xwchar*)t );
 }
-
-//=========================================================================
-

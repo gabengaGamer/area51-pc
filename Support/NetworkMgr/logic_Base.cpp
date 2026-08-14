@@ -12,8 +12,8 @@
 
 #include "logic_Base.hpp"
 #include "NetworkMgr.hpp"
-#include "Objects/Player.hpp"               // For class actor/player.
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "Objects/Player/Player.hpp"               // For class actor/player.
+#include "CollisionMgr/CollisionMgr.hpp"
 
 #include "MsgMgr.hpp"
 
@@ -470,13 +470,25 @@ void logic_base::MoveToSpawnPt( s32 PlayerIndex, spawn_point& SpawnPt )
     u16     Zone2;
     SpawnPt.GetSpawnInfo( pActor->GetGuid(), Position, Rotation, Zone1, Zone2 );
 
-    // Teleport the actor
-    pActor->Teleport( Position, FALSE );
-    pActor->SetPitch( Rotation.Pitch );
-    pActor->SetYaw  ( Rotation.Yaw   ); 
-    pActor->SetZone1( Zone1 );
-    pActor->SetZone2( Zone2 );
-    pActor->InitZoneTracking();
+    if( pActor->GetType() == object::TYPE_PLAYER )
+    {
+        player* pPlayer = static_cast<player*>( pActor );
+        pPlayer->Teleport( Position,
+                           Rotation.Pitch,
+                           Rotation.Yaw,
+                           static_cast<zone_mgr::zone_id>( Zone1 ),
+                           static_cast<zone_mgr::zone_id>( Zone2 ),
+                           PlayerTeleportVelocityPolicy::Clear,
+                           FALSE,
+                           FALSE );
+    }
+    else
+    {
+        pActor->Teleport( Position, Rotation.Pitch, Rotation.Yaw, FALSE );
+        pActor->SetZone1( Zone1 );
+        pActor->SetZone2( Zone2 );
+        pActor->InitZoneTracking();
+    }
 }
 
 //==============================================================================

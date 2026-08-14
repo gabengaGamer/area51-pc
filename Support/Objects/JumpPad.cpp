@@ -8,10 +8,11 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "JumpPad.hpp"
-#include "Objects\Player.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "AudioMgr\AudioMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 
 //==============================================================================
 //  OBJECT DESCRIPTION
@@ -48,7 +49,7 @@ static struct jump_pad_desc : public object_desc
         {
             bbox BBox = Object.GetLocalBBox();
             BBox.Translate( Object.GetPosition() );
-            draw_BBox( BBox );
+            render::debug::Box( BBox );
 
             jump_pad& JumpPad = (jump_pad&)Object;
 
@@ -67,15 +68,15 @@ static struct jump_pad_desc : public object_desc
                 Velocity.GetY() -= (1000.0f    * g_MPTweaks.Gravity) * (1.0f/30.0f);
                                 // (Grav=cm/s) * (MP)                * (1/30th second);
 
-                draw_Line( P0, P1, Toggle ? XCOLOR_YELLOW : XCOLOR_RED );
-                draw_Point( P1 );
+                render::debug::Line( P0, P1, Toggle ? XCOLOR_YELLOW : XCOLOR_RED );
+                render::debug::Point( P1 );
 
                 Toggle = !Toggle;
                 P0     = P1;
             }
         }
 
-        return( EDITOR_ICON_JUMP_PAD );
+        return static_cast<s32>( EditorIcon::JumpPad );
     }
 
 #endif // X_EDITOR
@@ -176,7 +177,7 @@ bbox jump_pad::GetLocalBBox( void ) const
 
 //==============================================================================
 
-void jump_pad::OnAdvanceLogic( f32 DeltaTime )
+void jump_pad::OnAdvanceSimulation( f32 DeltaTime )
 {
     m_FXHandle.AdvanceLogic( DeltaTime );
     if( m_FXHandle.IsFinished() )

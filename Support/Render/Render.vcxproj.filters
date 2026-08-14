@@ -1,5 +1,5 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0">
   <ItemGroup>
     <Filter Include="PC">
       <UniqueIdentifier>{8f9eb36c-f5da-4a90-94b0-c4a00acda577}</UniqueIdentifier>
@@ -20,6 +20,9 @@
     <Filter Include="PC\ShaderMgr">
       <UniqueIdentifier>{51aa40fc-fd6e-4c3c-a23f-e2f87e33790d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PC\PrimitiveMgr">
+      <UniqueIdentifier>{93224d8f-4b26-4466-a595-861ed65b2c2c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Pc\SoftVertexMgr.cpp">
@@ -31,10 +34,19 @@
     <ClCompile Include="LeastSquares\LeastSquares.cpp">
       <Filter>LeastSquares</Filter>
     </ClCompile>
-    <ClCompile Include="Editor\editor_icons.cpp">
+    <ClCompile Include="Editor\EditorIcons.cpp">
       <Filter>Editor</Filter>
     </ClCompile>
     <ClCompile Include="PC\GBufferMgr.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\DecalRenderer.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\ForwardRenderMgr.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\ProjectionAtlas.cpp">
       <Filter>PC</Filter>
     </ClCompile>
     <ClCompile Include="PC\ShadowMgr.cpp">
@@ -48,9 +60,11 @@
     <ClCompile Include="ProjTextureMgr.cpp" />
     <ClCompile Include="ShadowMapMgr.cpp" />
     <ClCompile Include="Render.cpp" />
+    <ClCompile Include="RigidColor.cpp" />
     <ClCompile Include="RigidGeom.cpp" />
     <ClCompile Include="SkinGeom.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="RenderPipelineCache.cpp" />
     <ClCompile Include="PC\PostMgr\PostMgr_Filters.cpp">
       <Filter>PC\PostMgr</Filter>
     </ClCompile>
@@ -66,6 +80,9 @@
     <ClCompile Include="PC\GeomMgr\GeomMgr.cpp">
       <Filter>PC</Filter>
     </ClCompile>
+    <ClCompile Include="PC\GeomMgr\GeomMgr_Dynamic.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
     <ClCompile Include="PC\GeomMgr\GeomMgr_ProjTex.cpp">
       <Filter>PC</Filter>
     </ClCompile>
@@ -79,11 +96,22 @@
       <Filter>PC</Filter>
     </ClCompile>
     <ClCompile Include="PC\PrimitiveMgr\PrimitiveMgr.cpp">
-      <Filter>PC</Filter>
+      <Filter>PC\PrimitiveMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="PC\PrimitiveMgr\PrimitiveRenderer.cpp">
+      <Filter>PC\PrimitiveMgr</Filter>
     </ClCompile>
     <ClCompile Include="PC\RuntimeVertexMgr.cpp">
       <Filter>PC</Filter>
     </ClCompile>
+    <ClCompile Include="PC\GeomStorage.cpp">
+      <Filter>PC</Filter>
+    </ClCompile>
+    <ClCompile Include="PrimitiveBatch.cpp" />
+    <ClCompile Include="PrimitiveDebug.cpp" />
+    <ClCompile Include="GeomFile.cpp" />
+    <ClCompile Include="DecalBatch.cpp" />
+    <ClCompile Include="SurfaceColor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pc\SoftVertexMgr.hpp">
@@ -98,6 +126,18 @@
     <ClInclude Include="PC\GBufferMgr.hpp">
       <Filter>PC</Filter>
     </ClInclude>
+    <ClInclude Include="PC\DecalRenderer.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="PC\ForwardRenderMgr.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="PC\FrameRenderContext.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="PC\ProjectionAtlas.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
     <ClInclude Include="PC\ShadowMgr.hpp">
       <Filter>PC</Filter>
     </ClInclude>
@@ -108,10 +148,13 @@
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="Material_Prefs.hpp" />
     <ClInclude Include="MaterialArray.hpp" />
+    <ClInclude Include="RenderPipelineCache.hpp" />
     <ClInclude Include="platform_Render.hpp" />
     <ClInclude Include="ProjTextureMgr.hpp" />
     <ClInclude Include="ShadowMapMgr.hpp" />
+    <ClInclude Include="ShadowTypes.hpp" />
     <ClInclude Include="Render.hpp" />
+    <ClInclude Include="RigidColor.hpp" />
     <ClInclude Include="RigidGeom.hpp" />
     <ClInclude Include="SkinGeom.hpp" />
     <ClInclude Include="PC\PostMgr\PostMgr.hpp">
@@ -121,11 +164,23 @@
       <Filter>PC</Filter>
     </ClInclude>
     <ClInclude Include="PC\PrimitiveMgr\PrimitiveMgr.hpp">
-      <Filter>PC</Filter>
+      <Filter>PC\PrimitiveMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="PC\PrimitiveMgr\PrimitiveRenderer.hpp">
+      <Filter>PC\PrimitiveMgr</Filter>
     </ClInclude>
     <ClInclude Include="PC\RuntimeVertexMgr.hpp">
       <Filter>PC</Filter>
     </ClInclude>
+    <ClInclude Include="PC\GeomStorage.hpp">
+      <Filter>PC</Filter>
+    </ClInclude>
+    <ClInclude Include="PrimitiveBatch.hpp" />
+    <ClInclude Include="PrimitiveDebug.hpp" />
+    <ClInclude Include="GeomFile.hpp" />
+    <ClInclude Include="GeometryDraw.hpp" />
+    <ClInclude Include="DecalBatch.hpp" />
+    <ClInclude Include="SurfaceColor.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Pc\pc_platform.inl">

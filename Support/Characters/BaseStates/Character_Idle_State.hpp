@@ -1,7 +1,7 @@
 #ifndef _CHARACTER_IDLE_STATE_HPP_
 #define _CHARACTER_IDLE_STATE_HPP_
 
-#include "..\CharacterState.hpp"
+#include "../CharacterState.hpp"
 
 class character_idle_state : public character_state
 {

@@ -13,8 +13,7 @@
 #include "io_filesystem.hpp"
 #include "io_mgr.hpp"
 #include "x_files.hpp"
-#include "e_virtual.hpp"
-#include "device_host\io_device_host.hpp"
+#include "device_host/io_device_host.hpp"
 #include "x_log.hpp"
 
 //==============================================================================
@@ -59,6 +58,29 @@ io_fs g_IOFSMgr;
 //  HELPER FUNCTIONS
 //==============================================================================
 
+static char io_path_separator( void )
+{
+#if defined( TARGET_LINUX )
+    return '/';
+#else
+    return '\\';
+#endif
+}
+
+// Virtual DFS paths are case-insensitive for compatibility with the PC
+// implementation. The host path of an emulated Linux DFS keeps its real case.
+static xbool io_path_chars_equal( char Left, char Right )
+{
+#if defined( TARGET_LINUX )
+    if( ((Left == '\\') || (Left == '/')) && ((Right == '\\') || (Right == '/')) )
+        return TRUE;
+
+    return x_tolower( (s32)(unsigned char)Left ) == x_tolower( (s32)(unsigned char)Right );
+#else
+    return Left == Right;
+#endif
+}
+
 void io_fs::DumpFileSystem( s32 Index )
 {
     char filename[255];
@@ -87,7 +109,7 @@ static void io_clean_path( char* pClean, const char* pFilename )
     {
         if( (*pSource == '\\') || (*pSource == '/') )
         {
-            *pClean++ = '\\';
+            *pClean++ = io_path_separator();
             pSource++;
 
             while( *pSource && ((*pSource == '\\') || (*pSource == '/')) )
@@ -101,8 +123,35 @@ static void io_clean_path( char* pClean, const char* pFilename )
 
     *pClean = 0;
 
+#if !defined( TARGET_LINUX )
     x_strtoupper( pOrig );
+#endif
 }
+
+#if defined( TARGET_LINUX )
+static void io_clean_host_path( char* pClean, const char* pFilename )
+{
+    const char* pSource = pFilename;
+
+    while( *pSource )
+    {
+        if( (*pSource == '\\') || (*pSource == '/') )
+        {
+            *pClean++ = '/';
+            pSource++;
+
+            while( *pSource && ((*pSource == '\\') || (*pSource == '/')) )
+                pSource++;
+        }
+        else
+        {
+            *pClean++ = *pSource++;
+        }
+    }
+
+    *pClean = 0;
+}
+#endif
 
 //==============================================================================
 
@@ -364,7 +413,7 @@ xbool io_fs::Init( void )
                        old_EOF,
                        old_Length );
 
-#if ( defined(TARGET_PC) && !defined(X_EDITOR) )
+#if ( defined(TARGET_DESKTOP) && !defined(X_EDITOR) )
     // Set new IOHooks
     x_SetFileIOHooks(  io_open,
                        io_close,
@@ -437,7 +486,7 @@ xbool io_fs::MountFileSystemRAM( const char* pPathName, void* pHeaderData, s32 H
     xbool       bSuccess = FALSE;
     char        pCleanFilename[X_MAX_PATH];
 
-    CONTEXT( "io_fs::MountFileSystemRAM" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "io_fs::MountFileSystemRAM" );
     MEMORY_OWNER( "io_fs::MountFileSystemRAM()" );
 
     // Snag that bad boy!
@@ -499,8 +548,11 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     dfs_header*     pHeader = NULL;
     xbool           bSuccess = FALSE;
     char            pCleanFilename[X_MAX_PATH];
+#if defined( TARGET_LINUX )
+    char            pEmuRootPath[X_MAX_PATH];
+#endif
 
-    CONTEXT( "io_fs::MountFileSystem" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "io_fs::MountFileSystem" );
     MEMORY_OWNER( "io_fs::MountFileSystem()" );
 
     // Snag that bad boy!
@@ -509,6 +561,9 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     // Clean the filename.
     ASSERT( pPathName );
     io_clean_path( pCleanFilename, pPathName );
+#if defined( TARGET_LINUX )
+    io_clean_host_path( pEmuRootPath, pPathName );
+#endif
 
 #ifdef DEBUG_IO
     x_DebugMsg( "FS: reading DFS header '%s.DFS' (priority %d)\n", pCleanFilename, SearchPriority );
@@ -640,7 +695,11 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     // Attempt DFS emulation from directory if load failed.
     if( !bSuccess )
     {
+#if defined( TARGET_LINUX )
+        pHeader = dfs_BuildHeaderFromDirectory( pEmuRootPath );
+#else
         pHeader = dfs_BuildHeaderFromDirectory( pCleanFilename );
+#endif
         if( pHeader )
         {
             s32 FileIndex = m_DFS.GetCount();
@@ -653,7 +712,11 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
             m_DFS[FileIndex].pHeader        = pHeader;
             m_DFS[FileIndex].FindIndex      = -1;
             m_DFS[FileIndex].bEmulated      = TRUE;
+#if defined( TARGET_LINUX )
+            m_DFS[FileIndex].EmuRootPath    = pEmuRootPath;
+#else
             m_DFS[FileIndex].EmuRootPath    = pCleanFilename;
+#endif
             m_DFS[FileIndex].DeviceFiles.Clear();
 
             bSuccess = TRUE;
@@ -702,7 +765,7 @@ xbool io_fs::UnmountFileSystem( const char* pPathName )
     s32   i;
     char  pCleanFilename[X_MAX_PATH];
 
-    CONTEXT( "io_fs::UnmountFileSystem" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "io_fs::UnmountFileSystem" );
 
     // Snag that bad boy!
     m_Mutex.Enter();
@@ -873,11 +936,13 @@ void io_fs::InvalidateCaches( void )
     io_cache* pCache;
     s32       i;
 
-    // Find this threads cache.
+    // Invalidate every cache owned by this filesystem.
     for( i=0, pCache=m_Caches ; i<NUM_CACHES ; i++, pCache++ )
     {
         // Invalidate the cache.
+        pCache->GetSemaphore()->Acquire();
         pCache->Invalidate();
+        pCache->GetSemaphore()->Release();
     }
 }
 
@@ -885,17 +950,29 @@ void io_fs::InvalidateCaches( void )
 
 io_cache* io_fs::AcquireCache( io_open_file* pOpenFile )
 {
-    s32       ThreadID = x_GetThreadID();
     io_cache* pResult  = NULL;
     io_cache* pCache;
+    const char* pFilename;
     s32       i;
 
-    // Find this threads cache.
+    ASSERT( pOpenFile );
+    ASSERT( pOpenFile->pDeviceFile );
+
+    pFilename = pOpenFile->pDeviceFile->Filename;
+
+    // Find this file's cache.
     for( i=0, pCache=m_Caches ; (i<NUM_CACHES && pResult==NULL) ; i++, pCache++ )
     {
-        // Threads match?
-        if( pCache->GetThreadID() == ThreadID )
+        pCache->GetSemaphore()->Acquire();
+
+        if( !x_strcmp( pCache->Filename, pFilename ) )
+        {
             pResult = pCache;
+        }
+        else
+        {
+            pCache->GetSemaphore()->Release();
+        }
     }
 
     // Not in the list?
@@ -904,35 +981,47 @@ io_cache* io_fs::AcquireCache( io_open_file* pOpenFile )
         s64 SmallTicks = (s64)(((u64)(-1)) >> 1);
 
         // Find LRU cache then...
-        for( i=0, pCache=m_Caches ; (i<NUM_CACHES && pResult==NULL) ; i++, pCache++ )
+        for( i=0, pCache=m_Caches ; i<NUM_CACHES ; i++, pCache++ )
         {
+            pCache->GetSemaphore()->Acquire();
+
             if( pCache->GetTicks() < SmallTicks )
             {
+                if( pResult )
+                {
+                    pResult->GetSemaphore()->Release();
+                }
+
                 // New smaller ticks!
                 SmallTicks = pCache->GetTicks();
 
                 // This is the one so far...
                 pResult = pCache;
             }
+            else
+            {
+                pCache->GetSemaphore()->Release();
+            }
         }
     }
 
     // Aquire the the cache.
     ASSERT( pResult );
-    pResult->GetSemaphore()->Acquire();
 
     // Set ticks.
     pResult->SetTicks( x_GetTime() );
 
-    // If different threads OR files, then invalidate the cache.
-    if( (pResult->GetThreadID() != ThreadID) || x_strcmp( pResult->Filename, pOpenFile->pDeviceFile->Filename ) ) 
+    // If different file, then invalidate the cache.
+    if( x_strcmp( pResult->Filename, pFilename ) )
+    {
         pResult->Invalidate();
+    }
 
-    // Set the last thread ID.
-    pResult->SetThreadID( ThreadID );
+    // Set the file associated with this cache.
+    pResult->SetFile( pOpenFile );
 
     // Set the filename
-    x_strcpy( pResult->Filename, pOpenFile->pDeviceFile->Filename );
+    x_strcpy( pResult->Filename, pFilename );
 
     // Tell the world...
     return( pResult );
@@ -960,7 +1049,7 @@ xbool io_fs::CompareFile( const char* pPathName, io_device_file* &DeviceFile, u3
     p2 = pStrings + pEntry->PathNameOffset;
     while( *p2 )
     {
-        if( *p1++ != *p2++ )
+        if( !io_path_chars_equal( *p1++, *p2++ ) )
             return FALSE;
     }
 
@@ -968,7 +1057,7 @@ xbool io_fs::CompareFile( const char* pPathName, io_device_file* &DeviceFile, u3
     p2 = pStrings + pEntry->FileNameOffset1;
     while( *p2 )
     {
-        if( *p1++ != *p2++ )
+        if( !io_path_chars_equal( *p1++, *p2++ ) )
             return FALSE;
     }
 
@@ -976,7 +1065,7 @@ xbool io_fs::CompareFile( const char* pPathName, io_device_file* &DeviceFile, u3
     p2 = pStrings + pEntry->FileNameOffset2;
     while( *p2 )
     {
-        if( *p1++ != *p2++ )
+        if( !io_path_chars_equal( *p1++, *p2++ ) )
             return FALSE;
     }
 
@@ -984,7 +1073,7 @@ xbool io_fs::CompareFile( const char* pPathName, io_device_file* &DeviceFile, u3
     p2 = pStrings + pEntry->ExtNameOffset;
     while( *p2 )
     {
-        if( *p1++ != *p2++ )
+        if( !io_path_chars_equal( *p1++, *p2++ ) )
             return FALSE;
     }
 
@@ -999,7 +1088,7 @@ xbool io_fs::CompareFile( const char* pPathName, io_device_file* &DeviceFile, u3
         char FullPath[X_MAX_PATH];
 
         dfs_BuildFileName( pHeader, Index, RelativePath );
-        x_sprintf( FullPath, "%s\\%s", (const char*)m_DFS[SubFile].EmuRootPath, RelativePath );
+        x_sprintf( FullPath, "%s%c%s", (const char*)m_DFS[SubFile].EmuRootPath, io_path_separator(), RelativePath );
 
         DeviceFile = g_IoMgr.OpenDeviceFile( FullPath, IO_DEVICE_HOST, io_device::READ );
         if( DeviceFile )
@@ -1398,7 +1487,7 @@ void io_fs::Close( io_open_file* pOpenFile )
     #ifdef DEBUG_IO
         x_DebugMsg( "FS Close: %p\n", (void*)pOpenFile );
     #endif
-
+        
         if( pOpenFile )
         {
             // Valid device file?
@@ -1497,7 +1586,7 @@ s32 io_fs::Read( io_open_file* pOpenFile, byte* pBuffer, s32 Bytes )
                 (PhysicalByte >= pCache->GetFirstByte()) &&
                 (PhysicalByte <= (pCache->GetFirstByte() + pCache->GetBytesCached()-1)) )
             {
-                CONTEXT("IOFS - ReadCacheHit");
+                X_PROFILE_SCOPE_CATEGORY( "Context", "IOFS - ReadCacheHit");
 
                 // Determine how many bytes we get from the cache
                 s32 nBytes = MIN( BytesLeft, (s32)(pCache->GetFirstByte() + pCache->GetBytesCached() - PhysicalByte) );
@@ -1513,7 +1602,7 @@ s32 io_fs::Read( io_open_file* pOpenFile, byte* pBuffer, s32 Bytes )
             }
             else
             {
-                CONTEXT("IOFS - ReadCacheMiss");
+                X_PROFILE_SCOPE_CATEGORY( "Context", "IOFS - ReadCacheMiss");
 
                 s32         SectorByte;
                 s32         Offset;

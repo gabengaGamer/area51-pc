@@ -9,10 +9,10 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\destory_this_trigger.hpp"
+#include "../Support/Trigger/Actions/destory_this_trigger.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 
 #include "Entropy.hpp"
 
@@ -28,7 +28,7 @@ destory_this_trigger::destory_this_trigger ( guid ParentGuid ) : actions_base( P
 
 void destory_this_trigger::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * destory_this_trigger::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * destory_this_trigger::Execute" );
 
     (void) pParent;
     

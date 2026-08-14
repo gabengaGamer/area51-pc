@@ -1,17 +1,9 @@
 #include "PlaySurfaceMgr.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Objects\PlaySurface.hpp"
-#include "Objects\ProxyPlaySurface.hpp"
-#include "Gamelib\RigidGeomCollision.hpp"
-#include "Render\LightMgr.hpp"
-
-#ifdef TARGET_XBOX
-#include "Entropy/XBox/xbox_private.hpp"
-#endif
-
-#ifdef TARGET_PS2
-#include "Entropy/PS2/ps2_spad.hpp"
-#endif
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "Objects/ProxyPlaySurface.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "Render/LightMgr.hpp"
 
 //=========================================================================
 // typedefs and structures
@@ -30,10 +22,6 @@ struct file_header
 //=========================================================================
 
 playsurface_mgr g_PlaySurfaceMgr;
-
-#ifdef TARGET_PS2
-static matrix4 s_GBToClip;
-#endif
 
 //=========================================================================
 // zone_info implementation
@@ -63,16 +51,7 @@ playsurface_mgr::zone_info::~zone_info( void )
 
 void playsurface_mgr::zone_info::Unload( void )
 {
-#ifdef TARGET_XBOX
-    if( hColorData )
-    {
-        delete( vert_factory::handle )hColorData;
-        hColorData = NULL;
-        pColorData = NULL;
-    }
-#else
     if ( pColorData )   x_free( pColorData );
-#endif
     if ( pSurfaces  )   x_free( pSurfaces  );
     pSurfaces  = NULL;
     pColorData = NULL;
@@ -89,6 +68,7 @@ playsurface_mgr::playsurface_mgr( void ) :
     m_Geoms             (),
     m_File              (NULL),
     m_Loading           (FALSE),
+    m_NextLoadZone      (-1),
     m_SpatialDBase      (),
     m_QueryNumber       (0),
     m_ProxyPlaySurface  (0)
@@ -453,7 +433,7 @@ void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,platform
         }
 
         // add in the color data
-        const void* pInstColors = RigidInst.GetColorTable( PlatformType );
+        const u32* pInstColors = RigidInst.GetColorTable( PlatformType );
         if ( RigidInst.GetNumColors() && pInstColors )
         {
             void* pColorData = ((byte*)pZoneInfo->pColorData)+pSurface->ColorOffset;
@@ -602,20 +582,9 @@ void playsurface_mgr::LoadZone( zone_info& Zone )
     if ( Zone.NColors )
     {
         MEMORY_OWNER( "COLOR DATA" );
-	#if defined(TARGET_XBOX)
-        vert_factory::handle hColorData = g_VertFactory.Create( "Zone colour data",Zone.NColors*sizeof( u32 ),0 );
-        x_fread( hColorData->m_Ptr,sizeof(u32),Zone.NColors,m_File );
-        Zone.pColorData = hColorData->m_Ptr;
-        Zone.hColorData = hColorData;
-    #elif defined(TARGET_PS2)
-        Zone.pColorData = (byte*)x_malloc(Zone.NColors*sizeof(u16));
-        ASSERT ( Zone.pColorData );
-        x_fread( Zone.pColorData, 1, Zone.NColors*sizeof(u16), m_File );
-    #elif defined(TARGET_PC)
         Zone.pColorData = (byte*)x_malloc(Zone.NColors*sizeof(u32));
         ASSERT ( Zone.pColorData );
         x_fread( Zone.pColorData, 1, Zone.NColors*sizeof(u32), m_File );
-    #endif
     }
 
     // resolve pointers and geometry handles
@@ -643,17 +612,33 @@ void playsurface_mgr::LoadZone( zone_mgr::zone_id Zone )
 
 //=========================================================================
 
-void playsurface_mgr::LoadAllZones( void )
+void playsurface_mgr::BeginLoadAllZones( void )
 {
-    // Start at 1 since the default zone is always loaded.
-    for( s32 iZone = 1; iZone < m_Zones.GetCount(); iZone++ )
+    ASSERT( m_File && m_Loading );
+    ASSERT( m_NextLoadZone == -1 );
+    m_NextLoadZone = 1;
+}
+
+//=========================================================================
+
+xbool playsurface_mgr::UpdateLoadAllZones( void )
+{
+    ASSERT( m_File && m_Loading );
+    ASSERT( m_NextLoadZone >= 1 );
+
+    if( m_NextLoadZone < m_Zones.GetCount() )
     {
-        LoadZone( iZone );
+        LoadZone( m_NextLoadZone );
+        m_NextLoadZone++;
+        return FALSE;
     }
 
     #ifdef X_DEBUG
     m_SpatialDBase.SanityCheck();
     #endif
+
+    m_NextLoadZone = -1;
+    return TRUE;
 }
 
 //=========================================================================
@@ -802,6 +787,7 @@ void playsurface_mgr::SaveFile( platform PlatformType )
 void playsurface_mgr::CloseFile( void )
 {
     ASSERT( m_File );
+    ASSERT( m_NextLoadZone == -1 );
     x_fclose( m_File );
     m_Loading = FALSE;
     m_File    = NULL;
@@ -952,255 +938,19 @@ void playsurface_mgr::ResolveSurfaceData( zone_info& Zone )
     // add the surfaces to our spatial database
     for ( iSurface = 0; iSurface < Zone.NSurfaces; iSurface++ )
         m_SpatialDBase.AddSurface( Zone.pSurfaces[iSurface] );
-
-    #ifdef TARGET_PS2
-    // we dma surface data to scratchpad, so make sure we've flushed the
-    // data cache
-    FlushCache(0);
-    #endif
 }
 
 //=========================================================================
 
 void playsurface_mgr::PrepVisCheck( void )
 {
-#ifdef TARGET_PS2
-    static const s32 kGuardbandClip = 1800;
-
-    const view* pActiveView = eng_GetView();
-    pActiveView->GetW2C( kGuardbandClip, s_GBToClip );
-#endif
 }
 
 //=========================================================================
 
 s32 playsurface_mgr::VisCheck( const bbox& BBox, u32 CheckPlaneMask )
 {
-    #if !defined(TARGET_PS2)
-    {
-        return g_ObjMgr.IsBoxInView( BBox, CheckPlaneMask );
-    }
-    #else
-    {
-        // QUESTION: Could this work be done in vu1 micro mode, and how much
-        // would that give us? Is it worth exploring?
-        (void)CheckPlaneMask;
-        register s32        Result;
-        register u_long128  Temp1;
-        register u_long128  Temp2;
-
-        asm
-        ("
-            .set noreorder
-
-            lqc2    vf24, 0x00(%5)  # load the guardband clip matrix
-            lqc2    vf25, 0x10(%5)  # load the guardband clip matrix
-            lqc2    vf26, 0x20(%5)  # load the guardband clip matrix
-            lqc2    vf27, 0x30(%5)  # load the guardband clip matrix
-            lqc2    vf28, 0x00(%4)  # load the screen clip matrix
-            lqc2    vf29, 0x10(%4)  # load the screen clip matrix
-            lqc2    vf30, 0x20(%4)  # load the screen clip matrix
-            lqc2    vf31, 0x30(%4)  # load the screen clip matrix
-
-            #// load the bounding box into a vf registers
-            lqc2    vf01, 0(%3)
-            lqc2    vf08, 16(%3)
-
-            #// build the other corners of our bounding box
-            vadd.xy         vf02,   vf00,   vf01
-            vadd.xz         vf03,   vf00,   vf01
-            vadd.x          vf04,   vf00,   vf01
-            vadd.yz         vf05,   vf00,   vf01
-            vadd.y          vf06,   vf00,   vf01
-            vadd.z          vf07,   vf00,   vf01
-            vadd.z          vf02,   vf00,   vf08
-            vadd.y          vf03,   vf00,   vf08
-            vadd.yz         vf04,   vf00,   vf08
-            vadd.x          vf05,   vf00,   vf08
-            vadd.xz         vf06,   vf00,   vf08
-            vadd.xy         vf07,   vf00,   vf08
-
-            #//////////////////////////////////////////////////////////////////////
-            #// do the clipping--note this code is kinda nasty, because the clip
-            #// tests and transforms are all interleaved, but we're going for
-            #// performance, not readability, right?
-            #//////////////////////////////////////////////////////////////////////
-            li              %0,     0               # accumulated or's
-            li              %2,     0x3f            # accumulated and's
-            vmulaw.xyzw     acc,    vf31,   vf00w   # xform point 0 to screen clip
-            vmaddaz.xyzw    acc,    vf30,   vf01z   # xform point 0 to screen clip
-            vmadday.xyzw    acc,    vf29,   vf01y   # xform point 0 to screen clip
-            vmaddx.xyzw     vf09,   vf28,   vf01x   # xform point 0 to screen clip
-            vmulaw.xyzw     acc,    vf31,   vf00w   # xform point 1 to screen clip
-            vmaddaz.xyzw    acc,    vf30,   vf02z   # xform point 1 to screen clip
-            vmadday.xyzw    acc,    vf29,   vf02y   # xform point 1 to screen clip
-            vmaddx.xyzw     vf10,   vf28,   vf02x   # xform point 1 to screen clip
-            vclipw.xyz      vf09,   vf09            #      clip test 0
-            vnop
-            vnop
-            vmulaw.xyzw     acc,    vf31,   vf00w   # xform point 2 to screen clip
-            vmaddaz.xyzw    acc,    vf30,   vf03z   # xform point 2 to screen clip
-            vmadday.xyzw    acc,    vf29,   vf03y   # xform point 2 to screen clip
-            vmaddx.xyzw     vf11,   vf28,   vf03x   # xform point 2 to screen clip
-            cfc2            %1,     $vi18           # read clip test 0
-            vclipw.xyz      vf10,   vf10            #      clip test 1
-            or              %0,     %0,     %1      # or   clip test 0
-            and             %2,     %2,     %1      # and  clip test 0
-            vmulaw.xyzw     acc,    vf31,   vf00w   # xform point 3 to screen clip
-            vmaddaz.xyzw    acc,    vf30,   vf04z   # xform point 3 to screen clip
-            vmadday.xyzw    acc,    vf29,   vf04y   # xform point 3 to screen clip
-            vmaddx.xyzw     vf12,   vf28,   vf04x   # xform point 3 to screen clip
-            cfc2            %1,     $vi18           # read clip test 1
-            vclipw.xyz      vf11,   vf11            #      clip test 2
-            or              %0,     %0,     %1      # or   clip test 1
-            and             %2,     %2,     %1      # and  clip test 1
-            vmulaw.xyzw     acc,    vf31,   vf00w   # xform point 4 to screen clip
-            vmaddaz.xyzw    acc,    vf30,   vf05z   # xform point 4 to screen clip
-            vmadday.xyzw    acc,    vf29,   vf05y   # xform point 4 to screen clip
-            vmaddx.xyzw     vf13,   vf28,   vf05x   # xform point 4 to screen clip
-            cfc2            %1,     $vi18           # read clip test 2
-            vclipw.xyz      vf12,   vf12            #      clip test 3
-            or              %0,     %0,     %1      # or   clip test 2
-            and             %2,     %2,     %1      # and  clip test 2
-            vmulaw.xyzw     acc,    vf31,   vf00w   # xform point 5 to screen clip
-            vmaddaz.xyzw    acc,    vf30,   vf06z   # xform point 5 to screen clip
-            vmadday.xyzw    acc,    vf29,   vf06y   # xform point 5 to screen clip
-            vmaddx.xyzw     vf14,   vf28,   vf06x   # xform point 5 to screen clip
-            cfc2            %1,     $vi18           # read clip test 3
-            vclipw.xyz      vf13,   vf13            #      clip test 4
-            or              %0,     %0,     %1      # or   clip test 3
-            and             %2,     %2,     %1      # and  clip test 3
-            vmulaw.xyzw     acc,    vf31,   vf00w   # xform point 6 to screen clip
-            vmaddaz.xyzw    acc,    vf30,   vf07z   # xform point 6 to screen clip
-            vmadday.xyzw    acc,    vf29,   vf07y   # xform point 6 to screen clip
-            vmaddx.xyzw     vf15,   vf28,   vf07x   # xform point 6 to screen clip
-            cfc2            %1,     $vi18           # read clip test 4
-            vclipw.xyz      vf14,   vf14            #      clip test 5
-            or              %0,     %0,     %1      # or   clip test 4
-            and             %2,     %2,     %1      # and  clip test 4
-            vmulaw.xyzw     acc,    vf31,   vf00w   # xform point 7 to screen clip
-            vmaddaz.xyzw    acc,    vf30,   vf08z   # xform point 7 to screen clip
-            vmadday.xyzw    acc,    vf29,   vf08y   # xform point 7 to screen clip
-            vmaddx.xyzw     vf16,   vf28,   vf08x   # xform point 7 to screen clip
-            cfc2            %1,     $vi18           # read clip test 5
-            vclipw.xyz      vf15,   vf15            #      clip test 6
-            or              %0,     %0,     %1      # or   clip test 5
-            and             %2,     %2,     %1      # and  clip test 5
-            vmulaw.xyzw     acc,    vf27,   vf00w   # xform point 0 to guardband clip
-            vmaddaz.xyzw    acc,    vf26,   vf01z   # xform point 0 to guardband clip
-            vmadday.xyzw    acc,    vf25,   vf01y   # xform point 0 to guardband clip
-            vmaddx.xyzw     vf01,   vf24,   vf01x   # xform point 0 to guardband clip
-            cfc2            %1,     $vi18           # read clip test 6
-            vclipw.xyz      vf16,   vf16            #      clip test 7
-            or              %0,     %0,     %1      # or   clip test 6
-            and             %2,     %2,     %1      # and  clip test 6
-            vmulaw.xyzw     acc,    vf27,   vf00w   # xform point 1 to guardband clip
-            vmaddaz.xyzw    acc,    vf26,   vf02z   # xform point 1 to guardband clip
-            vmadday.xyzw    acc,    vf25,   vf02y   # xform point 1 to guardband clip
-            vmaddx.xyzw     vf02,   vf24,   vf02x   # xform point 1 to guardband clip
-            cfc2            %1,     $vi18           # read clip test 7
-            vclipw.xyz      vf01,   vf01            #      clip test 0 (guardband)
-            or              %0,     %0,     %1      # or   clip test 7
-            and             %2,     %2,     %1      # and  clip test 7
-
-            #//////////////////////////////////////////////////////////////////////
-            #// at this point, we are completely transformed to clip space, and can
-            #// perform trivial rejection or acceptance against the smaller frustum
-            #//////////////////////////////////////////////////////////////////////
-            andi            %0,     %0,     0x3f    # lop off the top bits that aren't useful
-            bgtz            %2,     0f              # completely outside of a plane?
-            nop
-            beq             %0,     $0,     1f      # completely inside?
-            nop
-            andi            %1,     %0,     0x10    # throw away far z
-            bgtz            %1,     0f              # reject anything that touches the far plane
-
-            #//////////////////////////////////////////////////////////////////////
-            #// now attempt trivial acceptance within the guardband, otherwise
-            #// we need to clip (rejection testing was already done earlier)
-            #//////////////////////////////////////////////////////////////////////
-            vmulaw.xyzw     acc,    vf27,   vf00w   # xform point 2 to guardband clip
-            vmaddaz.xyzw    acc,    vf26,   vf03z   # xform point 2 to guardband clip
-            vmadday.xyzw    acc,    vf25,   vf03y   # xform point 2 to guardband clip
-            vmaddx.xyzw     vf03,   vf24,   vf03x   # xform point 2 to guardband clip
-            cfc2            %1,     $vi18           # read clip test 0 (guardband)
-            vclipw.xyz      vf02,   vf02            #      clip test 1 (guardband)
-            andi            %1,     %1,     0x3f    # and  clip test 0 (guardband)
-            bgtz            %1,     1f              # bit set   test 0 (guardband)
-            vmulaw.xyzw     acc,    vf27,   vf00w   # xform point 3 to guardband clip
-            vmaddaz.xyzw    acc,    vf26,   vf04z   # xform point 3 to guardband clip
-            vmadday.xyzw    acc,    vf25,   vf04y   # xform point 3 to guardband clip
-            vmaddx.xyzw     vf04,   vf24,   vf04x   # xform point 3 to guardband clip
-            cfc2            %1,     $vi18           # read clip test 1 (guardband)
-            vclipw.xyz      vf03,   vf03            #      clip test 2 (guardband)
-            andi            %1,     %1,     0x3f    # and  clip test 1 (guardband)
-            bgtz            %1,     1f              # bit set   test 1 (guardband)
-            vmulaw.xyzw     acc,    vf27,   vf00w   # xform point 4 to guardband clip
-            vmaddaz.xyzw    acc,    vf26,   vf05z   # xform point 4 to guardband clip
-            vmadday.xyzw    acc,    vf25,   vf05y   # xform point 4 to guardband clip
-            vmaddx.xyzw     vf05,   vf24,   vf05x   # xform point 4 to guardband clip
-            cfc2            %1,     $vi18           # read clip test 2 (guardband)
-            vclipw.xyz      vf04,   vf04            #      clip test 3 (guardband)
-            andi            %1,     %1,     0x3f    # and  clip test 2 (guardband)
-            bgtz            %1,     1f              # bit set   test 2 (guardband)
-            vmulaw.xyzw     acc,    vf27,   vf00w   # xform point 5 to guardband clip
-            vmaddaz.xyzw    acc,    vf26,   vf06z   # xform point 5 to guardband clip
-            vmadday.xyzw    acc,    vf25,   vf06y   # xform point 5 to guardband clip
-            vmaddx.xyzw     vf06,   vf24,   vf06x   # xform point 5 to guardband clip
-            cfc2            %1,     $vi18           # read clip test 3 (guardband)
-            vclipw.xyz      vf05,   vf05            #      clip test 4 (guardband)
-            andi            %1,     %1,     0x3f    # and  clip test 3 (guardband)
-            bgtz            %1,     1f              # bit set   test 3 (guardband)
-            vmulaw.xyzw     acc,    vf27,   vf00w   # xform point 6 to guardband clip
-            vmaddaz.xyzw    acc,    vf26,   vf07z   # xform point 6 to guardband clip
-            vmadday.xyzw    acc,    vf25,   vf07y   # xform point 6 to guardband clip
-            vmaddx.xyzw     vf07,   vf24,   vf07x   # xform point 6 to guardband clip
-            cfc2            %1,     $vi18           # read clip test 4 (guardband)
-            vclipw.xyz      vf06,   vf06            #      clip test 5 (guardband)
-            andi            %1,     %1,     0x3f    # and  clip test 4 (guardband)
-            bgtz            %1,     1f              # bit set   test 4 (guardband)
-            vmulaw.xyzw     acc,    vf27,   vf00w   # xform point 7 to guardband clip
-            vmaddaz.xyzw    acc,    vf26,   vf08z   # xform point 7 to guardband clip
-            vmadday.xyzw    acc,    vf25,   vf08y   # xform point 7 to guardband clip
-            vmaddx.xyzw     vf08,   vf24,   vf08x   # xform point 7 to guardband clip
-            cfc2            %1,     $vi18           # read clip test 5 (guardband)
-            vclipw.xyz      vf07,   vf07            #      clip test 6 (guardband)
-            andi            %1,     %1,     0x3f    # and  clip test 5 (guardband)
-            bgtz            %1,     1f              # bit set   test 5 (guardband)
-            vnop
-            vnop
-            vnop
-            vnop
-            cfc2            %1,     $vi18           # read clip test 6 (guardband)
-            vclipw.xyz      vf08,   vf08            #      clip test 7 (guardband)
-            andi            %1,     %1,     0x3f    # and  clip test 6 (guardband)
-            bgtz            %1,     1f              # bit set   test 6 (guardband)
-            vnop
-            vnop
-            vnop
-            vnop
-            cfc2            %1,     $vi18           # read clip test 7 (guardband)
-            vnop
-            andi            %1,     %1,     0x3f    # and  clip test 7 (guardband)
-            bgtz            %1,     1f              # bit set   test 7 (guardband)
-            nop
-            
-            b               1f
-            addi            %0,     $0,     0x00    # acceptance inside guardband
-
-        0:
-            addi    %0, $0, -1
-
-        1:
-            .set reorder
-
-                " : "=r" (Result) , "=r" (Temp1) , "=r" (Temp2) : "r" (&BBox), "r" (&eng_GetView()->GetW2C()), "r" (&s_GBToClip) :
-                "vf1",  "vf2",  "vf3",  "vf4",  "vf5",  "vf6",  "vf7",  "vf8",
-                "vf9",  "vf10", "vf11", "vf12", "vf13", "vf14", "vf16",
-                "vf24", "vf25", "vf26", "vf27", "vf28", "vf29", "vf30", "vf31" );
-        return Result;
-    }
-    #endif
+    return g_ObjMgr.IsBoxInView( BBox, CheckPlaneMask );
 }
 
 //=========================================================================
@@ -1221,10 +971,6 @@ void playsurface_mgr::RenderZone( zone_info& ZoneInfo, zone_mgr::zone_id Zone1, 
     xbool bNotInStartingZone = !((Zone1==StartingZone) || (Zone2==StartingZone));
 
     // limit ourselves to 4k of playsurfaces in spad (using 8k total double-buffered)
-#if defined(TARGET_PS2)
-    ASSERT( SPAD.GetUsableSize() >= 8192 );
-    SPAD.Lock();
-#endif
     const s32 kMaxSurfacesToProcess = 4096 / sizeof(surface);
     s32 NSurfacesProcessed = 0;
 
@@ -1233,9 +979,6 @@ void playsurface_mgr::RenderZone( zone_info& ZoneInfo, zone_mgr::zone_id Zone1, 
     s32 Buffer = 0;
     s32 nSurfacesToDma = MIN(kMaxSurfacesToProcess, ZoneInfo.NSurfaces-NSurfacesProcessed);
     surface* pDmaSource = ZoneInfo.pSurfaces;
-#if defined(TARGET_PS2)
-    SPAD.DmaTo( SpadOffsets[Buffer], pDmaSource, nSurfacesToDma*sizeof(surface) );
-#endif
     pDmaSource += nSurfacesToDma;
     Buffer = !Buffer;
 
@@ -1254,28 +997,16 @@ void playsurface_mgr::RenderZone( zone_info& ZoneInfo, zone_mgr::zone_id Zone1, 
         // how many surfaces will this loop handle?
         s32 NSurfacesToProcess = nSurfacesToDma;
 
-        // make sure the surfaces have finished dma'ing
-        #ifdef TARGET_PS2
-        SPAD.DmaSyncTo();
-        #endif
-
         // start dma'ing the next batch
         nSurfacesToDma = MIN(kMaxSurfacesToProcess, ZoneInfo.NSurfaces-NSurfacesProcessed-NSurfacesToProcess);
         if ( nSurfacesToDma )
         {
-            #ifdef TARGET_PS2
-            SPAD.DmaTo( SpadOffsets[Buffer], pDmaSource, nSurfacesToDma*sizeof(surface) );
-            #endif
             pDmaSource += nSurfacesToDma;
         }
         Buffer = !Buffer;
 
         // handle the current batch of surfaces
-        #ifdef TARGET_PS2
-        surface* pSpadSurface = (surface*)((byte*)SPAD.GetUsableStartAddr()+SpadOffsets[Buffer]);
-        #else
         surface* pSpadSurface = pSurface;
-        #endif
         for ( i = 0; i < NSurfacesToProcess; i++, pSurface++, pSpadSurface++ )
         {
             // check if this surface is in the zone
@@ -1308,22 +1039,14 @@ void playsurface_mgr::RenderZone( zone_info& ZoneInfo, zone_mgr::zone_id Zone1, 
                 Flags |= render::CLIPPED;
 
             // render it
-            #if defined(TARGET_XBOX) || defined(TARGET_PC)
             render::AddRigidInstanceSimple( pSpadSurface->RenderInst,
                                             (const u32*)pSpadSurface->pColor,
                                             &pSurface->L2W,
                                             pSpadSurface->WorldBBox,
                                             Flags );
-            #else
-            render::AddRigidInstanceSimple( pSpadSurface->RenderInst,
-                                            (const u16*)pSpadSurface->pColor,
-                                            &pSurface->L2W,
-                                            pSpadSurface->WorldBBox,
-                                            Flags );
-            #endif
 
             // clear any accumulated flags for the next frame
-            pSurface->RenderFlags &= ~(render::CLIPPED | render::SHADOW_PASS);
+            pSurface->RenderFlags &= ~render::CLIPPED;
         }
 
         // move to the next batch
@@ -1331,10 +1054,6 @@ void playsurface_mgr::RenderZone( zone_info& ZoneInfo, zone_mgr::zone_id Zone1, 
     }
 
     ASSERT( pDmaSource == ZoneInfo.pSurfaces + ZoneInfo.NSurfaces );
-
-#if defined(TARGET_PS2)
-    SPAD.Unlock();
-#endif
 }
 
 //=========================================================================

@@ -15,22 +15,10 @@
 
 #include "x_types.hpp"
 #include "x_array.hpp"
+#include "x_profile.hpp"
 
-#include "MiscUtils\Property.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-
-//=========================================================================
-// GLOBALS
-//=========================================================================
-  
-//#define _ENABLE_TRIGGER_PROFILING_
-//#define _ENABLE_TRIGGER_DEBUGGING_
-    
-#ifdef _ENABLE_TRIGGER_PROFILING_
-    #define TRIGGER_CONTEXT( exp )  CONTEXT( exp )                 
-#else
-    #define TRIGGER_CONTEXT( exp ) /*no-op*/
-#endif  
+#include "MiscUtils/Property.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 
 //=========================================================================
 // TRIGGER_MNGR

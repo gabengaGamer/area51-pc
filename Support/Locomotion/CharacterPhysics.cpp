@@ -1,23 +1,24 @@
 
+#include "Render/PrimitiveDebug.hpp"
 #include "CharacterPhysics.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 #include "Entropy.hpp"
-#include "Objects\AnimSurface.hpp"
-#include "Objects\Player.hpp"
-#include "PainMgr\Pain.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "Characters\Character.hpp"
-#include "Objects\Door.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "Objects\CokeCan.hpp"
+#include "Objects/AnimSurface.hpp"
+#include "Objects/Player/Player.hpp"
+#include "PainMgr/Pain.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "Characters/Character.hpp"
+#include "Objects/Door.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "Objects/CokeCan.hpp"
 
 #ifndef X_EDITOR
-#include "NetworkMgr\NetworkMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
 #endif
 
 static const f32 REALLY_SMALL                =  0.00001f;
-static const f32 MIN_DELTA_TO_CLIMB_STEEPS   = 10.0f;
-static const f32 MIN_DELTA_TO_CLIMB_STEEPS_2 = x_sqr( MIN_DELTA_TO_CLIMB_STEEPS );
+static const f32 MAX_VELOCITY_TO_CLIMB_STEEPS   = 600.0f;
+static const f32 MAX_VELOCITY_TO_CLIMB_STEEPS_2 = x_sqr( MAX_VELOCITY_TO_CLIMB_STEEPS );
 static const f32 SLIDE_PLANE_BACKOFF         = 0.01f;
 
 
@@ -113,6 +114,7 @@ xbool IsValidPosition( const vector3& P )
 
 character_physics::character_physics( void )
 {
+    m_Guid                      =        0;
     m_NavCollisionHeight        =   180.0f;
     m_NavCollisionCurentHeight  =  m_NavCollisionHeight;
     m_NavCollisionRadius        =    30.0f;
@@ -136,6 +138,7 @@ character_physics::character_physics( void )
     m_GravityAcceleration       = -1000.0f;
     m_MaxDistanceToGround       =    20.0f;
     m_SteepestSlide             =     0.5f;
+    m_CrouchPercent             =     0.0f;
     m_GroundPlane.Setup(1,0,0,0);
     m_GroundGuid                =        0;
     m_GroundPos.Zero();
@@ -147,6 +150,7 @@ character_physics::character_physics( void )
     m_SolveActorCollisions      =    FALSE;
     m_IgnoreGuid                =        0;
     m_LastFling                 =        0;
+    m_StuckFallTime             =     0.0f;
     m_OldMovingPlatformVelocity.Zero();
     m_OldMovingPlatformL2W.Identity();
 
@@ -155,8 +159,9 @@ character_physics::character_physics( void )
     m_Velocity.Set(0,0,0);
     m_Position.Set(0,0,0);
 
-    m_LastMove.Set( 0.0f, 0.0f, 0.0f );
+    m_LastMoveVelocity.Set( 0.0f, 0.0f, 0.0f );
     m_LastSteepSurface = NULL_GUID;
+    m_bIsAirborn       = FALSE;
     
     ResetDeltaPos() ;
 
@@ -280,10 +285,19 @@ void character_physics::SolveActorCollisions ( const bbox& ActorBBox )
 void character_physics::AdvanceWithoutCollision( const vector3& MoveTo, f32 DeltaTime, xbool bIsDead )
 {
     (void)bIsDead;
-    vector3 Delta    = MoveTo - m_Position;
+    if( !x_isvalid( DeltaTime ) || (DeltaTime < 0.0f) )
+    {
+        ASSERT( FALSE );
+        return;
+    }
+
+    if( DeltaTime <= F32_MIN )
+        return;
+
+    vector3 const Delta = MoveTo - m_Position;
 
     m_Velocity = Delta/DeltaTime;
-    m_LastMove = MoveTo - m_Position;
+    m_LastMoveVelocity = Delta / DeltaTime;
     m_Position = MoveTo;
 
     m_bFallMode  = FALSE;
@@ -299,7 +313,17 @@ void character_physics::AdvanceWithoutCollision( const vector3& MoveTo, f32 Delt
 
 void character_physics::Advance( const vector3& MoveTo, f32 DeltaTime, xbool bIsDead )
 {
-    static s32 FallCounter = 0;
+    if( !x_isvalid( DeltaTime ) || (DeltaTime < 0.0f) )
+    {
+        ASSERT( FALSE );
+        return;
+    }
+
+    if( DeltaTime <= F32_MIN )
+        return;
+
+    vector3 const StartPosition     = m_Position;
+    vector3 const RequestedVelocity = (MoveTo - StartPosition) / DeltaTime;
     vector3 PositionOnEntry = m_Position;
     vector3 VelocityOnEntry = m_Velocity;
 
@@ -314,10 +338,9 @@ void character_physics::Advance( const vector3& MoveTo, f32 DeltaTime, xbool bIs
 
     vector3 OldPos   = m_Position;
     vector3 NewPos   = m_Position;
-    vector3 Delta    = MoveTo - m_Position;
     vector3 Momentum = m_Velocity;
 
-    m_Velocity = Delta/DeltaTime;
+    m_Velocity = RequestedVelocity;
 
     if (m_bLocoGravityOn == FALSE)
     {
@@ -335,7 +358,7 @@ void character_physics::Advance( const vector3& MoveTo, f32 DeltaTime, xbool bIs
     //
     // Update physics and apply gravity etc.
     //
-    UpdatePhysics( DeltaTime );
+    UpdatePhysics( DeltaTime, Momentum.GetY() );
 
     if( m_bFallMode == TRUE )
     {
@@ -346,6 +369,12 @@ void character_physics::Advance( const vector3& MoveTo, f32 DeltaTime, xbool bIs
             if( m_bFlingMode )   AirControl = m_FlingAC;
             else                 AirControl = g_MPTweaks.AirControl;
         }
+
+        // AirControl is authored as the amount applied by one 60 Hz frame.
+        // Convert that response to the actual simulation interval
+        AirControl = x_clamp( AirControl, 0.0f, 1.0f );
+        AirControl = 1.0f - x_pow( 1.0f - AirControl,
+                                   DeltaTime * 60.0f );
 
         m_Velocity.GetX()  = Momentum.GetX() + AirControl * ( m_Velocity.GetX() - Momentum.GetX() );
         m_Velocity.GetZ()  = Momentum.GetZ() + AirControl * ( m_Velocity.GetZ() - Momentum.GetZ() );
@@ -377,7 +406,7 @@ void character_physics::Advance( const vector3& MoveTo, f32 DeltaTime, xbool bIs
         m_bTrackingGround = FALSE;
     }
 
-    m_LastMove = NewPos - OldPos;
+    m_LastMoveVelocity = (NewPos - OldPos) / DeltaTime;
     m_Position = NewPos;
 
 // TODO - Revisit this logic.
@@ -394,23 +423,24 @@ void character_physics::Advance( const vector3& MoveTo, f32 DeltaTime, xbool bIs
     {
         if( x_abs( PositionOnEntry.GetY() - m_Position.GetY() ) < 0.1f )
         {
-            FallCounter++;
-            if( FallCounter > 2 )
+            m_StuckFallTime += DeltaTime;
+            if( m_StuckFallTime >= (3.0f / 60.0f) )
             {
                 LOG_WARNING( "character_physics::Advance", "Stuck!" );
                 m_Velocity.GetY() = 0.0f;
                 m_bFallMode  = FALSE;
                 m_bFlingMode = FALSE;
+                m_StuckFallTime = 0.0f;
             }
         }
         else
         {
-            FallCounter = 0;
+            m_StuckFallTime = 0.0f;
         }
     }
     else
     {
-        FallCounter = 0;
+        m_StuckFallTime = 0.0f;
     }
 }
 
@@ -892,7 +922,7 @@ void character_physics::HandleMove(
 #endif
                 // We're moving into it, see if our last move was into it
                 // slow enough to prevent coasting up.
-                vector3 Into( m_LastMove );
+                vector3 Into( m_LastMoveVelocity );
                 Into.GetY() = 0.0f;
 #ifdef X_ASSERT
                 CurMoveData.Into1 = Into;
@@ -906,7 +936,7 @@ void character_physics::HandleMove(
                 CurMoveData.Dot = Dot;
                 
 #endif
-                if (   ((Dot < 0) && (Into.LengthSquared() < x_sqr( MIN_DELTA_TO_CLIMB_STEEPS )) 
+                if (   ((Dot < 0) && (Into.LengthSquared() < MAX_VELOCITY_TO_CLIMB_STEEPS_2 )
                     || (Coll.ObjectHitGuid == m_LastSteepSurface)) )
                 {
                     // Ok, let's move along the plane
@@ -968,15 +998,18 @@ void character_physics::HandleMove(
         //
     }
 
+    #ifdef X_ASSERT
     ASSERT( IsValidPosition( NewPos ) );
-
+    #endif
     //
     // Move whatever delta is left after the collisions
     //
     if( Delta.LengthSquared() > REALLY_SMALL )
     {
         NewPos += Delta;
+        #ifdef X_ASSERT
         ASSERT( IsValidPosition( NewPos ) );
+        #endif
     }
     OriginalVelocity = (NewPos - OldPos) * (1.0f / DeltaTime);
 
@@ -986,7 +1019,9 @@ void character_physics::HandleMove(
     if( m_bHandlePermeable && pObject )
         CollectPermeable( pObject, StartPosForPermeables, NewPos );
 
+    #ifdef X_ASSERT
     ASSERT( IsValidPosition( NewPos ) );
+    #endif
 }
 
 //=========================================================================
@@ -1059,7 +1094,7 @@ xbool character_physics::UpdateGround( f32 BelowDist )
 
 //=========================================================================
 
-void character_physics::UpdatePhysics( f32 DeltaTime )
+void character_physics::UpdatePhysics( f32 DeltaTime, f32 IncomingVerticalVelocity )
 {
 #ifdef LOG_CHARACTER_PHYSICS
     CLOG_MESSAGE( g_LogCharacterPhysics, "character_physics::UpdatePhysics", "" );
@@ -1072,6 +1107,14 @@ void character_physics::UpdatePhysics( f32 DeltaTime )
 #ifdef LOG_CHARACTER_PHYSICS
         CLOG_MESSAGE( g_LogCharacterPhysics, "character_physics::UpdatePhysics", "Was Jump, set to Fall" );
 #endif
+
+        // A jump starts during this simulation interval. Apply gravity to
+        // that same interval instead of dropping the whole first frame.
+        if( m_bUseGravity && m_bLocoGravityOn )
+        {
+            f32 const GravityScale = g_MPTweaks.Active ? g_MPTweaks.Gravity : 1.0f;
+            m_Velocity.GetY() += DeltaTime * m_GravityAcceleration * GravityScale;
+        }
         return;
     }
 
@@ -1128,8 +1171,12 @@ void character_physics::UpdatePhysics( f32 DeltaTime )
             // too steep, record the surface
             m_LastSteepSurface = m_GroundGuid;
         }
-        // Ok, we're on the ground, make sure we don't think we're falling
-        else
+        // Ok, we're on the ground, make sure we don't think we're falling.
+        // An upward-moving character can still be within GroundTolerance of
+        // the takeoff surface at high frame rates. The incoming velocity is
+        // the physical velocity from the previous interval; use it to keep
+        // the jump airborne until the character starts descending.
+        else if( IncomingVerticalVelocity <= 0.0f )
         {
             if ( m_bFallMode ) // mreed: this if () makes it possible to set a breakpoint on landing
             {
@@ -1158,11 +1205,17 @@ void character_physics::UpdatePhysics( f32 DeltaTime )
         if(    (Dot >= 0)       // Angle < 90 degrees
             && (Dot <  0.68f) ) // Angle > 48 degrees
         {
-            // stick to the ground
-            f32 Speed = m_Velocity.Length();
+            // Stick to the ground without reducing the requested horizontal
+            // movement speed while moving uphill.
+            f32 HorizontalSpeed = x_sqrt( x_sqr( m_Velocity.GetX() ) +
+                                          x_sqr( m_Velocity.GetZ() ) );
             vector3 Perpendicular; // dummy placeholder
             m_GroundPlane.GetComponents( m_Velocity, m_Velocity, Perpendicular );
-            m_Velocity.NormalizeAndScale( Speed );
+
+            f32 ProjectedHorizontalSpeed = x_sqrt( x_sqr( m_Velocity.GetX() ) +
+                                                   x_sqr( m_Velocity.GetZ() ) );
+            if( ProjectedHorizontalSpeed > REALLY_SMALL )
+                m_Velocity *= HorizontalSpeed / ProjectedHorizontalSpeed;
         }
     }
 }
@@ -1311,13 +1364,48 @@ void character_physics::Jump( f32 Vel )
 
 //=========================================================================
 
-void character_physics::Fling( const vector3& Velocity,
-                                     f32      DeltaTime,
-                                     f32      AirControl, 
-                                     xbool    FlingOnly,
-                                     xbool    ReflingOnly,
-                                     xbool    Instantaneous,
-                                     guid     FlingGuid )
+void character_physics::FlingWithVelocity( const vector3& Velocity,
+                                           f32            AirControl,
+                                           xbool          FlingOnly,
+                                           xbool          ReflingOnly,
+                                           guid           FlingGuid )
+{
+    ApplyFling( Velocity, AirControl, FlingOnly, ReflingOnly, TRUE, FlingGuid );
+}
+
+//=========================================================================
+
+void character_physics::FlingWithAcceleration( const vector3& Acceleration,
+                                               f32            DeltaTime,
+                                               f32            AirControl,
+                                               xbool          FlingOnly,
+                                               xbool          ReflingOnly )
+{
+    if( !x_isvalid( DeltaTime ) || (DeltaTime < 0.0f) )
+    {
+        ASSERT( FALSE );
+        return;
+    }
+
+    if( DeltaTime <= F32_MIN )
+        return;
+
+    ApplyFling( Acceleration * DeltaTime,
+                AirControl,
+                FlingOnly,
+                ReflingOnly,
+                FALSE,
+                NULL_GUID );
+}
+
+//=========================================================================
+
+void character_physics::ApplyFling( const vector3& Velocity,
+                                    f32            AirControl,
+                                    xbool          FlingOnly,
+                                    xbool          ReflingOnly,
+                                    xbool          ReplaceVelocity,
+                                    guid           FlingGuid )
 {
     if( FlingOnly && m_bFlingMode )
         return;
@@ -1328,14 +1416,14 @@ void character_physics::Fling( const vector3& Velocity,
     if( m_bFlingMode && (m_LastFling == FlingGuid) )
         return;
 
-    if( Instantaneous )
+    if( ReplaceVelocity )
     {
         m_Velocity  = Velocity;
         m_LastFling = FlingGuid;
     }
     else
     {
-        m_Velocity  += Velocity * DeltaTime;
+        m_Velocity  += Velocity;
         m_LastFling  = 0;
     }
 
@@ -1495,7 +1583,7 @@ void character_physics::RenderCollision( void )
                                             object::MAT_TYPE_FLESH );
     for( i=0; i<nSpheres; i++ )
     {
-        draw_Sphere( SpherePos[i], m_NavCollisionRadius );
+        render::debug::Sphere( SpherePos[i], m_NavCollisionRadius );
     }
 }
 #endif
@@ -1508,6 +1596,7 @@ void character_physics::CopyValues( character_physics& rPhysics )
     m_bJumpMode = rPhysics.GetJumpMode();
     m_Velocity = rPhysics.GetVelocity();
     m_Position = rPhysics.GetPosition();
+    m_StuckFallTime = rPhysics.m_StuckFallTime;
 }
 
 //=========================================================================
@@ -1584,7 +1673,14 @@ void character_physics::CatchUpWithRidingPlatform( f32 DeltaTime )
         //
         // Remember velocity
         //
-        m_OldMovingPlatformVelocity = DeltaPos / DeltaTime;
+        if( x_isvalid( DeltaTime ) && (DeltaTime > F32_MIN) )
+        {
+            m_OldMovingPlatformVelocity = DeltaPos / DeltaTime;
+        }
+        else
+        {
+            m_OldMovingPlatformVelocity.Zero();
+        }
 
         //
         // Remember new platform L2W
@@ -1592,16 +1688,10 @@ void character_physics::CatchUpWithRidingPlatform( f32 DeltaTime )
         m_OldMovingPlatformL2W = NewMovingPlatformL2W;
 
         //
-        // Get current position and yaw
+        // Get current position
         //
         const matrix4& L2W = pActor->GetL2W();
         vector3 CurrPos = L2W.GetTranslation();
-        radian  CurrYaw = L2W.GetRotation().Yaw;
-
-        //
-        // Update yaw
-        //
-        CurrYaw += DeltaYaw;
 
         //
         // Update position
@@ -1613,12 +1703,7 @@ void character_physics::CatchUpWithRidingPlatform( f32 DeltaTime )
         HandleMove( CurrPos, NewVector, 1.0f, m_SteepestSlide, FALSE );
         m_nPlatformsToIgnore=0;
 
-        //
-        // Set new player information
-        //
-        matrix4 NewL2W;
-        NewL2W.Setup(vector3(1,1,1),radian3(0,CurrYaw,0),CurrPos);
-        pActor->OnTransform(NewL2W);
+        pActor->OnRidingPlatformMove( CurrPos, DeltaYaw );
     }
 }
 
@@ -2102,7 +2187,9 @@ void character_physics::ResolvePenetrations( void )
 
     for( nLoops=0; nLoops < MaxLoops; nLoops++ )
     {
+        #ifdef X_ASSERT
         ASSERT( IsValidPosition( m_Position ) );
+        #endif
     
         vector3 AccumMoveDelta;
         AccumMoveDelta.Zero();
@@ -2224,7 +2311,9 @@ void character_physics::ResolvePenetrations( void )
                 m_Position += DeepestMove;
                 m_Velocity.Zero();
                 
+                #ifdef X_ASSERT
                 ASSERT( IsValidPosition( m_Position ) );
+                #endif
                 
 #ifdef LOG_CHARACTER_PHYSICS
                 LOG_WARNING( "character_physics::ResolvePenetrations", "Iteration %d Move (%.3f,%.3f,%.3f)", nLoops, DeepestMove.GetX(), DeepestMove.GetY(), DeepestMove.GetZ() );
@@ -2280,7 +2369,18 @@ void character_physics::SetGroundTracking( xbool Track )
 void character_physics::InitialGroundCheck( const vector3& Position )
 {
     m_Position = Position;
+    m_bJumpMode = FALSE;
+    m_bFallMode = FALSE;
+    m_bFlingMode = FALSE;
+    m_LastFling = NULL_GUID;
+    m_StuckFallTime = 0.0f;
+    ResetDeltaPos();
+    ResetRidingPlatforms();
     m_bTrackingGround = UpdateGround( 50.0f );
+    if( !m_bTrackingGround && m_bUseGravity && m_bLocoGravityOn )
+    {
+        m_bFallMode = TRUE;
+    }
 }
 
 //=========================================================================

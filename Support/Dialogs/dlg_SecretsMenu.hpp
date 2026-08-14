@@ -11,16 +11,16 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_blankbox.hpp"
-#include "ui\ui_textbox.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_blankbox.hpp"
+#include "UI/ui_textbox.hpp"
 
 #include "StateMgr/SecretList.hpp"
 
-#include "dialogs\dlg_popup.hpp"
+#include "Dialogs/dlg_PopUp.hpp"
 
 //==============================================================================
 //  dlg_secrets_menu
@@ -48,11 +48,11 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnNotify            ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData );
-    virtual void        OnPadNavigate       ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
-    virtual void        OnLBDown            ( ui_win* pWin );
+    virtual void        OnNotify( ui_notification const& Event );
+    virtual void        OnNavigate       ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
+    virtual void        OnPointerDown       ( ui_win* pWin, s32 x, s32 y );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
     void                InitIconScaling     ( xbool ScaleDown );
@@ -65,7 +65,6 @@ protected:
 
     ui_blankbox*            m_pSecretsMain;
     ui_blankbox*            m_pSecretsDetails;
-    ui_blankbox*            m_pBlackOut;
 
     ui_combo*               m_pSecretsSelect;
 
@@ -77,7 +76,6 @@ protected:
 
     ui_textbox*             m_pTextBox;
 
-    ui_text*                m_pNavText;
 
     dlg_popup*              m_PopUp;
 
@@ -106,7 +104,6 @@ protected:
     // secrets list related
     s32                     m_SelectedIndex;
     //secrets_vault*          m_pSelectedVault;
-    secret_type             m_CurrentType;
     //s32                     m_VaultIndex;
     char                    m_FileName[32];
     char                    m_FullDesc[32];

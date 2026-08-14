@@ -214,5 +214,4 @@ static s16 s_iicon_tracker[] =
 };
 
 
-#define DRAW_ICON_TRACKER() draw_icon( NUM_FACETS_ICON_TRACKER, NUM_VERTICES_ICON_TRACKER, s_vicon_tracker, s_iicon_tracker )
 

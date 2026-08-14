@@ -114,20 +114,28 @@ void collider::ClearCollisions( void )
 // Reports collisions to physics manager
 s32 collider::ReportCollisions( collision_shape* pColl0, collision_shape* pColl1 )
 {
-/*
-    // Lookup rigid bodies
+    // Report retained collisions
+    s32 nCollisions = 0;
     rigid_body* pBody0 = pColl0->GetOwner();
     rigid_body* pBody1 = pColl1->GetOwner();
-    
-    // Report any collisions?
-    s32 nCollisions = 0;
+
     for( s32 i = 0; i < m_nMaxCollisions; i++)
     {
         // Collision setup
         collision& Collision = m_Collisions[i];
         if( Collision.m_Depth > -F32_MAX )
         {
-            // Update stats
+            const f32 NormalLengthSqr = Collision.m_Normal.LengthSquared();
+            if( !Collision.m_Point.IsValid() ||
+                !Collision.m_Normal.IsValid() ||
+                !x_isvalid( Collision.m_Depth ) ||
+                (NormalLengthSqr < 0.000001f) )
+            {
+                ASSERTS( FALSE, "Collider produced an invalid contact" );
+                continue;
+            }
+
+            Collision.m_Normal *= 1.0f / x_sqrt( NormalLengthSqr );
             nCollisions++;
 
             // Add world space collision
@@ -138,70 +146,7 @@ s32 collider::ReportCollisions( collision_shape* pColl0, collision_shape* pColl1
                                        Collision.m_Depth );
         }
     }
-*/
 
-    // Count the # of collisions to report and compute average collision
-    s32 nCollisions = 0;
-    s32 i;
-    vector3 Position( 0.0f, 0.0f, 0.0f );
-    vector3 Normal  ( 0.0f, 0.0f, 0.0f );
-    f32     Depth = 0.0f;
-    for( i = 0; i < m_nMaxCollisions; i++)
-    {
-        // Collision setup
-        collision& Collision = m_Collisions[i];
-        if( Collision.m_Depth > -F32_MAX )
-        {
-            // Update stats
-            nCollisions++;
-
-            // Accumulate
-            Position += Collision.m_Point;
-            Normal   += Collision.m_Normal;
-            Depth    += Collision.m_Depth;
-        }
-    }
-    // Nothing to do?
-    if( !nCollisions )
-        return 0;
-
-    // Lookup rigid bodies
-    rigid_body* pBody0 = pColl0->GetOwner();
-    rigid_body* pBody1 = pColl1->GetOwner();
-
-    // Report average?
-    if( nCollisions > 1 )
-    {
-        // Compute average
-        f32 Scale = 1.0f / (f32)nCollisions;
-        Position *= Scale;
-        Normal   *= Scale;
-        Depth    *= Scale;
-    
-        // Report the average collision
-        g_PhysicsMgr.AddCollision( pBody0, 
-                                   pBody1, 
-                                   Position,
-                                   Normal,
-                                   Depth );
-    }
-    
-    // Report other collisions
-    for( i = 0; i < m_nMaxCollisions; i++)
-    {
-        // Collision setup
-        collision& Collision = m_Collisions[i];
-        if( Collision.m_Depth > -F32_MAX )
-        {
-            // Add world space collision
-            g_PhysicsMgr.AddCollision( pBody0, 
-                                       pBody1, 
-                                       Collision.m_Point,
-                                       Collision.m_Normal,
-                                       Collision.m_Depth );
-        }
-    }
-    
     return nCollisions;
 }
 
@@ -215,7 +160,7 @@ void collider::RecordCollision( const collision& Collision )
 
     // Find the least deepest current collision
     s32 I = 0;
-    f32 D = m_Collisions[0].m_Depth; // Counter act expand!
+    f32 D = m_Collisions[0].m_Depth;
     for( s32 i = 1; i < m_nMaxCollisions; i++ )
     {
         if( m_Collisions[i].m_Depth < D )
@@ -299,33 +244,61 @@ s32 collider::Check( collision_shape* pColl0, collision_shape* pColl1 )
 // Private functions
 //==============================================================================
 
+vector3 collider::ComputeFallbackNormal( const collision_shape* pColl0,
+                                         const collision_shape* pColl1 ) const
+{
+    ASSERT( pColl0 );
+    ASSERT( pColl1 );
+    ASSERT( pColl0->GetOwner() );
+    ASSERT( pColl1->GetOwner() );
+
+    const rigid_body& Body0 = *pColl0->GetOwner();
+    const rigid_body& Body1 = *pColl1->GetOwner();
+    vector3 Normal = Body0.GetPosition() - Body1.GetPosition();
+
+    if( Normal.LengthSquared() < 0.000001f )
+        Normal = Body1.GetLinearVelocity() - Body0.GetLinearVelocity();
+
+    if( Normal.LengthSquared() < 0.000001f )
+        Normal.Set( 1.0f, 0.0f, 0.0f );
+    else
+        Normal.Normalize();
+
+    return Normal;
+}
+
+//==============================================================================
+
 // Checks static sphere V sphere collision
 void collider::SphereSphereCollision( const vector3&     SpherePos0,
                                       const f32          SphereRadius0,
                                       const vector3&     SpherePos1,
-                                      const f32          SphereRadius1 )
+                                      const f32          SphereRadius1,
+                                      const vector3&     FallbackNormal )
 {
     // Update stats
     PHYSICS_DEBUG_INC_COUNT( g_PhysicsMgr.m_Profile.m_nSphereSphereCollTests );
    
-    // Compute distance to be apart
-    f32 CheckDistSqr = x_sqr( SphereRadius0 + SphereRadius1 );
+    const f32 RadiusSum = SphereRadius0 + SphereRadius1;
+    const f32 CheckDistSqr = x_sqr( RadiusSum );
     
     // Intersecting?
     vector3 Dir     = SpherePos0 - SpherePos1;
     f32     DistSqr = Dir.LengthSquared();
     if( DistSqr < CheckDistSqr )
     {
-        // Compute intersection depth
-        f32 Depth = CheckDistSqr - DistSqr;
+        const f32 Dist = x_sqrt( DistSqr );
+        const f32 Depth = RadiusSum - Dist;
         if( Depth > 0.001f )
         {
             // Build collision
             collision Collision;
-            Collision.m_Depth  = x_sqrt( Depth );
-            Collision.m_Normal = Dir;
-            Collision.m_Normal.Normalize();
-            
+            Collision.m_Depth = Depth;
+            if( Dist > 0.00001f )
+                Collision.m_Normal = Dir / Dist;
+            else
+                Collision.m_Normal = FallbackNormal;
+
             // Use average of collision pt on both spheres for final collision pt
             Collision.m_Point =  0.5f * (   ( SpherePos0 - ( Collision.m_Normal * SphereRadius0 ) )
                                           + ( SpherePos1 + ( Collision.m_Normal * SphereRadius1 ) ) );
@@ -343,7 +316,8 @@ void collider::SphereCapsuleCollision( const vector3&    SpherePos,
                                        const f32         SphereRadius,
                                        const vector3&    CapsuleStartPos,
                                        const vector3&    CapsuleEndPos,
-                                       const f32         CapsuleRadius )
+                                       const f32         CapsuleRadius,
+                                       const vector3&    FallbackNormal )
 {
     // Update stats
     PHYSICS_DEBUG_INC_COUNT( g_PhysicsMgr.m_Profile.m_nSphereCapsuleCollTests );
@@ -353,18 +327,21 @@ void collider::SphereCapsuleCollision( const vector3&    SpherePos,
     f32     DistSqr = Delta.LengthSquared();
     
     // Overlapping?
-    f32 CheckDistSqr = x_sqr( SphereRadius + CapsuleRadius );
+    const f32 RadiusSum = SphereRadius + CapsuleRadius;
+    f32 CheckDistSqr = x_sqr( RadiusSum );
     if( DistSqr < CheckDistSqr )
     {
-        // Compute intersection depth
-        f32 Depth = CheckDistSqr - DistSqr;
+        const f32 Dist = x_sqrt( DistSqr );
+        const f32 Depth = RadiusSum - Dist;
         if( Depth > 0.001f )
         {
             // Build collision
             collision Collision;
-            Collision.m_Depth  = x_sqrt( Depth );
-            Collision.m_Normal = -Delta;
-            Collision.m_Normal.Normalize();
+            Collision.m_Depth = Depth;
+            if( Dist > 0.00001f )
+                Collision.m_Normal = -Delta / Dist;
+            else
+                Collision.m_Normal = FallbackNormal;
             Collision.m_Point = SpherePos - ( Collision.m_Normal * SphereRadius );
             
             // Record
@@ -381,13 +358,15 @@ void collider::CapsuleCapsuleCollision( const vector3&    CapsuleStartPos0,
                                         const f32         CapsuleRadius0,
                                         const vector3&    CapsuleStartPos1,
                                         const vector3&    CapsuleEndPos1,
-                                        const f32         CapsuleRadius1 )
+                                        const f32         CapsuleRadius1,
+                                        const vector3&    FallbackNormal )
 {
     // Update stats
     PHYSICS_DEBUG_INC_COUNT( g_PhysicsMgr.m_Profile.m_nCapsuleCapsuleCollTests );
 
     // Compute radius checking distance
-    f32 CheckDistSqr = x_sqr( CapsuleRadius0 + CapsuleRadius1 );
+    const f32 RadiusSum = CapsuleRadius0 + CapsuleRadius1;
+    f32 CheckDistSqr = x_sqr( RadiusSum );
     
     // Compute closest points on lines
     vector3 P0,P1;    
@@ -402,15 +381,17 @@ void collider::CapsuleCapsuleCollision( const vector3&    CapsuleStartPos0,
     // Overlapping?    
     if( DistSqr < CheckDistSqr )
     {
-        // Compute intersection depth
-        f32 Depth = CheckDistSqr - DistSqr;
+        const f32 Dist = x_sqrt( DistSqr );
+        const f32 Depth = RadiusSum - Dist;
         if( Depth > 0.001f )
         {
             // Build collision
             collision Collision;
-            Collision.m_Depth  = x_sqrt( Depth );
-            Collision.m_Normal = -Delta;
-            Collision.m_Normal.Normalize();
+            Collision.m_Depth = Depth;
+            if( Dist > 0.00001f )
+                Collision.m_Normal = -Delta / Dist;
+            else
+                Collision.m_Normal = FallbackNormal;
             
             // Use average of collision pt on both spheres for final collision pt
             Collision.m_Point =  0.5f * (     ( P0 - ( Collision.m_Normal * CapsuleRadius0 ) )
@@ -665,7 +646,7 @@ xbool collider::SphereNGonCollision( const plane&   Plane,
     // Moving away from plane?
     vector3 Dir = SphereEndPos - SphereStartPos;
     f32 DirDotNormal = Plane.Normal.Dot( Dir );
-    if( DirDotNormal > 0.0f )
+    if( DirDotNormal >= -0.000001f )
         return FALSE;
      
     // Check if starting sphere is behind plane
@@ -910,113 +891,61 @@ void collider::CheckSpheresWorld( collision_shape* pColl0, collision_shape* pCol
     pColl0->DebugClearCollision();
 #endif            
 
-    // If there are no cluster, then just update spheres fast and get out of here
-    if( m_nClusters == 0 )
+    // Update collision free positions if no world geometry was collected
+    if( (m_nClusters == 0) && g_PhysicsMgr.m_Settings.m_bUsePolycache )
     {
-        // Update all spheres
         for( i = 0; i < pColl0->GetNSpheres(); i++ )
-        {
-            // Lookup sphere
-            collision_shape::sphere& Sphere = pColl0->GetSphere( i );
-
-            // Update collision free pos
-            Sphere.m_CollFreePos = Sphere.m_CurrPos;
-        }
-        
-        // Nothing else to do...
-        return;    
+            pColl0->GetSphere( i ).m_CollFreePos = pColl0->GetSphere( i ).m_CurrPos;
+        return;
     }
 
-/*
-    // Compute bounding bbox around all start positions of collision shape
-    bbox BodyBBox;
-    BodyBBox.Clear();
-    for( i = 0; i < pColl0->GetNSpheres(); i++ )
-        BodyBBox += pColl0->GetSphere(i).m_PrevPos;
-    f32 Inflate = pColl0->GetSphereRadius() + 1.0f;
-    BodyBBox.Inflate( Inflate, Inflate, Inflate );
-
-    // Compute bounding sphere    
-    vector3 BodyCenter = BodyBBox.GetCenter();
-    f32     BodyRadius = BodyBBox.GetRadius();
-    
-    // If shape start does not intersect the world, then update the collision free position
-    if( SphereWorldIntersection( BodyCenter, BodyRadius ) == FALSE )
-    {
-        // Update all spheres
-        for( i = 0; i < pColl0->GetNSpheres(); i++ )
-        {
-            // Lookup sphere
-            collision_shape::sphere& Sphere = pColl0->GetSphere( i );
-            
-            // Update collision free pos
-            Sphere.m_CollFreePos = Sphere.m_CurrPos;
-        }
-    }
-*/
-
-    // Lookup back off dist
-    f32 HitBackoffDist = g_PhysicsMgr.m_Settings.m_CollisionHitBackoffDist;
-
-    // Check all spheres against world for first collision
+    const f32 HitBackoffDist = g_PhysicsMgr.m_Settings.m_CollisionHitBackoffDist;
     const f32 SphereRadius = pColl0->m_Radius;
     for( i = 0; i < pColl0->GetNSpheres(); i++ )
     {
         // Get sphere info
         collision_shape::sphere& Sphere = pColl0->GetSphere( i );
 
-        // If movement is collision free, then update collision 
-        // free pos to stop ragdoll getting hung up on stuff
         bbox    MoveBBox( Sphere.m_PrevPos, Sphere.m_CurrPos );
         MoveBBox.Inflate( SphereRadius, SphereRadius, SphereRadius );
         if( SphereWorldIntersection( MoveBBox.GetCenter(), MoveBBox.GetRadius() ) == FALSE )
         {
-            // No collision, so just update collision pos
             Sphere.m_CollFreePos = Sphere.m_CurrPos;
+            continue;
+        }
+
+        const vector3& SphereStartPos = Sphere.m_CollFreePos;
+        const vector3& SphereEndPos   = Sphere.m_CurrPos;
+
+        Dir     = SphereEndPos - SphereStartPos;
+        DistSqr = Dir.LengthSquared();
+        if( DistSqr < x_sqr( 0.001f ) )
+            continue;
+
+        f32   CollT = F32_MAX;
+        plane CollPlane;
+        if( SphereWorldCollision( SphereStartPos, SphereEndPos, SphereRadius, CollT, CollPlane ) )
+        {
+            #ifdef ENABLE_PHYSICS_DEBUG
+            Sphere.m_bCollision = TRUE;
+            #endif
+
+            collision Collision;
+            Collision.m_Normal = CollPlane.Normal;
+            Collision.m_Point  = SphereEndPos - Collision.m_Normal * SphereRadius;
+            Collision.m_Depth  = -CollPlane.Distance( Collision.m_Point );
+            RecordCollision( Collision );
+
+            Dist = x_sqrt( DistSqr );
+            CollT -= HitBackoffDist / Dist;
+            if( CollT < 0.0f )
+                CollT = 0.0f;
+
+            Sphere.m_CollFreePos += CollT * Dir;
         }
         else
         {
-            // Lookup movement
-            const vector3& SphereStartPos = Sphere.m_CollFreePos;
-            const vector3& SphereEndPos   = Sphere.m_CurrPos;
-
-            // Skip if not moving very far
-            Dir     = SphereEndPos - SphereStartPos;
-            DistSqr = Dir.LengthSquared();
-            if( DistSqr < x_sqr( 0.001f ) )
-                continue;
-            
-            // Collision with world?
-            f32   CollT = F32_MAX;
-            plane CollPlane;
-            if( SphereWorldCollision( SphereStartPos, SphereEndPos, SphereRadius, CollT, CollPlane ) )
-            {
-                // Record for debug render
-                #ifdef ENABLE_PHYSICS_DEBUG
-                Sphere.m_bCollision = TRUE;
-                #endif
-
-                // Record the collision (keep as if it happened at the end position)
-                collision   Collision;
-                Collision.m_Normal = CollPlane.Normal;
-                Collision.m_Point  = SphereEndPos - ( Collision.m_Normal * SphereRadius );
-                Collision.m_Depth  = -CollPlane.Distance( Collision.m_Point );
-                RecordCollision( Collision );
-                
-                // Pull back from collision a bit
-                Dist  = x_sqrt( DistSqr );
-                CollT -= HitBackoffDist / Dist;
-                if( CollT < 0 )
-                    CollT = 0.0f;
-
-                // Update collision free pos to be just before the collision
-                Sphere.m_CollFreePos += CollT * ( SphereEndPos - SphereStartPos );
-            }
-            else
-            {
-                // No collision so update collision free pos to be end of movement
-                Sphere.m_CollFreePos = Sphere.m_CurrPos;
-            }
+            Sphere.m_CollFreePos = Sphere.m_CurrPos;
         }
     }
 }
@@ -1041,6 +970,7 @@ void collider::CheckSpheresSpheres( collision_shape* pColl0, collision_shape* pC
     // Lookup radii
     const f32 Radius0 = pColl0->GetRadius();
     const f32 Radius1 = pColl1->GetRadius();
+    const vector3 FallbackNormal = ComputeFallbackNormal( pColl0, pColl1 );
 
     // Check all spheres against all other spheres    
     for( s32 i = 0; i < pColl0->GetNSpheres(); i++ )
@@ -1058,12 +988,14 @@ void collider::CheckSpheresSpheres( collision_shape* pColl0, collision_shape* pC
             if( m_pMovingColl == pColl0 )
             {              
                 SphereSphereCollision( Sphere0.m_CurrPos, Radius0,
-                                       Sphere1.m_PrevPos, Radius1 );
+                                       Sphere1.m_PrevPos, Radius1,
+                                       FallbackNormal );
             }                                    
             else
             {              
                 SphereSphereCollision( Sphere0.m_PrevPos, Radius0,
-                                       Sphere1.m_CurrPos, Radius1 );
+                                       Sphere1.m_CurrPos, Radius1,
+                                       FallbackNormal );
             }                                    
         }                                   
     }
@@ -1083,6 +1015,7 @@ void collider::CheckSpheresCapsule( collision_shape* pColl0, collision_shape* pC
             ||  ( pColl0->GetType() == collision_shape::TYPE_BOX     )
             ||  ( pColl0->GetType() == collision_shape::TYPE_CAPSULE ) );
     ASSERT( pColl1->GetType() == collision_shape::TYPE_CAPSULE );
+    const vector3 FallbackNormal = ComputeFallbackNormal( pColl0, pColl1 );
 
     // Loop through all spheres and collide with capsule
     for( s32 i = 0; i < pColl0->GetNSpheres(); i++ )
@@ -1097,7 +1030,8 @@ void collider::CheckSpheresCapsule( collision_shape* pColl0, collision_shape* pC
                                     pColl0->GetRadius(),
                                     pColl1->GetCapsulePrevStartPos(),
                                     pColl1->GetCapsulePrevEndPos(),
-                                    pColl1->GetRadius() );
+                                    pColl1->GetRadius(),
+                                    FallbackNormal );
         }
         else
         {
@@ -1105,7 +1039,8 @@ void collider::CheckSpheresCapsule( collision_shape* pColl0, collision_shape* pC
                                     pColl0->GetRadius(),
                                     pColl1->GetCapsuleCurrStartPos(),
                                     pColl1->GetCapsuleCurrEndPos(),
-                                    pColl1->GetRadius() );
+                                    pColl1->GetRadius(),
+                                    FallbackNormal );
         }
     }
 }
@@ -1122,6 +1057,7 @@ void collider::CheckCapsuleCapsule( collision_shape* pColl0, collision_shape* pC
     ASSERT( pColl1->GetNSpheres() );
     ASSERT( pColl0->GetType() == collision_shape::TYPE_CAPSULE );
     ASSERT( pColl1->GetType() == collision_shape::TYPE_CAPSULE );
+    const vector3 FallbackNormal = ComputeFallbackNormal( pColl0, pColl1 );
     
     // Check for collision
     if( m_pMovingColl == pColl0 )
@@ -1131,7 +1067,8 @@ void collider::CheckCapsuleCapsule( collision_shape* pColl0, collision_shape* pC
                                  pColl0->GetRadius(),
                                  pColl1->GetCapsulePrevStartPos(),
                                  pColl1->GetCapsulePrevEndPos(),
-                                 pColl1->GetRadius() );
+                                 pColl1->GetRadius(),
+                                 FallbackNormal );
     }
     else
     {
@@ -1140,9 +1077,9 @@ void collider::CheckCapsuleCapsule( collision_shape* pColl0, collision_shape* pC
                                  pColl0->GetRadius(),
                                  pColl1->GetCapsuleCurrStartPos(),
                                  pColl1->GetCapsuleCurrEndPos(),
-                                 pColl1->GetRadius() );
+                                 pColl1->GetRadius(),
+                                 FallbackNormal );
     }
 }
 
 //==============================================================================
-

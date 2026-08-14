@@ -621,7 +621,7 @@ void loco_anim_controller::GetInterpKeys( const info& Info, anim_key* pKey )
 
 void loco_anim_controller::MixKeys( const info& Info, anim_key* pDestKey )
 {
-    CONTEXT("loco_anim_controller::MixKeys") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "loco_anim_controller::MixKeys") ;
 
     // If we aren't playing anything then just return
     if( (m_iAnim == -1) || (m_Weight==0.0f) )
@@ -665,7 +665,7 @@ void loco_anim_controller::MixKeys( const info& Info, anim_key* pDestKey )
 
 void loco_anim_controller::AdditiveMixKeys( const info& Info, s32 iAnim, f32 Frame, s32 iRefFrame, anim_key* pDestKey )
 {
-    CONTEXT(" loco_anim_controller::AdditiveMixKeys") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", " loco_anim_controller::AdditiveMixKeys") ;
 
     // If we aren't playing anything then just return
     if ( (iAnim == -1) || (m_Weight == 0.0f) )
@@ -707,6 +707,14 @@ void loco_anim_controller::AdditiveMixKeys( const info& Info, s32 iAnim, f32 Fra
 
     // Take LOD into account
     iAnimBoneMax = x_min( Info.m_nActiveBones-1, iAnimBoneMax );
+
+    // Resolve each key block once for the complete additive range.
+    anim_key* pRefKeys  = base_player::GetMixBuffer( base_player::MIX_BUFFER_TEMP );
+    anim_key* pCurrKeys = base_player::GetMixBuffer( base_player::MIX_BUFFER_CONTROLLER );
+    ASSERT( pRefKeys );
+    ASSERT( pCurrKeys );
+    AnimInfo.GetRawKeys( iRefFrame, pRefKeys, iAnimBoneMin, iAnimBoneMax );
+    AnimInfo.GetInterpKeys( Frame, pCurrKeys, iAnimBoneMin, iAnimBoneMax );
     
     // Debug count
     #ifdef X_DEBUG
@@ -721,12 +729,10 @@ void loco_anim_controller::AdditiveMixKeys( const info& Info, s32 iAnim, f32 Fra
             continue ;
 
         // Read reference key
-        anim_key InvRefKey ;
-        AnimInfo.GetRawKey(iRefFrame, i, InvRefKey) ;
+        anim_key InvRefKey = pRefKeys[i];
 
         // Lookup current key
-        anim_key CurrKey ;
-        AnimInfo.GetInterpKey(Frame, i, CurrKey) ;
+        const anim_key& CurrKey = pCurrKeys[i];
 
         // Skip if keys are the same
         if (InvRefKey.Translation == CurrKey.Translation)
@@ -789,7 +795,7 @@ void loco_anim_controller::MaskedMixKeys( const info&               Info,
                                           const geom::bone_masks&   BoneMasks,
                                                 anim_key*           pDestKey )
 {
-    CONTEXT(" loco_anim_controller::MaskedMixKeys") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", " loco_anim_controller::MaskedMixKeys") ;
 
     // If we aren't playing anything then just return
     if ( (iAnim == -1) || (m_Weight == 0.0f) )
@@ -850,7 +856,7 @@ void loco_anim_controller::MaskedMixKeys( const info&               Info,
                                                 f32                 BoneBlend,
                                                 anim_key*           pDestKey )
 {
-    CONTEXT(" loco_anim_controller::MaskedMixKeys") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", " loco_anim_controller::MaskedMixKeys") ;
 
     // If we aren't playing anything then just return
     if ( (iAnim == -1) || (m_Weight == 0.0f) )
@@ -906,4 +912,3 @@ void loco_anim_controller::MaskedMixKeys( const info&               Info,
 }
 
 //=========================================================================
-

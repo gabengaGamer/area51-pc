@@ -4,7 +4,7 @@
 #include "x_files.hpp"
 #include "x_bytestream.hpp"
 #include "aiff_file.hpp"
-#include "audio_private_pkg.hpp"
+#include "audio_package_format.hpp"
 
 enum export_targets
 {

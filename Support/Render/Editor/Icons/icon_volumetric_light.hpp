@@ -938,5 +938,4 @@ static s16 s_iicon_volumetric_light[] =
 };
 
 
-#define DRAW_ICON_VOLUMETRIC_LIGHT() draw_icon( NUM_FACETS_ICON_VOLUMETRIC_LIGHT, NUM_VERTICES_ICON_VOLUMETRIC_LIGHT, s_vicon_volumetric_light, s_iicon_volumetric_light )
 

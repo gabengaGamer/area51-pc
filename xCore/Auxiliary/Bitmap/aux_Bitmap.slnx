@@ -5,6 +5,7 @@
     <BuildType Name="OptDebug" />
     <BuildType Name="QA" />
     <BuildType Name="Release" />
+    <Platform Name="ARM64" />
     <Platform Name="Win32" />
     <Platform Name="x64" />
   </Configurations>

@@ -11,11 +11,11 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_text.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_text.hpp"
 
 #include "dlg_PopUp.hpp"
 
@@ -51,9 +51,9 @@ public:
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
-    virtual void        OnNotify            ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData );
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
+    virtual void        OnNotify( ui_notification const& Event );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
 
     void                OnYearChange        ( void );
     void                OnMonthChange       ( void );
@@ -62,7 +62,6 @@ public:
     void                OnSaveProfileCB     ( void );
 protected:
     ui_text*            m_pMessageText;
-    ui_text*            m_pNavText;
 
     ui_text*            m_pMonthText;
     ui_text*            m_pDayText;
@@ -77,8 +76,6 @@ protected:
     dlg_popup*          m_PopUp;
     s32                 m_PopUpResult;
     s32                 m_PopUpType;
-    s32                 m_iCard;
-
     xwstring            m_Message;
     s32                 m_CurrHL;
 };

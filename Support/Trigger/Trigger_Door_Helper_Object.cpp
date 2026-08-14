@@ -8,11 +8,12 @@
 //  INCLUDES
 //=========================================================================
 
-#include "Trigger\Trigger_Door_Helper_Object.hpp"
-#include "Trigger\Trigger_Manager.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Trigger/Trigger_Door_Helper_Object.hpp"
+#include "Trigger/Trigger_Manager.hpp"
 #include "Entropy.hpp"
 
-#include "Objects\Door.hpp"
+#include "Objects/Door.hpp"
 
 //=========================================================================
 // STATIC DEFINITIONS AND CONSTS
@@ -100,7 +101,7 @@ void trigger_door_helper_object::Render ( u32 ParentAttribs )
     if( ParentAttribs & ATTR_EDITOR_SELECTED )
     {
 #ifdef TARGET_PC
-        draw_BBox ( GetBBox(), XCOLOR_BLUE);
+        render::debug::Box ( GetBBox(), XCOLOR_BLUE);
 #endif
     }
 }
@@ -143,7 +144,7 @@ void trigger_door_helper_object::Sync( const bbox& BBox )
 
 void trigger_door_helper_object::ExecuteLogic ( f32 DeltaTime )
 {    
-    TRIGGER_CONTEXT("trigger_door_helper_object::ExecuteLogic");
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "trigger_door_helper_object::ExecuteLogic");
 
     trigger_spatial_object::ExecuteLogic( DeltaTime );
 }

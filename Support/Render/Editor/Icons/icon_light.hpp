@@ -216,5 +216,4 @@ static s16 s_iicon_light[] =
 };
 
 
-#define DRAW_ICON_LIGHT() draw_icon( NUM_FACETS_ICON_LIGHT, NUM_VERTICES_ICON_LIGHT, s_vicon_light, s_iicon_light )
 

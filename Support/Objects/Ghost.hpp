@@ -11,28 +11,28 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Objects\Actor\Actor.hpp"
+#include "Objects/Actor/Actor.hpp"
 
-#include "Animation\AnimPlayer.hpp"
-#include "Animation\CharAnimPlayer.hpp"
-#include "Locomotion\CharacterPhysics.hpp"
+#include "Animation/AnimPlayer.hpp"
+#include "Animation/CharAnimPlayer.hpp"
+#include "Locomotion/CharacterPhysics.hpp"
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
-#include "EventMgr\EventMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
+#include "EventMgr/EventMgr.hpp"
 
-#include "Objects\Render\SkinInst.hpp"
-#include "Objects\SpawnPoint.hpp"
-#include "Objects\PlayerLoco.hpp"
-#include "Objects\NewWeapon.hpp"
+#include "Objects/Render/SkinInst.hpp"
+#include "Objects/SpawnPoint.hpp"
+#include "Objects/Player/PlayerLoco.hpp"
+#include "Objects/NewWeapon.hpp"
 
-#include "Trigger\Actions\lock_player_view.hpp"
+#include "Trigger/Actions/lock_player_view.hpp"
 
-#include "NetworkMgr\NetObj.hpp"
-#include "NetworkMgr\MoveMgr.hpp"
-#include "NetworkMgr\Blender.hpp"
+#include "NetworkMgr/NetObj.hpp"
+#include "NetworkMgr/MoveMgr.hpp"
+#include "NetworkMgr/Blender.hpp"
 
 #include "Ragdoll/Ragdoll.hpp"
 #include "Inventory/Inventory2.hpp"
@@ -48,7 +48,6 @@
 //==============================================================================
 
 class dead_body;
-class third_person_camera;
 
 
 //==============================================================================
@@ -184,7 +183,7 @@ virtual         f32             GetCollisionRadius  ( void );
 protected:
 
     virtual s32         GetMaterial                 ( void ) const { return MAT_TYPE_FLESH; }
-    virtual void        OnAdvanceLogic              ( f32 DeltaTime );
+    virtual void        OnAdvanceSimulation              ( f32 DeltaTime );
     virtual void        OnTransform                 ( const matrix4& L2W );    
             const char* GetVirtualWeaponName        ( player_virtual_weapon VirtualWeapon );
             const char* GetWeaponObjName            ( player_weapon_obj WeaponObj );
@@ -194,8 +193,6 @@ protected:
     virtual void        SwitchWeapon                ( new_weapon* pWeapon );
     virtual radian3     GetProjectileTrajectory     ( void );
     player_weapon_obj   GetWeaponObjFromVirtual     ( player_virtual_weapon VirtualWeapon );
-            s32         GetRenderIndexFromPlayer    ( void );
-    inventory_item::inv_type GetInventoryType       ( player_virtual_weapon VirtualWeapon );
     virtual void        AddNewWeapon                ( guid WeaponGuid );
     player_virtual_weapon GetWeaponStateFromType    ( object::type Type ); 
     virtual s32         GetWeaponRenderState        ( void );

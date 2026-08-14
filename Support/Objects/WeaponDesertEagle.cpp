@@ -5,14 +5,14 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "ProjectileBullett.hpp"
 #include "WeaponDesertEagle.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "Objects\Projector.hpp"
-#include "render\LightMgr.hpp"
-#include "Objects\Player.hpp"
-#include "Objects\ParticleEmiter.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Objects/Projector.hpp"
+#include "Render/LightMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/ParticleEmiter.hpp"
 
 
 //=========================================================================
@@ -253,9 +253,9 @@ void weapon_desert_eagle::FireBullet( const vector3& Pos, const radian3& Rot, co
 
 //==============================================================================
 
-void weapon_desert_eagle::OnAdvanceLogic( f32 DeltaTime )
+void weapon_desert_eagle::OnAdvanceSimulation( f32 DeltaTime )
 {
-    new_weapon::OnAdvanceLogic( DeltaTime );
+    new_weapon::OnAdvanceSimulation( DeltaTime );
 
     // Are we in zoom mode.
     if( IsZoomEnabled() )

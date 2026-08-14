@@ -4,10 +4,11 @@
 // 
 //=========================================================================
 
-#include "entropy.hpp"
-#include "occludermgr.hpp"
-#include "Obj_Mgr\Obj_mgr.hpp"
-#include "Objects\InvisWall.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Entropy.hpp"
+#include "OccluderMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/InvisWall.hpp"
 
 //=========================================================================
 
@@ -142,41 +143,55 @@ void occluder_mgr::RenderAllOccluders( void )
 #if !defined(X_RETAIL)
     s32 i;
 
-    // Render Alpha filler
-    draw_Begin(DRAW_TRIANGLES,DRAW_USE_ALPHA);
-    draw_Color(xcolor(255,0,0,32));
+    const render::primitive_draw_desc FillMaterial( NULL,
+                                                    render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                    render::PRIMITIVE_BLEND_ALPHA,
+                                                    render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                    render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                    render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                    render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch FillBatch( FillMaterial );
     for( i=0; i<m_nOccluders; i++ )
     {
         occluder& O = m_Occluder[ i ];
 
         for( s32 j=1; j<O.nPoints-1; j++ )
         {
-            draw_Vertex(O.Point[0]);
-            draw_Vertex(O.Point[j]);
-            draw_Vertex(O.Point[j+1]);
+            const render::primitive_vertex V0( O.Point[0], vector2( 0.0f, 0.0f ), xcolor( 255, 0, 0, 32 ) );
+            const render::primitive_vertex V1( O.Point[j], vector2( 0.0f, 0.0f ), xcolor( 255, 0, 0, 32 ) );
+            const render::primitive_vertex V2( O.Point[j + 1], vector2( 0.0f, 0.0f ), xcolor( 255, 0, 0, 32 ) );
+            FillBatch.AddTriangle( V0, V1, V2 );
         }
     }
-    draw_End();
+    matrix4 Identity;
+    Identity.Identity();
+    FillBatch.Submit( Identity );
 
     // Render Wire outline
-    draw_Begin(DRAW_LINES,DRAW_NO_ZBUFFER);
-    draw_Color(xcolor(255,0,0,255));
+    const render::primitive_draw_desc LineMaterial( NULL,
+                                                    render::PRIMITIVE_TOPOLOGY_LINE_LIST,
+                                                    render::PRIMITIVE_BLEND_ALPHA,
+                                                    render::PRIMITIVE_DEPTH_DISABLED,
+                                                    render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                    render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                    render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch LineBatch( LineMaterial );
     for( i=0; i<m_nOccluders; i++ )
     {
         s32 P = m_Occluder[i].nPoints-1;
         for( s32 j=0; j<m_Occluder[i].nPoints; j++ )
         {
-            draw_Vertex(m_Occluder[i].Point[P]);
-            draw_Vertex(m_Occluder[i].Point[j]);
+            LineBatch.AddLine( m_Occluder[i].Point[P], m_Occluder[i].Point[j],
+                               XCOLOR_RED, XCOLOR_RED );
             P = j;
         }
     }
-    draw_End();
+    LineBatch.Submit( Identity );
 /*
     // Render markers
     for( i=0; i<m_nOccluders; i++ )
     {
-        draw_Marker( m_Occluder[i].Center, XCOLOR_YELLOW );
+        render::debug::Marker( m_Occluder[i].Center, XCOLOR_YELLOW );
     }
 */
 #endif
@@ -189,25 +204,39 @@ void occluder_mgr::RenderUsableOccluders( void )
 #if !defined(X_RETAIL)
     s32 i;
 
-    // Render Alpha filler
-    draw_Begin(DRAW_TRIANGLES,DRAW_USE_ALPHA);
-    draw_Color(xcolor(0,255,0,32));
+    const render::primitive_draw_desc FillMaterial( NULL,
+                                                    render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                    render::PRIMITIVE_BLEND_ALPHA,
+                                                    render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                    render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                    render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                    render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch FillBatch( FillMaterial );
     for( i=0; i<m_nUsableOccluders; i++ )
     {
         occluder& O = m_Occluder[ m_UsableOccluderIndex[i] ];
 
         for( s32 j=1; j<O.nPoints-1; j++ )
         {
-            draw_Vertex(O.Point[0]);
-            draw_Vertex(O.Point[j]);
-            draw_Vertex(O.Point[j+1]);
+            const render::primitive_vertex V0( O.Point[0], vector2( 0.0f, 0.0f ), xcolor( 0, 255, 0, 32 ) );
+            const render::primitive_vertex V1( O.Point[j], vector2( 0.0f, 0.0f ), xcolor( 0, 255, 0, 32 ) );
+            const render::primitive_vertex V2( O.Point[j + 1], vector2( 0.0f, 0.0f ), xcolor( 0, 255, 0, 32 ) );
+            FillBatch.AddTriangle( V0, V1, V2 );
         }
     }
-    draw_End();
+    matrix4 Identity;
+    Identity.Identity();
+    FillBatch.Submit( Identity );
 
     // Render Wire outline
-    draw_Begin(DRAW_LINES,DRAW_NO_ZBUFFER);
-    draw_Color(xcolor(0,255,0,255));
+    const render::primitive_draw_desc LineMaterial( NULL,
+                                                    render::PRIMITIVE_TOPOLOGY_LINE_LIST,
+                                                    render::PRIMITIVE_BLEND_ALPHA,
+                                                    render::PRIMITIVE_DEPTH_DISABLED,
+                                                    render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                    render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                    render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch LineBatch( LineMaterial );
     for( i=0; i<m_nUsableOccluders; i++ )
     {
         occluder& O = m_Occluder[ m_UsableOccluderIndex[i] ];
@@ -215,19 +244,18 @@ void occluder_mgr::RenderUsableOccluders( void )
         s32 P = O.nPoints-1;
         for( s32 j=0; j<O.nPoints; j++ )
         {
-            draw_Vertex(O.Point[P]);
-            draw_Vertex(O.Point[j]);
+            LineBatch.AddLine( O.Point[P], O.Point[j], XCOLOR_GREEN, XCOLOR_GREEN );
             P = j;
         }
     }
-    draw_End();
+    LineBatch.Submit( Identity );
 /*
     // Render markers
     for( i=0; i<m_nUsableOccluders; i++ )
     {
         occluder& O = m_Occluder[ m_UsableOccluderIndex[i] ];
-        draw_Label( O.Center, XCOLOR_YELLOW, xfs("(%1d)",i) );
-        //draw_Marker( O.Center, XCOLOR_YELLOW );
+        render::debug::Label( O.Center, XCOLOR_YELLOW, xfs("(%1d)",i) );
+        //render::debug::Marker( O.Center, XCOLOR_YELLOW );
     }
 */
 #endif
@@ -247,7 +275,7 @@ void occluder_mgr::RenderFrustums( void )
         {
             vector3 Delta = m_Occluder[i].Point[j] - m_EyePos;
             Delta.Normalize();
-            draw_Line( m_EyePos, m_Occluder[i].Point[j]+(Delta*5000), XCOLOR_WHITE );
+            render::debug::Line( m_EyePos, m_Occluder[i].Point[j]+(Delta*5000), XCOLOR_WHITE );
         }
     }
 #endif

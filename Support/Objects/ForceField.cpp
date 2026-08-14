@@ -8,22 +8,23 @@
 // INCLUDES
 //=========================================================================
 #include "ForceField.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "x_context.hpp"
-#include "NetworkMgr\NetObjMgr.hpp"
-#include "Player.hpp"
-#include "Render\LightMgr.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "CollisionMgr\PolyCache.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "x_profile.hpp"
+#include "NetworkMgr/NetObjMgr.hpp"
+#include "Player/Player.hpp"
+#include "Render/LightMgr.hpp"
+#include "Render/PrimitiveBatch.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "CollisionMgr/PolyCache.hpp"
 
 #ifndef X_EDITOR
-#include "GameLib\RenderContext.hpp"
+#include "GameLib/RenderContext.hpp"
 #endif
 
 //=========================================================================
 
-rhandle<xbitmap>            force_field::m_ForceTexture;
-rhandle<xbitmap>            force_field::m_ForceCloudTexture;
+rhandle<texture>            force_field::m_ForceTexture;
+rhandle<texture>            force_field::m_ForceCloudTexture;
 
 #define DEPTH 4
 
@@ -90,7 +91,7 @@ force_field::force_field( void )
     m_OldState               = FRIENDLY_ALL;
     m_TransitionValue        = 1.0f;
 
-    m_bInitialized           = FALSE;
+    m_isInitialized           = FALSE;
     m_pVertices              = NULL;
     m_pSeekingVertices       = NULL;
 
@@ -132,7 +133,7 @@ void force_field::OnInit( void )
 
 void force_field::CreateVertices( void )
 {
-    m_bInitialized = TRUE;
+    m_isInitialized = TRUE;
 
     if( m_pVertices )
     {
@@ -167,7 +168,7 @@ void force_field::CreateVertices( void )
 
 void force_field::OnColCheck( void )
 {
-    CONTEXT("force_field::OnColCheck");
+    X_PROFILE_SCOPE_CATEGORY( "Context", "force_field::OnColCheck");
 
     //
     // Compute corners
@@ -394,44 +395,15 @@ inline xcolor Interpolate( xcolor Color1, xcolor Color2, f32 Percentage )
 
 void force_field::OnRenderTransparent( void )
 {
-    CONTEXT( "force_field::OnRenderTransparent" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "force_field::OnRenderTransparent" );
 
-    if( !m_bInitialized )
+    if( !m_isInitialized )
     {
         CreateVertices();
     }
 
-    ASSERT( m_bInitialized );
+    ASSERT( m_isInitialized );
     ASSERT( m_pVertices );
-
-    //draw_BBox( GetBBox() );
-
-    // Vertices.
-    if( FALSE )
-    {
-        draw_Begin( DRAW_LINES, 0 );
-        xcolor Color = XCOLOR_YELLOW;
-
-        draw_Color( Color );
-
-        for( s32 i = 0; i < (m_NumCols * m_NumRows); i++ )
-        {
-            {
-                vector3 V1( m_pVertices[ i ].X, m_pVertices[ i ].Y, +2);
-                vector3 V2( m_pVertices[ i ].X, m_pVertices[ i ].Y, -2);
-
-                matrix4 L2W = GetL2W();
-
-                V1 = L2W.Transform( V1 );
-                V2 = L2W.Transform( V2 );
-
-                draw_Vertex( V1 );
-                draw_Vertex( V2 );
-            }
-        }
-
-        draw_End();
-    }
 
 #ifndef X_EDITOR
     u32 States[ 2 ]     = { m_OldState, m_NewState };
@@ -470,24 +442,45 @@ void force_field::OnRenderTransparent( void )
     static f32 HexAlpha    = 0.5f;
     static f32 CloudAlpha  = 0.2f;
 
-    s32 EvenSquare[ 4 ] = { 0, 1, 2, 3 };
-    s32 OddSquare [ 4 ] = { 1, 3, 0, 2 };
+    const s32 EvenSquare[ 4 ] = { 0, 1, 2, 3 };
+    const s32 OddSquare [ 4 ] = { 1, 3, 0, 2 };
 
     static f32 DynamicAlpha = 0.01f;
 
     xcolor FringeColor = XCOLOR_WHITE;
     FringeColor.A = (u8)(255 * m_PercentageOn);
 
-    // Hex Pattern.
+    const s32 nCells = (m_NumRows - 1) * (m_NumCols - 1);
+    ASSERTS( (nCells > 0) &&
+             (nCells <= (render::MAX_PRIMITIVE_VERTICES / 4)),
+             "Force field primitive grid exceeds the 16-bit batch limit" );
+    if( (nCells <= 0) ||
+        (nCells > (render::MAX_PRIMITIVE_VERTICES / 4)) )
     {
-        draw_ClearL2W();
+        return;
+    }
 
-        vector3 Points[ 4 ];
+    matrix4 LocalToWorld = GetL2W();
+
+    // Hex pattern.
+    const texture* pForceTexture = m_ForceTexture.GetPointer();
+    if( pForceTexture )
+    {
+        const render::primitive_draw_desc Material( pForceTexture,
+                                                    render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                    render::PRIMITIVE_BLEND_ALPHA,
+                                                    render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                    render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                    render::PRIMITIVE_SAMPLER_ANISOTROPIC_WRAP,
+                                                    render::PRIMITIVE_LAYER_TRANSPARENT );
+        render::PrimitiveBatch Batch( Material );
+        Batch.Reserve( nCells * 4, nCells * 6 );
+
         for( s32 i = 0; i < m_NumRows - 1; i++ )
         {
-            for( s32 j = 0; j < m_NumCols - 1; j++) 
+            for( s32 j = 0; j < m_NumCols - 1; j++ )
             {
-                s32 Indices[ 4 ] =
+                const s32 GridIndices[ 4 ] =
                 {
                     (i * m_NumCols) + j,
                     (i * m_NumCols) + j + 1,
@@ -498,32 +491,24 @@ void force_field::OnRenderTransparent( void )
 #ifdef X_DEBUG
                 for( s32 l = 0; l < 4; l++ )
                 {
-                    ASSERT( IN_RANGE( 0, Indices[ l ], (m_NumCols * m_NumRows) - 1 ) );
+                    ASSERT( IN_RANGE( 0, GridIndices[ l ], (m_NumCols * m_NumRows) - 1 ) );
                 }
 #endif
 
-                Points[0]( m_pVertices[ Indices[ 0 ] ].X, m_pVertices[ Indices[ 0 ] ].Y,  0.0f );
-                Points[1]( m_pVertices[ Indices[ 1 ] ].X, m_pVertices[ Indices[ 1 ] ].Y,  0.0f );
-                Points[2]( m_pVertices[ Indices[ 2 ] ].X, m_pVertices[ Indices[ 2 ] ].Y,  0.0f );
-                Points[3]( m_pVertices[ Indices[ 3 ] ].X, m_pVertices[ Indices[ 3 ] ].Y,  0.0f );
+                const vector3 Points[ 4 ] =
+                {
+                    vector3( m_pVertices[ GridIndices[0] ].X, m_pVertices[ GridIndices[0] ].Y, 0.0f ),
+                    vector3( m_pVertices[ GridIndices[1] ].X, m_pVertices[ GridIndices[1] ].Y, 0.0f ),
+                    vector3( m_pVertices[ GridIndices[2] ].X, m_pVertices[ GridIndices[2] ].Y, 0.0f ),
+                    vector3( m_pVertices[ GridIndices[3] ].X, m_pVertices[ GridIndices[3] ].Y, 0.0f )
+                };
 
                 xcolor Color = Interpolate( BaseColor, FringeColor, x_min( m_PercentageOn, MINMAX( 0.4f, m_Hit, 1.0f ) ) );
                 Color.A = x_max( (u8)(255 * ((HexAlpha * m_PercentageOn))), (u8)(255 * x_min( 1.0f, m_Hit ) * m_PercentageOn ));
 
-                matrix4 L2W = GetL2W();
-                L2W.Transform( Points, Points, 4 );
-
-                draw_Begin( DRAW_TRIANGLE_STRIPS, DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_USE_GDEPTH );
-
-                const xbitmap* pBitmap = m_ForceTexture.GetPointer();
-
-                draw_SetTexture( *pBitmap );
-
-                draw_Color( Color );
-
                 static f32 TexDim = 400.0f;
 
-                vector2 PointUV[ 4 ] = 
+                const vector2 PointUV[ 4 ] =
                 {
                     vector2( (((f32)(j + 0) / (f32)m_NumCols) * m_Width ) / TexDim,
                              (((f32)(i + 0) / (f32)m_NumRows) * m_Height) / TexDim ),
@@ -535,23 +520,40 @@ void force_field::OnRenderTransparent( void )
                              (((f32)(i + 1) / (f32)m_NumRows) * m_Height) / TexDim )
                 };
 
+                vector3 OrderedPoints[4];
+                vector2 OrderedUVs[4];
+                xcolor  OrderedColors[4];
+                const s32* pOrder = (((i + j) % 2) == 0) ? EvenSquare : OddSquare;
+
                 for( s32 k = 0; k < 4; k++ )
                 {
-                    s32 PointNum = (((i + j) % 2) == 0) ? EvenSquare[ k ] : OddSquare[ k ];
-
-                    draw_UV    (    PointUV[ PointNum ] );
-                    draw_Vertex(     Points[ PointNum ] );
+                    const s32 Point = pOrder[k];
+                    OrderedPoints[k] = Points[Point];
+                    OrderedUVs[k]    = PointUV[Point];
+                    OrderedColors[k] = Color;
                 }
 
-                draw_End();
+                Batch.AddTriangleStripQuad( OrderedPoints, OrderedUVs, OrderedColors );
             }
         }
+
+        Batch.Submit( LocalToWorld );
     }
 
     // Clouds.
-    const xbitmap* pBitmap = m_ForceCloudTexture.GetPointer();
-    if( pBitmap )
+    const texture* pCloudTexture = m_ForceCloudTexture.GetPointer();
+    if( pCloudTexture )
     {
+        const render::primitive_draw_desc Material( pCloudTexture,
+                                                    render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                    render::PRIMITIVE_BLEND_ALPHA,
+                                                    render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                    render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                    render::PRIMITIVE_SAMPLER_ANISOTROPIC_WRAP,
+                                                    render::PRIMITIVE_LAYER_TRANSPARENT );
+        render::PrimitiveBatch Batch( Material );
+        Batch.Reserve( nCells * 4, nCells * 6 );
+
         // Set up the "random" colors.
         f32 ColorVal1 = ((x_sin( m_Phase * 2.0f ) + 1.0f) / 2.0f);
         f32 ColorVal2 = 1.0f - ColorVal1;
@@ -564,32 +566,32 @@ void force_field::OnRenderTransparent( void )
                 xcolor( (u8)(127 * ColorVal1), (u8)(255 * ColorVal2),       (u8)(255 * ColorVal1), (u8)(255 * m_PercentageOn) ),
         };
 
-        draw_ClearL2W();
-
-        vector3 Points[ 4 ];
         for( s32 i = 0; i < m_NumRows - 1; i++ )
         {
-            for( s32 j = 0; j < m_NumCols - 1; j++) 
+            for( s32 j = 0; j < m_NumCols - 1; j++ )
             {
-                s32 Indices[ 4 ] =
+                const s32 GridIndices[ 4 ] =
                 {
                     (i * m_NumCols) + j,
-                        (i * m_NumCols) + j + 1,
-                        ((i + 1) * m_NumCols) + j,
-                        ((i + 1) * m_NumCols) + j + 1
+                    (i * m_NumCols) + j + 1,
+                    ((i + 1) * m_NumCols) + j,
+                    ((i + 1) * m_NumCols) + j + 1
                 };
 
 #ifdef X_DEBUG
                 for( s32 l = 0; l < 4; l++ )
                 {
-                    ASSERT( IN_RANGE( 0, Indices[ l ], (m_NumCols * m_NumRows) - 1 ) );
+                    ASSERT( IN_RANGE( 0, GridIndices[ l ], (m_NumCols * m_NumRows) - 1 ) );
                 }
 #endif
 
-                Points[0]( m_pVertices[ Indices[ 0 ] ].X, m_pVertices[ Indices[ 0 ] ].Y,  0.0f );
-                Points[1]( m_pVertices[ Indices[ 1 ] ].X, m_pVertices[ Indices[ 1 ] ].Y,  0.0f );
-                Points[2]( m_pVertices[ Indices[ 2 ] ].X, m_pVertices[ Indices[ 2 ] ].Y,  0.0f );
-                Points[3]( m_pVertices[ Indices[ 3 ] ].X, m_pVertices[ Indices[ 3 ] ].Y,  0.0f );
+                const vector3 Points[ 4 ] =
+                {
+                    vector3( m_pVertices[ GridIndices[0] ].X, m_pVertices[ GridIndices[0] ].Y, 0.0f ),
+                    vector3( m_pVertices[ GridIndices[1] ].X, m_pVertices[ GridIndices[1] ].Y, 0.0f ),
+                    vector3( m_pVertices[ GridIndices[2] ].X, m_pVertices[ GridIndices[2] ].Y, 0.0f ),
+                    vector3( m_pVertices[ GridIndices[3] ].X, m_pVertices[ GridIndices[3] ].Y, 0.0f )
+                };
 
                 static f32 InterpAmount = 0.10f;
 
@@ -598,24 +600,15 @@ void force_field::OnRenderTransparent( void )
 
                 xcolor HitColors[ 4 ] =
                 {
-                    (IN_RANGE( m_NumCols, Indices[ 0 ], m_NumCols * (m_NumRows - 1) - 1 ) && (((Indices[ 0 ] % m_NumCols) != 0) && ((Indices[ 0 ] % m_NumCols) != (m_NumCols - 1)))) ? Interpolate( Color, PossibleColors[ Indices[ 0 ] % 4 ], InterpAmount ) : Interpolate( Color, FringeColor, 0.5f ),
-                    (IN_RANGE( m_NumCols, Indices[ 1 ], m_NumCols * (m_NumRows - 1) - 1 ) && (((Indices[ 1 ] % m_NumCols) != 0) && ((Indices[ 1 ] % m_NumCols) != (m_NumCols - 1)))) ? Interpolate( Color, PossibleColors[ Indices[ 1 ] % 4 ], InterpAmount ) : Interpolate( Color, FringeColor, 0.5f ),
-                    (IN_RANGE( m_NumCols, Indices[ 2 ], m_NumCols * (m_NumRows - 1) - 1 ) && (((Indices[ 2 ] % m_NumCols) != 0) && ((Indices[ 2 ] % m_NumCols) != (m_NumCols - 1)))) ? Interpolate( Color, PossibleColors[ Indices[ 2 ] % 4 ], InterpAmount ) : Interpolate( Color, FringeColor, 0.5f ),
-                    (IN_RANGE( m_NumCols, Indices[ 3 ], m_NumCols * (m_NumRows - 1) - 1 ) && (((Indices[ 3 ] % m_NumCols) != 0) && ((Indices[ 3 ] % m_NumCols) != (m_NumCols - 1)))) ? Interpolate( Color, PossibleColors[ Indices[ 3 ] % 4 ], InterpAmount ) : Interpolate( Color, FringeColor, 0.5f )
+                    (IN_RANGE( m_NumCols, GridIndices[0], m_NumCols * (m_NumRows - 1) - 1 ) && (((GridIndices[0] % m_NumCols) != 0) && ((GridIndices[0] % m_NumCols) != (m_NumCols - 1)))) ? Interpolate( Color, PossibleColors[ GridIndices[0] % 4 ], InterpAmount ) : Interpolate( Color, FringeColor, 0.5f ),
+                    (IN_RANGE( m_NumCols, GridIndices[1], m_NumCols * (m_NumRows - 1) - 1 ) && (((GridIndices[1] % m_NumCols) != 0) && ((GridIndices[1] % m_NumCols) != (m_NumCols - 1)))) ? Interpolate( Color, PossibleColors[ GridIndices[1] % 4 ], InterpAmount ) : Interpolate( Color, FringeColor, 0.5f ),
+                    (IN_RANGE( m_NumCols, GridIndices[2], m_NumCols * (m_NumRows - 1) - 1 ) && (((GridIndices[2] % m_NumCols) != 0) && ((GridIndices[2] % m_NumCols) != (m_NumCols - 1)))) ? Interpolate( Color, PossibleColors[ GridIndices[2] % 4 ], InterpAmount ) : Interpolate( Color, FringeColor, 0.5f ),
+                    (IN_RANGE( m_NumCols, GridIndices[3], m_NumCols * (m_NumRows - 1) - 1 ) && (((GridIndices[3] % m_NumCols) != 0) && ((GridIndices[3] % m_NumCols) != (m_NumCols - 1)))) ? Interpolate( Color, PossibleColors[ GridIndices[3] % 4 ], InterpAmount ) : Interpolate( Color, FringeColor, 0.5f )
                 };
-
-                matrix4 L2W = GetL2W();
-                L2W.Transform( Points, Points, 4 );
-
-                draw_Begin( DRAW_TRIANGLE_STRIPS, DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_USE_GDEPTH );
-
-                draw_SetTexture( *pBitmap );
-
-                draw_Color( Color );
 
                 static f32 TexDim = 256.0f;
 
-                vector2 PointUV[ 4 ] = 
+                const vector2 PointUV[ 4 ] =
                 {
                     vector2( (((f32)(j + 0) / (f32)m_NumCols) * m_Width ) / TexDim + m_ScrollFactor,
                              (((f32)(i + 0) / (f32)m_NumRows) * m_Height) / TexDim + m_ScrollFactor ),
@@ -627,18 +620,24 @@ void force_field::OnRenderTransparent( void )
                              (((f32)(i + 1) / (f32)m_NumRows) * m_Height) / TexDim + m_ScrollFactor )
                 };
 
+                vector3 OrderedPoints[4];
+                vector2 OrderedUVs[4];
+                xcolor  OrderedColors[4];
+                const s32* pOrder = (((i + j) % 2) == 0) ? EvenSquare : OddSquare;
+
                 for( s32 k = 0; k < 4; k++ )
                 {
-                    s32 PointNum = (((i + j) % 2) == 0) ? EvenSquare[ k ] : OddSquare[ k ];
-
-                    draw_UV    (    PointUV[ PointNum ] );
-                    draw_Color (  HitColors[ PointNum ] );
-                    draw_Vertex(     Points[ PointNum ] );
+                    const s32 Point = pOrder[k];
+                    OrderedPoints[k] = Points[Point];
+                    OrderedUVs[k]    = PointUV[Point];
+                    OrderedColors[k] = HitColors[Point];
                 }
 
-                draw_End();
+                Batch.AddTriangleStripQuad( OrderedPoints, OrderedUVs, OrderedColors );
             }
         }
+
+        Batch.Submit( LocalToWorld );
     }
 
 #ifdef X_EDITOR
@@ -688,9 +687,9 @@ void force_field::OnProjectileImpact  ( vector3& Point )
 
 //=========================================================================
 
-void force_field::OnAdvanceLogic ( f32 DeltaTime )
+void force_field::OnAdvanceSimulation ( f32 DeltaTime )
 {
-    CONTEXT( "force_field::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "force_field::OnAdvanceSimulation" );
 
     m_Phase += 6.0f * DeltaTime;
     if( m_Phase > R_360 )
@@ -700,7 +699,7 @@ void force_field::OnAdvanceLogic ( f32 DeltaTime )
 
     m_Hit = x_max( 0.0f, m_Hit - DeltaTime );
 
-    if( !m_bInitialized )
+    if( !m_isInitialized )
     {
         CreateVertices();
     }
@@ -830,7 +829,7 @@ void force_field::OnEnumProp( prop_enum& List )
     u32 Flags = PROP_TYPE_DONT_SAVE | 
         PROP_TYPE_DONT_SHOW | 
         PROP_TYPE_DONT_EXPORT | 
-        PROP_TYPE_DONT_SAVE_MEMCARD;
+        PROP_TYPE_DONT_SAVE_GAME;
 
     List.PropEnumExternal( "ForceField\\MainGraphic", "Resource\0xbmp",     "Resource Animation File", Flags );
     List.PropEnumExternal( "ForceField\\ScanGraphic", "Resource\0xbmp",     "Resource Animation File", Flags );

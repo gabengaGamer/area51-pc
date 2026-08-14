@@ -1,8 +1,8 @@
 //==============================================================================
 //
 //  VoiceProxy.hpp
-// Client instance depository for voice data going out to this specific
-// client.
+//
+//  Client instance depository for voice data going out to this specific client.
 //
 //==============================================================================
 
@@ -16,13 +16,11 @@
 #include "x_files.hpp"
 #include "Network/NetStream.hpp"
 #include "Network/FiFo.hpp"
-#include "x_threads.hpp"
 #include "VoiceMgr.hpp"
 
 //==============================================================================
 //  DEFINES
 //==============================================================================
-
 
 //==============================================================================
 //  TYPES
@@ -35,7 +33,6 @@ public:
 
         void                Init                ( s32 PlayerNetSlot );
         void                Kill                ( void );
-        void                Update              ( f32 DeltaTime );
 
         void                ProvideUpdate       ( netstream& BitStream );
         void                AcceptUpdate        ( netstream& BitStream );
@@ -43,12 +40,10 @@ public:
         void                Write               ( const byte* pBuffer, s32 Length );
         void                SetPlayerSlot       ( s32 PlayerSlot );
         s32                 GetPlayerSlot       ( void );
-        void                SetTalkMode         ( s32 Mode );
         void                SetVoiceOwner       ( s32 PlayerSlot, actual_talk_mode TalkMode );
         s32                 GetVoiceOwner       ( void );
-        f32                 GetOwnerTimeout     ( void );
-        desired_talk_mode   GetDesiredTalkMode  ( void ) { return m_DesiredTalkMode; };
-        u32                 GetMutedPlayers     ( void ) { return m_MutedPlayers; };
+        desired_talk_mode   GetDesiredTalkMode  ( void ) { return m_DesiredTalkMode; }
+        u32                 GetMutedPlayers     ( void ) { return m_MutedPlayers; }
 
 private:
         xbool               m_Initialized;

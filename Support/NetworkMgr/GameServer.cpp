@@ -16,6 +16,7 @@
 #include "MsgMgr.hpp"
 #include "Configuration/GameConfig.hpp"
 #include "ClientProxy.hpp"
+#include "Voice/VoiceMgr.hpp"
 
 #include "x_log.hpp"
 
@@ -49,6 +50,7 @@ game_server::game_server( void )
 
     m_AllowClients  = TRUE;
     m_MaxClients    = 0;
+    m_PacketSendBudget = 0.0f;
     m_pClients      = NULL;
     m_State         = STATE_SERVER_IDLE;
 
@@ -75,6 +77,7 @@ void game_server::Init( net_socket& LocalSocket, s32 LocalPlayerCount, s32 MaxCl
     m_LocalPlayerCount  = LocalPlayerCount;
     m_UpdateIndex       = 0;
     m_MaxClients        = MaxClients;
+    m_PacketSendBudget  = 0.0f;
 
     EnterState(STATE_SERVER_INIT);
 }    
@@ -123,7 +126,7 @@ void game_server::AcceptLogin( const net_address& Remote, s32 ClientIndex, s32 P
     Client.m_ConnMgr.SetEncryption( FALSE );
 
     // Dummy packet to test security validation
-#if defined(X_DEBUG) && defined(bwatson) && defined(TARGET_PS2)
+#if defined(X_DEBUG) && defined(bwatson)
     {
         s32 QueryTable[]=
         {
@@ -628,32 +631,48 @@ exit_reason game_server::Update( f32 DeltaTime )
         //
         // We want to prevent "outbound packet harmonic" problems where, for
         // whatever reason, the server starts trying to send packets in "bursts
-        // with gaps" rather than evenly divided among clients and frames.
+        // with gaps" rather than evenly divided among clients and updates.
         //
-        // The fastest we want to update is 10 packets per second, or 1 packet 
-        // every 3rd frame.  If we have 3 clients, then we would (under optimal
-        // conditions) send 1 packet per frame.  If we have 30 clients, then 10.
-        // 
-        // So, the maximum number of packets we want to send is 1/3 the number
-        // of clients.  Round uneven results up.
-        // 
+        // Accumulate packet capacity in seconds, not frames.  Each client can
+        // ship at least once per MIN_SHIP_INTERVAL, so this is the maximum
+        // aggregate rate that the per-client ship timers can request.
+        //
+        f32 const PacketRate = nClients / MIN_SHIP_INTERVAL;
+        m_PacketSendBudget += DeltaTime * PacketRate;
 
-        s32 PacketsAllowed = (nClients + 2) / 3;
+        // Keep the bucket bounded so a long stall cannot release an unbounded
+        // burst.  One extra token peserves fractional capacity between
+        // updates without turning the bucket into a frame-based throttle.
+        f32 const MaxPacketBudget = (f32)nClients + 1.0f;
+        if( m_PacketSendBudget > MaxPacketBudget )
+        {
+            m_PacketSendBudget = MaxPacketBudget;
+        }
 
-        for( i=0; i<m_MaxClients; i++ )
+        s32 PacketsAllowed = 0;
+        if( DeltaTime > 0.0f )
+        {
+            s32 const PacketsThisUpdate = (s32)x_ceil( DeltaTime * PacketRate );
+            PacketsAllowed = MIN( (s32)m_PacketSendBudget, PacketsThisUpdate );
+        }
+        for( i = 0; (i < m_MaxClients) && (PacketsAllowed > 0); i++ )
         {
             if( m_pClients[m_UpdateIndex].ProvideUpdate() )
             {
                 PacketsAllowed--;
+                m_PacketSendBudget -= 1.0f;
             }
+
             m_UpdateIndex++;
             if( m_UpdateIndex >= m_MaxClients )
             {
                 m_UpdateIndex = 0;
             }
-            if( PacketsAllowed == 0 )
-                break;
         }
+    }
+    else
+    {
+        m_PacketSendBudget = 0.0f;
     }
 
     return GetExitReason();
@@ -987,13 +1006,17 @@ const char* game_server::GetClientTicket(s32 Client)
 }
 
 //=========================================================================
+
+voice_proxy& game_server::GetVoiceProxy( s32 ClientIndex )
+{
+    return m_pClients[ClientIndex].m_VoiceProxy;
+}
+
+//==========================================================================
 // This only deals with the local server's headset.
 
 void game_server::UpdateVoice( f32 DeltaTime )
 {
-#ifdef TARGET_PC // Завали ебало
-    return;
-#endif
     s32     VoiceDataLength = 0;
     byte    VoiceDataBuffer[ 256 ];
 
@@ -1004,26 +1027,11 @@ void game_server::UpdateVoice( f32 DeltaTime )
         return;
     }
 
-    /*
-    // If the local server player is trying to speak, let him be arbitrated!
-    if( g_VoiceMgr.IsTalking() )
-    {
-        g_VoiceMgr.Arbitrate( m_LocalPlayerSlot[0], g_VoiceMgr.GetLocalTalkMode() );
-    }
-    else
-    {
-        g_VoiceMgr.Arbitrate( m_LocalPlayerSlot[0], TALK_NONE );
-    }
-    */
-
-    // On XBox when we are recording voice attachments we must not distribute the audio to clients.
     #ifdef TARGET_XBOX
     if( g_VoiceMgr.GetHeadset().GetVoiceIsRecording() == TRUE )
         return;
     #endif
 
-    // If we have any local voice data, we need to pump that off to all who
-    // may be interested.
     while( TRUE )
     {
         VoiceDataLength = g_VoiceMgr.ReadFromVoiceFifo( VoiceDataBuffer, g_VoiceMgr.GetHeadset().GetEncodedBlockSize() );
@@ -1031,17 +1039,10 @@ void game_server::UpdateVoice( f32 DeltaTime )
         {
             break;
         }
-        g_VoiceMgr.Distribute( m_LocalPlayerSlot[0], VoiceDataBuffer, VoiceDataLength, g_VoiceMgr.GetLocalDesiredTalkMode() );
+        g_VoiceMgr.Distribute( m_LocalPlayerSlot[0], VoiceDataBuffer, VoiceDataLength );
     }
 }
 
-//==============================================================================
-voice_proxy& game_server::GetVoiceProxy( s32 ClientIndex )
-{
-    return m_pClients[ClientIndex].m_VoiceProxy;
-}
-
-//==============================================================================
 xbool game_server::HasPlayerBuddy( const char* pSearch )
 {
     s32 i;

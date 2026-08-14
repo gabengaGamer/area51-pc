@@ -8,8 +8,8 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "NetProjectile.hpp"
-#include "Entropy/e_Draw.hpp"
 #include "Objects/ClothObject.hpp"
 #include "Objects/Flag.hpp"
 #include "Objects/Actor/Actor.hpp"
@@ -19,9 +19,9 @@
 #include "Objects/SuperDestructible.hpp"
 #include "Objects/Turret.hpp"
 #include "Objects/AlienShield.hpp"
-#include "Objects/alienglob.hpp"
+#include "Objects/AlienGlob.hpp"
 #include "Objects/ParticleEmiter.hpp"
-#include "Objects/Player.hpp"
+#include "Objects/Player/Player.hpp"
 
 #ifndef X_EDITOR
 #include "NetworkMgr/NetworkMgr.hpp"
@@ -162,7 +162,12 @@ void net_proj::SetPosition( const vector3& Position,
 
     SetZone1( Zone1 );
     SetZone2( Zone2 );
-    g_ZoneMgr.InitZoneTracking( *this, m_ZoneTracker );
+    g_ZoneMgr.RebaseZoneTracking( *this,
+                                  m_ZoneTracker,
+                                  GetPosition(),
+                                  GetZone1(),
+                                  GetZone2(),
+                                  zone_mgr::SeedSource::Destination );
 
     #ifndef X_EDITOR
     m_NetDirtyBits |= DIRTY_POSITION;
@@ -297,7 +302,7 @@ void net_proj::OnMove( const vector3& NewPos )
 
 void net_proj::UpdateZoneTrack( void )
 { 
-    g_ZoneMgr.UpdateZoneTracking( *this, m_ZoneTracker, GetPosition() );
+    g_ZoneMgr.AdvanceZoneTracking( *this, m_ZoneTracker, GetPosition() );
 }
 
 //==============================================================================
@@ -311,15 +316,15 @@ void net_proj::OnRender( void )
 void net_proj::OnRenderTransparent( void )
 {   
 #if !defined( CONFIG_RETAIL )
-    draw_Marker( GetPosition(), XCOLOR_BLUE );
-    draw_Sphere( GetPosition(), 50.0f, XCOLOR_RED );
-    draw_BBox( GetBBox() );
+    render::debug::Marker( GetPosition(), XCOLOR_BLUE );
+    render::debug::Sphere( GetPosition(), 50.0f, XCOLOR_RED );
+        render::debug::Box( GetBBox() );
 #endif // !defined( CONFIG_RETAIL )
 }
 
 //==============================================================================
 
-void net_proj::OnAdvanceLogic( f32 DeltaTime )
+void net_proj::OnAdvanceSimulation( f32 DeltaTime )
 {
     // Projectile has exploded and now just needs to time out and destroy itself
     if( m_Exploded )
@@ -331,7 +336,7 @@ void net_proj::OnAdvanceLogic( f32 DeltaTime )
             m_ExplodedTimer -= DeltaTime;
             if( m_ExplodedTimer <= 0.0f )
             {
-                // LOG_MESSAGE( "net_proj::OnAdvanceLogic", "Destroyed after Exploded" );
+                // LOG_MESSAGE( "net_proj::OnAdvanceSimulation", "Destroyed after Exploded" );
                 DESTROY_NET_OBJECT( this );
             }
         }
@@ -422,7 +427,7 @@ void net_proj::OnAdvanceLogic( f32 DeltaTime )
 
         ComputePosAndVelAtTimeT( NewT );
 
-        CLOG_MESSAGE( ENABLE_LOGGING, "net_proj::OnAdvanceLogic", 
+        CLOG_MESSAGE( ENABLE_LOGGING, "net_proj::OnAdvanceSimulation", 
                                       "Collide from (%4.2f,%4.2f,%4.2f) to (%4.2f,%4.2f,%4.2f).",
                                       m_OldPos.GetX(), m_OldPos.GetY(), m_OldPos.GetZ(), 
                                       m_NewPos.GetX(), m_NewPos.GetY(), m_NewPos.GetZ() );
@@ -454,7 +459,7 @@ void net_proj::OnAdvanceLogic( f32 DeltaTime )
             // No collision?  Then bail out of this loop.
             if( g_CollisionMgr.m_nCollisions == 0 )
             {
-                CLOG_MESSAGE( ENABLE_LOGGING, "net_proj::OnAdvanceLogic", 
+                CLOG_MESSAGE( ENABLE_LOGGING, "net_proj::OnAdvanceSimulation", 
                                             "Clean move from (%4.2f,%4.2f,%4.2f) to (%4.2f,%4.2f,%4.2f).",
                                             m_OldPos.GetX(), m_OldPos.GetY(), m_OldPos.GetZ(), 
                                             m_NewPos.GetX(), m_NewPos.GetY(), m_NewPos.GetZ() );
@@ -482,7 +487,7 @@ void net_proj::OnAdvanceLogic( f32 DeltaTime )
                 // Skip over collisions with unidentifiable objects.
                 if( Coll.ObjectHitGuid == 0 )
                 {
-                    LOG_WARNING( "net_proj::OnAdvanceLogic",
+                    LOG_WARNING( "net_proj::OnAdvanceSimulation",
                                 "Collision with 'unidentifiable' object." );
                     continue;
                 }
@@ -491,7 +496,7 @@ void net_proj::OnAdvanceLogic( f32 DeltaTime )
                 object* pObject = g_ObjMgr.GetObjectByGuid( Coll.ObjectHitGuid );
                 if( !pObject )
                 {
-                    LOG_WARNING( "net_proj::OnAdvanceLogic",
+                    LOG_WARNING( "net_proj::OnAdvanceSimulation",
                                 "Collision with 'unretrievable' object." );
                     continue;
                 }
@@ -593,7 +598,7 @@ void net_proj::OnAdvanceLogic( f32 DeltaTime )
     //
 
     CLOG_MESSAGE( ENABLE_LOGGING, 
-                  "net_proj::OnAdvanceLogic", 
+                  "net_proj::OnAdvanceSimulation", 
                   "TimeT:%4.2f - Position:(%4.2f,%4.2f,%4.2f) - Velocity:(%4.2f,%4.2f,%4.2f)", 
                   m_TimeT,
                   m_NewPos.GetX(),   m_NewPos.GetY(),   m_NewPos.GetZ(),

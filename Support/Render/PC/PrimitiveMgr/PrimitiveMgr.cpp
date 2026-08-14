@@ -1,18 +1,8 @@
 //=========================================================================
 //
-//  Primitive Manager for PC
+//  PrimitiveMgr.cpp
 //
 //=========================================================================
-
-//=========================================================================
-//  PLATFORM CHECK
-//=========================================================================
-
-#include "x_types.hpp"
-
-#if !defined(TARGET_PC)
-#error "This is only for the PC target platform. Please check build exclusion rules"
-#endif
 
 //=========================================================================
 // INCLUDES
@@ -20,742 +10,740 @@
 
 #include "PrimitiveMgr.hpp"
 
-#include "..\..\Render.hpp"
-#include "..\..\..\Decals\DecalMgr.hpp"
-
-#include "Entropy/e_Draw.hpp"
-#include "Entropy/e_VRAM.hpp"
-#include "Entropy/D3DEngine/d3deng_draw_shaders.hpp"
-#include "Entropy/D3DEngine/d3deng_shader.hpp"
-#include "Entropy/D3DEngine/d3deng_state.hpp"
+#include "x_debug.hpp"
 
 //=========================================================================
 // GLOBAL INSTANCE
 //=========================================================================
 
-primitive_mgr g_PrimitiveMgr;
+PrimitiveMgr g_PrimitiveMgr;
 
 //=========================================================================
 // IMPLEMENTATION
 //=========================================================================
 
-namespace
+PrimitiveMgr::PrimitiveMgr( void )
+    : m_vertexMgr(), m_vertexShader(), m_pixelShader(), m_pipelines(), m_drawUniformVertexSlot( 0xffffffffu ),
+      m_drawUniformPixelSlot( 0xffffffffu ), m_textureSlot( 0xffffffffu ), m_sceneTextureSlot( 0xffffffffu ),
+      m_pDistortionScene( NULL ), m_whiteTexture(), m_isInitialized( FALSE ), m_batchDesc(), m_batchVertices(),
+      m_batchIndices(), m_isBatchOpen( FALSE ), m_queuedVertices(), m_queuedIndices(), m_queuedDraws(),
+      m_areQueuedDrawsUploaded( FALSE )
 {
-    enum primitive_material_mode
-    {
-        PRIMITIVE_MATERIAL_DIFFUSE = 0,
-        PRIMITIVE_MATERIAL_GLOW    = 1,
-        PRIMITIVE_MATERIAL_ENV     = 2,
-    };
-
-    struct cb_primitive_matrices
-    {
-        matrix4 World;
-        matrix4 View;
-        matrix4 Projection;
-        f32     NearZ;
-        f32     FarZ;
-        f32     pad0;
-        f32     pad1;
-    };
-
-    struct cb_primitive_flags
-    {
-        s32 UseTexture;
-        s32 UseAlpha;
-        s32 MaterialMode;
-        s32 pad0;
-    };
-
-    static const char* s_PrimitiveVertexShader =
-    "cbuffer cbMatrices : register(b0)\n"
-    "{\n"
-    "    float4x4 World;\n"
-    "    float4x4 View;\n"
-    "    float4x4 Projection;\n"
-    "    float NearZ;\n"
-    "    float FarZ;\n"
-    "    float pad0;\n"
-    "    float pad1;\n"
-    "};\n"
-    "struct VS_INPUT\n"
-    "{\n"
-    "    float3 Pos   : POSITION;\n"
-    "    float4 Color : COLOR;\n"
-    "    float2 UV    : TEXCOORD;\n"
-    "};\n"
-    "struct PS_INPUT\n"
-    "{\n"
-    "    float4 Pos      : SV_POSITION;\n"
-    "    float4 Color    : COLOR0;\n"
-    "    float2 UV       : TEXCOORD0;\n"
-    "    float3 WorldPos : TEXCOORD1;\n"
-    "};\n"
-    "PS_INPUT main( VS_INPUT input )\n"
-    "{\n"
-    "    PS_INPUT output;\n"
-    "    float4 worldPos = mul( World, float4( input.Pos, 1.0 ) );\n"
-    "    float4 viewPos  = mul( View, worldPos );\n"
-    "    output.Pos      = mul( Projection, viewPos );\n"
-    "    output.Color    = input.Color;\n"
-    "    output.UV       = input.UV;\n"
-    "    output.WorldPos = worldPos.xyz;\n"
-    "    return output;\n"
-    "}\n";
-
-    static const char* s_PrimitivePixelShader =
-    "Texture2D txDiffuse : register(t0);\n"
-    "SamplerState samLinear : register(s0);\n"
-    "cbuffer cbMatrices : register(b0)\n"
-    "{\n"
-    "    float4x4 World;\n"
-    "    float4x4 View;\n"
-    "    float4x4 Projection;\n"
-    "    float NearZ;\n"
-    "    float FarZ;\n"
-    "    float pad0;\n"
-    "    float pad1;\n"
-    "};\n"
-    "cbuffer cbFlags : register(b1)\n"
-    "{\n"
-    "    int UseTexture;\n"
-    "    int UseAlpha;\n"
-    "    int MaterialMode;\n"
-    "    int FlagsPad0;\n"
-    "};\n"
-    "struct PS_INPUT\n"
-    "{\n"
-    "    float4 Pos      : SV_POSITION;\n"
-    "    float4 Color    : COLOR0;\n"
-    "    float2 UV       : TEXCOORD0;\n"
-    "    float3 WorldPos : TEXCOORD1;\n"
-    "    bool   IsFrontFace : SV_IsFrontFace;\n"
-    "};\n"
-    "struct PS_OUTPUT\n"
-    "{\n"
-    "    float4 FinalColor  : SV_Target0;\n"
-    "    float4 Albedo      : SV_Target1;\n"
-    "    float4 Normal      : SV_Target2;\n"
-    "    float4 LinearDepth : SV_Target3;\n"
-    "    float4 Glow        : SV_Target4;\n"
-    "};\n"
-    "PS_OUTPUT main( PS_INPUT input )\n"
-    "{\n"
-    "    PS_OUTPUT output;\n"
-    "    float4 texColor   = (UseTexture > 0) ? txDiffuse.Sample( samLinear, input.UV ) : float4( 1.0, 1.0, 1.0, 1.0 );\n"
-    "    float4 finalColor = texColor * input.Color;\n"
-    "    float3 dx         = ddx( input.WorldPos );\n"
-    "    float3 dy         = ddy( input.WorldPos );\n"
-    "    float3 worldN     = cross( dx, dy );\n"
-    "    float  lenSq      = dot( worldN, worldN );\n"
-    "    if( lenSq > 1e-6 )\n"
-    "        worldN *= rsqrt( lenSq );\n"
-    "    else\n"
-    "        worldN = float3( 0.0, 0.0, 1.0 );\n"
-    "    if( !input.IsFrontFace )\n"
-    "        worldN = -worldN;\n"
-    "    float3 viewN       = normalize( mul( (float3x3)View, worldN ) );\n"
-    "    float4 viewPos     = mul( View, float4( input.WorldPos, 1.0 ) );\n"
-    "    float  invRange    = rcp( max( FarZ - NearZ, 1e-5 ) );\n"
-    "    float  linearDepth = saturate( (viewPos.z - NearZ) * invRange );\n"
-    "    output.FinalColor  = finalColor;\n"
-    "    output.Albedo      = finalColor;\n"
-    "    output.Normal      = float4( viewN * 0.5 + 0.5, finalColor.a );\n"
-    "    output.LinearDepth = linearDepth.xxxx;\n"
-    "    output.Glow        = (MaterialMode == 1) ? finalColor : float4( 0.0, 0.0, 0.0, 0.0 );\n"
-    "    return output;\n"
-    "}\n";
 }
 
-void primitive_mgr::Init( void )
+//=========================================================================
+
+void PrimitiveMgr::Init( void )
 {
-    m_pGDepthProvider = NULL;
-    m_pBitmap         = NULL;
-    m_DrawFlags       = 0;
-    m_MaterialMode    = PRIMITIVE_MATERIAL_DIFFUSE;
-    m_pMatrixBuffer   = NULL;
-    m_pFlagsBuffer    = NULL;
-    m_pInputLayout    = NULL;
-    m_pVertexShader   = NULL;
-    m_pPixelShader    = NULL;
-
-    m_PrimitiveBuffer.Init( sizeof(primitive_vertex) );
-
-    if( !g_pd3dDevice )
+    if ( m_isInitialized )
+    {
         return;
-
-    m_pMatrixBuffer = shader_CreateConstantBuffer( sizeof(cb_primitive_matrices), CB_TYPE_DYNAMIC );
-    m_pFlagsBuffer  = shader_CreateConstantBuffer( sizeof(cb_primitive_flags), CB_TYPE_DYNAMIC );
-
-    m_pVertexShader = shader_CompileVertexWithLayout( s_PrimitiveVertexShader,
-                                                      &m_pInputLayout,
-                                                      s_InputLayout3D,
-                                                      ARRAYSIZE(s_InputLayout3D),
-                                                      "main",
-                                                      "vs_5_0",
-                                                      "PrimitiveMgr" );
-
-    m_pPixelShader = shader_CompilePixel( s_PrimitivePixelShader,
-                                          "main",
-                                          "ps_5_0",
-                                          "PrimitiveMgr" );
-
-    ASSERT( m_pMatrixBuffer );
-    ASSERT( m_pFlagsBuffer );
-    ASSERT( m_pInputLayout );
-    ASSERT( m_pVertexShader );
-    ASSERT( m_pPixelShader );
-}
-
-//=========================================================================
-
-void primitive_mgr::Kill( void )
-{
-    if( m_pPixelShader )
-    {
-        m_pPixelShader->Release();
-        m_pPixelShader = NULL;
     }
 
-    if( m_pVertexShader )
+    if ( !m_vertexMgr.Init( sizeof( Vertex ) ) || !LoadShaders() || !CreateSamplers() || !CreateWhiteTexture() ||
+         !PrewarmPipelines() )
     {
-        m_pVertexShader->Release();
-        m_pVertexShader = NULL;
+        Kill();
+        return;
     }
 
-    if( m_pInputLayout )
+    m_isInitialized = TRUE;
+}
+
+//=========================================================================
+
+void PrimitiveMgr::Kill( void )
+{
+    ClearBatch();
+    m_batchVertices.Clear();
+    m_batchIndices.Clear();
+    ClearQueuedDraws();
+    m_queuedVertices.Clear();
+    m_queuedIndices.Clear();
+    m_queuedDraws.Clear();
+
+    DestroyPipelines();
+    DestroySamplers();
+    vram_DestroyTexture( m_whiteTexture );
+
+    shader_Destroy( m_pixelShader );
+    shader_Destroy( m_vertexShader );
+
+    m_vertexMgr.Kill();
+
+    m_drawUniformVertexSlot = 0xffffffffu;
+    m_drawUniformPixelSlot = 0xffffffffu;
+    m_textureSlot = 0xffffffffu;
+    m_sceneTextureSlot = 0xffffffffu;
+    m_pDistortionScene = NULL;
+    m_isInitialized = FALSE;
+}
+
+//=========================================================================
+
+void PrimitiveMgr::BeginRender( void )
+{
+    ASSERTS( !m_isBatchOpen, "Primitive batch survived the previous frame" );
+    ASSERTS( !HasQueuedDraws(), "Primitive draw queue survived the previous frame" );
+
+    ClearBatch();
+    ClearQueuedDraws();
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::LoadShaders( void )
+{
+    shader_LoadFromEcs( m_vertexShader, "primitive_basic_vs.vs.ecs" );
+    shader_LoadFromEcs( m_pixelShader, "primitive_basic_ps.ps.ecs" );
+
+    if ( !m_vertexShader || !m_pixelShader )
     {
-        m_pInputLayout->Release();
-        m_pInputLayout = NULL;
-    }
-
-    if( m_pFlagsBuffer )
-    {
-        m_pFlagsBuffer->Release();
-        m_pFlagsBuffer = NULL;
-    }
-
-    if( m_pMatrixBuffer )
-    {
-        m_pMatrixBuffer->Release();
-        m_pMatrixBuffer = NULL;
-    }
-
-    m_PrimitiveBuffer.Kill();
-
-    m_pGDepthProvider = NULL;
-    m_pBitmap         = NULL;
-    m_DrawFlags       = 0;
-    m_MaterialMode    = PRIMITIVE_MATERIAL_DIFFUSE;
-}
-
-//=========================================================================
-
-void primitive_mgr::BeginRender( void )
-{
-    m_PrimitiveBuffer.BeginRender();
-}
-
-//=========================================================================
-
-void primitive_mgr::EndRender( void )
-{
-}
-
-//=========================================================================
-
-void primitive_mgr::SetGDepthProvider( primitive_gdepth_provider pfnProvider )
-{
-    m_pGDepthProvider = pfnProvider;
-}
-
-//=========================================================================
-
-void primitive_mgr::SetDiffuseMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
-{
-    vram_Activate( Bitmap );
-
-    m_DrawFlags = DRAW_TEXTURED | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE;
-    if( !ZTestEnabled )
-        m_DrawFlags |= DRAW_NO_ZBUFFER;
-
-    switch( BlendMode )
-    {
-        case render::BLEND_MODE_ADDITIVE:
-            m_DrawFlags |= DRAW_BLEND_ADD;
-            break;
-        case render::BLEND_MODE_SUBTRACTIVE:
-            m_DrawFlags |= DRAW_BLEND_SUB;
-            break;
-        case render::BLEND_MODE_INTENSITY:
-            m_DrawFlags |= DRAW_BLEND_INTENSITY;
-            break;
-        case render::BLEND_MODE_NORMAL:
-            m_DrawFlags |= DRAW_USE_ALPHA;
-        default:
-            break;
-    }
-
-    m_pBitmap = &Bitmap;
-    m_MaterialMode = PRIMITIVE_MATERIAL_DIFFUSE;
-}
-
-//=========================================================================
-
-void primitive_mgr::SetGlowMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
-{
-    SetDiffuseMaterial( Bitmap, BlendMode, ZTestEnabled );
-    m_MaterialMode = PRIMITIVE_MATERIAL_GLOW;
-}
-
-//=========================================================================
-
-void primitive_mgr::SetEnvMapMaterial( const xbitmap& Bitmap, s32 BlendMode, xbool ZTestEnabled )
-{
-    SetDiffuseMaterial( Bitmap, BlendMode, ZTestEnabled );
-    m_MaterialMode = PRIMITIVE_MATERIAL_ENV;
-}
-
-//=========================================================================
-
-void primitive_mgr::SetDistortionMaterial( s32 BlendMode, xbool ZTestEnabled )
-{
-    ASSERTS( FALSE, "Not implemented yet!" );
-    (void)BlendMode;
-    (void)ZTestEnabled;
-}
-
-//=========================================================================
-
-u32 primitive_mgr::DrawColorToU32( const xcolor& Color )
-{
-    return ((u32)Color.A << 24) | ((u32)Color.R << 16) | ((u32)Color.G << 8) | ((u32)Color.B);
-}
-
-//=========================================================================
-
-u32 primitive_mgr::SourceColorToU32( u32 Color )
-{
-    return (Color & 0xFF000000) |
-           ((Color & 0x000000FF) << 16) |
-           (Color & 0x0000FF00) |
-           ((Color & 0x00FF0000) >> 16);
-}
-
-//=========================================================================
-
-void primitive_mgr::ApplyBlendState( u32 Flags )
-{
-    if( Flags & DRAW_BLEND_ADD )
-        state_SetBlend( STATE_BLEND_ADD );
-    else if( Flags & DRAW_BLEND_SUB )
-        state_SetBlend( STATE_BLEND_SUB );
-    else if( Flags & DRAW_BLEND_INTENSITY )
-        state_SetBlend( STATE_BLEND_INTENSITY );
-    else if( Flags & DRAW_USE_ALPHA )
-        state_SetBlend( STATE_BLEND_ALPHA );
-    else
-        state_SetBlend( STATE_BLEND_NONE );
-}
-
-//=========================================================================
-
-void primitive_mgr::ApplyDepthState( u32 Flags )
-{
-    if( Flags & DRAW_NO_ZBUFFER )
-    {
-        if( Flags & DRAW_NO_ZWRITE )
-            state_SetDepth( STATE_DEPTH_DISABLED_NO_WRITE );
-        else
-            state_SetDepth( STATE_DEPTH_DISABLED );
-    }
-    else
-    {
-        if( Flags & DRAW_NO_ZWRITE )
-            state_SetDepth( STATE_DEPTH_NO_WRITE );
-        else
-            state_SetDepth( STATE_DEPTH_NORMAL );
-    }
-}
-
-//=========================================================================
-
-void primitive_mgr::ApplyRasterizerState( u32 Flags )
-{
-    if( Flags & DRAW_WIRE_FRAME )
-    {
-        if( Flags & DRAW_CULL_NONE )
-            state_SetRasterizer( STATE_RASTER_WIRE_NO_CULL );
-        else
-            state_SetRasterizer( STATE_RASTER_WIRE );
-    }
-    else
-    {
-        if( Flags & DRAW_CULL_NONE )
-            state_SetRasterizer( STATE_RASTER_SOLID_NO_CULL );
-        else
-            state_SetRasterizer( STATE_RASTER_SOLID );
-    }
-}
-
-//=========================================================================
-
-void primitive_mgr::ApplySamplerState( u32 Flags )
-{
-    const xbool bClamp = (Flags & (DRAW_U_CLAMP | DRAW_V_CLAMP)) != 0;
-
-    if( bClamp )
-        state_SetSampler( STATE_SAMPLER_ANISOTROPIC_CLAMP, 0, STATE_SAMPLER_STAGE_PS );
-    else
-        state_SetSampler( STATE_SAMPLER_ANISOTROPIC_WRAP, 0, STATE_SAMPLER_STAGE_PS );
-}
-
-//=========================================================================
-
-xbool primitive_mgr::BeginPrimitiveDraw( const matrix4& L2W )
-{
-    if( !g_pd3dDevice || !g_pd3dContext )
+        x_DebugMsg( "PrimitiveMgr: failed to load primitive shaders\n" );
         return FALSE;
+    }
 
-    const view* pView = eng_GetView();
-    if( !pView )
+    if ( !shader_FindUniformSlot( m_vertexShader, "cbPrimitiveDraw", m_drawUniformVertexSlot ) )
+    {
+        x_DebugMsg( "PrimitiveMgr: vertex draw constants binding not found\n" );
         return FALSE;
+    }
 
-    eng_SetViewport( *pView );
+    if ( !shader_FindUniformSlot( m_pixelShader, "cbPrimitiveDraw", m_drawUniformPixelSlot ) )
+    {
+        x_DebugMsg( "PrimitiveMgr: pixel draw constants binding not found\n" );
+        return FALSE;
+    }
 
-    cb_primitive_matrices Matrices;
-    f32 NearZ = 0.0f;
-    f32 FarZ  = 0.0f;
-    pView->GetZLimits( NearZ, FarZ );
-    Matrices.World      = L2W;
-    Matrices.View       = pView->GetW2V();
-    Matrices.Projection = pView->GetV2C();
-    Matrices.NearZ      = NearZ;
-    Matrices.FarZ       = FarZ;
-    Matrices.pad0       = 0.0f;
-    Matrices.pad1       = 0.0f;
-    shader_UpdateConstantBuffer( m_pMatrixBuffer, &Matrices, sizeof(Matrices) );
-    g_pd3dContext->VSSetConstantBuffers( 0, 1, &m_pMatrixBuffer );
-    g_pd3dContext->PSSetConstantBuffers( 0, 1, &m_pMatrixBuffer );
+    if ( !shader_FindSampledTextureSlot( m_pixelShader, "txPrimitive", m_textureSlot ) )
+    {
+        x_DebugMsg( "PrimitiveMgr: primitive texture binding not found\n" );
+        return FALSE;
+    }
 
-    cb_primitive_flags RenderFlags;
-    RenderFlags.UseTexture             = m_pBitmap ? 1 : 0;
-    RenderFlags.UseAlpha               = (m_DrawFlags & DRAW_USE_ALPHA) ? 1 : 0;
-    RenderFlags.MaterialMode           = m_MaterialMode;
-    RenderFlags.pad0                   = 0;
-    shader_UpdateConstantBuffer( m_pFlagsBuffer, &RenderFlags, sizeof(RenderFlags) );
-    g_pd3dContext->PSSetConstantBuffers( 1, 1, &m_pFlagsBuffer );
-
-    shader_SetInputLayout( m_pInputLayout );
-    shader_SetVertexShader( m_pVertexShader );
-    shader_SetGeometryShader( NULL );
-    shader_SetPixelShader( m_pPixelShader );
-
-    ApplyBlendState( m_DrawFlags );
-    ApplyDepthState( m_DrawFlags );
-    ApplyRasterizerState( m_DrawFlags );
-    ApplySamplerState( m_DrawFlags );
-
-    if( m_pBitmap )
-        vram_Activate( *m_pBitmap );
-    else
-        vram_Activate();
+    if ( !shader_FindSampledTextureSlot( m_pixelShader, "txPrimitiveScene", m_sceneTextureSlot ) )
+    {
+        x_DebugMsg( "PrimitiveMgr: primitive scene texture binding not found\n" );
+        return FALSE;
+    }
 
     return TRUE;
 }
 
 //=========================================================================
 
-void primitive_mgr::RenderRawStrips( s32 nVerts, const matrix4& L2W, const vector4* pPos, const s16* pUV, const u32* pColor )
+xbool PrimitiveMgr::CreateSamplers( void )
 {
-    static const f32 ItoFScale = 1.0f / 4096.0f;
-
-    ASSERTS( m_pBitmap, "You must set a material first!" );
-    if( nVerts < 3 )
-        return;
-
-    s32 nTris = 0;
-    for( s32 iVert = 2; iVert < nVerts; ++iVert )
+    for ( s32 i = 0; i < RSTATE_SAMPLER_PRESET_COUNT; i++ )
     {
-        const f32 W = pPos[iVert].GetW();
-        if( (*((const u32*)&W)) & decal_mgr::decal_vert::FLAG_SKIP_TRIANGLE )
-            continue;
-
-        nTris++;
-    }
-
-    if( nTris == 0 )
-        return;
-
-    primitive_vertex* pVertex = (primitive_vertex*)smem_BufferAlloc( sizeof(primitive_vertex) * nTris * 3 );
-    u16*              pIndex  = (u16*)smem_BufferAlloc( sizeof(u16) * nTris * 3 );
-
-    const xbool bIntensity = (m_DrawFlags & DRAW_BLEND_INTENSITY) != 0;
-    const u32   WhiteColor = DrawColorToU32( XCOLOR_WHITE );
-    s32         iOut       = 0;
-
-    for( s32 iVert = 2; iVert < nVerts; ++iVert )
-    {
-        const f32 W = pPos[iVert].GetW();
-        if( (*((const u32*)&W)) & decal_mgr::decal_vert::FLAG_SKIP_TRIANGLE )
-            continue;
-
-        const vector3 Pos[3] =
+        if ( !rstate_CreateSampler( m_samplers[i], static_cast<rstate_sampler_preset>( i ), "PrimitiveSampler" ) )
         {
-            vector3( pPos[iVert-2].GetX(), pPos[iVert-2].GetY(), pPos[iVert-2].GetZ() ),
-            vector3( pPos[iVert-1].GetX(), pPos[iVert-1].GetY(), pPos[iVert-1].GetZ() ),
-            vector3( pPos[iVert-0].GetX(), pPos[iVert-0].GetY(), pPos[iVert-0].GetZ() )
-        };
-
-        const vector2 UV[3] =
-        {
-            vector2( pUV[(iVert-2)*2+0] * ItoFScale, pUV[(iVert-2)*2+1] * ItoFScale ),
-            vector2( pUV[(iVert-1)*2+0] * ItoFScale, pUV[(iVert-1)*2+1] * ItoFScale ),
-            vector2( pUV[(iVert-0)*2+0] * ItoFScale, pUV[(iVert-0)*2+1] * ItoFScale )
-        };
-
-        const u32 PackedColor[3] =
-        {
-            bIntensity ? WhiteColor : SourceColorToU32( pColor[iVert-2] ),
-            bIntensity ? WhiteColor : SourceColorToU32( pColor[iVert-1] ),
-            bIntensity ? WhiteColor : SourceColorToU32( pColor[iVert-0] )
-        };
-
-        for( s32 i = 0; i < 3; ++i )
-        {
-            pVertex[iOut].Position = Pos[i];
-            pVertex[iOut].Color    = PackedColor[i];
-            pVertex[iOut].UV       = UV[i];
-            pIndex [iOut]          = (u16)iOut;
-            iOut++;
+            DestroySamplers();
+            return FALSE;
         }
     }
 
-    ASSERT( iOut == (nTris * 3) );
-
-    if( !BeginPrimitiveDraw( L2W ) )
-        return;
-
-    runtime_vertex_mgr::primitive Primitive;
-    Primitive.pVertex   = pVertex;
-    Primitive.pIndex    = pIndex;
-    Primitive.nVertices = iOut;
-    Primitive.nIndices  = iOut;
-    Primitive.Topology  = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-
-    m_PrimitiveBuffer.DrawPrimitive( Primitive );
+    return TRUE;
 }
 
 //=========================================================================
 
-void primitive_mgr::Render3dSprites( s32 nSprites, f32 UniScale, const matrix4* pL2W, const vector4* pPositions, const vector2* pRotScales, const u32* pColors )
+void PrimitiveMgr::DestroySamplers( void )
 {
-    ASSERTS( m_pBitmap, "You must set a material first!" );
-    if( nSprites == 0 )
-        return;
-
-    const matrix4& V2W = eng_GetView()->GetV2W();
-    const matrix4& W2V = eng_GetView()->GetW2V();
-    matrix4 S2V;
-    if( pL2W )
-        S2V = W2V * (*pL2W);
-    else
-        S2V = W2V;
-
-    s32 nActiveSprites = 0;
-    for( s32 i = 0; i < nSprites; i++ )
+    for ( s32 i = 0; i < RSTATE_SAMPLER_PRESET_COUNT; i++ )
     {
-        if( (pPositions[i].GetIW() & 0x8000) != 0x8000 )
-            nActiveSprites++;
+        rstate_DestroySampler( m_samplers[i] );
+    }
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::CreateWhiteTexture( void )
+{
+    vram_texture_desc desc;
+    desc.Width = 1;
+    desc.Height = 1;
+    desc.Format = VRAM_TEXTURE_FORMAT_RGBA8;
+    desc.UsageFlags = VRAM_TEXTURE_USAGE_SAMPLED;
+    desc.pDebugName = "PrimitiveWhiteTexture";
+
+    if ( !vram_CreateTexture( m_whiteTexture, desc ) )
+    {
+        return FALSE;
     }
 
-    if( nActiveSprites == 0 )
-        return;
+    u32 const whitePixel = 0xffffffffu;
+    vram_texture_upload_desc upload;
+    upload.Region.Width = 1;
+    upload.Region.Height = 1;
+    upload.Region.Depth = 1;
+    upload.pData = &whitePixel;
+    upload.Size = sizeof( whitePixel );
+    upload.RowPitch = sizeof( whitePixel );
+    upload.SlicePitch = sizeof( whitePixel );
+    return vram_UploadTexture( m_whiteTexture, upload );
+}
 
-    primitive_vertex* pVertex = (primitive_vertex*)smem_BufferAlloc( sizeof(primitive_vertex) * nActiveSprites * 4 );
-    u16*              pIndex  = (u16*)smem_BufferAlloc( sizeof(u16) * nActiveSprites * 6 );
+//=========================================================================
 
-    s32 iVertex = 0;
-    s32 iIndex  = 0;
-    for( s32 i = 0; i < nSprites; i++ )
+void PrimitiveMgr::DestroyPipelines( void )
+{
+    m_pipelines.Reset();
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::PrewarmPipelines( void )
+{
+    static rstate_blend_preset const blendPresets[] = { RSTATE_BLEND_PRESET_ADD, RSTATE_BLEND_PRESET_SUB,
+                                                        RSTATE_BLEND_PRESET_ALPHA, RSTATE_BLEND_PRESET_INTENSITY };
+
+    PipelineDesc desc;
+    desc.Pass.ColorFormat = RTARGET_FORMAT_RGBA8;
+    desc.Pass.SampleCount = 1;
+    desc.Topology         = SHADER_TOPOLOGY_TRIANGLE_LIST;
+    desc.Raster           = RSTATE_RASTER_PRESET_SOLID_NO_CULL;
+    desc.Sampler          = RSTATE_SAMPLER_PRESET_LINEAR_CLAMP;
+    desc.pDebugName       = "ForwardPrimitivePipeline";
+
+    u32 pipelineCount = 0;
+    for ( u32 blendIndex = 0; blendIndex < ARRAYSIZE( blendPresets ); ++blendIndex )
     {
-        if( (pPositions[i].GetIW() & 0x8000) == 0x8000 )
-            continue;
+        desc.Blend = blendPresets[blendIndex];
 
-        vector3 Center( pPositions[i].GetX(), pPositions[i].GetY(), pPositions[i].GetZ() );
-        Center = S2V * Center;
-
-        vector3 Corners[4];
-        f32 Sine, Cosine;
-        x_sincos( -pRotScales[i].X, Sine, Cosine );
-
-        vector3 v0( Cosine - Sine, Sine + Cosine, 0.0f );
-        vector3 v1( Cosine + Sine, Sine - Cosine, 0.0f );
-        Corners[0] = v0;
-        Corners[1] = v1;
-        Corners[2] = -v0;
-        Corners[3] = -v1;
-
-        for( s32 j = 0; j < 4; j++ )
+        desc.Pass.ColorFormat = RTARGET_FORMAT_RGBA8;
+        desc.Pass.DepthFormat = RTARGET_FORMAT_DEPTH24_STENCIL8;
+        desc.Depth = RSTATE_DEPTH_PRESET_NO_WRITE;
+        if ( !GetOrCreatePipeline( desc, TRUE ) )
         {
-            Corners[j].Scale( pRotScales[i].Y * UniScale );
-            Corners[j] += Center;
+            return FALSE;
+        }
+        pipelineCount++;
+
+        desc.Depth = RSTATE_DEPTH_PRESET_DISABLED_NO_WRITE;
+        if ( !GetOrCreatePipeline( desc, TRUE ) )
+        {
+            return FALSE;
+        }
+        pipelineCount++;
+
+        // Target overrides without a depth attachment are valid for primitives.
+        desc.Pass.DepthFormat = RTARGET_FORMAT_COUNT;
+        if ( !GetOrCreatePipeline( desc, TRUE ) )
+        {
+            return FALSE;
+        }
+        pipelineCount++;
+
+        // Glow primitives are replayed by ForwardRenderMgr into the HDR glow
+        // target instead of the RGBA8 scene target.
+        desc.Pass.ColorFormat = RTARGET_FORMAT_RGBA16F;
+        desc.Pass.DepthFormat = RTARGET_FORMAT_DEPTH24_STENCIL8;
+        desc.Depth = RSTATE_DEPTH_PRESET_NO_WRITE;
+        if ( !GetOrCreatePipeline( desc, TRUE ) )
+        {
+            return FALSE;
+        }
+        pipelineCount++;
+
+        desc.Depth = RSTATE_DEPTH_PRESET_DISABLED_NO_WRITE;
+        if ( !GetOrCreatePipeline( desc, TRUE ) )
+        {
+            return FALSE;
+        }
+        pipelineCount++;
+    }
+
+    x_DebugMsg( "PrimitiveMgr: prewarmed %u graphics pipeline variants\n", pipelineCount );
+    return TRUE;
+}
+
+//=========================================================================
+
+u64 PrimitiveMgr::MakePipelineKey( PipelineDesc const& desc )
+{
+    return static_cast<u64>( static_cast<u8>( desc.Pass.ColorFormat ) ) |
+           ( static_cast<u64>( static_cast<u8>( desc.Pass.DepthFormat ) ) << 8 ) |
+           ( static_cast<u64>( static_cast<u8>( desc.Pass.SampleCount ) ) << 16 ) |
+           ( static_cast<u64>( static_cast<u8>( desc.Topology ) ) << 24 ) |
+           ( static_cast<u64>( static_cast<u8>( desc.Blend ) ) << 32 ) |
+           ( static_cast<u64>( static_cast<u8>( desc.Depth ) ) << 40 ) |
+           ( static_cast<u64>( static_cast<u8>( desc.Raster ) ) << 48 );
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::ValidatePipelineDesc( PipelineDesc const& desc )
+{
+    if ( !ValidatePipelineState( desc ) )
+    {
+        return FALSE;
+    }
+
+    if ( ( static_cast<u32>( desc.Pass.ColorFormat ) >= static_cast<u32>( RTARGET_FORMAT_COUNT ) ) ||
+         ( static_cast<u32>( desc.Pass.DepthFormat ) > static_cast<u32>( RTARGET_FORMAT_COUNT ) ) ||
+         ( ( desc.Pass.SampleCount != 1 ) && ( desc.Pass.SampleCount != 2 ) && ( desc.Pass.SampleCount != 4 ) &&
+           ( desc.Pass.SampleCount != 8 ) ) )
+    {
+        return FALSE;
+    }
+
+    if ( ( desc.Pass.ColorFormat == RTARGET_FORMAT_DEPTH24_STENCIL8 ) ||
+         ( desc.Pass.ColorFormat == RTARGET_FORMAT_DEPTH32F ) )
+    {
+        return FALSE;
+    }
+
+    if ( ( desc.Pass.DepthFormat != RTARGET_FORMAT_COUNT ) &&
+         ( desc.Pass.DepthFormat != RTARGET_FORMAT_DEPTH24_STENCIL8 ) &&
+         ( desc.Pass.DepthFormat != RTARGET_FORMAT_DEPTH32F ) )
+    {
+        return FALSE;
+    }
+
+    if ( ( ( desc.Depth == RSTATE_DEPTH_PRESET_NORMAL ) || ( desc.Depth == RSTATE_DEPTH_PRESET_NO_WRITE ) ||
+           ( desc.Depth == RSTATE_DEPTH_PRESET_WRITE_ALWAYS ) ) &&
+         ( desc.Pass.DepthFormat == RTARGET_FORMAT_COUNT ) )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::ValidatePipelineState( PipelineDesc const& desc )
+{
+    if ( ( desc.Topology <= SHADER_TOPOLOGY_UNDEFINED ) || ( desc.Topology > SHADER_TOPOLOGY_TRIANGLE_STRIP ) ||
+         ( desc.Blend < 0 ) || ( desc.Blend >= RSTATE_BLEND_PRESET_COUNT ) || ( desc.Depth < 0 ) ||
+         ( desc.Depth >= RSTATE_DEPTH_PRESET_COUNT ) || ( desc.Raster < 0 ) ||
+         ( desc.Raster >= RSTATE_RASTER_PRESET_COUNT ) || ( desc.Sampler < 0 ) ||
+         ( desc.Sampler >= RSTATE_SAMPLER_PRESET_COUNT ) )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::BuildPipelineDesc( render_pipeline_desc& pipelineDesc, PipelineDesc const& desc ) const
+{
+    if ( !ValidatePipelineDesc( desc ) )
+    {
+        return FALSE;
+    }
+
+    shader_vertex_buffer_desc vertexBuffer;
+    vertexBuffer.Slot = 0;
+    vertexBuffer.Stride = sizeof( Vertex );
+
+    static shader_vertex_element const layout[] = {
+        shader_vertex_element( 0, 0, SHADER_VERTEX_FORMAT_FLOAT3, offsetof( Vertex, Position ) ),
+        shader_vertex_element( 1, 0, SHADER_VERTEX_FORMAT_UBYTE4N_BGRA, offsetof( Vertex, Color ) ),
+        shader_vertex_element( 2, 0, SHADER_VERTEX_FORMAT_FLOAT2, offsetof( Vertex, UV ) ) };
+
+    pipelineDesc                          = render_pipeline_desc();
+    pipelineDesc.Shader.pVertexShader     = &m_vertexShader;
+    pipelineDesc.Shader.pPixelShader      = &m_pixelShader;
+    pipelineDesc.Shader.pVertexBuffers    = &vertexBuffer;
+    pipelineDesc.Shader.VertexBufferCount = 1;
+    pipelineDesc.Shader.pInputElements    = layout;
+    pipelineDesc.Shader.InputElementCount = ARRAYSIZE( layout );
+    pipelineDesc.Shader.Topology          = desc.Topology;
+    pipelineDesc.Depth                    = rstate_GetDepthDesc( desc.Depth );
+    pipelineDesc.Raster                   = rstate_GetRasterDesc( desc.Raster );
+    pipelineDesc.ColorCount               = 1;
+    pipelineDesc.DepthFormat              = desc.Pass.DepthFormat;
+    pipelineDesc.SampleCount              = desc.Pass.SampleCount;
+    pipelineDesc.pDebugName               = desc.pDebugName ? desc.pDebugName : "PrimitivePipeline";
+
+    pipelineDesc.ColorTargets[0].Format = desc.Pass.ColorFormat;
+    pipelineDesc.ColorTargets[0].Blend  = rstate_GetBlendDesc( desc.Blend );
+
+    return TRUE;
+}
+
+//=========================================================================
+
+render_pipeline* PrimitiveMgr::GetOrCreatePipeline( PipelineDesc const& desc, xbool isPrewarm )
+{
+    render_pipeline_desc pipelineDesc;
+    if ( !BuildPipelineDesc( pipelineDesc, desc ) )
+    {
+        return NULL;
+    }
+
+    u64 const key = MakePipelineKey( desc );
+    return isPrewarm ? m_pipelines.Prewarm( key, pipelineDesc ) : m_pipelines.GetOrCreate( key, pipelineDesc );
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::BindPipeline( PipelineDesc const& desc )
+{
+    render_pipeline* pPipeline = GetOrCreatePipeline( desc );
+    return pPipeline && render_BindPipeline( *pPipeline );
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::BindResources( BatchDesc const& desc, s32 drawIndex )
+{
+    if ( !shader_PushUniformData( SHADER_STAGE_VERTEX, m_drawUniformVertexSlot, &desc.Constants,
+                                  sizeof( desc.Constants ) ) )
+    {
+        x_DebugMsg( "PrimitiveMgr: failed to push vertex constants packet=%d output=%d\n",
+                    drawIndex, static_cast<s32>( desc.Output ) );
+        return FALSE;
+    }
+
+    if ( !shader_PushUniformData( SHADER_STAGE_PIXEL, m_drawUniformPixelSlot, &desc.Constants,
+                                  sizeof( desc.Constants ) ) )
+    {
+        x_DebugMsg( "PrimitiveMgr: failed to push pixel constants packet=%d output=%d\n",
+                    drawIndex, static_cast<s32>( desc.Output ) );
+        return FALSE;
+    }
+
+    shader_resource const* pTexture = desc.pTexture;
+    if ( !pTexture || !*pTexture )
+    {
+        pTexture = vram_GetShaderResource( m_whiteTexture );
+        if ( !pTexture || !*pTexture )
+        {
+            x_DebugMsg( "PrimitiveMgr: missing texture and white fallback packet=%d output=%d\n",
+                        drawIndex, static_cast<s32>( desc.Output ) );
+            return FALSE;
+        }
+    }
+
+    rstate_sampler_preset sampler = desc.Pipeline.Sampler;
+    if ( ( sampler < 0 ) || ( sampler >= RSTATE_SAMPLER_PRESET_COUNT ) )
+    {
+        x_DebugMsg( "PrimitiveMgr: invalid sampler packet=%d sampler=%d output=%d\n",
+                    drawIndex, static_cast<s32>( sampler ), static_cast<s32>( desc.Output ) );
+        return FALSE;
+    }
+
+    if ( !m_samplers[sampler] )
+    {
+        x_DebugMsg( "PrimitiveMgr: unavailable sampler packet=%d sampler=%d output=%d\n",
+                    drawIndex, static_cast<s32>( sampler ), static_cast<s32>( desc.Output ) );
+        return FALSE;
+    }
+
+    shader_resource const* pScene = pTexture;
+    if ( desc.Output == render::PRIMITIVE_OUTPUT_DISTORTION )
+    {
+        pScene = m_pDistortionScene;
+        if ( !pScene || !*pScene )
+        {
+            x_DebugMsg( "PrimitiveMgr: missing distortion scene packet=%d\n", drawIndex );
+            return FALSE;
+        }
+    }
+
+    if ( !shader_BindSampler(
+             shader_sampler_binding( SHADER_STAGE_PIXEL, m_textureSlot, pTexture, &m_samplers[sampler] ) ) )
+    {
+        x_DebugMsg( "PrimitiveMgr: failed to bind texture sampler packet=%d slot=%u output=%d\n",
+                    drawIndex, m_textureSlot, static_cast<s32>( desc.Output ) );
+        return FALSE;
+    }
+    if ( !shader_BindSampler( shader_sampler_binding( SHADER_STAGE_PIXEL, m_sceneTextureSlot, pScene,
+                                                      &m_samplers[RSTATE_SAMPLER_PRESET_LINEAR_CLAMP] ) ) )
+    {
+        x_DebugMsg( "PrimitiveMgr: failed to bind scene sampler packet=%d slot=%u output=%d\n",
+                    drawIndex, m_sceneTextureSlot, static_cast<s32>( desc.Output ) );
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::BeginBatch( BatchDesc const& desc )
+{
+    if ( !m_isInitialized || m_areQueuedDrawsUploaded ||
+         ( desc.Output < render::PRIMITIVE_OUTPUT_COLOR ) || ( desc.Output >= render::PRIMITIVE_OUTPUT_COUNT ) ||
+         ( desc.Layer < render::PRIMITIVE_LAYER_SURFACE ) || ( desc.Layer >= render::PRIMITIVE_LAYER_COUNT ) ||
+         ( ( desc.Output == render::PRIMITIVE_OUTPUT_DISTORTION ) !=
+           ( desc.Layer == render::PRIMITIVE_LAYER_DISTORTION ) ) ||
+         ( desc.Constants.Output != static_cast<u32>( desc.Output ) ) || !x_isvalid( desc.SortDepth ) ||
+         !ValidatePipelineState( desc.Pipeline ) )
+    {
+        return FALSE;
+    }
+
+    if ( m_isBatchOpen )
+    {
+        return FALSE;
+    }
+
+    m_batchDesc = desc;
+
+    m_batchVertices.SetCount( 0 );
+    m_batchIndices.SetCount( 0 );
+    m_isBatchOpen = TRUE;
+    return TRUE;
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::SubmitBatch( Vertex const* pVertices, s32 nVertices, u16 const* pIndices, s32 nIndices )
+{
+    if ( !m_isBatchOpen )
+    {
+        return FALSE;
+    }
+
+    if ( !pVertices || !pIndices )
+    {
+        return FALSE;
+    }
+
+    if ( ( nVertices <= 0 ) || ( nIndices <= 0 ) )
+    {
+        return FALSE;
+    }
+
+    if ( nVertices > MAX_BATCH_VERTICES )
+    {
+        return FALSE;
+    }
+
+    for ( s32 i = 0; i < nIndices; i++ )
+    {
+        if ( pIndices[i] >= nVertices )
+        {
+            return FALSE;
+        }
+    }
+
+    if ( ( m_batchVertices.GetCount() + nVertices ) > MAX_BATCH_VERTICES )
+    {
+        BatchDesc desc = m_batchDesc;
+        if ( !EndBatch() )
+        {
+            return FALSE;
         }
 
-        const u32 PackedColor = SourceColorToU32( pColors[i] );
-        const s32 iBaseVertex = iVertex;
-
-        pVertex[iVertex+0].Position = Corners[0];
-        pVertex[iVertex+0].Color    = PackedColor;
-        pVertex[iVertex+0].UV.Set( 0.0f, 0.0f );
-        pVertex[iVertex+1].Position = Corners[1];
-        pVertex[iVertex+1].Color    = PackedColor;
-        pVertex[iVertex+1].UV.Set( 0.0f, 1.0f );
-        pVertex[iVertex+2].Position = Corners[2];
-        pVertex[iVertex+2].Color    = PackedColor;
-        pVertex[iVertex+2].UV.Set( 1.0f, 1.0f );
-        pVertex[iVertex+3].Position = Corners[3];
-        pVertex[iVertex+3].Color    = PackedColor;
-        pVertex[iVertex+3].UV.Set( 1.0f, 0.0f );
-
-        pIndex[iIndex+0] = (u16)(iBaseVertex + 0);
-        pIndex[iIndex+1] = (u16)(iBaseVertex + 3);
-        pIndex[iIndex+2] = (u16)(iBaseVertex + 1);
-        pIndex[iIndex+3] = (u16)(iBaseVertex + 3);
-        pIndex[iIndex+4] = (u16)(iBaseVertex + 1);
-        pIndex[iIndex+5] = (u16)(iBaseVertex + 2);
-
-        iVertex += 4;
-        iIndex  += 6;
+        if ( !BeginBatch( desc ) )
+        {
+            return FALSE;
+        }
     }
 
-    ASSERT( iVertex == (nActiveSprites * 4) );
-    ASSERT( iIndex  == (nActiveSprites * 6) );
+    s32 const baseVertex = m_batchVertices.GetCount();
 
-    if( !BeginPrimitiveDraw( V2W ) )
-        return;
+    for ( s32 i = 0; i < nVertices; i++ )
+    {
+        m_batchVertices.Append() = pVertices[i];
+    }
 
-    runtime_vertex_mgr::primitive Primitive;
-    Primitive.pVertex   = pVertex;
-    Primitive.pIndex    = pIndex;
-    Primitive.nVertices = iVertex;
-    Primitive.nIndices  = iIndex;
-    Primitive.Topology  = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    for ( s32 i = 0; i < nIndices; i++ )
+    {
+        m_batchIndices.Append() = static_cast<u16>( baseVertex + pIndices[i] );
+    }
 
-    m_PrimitiveBuffer.DrawPrimitive( Primitive );
+    return TRUE;
 }
 
 //=========================================================================
 
-void primitive_mgr::RenderHeatHazeSprites( s32 nSprites, f32 UniScale, const matrix4* pL2W, const vector4* pPositions, const vector2* pRotScales, const u32* pColors )
+xbool PrimitiveMgr::EndBatch( void )
 {
-    (void)nSprites;
-    (void)UniScale;
-    (void)pL2W;
-    (void)pPositions;
-    (void)pRotScales;
-    (void)pColors;
+    if ( !m_isBatchOpen )
+    {
+        return TRUE;
+    }
+
+    if ( ( m_batchVertices.GetCount() == 0 ) || ( m_batchIndices.GetCount() == 0 ) )
+    {
+        ClearBatch();
+        return TRUE;
+    }
+
+    QueuedDraw& draw = m_queuedDraws.Append();
+    draw.Desc        = m_batchDesc;
+    draw.StartIndex  = m_queuedIndices.GetCount();
+    draw.BaseVertex  = m_queuedVertices.GetCount();
+    draw.IndexCount  = m_batchIndices.GetCount();
+
+    m_queuedVertices.Append( m_batchVertices );
+    m_queuedIndices.Append( m_batchIndices );
+
+    m_areQueuedDrawsUploaded = FALSE;
+    ClearBatch();
+    return TRUE;
 }
 
 //=========================================================================
 
-void primitive_mgr::RenderVelocitySprites( s32 nSprites, f32 UniScale, const matrix4* pL2W, const matrix4* pVelMatrix, const vector4* pPositions, const vector4* pVelocities, const u32* pColors )
+xbool PrimitiveMgr::UploadQueuedDraws( void )
 {
-    ASSERTS( m_pBitmap, "You must set a material first!" );
-    if( nSprites == 0 )
-        return;
-
-    matrix4 L2W;
-    if( pL2W )
-        L2W = *pL2W;
-    else
-        L2W.Identity();
-
-    matrix4 L2WNoTranslate = L2W;
-    L2WNoTranslate.ClearTranslation();
-    matrix4 VL2W = L2WNoTranslate * (*pVelMatrix);
-
-    vector3 ViewDir = eng_GetView()->GetViewZ();
-
-    s32 nActiveSprites = 0;
-    for( s32 i = 0; i < nSprites; i++ )
+    if ( m_areQueuedDrawsUploaded )
     {
-        if( (pPositions[i].GetIW() & 0x8000) != 0x8000 )
-            nActiveSprites++;
+        return FALSE;
     }
 
-    if( nActiveSprites == 0 )
-        return;
-
-    primitive_vertex* pVertex = (primitive_vertex*)smem_BufferAlloc( sizeof(primitive_vertex) * nActiveSprites * 4 );
-    u16*              pIndex  = (u16*)smem_BufferAlloc( sizeof(u16) * nActiveSprites * 6 );
-
-    s32 iVertex = 0;
-    s32 iIndex  = 0;
-    for( s32 i = 0; i < nSprites; i++ )
+    if ( m_isBatchOpen )
     {
-        if( (pPositions[i].GetIW() & 0x8000) == 0x8000 )
-            continue;
-
-        vector3 P = L2W * vector3( pPositions[i].GetX(), pPositions[i].GetY(), pPositions[i].GetZ() );
-
-        vector3 Right( pVelocities[i].GetX(), pVelocities[i].GetY(), pVelocities[i].GetZ() );
-        Right = VL2W * Right;
-        Right.Normalize();
-        vector3 Up   = ViewDir.Cross( Right );
-        Right *= pVelocities[i].GetW() * UniScale;
-        Up    *= pVelocities[i].GetW() * UniScale;
-        vector3 Fore = P + Right;
-        vector3 Aft  = P - Right;
-        vector3 V0   = Fore - Up;
-        vector3 V1   = Aft  - Up;
-        vector3 V2   = Aft  + Up;
-        vector3 V3   = Fore + Up;
-
-        const u32 PackedColor = SourceColorToU32( pColors[i] );
-        const s32 iBaseVertex = iVertex;
-
-        pVertex[iVertex+0].Position = V0;
-        pVertex[iVertex+0].Color    = PackedColor;
-        pVertex[iVertex+0].UV.Set( 1.0f, 0.0f );
-        pVertex[iVertex+1].Position = V1;
-        pVertex[iVertex+1].Color    = PackedColor;
-        pVertex[iVertex+1].UV.Set( 0.0f, 0.0f );
-        pVertex[iVertex+2].Position = V2;
-        pVertex[iVertex+2].Color    = PackedColor;
-        pVertex[iVertex+2].UV.Set( 0.0f, 1.0f );
-        pVertex[iVertex+3].Position = V3;
-        pVertex[iVertex+3].Color    = PackedColor;
-        pVertex[iVertex+3].UV.Set( 1.0f, 1.0f );
-
-        pIndex[iIndex+0] = (u16)(iBaseVertex + 0);
-        pIndex[iIndex+1] = (u16)(iBaseVertex + 1);
-        pIndex[iIndex+2] = (u16)(iBaseVertex + 3);
-        pIndex[iIndex+3] = (u16)(iBaseVertex + 1);
-        pIndex[iIndex+4] = (u16)(iBaseVertex + 3);
-        pIndex[iIndex+5] = (u16)(iBaseVertex + 2);
-
-        iVertex += 4;
-        iIndex  += 6;
+        return FALSE;
     }
 
-    ASSERT( iVertex == (nActiveSprites * 4) );
-    ASSERT( iIndex  == (nActiveSprites * 6) );
+    if ( !HasQueuedDraws() )
+    {
+        return TRUE;
+    }
 
-    matrix4 Identity;
-    Identity.Identity();
+    RuntimeVertexMgr::primitive primitive;
+    primitive.pVertex   = m_queuedVertices.GetPtr();
+    primitive.pIndex    = m_queuedIndices.GetPtr();
+    primitive.nVertices = m_queuedVertices.GetCount();
+    primitive.nIndices  = m_queuedIndices.GetCount();
 
-    if( !BeginPrimitiveDraw( Identity ) )
-        return;
+    m_areQueuedDrawsUploaded = m_vertexMgr.UploadPrimitive( primitive );
+    return m_areQueuedDrawsUploaded;
+}
 
-    runtime_vertex_mgr::primitive Primitive;
-    Primitive.pVertex   = pVertex;
-    Primitive.pIndex    = pIndex;
-    Primitive.nVertices = iVertex;
-    Primitive.nIndices  = iIndex;
-    Primitive.Topology  = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+//=========================================================================
 
-    m_PrimitiveBuffer.DrawPrimitive( Primitive );
+render::primitive_render_layer PrimitiveMgr::GetQueuedDrawLayer( s32 drawIndex ) const
+{
+    ASSERT( ( drawIndex >= 0 ) && ( drawIndex < m_queuedDraws.GetCount() ) );
+    return m_queuedDraws[drawIndex].Desc.Layer;
+}
+
+//=========================================================================
+
+render::primitive_output_mode PrimitiveMgr::GetQueuedDrawOutput( s32 drawIndex ) const
+{
+    ASSERT( ( drawIndex >= 0 ) && ( drawIndex < m_queuedDraws.GetCount() ) );
+    return m_queuedDraws[drawIndex].Desc.Output;
+}
+
+//=========================================================================
+
+f32 PrimitiveMgr::GetQueuedDrawSortDepth( s32 drawIndex ) const
+{
+    ASSERT( ( drawIndex >= 0 ) && ( drawIndex < m_queuedDraws.GetCount() ) );
+    return m_queuedDraws[drawIndex].Desc.SortDepth;
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::DrawQueuedDraw( s32 drawIndex, PassDesc const& pass )
+{
+    if ( !m_areQueuedDrawsUploaded || ( drawIndex < 0 ) || ( drawIndex >= m_queuedDraws.GetCount() ) )
+    {
+        x_DebugMsg( "PrimitiveMgr: invalid queued draw packet=%d count=%d uploaded=%d pass=%s\n",
+                    drawIndex, m_queuedDraws.GetCount(), m_areQueuedDrawsUploaded,
+                    ( pass.IsGlowPass ? "glow" : "scene" ) );
+        return FALSE;
+    }
+
+    QueuedDraw const& draw = m_queuedDraws[drawIndex];
+    BatchDesc         desc = draw.Desc;
+    desc.Pipeline.Pass = pass;
+    if ( pass.IsGlowPass )
+    {
+        desc.Pipeline.Blend = RSTATE_BLEND_PRESET_ADD;
+    }
+    if ( pass.DepthFormat == RTARGET_FORMAT_COUNT )
+    {
+        if ( desc.Pipeline.Depth == RSTATE_DEPTH_PRESET_WRITE_ALWAYS )
+        {
+            x_DebugMsg( "PrimitiveMgr: depth-writing packet has no depth target packet=%d output=%d pass=%s\n",
+                        drawIndex, static_cast<s32>( desc.Output ), ( pass.IsGlowPass ? "glow" : "scene" ) );
+            return FALSE;
+        }
+
+        desc.Pipeline.Depth = RSTATE_DEPTH_PRESET_DISABLED_NO_WRITE;
+    }
+
+    if ( !m_vertexMgr.BindBuffers() )
+    {
+        x_DebugMsg( "PrimitiveMgr: failed to bind vertex/index buffers packet=%d output=%d pass=%s\n",
+                    drawIndex, static_cast<s32>( desc.Output ), ( pass.IsGlowPass ? "glow" : "scene" ) );
+        return FALSE;
+    }
+    if ( !BindPipeline( desc.Pipeline ) )
+    {
+        x_DebugMsg(
+            "PrimitiveMgr: failed to bind pipeline packet=%d output=%d color=%d depth=%d samples=%u blend=%d pass=%s\n",
+            drawIndex, static_cast<s32>( desc.Output ), static_cast<s32>( desc.Pipeline.Pass.ColorFormat ),
+            static_cast<s32>( desc.Pipeline.Pass.DepthFormat ), desc.Pipeline.Pass.SampleCount,
+            static_cast<s32>( desc.Pipeline.Blend ), ( pass.IsGlowPass ? "glow" : "scene" ) );
+        return FALSE;
+    }
+    if ( !BindResources( desc, drawIndex ) )
+    {
+        return FALSE;
+    }
+    if ( !m_vertexMgr.DrawIndexed( draw.IndexCount, draw.StartIndex, draw.BaseVertex ) )
+    {
+        x_DebugMsg( "PrimitiveMgr: indexed draw failed packet=%d output=%d indices=%d start=%d base=%d pass=%s\n",
+                    drawIndex, static_cast<s32>( desc.Output ), draw.IndexCount, draw.StartIndex, draw.BaseVertex,
+                    ( pass.IsGlowPass ? "glow" : "scene" ) );
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+//=========================================================================
+
+void PrimitiveMgr::SetDistortionScene( shader_resource const* pScene )
+{
+    m_pDistortionScene = pScene;
+}
+
+//=========================================================================
+
+void PrimitiveMgr::DiscardQueuedDraws( void )
+{
+    ClearBatch();
+    ClearQueuedDraws();
+}
+
+//=========================================================================
+
+void PrimitiveMgr::ClearBatch( void )
+{
+    m_batchDesc = BatchDesc();
+    m_batchVertices.SetCount( 0 );
+    m_batchIndices.SetCount( 0 );
+    m_isBatchOpen = FALSE;
+}
+
+//=========================================================================
+
+void PrimitiveMgr::ClearQueuedDraws( void )
+{
+    m_queuedVertices.SetCount( 0 );
+    m_queuedIndices.SetCount( 0 );
+    m_queuedDraws.SetCount( 0 );
+    m_pDistortionScene = NULL;
+    m_areQueuedDrawsUploaded = FALSE;
+}
+
+//=========================================================================
+
+xbool PrimitiveMgr::BuildDrawConstants( DrawConstants& out, matrix4 const& localToWorld )
+{
+    view const* pView = eng_GetView();
+    if ( !pView )
+    {
+        return FALSE;
+    }
+
+    out.LocalToClip = pView->GetW2C() * localToWorld;
+    return TRUE;
 }
 
 //=========================================================================

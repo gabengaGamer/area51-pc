@@ -11,21 +11,10 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
 
 #include "dlg_PopUp.hpp"
-
-//==============================================================================
-//  DEFINES
-//==============================================================================
-
-enum autosave_controls
-{
-    IDC_AUTOSAVE_NAV_TEXT,
-};
 
 //==============================================================================
 //  dlg_autosave
@@ -53,18 +42,12 @@ public:
 
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
-    void                SetCard             ( s32 CardID )              { m_iCard = CardID; }
-
 protected:
     ui_frame*           m_pFrame1;
 
     dlg_popup*          m_PopUp;
     s32                 m_PopUpResult;
 
-    s32                 m_iCard;
-#ifdef TARGET_XBOX
-    s32                 m_BlocksRequired;
-#endif
 };
 
 //==============================================================================

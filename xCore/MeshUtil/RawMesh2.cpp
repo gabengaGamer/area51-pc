@@ -1,11 +1,7 @@
-#ifdef TARGET_PC
-#include <crtdbg.h>
-#endif
-
 #include "RawMesh2.hpp"
 #include "TextIn.hpp"
 #include "TextOut.hpp"
-#include "rawmesh.hpp"
+#include "RawMesh.hpp"
 
 //=========================================================================
 // FUNCTIONS
@@ -3453,4 +3449,3 @@ void rawmesh2::PrintRigidBodies( void ) const
 }
 
 //=========================================================================
-

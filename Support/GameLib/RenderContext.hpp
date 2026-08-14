@@ -12,31 +12,30 @@
 //==============================================================================
 
 #include "x_types.hpp"
-#include "Entropy/D3DEngine/d3deng_rtarget.hpp"
+#include "e_Engine.hpp"
 
 //==============================================================================
 //  TYPES
 //==============================================================================
 
-#if defined(TARGET_PC)
-struct pip_render_target_pc
+struct pip_render_target
 {
     rtarget ColorTarget;
     rtarget DepthTarget;
-    s32     VRAMID;
     s32     Width;
     s32     Height;
     xbool   bValid;
 
-    pip_render_target_pc()
+    pip_render_target() :
+        Width  ( 0 ),
+        Height ( 0 ),
+        bValid ( FALSE )
     {
-        x_memset( this, 0, sizeof(pip_render_target_pc) );
     }
 
     xbool Create   ( s32 Width, s32 Height );
     void  Destroy  ( void );
 };
-#endif // defined(TARGET_PC)
 
 //---------------------------------------------------------------------
 
@@ -50,10 +49,7 @@ struct render_context
     u32     m_bIsMutated;
     u32     m_bIsPipRender;
 
-#if defined(TARGET_PC)
-    pip_render_target_pc*  m_pActivePipTarget;
     xbool                  m_bPipTargetsActive;
-#endif
 
     void    Set( s32    LocalPlayerIndex, 
                  s32    NetPlayerSlot,
@@ -61,14 +57,8 @@ struct render_context
                  xbool  bIsMutated,
                  xbool  bIsPipRender );
 
-    void    SetPipRender( xbool bIsPipRender );
-	
-#if defined(TARGET_PC)
-    xbool   BeginPipRender       ( pip_render_target_pc* pTarget );
+    xbool   BeginPipRender       ( pip_render_target* pTarget );
     void    EndPipRender         ( void );
-    pip_render_target_pc* GetActivePipTarget ( void ) const;
-    xbool   ArePipTargetsActive  ( void ) const;
-#endif
 };
 
 //==============================================================================

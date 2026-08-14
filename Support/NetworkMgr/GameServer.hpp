@@ -11,7 +11,7 @@
 #ifndef GAMESERVER_HPP
 #define GAMESERVER_HPP
 
-#include "x_Files.hpp"
+#include "x_files.hpp"
 #include "e_Network.hpp"
 #include "ConnMgr.hpp"
 #include "UpdateMgr.hpp"
@@ -116,6 +116,7 @@ private:
 
         s32                 m_UpdateIndex;
         s32                 m_MaxClients;
+        f32                 m_PacketSendBudget;
         client_proxy*       m_pClients;
         server_state        m_State;
         f32                 m_StateTime;

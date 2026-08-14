@@ -21,7 +21,7 @@ Circuit CTF\04\Value    = enum of 4 choices         no      yes     no
 //  INCLUDES
 //==============================================================================
 
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "MP_Settings.hpp"
 
 //==============================================================================
@@ -87,7 +87,7 @@ static struct mp_settings_desc : public object_desc
     virtual s32 OnEditorRender( object& Object ) const
     {
         mp_settings::s_Selected = (Object.GetAttrBits() & object::ATTR_EDITOR_SELECTED);
-        return( EDITOR_ICON_MP_SETTINGS );
+        return static_cast<s32>( EditorIcon::MultiplayerSettings );
     }
 
 #endif // X_EDITOR
@@ -297,7 +297,7 @@ void mp_settings::OnEnumProp( prop_enum& List )
     u32 Flags = PROP_TYPE_MUST_ENUM | 
         PROP_TYPE_DONT_SAVE | 
         PROP_TYPE_DONT_EXPORT | 
-        PROP_TYPE_DONT_SAVE_MEMCARD;
+        PROP_TYPE_DONT_SAVE_GAME;
     List.PropEnumString( "MP Settings\\Active Game Types", "Select game types to edit.", Flags | PROP_TYPE_HEADER );
     List.PropEnumBool  ( "MP Settings\\Active Game Types\\DM",   "Death Match",          Flags );
     List.PropEnumBool  ( "MP Settings\\Active Game Types\\TDM",  "Team Death Match",     Flags );
@@ -314,12 +314,12 @@ void mp_settings::OnEnumProp( prop_enum& List )
         PROP_TYPE_HEADER | 
         PROP_TYPE_DONT_SAVE | 
         PROP_TYPE_DONT_EXPORT | 
-        PROP_TYPE_DONT_SAVE_MEMCARD );
+        PROP_TYPE_DONT_SAVE_GAME );
     if( s_GameTypeBits )
     {
         Flags = PROP_TYPE_DONT_SAVE | 
             PROP_TYPE_DONT_EXPORT | 
-            PROP_TYPE_DONT_SAVE_MEMCARD;
+            PROP_TYPE_DONT_SAVE_GAME;
 
         for( s32 c = 0; c < MAX_CIRCUITS; c++ )
         {
@@ -349,7 +349,7 @@ void mp_settings::OnEnumProp( prop_enum& List )
                 PROP_TYPE_HEADER | 
                 PROP_TYPE_DONT_SAVE | 
                 PROP_TYPE_DONT_EXPORT | 
-                PROP_TYPE_DONT_SAVE_MEMCARD );
+                PROP_TYPE_DONT_SAVE_GAME );
         }
     }
 
@@ -365,7 +365,7 @@ void mp_settings::OnEnumProp( prop_enum& List )
         // This field is not saved or visible, but it IS exported.
         List.PropEnumInt( xfs( "MP Settings\\Circuit %s\\Values", s_GameTypeAbbr[t] ),
             "", 
-            PROP_TYPE_DONT_SAVE_MEMCARD | 
+            PROP_TYPE_DONT_SAVE_GAME | 
             PROP_TYPE_DONT_SHOW | 
             PROP_TYPE_DONT_SAVE );
 
@@ -386,7 +386,7 @@ void mp_settings::OnEnumProp( prop_enum& List )
                 List.PropEnumEnum  ( Path,
                     "None\0Team 0 (Alpha)\0Team 1 (Omega)\0All\0",
                     "",
-                    PROP_TYPE_DONT_SAVE_MEMCARD | 
+                    PROP_TYPE_DONT_SAVE_GAME | 
                     PROP_TYPE_DONT_SHOW | 
                     PROP_TYPE_DONT_EXPORT );
             }
@@ -395,7 +395,7 @@ void mp_settings::OnEnumProp( prop_enum& List )
                 // MP Settings\Circuit DM\04\Value
                 List.PropEnumString( Path,
                     "",
-                    PROP_TYPE_DONT_SAVE_MEMCARD | 
+                    PROP_TYPE_DONT_SAVE_GAME | 
                     PROP_TYPE_DONT_SHOW | 
                     PROP_TYPE_DONT_SAVE | 
                     PROP_TYPE_DONT_EXPORT | 

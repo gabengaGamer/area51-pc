@@ -8,13 +8,14 @@
 //==============================================================================
 
 #include "DebugMenu2.hpp"
-#include "Ui\ui_manager.hpp"
-#include "Ui\ui_font.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "fx_RunTime\fx_Mgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_renderer.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "FX/fx_Mgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
 #if defined( ENABLE_DEBUG_MENU )
-#include "InputMgr\GamePad.hpp"
+#include "InputMgr/GamePad.hpp"
 #endif
 
 
@@ -155,12 +156,12 @@ xbool debug_menu2::WasTogglePressed( void ) const
     xbool ExitModifierDown = FALSE;
     xbool ExitPressed      = FALSE;
 
-    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
+    for( s32 i = 0; i < frontend_input::MAX_CONTROLLERS; i++ )
     {
-        const ingame_pad& Pad = g_IngamePad[i];
+        const frontend_pad& Pad = g_FrontendInput.GetPad( i );
 
-        ExitModifierDown |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_EXIT_MODIFIER ).GetIsValue()  > 0.25f);
-        ExitPressed      |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_EXIT          ).GetWasValue() > 0.25f);
+        ExitModifierDown |= (Pad.GetFrameLogical( frontend_pad::DEBUG_MENU_EXIT_MODIFIER ).GetIsValue()  > 0.25f);
+        ExitPressed      |= (Pad.GetFrameLogical( frontend_pad::DEBUG_MENU_EXIT          ).GetWasValue() > 0.25f);
     }
 
     return( ExitModifierDown && ExitPressed );
@@ -221,19 +222,19 @@ xbool debug_menu2::Update( f32 DeltaTime )
         xbool IncrementHeld    = FALSE;
         xbool DecrementHeld    = FALSE;
 
-        for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
+        for( s32 i = 0; i < frontend_input::MAX_CONTROLLERS; i++ )
         {
-            const ingame_pad& Pad = g_IngamePad[i];
+            const frontend_pad& Pad = g_FrontendInput.GetPad( i );
 
-            NextPagePressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_NEXT_PAGE     ).GetWasValue() > 0.25f);
-            PrevPagePressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_PREV_PAGE     ).GetWasValue() > 0.25f);
-            NextItemPressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_NEXT_ITEM     ).GetWasValue() > 0.25f);
-            PrevItemPressed  |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_PREV_ITEM     ).GetWasValue() > 0.25f);
-            IncrementPressed |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_INCREMENT     ).GetWasValue() > 0.25f);
-            DecrementPressed |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_DECREMENT     ).GetWasValue() > 0.25f);
-            ActionPressed    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_ACTION        ).GetWasValue() > 0.25f);
-            IncrementHeld    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_INCREMENT     ).GetIsValue()  > 0.25f);
-            DecrementHeld    |= (Pad.GetLogical( ingame_pad::DEBUG_MENU_DECREMENT     ).GetIsValue()  > 0.25f);
+            NextPagePressed  |= (Pad.GetFrameLogical( frontend_pad::DEBUG_MENU_NEXT_PAGE     ).GetWasValue() > 0.25f);
+            PrevPagePressed  |= (Pad.GetFrameLogical( frontend_pad::DEBUG_MENU_PREV_PAGE     ).GetWasValue() > 0.25f);
+            NextItemPressed  |= (Pad.GetFrameLogical( frontend_pad::DEBUG_MENU_NEXT_ITEM     ).GetWasValue() > 0.25f);
+            PrevItemPressed  |= (Pad.GetFrameLogical( frontend_pad::DEBUG_MENU_PREV_ITEM     ).GetWasValue() > 0.25f);
+            IncrementPressed |= (Pad.GetFrameLogical( frontend_pad::DEBUG_MENU_INCREMENT     ).GetWasValue() > 0.25f);
+            DecrementPressed |= (Pad.GetFrameLogical( frontend_pad::DEBUG_MENU_DECREMENT     ).GetWasValue() > 0.25f);
+            ActionPressed    |= (Pad.GetFrameLogical( frontend_pad::DEBUG_MENU_ACTION        ).GetWasValue() > 0.25f);
+            IncrementHeld    |= (Pad.GetFrameLogical( frontend_pad::DEBUG_MENU_INCREMENT     ).GetIsValue()  > 0.25f);
+            DecrementHeld    |= (Pad.GetFrameLogical( frontend_pad::DEBUG_MENU_DECREMENT     ).GetIsValue()  > 0.25f);
         }
 
         if( NextPagePressed )
@@ -393,13 +394,8 @@ void debug_menu2::Render( void )
             // render background filter
             s32 XRes, YRes;
             eng_GetRes(XRes, YRes);
-            #if 0 // def TARGET_PS2
-            // Nasty hack to force PS2 to draw to rb.l = 0
-            rb.Set( -1, 0, XRes, YRes );
-            #else
             rb.Set( 0, 0, XRes, YRes );
-            #endif
-            draw_Rect( rb, xcolor(0,0,0,(u8)(255 * m_FadeAlpha)), FALSE, DRAW_UI_RTARGET );
+            g_UIRenderer.DrawRect( rb, xcolor(0,0,0,(u8)(255 * m_FadeAlpha)) );
 
             m_Pages[m_iActivePage]->Render();
 

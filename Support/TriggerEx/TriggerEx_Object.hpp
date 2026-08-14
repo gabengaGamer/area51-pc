@@ -12,12 +12,12 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "..\Support\TriggerEx\TriggerEx_Conditionals.hpp"
-#include "..\Support\TriggerEx\TriggerEx_Actions.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Affecters\conditional_affecter.hpp"
-#include "..\Support\Objects\focusobject.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/TriggerEx/TriggerEx_Conditionals.hpp"
+#include "../Support/TriggerEx/TriggerEx_Actions.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Affecters/conditional_affecter.hpp"
+#include "../Support/Objects/FocusObject.hpp"
 
 class trigger_ex_mngr;
 class check_point_mgr;
@@ -255,7 +255,7 @@ protected:
     virtual         void        OnInit					( void );
     virtual         void        OnKill                  ( void );
     virtual         void        OnRender        		( void );
-    virtual         void        OnAdvanceLogic          ( f32 DeltaTime );      
+    virtual         void        OnAdvanceSimulation          ( f32 DeltaTime );      
 
 //=========================================================================
 // Trigger Manager Interface functions...

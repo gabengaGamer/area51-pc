@@ -1,9 +1,10 @@
 #ifndef CINEMA_HPP
 #define CINEMA_HPP
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "TriggerEx\Affecters\object_affecter.hpp"
-#include "Animation\AnimAudioTimer.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "TriggerEx/Affecters/object_affecter.hpp"
+#include "Animation/AnimAudioTimer.hpp"
+#include "CinemaPlayback.hpp"
 
 
 class cinema_object : public object
@@ -70,6 +71,7 @@ public:
         s32                 NextAiState;            // AI State to change too at end..
         anim_group::handle  hNextAnimGroup;         // Next animation group to resume back to
         s32                 iNextAnim;              // Next animation to resume back to
+        xbool               IsPlaying;              // Runtime state; authored guid remains reusable
 
         cinema_character();
         void Init( void );
@@ -89,8 +91,11 @@ public:
 
     virtual			void	        OnEnumProp		            ( prop_enum& List );
     virtual			xbool	        OnProperty		            ( prop_query& I );
-    virtual         void            OnAdvanceLogic              ( f32 DeltaTime );
+    virtual         void            OnAdvanceSimulation              ( f32 DeltaTime );
     virtual         void            OnActivate                  ( xbool Flag );
+    virtual         void            OnKill                      ( void );
+
+                    xbool           IsCinemaActive              ( void ) const { return m_Playback.IsActive(); }
     
                     void            StartAnimAudioTimer         ( void );
                     xbool           IsPast                      ( char* Marker );
@@ -113,21 +118,23 @@ public:
 
 protected:
 
+                    void            Finalize                    ( CinemaPlaybackFinishReason Reason );
+                    void            BindActivePlayer            ( void );
+                    void            UnbindActivePlayer          ( void );
+
 #ifdef X_EDITOR
     char*                       m_pEnumString;
 #endif
     rhandle<char>               m_AudioPackage;
     f32                         m_AudioLength;
-    xbool                       m_bCinemaActive;
-    xbool                       m_bCinemaDone;
+    CinemaPlayback              m_Playback;
     xbool                       m_bIs2D;
     audio_status                m_AudioStatus;
     anim_status                 m_AnimStatus;
     s32                         m_VoiceID;
     char                        m_Descriptor[64];
     anim_audio_timer            m_Timer;
-    f32                         m_PrevTime;
-    f32                         m_CurrTime;
+    guid                        m_BoundPlayerGuid;
     s32                         m_nPositionMarkers;
     xarray<position_marker>     m_PositionMarkers;
     s32                         m_PositionMarkerIndex;

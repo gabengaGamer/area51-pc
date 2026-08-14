@@ -170,5 +170,4 @@ static s16 s_iicon_sphere[] =
 };
 
 
-#define DRAW_ICON_SPHERE() draw_icon( NUM_FACETS_ICON_SPHERE, NUM_VERTICES_ICON_SPHERE, s_vicon_sphere, s_iicon_sphere )
 

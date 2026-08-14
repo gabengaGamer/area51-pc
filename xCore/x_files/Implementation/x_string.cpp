@@ -1429,56 +1429,19 @@ xbool xstring::LoadFile( const char* pFileName )
 
 xbool xstring::SaveFile( const char* pFileName, xbool Append ) const
 {
-    X_FILE* pFile = NULL;
-    s32     NChars;
-    s32     Written = 0;
-
-#if defined(TARGET_PC)
-    
-    if( Append )
-        pFile = x_fopen( pFileName, "at" );
-    else
-        pFile = x_fopen( pFileName, "wt" );
+    X_FILE* pFile = x_fopen( pFileName, Append ? "ab" : "wb" );
 
     if( !pFile )
         return( FALSE );
 
-    NChars = GetLength();
+    const s32 NChars = GetLength();
+    s32       Written = 0;
     if( NChars > 0 )
     {
         Written = x_fwrite( (const byte*)(const char*)m_pData, 1, NChars, pFile );
     }
 
     x_fclose( pFile );
-#else
-
-    if( Append )
-        pFile = x_fopen( pFileName, "ab" );
-    else
-        pFile = x_fopen( pFileName, "wb" );
-
-    if( !pFile )
-        return( FALSE );
-
-    // Replace \n with \r\n
-    xstring TempStr( (s32)(GetLength()*2) );
-    TempStr = *this;
-    s32 Index=0;
-    while( (Index < TempStr.GetLength() ) && 
-           ((Index = TempStr.Find( '\n', Index )) != -1) )
-    {
-        TempStr.Insert( Index, "\r" );
-        Index+=2;
-    }
-
-    NChars = TempStr.GetLength();
-    if( NChars > 0 )
-    {
-        Written = x_fwrite( (const byte*)(const char*)TempStr, 1, NChars, pFile );
-    }
-
-    x_fclose( pFile );
-#endif
 
     return( Written == NChars );
 }

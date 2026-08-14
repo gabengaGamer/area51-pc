@@ -11,7 +11,7 @@
 //=========================================================================
 
 #include "BasePlayer.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 //=========================================================================
 // CLASS ANIM_TRACK

@@ -17,8 +17,6 @@
 
 // APP_EDITOR defines __PLACEMENT_NEW_INLINE, so keep a TU-local placement new
 // for the MFC templates used by this editor instead of changing shared x_files headers.
-inline void* operator new( size_t, void* pData ) noexcept { return pData; }
-inline void  operator delete( void*, void* ) noexcept {}
 
 //=========================================================================
 // DATA
@@ -93,7 +91,7 @@ external_rsc_desc::external_rsc_desc( void ) : rsc_desc( s_Desc ) {}
 #if defined(X_EDITOR)
 void rsc_desc_mgr::RefreshDesc( void )
 {
-    CONTEXT( "rsc_desc_mgr::RefreshDesc" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "rsc_desc_mgr::RefreshDesc" );
 
     ClearRscDesc();
     ScanForRscDesc();
@@ -977,7 +975,8 @@ void rsc_desc_mgr::GetMakeRules( s32 Index, xstring& MakeRules, xstring& Output 
         return;
 
     // Fist lets collect the make rules from the rsc desc.    
-    GetRscDescIndex( Index ).pDesc->OnGetCompilerRules( MakeRules );
+    rsc_desc* pDesc = GetRscDescIndex( Index ).pDesc;
+    pDesc->OnGetCompilerRules( MakeRules );
 
     // Then lets add where the compiles are
     xstring A;
@@ -986,16 +985,28 @@ void rsc_desc_mgr::GetMakeRules( s32 Index, xstring& MakeRules, xstring& Output 
     MakeRules = A + MakeRules + " ";
 
     // Now lets finally add the destination data
-    Output = GetRscDescIndex( Index ).pDesc->GetName();
+    Output = pDesc->GetName();
+
+    const char* pOutputOption = pDesc->OnGetCompilerOutputOption();
+    s32 nOutputs = 0;
 
     for( s32 i=0; i<PLATFORM_COUNT; i++ )
     {
         if( m_Platform[i].bCompile == FALSE )
             continue;
 
+        if( pOutputOption && (nOutputs != 0) )
+            x_throw( "Geometry compiler has one common output and cannot target multiple platforms" );
+
         char FilePath[256];
-        sprintf( FilePath, "-%s \"%s\\%s\\%s\" ", m_Platform[i].Cmd, g_Settings.GetReleasePath(), m_Platform[i].OutputDir, &Output[0] );
+        sprintf( FilePath,
+                 "-%s \"%s\\%s\\%s\" ",
+                 pOutputOption ? pOutputOption : m_Platform[i].Cmd,
+                 g_Settings.GetReleasePath(),
+                 m_Platform[i].OutputDir,
+                 &Output[0] );
         MakeRules += FilePath;
+        nOutputs++;
     }
 
     Output += "\n";
@@ -1187,11 +1198,11 @@ void rsc_desc::SetFullName( const char* pRscName )
     if( Ext[0] == 0 )
     {
         Ext[0] = '.';
-        x_strcpy( &Ext[1], m_Type.GetName() );
+        x_strcpy( &Ext[1], m_type.GetName() );
     }
     else
     {
-        if( x_stricmp( &Ext[1], m_Type.GetName() ) != 0 )
+        if( x_stricmp( &Ext[1], m_type.GetName() ) != 0 )
             x_throw( "Wrong type in the name of the resource" );
     }
 
@@ -1215,7 +1226,7 @@ void rsc_desc::GetFullName( char* pRscName ) const
 void rsc_desc::OnEnumProp( prop_enum& List )
 {
     List.PropEnumString  ( "ResDesc",       "Resource package Name", PROP_TYPE_HEADER );
-    List.PropEnumFileName( "ResDesc\\Name", xfs("*.%s|*.%s||",m_Type.GetName(),m_Type.GetName()), "File name for the resource description", PROP_TYPE_MUST_ENUM );
+    List.PropEnumFileName( "ResDesc\\Name", xfs("*.%s|*.%s||",m_type.GetName(),m_type.GetName()), "File name for the resource description", PROP_TYPE_MUST_ENUM );
 }
 
 //=========================================================================
@@ -1231,8 +1242,8 @@ void rsc_desc::OnCheckIntegrity( void )
     if( Ext[0] == 0 )
         x_throw( "You must include the extension in the resource name" );
 
-    if( x_stricmp( &Ext[1], m_Type.GetName()) != 0 )
-        x_throw( xfs("The extension should must the resource type[%s]",m_Type.GetName() )); 
+    if( x_stricmp( &Ext[1], m_type.GetName()) != 0 )
+        x_throw( xfs("The extension should must the resource type[%s]",m_type.GetName() )); 
 
     if( FileName[0] == 0 )
         x_throw( "The resource must have a file name" );

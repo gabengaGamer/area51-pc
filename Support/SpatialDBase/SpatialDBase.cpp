@@ -8,8 +8,9 @@
 //  INCLUDES
 //==============================================================================
 
-#include "spatialdbase.hpp"
+#include "SpatialDBase.hpp"
 
+#include "Render/PrimitiveBatch.hpp"
 #include "x_stdio.hpp"
 #include "Entropy.hpp"
 #include "x_color.hpp"
@@ -182,13 +183,19 @@ void spatial_dbase::DumpStats( void ) const
 void spatial_dbase::Render( s32 MinLevel, s32 MaxLevel ) const
 {
     s32                   nCells  = 0;
-    static const s16      Index[] = {1,5,5,7,7,3,3,1,0,4,4,6,6,2,2,0,3,2,7,6,5,4,1,0};
+    static const u16      Index[] = {1,5,5,7,7,3,3,1,0,4,4,6,6,2,2,0,3,2,7,6,5,4,1,0};
     static const xcolor   Color[] = { XCOLOR_RED, XCOLOR_GREEN, XCOLOR_BLUE, XCOLOR_YELLOW, XCOLOR_AQUA, XCOLOR_PURPLE };
     vector3               P[8];
 
-    draw_ClearL2W();
-    draw_Begin( DRAW_LINES );
-    draw_Color( Color[0] );
+    const render::primitive_draw_desc Material( NULL,
+                                                render::PRIMITIVE_TOPOLOGY_LINE_LIST,
+                                                render::PRIMITIVE_BLEND_ALPHA,
+                                                render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                render::PRIMITIVE_LAYER_TRANSPARENT );
+    render::PrimitiveBatch Batch( Material );
+    Batch.Reserve( m_nCells * 8, m_nCells * ARRAYSIZE( Index ) );
 
     // Render all cells of a particular level
     for( s32 H = 0; H<HASH_SIZE; H++ )
@@ -201,11 +208,7 @@ void spatial_dbase::Render( s32 MinLevel, s32 MaxLevel ) const
 
             if( (Cell.Level >= MinLevel) && (Cell.Level <= MaxLevel) )
             {
-                // Decide color
-                if( Cell.Level > 5 )
-                    draw_Color( XCOLOR_WHITE );
-                else
-                    draw_Color( Color[Cell.Level] );
+                const xcolor CellColor = ( Cell.Level > 5 ) ? XCOLOR_WHITE : Color[Cell.Level];
 
                 // Get bbox bounds
                 bbox BBox;
@@ -220,18 +223,12 @@ void spatial_dbase::Render( s32 MinLevel, s32 MaxLevel ) const
                 P[6].GetX() = BBox.Max.GetX();  P[6].GetY() = BBox.Max.GetY();  P[6].GetZ() = BBox.Min.GetZ();
                 P[7].GetX() = BBox.Max.GetX();  P[7].GetY() = BBox.Max.GetY();  P[7].GetZ() = BBox.Max.GetZ();
 
-                //
-                // Render linees
-                //
+                render::primitive_vertex Vertices[8];
+                for( s32 i = 0; i < ARRAYSIZE( Vertices ); ++i )
                 {
-                    s32 i;
-
-                    for( i=0; i<((s32)(sizeof(Index)/sizeof(s16))); i++ )
-                        draw_Vertex( P[Index[i]] );
-
-                    //draw_Verts( P, 8 );
-                    //draw_Execute( Index, sizeof(Index)/sizeof(s16) );
+                    Vertices[i] = render::primitive_vertex( P[i], vector2( 0.0f, 0.0f ), CellColor );
                 }
+                Batch.AppendIndexed( Vertices, ARRAYSIZE( Vertices ), Index, ARRAYSIZE( Index ) );
 
                 nCells++;
             }
@@ -240,7 +237,9 @@ void spatial_dbase::Render( s32 MinLevel, s32 MaxLevel ) const
         } 
     }
 
-    draw_End();
+    matrix4 Identity;
+    Identity.Identity();
+    Batch.Submit( Identity );
 /*
     x_printf("NCELLS(%4d): ",m_nCells);
     for( s32 i=0; i<MAX_LEVELS; i++ )
@@ -278,11 +277,7 @@ u16 spatial_dbase::AllocCell( s32 X, s32 Y, s32 Z, s32 Level )
         // WARNING:
         // Make sure to grow here all that we will ever need.
         //
-        #ifndef TARGET_PC
         m_nCellsAllocated += 2048 + 512; // TODO: CJ: This was bumped up by 512 for Alien SL4_1
-        #else
-        m_nCellsAllocated += (2048*8);
-        #endif
 
         x_DebugMsg("WARNING: AllocCell1: %08X ",(u32)(uaddr)m_pCell);
         m_pCell = (spatial_cell*)x_realloc( m_pCell, sizeof(spatial_cell)*m_nCellsAllocated );
@@ -496,7 +491,7 @@ void spatial_dbase::FreeCell( u16 ID )
 
 u16 spatial_dbase::BuildVisList( const view& View, xbool DoCulling )
 {
-    CONTEXT( "spatial_dbase::BuildVisList" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "spatial_dbase::BuildVisList" );
 
     //
     // Initialize
@@ -654,7 +649,7 @@ u16 spatial_dbase::TraverseCells(
     const bbox&     RegionBBox, 
     u32             OccFlags )
 {
-    CONTEXT( "spatial_dbase::TraverseCells-BBox" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "spatial_dbase::TraverseCells-BBox" );
 
     s32 i,X,Y,Z;
     s32 MinX,MinY,MinZ;
@@ -847,7 +842,7 @@ u16 spatial_dbase::TraverseCells( const vector3& WorldSpaceRayStart,
                                   const vector3& WorldSpaceRayEnd,
                                         u32      OccFlags )
 {
-    CONTEXT( "spatial_dbase::TraverseCells-Ray" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "spatial_dbase::TraverseCells-Ray" );
 
     // Get ray coordinates in spatial-dbase cells
     f32         BaseCellSize    = m_CellWidth[0];

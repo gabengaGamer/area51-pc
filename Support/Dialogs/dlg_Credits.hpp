@@ -15,13 +15,13 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_bitmap.hpp"
-#include "ui\ui_font.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_bitmap.hpp"
+#include "UI/ui_font.hpp"
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 //==============================================================================
 //  dlg_credits
@@ -45,6 +45,7 @@ typedef struct _CreditLine_
     s32                 m_CharCount;
     CustomRenderStruct  m_CustomRenderStruct[128];
     f32                 m_FadeDelay[128];
+    f32                 m_SweepTime[128];
 }CreditLine;
 
 class dlg_credits : public ui_dialog
@@ -87,8 +88,8 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
     void                InitCreditLines     ( void );

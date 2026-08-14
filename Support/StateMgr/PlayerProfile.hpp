@@ -7,52 +7,32 @@
 #ifndef PLAYER_PROFILE_HPP
 #define PLAYER_PROFILE_HPP
 
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "x_types.hpp"
 #include "GlobalSettings.hpp"
-#include "CheckPointMgr/CheckpointMgr.hpp"
+#include "CheckPointMgr/CheckPointMgr.hpp"
 #include "LoreList.hpp"
 
 //==============================================================================
-//  Defines
+//  DEFINES
 //==============================================================================
 
-// NOTE: if you change this value, increase the profile version, add a note, and let MarkB know. Thanks!
 #define MAX_SAVED_LEVELS 20
 
-//********************************************************
-//** PROFILE VERSION HISTORY
-//********************************************************
-// 1006 - BW: Added checkpoints to saved profiles.
-// 1007 - BW: Cleaned up profile list use in memory card manager. Preserved selected profile info.
-//            Fixed memory fragmentation.
-// 1008 - MB: Removed buddy lists.
-// 1009 - BW: Added CRC checksum to player profile.
-// 1010 - BW: Modified the way profiles are being saved and loaded.
-// 1011 - MB: Added secrets data (and fixed bad merge)
-// 1012 - MB: Increased number of lore items and fixed bad initialization of lore collected.
-// 1013 - MB: Added a count for entering a cinema whilst mutated.
-// 1014 - MB: Defaulted map scaling to enabled. (and added some LAN party defaults)
-// 1015 - MB: Added a variable to track the players mutation status.
-// 1016 - MB: Added difficulty level setting
-// 1017 - BW: Added flag whether or not to appear visible while online.
-// 1018 - KS: Upped MAX_SAVED_LEVELS because there are 19 levels and Welcome to Dreamland was overwritten by Last Exit
-// 1019 - KS: MAX_SAVED_LEVELS back down to 20 since it's a HUGE memory hog
-// 1020 - MB: Added autosave flag
-// 1021 - MB: Added flag to enable use of the alien avatars
-// 1022 - CJ: Reduced patch size to save RAM
-// 1023 - MB: Reverted increase in MAX_SAVED_LEVELS. 
-// 1024 - MB: Added some new flags for tracking difficulty and awarding a secret
-// 1025 - MB: Size of profile name changed
-// 1026 - MB: Added a flag for verifying the player's age before going online (COPA requirement)
-
-#define PROFILE_VERSION_NUMBER  1027
+//==============================================================================
+//  ENUMS
+//==============================================================================
 
 enum profile_states
 {
     PROFILE_OK,
     PROFILE_CORRUPT,
-    PROFILE_EXPIRED,
 };
+
+//------------------------------------------------------------------------------
 
 enum difficulty_level
 {
@@ -61,67 +41,121 @@ enum difficulty_level
     DIFFICULTY_HARD,
 };
 
+//------------------------------------------------------------------------------
+
+enum class profile_control_device
+{
+    Mouse,
+    Gamepad,
+};
+
+//------------------------------------------------------------------------------
+
+enum class profile_control_axis
+{
+    X,
+    Y,
+};
+
 //==============================================================================
-// profile
+//  PLAYER PROFILE
 //==============================================================================
+
 class player_profile
 {
+    friend class save_data_codec;
+    template<class SERIALIZER>
+    friend void save_data_serialize_profile( SERIALIZER&, player_profile& );
+
 public:
                         player_profile          ( void );
     void                Reset                   ( void );
-    u32                 GetVersion              ( void )                            { return m_Version; }
 
     void                RestoreControlDefaults  ( void );
-    void                RestoreAudioDefaults    ( void );
-    void                RestoreHeadsetDefaults  ( void );
+    void                RestoreMouseControlDefaults
+                                                ( void );
+    void                RestoreGamepadControlDefaults
+                                                ( void );
+    void                RestoreCommonControlDefaults
+                                                ( void );
 
-    void                SetProfileName          ( const char* pProfileName );
-    const char*         GetProfileName          ( void )const                       { return ( const char* )m_pProfileName; }
+    void                SetProfileName          ( char const* pProfileName );
+    char const*         GetProfileName          ( void ) const;
 
     void                SetHash                 ( void );
-    u32                 GetHash                 ( void )                            { return m_HashString; }
+    u32                 GetHash                 ( void ) const;
 
-    u32                 GetSensitivity          ( u32 Index )const                  { ASSERT( Index < 2 ); return m_Sensitivity[ Index ]; }
-    void                SetSensitivity          ( u32 Index, u32 Sensitivity )      { ASSERT( Index < 2 ); m_Sensitivity[Index] = Sensitivity; }
+    u32                 GetSensitivity          ( profile_control_device Device,
+                                                  profile_control_axis   Axis ) const;
+    void                SetSensitivity          ( profile_control_device Device,
+                                                  profile_control_axis   Axis,
+                                                  u32                    Sensitivity );
+    xbool               IsAxisInverted          ( profile_control_device Device,
+                                                  profile_control_axis   Axis ) const;
+    void                SetAxisInverted         ( profile_control_device Device,
+                                                  profile_control_axis   Axis,
+                                                  xbool                  IsInverted );
+    xbool               IsAimToggleEnabled      ( void ) const;
+    void                SetAimToggleEnabled     ( xbool IsEnabled );
 
-    u8                  GetVolume               ( u32 Index )const                  { ASSERT( Index < 5 ); return m_Volume[ Index ]; }
-    void                SetVolume               ( u32 Index, u8 Volume )            { ASSERT( Index < 5 ); m_Volume[Index] = Volume; }
+    u8                  GetVolume               ( u32 Index ) const;
+    void                SetVolume               ( u32 Index, u8 Volume );
 
-    s32                 GetAvatarID             ( void )                            { return m_AvatarID;     }
-    void                SetAvatarID             ( s32 AvatarID )                    { m_AvatarID = AvatarID; }
+    s32                 GetAvatarID             ( void ) const;
+    void                SetAvatarID             ( s32 AvatarID );
 
-    xbool               GetLoreAcquired         ( u32 Vault, s32 Index );
+    xbool               GetLoreAcquired         ( u32 Vault, s32 Index ) const;
     void                SetLoreAcquired         ( u32 Vault, u32 Index );
 
     void                AcquireSecret           ( void );
 
-    u32                 GetTotalLoreAcquired    ( void )                            { return m_LoreTotal;          }
-    xbool               IsNewLoreUnlocked       ( void )                            { return m_bNewLoreUnlocked;   }
-    void                ClearNewLoreUnlocked    ( void )                            { m_bNewLoreUnlocked = FALSE;  }
+    u32                 GetTotalLoreAcquired    ( void ) const;
+    xbool               IsNewLoreUnlocked       ( void ) const;
+    void                ClearNewLoreUnlocked    ( void );
 
-    u32                 GetNumSecretsUnlocked   ( void )                            { return m_NumSecretsUnlocked; }
-    xbool               IsNewSecretUnlocked     ( void )                            { return m_bNewSecretUnlocked; }
-    void                ClearNewSecretUnlocked  ( void )                            { m_bNewSecretUnlocked = FALSE;}
+    u32                 GetNumSecretsUnlocked   ( void ) const;
+    xbool               IsNewSecretUnlocked     ( void ) const;
+    void                ClearNewSecretUnlocked  ( void );
     
-    void                SetUniqueId             ( const byte* pUniqueId, s32 IdLength );
-    const byte*         GetUniqueId             ( s32& IdLength );
+    void                SetUniqueId             ( byte const* pUniqueId, s32 IdLength );
+    byte const*         GetUniqueId             ( s32& IdLength ) const;
 
     xbool               DisplayCinemaMutatedMsg ( void );
 
-    void                SetPlayerIsMutated      ( xbool bIsMutated )                { m_bIsMutated = bIsMutated;   }
-    xbool               IsPlayerMutated         ( void )                            { return m_bIsMutated;         }
+    void                SetPlayerIsMutated      ( xbool IsMutated );
+    xbool               IsPlayerMutated         ( void ) const;
 
-    void                SetDifficultyLevel      ( u8 Difficulty )                   { m_DifficultyLevel = Difficulty; }
-    u8                  GetDifficultyLevel      ( void )                            { return m_DifficultyLevel;       }
+    void                SetDifficultyLevel      ( u8 Difficulty );
+    u8                  GetDifficultyLevel      ( void ) const;
 
-    void                SetWeaponAutoSwitch     ( xbool bAutoSwitch )               { m_bWeaponAutoSwitch = bAutoSwitch; }
-    xbool               GetWeaponAutoSwitch     ( void )                            { return m_bWeaponAutoSwitch;        }
+    void                SetWeaponAutoSwitch     ( xbool AutoSwitch );
+    xbool               GetWeaponAutoSwitch     ( void ) const;
+
+    void                SetLookspringOn         ( xbool LookspringOn );
+    xbool               GetLookspringOn         ( void ) const;
+    void                SetCrouchOn             ( xbool CrouchOn );
+    xbool               GetCrouchOn             ( void ) const;
+    void                SetVibration            ( xbool Vibration );
+    xbool               GetVibration            ( void ) const;
+    void                SetVisibleOnline        ( xbool VisibleOnline );
+    xbool               GetVisibleOnline        ( void ) const;
+    void                SetAutosaveOn           ( xbool AutosaveOn );
+    xbool               GetAutosaveOn           ( void ) const;
+    void                SetAlienAvatarsOn       ( xbool AlienAvatarsOn );
+    xbool               GetAlienAvatarsOn       ( void ) const;
+    void                SetHardUnlocked         ( xbool HardUnlocked );
+    xbool               GetHardUnlocked         ( void ) const;
+    void                SetDifficultyChanged    ( xbool DifficultyChanged );
+    xbool               GetDifficultyChanged    ( void ) const;
+    void                SetAgeVerified          ( xbool AgeVerified );
+    xbool               GetAgeVerified          ( void ) const;
+    void                SetGameFinished         ( xbool GameFinished );
+    xbool               GetGameFinished         ( void ) const;
  
-    level_check_points& GetCheckpoint           ( s32 Index )                       { return m_Checkpoints[Index]; }
+    level_check_points& GetCheckpoint           ( s32 Index );
     level_check_points* GetCheckpointByMapID    ( s32 MapID );
 
     void                Checksum                ( void );
-    xbool               Validate                ( void );
     xbool               HasChanged              ( void );
     void                MarkDirty               ( void );
 
@@ -131,11 +165,11 @@ public:
 
 private:
     s32                 m_Checksum;                                                     // CRC32 of the profile
-    u32                 m_Version;                                                      // profile version control
     char                m_pProfileName[32];                                             // the nickname (MUST BE FIRST)
     u32                 m_HashString;                                                   // hash of the profile name and the time created
     s32                 m_AvatarID;                                                     // avatar
-    u32                 m_Sensitivity[2];                                               // controller sensitivity
+    u8                  m_MouseSensitivity[2];
+    u8                  m_GamepadSensitivity[2];
     u8                  m_Volume[5];                                                    // volume controls
     u8                  m_Lore[NUM_VAULTS];                                             // lore acquired flags
     u32                 m_LoreTotal;                                                    // total lore acquired
@@ -151,12 +185,10 @@ private:
 
     level_check_points  m_Checkpoints[ MAX_SAVED_LEVELS ];
 
-public:
-    // members 
     u32                 m_bLookspringOn         : 1;  // toggle lookspring
     u32                 m_bCrouchOn             : 1;  // toggle crouch
     u32                 m_bIsActive             : 1;  // is currently active 
-    u32                 m_bInvertY              : 1;  // invert Y axis
+    u32                 m_bGamepadInvertY       : 1;  // invert gamepad Y axis
     u32                 m_bVibration            : 1;  // Force feedback/vibration enabled
     u32                 m_bIsVisibleOnline      : 1;  // Report full status when online
     u32                 m_bAutosaveOn           : 1;  // Autosave is enabled
@@ -166,25 +198,303 @@ public:
     u32                 m_bDifficultyChanged    : 1;  // Was the difficulty level changed during a campaign
     u32                 m_bAgeVerified          : 1;  // The player's age has been verified for this profile (COPA requirement)
     u32                 m_bGameFinished         : 1;  // Player has finished the game.
+    u32                 m_bMouseInvertX         : 1;  // invert mouse X axis
+    u32                 m_bMouseInvertY         : 1;  // invert mouse Y axis
+    u32                 m_bGamepadInvertX       : 1;  // invert gamepad X axis
+    u32                 m_bAimToggleOn          : 1;  // toggle aim instead of holding
 };
 
 //==============================================================================
-//  profile_info
+//  PROFILE INFO
 //==============================================================================
 
 struct profile_info
 {
     xbool       bDamaged;
     s32         ProfileID;
-    s32         CardID;
     xwstring    Name;
     u32         Hash;           // unique identifier for this profile
-    u32         Ver;
-    xstring     Dir;
     datestamp   CreationDate;   // in platform specific format
     datestamp   ModifiedDate;   // in platform specific format
 };
 
+//==============================================================================
+//  INLINE FUNCTIONS
+//==============================================================================
+
+inline char const* player_profile::GetProfileName( void ) const
+{
+    return m_pProfileName;
+}
+
+//==============================================================================
+
+inline u32 player_profile::GetHash( void ) const
+{
+    return m_HashString;
+}
+
+//==============================================================================
+
+inline u8 player_profile::GetVolume( u32 Index ) const
+{
+    ASSERT( Index < 5 );
+    return m_Volume[Index];
+}
+
+//==============================================================================
+
+inline void player_profile::SetVolume( u32 Index, u8 Volume )
+{
+    ASSERT( Index < 5 );
+    m_Volume[Index] = Volume;
+}
+
+//==============================================================================
+
+inline s32 player_profile::GetAvatarID( void ) const
+{
+    return m_AvatarID;
+}
+
+//==============================================================================
+
+inline void player_profile::SetAvatarID( s32 AvatarID )
+{
+    m_AvatarID = AvatarID;
+}
+
+//==============================================================================
+
+inline u32 player_profile::GetTotalLoreAcquired( void ) const
+{
+    return m_LoreTotal;
+}
+
+//==============================================================================
+
+inline xbool player_profile::IsNewLoreUnlocked( void ) const
+{
+    return m_bNewLoreUnlocked;
+}
+
+//==============================================================================
+
+inline void player_profile::ClearNewLoreUnlocked( void )
+{
+    m_bNewLoreUnlocked = FALSE;
+}
+
+//==============================================================================
+
+inline u32 player_profile::GetNumSecretsUnlocked( void ) const
+{
+    return m_NumSecretsUnlocked;
+}
+
+//==============================================================================
+
+inline xbool player_profile::IsNewSecretUnlocked( void ) const
+{
+    return m_bNewSecretUnlocked;
+}
+
+//==============================================================================
+
+inline void player_profile::ClearNewSecretUnlocked( void )
+{
+    m_bNewSecretUnlocked = FALSE;
+}
+
+//==============================================================================
+
+inline void player_profile::SetPlayerIsMutated( xbool IsMutated )
+{
+    m_bIsMutated = IsMutated;
+}
+
+//==============================================================================
+
+inline xbool player_profile::IsPlayerMutated( void ) const
+{
+    return m_bIsMutated;
+}
+
+//==============================================================================
+
+inline void player_profile::SetDifficultyLevel( u8 Difficulty )
+{
+    m_DifficultyLevel = Difficulty;
+}
+
+//==============================================================================
+
+inline u8 player_profile::GetDifficultyLevel( void ) const
+{
+    return m_DifficultyLevel;
+}
+
+//==============================================================================
+
+inline void player_profile::SetWeaponAutoSwitch( xbool AutoSwitch )
+{
+    m_bWeaponAutoSwitch = AutoSwitch;
+}
+
+//==============================================================================
+
+inline xbool player_profile::GetWeaponAutoSwitch( void ) const
+{
+    return m_bWeaponAutoSwitch;
+}
+
+//==============================================================================
+
+inline void player_profile::SetLookspringOn( xbool LookspringOn )
+{
+    m_bLookspringOn = LookspringOn;
+}
+
+//==============================================================================
+
+inline xbool player_profile::GetLookspringOn( void ) const
+{
+    return m_bLookspringOn;
+}
+
+//==============================================================================
+
+inline void player_profile::SetCrouchOn( xbool CrouchOn )
+{
+    m_bCrouchOn = CrouchOn;
+}
+
+//==============================================================================
+
+inline xbool player_profile::GetCrouchOn( void ) const
+{
+    return m_bCrouchOn;
+}
+
+//==============================================================================
+
+inline void player_profile::SetVibration( xbool Vibration )
+{
+    m_bVibration = Vibration;
+}
+
+//==============================================================================
+
+inline xbool player_profile::GetVibration( void ) const
+{
+    return m_bVibration;
+}
+
+//==============================================================================
+
+inline void player_profile::SetVisibleOnline( xbool VisibleOnline )
+{
+    m_bIsVisibleOnline = VisibleOnline;
+}
+
+//==============================================================================
+
+inline xbool player_profile::GetVisibleOnline( void ) const
+{
+    return m_bIsVisibleOnline;
+}
+
+//==============================================================================
+
+inline void player_profile::SetAutosaveOn( xbool AutosaveOn )
+{
+    m_bAutosaveOn = AutosaveOn;
+}
+
+//==============================================================================
+
+inline xbool player_profile::GetAutosaveOn( void ) const
+{
+    return m_bAutosaveOn;
+}
+
+//==============================================================================
+
+inline void player_profile::SetAlienAvatarsOn( xbool AlienAvatarsOn )
+{
+    m_bAlienAvatarsOn = AlienAvatarsOn;
+}
+
+//==============================================================================
+
+inline xbool player_profile::GetAlienAvatarsOn( void ) const
+{
+    return m_bAlienAvatarsOn;
+}
+
+//==============================================================================
+
+inline void player_profile::SetHardUnlocked( xbool HardUnlocked )
+{
+    m_bHardUnlocked = HardUnlocked;
+}
+
+//==============================================================================
+
+inline xbool player_profile::GetHardUnlocked( void ) const
+{
+    return m_bHardUnlocked;
+}
+
+//==============================================================================
+
+inline void player_profile::SetDifficultyChanged( xbool DifficultyChanged )
+{
+    m_bDifficultyChanged = DifficultyChanged;
+}
+
+//==============================================================================
+
+inline xbool player_profile::GetDifficultyChanged( void ) const
+{
+    return m_bDifficultyChanged;
+}
+
+//==============================================================================
+
+inline void player_profile::SetAgeVerified( xbool AgeVerified )
+{
+    m_bAgeVerified = AgeVerified;
+}
+
+//==============================================================================
+
+inline xbool player_profile::GetAgeVerified( void ) const
+{
+    return m_bAgeVerified;
+}
+
+//==============================================================================
+
+inline void player_profile::SetGameFinished( xbool GameFinished )
+{
+    m_bGameFinished = GameFinished;
+}
+
+//==============================================================================
+
+inline xbool player_profile::GetGameFinished( void ) const
+{
+    return m_bGameFinished;
+}
+
+//==============================================================================
+
+inline level_check_points& player_profile::GetCheckpoint( s32 Index )
+{
+    ASSERT( (Index >= 0) && (Index < MAX_SAVED_LEVELS) );
+    return m_Checkpoints[Index];
+}
 
 //==============================================================================
 #endif // PLAYER_PROFILE_HPP

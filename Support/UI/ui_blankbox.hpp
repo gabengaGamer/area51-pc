@@ -39,8 +39,6 @@ public:
 
     virtual void    Render                  ( s32 ox=0, s32 oy=0 );
 
-    virtual void    OnUpdate                ( ui_win* pWin, f32 DeltaTime );
-
     void            SetHasTitleBar          ( xbool hasTitle );
 
     void            SetTitleBarColor        ( xcolor Color );

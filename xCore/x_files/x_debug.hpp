@@ -29,7 +29,7 @@
 #include "x_types.hpp"
 #endif
 
-#if defined(TARGET_PC) && defined(_MSC_VER)
+#if defined(_MSC_VER)
 #include <intrin.h>
 #endif
 
@@ -54,20 +54,11 @@ xbool RTFHandler( const char* pFileName,
 typedef void x_debug_msg_fn     ( const char* pBuffer );
 typedef void x_debug_crash_fn   ( char *pBuffer, s32 Length );
 #ifdef X_RETAIL
-    #ifdef TARGET_PC
-        //    The #define approach doesn't work on VC 7.x
-        inline void         x_DebugMsg( ... ){ }
-        inline void         x_DebugLog( ... ){ }
-        inline void         x_DebugMsgSetFunction( x_debug_msg_fn* CallBack ){ }
-        inline const char*  x_DebugGetVersionString( void ){ return ""; }
-        inline void         x_DebugSetVersionString( ... ){ }
-    #else
-        inline void         x_DebugMsg( ... ){ }
-        inline void         x_DebugLog( ... ){ }
-        inline void         x_DebugMsgSetFunction( x_debug_msg_fn* CallBack ){ }
-        inline const char*  x_DebugGetVersionString( void ){ return ""; }
-        inline void         x_DebugSetVersionString( ... ){ }
-    #endif
+    inline void         x_DebugMsg( ... ){ }
+    inline void         x_DebugLog( ... ){ }
+    inline void         x_DebugMsgSetFunction( x_debug_msg_fn* CallBack ){ }
+    inline const char*  x_DebugGetVersionString( void ){ return ""; }
+    inline void         x_DebugSetVersionString( ... ){ }
 #else
 void        x_DebugMsg              ( const char* pFormatStr, ... );
 void        x_DebugMsg              ( s32 Channel, const char* pFormatStr, ... );
@@ -99,7 +90,7 @@ x_debug_crash_fn*   x_DebugGetCrashFunction( void );
 
 // If we can implement BREAK properly on any given platform, do it!
 
-#if defined(TARGET_PC) && defined(_MSC_VER)
+#if defined(_MSC_VER)
 #define BREAK      do { __debugbreak(); } while(0);
 #endif
 
@@ -215,7 +206,7 @@ extern volatile s32 DDBZ;   // Debug Divide By Zero
 
 #else
 
-  #if defined( TARGET_PC ) && defined( VENDOR_MS )
+  #if defined( _MSC_VER )
     #define ASSERT(expr)        (__assume(expr))
     #define ASSERTS(expr,str)   (__assume(expr))
   #else
@@ -417,17 +408,13 @@ rtf_fn   RTFHandler;
 //
 //==============================================================================
 
-#ifdef TARGET_PC
-    #define E_PARAM int     // Let developer studio handle some of the exceptions
+#ifdef TARGET_DESKTOP
+    #define E_PARAM int     // x_throw raises an int on desktop targets.
 #else
     #define E_PARAM ...     
 #endif
 
 #ifdef X_EXCEPTIONS
-
-#ifndef TARGET_PC
-#error Exceptions are only allowed for PC Targets!
-#endif
 
 #ifdef X_EXCEPTIONS_LITE             
 
@@ -467,7 +454,7 @@ rtf_fn   RTFHandler;
     #define x_catch_begin           } if( 0 ) {
     #define x_catch_end             }
 
-    #ifdef TARGET_PC
+    #ifdef TARGET_DESKTOP
     inline void x_throw(const char* pString) { (void)pString; ASSERT(0); }
     inline void x_append_throw(const char* pString) { (void)pString; ASSERT(0); }
     #else

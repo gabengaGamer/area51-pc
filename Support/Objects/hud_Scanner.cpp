@@ -12,12 +12,13 @@
 
 #include "hud_Scanner.hpp"
 #include "HudObject.hpp"
+#include "UI/ui_renderer.hpp"
 #include "WeaponScanner.hpp"
-#include "Characters\Character.hpp"
-#include "corpse.hpp"
-#include "StringMgr\StringMgr.hpp"
-#include "NetworkMgr\Networkmgr.hpp"
-#include "NetworkMgr\MsgMgr.hpp"
+#include "Characters/Character.hpp"
+#include "Corpse.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/MsgMgr.hpp"
 
 #ifndef X_EDITOR
 #include "../../Apps/GameApp/Config.hpp"
@@ -27,9 +28,9 @@
 //  STORAGE
 //==============================================================================
 
-rhandle<xbitmap>            hud_scanner::m_InnerBmp;
-rhandle<xbitmap>            hud_scanner::m_OuterBmp;
-rhandle<xbitmap>            hud_scanner::m_OuterBmpFlipped;
+rhandle<texture>            hud_scanner::m_InnerBmp;
+rhandle<texture>            hud_scanner::m_OuterBmp;
+rhandle<texture>            hud_scanner::m_OuterBmpFlipped;
 
 //#define BAR_LENGTH          84.0f
 //#define BAR_HEIGHT          4.0f
@@ -95,6 +96,9 @@ hud_scanner::hud_scanner ( void )
     m_bJustAirSample = FALSE;
 
     m_LoreDetected = FALSE;
+    m_LoreBarAmount = 0;
+    m_LoreDistance = 0.0f;
+    m_LoreMaxDistance = 1.0f;
 }
 
 //==============================================================================
@@ -651,8 +655,6 @@ f32 g_GeigerBGSize  = 6.0f;
 
 void hud_scanner::RenderGeiger( player* pPlayer )
 {
-    (void)pPlayer;
-
     // If player dosent have the scanner then dont render the 
     // Geiger.
     if( !pPlayer->GetInventory2().HasItem(INVEN_WEAPON_SCANNER) || pPlayer->IsMutated() )
@@ -660,71 +662,30 @@ void hud_scanner::RenderGeiger( player* pPlayer )
         return;
     }
 
-    f32 ClosestDist = 0.0f;
-    f32 Max_Distance = Lore_Max_Detect_DistanceTweak.GetF32();
-
-    if( pPlayer->GetClosestLoreObjectDist( ClosestDist ) )
-    {
-        if( ClosestDist >= Max_Distance )
-        {
-            // no bar?
-            m_ScannerBmpAlpha = 0;
-            return;
-        }
-        else
-        {
-            if( m_LoreDetected == FALSE )
-            {
-                // Play sound.
-                g_AudioMgr.Play("Scanner_HUD_Appear", TRUE );
-            }
-
-            m_LoreDetected = TRUE;
-        }
-    }
-    else
-    {
-        // nothing available
-        m_ScannerBmpAlpha = 0;
-        m_LoreDetected = FALSE;
+    if( !m_LoreDetected )
         return;
-    }
 
     // Draw Scanner Boarder
-    xbitmap* pBitmap = m_ScannerBarBmp.GetPointer();
-    if( pBitmap == NULL )
+    texture* pTexture = m_ScannerBarBmp.GetPointer();
+    if( pTexture == NULL )
         return;
 
-    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
-    s32 BitmapWidth  = m_ScannerBarBmp.GetPointer()->GetWidth();
-    s32 BitmapHeight = m_ScannerBarBmp.GetPointer()->GetHeight();
+    const xbitmap& Bitmap = pTexture->m_bitmap;
+    s32 BitmapWidth  = Bitmap.GetWidth();
+    s32 BitmapHeight = Bitmap.GetHeight();
     vector2 WH( (f32)(BitmapWidth), (f32)(BitmapHeight) );
-    vector3 Pos;
-    draw_SetTexture( *m_ScannerBarBmp.GetPointer() );
+    vector2 Pos;
     static s32 HUD_SCANNER_X = -128;
     static s32 HUD_SCANNER_Y = -180;//-132;
-    Pos.GetX() = m_XPos+HUD_SCANNER_X; 
-    Pos.GetY() = m_YPos+HUD_SCANNER_Y; 
-    draw_DisableBilinear();
+    Pos.X = m_XPos+HUD_SCANNER_X;
+    Pos.Y = m_YPos+HUD_SCANNER_Y;
     static xcolor HUD_LORE_PIC_COLOR = g_HudColor;
     HUD_LORE_PIC_COLOR.A = m_ScannerBmpAlpha;
-    m_ScannerBmpAlpha+=32;
-    m_ScannerBmpAlpha = MIN(m_ScannerBmpAlpha,255);
-    draw_Sprite( Pos, WH, HUD_LORE_PIC_COLOR );
-    draw_EnableBilinear();
-    draw_End();
+    g_UIRenderer.DrawImage( *pTexture, Pos, WH,
+                            vector2( 0.0f, 0.0f ), vector2( 1.0f, 1.0f ),
+                            HUD_LORE_PIC_COLOR, 0.0f, UI_BLEND_ALPHA, UI_SAMPLER_LINEAR_CLAMP );
 
-    f32 pct = 1.0f - (ClosestDist / Max_Distance);
-
-    // give it some flutter
-    {
-        f32 fRand = x_frand( -2.0f, 2.0f );
-        f32 fSize = g_GeigerSize + fRand;
-        pct = pct * fSize;
-        pct = x_clamp(pct, 0.0f, g_GeigerSize);
-    }
-
-    RenderLoreBar((s32)pct);
+    RenderLoreBar( m_LoreBarAmount );
 }
 
 //==============================================================================
@@ -752,16 +713,17 @@ void hud_scanner::RenderLoreBar( s32 AmountPercent )
     static xcolor HUD_LORE_BAR = xcolor(80, 150, 150, 30);
     static xcolor HUD_LORE_BAR_HIGH = xcolor(200, 80, 80, 200);
     xcolor bar = Interpolate(HUD_LORE_BAR, HUD_LORE_BAR_HIGH, AmountPercent / g_GeigerSize);
-    draw_GouraudRect(R, bar, bar, bar, bar, FALSE, DRAW_UI_RTARGET);
+    g_UIRenderer.DrawGradientRect( R, bar, bar, bar, bar );
 
-    // Has the bar went up? if so update the peak
-    if( Y-BarLength < m_ScanPeak )
-        m_ScanPeak = (s32)Y-BarLength;
+    // Track the highest recent reading and periodically re-arm the peak.
+    // The old render path performed both updates here; keeping only the
+    // simulation timer made the marker stale forever.
+    if( Y - BarLength < m_ScanPeak )
+        m_ScanPeak = Y - BarLength;
 
-    // Are we in a Update Peak mode?
-    if( m_ScanPeakUpdate ) // do we need to update?
+    if( m_ScanPeakUpdate )
     {
-        m_ScanPeak = (s32)Y-BarLength;
+        m_ScanPeak = Y - BarLength;
         m_ScanPeakUpdate = FALSE;
     }
 
@@ -773,7 +735,7 @@ void hud_scanner::RenderLoreBar( s32 AmountPercent )
         m_ScanPeak-2
         );
 
-    draw_Rect(R, g_HudColor, FALSE, DRAW_UI_RTARGET);
+    g_UIRenderer.DrawRect( R, g_HudColor );
     
 }
 //==============================================================================
@@ -785,31 +747,27 @@ void hud_scanner::RenderBar( void )
 
     f32 BarPercentage = ((f32)m_Bar.m_TargetVal /  m_Bar.m_MaxVal);
 
-    xbitmap* pBitmap;
+    texture* pTexture;
 
     if( !m_Bar.m_bFlip )
-        pBitmap = m_OuterBmp.GetPointer();
+        pTexture = m_OuterBmp.GetPointer();
     else
-        pBitmap = m_OuterBmpFlipped.GetPointer();
+        pTexture = m_OuterBmpFlipped.GetPointer();
 
     //
     // Draw the border.
     //
-    if( pBitmap )
+    if( pTexture )
     {
-        vector2 WH( (f32)m_OuterBmp.GetPointer()->GetWidth(), (f32)m_OuterBmp.GetPointer()->GetHeight() );
+        const xbitmap& Bitmap = pTexture->m_bitmap;
+        vector2 WH( (f32)Bitmap.GetWidth(), (f32)Bitmap.GetHeight() );
 
-        vector3 Pos;
+        vector2 Pos;
 
-        Pos.GetX()  = m_XPos + 5.0f;
-        Pos.GetY()  = m_YPos;
-        Pos.GetY() -= YOffset;
+        Pos.X  = m_XPos + 5.0f;
+        Pos.Y  = m_YPos - YOffset;
 
         xcolor DisplayColor = m_Bar.m_OuterColor;
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
-        draw_SetTexture( *pBitmap );
-        draw_DisableBilinear();
-
         vector2 TL = vector2( 0.0f, 0.0f );
         vector2 BR = vector2( 1.0f, 1.0f );
 
@@ -818,20 +776,13 @@ void hud_scanner::RenderBar( void )
         {
             xcolor PulseColor( DisplayColor );
             PulseColor.A = (u8)(((f32)PulseColor.A / 255) * hud_object::m_PulseAlpha);
-            draw_SpriteUV( Pos, WH, TL, BR, PulseColor );
+            DisplayColor = PulseColor;
         }
-        else
-        {
-
-            draw_SpriteUV( Pos, WH, TL, BR, DisplayColor );
-        } 
-
-        draw_End(); 
+        g_UIRenderer.DrawImage( *pTexture, Pos, WH, TL, BR, DisplayColor,
+                                0.0f, UI_BLEND_ALPHA, UI_SAMPLER_LINEAR_CLAMP );
     }
 
-    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
-
-    pBitmap = m_InnerBmp.GetPointer();
+    pTexture = m_InnerBmp.GetPointer();
 
     // Image constants
     static f32 BarWidth      = 115.0f;
@@ -845,22 +796,20 @@ void hud_scanner::RenderBar( void )
     //
     if( x_abs( m_Bar.m_TargetVal - m_Bar.m_CurrentVal ) > 0.01f )
     {
-        pBitmap = m_InnerBmp.GetPointer();
-        if( pBitmap )
+        pTexture = m_InnerBmp.GetPointer();
+        if( pTexture )
         {
+            const xbitmap& Bitmap = pTexture->m_bitmap;
             f32 CurrWidth = ((f32)m_Bar.m_CurrentVal / (f32)m_Bar.m_MaxVal );
             vector2 WH( BarWidth * CurrWidth, BarHeight );
 
-            vector3 Pos; 
+            vector2 Pos;
 
-            draw_SetTexture( *pBitmap );
+            Pos.X = m_XPos + BarXOffset + 5.0f;
+            Pos.Y = m_YPos + (m_Bar.m_bFlip ? BarYOffsetF : BarYOffset) - YOffset;
 
-            Pos.GetX() = m_XPos + BarXOffset + 5.0f;
-            Pos.GetY() = m_YPos + (m_Bar.m_bFlip ? BarYOffsetF : BarYOffset);
-            Pos.GetY() -= YOffset;
-
-            vector2 UV0( (1.0f - CurrWidth) * ( BarWidth / pBitmap->GetWidth()), 0.0f );
-            vector2 UV1( BarWidth / pBitmap->GetWidth(), BarHeight / pBitmap->GetHeight() );
+            vector2 UV0( (1.0f - CurrWidth) * ( BarWidth / Bitmap.GetWidth()), 0.0f );
+            vector2 UV1( BarWidth / Bitmap.GetWidth(), BarHeight / Bitmap.GetHeight() );
 
             xcolor ScannerColor = Interpolate(XCOLOR_WHITE, XCOLOR_BLUE, (f32)(m_Bar.m_StartVal - m_Bar.m_CurrentVal) / (f32)(m_Bar.m_StartVal - m_Bar.m_TargetVal));
 
@@ -869,37 +818,30 @@ void hud_scanner::RenderBar( void )
             {
                 xcolor PulseColor( ScannerColor );
                 PulseColor.A = (u8)(((f32)PulseColor.A / 255) * hud_object::m_PulseAlpha);       
-                draw_SpriteUV( Pos, WH, UV0, UV1, PulseColor );
+                ScannerColor = PulseColor;
             }
-            else 
-            {
-                draw_SpriteUV( Pos, WH, UV0, UV1, ScannerColor );
-            }
+            g_UIRenderer.DrawImage( *pTexture, Pos, WH, UV0, UV1, ScannerColor,
+                                    0.0f, UI_BLEND_ALPHA, UI_SAMPLER_LINEAR_CLAMP );
         }
     }
-
-    draw_End();
-    draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
 
 
     //
     // Draw the current value.
     //
-    if( pBitmap )
+    if( pTexture )
     {
+        const xbitmap& Bitmap = pTexture->m_bitmap;
         for( s32 i = 0; i < 2; i++ )
         {
             vector2 WH( x_floor( BarPercentage * BarWidth ) + i, BarHeight );
-            vector3 Pos;
+            vector2 Pos;
 
-            draw_SetTexture( *pBitmap );
+            Pos.X = m_XPos + BarXOffset + 5.0f;
+            Pos.Y = m_YPos + (m_Bar.m_bFlip ? BarYOffsetF : BarYOffset) - YOffset;
 
-            Pos.GetX() = m_XPos + BarXOffset + 5.0f;
-            Pos.GetY() = m_YPos + (m_Bar.m_bFlip ? BarYOffsetF : BarYOffset);
-            Pos.GetY() -= YOffset;
-
-            vector2 UV0( (1.0f - BarPercentage) * ( BarWidth / pBitmap->GetWidth()) + (i / pBitmap->GetWidth()), 0.0f );
-            vector2 UV1( BarWidth / pBitmap->GetWidth(), BarHeight / pBitmap->GetHeight() );
+            vector2 UV0( (1.0f - BarPercentage) * ( BarWidth / Bitmap.GetWidth()) + (i / (f32)Bitmap.GetWidth()), 0.0f );
+            vector2 UV1( BarWidth / Bitmap.GetWidth(), BarHeight / Bitmap.GetHeight() );
 
             xcolor DisplayColor = m_Bar.m_InnerColor;
 
@@ -914,48 +856,45 @@ void hud_scanner::RenderBar( void )
             {
                 xcolor PulseColor( DisplayColor );
                 PulseColor.A = (u8)(((f32)PulseColor.A / 255) * hud_object::m_PulseAlpha);
-                draw_SpriteUV( Pos, WH, UV0, UV1, PulseColor );
+                DisplayColor = PulseColor;
             }
-            else 
-            {
-                draw_SpriteUV( Pos, WH, UV0, UV1, DisplayColor );
-            }
+            g_UIRenderer.DrawImage( *pTexture, Pos, WH, UV0, UV1, DisplayColor,
+                                    0.0f, UI_BLEND_ALPHA, UI_SAMPLER_LINEAR_CLAMP );
         }
     }
-
-
-    draw_End();
 }
 
 //==============================================================================
 
-void hud_scanner::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
+void hud_scanner::OnAdvanceSimulation( player* pPlayer, f32 DeltaTime )
 {
-    (void) pPlayer;
-    (void) DeltaTime;
-
-    // Check for update to the peak on the Lore Scan bar.
+    // Keep the scan overlay and its peak marker on a real simulation timer.
     m_ScanPeakUpdateTime -= DeltaTime;
-    if( m_ScanPeakUpdateTime <= 0 )
+    if( m_ScanPeakUpdateTime <= 0.0f )
     {
-        m_ScanPeakUpdateTime = 1.5f;
+        m_ScanPeakUpdateTime += 1.5f;
         m_ScanPeakUpdate = TRUE;
     }
 
     m_ScanDataTimeout -= DeltaTime;
-
-    // don't render scan info
     if( m_ScanDataTimeout <= F32_MIN )
-    {
         m_bRenderScanData = FALSE;
-    }
 
-    /*
-    if( pPlayer->GetCurrentWeapon2() == INVEN_WEAPON_SCANNER )
-    {
-        AdvanceBar( pPlayer, DeltaTime); 
-    }
-    */
+    f32 ClosestDistance = 0.0f;
+    const f32 MaxDistance = MAX( Lore_Max_Detect_DistanceTweak.GetF32(), F32_MIN );
+    const xbool HasScanner = pPlayer->GetInventory2().HasItem( INVEN_WEAPON_SCANNER ) &&
+                             !pPlayer->IsMutated();
+    const xbool WasDetected = m_LoreDetected;
+
+    m_LoreDetected = HasScanner &&
+                     pPlayer->GetClosestLoreObjectDist( ClosestDistance ) &&
+                     (ClosestDistance < MaxDistance);
+
+    if( m_LoreDetected && !WasDetected )
+        g_AudioMgr.Play( "Scanner_HUD_Appear", TRUE );
+
+    m_LoreDistance = ClosestDistance;
+    m_LoreMaxDistance = MaxDistance;
 }
 
 //==============================================================================

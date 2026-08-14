@@ -4,25 +4,25 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_textbox.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_textbox.hpp"
 
 #include "dlg_JoinFilter.hpp"
-#include "dlg_popup.hpp"
+#include "dlg_PopUp.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 #include "Configuration/GameConfig.hpp"
-#include "MemCardMgr/MemCardMgr.hpp"
+#include "SaveData/SaveDataMgr.hpp"
 
 
 //=========================================================================
@@ -42,7 +42,6 @@ enum controls
     IDC_JOIN_FILTER_PASSWORD_SELECTOR,
     IDC_JOIN_FILTER_HEADSET_SELECTOR,
     IDC_JOIN_FILTER_CONTINUE,
-    IDC_JOIN_FILTER_NAV_TEXT,
 };
 
 //-------------------------------------------------------------------------
@@ -50,21 +49,20 @@ enum controls
 ui_manager::control_tem JoinFilterControls_SPA[] = 
 {
     // Frames.
-    { IDC_JOIN_FILTER_GAME_TYPE,              "IDS_HOST_GAME_TYPE",       "text",    40,  40, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_NUM_PLAYERS,            "IDS_HOST_MIN_PLAYERS",     "text",    40,  80, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_MUTATION_MODE,          "IDS_HOST_MUTATION",        "text",    40, 120, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_PASSWORD,               "IDS_HOST_PASSWORD",        "text",    40, 160, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_HEADSET,                "IDS_HOST_VOICE_ENABLED",   "text",    40, 200, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_JOIN_FILTER_GAME_TYPE,              "IDS_HOST_GAME_TYPE",       "text",    40,  40, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_NUM_PLAYERS,            "IDS_HOST_MIN_PLAYERS",     "text",    40,  80, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_MUTATION_MODE,          "IDS_HOST_MUTATION",        "text",    40, 120, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_PASSWORD,               "IDS_HOST_PASSWORD",        "text",    40, 160, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_HEADSET,                "IDS_HOST_VOICE_ENABLED",   "text",    40, 200, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_JOIN_FILTER_GAME_TYPE_SELECTOR,     "IDS_NULL",                 "combo",  190,  40, 230, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_NUM_PLAYERS_SELECTOR,   "IDS_NULL",                 "combo",  300,  80, 120, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_MUTATION_MODE_SELECTOR, "IDS_NULL",                 "combo",  207, 120, 213, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_PASSWORD_SELECTOR,      "IDS_NULL",                 "combo",  300, 160, 120, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_HEADSET_SELECTOR,       "IDS_NULL",                 "combo",  300, 200, 120, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_JOIN_FILTER_GAME_TYPE_SELECTOR,     "IDS_NULL",                 "combo",  190,  40, 230, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_NUM_PLAYERS_SELECTOR,   "IDS_NULL",                 "combo",  300,  80, 120, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_MUTATION_MODE_SELECTOR, "IDS_NULL",                 "combo",  207, 120, 213, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_PASSWORD_SELECTOR,      "IDS_NULL",                 "combo",  300, 160, 120, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_HEADSET_SELECTOR,       "IDS_NULL",                 "combo",  300, 200, 120, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_JOIN_FILTER_CONTINUE,               "IDS_JOIN_FILTER_CONTINUE", "button",  50, 292, 100, 40,  0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_JOIN_FILTER_CONTINUE,               "IDS_JOIN_FILTER_CONTINUE", "button",  50, 292, 100, 40,  0, 5, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_JOIN_FILTER_NAV_TEXT,               "IDS_NULL",                 "text",     0,   0,   0,  0,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -72,21 +70,20 @@ ui_manager::control_tem JoinFilterControls_SPA[] =
 ui_manager::control_tem JoinFilterControls_PAL[] = 
 {
     // Frames.
-    { IDC_JOIN_FILTER_GAME_TYPE,              "IDS_HOST_GAME_TYPE",       "text",    40,  40, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_NUM_PLAYERS,            "IDS_HOST_MIN_PLAYERS",     "text",    40,  80, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_MUTATION_MODE,          "IDS_HOST_MUTATION",        "text",    40, 120, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_PASSWORD,               "IDS_HOST_PASSWORD",        "text",    40, 160, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_HEADSET,                "IDS_HOST_VOICE_ENABLED",   "text",    40, 200, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_JOIN_FILTER_GAME_TYPE,              "IDS_HOST_GAME_TYPE",       "text",    40,  40, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_NUM_PLAYERS,            "IDS_HOST_MIN_PLAYERS",     "text",    40,  80, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_MUTATION_MODE,          "IDS_HOST_MUTATION",        "text",    40, 120, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_PASSWORD,               "IDS_HOST_PASSWORD",        "text",    40, 160, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_HEADSET,                "IDS_HOST_VOICE_ENABLED",   "text",    40, 200, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_JOIN_FILTER_GAME_TYPE_SELECTOR,     "IDS_NULL",                 "combo",  220,  40, 205, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_NUM_PLAYERS_SELECTOR,   "IDS_NULL",                 "combo",  220,  80, 205, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_MUTATION_MODE_SELECTOR, "IDS_NULL",                 "combo",  220, 120, 205, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_PASSWORD_SELECTOR,      "IDS_NULL",                 "combo",  220, 160, 205, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_HEADSET_SELECTOR,       "IDS_NULL",                 "combo",  220, 200, 205, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_JOIN_FILTER_GAME_TYPE_SELECTOR,     "IDS_NULL",                 "combo",  220,  40, 205, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_NUM_PLAYERS_SELECTOR,   "IDS_NULL",                 "combo",  220,  80, 205, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_MUTATION_MODE_SELECTOR, "IDS_NULL",                 "combo",  220, 120, 205, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_PASSWORD_SELECTOR,      "IDS_NULL",                 "combo",  220, 160, 205, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_HEADSET_SELECTOR,       "IDS_NULL",                 "combo",  220, 200, 205, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_JOIN_FILTER_CONTINUE,               "IDS_JOIN_FILTER_CONTINUE", "button",  50, 292, 100, 40,  0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_JOIN_FILTER_CONTINUE,               "IDS_JOIN_FILTER_CONTINUE", "button",  50, 292, 100, 40,  0, 5, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_JOIN_FILTER_NAV_TEXT,               "IDS_NULL",                 "text",     0,   0,   0,  0,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -94,21 +91,20 @@ ui_manager::control_tem JoinFilterControls_PAL[] =
 ui_manager::control_tem JoinFilterControls_ENG[] = 
 {
     // Frames.
-    { IDC_JOIN_FILTER_GAME_TYPE,              "IDS_HOST_GAME_TYPE",       "text",    50,  40, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_NUM_PLAYERS,            "IDS_HOST_MIN_PLAYERS",     "text",    50,  80, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_MUTATION_MODE,          "IDS_HOST_MUTATION",        "text",    50, 120, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_PASSWORD,               "IDS_HOST_PASSWORD",        "text",    50, 160, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_HEADSET,                "IDS_HOST_VOICE_ENABLED",   "text",    50, 200, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_JOIN_FILTER_GAME_TYPE,              "IDS_HOST_GAME_TYPE",       "text",    50,  40, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_NUM_PLAYERS,            "IDS_HOST_MIN_PLAYERS",     "text",    50,  80, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_MUTATION_MODE,          "IDS_HOST_MUTATION",        "text",    50, 120, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_PASSWORD,               "IDS_HOST_PASSWORD",        "text",    50, 160, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_HEADSET,                "IDS_HOST_VOICE_ENABLED",   "text",    50, 200, 100, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_JOIN_FILTER_GAME_TYPE_SELECTOR,     "IDS_NULL",                 "combo",  240,  40, 180, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_NUM_PLAYERS_SELECTOR,   "IDS_NULL",                 "combo",  240,  80, 180, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_MUTATION_MODE_SELECTOR, "IDS_NULL",                 "combo",  240, 120, 180, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_PASSWORD_SELECTOR,      "IDS_NULL",                 "combo",  240, 160, 180, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_JOIN_FILTER_HEADSET_SELECTOR,       "IDS_NULL",                 "combo",  240, 200, 180, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_JOIN_FILTER_GAME_TYPE_SELECTOR,     "IDS_NULL",                 "combo",  240,  40, 180, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_NUM_PLAYERS_SELECTOR,   "IDS_NULL",                 "combo",  240,  80, 180, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_MUTATION_MODE_SELECTOR, "IDS_NULL",                 "combo",  240, 120, 180, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_PASSWORD_SELECTOR,      "IDS_NULL",                 "combo",  240, 160, 180, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_JOIN_FILTER_HEADSET_SELECTOR,       "IDS_NULL",                 "combo",  240, 200, 180, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_JOIN_FILTER_CONTINUE,               "IDS_JOIN_FILTER_CONTINUE", "button",  50, 292, 100, 40,  0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_JOIN_FILTER_CONTINUE,               "IDS_JOIN_FILTER_CONTINUE", "button",  50, 292, 100, 40,  0, 5, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_JOIN_FILTER_NAV_TEXT,               "IDS_NULL",                 "text",     0,   0,   0,  0,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -226,7 +222,6 @@ xbool dlg_join_filter::Create( s32                        UserID,
     m_pMutationModeText = (ui_text*)  FindChildByID( IDC_JOIN_FILTER_MUTATION_MODE );
     m_pPasswordText     = (ui_text*)  FindChildByID( IDC_JOIN_FILTER_PASSWORD );
     m_pHeadsetText      = (ui_text*)  FindChildByID( IDC_JOIN_FILTER_HEADSET );
-    m_pNavText          = (ui_text*)  FindChildByID( IDC_JOIN_FILTER_NAV_TEXT    );
 
     m_pGameTypeSelect   = (ui_combo*) FindChildByID( IDC_JOIN_FILTER_GAME_TYPE_SELECTOR   );
     m_pNumPlayerSelect  = (ui_combo*) FindChildByID( IDC_JOIN_FILTER_NUM_PLAYERS_SELECTOR );
@@ -246,11 +241,7 @@ xbool dlg_join_filter::Create( s32                        UserID,
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);    
-
+    SetNavText( navText );
     // set up game type selector
     m_pGameTypeSelect->SetNavFlags( ui_combo::CB_CHANGE_ON_NAV | ui_combo::CB_CHANGE_ON_SELECT );
     m_pGameTypeSelect->AddItem  ( g_StringTableMgr( "ui", "IDS_ANY"  ), -1  );
@@ -329,7 +320,7 @@ xbool dlg_join_filter::Create( s32                        UserID,
 
     // set initial highlight/control
     m_CurrHL = 0;
-    m_pContinueButton->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pContinueButton->SetActive( TRUE );
     GotoControl( (ui_control*)m_pContinueButton );
 
     // Clear popup pointer
@@ -413,6 +404,7 @@ xbool dlg_join_filter::Create( s32                        UserID,
 
 void dlg_join_filter::Destroy( void )
 {
+    g_SaveDataMgr.CancelCallbacks( this );
     ui_dialog::Destroy();
 
     // kill screen wipe
@@ -475,14 +467,14 @@ void dlg_join_filter::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_join_filter::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_join_filter::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 }
 
 //=========================================================================
 
-void dlg_join_filter::OnPadBack( ui_win* pWin )
+void dlg_join_filter::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -495,7 +487,7 @@ void dlg_join_filter::OnPadBack( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_join_filter::OnPadSelect( ui_win* pWin )
+void dlg_join_filter::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -524,12 +516,12 @@ void dlg_join_filter::OnPadSelect( ui_win* pWin )
             {
                 // settings have changed -save changes?
                 irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
                 // set nav text
                 xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
                 navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-                m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                SetNavTextVisible( FALSE );
 
                 // configure message
                 m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_GAMEMGR_POPUP" ), 
@@ -572,7 +564,6 @@ void dlg_join_filter::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pPasswordText     ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pHeadsetText      ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pContinueButton   ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pNavText          ->SetFlag( ui_win::WF_VISIBLE, TRUE );
 
             m_pGameTypeSelect   ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pNumPlayerSelect  ->SetFlag( ui_win::WF_VISIBLE, TRUE );
@@ -581,7 +572,6 @@ void dlg_join_filter::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pHeadsetSelect    ->SetFlag( ui_win::WF_VISIBLE, TRUE );
     
             GotoControl( (ui_control*)m_pContinueButton );
-            m_pContinueButton->SetFlag(ui_win::WF_HIGHLIGHT, TRUE);
             g_UiMgr->SetScreenHighlight( m_pContinueButton->GetPosition() );
         }
     }
@@ -595,34 +585,15 @@ void dlg_join_filter::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp = NULL;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
 
             switch( m_PopUpResult )
             {
                 case DLG_POPUP_YES:
                 {
-                    // save changes
-                    // check if the settings are saved 
-                    if( g_StateMgr.GetSettingsCardSlot() == -1 )
-                    {
-#ifdef TARGET_PS2
-                        // not saved - goto memory card select screen
-                        m_State = DIALOG_STATE_MEMCARD_ERROR;
-#else
-                        // attempt to create settings
-                        g_StateMgr.SetSettingsCardSlot( 0 );
-                        g_UIMemCardMgr.CreateSettings( this, &dlg_join_filter::OnSaveSettingsCB );
-                        m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
-#endif
-                    }
-                    else
-                    {                            
-                        // OK. save changes
-                        g_AudioMgr.Play("Select_Norm");
-                        // attempt to save the changes to the memcard
-                        g_UIMemCardMgr.SaveSettings( this, &dlg_join_filter::OnSaveSettingsCB );
-                        m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
-                    }
+                    g_AudioMgr.Play("Select_Norm");
+                    g_SaveDataMgr.SaveSettings( this, &dlg_join_filter::OnSaveSettingsCB );
+                    m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
                 }
                 break;
 
@@ -644,7 +615,7 @@ void dlg_join_filter::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
     // update labels  
-    if( m_pGameTypeSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pGameTypeSelect->IsFocused() )
     {
         highLight = 0;
         m_pGameTypeText->SetLabelColor( xcolor(255,252,204,255) );
@@ -655,7 +626,7 @@ void dlg_join_filter::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         m_pGameTypeText->SetLabelColor( xcolor(126,220,60,255) );
     }
 
-    if( m_pNumPlayerSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pNumPlayerSelect->IsFocused() )
     {
         highLight = 1;
         m_pNumPlayerText->SetLabelColor( xcolor(255,252,204,255) );
@@ -666,7 +637,7 @@ void dlg_join_filter::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         m_pNumPlayerText->SetLabelColor( xcolor(126,220,60,255) );
     }
 
-   if( m_pMutationSelect->GetFlags(WF_HIGHLIGHT) )
+   if( m_pMutationSelect->IsFocused() )
     {
         highLight = 2;
         m_pMutationModeText->SetLabelColor( xcolor(255,252,204,255) );
@@ -677,7 +648,7 @@ void dlg_join_filter::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         m_pMutationModeText->SetLabelColor( xcolor(126,220,60,255) );
     }
 
-   if( m_pPasswordSelect->GetFlags(WF_HIGHLIGHT) )
+   if( m_pPasswordSelect->IsFocused() )
     {
         highLight = 3;
         m_pPasswordText->SetLabelColor( xcolor(255,252,204,255) );
@@ -688,7 +659,7 @@ void dlg_join_filter::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         m_pPasswordText->SetLabelColor( xcolor(126,220,60,255) );
     }
 
-   if( m_pHeadsetSelect->GetFlags(WF_HIGHLIGHT) )
+   if( m_pHeadsetSelect->IsFocused() )
     {
         highLight = 4;
         m_pHeadsetText->SetLabelColor( xcolor(255,252,204,255) );
@@ -701,7 +672,7 @@ void dlg_join_filter::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
 
 
-    if( m_pContinueButton->GetFlags(WF_HIGHLIGHT) )
+    if( m_pContinueButton->IsFocused() )
     {
         highLight = 5;
         g_UiMgr->SetScreenHighlight( m_pContinueButton->GetPosition() );
@@ -720,23 +691,10 @@ void dlg_join_filter::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
 void dlg_join_filter::OnSaveSettingsCB( void )
 {
-    // check if the save was successful (OR user wants to continue without saving)
-#ifdef TARGET_PS2
-    MemCardMgr::condition& Condition1 = g_UIMemCardMgr.GetCondition( g_StateMgr.GetSettingsCardSlot() );
-#else
-    MemCardMgr::condition& Condition1 = g_UIMemCardMgr.GetCondition( 0 );
-#endif
-    if( Condition1.SuccessCode )
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
     {
         // activate the new settings
         g_StateMgr.ActivatePendingSettings();
-
-        // continue without saving?
-        if( Condition1.bCancelled )
-        {
-            // clear settings card slot
-            g_StateMgr.SetSettingsCardSlot(-1);
-        }
 
         // save successful - onward to load game
         g_AudioMgr.Play( "Select_Norm" );
@@ -744,16 +702,12 @@ void dlg_join_filter::OnSaveSettingsCB( void )
     }
     else
     {
-        // save failed! - goto memcard select dialog
+        // save failed; let the state manager open the save data retry dialog
         g_AudioMgr.Play( "Backup" );
 
-        // clear settings card slot
-        g_StateMgr.SetSettingsCardSlot(-1);
-
         // handle error condition
-        m_State = DIALOG_STATE_MEMCARD_ERROR;
+        m_State = DIALOG_STATE_SAVE_DATA_ERROR;
     }
 }
 
 //=========================================================================
-

@@ -7,18 +7,6 @@
 // DEFINES
 //------------------------------------------------------------------------------
 
-// Error codes
-#define LGCODEC_SUCCESS                          (0x00000000)
-#define LGCODEC_ERROR                            (0x80000000)
-#define LGCODEC_ERR_INVALID_PARAMETER             (0x80000004)
-#define LGCODEC_ERR_ALREADY_OPENED                (0x80000005)
-#define LGCODEC_ERR_DEVICE_LOST                   (0x80000006)
-#define LGCODEC_ERR_OUT_OF_MEMORY                 (0x80000007)
-
-// quick test against error condition
-#define LGCODEC_SUCCEEDED(x)                      (0 == ((x) & LGCODEC_ERROR))
-#define LGCODEC_FAILED(x)                         (0 != ((x) & LGCODEC_ERROR))
-
 #define LPC10_SAMPLES_PER_FRAME         (180)
 #define LPC10_BYTES_PER_EFRAME          (7)
 #define LPC10_BITS_IN_COMPRESSED_FRAME  (54)
@@ -158,6 +146,7 @@ struct LPC10
 
 xbool LPC10Init( void );
 xbool LPC10Kill( void );
+xbool LPC10Reset( void );
 
 xbool LPC10Encode( const s16 *src, const u32 src_size, u8  *dest, s32 *dest_size );
 xbool LPC10Decode( const u8  *src, const u32 src_size, s16 *dest, s32 *dest_size );

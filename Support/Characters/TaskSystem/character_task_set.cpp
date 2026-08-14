@@ -8,12 +8,13 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "character_task_set.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 #include "Entropy.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Characters\Character.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Characters/Character.hpp"
 
 #define MAX_TASK_STRING_LEN     255
 
@@ -75,12 +76,12 @@ static struct character_task_set_desc : public object_desc
                 //should we blink
                 if (Task.m_bBlink)
                 {
-                    EditorIcon_Draw( EDITOR_ICON_LOOP, Task.GetL2W(), FALSE, XCOLOR_YELLOW);
+                    DrawEditorIcon( EditorIcon::Loop, Task.GetL2W(), FALSE, XCOLOR_YELLOW);
                 }
                 Task.m_bBlink = !Task.m_bBlink;
             }
         }
-        return EDITOR_ICON_CHARACTER_TASK; 
+        return static_cast<s32>( EditorIcon::CharacterTask ); 
     }
 
 #endif // X_EDITOR
@@ -154,21 +155,19 @@ void character_task_set::OnDebugRender ( void )
         if ( pObject )
         {
             xcolor ActivatorColor = XCOLOR_YELLOW;
-            draw_Line( GetPosition(), pObject->GetBBox().GetCenter(), ActivatorColor );
-            draw_BBox( pObject->GetBBox(), ActivatorColor );
+            render::debug::Line( GetPosition(), pObject->GetBBox().GetCenter(), ActivatorColor );
+            render::debug::Box( pObject->GetBBox(), ActivatorColor );
 #ifdef X_EDITOR
-            draw_Label( pObject->GetBBox().GetCenter(), XCOLOR_WHITE, "Task Character" );
+            render::debug::Label( pObject->GetBBox().GetCenter(), XCOLOR_WHITE, "Task Character" );
 #endif // X_EDITOR
         }
     
         if (m_OnSuccess == character_task::HANDLE_COMMAND_RETRY_AT_TOP)
         {
-//            draw_editor_icon( EDITOR_ICON_LOOP, GetPosition() + vector3(0.0f, - 15.0f, 0.0f));
         }
 
         if(GetAttrBits() & ATTR_EDITOR_SELECTED )
         {
-//            draw_editor_icon( EDITOR_ICON_CHARACTER_TASK, Pos, xcolor(255,0,0,128) );
 
             if (m_ActivateOnSuccess != 0)
             {
@@ -177,10 +176,10 @@ void character_task_set::OnDebugRender ( void )
                 if ( ObjectPtr.IsValid() )
                 {
                     xcolor ActivatorColor = XCOLOR_BLUE;
-                    draw_Line( GetPosition(), ObjectPtr.m_pObject->GetBBox().GetCenter(), ActivatorColor );
-                    draw_BBox( ObjectPtr.m_pObject->GetBBox(), ActivatorColor );
+                    render::debug::Line( GetPosition(), ObjectPtr.m_pObject->GetBBox().GetCenter(), ActivatorColor );
+                    render::debug::Box( ObjectPtr.m_pObject->GetBBox(), ActivatorColor );
 #ifdef X_EDITOR
-                    draw_Label( ObjectPtr.m_pObject->GetBBox().GetCenter(), XCOLOR_WHITE, "Activate On Success" );
+                    render::debug::Label( ObjectPtr.m_pObject->GetBBox().GetCenter(), XCOLOR_WHITE, "Activate On Success" );
 #endif // X_EDITOR
                 }
             }
@@ -202,7 +201,7 @@ void character_task_set::OnDebugRender ( void )
             //what task am I on
             if (m_CurrentTaskIndex < m_TaskCount && m_Task[m_CurrentTaskIndex])
             {
-                draw_Label( GetPosition(), XCOLOR_WHITE, xfs("[%d,%d]",
+                render::debug::Label( GetPosition(), XCOLOR_WHITE, xfs("[%d,%d]",
                     m_CurrentTaskIndex, m_Task[m_CurrentTaskIndex]->m_SubCurrentTaskIndex) );
             }
         }
@@ -756,7 +755,7 @@ void character_task_set::MarkForDeletion()
 
 //=============================================================================
 
-void character_task_set::OnAdvanceLogic( f32 DeltaTime )
+void character_task_set::OnAdvanceSimulation( f32 DeltaTime )
 {
     (void)DeltaTime;
 

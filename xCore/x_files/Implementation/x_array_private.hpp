@@ -42,7 +42,7 @@ template< class T >
 inline s32 xarray<T>::CalcGrowth( void )
 {
     if( m_GrowAmount == 0 )
-        return MAX( 128, (m_Capacity/2) );
+        return MAX( 128, (m_capacity/2) );
     else
         return m_GrowAmount;
 }
@@ -93,8 +93,8 @@ inline s32 xarray<T>::GetCount( void ) const
 template< class T >
 inline void xarray<T>::SetCount( s32 NewCount )
 {
-    SetCapacity( MAX( NewCount, m_Capacity ) );
-    ASSERT(NewCount <= m_Capacity);
+    SetCapacity( MAX( NewCount, m_capacity ) );
+    ASSERT(NewCount <= m_capacity);
     m_Count = NewCount;
 }
 
@@ -103,7 +103,7 @@ inline void xarray<T>::SetCount( s32 NewCount )
 template< class T >
 inline s32 xarray<T>::GetCapacity( void ) const
 {
-    return( m_Capacity );
+    return( m_capacity );
 }
 
 //==============================================================================
@@ -164,7 +164,7 @@ xarray<T>::xarray( void )
 {
     m_pData         = NULL;
     m_Count         = 0;
-    m_Capacity      = 0;
+    m_capacity      = 0;
     m_GrowAmount    = 0;
     m_Status        = STATUS_NORMAL;
 }
@@ -177,8 +177,8 @@ xarray<T>::xarray( const xarray<T>& Array )
     s32 i;
 
     m_Status        = STATUS_NORMAL;
-    m_Capacity      = Array.GetCount();
-    m_Count         = m_Capacity;
+    m_capacity      = Array.GetCount();
+    m_Count         = m_capacity;
     m_GrowAmount    = 0;
     m_pData         = new T[ m_Count ];
 
@@ -199,7 +199,7 @@ xarray<T>::xarray( T* Array, s32 Capacity, s32 Count )
     m_pData         = Array;
     m_Count         = Count;
     m_GrowAmount    = 0;
-    m_Capacity      = Capacity;
+    m_capacity      = Capacity;
     m_Status        = STATUS_STATIC;
 }
 
@@ -219,7 +219,7 @@ T& xarray<T>::Insert( s32 Index )
     ASSERT( Index >= 0 );
     ASSERT( Index <= m_Count ); // Allow "insertion" at the end of the array.
     
-    if( m_Capacity < m_Count+1 )
+    if( m_capacity < m_Count+1 )
     {
         // Need to grow the buffer.
         ASSERT( m_Status != STATUS_LOCKED );
@@ -246,7 +246,7 @@ T& xarray<T>::Insert( s32 Index )
         // Ditch the old allocation, and install the new one.
         delete [] m_pData;
         m_pData    = pNewData;
-        m_Capacity = NewCapacity;
+        m_capacity = NewCapacity;
 
         // Update count.
         m_Count += 1;
@@ -289,7 +289,7 @@ void xarray<T>::Insert( s32 Index, const xarray<T>& Array )
     ASSERT( Index <= m_Count ); // Allow "insertion" at the end of the array.
     ASSERT( *this != Array );   // Can't insert self into self!  (Ouch!)
 
-    if( m_Capacity < (m_Count + Array.m_Count) )
+    if( m_capacity < (m_Count + Array.m_Count) )
     {
         // Need to grow the buffer.
         ASSERT( m_Status != STATUS_LOCKED );
@@ -319,7 +319,7 @@ void xarray<T>::Insert( s32 Index, const xarray<T>& Array )
         // Ditch the old allocation, and install the new one.
         delete [] m_pData;
         m_pData    = pNewData;
-        m_Capacity = NewCapacity;
+        m_capacity = NewCapacity;
 
         // Update count.
         m_Count += Array.m_Count;
@@ -373,7 +373,7 @@ void xarray<T>::Delete( s32 Index, s32 Count )
 template< class T >
 T& xarray<T>::Append( void )
 {
-    if( m_Capacity < m_Count+1 )
+    if( m_capacity < m_Count+1 )
     {
         // Need to grow the buffer.
         ASSERT( m_Status != STATUS_LOCKED );
@@ -394,7 +394,7 @@ T& xarray<T>::Append( void )
         // Ditch the old allocation, and install the new one.
         delete [] m_pData;
         m_pData    = pNewData;
-        m_Capacity = NewCapacity;
+        m_capacity = NewCapacity;
     }
 
     // Update count.
@@ -409,7 +409,7 @@ T& xarray<T>::Append( void )
 template< class T >
 void xarray<T>::Append( const T& Element )
 {       
-    if( m_Capacity < m_Count+1 )
+    if( m_capacity < m_Count+1 )
     {
         // Need to grow the buffer.
         ASSERT( m_Status != STATUS_LOCKED );
@@ -430,7 +430,7 @@ void xarray<T>::Append( const T& Element )
         // Ditch the old allocation, and install the new one.
         delete [] m_pData;
         m_pData    = pNewData;
-        m_Capacity = NewCapacity;
+        m_capacity = NewCapacity;
     }
 
     // Bring in new element.
@@ -448,7 +448,7 @@ void xarray<T>::Append( const xarray<T>& Array )
     s32 i;
     ASSERT( *this != Array );   // Can't append self onto self!
 
-    if( m_Capacity < (m_Count + Array.m_Count) )
+    if( m_capacity < (m_Count + Array.m_Count) )
     {
         // Need to grow the buffer.
         ASSERT( m_Status != STATUS_LOCKED );
@@ -465,7 +465,7 @@ void xarray<T>::Append( const xarray<T>& Array )
         // Ditch the old allocation, and install the new one.
         delete [] m_pData;
         m_pData    = pNewData;
-        m_Capacity = m_Count + Array.m_Count;
+        m_capacity = m_Count + Array.m_Count;
     }
 
     // Bring in new elements.
@@ -486,7 +486,7 @@ void xarray<T>::SetCapacity( s32 Capacity )
     ASSERT( Capacity >= m_Count );
     ASSERT( m_Status == STATUS_NORMAL );
 
-    if( Capacity != m_Capacity )
+    if( Capacity != m_capacity )
     {
         s32 i;
         T*  pNewData = new T[ Capacity ];
@@ -500,7 +500,7 @@ void xarray<T>::SetCapacity( s32 Capacity )
         // Ditch the old allocation, and install the new one.
         delete [] m_pData;
         m_pData    = pNewData;
-        m_Capacity = Capacity;        
+        m_capacity = Capacity;        
     }
 }
 
@@ -514,7 +514,7 @@ void xarray<T>::Clear( void )
         delete [] m_pData;
         m_pData    = NULL;
         m_Count    = 0;
-        m_Capacity = 0;
+        m_capacity = 0;
     }
     else
     {
@@ -529,7 +529,7 @@ void xarray<T>::FreeExtra( void )
 {
     ASSERT( m_Status == STATUS_NORMAL );
 
-    if( m_Capacity > m_Count )
+    if( m_capacity > m_Count )
     {
         if( m_Count > 0 )
         {
@@ -545,14 +545,14 @@ void xarray<T>::FreeExtra( void )
             // Ditch the old allocation, and install the new one.
             delete [] m_pData;
             m_pData    = pNewData;
-            m_Capacity = m_Count;
+            m_capacity = m_Count;
         }
         else
         {
             // Free the buffer completely
             delete[] m_pData;
             m_pData = NULL;
-            m_Capacity = 0;
+            m_capacity = 0;
         }
     }
 }
@@ -584,7 +584,7 @@ const xarray<T>& xarray<T>::operator = ( const xarray<T>& Array )
 
     if( this != &Array )
     {
-        if( m_Capacity < Array.m_Count )
+        if( m_capacity < Array.m_Count )
         {
             // Need to grow the buffer.
             ASSERT( m_Status != STATUS_LOCKED );
@@ -598,7 +598,7 @@ const xarray<T>& xarray<T>::operator = ( const xarray<T>& Array )
             ASSERTS(m_pData,"xarray::operator= out of memory");
 
             m_Count    = 0;
-            m_Capacity = Array.m_Count;
+            m_capacity = Array.m_Count;
         }
 
         // Copy in elements.
@@ -667,7 +667,7 @@ xbool xarray<T>::Load( X_FILE* pFile )
     ASSERT( pFile );
     x_fread( this, sizeof(*this),1,pFile);
 
-    m_pData = new T[ m_Capacity ];
+    m_pData = new T[ m_capacity ];
 
     x_fread( m_pData, sizeof(*m_pData), m_Count, pFile);
 

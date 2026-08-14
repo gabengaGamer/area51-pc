@@ -8,26 +8,14 @@
 //#include "Navigation\Nav_Map.hpp"
 #include "AlertPackage.hpp"
 #include "Conversation_Packet.hpp"
-#include "loco\loco.hpp"
+#include "Loco/Loco.hpp"
 
 //=========================================================================
 // PATCHVARIANT macro - this macros is used so from Visual Studio .NET we
 // can auto fixup the character base references..
 //=========================================================================
 
-#ifndef TARGET_XBOX
-    #define PATCHVARIANT(type,label) type& m_##label
-#else
-    #if _MSC_VER < 1300
-        #define PATCHVARIANT(type,label) type& m_##label
-    #else
-        #define PATCHVARIANT(type,label) union  \
-        {                                       \
-            type* m_p##label;                   \
-            type& m_##label;                    \
-        };
-    #endif
-#endif
+#define PATCHVARIANT(type,label) type& m_##label
 
 //=========================================================================
 // CLASSES

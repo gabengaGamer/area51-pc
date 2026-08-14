@@ -13,9 +13,9 @@
 //==------------------------------------------------------------------------
 // Includes
 //==------------------------------------------------------------------------
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
-#include "..\Support\TriggerEx\Affecters\object_affecter.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
+#include "../Support/TriggerEx/Affecters/object_affecter.hpp"
 //==------------------------------------------------------------------------
 // Defines
 //==------------------------------------------------------------------------
@@ -55,7 +55,7 @@ public:
     virtual void        OnActivate          ( xbool Flag );  
     void                LogicCheckOnActivate( void );
     virtual void        OnInit              ( void );
-    virtual void        OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
     xbool               QueryPlayerInVolume ( void );
     xbool               QueryObjectInVolume ( object* pObject );
 

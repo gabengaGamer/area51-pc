@@ -5,60 +5,7 @@
 //=============================================================================
 
 #include "Entropy.hpp"
-#include "Objects\Render\SkinInst.hpp"
-
-//=============================================================================
-
-#ifdef TARGET_XBOX
-void xbox_Unregister ( skin_geom* pGeom );
-#endif
-
-//=============================================================================
-// LOADER FOR THE SKIN GEOM RESOURCE
-//=============================================================================
-
-static struct skin_loader : public rsc_loader
-{
-    //-------------------------------------------------------------------------
-    
-    skin_loader( void ) : rsc_loader( "SKIN GEOM", ".skingeom" ) {}
-
-    //-------------------------------------------------------------------------
-    
-    virtual void* PreLoad ( X_FILE* FP )
-    {
-        MEMORY_OWNER( "SKIN GEOM DATA" );
-        fileio File;
-        return( File.PreLoad( FP ) );
-    }
-
-    //-------------------------------------------------------------------------
-    
-    virtual void* Resolve ( void* pData ) 
-    {
-        fileio     File;
-        skin_geom* pSkinGeom = NULL;
-
-        File.Resolved( (fileio::resolve*)pData, pSkinGeom );
-
-        return( pSkinGeom );
-    }
-
-    //-------------------------------------------------------------------------
-    
-    virtual void Unload( void* pData )
-    {
-        skin_geom* pSkinGeom = (skin_geom*)pData;
-        ASSERT( pSkinGeom );
-
-        #ifdef TARGET_XBOX
-        xbox_Unregister( pSkinGeom );
-        #endif
-
-        delete pSkinGeom;
-    }
-
-} s_Skin_Geom_Loader;
+#include "Objects/Render/SkinInst.hpp"
 
 //=============================================================================
 // FUNCTIONS
@@ -145,12 +92,12 @@ void skin_inst::RenderShadowCast( const matrix4* pL2W,
                                   u64            ProjMask )
 {
     (void)pL2W;
-    (void)nBone;
     (void)Flags;
 
     // add the shadow
     render::AddSkinCaster( m_hInst,
                            pBone,
+                           nBone,
                            LODMask,
                            ProjMask );
 }
@@ -177,7 +124,7 @@ void skin_inst::OnEnumProp( prop_enum& List )
 
 xbool skin_inst::OnProperty( prop_query& I )
 {
-    CONTEXT( "skin_inst::OnProperty" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "skin_inst::OnProperty" );
 
     if( render_inst::OnProperty( I ) )
         return( TRUE );

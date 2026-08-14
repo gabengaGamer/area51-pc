@@ -9,15 +9,15 @@
 //=========================================================================
 
 #include "Soldier.hpp"
-#include "Characters\God.hpp"
-#include "Debris\debris_rigid.hpp"
-#include "gamelib\StatsMgr.hpp"
-#include "Objects\NewWeapon.hpp"
-#include "Objects\Corpse.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Objects\AlienOrb.hpp"
+#include "Characters/God.hpp"
+#include "Debris/debris_rigid.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "Objects/Corpse.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Objects/AlienOrb.hpp"
 
 //=========================================================================
 // DEBUG
@@ -237,11 +237,6 @@ hazmat::~hazmat()
 // Soldier CHARACTER
 //=========================================================================
 
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( push )
-    #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
-#endif
-
 soldier::soldier() :
     character(),
     m_Idle              ( *this, character_state::STATE_IDLE    ),
@@ -272,10 +267,6 @@ soldier::soldier() :
 
     m_OrbGuid       = 0;
 }
-
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( pop )
-#endif
 
 //=========================================================================
 

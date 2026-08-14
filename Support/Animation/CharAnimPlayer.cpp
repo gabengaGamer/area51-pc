@@ -8,8 +8,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "animdata.hpp"
-#include "charanimplayer.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "AnimData.hpp"
+#include "CharAnimPlayer.hpp"
 #include "e_ScratchMem.hpp"
 #include "Entropy.hpp"
 
@@ -41,7 +42,6 @@ char_anim_player::char_anim_player     ( void )
     m_WorldPos.Zero();
     m_WorldRot.Zero();
     m_WorldScale = 1.0f;
-    m_RenderOffset.Zero();
     m_SlideDelta.Zero();
     m_YawDelta = 0.0f;
     m_AnimHandleYaw = 0;
@@ -145,7 +145,6 @@ void char_anim_player::SetAnim( s32 iAnim, xbool ManualVert, xbool ManualHoriz, 
     m_bManualVert = ManualVert;
     m_bManualHoriz = ManualHoriz;
 
-    m_RenderOffset.Zero();
     m_SlideDelta.Zero();
     m_YawDelta = 0.0f;
 }
@@ -202,7 +201,7 @@ void char_anim_player::SetRemoveTurnYaw( xbool bRemoveTurnYaw )
 
 void char_anim_player::Advance( f32 nSeconds, vector3&  DeltaPos, radian& DeltaYaw )
 {
-    CONTEXT( "char_anim_player::Advance" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "char_anim_player::Advance" );
 
     // If completely frozen just return
     if( nSeconds==0 )
@@ -428,9 +427,6 @@ void char_anim_player::PrepareRootKey( anim_key& Key )
         RootTrans += RootTransJ;
     }
 
-    // Transform render offset into world and add to root translation
-    RootTrans += AnimToWorldM * m_RenderOffset;
-
     // Put data back into Key[0]
     Key.Rotation = RootRot;
     Key.Translation = RootTrans;
@@ -563,8 +559,8 @@ void char_anim_player::RenderSkeleton( xbool LabelBones )
         if( GetBone(i).iParent != -1 )
             PP = GetBonePosition( GetBone(i).iParent );
 
-        draw_Line( BP, PP, XCOLOR_GREEN );
-        draw_Marker( BP, XCOLOR_RED );
+        render::debug::Line( BP, PP, XCOLOR_GREEN );
+        render::debug::Marker( BP, XCOLOR_RED );
     }
 
     // Label bones
@@ -572,7 +568,7 @@ void char_anim_player::RenderSkeleton( xbool LabelBones )
     {
         for( i=0; i<nBones; i++ )
         {
-            draw_Label( GetBonePosition( i ), XCOLOR_WHITE, GetBone(i).Name );
+            render::debug::Label( GetBonePosition( i ), XCOLOR_WHITE, GetBone(i).Name );
         }
     }
 }
@@ -744,22 +740,6 @@ const matrix4& char_anim_player::GetCachedL2W( s32 iBone )
         UpdateCachedL2W();
 
     return m_pCachedL2W[iBone];
-}
-
-//=========================================================================
-
-void char_anim_player::GetBoneL2Ws( matrix4* pBoneL2W, xbool bApplyBindPose )
-{
-    ASSERT( pBoneL2W );
-
-    anim_key* MixBuffer = base_player::GetMixBuffer( base_player::MIX_BUFFER_PLAYER );
-    ASSERT( MixBuffer );
-
-    matrix4 L2W;
-    L2W.Identity();
-
-    GetInterpKeys( MixBuffer );
-    GetAnimGroup().ComputeBonesL2W( L2W, MixBuffer, GetAnimGroup().GetNBones(), pBoneL2W, bApplyBindPose );
 }
 
 //=========================================================================

@@ -1,18 +1,14 @@
 //=========================================================================
 //
-// Vertex Manager for PC
+//  VertexMgr.cpp
 //
 //=========================================================================
 
 //=========================================================================
-//  PLATFORM CHECK
+//  BASE INCLUDES
 //=========================================================================
 
 #include "x_types.hpp"
-
-#if !defined(TARGET_PC)
-#error "This is only for the PC target platform. Please check build exclusion rules"
-#endif
 
 //=========================================================================
 // INCLUDES
@@ -24,680 +20,571 @@
 //  GLOBAL INSTANCE
 //=========================================================================
 
-vertex_mgr g_RigidVertMgr;
+VertexMgr g_RigidVertMgr;
 
 //=========================================================================
-// IMPLEMENTATION
+// PREPARED DLIST
 //=========================================================================
 
-s32 vertex_mgr::NextLog2( u32 n )
+VertexMgr::PreparedMesh::PreparedMesh( void ) : m_vertices(), m_indices(), m_vertexCount( 0 ), m_vertexStride( 0 )
 {
-    if( n == 0 ) return 0;
-    f32 f  = (f32)((n << 1) - 1);
-    u32 rn = *((u32*)&f);
-    return (s32)((rn >> 23) - 127);
 }
 
 //=========================================================================
 
-s32 vertex_mgr::GetHashEntry( s32 nItems, xbool bVertex )  
-{ 
-    s32 iHash;
+xbool VertexMgr::PreparedMesh::Allocate( s32 nVertices, s32 nIndices, s32 vertexStride )
+{
+    Clear();
 
-    (void)( bVertex );
-    iHash = iMin( (NUM_HASH_ENTRIES-1), iMax( 0, (NextLog2(nItems) - START_HASH_ENTRY) ) );   
-    
-    ASSERT( iHash >= 0 );
-    ASSERT( iHash < NUM_HASH_ENTRIES );
-    return iHash;
+    if ( ( nVertices <= 0 ) || ( nIndices <= 0 ) || ( vertexStride <= 0 ) ||
+         ( nVertices > ( 0x7fffffff / vertexStride ) ) )
+    {
+        return FALSE;
+    }
+
+    m_vertices.SetCount( nVertices * vertexStride );
+    m_indices.SetCount( nIndices );
+    m_vertexCount = nVertices;
+    m_vertexStride = vertexStride;
+    return TRUE;
 }
 
 //=========================================================================
 
-void vertex_mgr::Init( s32 VStride )
+void VertexMgr::PreparedMesh::Clear( void )
 {
-    s32 i;
-
-    // Clear all the vertices
-    for( i=0; i<NUM_HASH_ENTRIES; i++ )
-    {
-        m_VertHash[i].Handle = HNULL;
-    }
-
-    // Clear all the Indices
-    for( i=0; i<NUM_HASH_ENTRIES; i++ )
-    {
-        m_IndexHash[i].Handle = HNULL;
-    }
-
-    // Init fields
-    m_Stride = VStride;
-
-    m_LastVertexPool.Handle = HNULL;
-    m_LastIndexPool.Handle  = HNULL;
+    m_vertices.Clear();
+    m_indices.Clear();
+    m_vertexCount = 0;
+    m_vertexStride = 0;
 }
-
 
 //=========================================================================
 
-void vertex_mgr::RemoveNodeFormHash( xhandle hNode, xbool bVertex )
+xbool VertexMgr::PreparedMesh::IsValid( void ) const
 {
-    node& Node      = m_lNode( hNode );
-    s32   HashEntry = GetHashEntry( Node.Count, bVertex );
-
-    if( Node.hHashNext.IsNull() == FALSE ) 
-        m_lNode( Node.hHashNext ).hHashPrev = Node.hHashPrev;
-
-    if( Node.hHashPrev.IsNull() == FALSE )
+    if ( ( m_vertexCount <= 0 ) || ( m_vertexCount > MAX_MESH_VERTICES ) || ( m_vertexStride <= 0 ) ||
+         ( m_vertexCount > ( 0x7fffffff / m_vertexStride ) ) ||
+         ( m_vertices.GetCount() != ( m_vertexCount * m_vertexStride ) ) || ( m_indices.GetCount() <= 0 ) ||
+         ( ( m_indices.GetCount() % 3 ) != 0 ) )
     {
-        m_lNode( Node.hHashPrev ).hHashNext = Node.hHashNext;
+        return FALSE;
     }
-    else if( bVertex )
+
+    for ( s32 i = 0; i < m_indices.GetCount(); ++i )
     {
-        ASSERT( m_VertHash[HashEntry] == hNode );
-        m_VertHash[HashEntry]  = Node.hHashNext;
+        if ( static_cast<s32>( m_indices[i] ) >= m_vertexCount )
+        {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+//=========================================================================
+
+void* VertexMgr::PreparedMesh::GetVertexData( void )
+{
+    return m_vertices.GetPtr();
+}
+
+//=========================================================================
+
+void const* VertexMgr::PreparedMesh::GetVertexData( void ) const
+{
+    return m_vertices.GetPtr();
+}
+
+//=========================================================================
+
+u16* VertexMgr::PreparedMesh::GetIndexData( void )
+{
+    return m_indices.GetPtr();
+}
+
+//=========================================================================
+
+u16 const* VertexMgr::PreparedMesh::GetIndexData( void ) const
+{
+    return m_indices.GetPtr();
+}
+
+//=========================================================================
+
+s32 VertexMgr::PreparedMesh::GetVertexCount( void ) const
+{
+    return m_vertexCount;
+}
+
+//=========================================================================
+
+s32 VertexMgr::PreparedMesh::GetIndexCount( void ) const
+{
+    return m_indices.GetCount();
+}
+
+//=========================================================================
+
+s32 VertexMgr::PreparedMesh::GetVertexStride( void ) const
+{
+    return m_vertexStride;
+}
+
+//=========================================================================
+// POOL
+//=========================================================================
+
+VertexMgr::pool::pool( void ) : Buffer(), VertexIndexBuffer(), Capacity( 0 ), Stride( 0 ), FreeRanges()
+{
+}
+
+//=========================================================================
+
+VertexMgr::pool::~pool( void )
+{
+    rbuffer_Destroy( VertexIndexBuffer );
+    rbuffer_Destroy( Buffer );
+}
+
+//=========================================================================
+// VERTEX MANAGER
+//=========================================================================
+
+VertexMgr::VertexMgr( void )
+    : m_meshes(), m_vertexPools(), m_indexPools(), m_vertexStride( 0 ), m_isInitialized( FALSE )
+{
+}
+
+//=========================================================================
+
+VertexMgr::~VertexMgr( void )
+{
+    Kill();
+}
+
+//=========================================================================
+
+void VertexMgr::Init( s32 vertexStride )
+{
+    ASSERT( vertexStride > 0 );
+
+    if ( m_isInitialized )
+    {
+        Kill();
+    }
+
+    if ( vertexStride <= 0 )
+    {
+        return;
+    }
+
+    m_vertexStride = vertexStride;
+    m_isInitialized = TRUE;
+}
+
+//=========================================================================
+
+void VertexMgr::Kill( void )
+{
+    m_meshes.Clear();
+
+    for ( s32 i = 0; i < m_indexPools.GetCount(); ++i )
+    {
+        delete m_indexPools[i];
+    }
+
+    for ( s32 i = 0; i < m_vertexPools.GetCount(); ++i )
+    {
+        delete m_vertexPools[i];
+    }
+
+    m_indexPools.Clear();
+    m_vertexPools.Clear();
+
+    m_vertexStride = 0;
+    m_isInitialized = FALSE;
+}
+
+//=========================================================================
+
+xbool VertexMgr::PrepareMesh( PreparedMesh& prepared, void const* pVertex, s32 nVertices, u16 const* pIndex,
+                              s32 nIndices, s32 vertexStride )
+{
+    prepared.Clear();
+
+    if ( !pVertex || !pIndex )
+    {
+        return FALSE;
+    }
+
+    if ( !prepared.Allocate( nVertices, nIndices, vertexStride ) )
+    {
+        return FALSE;
+    }
+
+    x_memcpy( prepared.GetVertexData(), pVertex, nVertices * vertexStride );
+    x_memcpy( prepared.GetIndexData(), pIndex, sizeof( u16 ) * nIndices );
+
+    if ( !prepared.IsValid() )
+    {
+        prepared.Clear();
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+//=========================================================================
+
+xbool VertexMgr::CreatePool( PoolArray& pools, s32 capacity, s32 stride, u32 usageFlags, char const* pDebugName )
+{
+    if ( ( capacity <= 0 ) || ( stride <= 0 ) ||
+         ( static_cast<u32>( capacity ) > ( 0xffffffffu / static_cast<u32>( stride ) ) ) )
+    {
+        return FALSE;
+    }
+
+    pool* pPool = new pool;
+    ASSERT( pPool );
+    if ( !pPool )
+    {
+        return FALSE;
+    }
+
+    rbuffer_desc desc;
+    desc.Size       = static_cast<u32>( capacity ) * static_cast<u32>( stride );
+    desc.Stride     = static_cast<u32>( stride );
+    desc.UsageFlags = usageFlags;
+    desc.pDebugName = pDebugName;
+
+    if ( !rbuffer_Create( pPool->Buffer, desc ) )
+    {
+        delete pPool;
+        return FALSE;
+    }
+
+    if ( usageFlags & RBUFFER_USAGE_VERTEX )
+    {
+        rbuffer_desc indexDesc;
+        indexDesc.Size       = static_cast<u32>( capacity ) * sizeof( u32 );
+        indexDesc.Stride     = sizeof( u32 );
+        indexDesc.UsageFlags = RBUFFER_USAGE_VERTEX;
+        indexDesc.pDebugName = "StaticVertexPoolIndices";
+        if ( !rbuffer_Create( pPool->VertexIndexBuffer, indexDesc ) )
+        {
+            delete pPool;
+            return FALSE;
+        }
+    }
+
+    pPool->Capacity = capacity;
+    pPool->Stride = stride;
+
+    free_range& range = pPool->FreeRanges.Append();
+    range.Offset = 0;
+    range.Count = capacity;
+
+    pools.Append() = pPool;
+    return TRUE;
+}
+
+//=========================================================================
+
+xbool VertexMgr::AllocateRange( PoolArray& pools, s32 count, s32 stride, u32 usageFlags, s32 defaultCapacity,
+                                char const* pDebugName, allocation& outAllocation )
+{
+    outAllocation = allocation();
+
+    if ( ( count <= 0 ) || ( stride <= 0 ) || ( defaultCapacity <= 0 ) )
+    {
+        return FALSE;
+    }
+
+    s32 bestPool = -1;
+    s32 bestRange = -1;
+    s32 bestWaste = 0x7fffffff;
+
+    for ( s32 iPool = 0; iPool < pools.GetCount(); ++iPool )
+    {
+        pool& pool = *pools[iPool];
+        if ( pool.Stride != stride )
+        {
+            continue;
+        }
+
+        for ( s32 iRange = 0; iRange < pool.FreeRanges.GetCount(); ++iRange )
+        {
+            free_range const& range = pool.FreeRanges[iRange];
+            if ( range.Count < count )
+            {
+                continue;
+            }
+
+            s32 const waste = range.Count - count;
+            if ( waste < bestWaste )
+            {
+                bestPool = iPool;
+                bestRange = iRange;
+                bestWaste = waste;
+            }
+        }
+    }
+
+    if ( bestPool < 0 )
+    {
+        s32 const capacity = MAX( defaultCapacity, count );
+        if ( !CreatePool( pools, capacity, stride, usageFlags, pDebugName ) )
+        {
+            return FALSE;
+        }
+
+        bestPool = pools.GetCount() - 1;
+        bestRange = 0;
+    }
+
+    pool&       pool = *pools[bestPool];
+    free_range& range = pool.FreeRanges[bestRange];
+
+    outAllocation.PoolIndex = bestPool;
+    outAllocation.Offset = range.Offset;
+    outAllocation.Count = count;
+
+    if ( range.Count == count )
+    {
+        pool.FreeRanges.Delete( bestRange );
     }
     else
     {
-        ASSERT( m_IndexHash[HashEntry] == hNode );
-        m_IndexHash[HashEntry] = Node.hHashNext;
+        range.Offset += count;
+        range.Count -= count;
     }
 
-    Node.hHashPrev.Handle = HNULL;
-    Node.hHashNext.Handle = HNULL;
-    Node.Flags           |= FLAGS_FULL;
+    return TRUE;
 }
 
 //=========================================================================
 
-void vertex_mgr::AddNodeToHash( xhandle hNode, xbool bVertex )
+void VertexMgr::ReleaseRange( PoolArray& pools, allocation const& allocation )
 {
-    node& Node      = m_lNode( hNode );
-    s32   HashEntry = GetHashEntry( Node.Count, bVertex );
-
-    Node.hHashPrev.Handle = HNULL;
-    Node.Flags &= ~FLAGS_FULL;
-
-    if( bVertex )
+    if ( !allocation.IsValid() )
     {
-        Node.hHashNext          = m_VertHash[ HashEntry ];
-        m_VertHash[ HashEntry ] = hNode;
-    }
-    else
-    {
-        Node.hHashNext           = m_IndexHash[ HashEntry ];
-        m_IndexHash[ HashEntry ] = hNode;
+        return;
     }
 
-    if( Node.hHashNext.IsNull() == FALSE )
-        m_lNode( Node.hHashNext ).hHashPrev = hNode;
-}
-
-//=========================================================================
-
-xhandle vertex_mgr::AllocNode( s32 nItems, xbool bVertex, s32 Stride )
-{
-    xhandle     hNode;
-
-    hNode.Handle = HNULL;
-    ASSERT( Stride != 0 );
-
-    //
-    // Do search throw the hash table and see if we find a good node.
-    // 
-    for( s32 HashEntry = GetHashEntry( nItems, bVertex ); HashEntry < NUM_HASH_ENTRIES; HashEntry++ )
+    ASSERT( allocation.PoolIndex < pools.GetCount() );
+    if ( ( allocation.PoolIndex < 0 ) || ( allocation.PoolIndex >= pools.GetCount() ) )
     {
-        if( bVertex )
+        return;
+    }
+
+    pool& pool = *pools[allocation.PoolIndex];
+    if ( ( allocation.Count <= 0 ) || ( allocation.Offset < 0 ) ||
+         ( allocation.Offset > ( pool.Capacity - allocation.Count ) ) )
+    {
+        return;
+    }
+
+    s32 insertAt = 0;
+    while ( ( insertAt < pool.FreeRanges.GetCount() ) && ( pool.FreeRanges[insertAt].Offset < allocation.Offset ) )
+    {
+        ++insertAt;
+    }
+
+    if ( insertAt > 0 )
+    {
+        free_range const& previous = pool.FreeRanges[insertAt - 1];
+        ASSERT( ( previous.Offset + previous.Count ) <= allocation.Offset );
+    }
+
+    if ( insertAt < pool.FreeRanges.GetCount() )
+    {
+        free_range const& next = pool.FreeRanges[insertAt];
+        ASSERT( ( allocation.Offset + allocation.Count ) <= next.Offset );
+    }
+
+    free_range& range = pool.FreeRanges.Insert( insertAt );
+    range.Offset = allocation.Offset;
+    range.Count = allocation.Count;
+
+    if ( insertAt > 0 )
+    {
+        free_range& previous = pool.FreeRanges[insertAt - 1];
+        if ( ( previous.Offset + previous.Count ) == range.Offset )
         {
-            hNode = m_VertHash[ HashEntry ];
-        }
-        else
-        {
-            hNode = m_IndexHash[ HashEntry ];
-        }
-
-        for( ; hNode.IsNull() == FALSE; hNode = m_lNode( hNode ).hHashNext )
-        {
-            node& Node = m_lNode( hNode );
-
-            if( Node.Count > nItems )
-                break;
-        }
-
-        if( hNode.IsNull() == FALSE )
-            break;
-    }
-
-    //
-    // Okay we didn't find any hole in any of the pools to put this vertex set.
-    // Here we have two options. One try to clean all vertex buffers (compact them)
-    // Hopping to get some hole big enoft and then try to find the hole ones again or
-    // just allocate another vertex pool.
-    // DONE: For now we will just allocate another vertex pool.
-    //
-    if( hNode.IsNull() ) 
-    {
-        //
-        // Create the physical pool
-        //
-        HRESULT         hr;
-        xhandle         hPool;
-        pool*           pPool;
-
-        if( bVertex )
-        {
-            vertex_pool&    Pool = m_lVertexPool.Add( hPool );
-
-            pPool           = &Pool;
-
-            Pool.nItems     = MAX_VERTEX_POOL;
-            Pool.Stride     = Stride;
-            Pool.pBuffer    = NULL;
-
-            if( g_pd3dDevice )
-            {
-                D3D11_BUFFER_DESC bd = {0};
-                bd.Usage = D3D11_USAGE_DYNAMIC;
-                bd.ByteWidth = Pool.Stride * Pool.nItems;
-                bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-                bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-                hr = g_pd3dDevice->CreateBuffer( &bd, NULL, &Pool.pBuffer );
-
-                if( FAILED(hr) )
-                {
-                    m_lVertexPool.DeleteByHandle( hPool );
-                    x_throw( "Unable to create vertex buffer in D3D11" );
-                }
-            }
-            else
-            {
-                Pool.pBuffer = (ID3D11Buffer*)x_malloc( Pool.Stride * Pool.nItems );
-            }
-        }
-        else
-        {
-            index_pool&    Pool = m_lIndexPool.Add( hPool );
-
-            pPool           = &Pool;
-
-            Pool.nItems     = MAX_INDEX_POOL;
-            Pool.Stride     = Stride;
-            Pool.pBuffer    = NULL;
-
-            if( g_pd3dDevice )
-            {
-                D3D11_BUFFER_DESC bd = {0};
-                bd.Usage = D3D11_USAGE_DYNAMIC;
-                bd.ByteWidth = Pool.Stride * Pool.nItems;
-                bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-                bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-                hr = g_pd3dDevice->CreateBuffer( &bd, NULL, &Pool.pBuffer );
-
-                ASSERT( Pool.Stride == sizeof(u16) );
-                if( FAILED(hr) )
-                {
-                    m_lIndexPool.DeleteByHandle( hPool );
-                    x_throw( "Unable to create index buffer in D3D11" );
-                }
-            }
-            else
-            {
-                Pool.pBuffer = (ID3D11Buffer*)x_malloc( Pool.Stride * Pool.nItems );
-            }
-        }
-
-        //
-        // Add the empty node that represents the new pool
-        //
-        node&   EmptyNode  = m_lNode.Add( hNode );
-        EmptyNode.Count    = pPool->nItems;
-        EmptyNode.Offset   = 0;
-        EmptyNode.hPool    = hPool;
-        EmptyNode.Flags    = bVertex?FLAGS_VERTEX:0;
-        EmptyNode.User     = -1;
-
-        EmptyNode.hGlobalNext.Handle = HNULL;
-        EmptyNode.hGlobalPrev.Handle = HNULL;
-
-        AddNodeToHash( hNode, bVertex );
-
-        pPool->hFirstNode = hNode;
-    }
-
-    //
-    // Now we need to alloc the node and possibly add the rest of the empty space
-    // back into a node. 
-    //
-    ASSERT( hNode.IsNull() == FALSE );
-
-    //
-    // Do a quick sanity check
-    //
-    {
-        node& Node      = m_lNode( hNode );
-        ASSERT( Node.Count >= nItems );
-        ASSERT( Node.hGlobalNext.Handle == -1 || Node.hGlobalNext.Handle >= 0 );
-        ASSERT( Node.hGlobalPrev.Handle == -1 || Node.hGlobalPrev.Handle >= 0 );
-        ASSERT( Node.hHashNext.Handle   == -1 || Node.hHashNext.Handle   >= 0 );
-        ASSERT( Node.hHashPrev.Handle   == -1 || Node.hHashPrev.Handle   >= 0 );
-        ASSERT( (Node.Flags & FLAGS_FULL) == 0 );
-    }
-
-    //
-    // Remove the node from the hash table
-    //
-    RemoveNodeFormHash( hNode, bVertex );
-
-    //
-    // Check whether we need to create an empty node or not. If so we must insert an
-    // empty node into the list
-    //
-    s32   Bias      = 100;
-    if( ( m_lNode( hNode ).Count - Bias ) > nItems )
-    {        
-        xhandle hEmptyNode;
-        node&   EmptyNode  = m_lNode.Add( hEmptyNode );
-        node&   Node       = m_lNode( hNode );
-        EmptyNode.Count    = Node.Count  - nItems;
-        EmptyNode.Offset   = Node.Offset + nItems;
-        EmptyNode.Flags    = bVertex?FLAGS_VERTEX:0;
-        EmptyNode.User     = -1;
-        EmptyNode.hPool    = Node.hPool;
-
-        EmptyNode.hGlobalNext = Node.hGlobalNext;
-        EmptyNode.hGlobalPrev = hNode;
-        Node.hGlobalNext = hEmptyNode;
-
-        if( EmptyNode.hGlobalNext.IsNull() == FALSE )
-            m_lNode( EmptyNode.hGlobalNext ).hGlobalPrev = hEmptyNode;
-
-        AddNodeToHash( hEmptyNode, bVertex );
-
-        Node.Count = nItems;
-    }
-
-    //
-    // Set the number of items that were actually allocated
-    //
-    m_lNode( hNode ).User   = nItems;
-
-    return hNode;
-}
-
-//=========================================================================
-
-void* vertex_mgr::LockDListVerts( xhandle hDList )
-{
-    BYTE*           pDest = NULL;
-    node&           Node  = m_lNode( m_lDList(hDList).hVertexNode );
-    vertex_pool&    Pool  = m_lVertexPool( Node.hPool );
-    ASSERT( (Node.Flags&FLAGS_VERTEX) == FLAGS_VERTEX );
-
-    if( g_pd3dDevice && g_pd3dContext )
-    {
-        D3D11_MAPPED_SUBRESOURCE mappedResource;
-        HRESULT hr = g_pd3dContext->Map( Pool.pBuffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mappedResource );
-        if( FAILED(hr) )
-        {
-            x_throw( "Unable to map vertex buffer in D3D11" );
-        }
-
-        pDest = ((BYTE*)mappedResource.pData) + (Pool.Stride * Node.Offset);
-        return pDest;
-    }
-    else
-    {   
-        pDest = ((BYTE*)Pool.pBuffer) + (Pool.Stride * Node.Offset);
-        return pDest;
-    }
-}
-
-//=========================================================================
-
-void vertex_mgr::UnlockDListVerts( xhandle hDList )
-{
-    node&           Node  = m_lNode( m_lDList(hDList).hVertexNode );
-    vertex_pool&    Pool  = m_lVertexPool( Node.hPool );
-    ASSERT( (Node.Flags&FLAGS_VERTEX) == FLAGS_VERTEX );
-
-    if( g_pd3dDevice && g_pd3dContext )
-    {
-        g_pd3dContext->Unmap( Pool.pBuffer, 0 );
-    }
-}
-
-//=========================================================================
-
-void* vertex_mgr::LockDListIndices( xhandle hDList, s32& Index )
-{
-    BYTE*        pDest = NULL;
-    node&        IndexNode   = m_lNode( m_lDList(hDList).hIndexNode );
-    node&        VertexNode  = m_lNode( m_lDList(hDList).hVertexNode );
-    index_pool&  Pool  = m_lIndexPool( IndexNode.hPool );
-    ASSERT( (IndexNode.Flags&FLAGS_VERTEX) == FALSE );
-
-    if( g_pd3dDevice && g_pd3dContext )
-    {
-        D3D11_MAPPED_SUBRESOURCE mappedResource;
-        HRESULT hr = g_pd3dContext->Map( Pool.pBuffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mappedResource );
-        if( FAILED(hr) )
-        {
-            x_throw( "Unable to map index buffer in D3D11" );
-        }
-
-        Index = VertexNode.Offset;
-        pDest = ((BYTE*)mappedResource.pData) + (Pool.Stride * IndexNode.Offset);
-        return pDest;
-    }
-    else
-    {
-        Index = VertexNode.Offset;
-        pDest = ((BYTE*)Pool.pBuffer) + (Pool.Stride * IndexNode.Offset);
-        return pDest;
-    }
-}
-
-//=========================================================================
-
-void vertex_mgr::UnlockDListIndices( xhandle hDList )
-{
-    node&           Node  = m_lNode( m_lDList(hDList).hIndexNode );
-    index_pool&     Pool  = m_lIndexPool( Node.hPool );
-    ASSERT( (Node.Flags&FLAGS_VERTEX) == FALSE );
-
-    if( g_pd3dDevice && g_pd3dContext )
-    {
-        g_pd3dContext->Unmap( Pool.pBuffer, 0 );
-    }
-}
-
-//=========================================================================
-
-xhandle vertex_mgr::AllocVertexSet( s32 nVertices, s32 Stride )
-{
-    ASSERT( MAX_VERTEX_POOL == 0xffff );
-    if( nVertices > 0xffff )
-        x_throw( "Unable to allocated object that have more than 65,000 vertices" );
-
-    return AllocNode( nVertices, TRUE, Stride );
-}
-
-//=========================================================================
-
-xhandle vertex_mgr::AllocIndexSet( s32 nIndices )
-{
-    if( nIndices > (MAX_INDEX_POOL/3) )
-        x_throw( xfs( "Unable to allocated object that have more than %d facets", (MAX_INDEX_POOL/3) ) );
-
-    return AllocNode( nIndices, FALSE, sizeof(u16) );
-}
-
-//=========================================================================
-
-void vertex_mgr::FreeNode( xhandle hNode, xbool bVertex )
-{
-    //
-    // First thing lets do any merging
-    //
-    {
-        node&   Node  = m_lNode( hNode );
-
-        //
-        // Can we merge on the right?
-        //
-        if( Node.hGlobalNext.IsNull() == FALSE && (m_lNode( Node.hGlobalNext ).Flags & FLAGS_FULL) == 0 ) 
-        {
-            xhandle hDelNode = Node.hGlobalNext;
-            node&   DelNode  = m_lNode( Node.hGlobalNext );
-
-            RemoveNodeFormHash( hDelNode, bVertex );
-
-            Node.Count += DelNode.Count;
-            Node.hGlobalNext = DelNode.hGlobalNext;
-
-            if( Node.hGlobalNext.IsNull() == FALSE )
-                m_lNode( Node.hGlobalNext ).hGlobalPrev = hNode;
-
-            m_lNode.DeleteByHandle( hDelNode );        
-        }
-
-        //
-        // Can we merge Left
-        //
-        if( Node.hGlobalPrev.IsNull() == FALSE && (m_lNode( Node.hGlobalPrev ).Flags & FLAGS_FULL) == 0 ) 
-        {
-            xhandle hNewNode = Node.hGlobalPrev;
-            node&   NewNode  = m_lNode( Node.hGlobalPrev );
-
-            RemoveNodeFormHash( hNewNode, bVertex );
-
-            NewNode.Count += Node.Count;
-
-            NewNode.hGlobalNext = Node.hGlobalNext;
-
-            if( Node.hGlobalNext.IsNull() == FALSE )
-                m_lNode( NewNode.hGlobalNext ).hGlobalPrev = hNewNode;
-
-            m_lNode.DeleteByHandle( hNode );        
-
-            hNode = hNewNode;
+            previous.Count += range.Count;
+            pool.FreeRanges.Delete( insertAt );
+            --insertAt;
         }
     }
 
-    //
-    // Now we must add our node to the hash
-    //
-    AddNodeToHash( hNode, bVertex );
+    if ( ( insertAt + 1 ) < pool.FreeRanges.GetCount() )
+    {
+        free_range&       current = pool.FreeRanges[insertAt];
+        free_range const& next = pool.FreeRanges[insertAt + 1];
+        if ( ( current.Offset + current.Count ) == next.Offset )
+        {
+            current.Count += next.Count;
+            pool.FreeRanges.Delete( insertAt + 1 );
+        }
+    }
 }
 
 //=========================================================================
 
-void vertex_mgr::DelDList( xhandle hDList )
+xhandle VertexMgr::AddMesh( PreparedMesh const& prepared )
 {
-    dlist&  DList = m_lDList( hDList );
+    ASSERT( m_isInitialized );
+    ASSERT( prepared.GetVertexStride() == m_vertexStride );
+    ASSERT( prepared.IsValid() );
 
-    if( DList.hVertexNode.IsNull() == FALSE )
-        FreeNode( DList.hVertexNode, TRUE );
+    if ( !m_isInitialized || ( prepared.GetVertexStride() != m_vertexStride ) || !prepared.IsValid() )
+    {
+        x_throw( "Invalid prepared static geometry" );
+    }
 
-    if( DList.hIndexNode.IsNull() == FALSE )
-        FreeNode( DList.hIndexNode, FALSE );
-
-    m_lDList.DeleteByHandle( hDList );
-}
-
-//=========================================================================
-
-xhandle vertex_mgr::AddDList( void* pVertex, s32 nVertices, u16* pIndex, s32 nIndices, s32 nPrims )
-{
-    xhandle hDList;
-    dlist&  DList = m_lDList.Add( hDList );
-
-    ASSERT( m_Stride > 0 );
-    ASSERT( nPrims*3 == nIndices );
-    DList.hVertexNode.Handle = HNULL;
-    DList.hIndexNode.Handle  = HNULL;
-    DList.nPrims             = nPrims;
+    allocation vertexAllocation;
+    allocation indexAllocation;
+    xhandle    hMesh;
+    hMesh.Handle = HNULL;
 
     x_try;
 
-    DList.hIndexNode  = AllocIndexSet   ( nIndices );
-    DList.hVertexNode = AllocVertexSet  ( nVertices, m_Stride );
-
-    // Copy the verts
+    if ( !AllocateRange( m_vertexPools, prepared.GetVertexCount(), m_vertexStride, RBUFFER_USAGE_VERTEX,
+                         DEFAULT_VERTEX_POOL_CAPACITY, "StaticGeometryVertexPool", vertexAllocation ) )
     {
-        void* pNewVert;
-        pNewVert = LockDListVerts( hDList );
-        x_memcpy( pNewVert, pVertex, m_Stride*nVertices );
-        UnlockDListVerts( hDList );
+        x_throw( "Unable to allocate static vertex range" );
     }
 
-    // Copy the Indices
+    if ( !AllocateRange( m_indexPools, prepared.GetIndexCount(), sizeof( u16 ), RBUFFER_USAGE_INDEX,
+                         DEFAULT_INDEX_POOL_CAPACITY, "StaticGeometryIndexPool", indexAllocation ) )
     {
-        u16* pNewIndex;
-        node& VNode = m_lNode( DList.hVertexNode );
-        node& INode = m_lNode( DList.hIndexNode );
-        s32   Index;
-
-        pNewIndex = (u16*)LockDListIndices( hDList, Index );
-        for( s32 i=0; i<nIndices; i++ )
-        {
-            ASSERT( ((s32)pIndex[i] + VNode.Offset) < MAX_VERTEX_POOL ) ;
-            ASSERT( pIndex[i] < VNode.User );
-            pNewIndex[i] = pIndex[i] + VNode.Offset;
-        }
-        UnlockDListIndices( hDList );
+        x_throw( "Unable to allocate static index range" );
     }
+
+    pool& vertexPool = *m_vertexPools[vertexAllocation.PoolIndex];
+    pool& indexPool  = *m_indexPools[indexAllocation.PoolIndex];
+
+    u32 const vertexUploadOffset = static_cast<u32>( vertexAllocation.Offset ) * static_cast<u32>( m_vertexStride );
+    u32 const vertexBytes        = static_cast<u32>( vertexAllocation.Count ) * static_cast<u32>( m_vertexStride );
+    u32 const indexUploadOffset  = static_cast<u32>( indexAllocation.Offset ) * static_cast<u32>( sizeof( u16 ) );
+    u32 const indexBytes         = static_cast<u32>( indexAllocation.Count ) * static_cast<u32>( sizeof( u16 ) );
+
+    if ( !rbuffer_Upload( vertexPool.Buffer, prepared.GetVertexData(), vertexBytes, vertexUploadOffset, FALSE ) )
+    {
+        x_throw( "Unable to upload static vertex data" );
+    }
+
+    xarray<u32> localVertexIndices;
+    localVertexIndices.SetCount( vertexAllocation.Count );
+    for ( s32 i = 0; i < vertexAllocation.Count; ++i )
+    {
+        localVertexIndices[i] = i;
+    }
+
+    if ( !rbuffer_Upload( vertexPool.VertexIndexBuffer, localVertexIndices.GetPtr(),
+                          vertexAllocation.Count * sizeof( u32 ), vertexAllocation.Offset * sizeof( u32 ), FALSE ) )
+    {
+        x_throw( "Unable to upload static local vertex indices" );
+    }
+
+    if ( !rbuffer_Upload( indexPool.Buffer, prepared.GetIndexData(), indexBytes, indexUploadOffset, FALSE ) )
+    {
+        x_throw( "Unable to upload static index data" );
+    }
+
+    mesh& mesh = m_meshes.Add( hMesh );
+    mesh.VertexAllocation = vertexAllocation;
+    mesh.IndexAllocation = indexAllocation;
 
     x_catch_begin;
-    
-    DelDList( hDList );
+
+    if ( hMesh.IsNonNull() )
+    {
+        m_meshes.DeleteByHandle( hMesh );
+    }
+
+    ReleaseRange( m_indexPools, indexAllocation );
+    ReleaseRange( m_vertexPools, vertexAllocation );
 
     x_catch_end_ret;
 
-    return hDList;
+    return hMesh;
 }
 
 //=========================================================================
 
-void vertex_mgr::InvalidateCache( void )
+void VertexMgr::RemoveMesh( xhandle hMesh )
 {
-    m_LastVertexPool.Handle = HNULL;
-    m_LastIndexPool.Handle  = HNULL;
+    mesh const mesh = m_meshes( hMesh );
+
+    ReleaseRange( m_indexPools, mesh.IndexAllocation );
+    ReleaseRange( m_vertexPools, mesh.VertexAllocation );
+    m_meshes.DeleteByHandle( hMesh );
 }
 
 //=========================================================================
 
-void vertex_mgr::BeginRender( void )
-{        
-    InvalidateCache();
-}
-
-//=========================================================================
-
-void vertex_mgr::ActivateStreams( xhandle hDList )
+xbool VertexMgr::BindMesh( xhandle hMesh ) const
 {
-    dlist& DList  = m_lDList( hDList );
-    node&  Vertex = m_lNode ( DList.hVertexNode );
-    node&  Index  = m_lNode ( DList.hIndexNode  );
-
-    if( Vertex.hPool != m_LastVertexPool )
+    mesh_range range;
+    if ( !GetMeshDrawRange( hMesh, range ) )
     {
-        vertex_pool& Pool = m_lVertexPool( Vertex.hPool );
-        if( g_pd3dDevice && g_pd3dContext )
-        {
-            UINT stride = Pool.Stride;
-            UINT offset = 0;
-            g_pd3dContext->IASetVertexBuffers( 0, 1, &Pool.pBuffer, &stride, &offset );
-        }
-        m_LastVertexPool = Vertex.hPool;
+        return FALSE;
     }
 
-    if( Index.hPool != m_LastIndexPool )
-    {
-        index_pool& Pool = m_lIndexPool( Index.hPool );
-        if( g_pd3dDevice && g_pd3dContext )
-        {
-            g_pd3dContext->IASetIndexBuffer( Pool.pBuffer, DXGI_FORMAT_R16_UINT, 0 );
-        }
-        m_LastIndexPool = Index.hPool;
-    }
+    return BindPools( range );
 }
 
 //=========================================================================
 
-void vertex_mgr::DrawDList( xhandle hDList, const matrix4* pWorld )
+xbool VertexMgr::BindPools( mesh_range const& range ) const
 {
-    ASSERT( hDList.Handle >= 0 );
-
-    dlist& DList  = m_lDList( hDList );
-    node&  Vertex = m_lNode ( DList.hVertexNode );
-    node&  Index  = m_lNode ( DList.hIndexNode  );
-
-    ActivateStreams( hDList );
-    
-    if( g_pd3dDevice && g_pd3dContext )
+    if ( ( range.VertexPool < 0 ) || ( range.VertexPool >= m_vertexPools.GetCount() ) || ( range.IndexPool < 0 ) ||
+         ( range.IndexPool >= m_indexPools.GetCount() ) )
     {
-        ASSERT( DList.nPrims*3 == Index.User );
-        ASSERT( (Index.Offset + Index.User) < MAX_INDEX_POOL );
-        
-        g_pd3dContext->DrawIndexed( Index.User, Index.Offset, 0 );
+        return FALSE;
     }
+
+    pool const& vertexPool = *m_vertexPools[range.VertexPool];
+    pool const& indexPool = *m_indexPools[range.IndexPool];
+    return rbuffer_BindVertex( vertexPool.Buffer, 0, 0 ) &&
+           rbuffer_BindIndex( indexPool.Buffer, RBUFFER_INDEX_FORMAT_U16, 0 );
 }
 
 //=========================================================================
 
-void vertex_mgr::DrawDListInstanced( xhandle hDList, s32 nInstances )
+xbool VertexMgr::BindVertexIndices( mesh_range const& range, u32 slot ) const
 {
-    ASSERT( hDList.Handle >= 0 );
-    ASSERT( nInstances > 0 );
-
-    dlist& DList  = m_lDList( hDList );
-    node&  Index  = m_lNode ( DList.hIndexNode  );
-
-    ActivateStreams( hDList );
-
-    if( g_pd3dDevice && g_pd3dContext )
+    if ( ( range.VertexPool < 0 ) || ( range.VertexPool >= m_vertexPools.GetCount() ) )
     {
-        ASSERT( DList.nPrims*3 == Index.User );
-        ASSERT( (Index.Offset + Index.User) < MAX_INDEX_POOL );
-
-        g_pd3dContext->DrawIndexedInstanced( Index.User, nInstances, Index.Offset, 0, 0 );
+        return FALSE;
     }
+
+    pool const& vertexPool = *m_vertexPools[range.VertexPool];
+    return rbuffer_BindVertex( vertexPool.VertexIndexBuffer, slot, 0 );
 }
 
 //=========================================================================
 
-s32 vertex_mgr::GetDListVertexOffset( xhandle hDList ) const
+xbool VertexMgr::GetMeshDrawRange( xhandle hMesh, mesh_range& range ) const
 {
-    ASSERT( hDList.Handle >= 0 );
+    range = mesh_range();
 
-    const dlist& DList  = m_lDList( hDList );
-    const node&  Vertex = m_lNode ( DList.hVertexNode );
-    return Vertex.Offset;
+    mesh const& mesh = m_meshes( hMesh );
+    if ( !mesh.VertexAllocation.IsValid() || !mesh.IndexAllocation.IsValid() ||
+         ( mesh.VertexAllocation.PoolIndex >= m_vertexPools.GetCount() ) ||
+         ( mesh.IndexAllocation.PoolIndex >= m_indexPools.GetCount() ) )
+    {
+        return FALSE;
+    }
+
+    range.FirstIndex = mesh.IndexAllocation.Offset;
+    range.IndexCount = mesh.IndexAllocation.Count;
+    range.BaseVertex = mesh.VertexAllocation.Offset;
+    range.VertexPool = mesh.VertexAllocation.PoolIndex;
+    range.IndexPool = mesh.IndexAllocation.PoolIndex;
+    return TRUE;
 }
 
 //=========================================================================
-
-void vertex_mgr::Kill( void )
-{
-    s32 i;
-
-    for( i=0; i<m_lIndexPool.GetCount(); i++ )
-    {
-        if( m_lIndexPool[i].pBuffer ) 
-        {
-            if( g_pd3dDevice )
-            {
-                m_lIndexPool[i].pBuffer->Release();
-                m_lIndexPool[i].pBuffer = NULL;
-            }
-            else
-            {
-                x_free( m_lIndexPool[i].pBuffer );
-                m_lIndexPool[i].pBuffer = NULL;
-            }
-        }
-    }
-
-    for( i=0; i<m_lVertexPool.GetCount(); i++ )
-    {
-        if( m_lVertexPool[i].pBuffer ) 
-        {
-            if( g_pd3dDevice )
-            {
-                m_lVertexPool[i].pBuffer->Release();
-                m_lVertexPool[i].pBuffer = NULL;
-            }
-            else
-            {
-                x_free(m_lVertexPool[i].pBuffer);
-                m_lVertexPool[i].pBuffer = NULL;
-            }
-        }
-    }
-
-    m_lIndexPool.Clear();
-    m_lVertexPool.Clear();
-}

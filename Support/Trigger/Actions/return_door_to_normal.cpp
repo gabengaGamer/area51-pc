@@ -9,11 +9,12 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\return_door_to_normal.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/return_door_to_normal.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "..\Support\Objects\Door.hpp "
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "../Support/Objects/Door.hpp"
 #include "Entropy.hpp"
 
 static const xcolor s_OpenReturnToNormal             (0,128,0);
@@ -32,7 +33,7 @@ return_door_to_normal::return_door_to_normal ( guid ParentGuid ) :
 
 void return_door_to_normal::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * move_object::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * move_object::Execute" );
 
     (void) pParent;
 
@@ -57,9 +58,9 @@ void return_door_to_normal::OnRender ( void )
 
 #ifdef TARGET_PC
     vector3 MyPosition =  GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
-    draw_Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_OpenReturnToNormal );
-    draw_BBox( ObjectPtr.m_pObject->GetBBox(), s_OpenReturnToNormal );
-    draw_Label( ObjectPtr.m_pObject->GetPosition(), s_OpenReturnToNormal, GetTypeName() );
+    render::debug::Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_OpenReturnToNormal );
+    render::debug::Box( ObjectPtr.m_pObject->GetBBox(), s_OpenReturnToNormal );
+    render::debug::Label( ObjectPtr.m_pObject->GetPosition(), s_OpenReturnToNormal, GetTypeName() );
 #endif
 }
 

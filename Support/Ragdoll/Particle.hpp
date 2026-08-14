@@ -73,7 +73,7 @@ public:
     // Returns (1.0f / Mass) of particle
     f32     GetInvMass ( void ) const ;
 
-} PS2_ALIGNMENT(16);
+};
 
 
 //==============================================================================

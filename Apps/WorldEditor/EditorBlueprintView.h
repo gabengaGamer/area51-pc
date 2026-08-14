@@ -9,7 +9,7 @@
 
 #include "..\WinControls\FileTreeCtrl.h"
 #include "ResourcePreview.h"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "..\Editor\PaletteView.h"
 
 class CEditorPaletteDoc;

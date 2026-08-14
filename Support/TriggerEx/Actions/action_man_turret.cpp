@@ -9,12 +9,12 @@
 //=========================================================================
 
 #include "action_man_turret.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "objects\player.hpp"
-#include "objects\turret.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/Turret.hpp"
 
 static const xcolor s_LogicColor          (200,200,0);
 

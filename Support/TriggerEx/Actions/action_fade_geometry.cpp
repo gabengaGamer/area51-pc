@@ -8,12 +8,13 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_fade_geometry.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Objects\Render\RenderInst.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Render/RenderInst.hpp"
 
 static const xcolor s_FadeInColor   (0,255,0);
 static const xcolor s_FadeOutColor  (255,0,0);
@@ -85,16 +86,16 @@ void action_fade_geometry::OnDebugRender ( s32 Index )
             break;
         }
 
-        draw_Line( GetPositionOwner(), pObject->GetPosition(), Color );
-        draw_BBox( pObject->GetBBox(), Color );
+        render::debug::Line( GetPositionOwner(), pObject->GetPosition(), Color );
+        render::debug::Box( pObject->GetBBox(), Color );
 
         if (!GetElse())
         {
-            draw_Label( pObject->GetPosition(), Color, xfs("[%d]%s", Index, Info.Get()) );
+            render::debug::Label( pObject->GetPosition(), Color, xfs("[%d]%s", Index, Info.Get()) );
         }
         else
         {
-            draw_Label( pObject->GetPosition(), Color, xfs("[Else %d]%s", Index, Info.Get()) );
+            render::debug::Label( pObject->GetPosition(), Color, xfs("[Else %d]%s", Index, Info.Get()) );
         }
     }
 }

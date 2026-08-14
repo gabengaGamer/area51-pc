@@ -572,5 +572,4 @@ static s16 s_iicon_group[] =
 };
 
 
-#define DRAW_ICON_GROUP() draw_icon( NUM_FACETS_ICON_GROUP, NUM_VERTICES_ICON_GROUP, s_vicon_group, s_iicon_group )
 

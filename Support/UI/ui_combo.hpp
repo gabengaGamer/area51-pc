@@ -58,11 +58,10 @@ public:
 
     virtual void    Render                  ( s32 ox=0, s32 oy=0 );
 
-    virtual void    OnFocusGained           ( ui_win* pWin );
-    virtual void    OnPadNavigate           ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void    OnPadSelect             ( ui_win* pWin );
-    virtual void    OnPadShoulder           ( ui_win* pWin, s32 Direction );
-    virtual void    OnLBDown                ( ui_win* pWin );
+    virtual void    OnNavigate              ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void    OnAccept                ( ui_win* pWin );
+    virtual void    OnPage                  ( ui_win* pWin, s32 Direction );
+    virtual void    OnPointerDown           ( ui_win* pWin, s32 x, s32 y );
 
 
     void            SetLabelWidth           ( s32 Width );
@@ -84,21 +83,17 @@ public:
     xbool           GetItemEnabled          ( s32 iItem ) const;
     xbool           GetSelectedItemEnabled  ( void ) const;
 
-    s32             FindItemByLabel         ( const xwstring& Label );
-    s32             FindItemByData          ( uaddr Data, s32 Index = 0 );
+    s32             FindItemByLabel         ( const xwstring& Label ) const;
+    s32             FindItemByData          ( uaddr Data, s32 Index = 0 ) const;
 
     s32             GetSelection            ( void ) const;
     void            SetSelection            ( s32 iSelection );
     void            ClearSelection          ( void );
 
-    void            EnablePopupList         ( xbool State );
-
     void            SetNavFlags             ( u32 flags )    { m_NavFlags = flags; };
 
 protected:
     s32             m_iElement1;
-    s32             m_iElement2;
-    s32             m_iElementb;
     s32             m_LabelWidth;
     xarray<item>    m_Items;
     s32             m_iSelection;

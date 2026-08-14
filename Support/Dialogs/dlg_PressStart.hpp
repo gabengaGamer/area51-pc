@@ -13,14 +13,14 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_bitmap.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_bitmap.hpp"
 
 #include "dlg_PopUp.hpp"
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 //==============================================================================
 //  dlg_press_start
@@ -48,17 +48,12 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
-	virtual void		OnPadHelp			( ui_win* pWin );
+	virtual void		OnHelp			( ui_win* pWin );
 
     void                DisableStartButton  ( void );
     void                EnableStartButton   ( void );
-
-#ifdef TARGET_XBOX
-    xbool               ValidateSettings    ( void );
-#endif
-
 
 protected:
 	ui_text*			m_pButtonPressStart;

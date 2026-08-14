@@ -8,6 +8,7 @@
 -- NUM5            - toggle shadow casting
 
 local LIGHT_TYPE    = "Dynamic Light"
+local LIGHT_COOKIE  = "Flashlight.xbmp"
 local RAY_DIST      = 110000
 local SPAWN_OFFSET  = 60
 local MOVE_SPEED    = 700
@@ -78,7 +79,7 @@ local function apply_runtime_settings()
     obj_prop_set(light_guid, "Light\\CastShadows", light_state.cast_shadows)
 
     if light_state.cast_shadows then
-        obj_prop_set(light_guid, "Light\\ShadowMapResolution", "2048")
+        obj_prop_set(light_guid, "Light\\ShadowMapResolution", "4096")
         obj_prop_set(light_guid, "Light\\ShadowPriority",      "HIGH")
     end
 end
@@ -189,4 +190,3 @@ end)
 register_level_unload(function()
     destroy_light()
 end)
-

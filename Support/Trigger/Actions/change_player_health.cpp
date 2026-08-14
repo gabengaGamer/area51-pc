@@ -9,12 +9,12 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\change_player_health.hpp"
+#include "../Support/Trigger/Actions/change_player_health.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 
-#include "Objects\Player.hpp"
+#include "Objects/Player/Player.hpp"
 #include "Entropy.hpp"
 
 //=========================================================================
@@ -34,7 +34,7 @@ m_ShakeForce( 100.f )
 
 void change_player_health::Execute ( trigger_object* pParent )
 { 
-    TRIGGER_CONTEXT( "ACTION * change_player_health::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * change_player_health::Execute" );
 
 /*
     if (pParent->GetTriggerActor()==NULL)

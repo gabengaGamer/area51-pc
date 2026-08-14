@@ -1,7 +1,7 @@
 #ifndef __GRUNT_ATTACK_STATE_HPP
 #define __GRUNT_ATTACK_STATE_HPP
 
-#include "characters\basestates\character_attack_state.hpp"
+#include "Characters/BaseStates/Character_Attack_State.hpp"
 
 
 class grunt_attack_state : public character_attack_state

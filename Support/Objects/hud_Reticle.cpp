@@ -12,22 +12,61 @@
 
 #include "hud_Reticle.hpp"
 #include "HudObject.hpp"
-#include "x_debug.hpp"
-#include "characters\Character.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "UI/ui_renderer.hpp"
 
-#ifndef X_EDITOR 
-#include "NetGhost.hpp"
-#endif
+namespace
+{
+    static const xcolor RETICLE_COLOR                 ( 134, 255, 255, 255 );
+    static const xcolor RETICLE_TARGET_COLOR          ( 125,   0,   0, 229 );
+    static const xcolor MUTATION_RETICLE_COLOR        ( 255,  55,  66, 255 );
+    static const xcolor MUTATION_RETICLE_TARGET_COLOR ( 255, 255,  66, 255 );
 
-//==============================================================================
-// STORAGE
-//==============================================================================
+    static const f32 ZOOM_CROSS_INNER_OFFSET = 3.0f;
+    static const f32 ZOOM_CROSS_OUTER_OFFSET = 6.0f;
+    static const f32 RETICLE_SPREAD_RANGE     = 40.0f;
+    static const f32 MUTATION_PIECE_SIZE      = 32.0f;
 
-xcolor  g_ReticleSmlColor           ( 134, 255, 255, 255 );
-xcolor  g_ReticleTargetColor        ( 125,   0,   0, 229 );
+    struct reticle_piece_layout
+    {
+        vector2 Center;
+        radian  Rotation;
+    };
 
-xcolor  g_ReticleMutantTargetColor  ( 255,  255,  66, 255 );
-xcolor  g_ReticleMutantColor        ( 255,   55,  66, 255 );
+    void DrawReticlePiece( const texture& Texture,
+                           const vector2& Center,
+                           const vector2& Size,
+                           const vector2& UV0,
+                           const vector2& UV1,
+                           const xcolor&  Color,
+                           radian         Rotation,
+                           ui_blend_mode  Blend = UI_BLEND_ALPHA )
+    {
+        const vector2 TopLeft = Center - Size * 0.5f;
+
+        g_UIRenderer.DrawImage( Texture,
+                                TopLeft,
+                                Size,
+                                UV0,
+                                UV1,
+                                Color,
+                                Rotation,
+                                Blend,
+                                UI_SAMPLER_LINEAR_CLAMP );
+    }
+
+    void DrawZoomCross( const vector2& Center, const xcolor& Color )
+    {
+        g_UIRenderer.DrawLine( Center + vector2( -ZOOM_CROSS_INNER_OFFSET, 0.0f ),
+                               Center + vector2( -ZOOM_CROSS_OUTER_OFFSET, 0.0f ), Color );
+        g_UIRenderer.DrawLine( Center + vector2(  ZOOM_CROSS_INNER_OFFSET, 0.0f ),
+                               Center + vector2(  ZOOM_CROSS_OUTER_OFFSET, 0.0f ), Color );
+        g_UIRenderer.DrawLine( Center + vector2( 0.0f, -ZOOM_CROSS_INNER_OFFSET ),
+                               Center + vector2( 0.0f, -ZOOM_CROSS_OUTER_OFFSET ), Color );
+        g_UIRenderer.DrawLine( Center + vector2( 0.0f,  ZOOM_CROSS_INNER_OFFSET ),
+                               Center + vector2( 0.0f,  ZOOM_CROSS_OUTER_OFFSET ), Color );
+    }
+}
 
 //==============================================================================
 // FUNCTIONS
@@ -35,401 +74,190 @@ xcolor  g_ReticleMutantColor        ( 255,   55,  66, 255 );
 
 hud_reticle::hud_reticle( void )
 {
-    m_LastTarget = 0;
-    m_LockonTime = 0.0f;
+    m_WeaponGuid            = NULL_GUID;
+    m_AimDegradation        = 0.0f;
+    m_ShouldRender          = FALSE;
+    m_IsZoomed              = FALSE;
+    m_UsesMutationReticle   = FALSE;
+    m_UsesCardinalEdges     = FALSE;
+    m_HasLiveEnemyTarget    = FALSE;
+
+    m_MutationReticle.SetName( PRELOAD_FILE("HUD_reticle_mutation.xbmp") );
+}
+
+//==============================================================================
+
+void hud_reticle::OnAdvanceSimulation( player* pPlayer, f32 DeltaTime )
+{
+    (void)DeltaTime;
+
+    m_WeaponGuid          = NULL_GUID;
+    m_AimDegradation      = 0.0f;
+    m_ShouldRender        = FALSE;
+    m_IsZoomed            = FALSE;
+    m_UsesMutationReticle = FALSE;
+    m_UsesCardinalEdges   = FALSE;
+    m_HasLiveEnemyTarget  = FALSE;
+
+    if( !pPlayer )
+    {
+        return;
+    }
+
+    new_weapon* pWeapon = pPlayer->GetCurrentWeaponPtr();
+    if( !pWeapon || !pWeapon->ShouldDrawReticle() )
+    {
+        return;
+    }
+
+    m_WeaponGuid          = pWeapon->GetGuid();
+    m_AimDegradation      = pPlayer->GetAimDegradation();
+    m_ShouldRender        = TRUE;
+    m_IsZoomed            = pWeapon->IsZoomEnabled();
+    m_UsesMutationReticle = (pPlayer->GetCurrentWeapon2() == INVEN_WEAPON_MUTATION);
+    m_UsesCardinalEdges   = (pPlayer->GetCurrentWeapon2() == INVEN_WEAPON_SMP);
+
+    object* pTarget = g_ObjMgr.GetObjectByGuid( pPlayer->GetEnemyOnReticle() );
+    if( pTarget && pTarget->IsKindOf( actor::GetRTTI() ) )
+    {
+        m_HasLiveEnemyTarget = !actor::GetSafeType( *pTarget ).IsDead();
+    }
 }
 
 //==============================================================================
 
 void hud_reticle::OnRender( player* pPlayer )
-{    
-    // Get the screen center.
-    rect m_ViewDimensions;
-    view& rView = ((player*)pPlayer)->GetInterpView();
-    rView.GetViewport( m_ViewDimensions );                                   
-
-    f32 CenterX = m_XPos;
-    f32 CenterY = m_YPos;
-
-    new_weapon* pWeapon = pPlayer->GetCurrentWeaponPtr();
-    if( pWeapon == NULL )
-        return;
-
-    if( !pWeapon->ShouldDrawReticle() )
-    {
-        return;
-    }
-
-    f32 MainWidth  = 0.0f;
-    f32 MainHeight = 0.0f;
-
-    xcolor tempSmallColor = g_ReticleSmlColor;
-    vector2 UV0( 0.0f, 0.0f );
-    vector2 UV1( 1.0f, 1.0f );
-
-    guid    EnemyGuid = pPlayer->GetEnemyOnReticle();
-    xcolor  Color = g_ReticleSmlColor;
-
-    // Only display if the target exists, is of a valid type, and is alive.
-    {
-        if( EnemyGuid )
-        {
-            object* pObject = g_ObjMgr.GetObjectByGuid( EnemyGuid );
-           
-            if( pObject && pObject->IsKindOf( actor::GetRTTI() ) )
-            {
-                actor& ActorObj =  actor::GetSafeType( *pObject );
-                if( !ActorObj.IsDead() )
-                {
-                    Color = g_ReticleTargetColor;
-                }
-            }
-        }
-        else
-        {
-            guid FriendlyGuid = pPlayer->GetFriendlyOnReticle();
-
-            if( FriendlyGuid )
-            {
-                object* pObject = g_ObjMgr.GetObjectByGuid( FriendlyGuid );
-
-                if( pObject && pObject->IsKindOf( actor::GetRTTI() ) )
-                {
-                    actor& ActorObj =  actor::GetSafeType( *pObject );
-                    if( !ActorObj.IsDead() )
-                    {
-                        // KSS -- Do anything for friendly targetting here
-                    }
-                }
-            }
-        }
-    }
-
-    tempSmallColor = Color;
-
-    xcolor PulseColor( Color );
-    vector3 Center    ( CenterX, CenterY, 0.0f );
-
-    // If we're zoomed we don't want anything but a small cross.
-    if( pWeapon->IsZoomEnabled() )
-    {
-        vector3 P0 = Center;
-        vector3 P1 = Center;
-        vector3 P2 = Center;
-        vector3 P3 = Center;
-
-        vector3 P4 = Center;
-        vector3 P5 = Center;
-        vector3 P6 = Center;
-        vector3 P7 = Center;
-
-        f32 Inner = 3.0f;
-        f32 Outer = 6.0f;
-        P0.GetX() -= Inner;
-        P1.GetX() -= Outer;
-        P2.GetX() += Inner;
-        P3.GetX() += Outer;
-
-        P4.GetY() -= Inner;
-        P5.GetY() -= Outer;
-        P6.GetY() += Inner;
-        P7.GetY() += Outer;
-        
-        draw_Begin( DRAW_LINES, DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
-        draw_Color( Color );
-        draw_Vertex( P0 );
-        draw_Vertex( P1 );
-        draw_Vertex( P2 );
-        draw_Vertex( P3 );
-        draw_Vertex( P4 );
-        draw_Vertex( P5 );
-        draw_Vertex( P6 );
-        draw_Vertex( P7 );
-        draw_End();
-        return;
-    }
-
-    //
-    // Draw the dot in the center.
-    //
-    {
-        // BEGIN DRAW
-        draw_Begin( DRAW_POINTS, DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER );
-
-        // check for pulsing
-        if( m_bPulsing )
-        {
-            draw_Color( PulseColor );
-        }
-        else
-        {
-            draw_Color( Color );
-        }
-
-        draw_Vertex( Center );
-        draw_End();
-        // END DRAW
-    }
-
-    //
-    // Draw the reticle circle.
-    //
-    {
-        // BEGIN DRAW
-        draw_Begin( DRAW_LINES, DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER  );
-
-        // Check for pulsing.
-        if( m_bPulsing )
-        {
-            PulseColor.A = (u8)(((f32)PulseColor.A / 255) * hud_object::m_PulseAlpha);
-            draw_Color( PulseColor );
-        }
-        else
-        {
-            draw_Color( Color );
-        }
-
-    #ifdef nmreed // this draws the enemy's shure-hit bbox
-        object* pEnemyObj = g_ObjMgr.GetObjectByGuid( EnemyGuid );
-        if ( pEnemyObj )
-        {
-            // draw the enemy box
-            bbox ScreenEnemyBBox( pEnemyObj->GetScreenBBox( pPlayer->GetView() ) );
-            vector3 Size( ScreenEnemyBBox.GetSize() );
-            extern f32 g_EnemyShootBBoxPct;
-            ScreenEnemyBBox.Inflate( (Size.X * g_EnemyShootBBoxPct) - Size.X, 0.0f, 0.0f );
-            vector3 UL( ScreenEnemyBBox.Min );
-            vector3 BR( ScreenEnemyBBox.Max );
-            vector3 BL( UL.X, BR.Y, UL.Z );
-            vector3 UR( BR.X, UL.Y, UL.Z );
-
-            draw_Color( XCOLOR_BLUE );
-            draw_Vertex( UL );
-            draw_Vertex( UR );
-
-            draw_Vertex( BR );
-            draw_Vertex( UR );
-
-            draw_Vertex( BR );
-            draw_Vertex( BL );
-
-            draw_Vertex( BL );
-            draw_Vertex( UL );
-        }
-    #endif
- 
-        draw_End();
-        // END DRAW
-    }
-    
-    xbitmap* pMainReticle = pWeapon->GetCenterReticleBmp();
-    if( pMainReticle  )
-    {
-        // BEGIN DRAW
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER );
-
-        // Since the bitmap is going to be centered we want to get half it length and width.
-        MainWidth  = (f32)pMainReticle->GetWidth()/2.0f;
-        MainHeight = (f32)pMainReticle->GetHeight()/2.0f;
-
-        vector3 ReticlePosRelative (  CenterX-MainWidth,    CenterY-MainHeight, 0.0f );
-    
-        draw_SetTexture( *pMainReticle );
-
-        draw_DisableBilinear();
-        {
-            guid EnemyGuid = pPlayer->GetEnemyOnReticle();
-            if( EnemyGuid != NULL_GUID )
-            {
-                object* pEnemyObj = g_ObjMgr.GetObjectByGuid( EnemyGuid );
-            
-                if( pEnemyObj )
-                {
-                    vector3 ReticlePosMin( ReticlePosRelative );
-                    vector3 ReticlePosMax( CenterX+MainWidth, CenterY+MainHeight, 0.0f );
-
-                    bbox ReticleRect( ReticlePosMin, ReticlePosMax);
-                    bbox ScreenEnemyBBox( pEnemyObj->GetScreenBBox( pPlayer->GetInterpView() ) );
-
-                    if( ReticleRect.Intersect( ScreenEnemyBBox ) )
-                        tempSmallColor = g_ReticleTargetColor;
-                }
-            }
-        }
-
-        // check for pulsing
-        if( m_bPulsing )
-        {
-            tempSmallColor.A = (u8)(((f32)tempSmallColor.A / 255) * hud_object::m_PulseAlpha);
-        }
-   
-        draw_SpriteUV( ReticlePosRelative , vector2((f32)pMainReticle->GetWidth(), 
-                    (f32)pMainReticle->GetHeight()), UV0, UV1, tempSmallColor );
-
-        draw_End();
-        draw_EnableBilinear();
-        // END DRAW
-    }
-    
-    xbitmap* pEdgeReticle       = pWeapon->GetEdgeReticleBmp();
-    s32      CenterPixelOffset  = (s32)pWeapon->GetCenterPixelOffset();
-
-    // aharp HACK - For E3 to draw mutant reticle.
-    if( pPlayer->GetCurrentWeapon2() == INVEN_WEAPON_MUTATION )
-    {
-        rhandle<xbitmap> m_ScreenEdgeBmp;
-        m_ScreenEdgeBmp.SetName(PRELOAD_FILE("HUD_reticle_mutation.xbmp"));
-        pEdgeReticle = m_ScreenEdgeBmp.GetPointer();
-    
-        guid    EnemyGuid = pPlayer->GetEnemyOnReticle();
-
-        xcolor  Color     = EnemyGuid ? g_ReticleMutantTargetColor : g_ReticleMutantColor;
-
-        // BEGIN DRAW
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_BLEND_ADD|DRAW_NO_ZBUFFER );
-
-
-        draw_SetTexture( *pEdgeReticle );
-
-        f32 BmpWidth  = (f32)32.0f;//pEdgeReticle->GetWidth();
-        f32 BmpHeight = (f32)32.0f;//pEdgeReticle->GetHeight();
-
-        vector3 ScreenCenter( CenterX, CenterY, 0 );
-        vector3 RenderPos;
-
-        vector2 UV2( 1.0f, 0.0f );
-        vector2 UV3( 0.0f, 1.0f );
-
-        // Top Left.
-        RenderPos = ScreenCenter;
-        RenderPos.GetX() -= BmpWidth  / 2.0f;
-        RenderPos.GetY() -= BmpHeight / 2.0f;
-        draw_SpriteUV( RenderPos, vector2(BmpWidth, BmpHeight), UV0, UV1, Color, R_0 );
-
-        // Bottom Left.
-        RenderPos = ScreenCenter;
-        RenderPos.GetX() -= BmpWidth  / 2.0f;
-        RenderPos.GetY() += BmpHeight / 2.0f;
-        draw_SpriteUV( RenderPos, vector2(BmpWidth, BmpHeight), UV3, UV2, Color, R_0 );
-
-        // Top Right.
-        RenderPos = ScreenCenter;
-        RenderPos.GetX() += BmpWidth  / 2.0f;
-        RenderPos.GetY() -= BmpHeight / 2.0f;
-        draw_SpriteUV( RenderPos, vector2(BmpWidth, BmpHeight), UV2, UV3, Color, R_0 );
-
-        // Bottom Right.
-        RenderPos = ScreenCenter;
-        RenderPos.GetX() += BmpWidth  / 2.0f;
-        RenderPos.GetY() += BmpHeight / 2.0f;
-        draw_SpriteUV( RenderPos, vector2(BmpWidth, BmpHeight), UV1, UV0, Color, R_0 );
-
-
-        draw_End();
-        // END DRAW
-        return;
-    }
-    
-    // Draw the second reticle.
-    if( pEdgeReticle == NULL )
-    {
-        return;
-    }
-
-    f32 DegWidth  = (f32)pEdgeReticle->GetWidth()/2.0f;
-    f32 DegHeight = (f32)pEdgeReticle->GetHeight()/2.0f;
-
-
-    f32 fSpace = (40.0f * pPlayer->GetAimDegradation() );
-
-    vector3 DegPosRelative1;
-    vector3 DegPosRelative2;
-    vector3 DegPosRelative3;
-    vector3 DegPosRelative4;
-
-    radian  DegRot1;
-    radian  DegRot2;
-    radian  DegRot3;
-    radian  DegRot4;
-
-    //         |
-    //      ___2___
-    //     |   |   |
-    //     |   |   |
-    // ---3|---C---|1---
-    //     |   |   |
-    //     |___|___|
-    //         4
-    //         |
-    
-    if( (pPlayer->GetCurrentWeapon2() == INVEN_WEAPON_SMP ) )
-    {
-        DegPosRelative1 (  (CenterX+(MainWidth+CenterPixelOffset)+fSpace), CenterY, 0.0f );
-        DegPosRelative2 (  (CenterX),                   CenterY-(MainWidth+CenterPixelOffset)-fSpace, 0.0f );    
-        DegPosRelative3 (  (CenterX-(MainWidth+CenterPixelOffset)-fSpace),  CenterY, 0.0f );    
-        DegPosRelative4 (  (CenterX),                   CenterY+(MainWidth+CenterPixelOffset)+fSpace, 0.0f );
-
-        DegRot1 = RADIAN(270);
-        DegRot2 = RADIAN(0);
-        DegRot3 = RADIAN(90);
-        DegRot4 = RADIAN(180);
-
-    }
-    //         |
-    //     2_______1
-    //     |   |   |
-    //     |   |   |
-    // ----|---C---|----
-    //     |   |   |
-    //     |___|___|
-    //     3   |   4
-    //         |
-    else
-    {
-        // This piece is going to be moving diagonal so drop the number of pixel that the degradation pieces
-        // will be by half so that make it 1/4.
-        MainWidth  = MainWidth/2.0f;
-        MainHeight = MainHeight/2.0f;
-
-        DegPosRelative1 (  (CenterX+(MainWidth+CenterPixelOffset)+fSpace),   (CenterY-(MainHeight+CenterPixelOffset)-fSpace), 0.0f );
-        DegPosRelative4 (  (CenterX-(MainWidth+CenterPixelOffset)-fSpace),   (CenterY-(MainHeight+CenterPixelOffset)-fSpace), 0.0f );    
-        DegPosRelative3 (  (CenterX-(MainWidth+CenterPixelOffset)-fSpace),   (CenterY+(MainHeight+CenterPixelOffset)+fSpace), 0.0f );    
-        DegPosRelative2 (  (CenterX+(MainWidth+CenterPixelOffset)+fSpace),   (CenterY+(MainHeight+CenterPixelOffset)+fSpace), 0.0f );
-
-        DegRot1 = RADIAN(315);
-        DegRot2 = RADIAN(225);
-        DegRot3 = RADIAN(135);
-        DegRot4 = RADIAN(45);
-    }
-    
-    {
-        // BEGIN DRAW
-        draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER );
-
-        draw_SetTexture( *pEdgeReticle );
-
-        DegWidth  = (f32)pEdgeReticle->GetWidth();
-        DegHeight = (f32)pEdgeReticle->GetHeight();
-
-        draw_SpriteUV( DegPosRelative1, vector2(DegWidth, DegHeight), UV0, UV1, tempSmallColor, DegRot1 );
-
-        draw_SpriteUV( DegPosRelative2, vector2(DegWidth, DegHeight), UV0, UV1, tempSmallColor, DegRot2 );
-
-        draw_SpriteUV( DegPosRelative3, vector2(DegWidth, DegHeight), UV0, UV1, tempSmallColor, DegRot3 );
-
-        draw_SpriteUV( DegPosRelative4, vector2(DegWidth, DegHeight), UV0, UV1, tempSmallColor, DegRot4 );
-
-        draw_End();
-        // END DRAW
-    }   
-}
-
-//==============================================================================
-
-void hud_reticle::OnAdvanceLogic( player* pPlayer, f32 DeltaTime )
 {
     (void)pPlayer;
-    (void)DeltaTime;
+
+    if( !m_ShouldRender )
+    {
+        return;
+    }
+
+    object* pWeaponObject = g_ObjMgr.GetObjectByGuid( m_WeaponGuid );
+    if( !pWeaponObject || !pWeaponObject->IsKindOf( new_weapon::GetRTTI() ) )
+    {
+        return;
+    }
+
+    new_weapon& Weapon = new_weapon::GetSafeType( *pWeaponObject );
+    const vector2 Center( m_XPos, m_YPos );
+    const vector2 UV0( 0.0f, 0.0f );
+    const vector2 UV1( 1.0f, 1.0f );
+    const xcolor ReticleColor = m_HasLiveEnemyTarget
+                              ? RETICLE_TARGET_COLOR
+                              : RETICLE_COLOR;
+
+    if( m_IsZoomed )
+    {
+        DrawZoomCross( Center, ReticleColor );
+        return;
+    }
+
+    g_UIRenderer.DrawPoint( Center, ReticleColor );
+
+    xcolor PieceColor = ReticleColor;
+    if( m_bPulsing )
+    {
+        PieceColor.A = (u8)(((f32)PieceColor.A / 255.0f) * hud_object::m_PulseAlpha);
+    }
+
+    vector2 CenterReticleSize( 0.0f, 0.0f );
+    texture* pCenterReticle = Weapon.GetCenterReticleTexture();
+    if( pCenterReticle )
+    {
+        const xbitmap& Bitmap = pCenterReticle->m_bitmap;
+        CenterReticleSize.Set( (f32)Bitmap.GetWidth(), (f32)Bitmap.GetHeight() );
+
+        g_UIRenderer.DrawImage( *pCenterReticle,
+                                Center - CenterReticleSize * 0.5f,
+                                CenterReticleSize,
+                                UV0,
+                                UV1,
+                                PieceColor,
+                                0.0f,
+                                UI_BLEND_ALPHA,
+                                UI_SAMPLER_POINT_CLAMP );
+    }
+
+    if( m_UsesMutationReticle )
+    {
+        texture* pMutationReticle = m_MutationReticle.GetPointer();
+        if( !pMutationReticle )
+        {
+            return;
+        }
+
+        const vector2 MutationSize( MUTATION_PIECE_SIZE, MUTATION_PIECE_SIZE );
+        const vector2 HalfMutationSize = MutationSize * 0.5f;
+        const vector2 UV2( 1.0f, 0.0f );
+        const vector2 UV3( 0.0f, 1.0f );
+        const xcolor MutationColor = m_HasLiveEnemyTarget
+                                   ? MUTATION_RETICLE_TARGET_COLOR
+                                   : MUTATION_RETICLE_COLOR;
+
+        DrawReticlePiece( *pMutationReticle, Center + vector2( -HalfMutationSize.X, -HalfMutationSize.Y ),
+                          MutationSize, UV0, UV1, MutationColor, R_0, UI_BLEND_ADDITIVE );
+        DrawReticlePiece( *pMutationReticle, Center + vector2( -HalfMutationSize.X,  HalfMutationSize.Y ),
+                          MutationSize, UV3, UV2, MutationColor, R_0, UI_BLEND_ADDITIVE );
+        DrawReticlePiece( *pMutationReticle, Center + vector2(  HalfMutationSize.X, -HalfMutationSize.Y ),
+                          MutationSize, UV2, UV3, MutationColor, R_0, UI_BLEND_ADDITIVE );
+        DrawReticlePiece( *pMutationReticle, Center + vector2(  HalfMutationSize.X,  HalfMutationSize.Y ),
+                          MutationSize, UV1, UV0, MutationColor, R_0, UI_BLEND_ADDITIVE );
+        return;
+    }
+
+    texture* pEdgeReticle = Weapon.GetEdgeReticleTexture();
+    if( !pEdgeReticle )
+    {
+        return;
+    }
+
+    const xbitmap& EdgeBitmap = pEdgeReticle->m_bitmap;
+    const vector2 EdgeSize( (f32)EdgeBitmap.GetWidth(), (f32)EdgeBitmap.GetHeight() );
+    const f32 CenterPixelOffset = Weapon.GetCenterPixelOffset();
+    const f32 Spread = RETICLE_SPREAD_RANGE * m_AimDegradation;
+    const f32 MainHalfWidth  = CenterReticleSize.X * 0.5f;
+    const f32 MainHalfHeight = CenterReticleSize.Y * 0.5f;
+    reticle_piece_layout Pieces[4];
+
+    if( m_UsesCardinalEdges )
+    {
+        const f32 Radius = MainHalfWidth + CenterPixelOffset + Spread;
+        Pieces[0].Center   = Center + vector2(  Radius, 0.0f );
+        Pieces[0].Rotation = RADIAN( 270 );
+        Pieces[1].Center   = Center + vector2( 0.0f, -Radius );
+        Pieces[1].Rotation = RADIAN(   0 );
+        Pieces[2].Center   = Center + vector2( -Radius, 0.0f );
+        Pieces[2].Rotation = RADIAN(  90 );
+        Pieces[3].Center   = Center + vector2( 0.0f,  Radius );
+        Pieces[3].Rotation = RADIAN( 180 );
+    }
+    else
+    {
+        const f32 RadiusX = MainHalfWidth  * 0.5f + CenterPixelOffset + Spread;
+        const f32 RadiusY = MainHalfHeight * 0.5f + CenterPixelOffset + Spread;
+        Pieces[0].Center   = Center + vector2(  RadiusX, -RadiusY );
+        Pieces[0].Rotation = RADIAN( 315 );
+        Pieces[1].Center   = Center + vector2(  RadiusX,  RadiusY );
+        Pieces[1].Rotation = RADIAN( 225 );
+        Pieces[2].Center   = Center + vector2( -RadiusX,  RadiusY );
+        Pieces[2].Rotation = RADIAN( 135 );
+        Pieces[3].Center   = Center + vector2( -RadiusX, -RadiusY );
+        Pieces[3].Rotation = RADIAN(  45 );
+    }
+
+    for( s32 i = 0; i < 4; i++ )
+    {
+        DrawReticlePiece( *pEdgeReticle,
+                          Pieces[i].Center,
+                          EdgeSize,
+                          UV0,
+                          UV1,
+                          PieceColor,
+                          Pieces[i].Rotation );
+    }
 }
 
 //==============================================================================

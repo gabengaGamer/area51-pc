@@ -1,5 +1,5 @@
 //factions.cpp
-#include "Factions.hpp"
+#include "factions.hpp"
 
 
 //=========================================================================

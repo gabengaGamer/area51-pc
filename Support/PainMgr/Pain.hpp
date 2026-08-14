@@ -16,7 +16,7 @@
 #include "x_array.hpp"
 #include "CollisionMgr/CollisionMgr.hpp"
 #include "PainMgr/PainMgr.hpp"
-#include "MiscUtils\RTTI.hpp"
+#include "MiscUtils/RTTI.hpp"
 
 //==============================================================================
 //==============================================================================
@@ -124,7 +124,7 @@ private:
     vector3                     m_ImpactPoint;
     vector3                     m_ImpactNormal;
     const rtti*                 m_pOriginRTTI;
-    collision_mgr::collision    m_Collision;
+    collision_mgr::collision    m_collision;
 
     // Values set by ComputeDamageAndForce()
     mutable f32                 m_Force;

@@ -1,3 +1,9 @@
+//==============================================================================
+// 
+// SimpleSoundEmitter.hpp
+//
+//==============================================================================
+
 #ifndef SIMPLE_SOUND_EMITTER_HPP
 #define SIMPLE_SOUND_EMITTER_HPP
 
@@ -5,11 +11,12 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 //=========================================================================
 // CLASS
 //=========================================================================
+
 class simple_sound_emitter : public object
 {
 public:
@@ -18,7 +25,7 @@ public:
 
                             simple_sound_emitter                ( void );
     virtual s32             GetMaterial                         ( void ) const { return MAT_TYPE_NULL; }
-    virtual void            OnAdvanceLogic                      ( f32 DeltaTime );      
+    virtual void            OnAdvanceSimulation                      ( f32 DeltaTime );      
     virtual void            OnMove                              ( const vector3& NewPos   );      
     virtual void            OnTransform                         ( const matrix4& L2W      );
     virtual bbox            GetLocalBBox                        ( void ) const;      
@@ -42,8 +49,6 @@ protected:
 
 //=========================================================================
 
-
-    
     char            m_DescriptorName[64];
     rhandle<char>   m_hAudioPackage;
     xarray<s32>     m_pAsyncVoiceID;
@@ -54,7 +59,7 @@ protected:
         
 // Make friends here
 };
+
 //=========================================================================
-// END
+#endif // SIMPLE_SOUND_EMITTER_HPP
 //=========================================================================
-#endif

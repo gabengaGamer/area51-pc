@@ -20,103 +20,107 @@
 //  SYSTEM MANAGER INCLUDES
 //==============================================================================
 
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Render\Render.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "IOManager\io_mgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "NetworkMgr\MsgMgr.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "MemCardMgr/MemCardMgr.hpp"
-#include "DeltaMgr\DeltaMgr.hpp"
-#include "DeltaMgr\InterpolationMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Render.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "IOManager/io_mgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "NetworkMgr/MsgMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "SaveData/SaveDataMgr.hpp"
 
 //==============================================================================
 //  OBJECT INCLUDES
 //==============================================================================
 
-#include "Objects\Player.hpp"  
-#include "Objects\Corpse.hpp"
-#include "Objects\LevelSettings.hpp"
-#include "Objects\SpawnPoint.hpp"
-#include "Objects\ParticleEmiter.hpp"
-#include "Objects\AlienGlob.hpp"
-#include "Objects\HudObject.hpp"
-#include "Objects\Render\PostEffectMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Objects/Corpse.hpp"
+#include "Objects/LevelSettings.hpp"
+#include "Objects/SpawnPoint.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/AlienGlob.hpp"
+#include "Objects/HudObject.hpp"
+#include "Objects/Render/PostEffectMgr.hpp"
 
 //==============================================================================
 //  GAME SUBSYSTEM INCLUDES
 //==============================================================================
 
-#include "Gamelib\Level.hpp"
-#include "Gamelib\binLevel.hpp"
-#include "Gamelib\Link.hpp"
-#include "Gamelib\LevelLoader.hpp"
-#include "gamelib\StatsMgr.hpp" 
-#include "GameLib\RenderContext.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
-#include "PlaySurfaceMgr\PlaySurfaceMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "Templatemgr\TemplateMgr.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "TweakMgr\TweakMgr.hpp"
-#include "PainMgr\PainMgr.hpp"
-#include "PhysicsMgr\PhysicsMgr.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "PerceptionMgr\PerceptionMgr.hpp"
-#include "CheckPointMgr\CheckPointMgr.hpp"
+#include "GameLib/Level.hpp"
+#include "GameLib/BinLevel.hpp"
+#include "GameLib/Link.hpp"
+#include "GameLib/LevelLoader.hpp"
+#include "GameLib/StatsMgr.hpp" 
+#include "GameLib/RenderContext.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
+#include "PlaySurfaceMgr/PlaySurfaceMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "TweakMgr/TweakMgr.hpp"
+#include "PainMgr/PainMgr.hpp"
+#include "PhysicsMgr/PhysicsMgr.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "PerceptionMgr/PerceptionMgr.hpp"
+#include "CheckPointMgr/CheckPointMgr.hpp"
 
 //==============================================================================
 //  AUDIO INCLUDES
 //==============================================================================
 
-#include "Audio\audio_stream_mgr.hpp"
-#include "Audio\audio_hardware.hpp"
-#include "Audio\audio_voice_mgr.hpp"
-#include "Music_Mgr\Music_mgr.hpp"
-#include "MusicStateMgr\MusicStateMgr.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
+#include "Audio/audio_stream_mgr.hpp"
+#include "Audio/backend/audio_backend.hpp"
+#include "Audio/audio_voice_mgr.hpp"
+#include "Music_mgr/music_mgr.hpp"
+#include "MusicStateMgr/MusicStateMgr.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
 
 //==============================================================================
 //  SCRIPTING
 //==============================================================================
 
-#include "..\Support\ScriptMgr\script_mgr.hpp"
+#include "../Support/ScriptMgr/script_mgr.hpp"
 
 //==============================================================================
 //  SUPPORT SYSTEM INCLUDES
 //==============================================================================
 
-#include "..\Support\TriggerEx\TriggerEx_Manager.hpp"
-#include "..\Support\Tracers\TracerMgr.hpp"
-#include "..\Support\Render\LightMgr.hpp"
-#include "navigation\nav_map.hpp"
-#include "navigation\ng_connection2.hpp"
-#include "navigation\ng_node2.hpp"
+#include "../Support/TriggerEx/TriggerEx_Manager.hpp"
+#include "../Support/Tracers/TracerMgr.hpp"
+#include "../Support/Render/LightMgr.hpp"
+#include "Navigation/Nav_Map.hpp"
+#include "Navigation/ng_connection2.hpp"
+#include "Navigation/ng_node2.hpp"
 
 //==============================================================================
 //  UI AND TEXT INCLUDES
 //==============================================================================
 
-#include "UI\ui_manager.hpp"
-#include "UI\ui_Font.hpp"
-#include "StringMgr\StringMgr.hpp"
-#include "GameTextMgr\GameTextMgr.hpp"
-#include "Menu\DebugMenu2.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_renderer.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "GameTextMgr/GameTextMgr.hpp"
+#include "Menu/DebugMenu2.hpp"
 
 //==============================================================================
 //  UTILITY INCLUDES
 //==============================================================================
 
-#include "x_files\x_context.hpp"
-#include "Auxiliary\Bitmap\aux_Bitmap.hpp"
-#include "DataVault\DataVault.hpp"
+#include "x_files/x_profile.hpp"
+#include "x_files/x_workers.hpp"
+#if X_WORKERS_DEBUG && X_THREADS_DEBUG && X_WORKERS_DEBUG_LOG
+#include "x_files/x_threads.hpp"
+#endif
+#include "Auxiliary/Bitmap/aux_Bitmap.hpp"
+#include "DataVault/DataVault.hpp"
 #include "Config.hpp"
+#include "FramePacer.hpp"
+#include "FrameTiming.hpp"
+#include "GameAppPlatform.hpp"
 #include "Configuration/GameConfig.hpp"
-
-#define RELEASE_PATH            "C:\\GameData\\A51\\Release"
 
 #if CONFIG_IS_DEMO
 xtimer g_DemoIdleTimer;
@@ -149,6 +153,7 @@ s32         g_MemoryLowWater        = 0x7fffffff;
 view        g_View;
 u32         g_nLogicFramesAfterLoad = 0;
 char        g_FullPath[256];
+char        g_DataPath[256];
 
 //==============================================================================
 //  GLOBAL VARIABLES - CAMERA AND RENDERING
@@ -255,10 +260,10 @@ void        Render                  ( void );
 //  PLATFORM SPECIFIC INCLUDES
 //==============================================================================
 
-#include "InputMgr\GamePad.hpp"
+#include "InputMgr/GamePad.hpp"
 
-#ifdef TARGET_PC
-#include "main_pc.inl"
+#if defined( TARGET_DESKTOP )
+#include "main_desktop.inl"
 #endif
 
 //==============================================================================
@@ -287,28 +292,17 @@ static u32 GetGameInputContext( void )
 
 static s32 WasPausePressed( void )
 {
-    for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
-    {
-        s32 DeviceID = g_IngamePad[i].GetDeviceID();
-
-        if( DeviceID == -1 )
-            continue;
-
-        if( g_IngamePad[i].GetLogical( ingame_pad::ACTION_PAUSE_CONTEXT ).GetWasValue() > 0.25f )
-            return DeviceID;
-    }
-
-    return -1;
+    return g_GameInput.GetPauseController();
 }
 
 //==============================================================================
 
 xbool HandleInput( f32 DeltaTime )
 {
-    CONTEXT( "HandleInput" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "HandleInput" );
 
     // Check for exit message
-    if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
+    if( g_Input.GetFrameSnapshot().IsPressed( INPUT_MSG_EXIT ) )
         return( FALSE );
 
     #if defined( ENABLE_DEBUG_MENU )
@@ -321,27 +315,27 @@ xbool HandleInput( f32 DeltaTime )
     static s32 FreeCamDebounce = 0;
 
     {
-    #if defined( TARGET_PC )
-        if( g_Input.WasPressed( INPUT_KBD_GRAVE ) )
-        {
-            FreeCamDebounce++;
-            if( FreeCamDebounce == 1 )
-            {
-                g_FreeCam ^= 1;
-                if( !g_FreeCam )
-                {
-                    // Move the player.
-                    player* pPlayer = SMP_UTIL_GetActivePlayer();
-                    if( pPlayer )
-                    {
-                        vector3 vPos = g_View.GetPosition();
-                        pPlayer->OnExitFreeCam( vPos );
-                    }
-                }
-            }
-        }
-        else
-    #endif // defined(TARGET_PC)
+    #if defined( TARGET_DESKTOP )
+        //if( g_Input.GetFrameSnapshot().WasPressed( INPUT_KBD_GRAVE ) )
+        //{
+        //    FreeCamDebounce++;
+        //    if( FreeCamDebounce == 1 )
+        //    {
+        //        g_FreeCam ^= 1;
+        //        if( !g_FreeCam )
+        //        {
+        //            // Move the player.
+        //            player* pPlayer = SMP_UTIL_GetActivePlayer();
+        //            if( pPlayer )
+        //            {
+        //                vector3 vPos = g_View.GetPosition();
+        //                pPlayer->OnExitFreeCam( vPos );
+        //            }
+        //        }
+        //    }
+        //}
+        //else
+    #endif // defined(TARGET_DESKTOP)
         {
             FreeCamDebounce = 0;
         }
@@ -365,7 +359,7 @@ xbool HandleInput( f32 DeltaTime )
             {
                 // Toggle the pause state.
                 g_StateMgr.SetPaused( !g_StateMgr.IsPaused(), PausingController );
-                g_Input.ClearActionMapsFixed( g_IngamePad );
+                g_GameInput.ClearInput();
             #if CONFIG_IS_DEMO
                 g_DemoIdleTimer.Reset();
                 g_DemoIdleTimer.Start();
@@ -391,10 +385,9 @@ xbool HandleInput( f32 DeltaTime )
 
 void UpdateAudio( f32 DeltaTime )
 {
-    (void)DeltaTime;
     STAT_LOGGER( temp, k_stats_Sound );
 
-    CONTEXT( "UpdateAudio" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "UpdateAudio" );
 
     #ifdef AUDIO_ENABLE
     
@@ -421,18 +414,29 @@ void AudioStats( f32 DeltaTime )
 //  MAIN UPDATE FUNCTIONS
 //==============================================================================
 
-void Update( f32 DeltaTime )
+#if !defined(X_RETAIL) && X_WORKERS_DEBUG && X_THREADS_DEBUG && X_WORKERS_DEBUG_LOG
+static void LogThreadDebugStats( f32 DeltaTime );
+#endif
+
+static xbool ShouldAdvanceWorld( void )
 {
-    CONTEXT( "Update" );
-
-    if( !g_StateMgr.IsPaused() )
-    {
-        g_Input.CommitActionMapsFixed( g_IngamePad );
-    }
-
-    #ifndef X_RETAIL
-    g_PolyCache.Update();
+    return
+    #if (!CONFIG_IS_DEMO)
+        (!g_FreeCamPause || (g_FreeCam == FALSE)) &&
     #endif
+    #if defined( ENABLE_DEBUG_MENU )
+        (g_DebugMenu.IsActive() == FALSE) &&
+        (!eng_ScreenShotActive()) &&
+    #endif
+        ((g_StateMgr.IsPaused() == FALSE) || (g_NetworkMgr.IsOnline() == TRUE));
+}
+
+//==============================================================================
+
+void AdvanceSimulation( f32 DeltaTime )
+{
+    X_PROFILE_SCOPE_CATEGORY( "Context", "AdvanceSimulation" );
+
 
     #if !defined(X_RETAIL)
     if( s_ForceGameComplete )
@@ -440,52 +444,39 @@ void Update( f32 DeltaTime )
         g_ActiveConfig.SetExitReason( GAME_EXIT_GAME_COMPLETE );
         s_ForceGameComplete = FALSE;
     }
+
+    #if X_WORKERS_DEBUG && X_THREADS_DEBUG && X_WORKERS_DEBUG_LOG
+    LogThreadDebugStats( DeltaTime );
+    #endif
     #endif
 
-    #if defined( ENABLE_DEBUG_MENU )
-    // run debug menu
-    g_DebugMenu.Update( DeltaTime );
-    #endif // defined( ENABLE_DEBUG_MENU )
-
-    ASSERT( g_StateMgr.IsBackgroundThreadRunning()==FALSE );
-    // run pause menu
-    if( !g_StateMgr.IsPaused() )
-    {
-        g_StateMgr.Update( DeltaTime );
-    }
-
-    // should not pause the game logic for multiplayer or online games!
-    if( 
-    #if (!CONFIG_IS_DEMO)
-        (!g_FreeCamPause || (g_FreeCam == FALSE)) && 
-    #endif
-    #if defined( ENABLE_DEBUG_MENU )
-        (g_DebugMenu.IsActive() == FALSE) &&
-        (!eng_ScreenShotActive()) &&
-    #endif // defined( ENABLE_DEBUG_MENU )
-        ( (g_StateMgr.IsPaused() == FALSE) || 
-          ( g_NetworkMgr.IsOnline() == TRUE ) ) 
-      )
+    if( ShouldAdvanceWorld() )
     {
         g_nLogicFramesAfterLoad++;
-
-        render::Update( DeltaTime );
-        g_TracerMgr.OnUpdate( DeltaTime );
         
         // Limit dynamic dead bodies before advancing physics so that it doesn't get overloaded 
         // and or/run out of constraints
         corpse::LimitCount();
         
         g_PhysicsMgr.Advance( DeltaTime );
+        slot_id const HudSlot = g_ObjMgr.GetFirst( object::TYPE_HUD_OBJECT );
+        hud_object* pHud = (HudSlot != SLOT_NULL)
+                         ? (hud_object*)g_ObjMgr.GetObjectBySlot( HudSlot )
+                         : NULL;
+        if( pHud )
+        {
+            pHud->BeginIconSnapshot();
+        }
         {
             STAT_LOGGER( temp, k_stats_OnAdvance );
-            g_ObjMgr.AdvanceAllLogic( DeltaTime );
+            g_ObjMgr.AdvanceSimulation( DeltaTime );
         }
-        g_LightMgr.OnUpdate( DeltaTime );
-        g_PostEffectMgr.OnUpdate( DeltaTime );
-        g_DecalMgr.OnUpdate( DeltaTime );
+        if( pHud )
+        {
+            pHud->CommitIconSnapshot();
+        }
         g_AlienGlobMgr.Advance( DeltaTime );
-        g_ScriptMgr.Update( DeltaTime );		
+        g_ScriptMgr.Update( DeltaTime );
     }
 
     if(
@@ -493,16 +484,34 @@ void Update( f32 DeltaTime )
         (g_DebugMenu.IsActive() == FALSE) &&
         (!eng_ScreenShotActive()) &&
     #endif // defined( ENABLE_DEBUG_MENU )
-        ( ( g_StateMgr.IsPaused() == FALSE ) || 
-          ( g_NetworkMgr.IsOnline() == TRUE ) )
+        ((g_StateMgr.IsPaused() == FALSE) || (g_NetworkMgr.IsOnline() == TRUE))
       )
     { 
         g_TriggerExMgr.OnUpdate( DeltaTime );
     }
 
-    g_NetworkMgr.Update( DeltaTime );
-    g_GameTextMgr.Update( DeltaTime );
-    UpdateAudio( DeltaTime );
+    g_NetworkMgr.AdvanceSimulation( DeltaTime );
+}
+
+//==============================================================================
+
+void UpdateFrameServices( f32 FrameDeltaTime )
+{
+    // Wall-clock and platform-facing services. These run once per presented
+    // frame and must not integrate authoritative world motion.
+    X_PROFILE_SCOPE_CATEGORY( "Context", "UpdateFrameServices" );
+
+    #ifndef X_RETAIL
+    g_PolyCache.Update();
+    #endif
+
+    #if defined( ENABLE_DEBUG_MENU )
+    g_DebugMenu.Update( FrameDeltaTime );
+    #endif
+
+    g_StateMgr.Update( FrameDeltaTime );
+    g_GameTextMgr.Update( FrameDeltaTime );
+    UpdateAudio( FrameDeltaTime );
 
     //handle save/load
     if ( g_BinLevelMgr.WantsToSave() )
@@ -519,31 +528,199 @@ void Update( f32 DeltaTime )
 
 //==============================================================================
 
-void UpdateFrontEnd( xtimer& FrontEndTimer )
+void UpdateRenderServices( f32 FrameDeltaTime )
 {
-    f32 DeltaTime = g_DeltaMgr.ReadTimerDeltaToFallback( FrontEndTimer );
+    // Advance render-side services once per frame.
+    X_PROFILE_SCOPE_CATEGORY( "Context", "UpdateRenderServices" );
 
-    ASSERT( g_StateMgr.IsBackgroundThreadRunning() == FALSE );
+    render::Update( FrameDeltaTime );
+    g_TracerMgr.OnUpdate( FrameDeltaTime );
+    g_LightMgr.OnUpdate( FrameDeltaTime );
+    g_PostEffectMgr.OnUpdate( FrameDeltaTime );
+    g_DecalMgr.OnUpdate( FrameDeltaTime );
+}
 
-    g_Input.SampleActionMaps( g_IngamePad, DeltaTime, FRONTEND_CONTEXT );
-    g_Input.CommitActionMapsFrame( g_IngamePad );
-    g_Input.ClearActionMapsFixed( g_IngamePad );
+//==============================================================================
 
-    g_StateMgr.CheckControllers();
+static xbool ClearBackBuffer( void )
+{
+    rtarget_backbuffer_pass_desc PassDesc;
+    PassDesc.bUseDepth = FALSE;
+    if( !rtarget_BeginBackBufferPass( PassDesc ) )
+    {
+        x_DebugMsg( "GameApp: failed to begin clear-only backbuffer pass\n" );
+        eng_ResetAfterException();
+        return FALSE;
+    }
 
-    #ifdef TARGET_PC
-    // Bail if the app is closed
-    if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
-        return;
-    #endif
-    g_NetworkMgr.Update( DeltaTime );
-    g_StateMgr.Update( DeltaTime );
-    g_StateMgr.Render();
+    rtarget_EndPass();
+    return TRUE;
+}
 
-    // update audio manager
-    UpdateAudio( DeltaTime );
+//==============================================================================
 
-    eng_PageFlip();
+static xbool FinishClearOnlyFrame( void )
+{
+    if( !ClearBackBuffer() )
+    {
+        return FALSE;
+    }
+
+    return eng_EndFrame();
+}
+
+//==============================================================================
+
+static xbool SampleFrameTiming( FrameTiming& FrameClock,
+                                f32&         FrameDeltaSeconds,
+                                const char*  pFrameName,
+                                xbool&       bFrameAccepted )
+{
+    FrameTimingSample const Sample = FrameClock.Sample();
+    bFrameAccepted = (Sample.Status == FrameTimingStatus::Valid);
+
+    if( bFrameAccepted )
+    {
+        FrameDeltaSeconds = Sample.AcceptedDeltaSeconds;
+        return TRUE;
+    }
+
+    FrameDeltaSeconds = 0.0f;
+    if( Sample.Status == FrameTimingStatus::Hitch )
+    {
+        x_DebugMsg( "GameApp: %s hitch delta %f; discarding frame\n", pFrameName, Sample.RawDeltaSeconds );
+    }
+    else
+    {
+        x_DebugMsg( "GameApp: invalid %s delta %f; discarding frame\n", pFrameName, Sample.RawDeltaSeconds );
+    }
+
+    return FinishClearOnlyFrame();
+}
+
+//==============================================================================
+
+static xbool BeginTimedFrame( FramePacer& Pacer,
+                              FrameTiming& FrameClock,
+                              f32&        FrameDeltaSeconds )
+{
+    while( TRUE )
+    {
+        global_settings const& Settings = g_StateMgr.GetActiveSettings();
+        Pacer.Configure( Settings.GetFrameRateLimit(), eng_GetPresentMode() );
+        Pacer.WaitForNextFrame();
+
+        if( !eng_BeginFrame() )
+        {
+            return FALSE;
+        }
+
+        xbool bFrameAccepted = FALSE;
+        if( !SampleFrameTiming( FrameClock, FrameDeltaSeconds, "frame", bFrameAccepted ) )
+        {
+            return FALSE;
+        }
+
+        if( bFrameAccepted )
+        {
+            return TRUE;
+        }
+    }
+}
+
+//==============================================================================
+
+static xbool BeginLoadingFrame( FrameTiming& FrameClock,
+                                f32&    FrameDeltaSeconds )
+{
+    while( TRUE )
+    {
+        if( !eng_BeginFrame() )
+        {
+            return FALSE;
+        }
+
+        xbool bFrameAccepted = FALSE;
+        if( !SampleFrameTiming( FrameClock, FrameDeltaSeconds, "loading frame", bFrameAccepted ) )
+        {
+            return FALSE;
+        }
+
+        if( bFrameAccepted )
+        {
+            return TRUE;
+        }
+    }
+}
+
+//==============================================================================
+
+xbool UpdateFrontEnd( FramePacer& Pacer, FrameTiming& FrontEndClock )
+{
+    f32 DeltaTime = 0.0f;
+    if( !BeginTimedFrame( Pacer, FrontEndClock, DeltaTime ) )
+    {
+        return FALSE;
+    }
+
+    {
+        X_PROFILE_SCOPE_CATEGORY( "Frame", "Frame.Update" );
+
+        g_FrontendInput.Update( DeltaTime );
+
+        g_StateMgr.CheckControllers();
+
+        #ifdef TARGET_DESKTOP
+        if( g_Input.GetFrameSnapshot().IsPressed( INPUT_MSG_EXIT ) )
+        {
+            FinishClearOnlyFrame();
+            return FALSE;
+        }
+        #endif
+        g_NetworkMgr.UpdateFrame( DeltaTime );
+        g_StateMgr.Update( DeltaTime );
+        g_StateMgr.Render();
+
+        UpdateAudio( DeltaTime );
+    }
+
+    if( !ClearBackBuffer() )
+    {
+        return FALSE;
+    }
+
+    return eng_EndFrame();
+}
+
+//==============================================================================
+
+xbool UpdateLevelLoadingFrame( FrameTiming& FrontEndClock )
+{
+    static const f32 k_LevelLoadTimeBudgetSeconds = 0.008f;
+
+    f32 DeltaTime = 0.0f;
+    if( !BeginLoadingFrame( FrontEndClock, DeltaTime ) )
+    {
+        return FALSE;
+    }
+
+    {
+        X_PROFILE_SCOPE_CATEGORY( "Frame", "Frame.Update" );
+
+        g_LevelLoader.UpdateLevelLoad( k_LevelLoadTimeBudgetSeconds );
+        g_FrontendInput.Update( DeltaTime );
+        g_NetworkMgr.UpdateFrame( DeltaTime );
+        g_StateMgr.UpdateLevelLoading( DeltaTime );
+        g_StateMgr.Render();
+        UpdateAudio( DeltaTime );
+    }
+
+    if( !ClearBackBuffer() )
+    {
+        return FALSE;
+    }
+
+    return eng_EndFrame();
 }
 
 //==============================================================================
@@ -552,7 +729,7 @@ void UpdateFrontEnd( xtimer& FrontEndTimer )
 
 void SetupViewAndFog( zone_mgr::zone_id StartZone )
 {
-    CONTEXT( "SetupView" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "SetupView" );
 
     texture::handle FogPalette;
 
@@ -602,14 +779,82 @@ void SetupViewAndFog( zone_mgr::zone_id StartZone )
 
 //==============================================================================
 
-void RenderGame( f32 Alpha )
+#if !defined(X_RETAIL) && X_WORKERS_DEBUG && X_THREADS_DEBUG && X_WORKERS_DEBUG_LOG
+
+static xbool s_LogThreadDebugStats = TRUE;
+
+static void LogThreadDebugStats( f32 DeltaTime )
+{
+    static f32 s_LogTimer = 0.0f;
+
+    if( !s_LogThreadDebugStats )
+        return;
+
+    s_LogTimer += DeltaTime;
+    if( s_LogTimer < 1.0f )
+        return;
+
+    s_LogTimer = 0.0f;
+
+    x_thread_debug_snapshot ThreadSnapshot;
+    x_worker_debug_snapshot WorkerSnapshot;
+    s32                     i;
+
+    x_GetThreadDebugSnapshot( ThreadSnapshot );
+    x_WorkersGetDebugSnapshot( WorkerSnapshot );
+
+    x_DebugMsg( "x_workers: %s n:%d kill:%d jobs F/P/R/D:%d/%d/%d/%d sub/done:%d/%d\n",
+                WorkerSnapshot.IsInitialized ? "ON" : "OFF",
+                WorkerSnapshot.nWorkers,
+                WorkerSnapshot.IsKilling,
+                WorkerSnapshot.nJobsFree,
+                WorkerSnapshot.nJobsPending,
+                WorkerSnapshot.nJobsRunning,
+                WorkerSnapshot.nJobsDone,
+                WorkerSnapshot.nJobsSubmitted,
+                WorkerSnapshot.nJobsCompleted );
+
+    x_DebugMsg( "x_worker_services: F/R/D:%d/%d/%d start/done:%d/%d\n",
+                WorkerSnapshot.nServicesFree,
+                WorkerSnapshot.nServicesRunning,
+                WorkerSnapshot.nServicesDone,
+                WorkerSnapshot.nServicesStarted,
+                WorkerSnapshot.nServicesCompleted );
+
+    if( !ThreadSnapshot.IsInitialized )
+    {
+        x_DebugMsg( "x_threads: OFF\n" );
+        return;
+    }
+
+    x_DebugMsg( "x_threads: n:%d active:%d\n", ThreadSnapshot.nThreads, ThreadSnapshot.ActiveThreadId );
+
+    for( i=0; i<ThreadSnapshot.nThreads; i++ )
+    {
+        const x_thread_debug_info& Info    = ThreadSnapshot.Threads[i];
+        const char*                pActive = (Info.ThreadId == ThreadSnapshot.ActiveThreadId) ? "*" : " ";
+
+        x_DebugMsg( "  %s id:%02d sys:%05d pri:%2d %s %s%s\n",
+                    pActive,
+                    Info.ThreadId,
+                    Info.SystemId,
+                    Info.Priority,
+                    x_GetThreadStateName( Info.Status ),
+                    Info.pName,
+                    Info.NeedToTerminate ? " TERM" : "" );
+    }
+}
+
+#endif // !defined(X_RETAIL) && X_WORKERS_DEBUG && X_THREADS_DEBUG && X_WORKERS_DEBUG_LOG
+
+//==============================================================================
+
+void RenderGame( void )
 {
     s32 i;
 
-    CONTEXT( "Render" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "Render" );
     LOG_STAT( k_stats_OtherRender );
-
-    ASSERT( g_StateMgr.IsBackgroundThreadRunning() == FALSE );
 
     // Set background clear color
     #if (!CONFIG_IS_DEMO)
@@ -681,7 +926,6 @@ void RenderGame( f32 Alpha )
             // one view, set it to the entire screen
             view& rView0 = player::GetLiveView( 0 );
             rView0.SetViewport( 0, 0, XRes, YRes );
-            pPlayers[0]->ComputeView( rView0 );
         }
         break;
 
@@ -693,12 +937,10 @@ void RenderGame( f32 Alpha )
             view& rView1 = player::GetLiveView( 1 );
             rView0.SetViewport( 0,0       ,XRes,YRes/2-1 ); // top
             rView1.SetViewport( 0,YRes/2+1,XRes,YRes     ); // bottom
-            pPlayers[0]->ComputeView( rView0 );
-            pPlayers[1]->ComputeView( rView1 );
 
             if( !g_StateMgr.IsPaused() && eng_Begin( "Kill last rect" ) )
             {
-                draw_Rect( irect( 0,YRes/2-2,XRes,YRes/2+2 ),XCOLOR_BLACK,FALSE,DRAW_UI_RTARGET);
+                g_UIRenderer.DrawRect( irect( 0,YRes/2-2,XRes,YRes/2+2 ), XCOLOR_BLACK );
                 eng_End( );
             }
         }
@@ -715,15 +957,11 @@ void RenderGame( f32 Alpha )
             rView1.SetViewport( XRes/2+1,0       ,XRes    ,YRes/2-1 );   // upper-right
             rView2.SetViewport( 0       ,YRes/2+1,XRes    ,YRes     );   // bottom
 
-            pPlayers[0]->ComputeView( rView0 );
-            pPlayers[1]->ComputeView( rView1 );
-            pPlayers[2]->ComputeView( rView2 );
 
             if( !g_StateMgr.IsPaused() && eng_Begin( "Kill last rect" ) )
             {
-                //draw_Rect( irect( XRes/2  ,YRes/2  ,XRes    ,YRes     ),XCOLOR_BLACK,FALSE,DRAW_UI_RTARGET ); // missing square
-                draw_Rect( irect( 0       ,YRes/2-2,XRes    ,YRes/2+2 ),XCOLOR_BLACK,FALSE,DRAW_UI_RTARGET ); // horizontal line
-                draw_Rect( irect( XRes/2-2,0       ,XRes/2+2,YRes/2+2 ),XCOLOR_BLACK,FALSE,DRAW_UI_RTARGET ); // vertical line
+                g_UIRenderer.DrawRect( irect( 0,        YRes/2-2, XRes,     YRes/2+2 ), XCOLOR_BLACK ); // horizontal line
+                g_UIRenderer.DrawRect( irect( XRes/2-2, 0,        XRes/2+2, YRes/2+2 ), XCOLOR_BLACK ); // vertical line
                 eng_End( );
             }
         }
@@ -743,22 +981,16 @@ void RenderGame( f32 Alpha )
             rView2.SetViewport( 0       ,YRes/2+1,XRes/2-1,YRes     );   // lower-left
             rView3.SetViewport( XRes/2+1,YRes/2+1,XRes    ,YRes     );   // lower-right
 
-            pPlayers[0]->ComputeView( rView0 );
-            pPlayers[1]->ComputeView( rView1 );
-            pPlayers[2]->ComputeView( rView2 );
-            pPlayers[3]->ComputeView( rView3 );
 
             if( !g_StateMgr.IsPaused() && eng_Begin( "Kill last rect" ) )
             {
-                draw_Rect( irect( 0       ,YRes/2-2,XRes    ,YRes/2+2 ),XCOLOR_BLACK,FALSE,DRAW_UI_RTARGET ); // horizontal line
-                draw_Rect( irect( XRes/2-2,0       ,XRes/2+2,YRes     ),XCOLOR_BLACK,FALSE,DRAW_UI_RTARGET ); // vertical line
+                g_UIRenderer.DrawRect( irect( 0,        YRes/2-2, XRes,     YRes/2+2 ), XCOLOR_BLACK ); // horizontal line
+                g_UIRenderer.DrawRect( irect( XRes/2-2, 0,        XRes/2+2, YRes     ), XCOLOR_BLACK ); // vertical line
                 eng_End( );
             }
         }
         break;
     }
-
-    g_InterpolationMgr.Update( Alpha );
 
     // Make all the players inactive in anticipation of the render...
     for( i = 0; i < nPlayers; i++ )
@@ -779,28 +1011,23 @@ void RenderGame( f32 Alpha )
         if ( g_FreeCam == FALSE )
     #endif
         {
-            g_View = pPlayers[i]->GetInterpView();
+            g_View = pPlayers[i]->GetRenderView();
         }
 
-        SetupViewAndFog(pPlayers[i]->GetPlayerViewZone());
+        zone_mgr::zone_id const PlayerViewZone =
+            pPlayers[i]->GetPlayerViewZone();
+        SetupViewAndFog( PlayerViewZone );
 
         // Perform any platform specific render initialization
         InitRenderPlatform();
 
         // render all objects
         xbool DoPortalWalk = TRUE;
-    #if (!CONFIG_IS_DEMO)
-        if( g_FreeCam )
-            DoPortalWalk = FALSE;
-    #endif
-        g_ObjMgr.Render( DoPortalWalk, g_View, pPlayers[i]->GetPlayerViewZone() );
+        g_ObjMgr.Render( DoPortalWalk, g_View, PlayerViewZone );
 
         EndRenderPlatform();
-        g_InterpolationMgr.Clear( interpolation_mgr::CLEAR_STAGE_PER_VIEW );
         pPlayers[i]->SetAsActivePlayer( FALSE );
     }
-
-    g_InterpolationMgr.Clear( interpolation_mgr::CLEAR_STAGE_END_FRAME );
 
     // Make all the players active again so their input will function.
     for( i = 0; i < nPlayers; i++ )
@@ -892,7 +1119,7 @@ void SaveCamera( void )
     
     const view* pView = eng_GetView();
 
-    if( !(fp = x_fopen( xfs( "%s\\camera.dat", g_FullPath ), "wb" ))) ASSERT( FALSE );
+    if( !(fp = x_fopen( xfs( "%s/camera.dat", g_FullPath ), "wb" ))) ASSERT( FALSE );
     x_fwrite( pView, sizeof( view ), 1, fp );
     x_fclose( fp );
     x_DebugMsg( "Camera saved\n" );
@@ -905,7 +1132,7 @@ void LoadCamera( void )
     X_FILE* fp;
     view    TheView;
 
-    if( !(fp = x_fopen( xfs( "%s\\camera.dat", g_FullPath ), "rb" ))) return;
+    if( !(fp = x_fopen( xfs( "%s/camera.dat", g_FullPath ), "rb" ))) return;
     x_fread( &TheView, sizeof( view ), 1, fp );
     g_View = TheView;
     x_fclose( fp );
@@ -1004,45 +1231,44 @@ void DoStartup( void )
     x_DebugMsg( "Entered app.\n" );
 
     // get language setting and check for default language.
-    x_language DefaultLanguage = x_GetConsoleLanguage();
-    x_SetLocale( CheckLanguageSupport( DefaultLanguage ) );
+    x_language DefaultLanguage = CheckLanguageSupport( x_GetConsoleLanguage() );
 
     #if !defined( CONFIG_RETAIL )
     if( g_CmdLineLanguage != -1 )
     {
-        x_SetLocale( (x_language)g_CmdLineLanguage );
+        DefaultLanguage = CheckLanguageSupport( static_cast<x_language>( g_CmdLineLanguage ) );
     }
     #endif
 
-    g_UIMemCardMgr.Init();
+    global_settings::SetDefaultLocalizationLanguage( DefaultLanguage );
+    x_SetLocale( DefaultLanguage );
 
-    eng_Init();
+    g_StateMgr.GetActiveSettings().Reset( RESET_LOCALIZATION );
+    g_StateMgr.GetPendingSettings().Reset( RESET_LOCALIZATION );
+
+    g_SaveDataMgr.Init();
+
+    // Restore startup consumers before the engine creates its display window.
+    xbool const StartupSettingsLoaded = g_SaveDataMgr.LoadStartupSettings();
+    g_StateMgr.GetActiveSettings().CommitStartup();
+
     guid_Init();
 
     x_DebugMsg( "Initialize io system\n" );
 
     g_IoMgr.Init();
 
-    #ifdef TARGET_PC
-    // Setup the full path to the PC exe
-    char exePath[256];
-    GetModuleFileNameA(NULL, exePath, sizeof(exePath));
+    if( !GameAppGetExecutableDirectory( g_FullPath, sizeof( g_FullPath ) ) )
+        x_strcpy( g_FullPath, "." );
 
-    x_strcpy(g_FullPath, exePath);
-    char* pLastSlash = x_strrchr(g_FullPath, '\\');
-    if (pLastSlash)
-        *pLastSlash = '\0';
-    
+    if( !GameAppGetDataDirectory( g_DataPath, sizeof( g_DataPath ) ) )
+        x_strcpy( g_DataPath, g_FullPath );
+
     x_DebugMsg( "Executable directory: %s\n", g_FullPath );
+    x_DebugMsg( "Data directory: %s\n", g_DataPath );
 
     // Mount the default file system.
-    g_IoMgr.SetDevicePathPrefix( xfs("%s\\", g_FullPath ), IO_DEVICE_HOST );
-    #else
-    // Mount the default file system.
-    g_IoMgr.SetDevicePathPrefix( "C:\\",IO_DEVICE_HOST );	
-    // Setup the full path to the platform specific release data
-    x_strcpy( g_FullPath, xfs( "%s\\%s", RELEASE_PATH, PLATFORM_PATH ) );
-    #endif
+    g_IoMgr.SetDevicePathPrefix( xfs( "%s/", g_FullPath ), IO_DEVICE_HOST );
 
     // Xbox: cache to the utility partition.
     g_LevelLoader.MountDefaultFilesystems();
@@ -1051,12 +1277,15 @@ void DoStartup( void )
     // This MUST happen AFTER the io system has been initialized. Otherwise we can't
     // load the config.ini file on a viewer build.
     #ifndef CONFIG_RETAIL
-    g_Config.Load( xfs( "%s\\%s\\Config.ini", RELEASE_PATH, PLATFORM_PATH ) );
+    g_Config.Load( xfs( "%s/Config.ini", g_DataPath ) );
     if( g_CmdLineAutoClient )
         g_Config.AutoClient = TRUE;
     if( g_CmdLineAutoServer )
         g_Config.AutoServer = TRUE;
     #endif
+
+    eng_Init();
+    GameAppSetWindowIcon();
 
     //
     // Fire up some of the major system managers.
@@ -1068,6 +1297,7 @@ void DoStartup( void )
     g_PlaySurfaceMgr.Init();
     g_DecalMgr.Init();
     g_AudioManager.Init( 5512*1024 );
+    g_StateMgr.GetActiveSettings().CommitLocalization();
 
     // Initialize animation system
     anim_event::Init();
@@ -1113,20 +1343,20 @@ void DoStartup( void )
     // initialize ui manager
     g_UiMgr =  new ui_manager;
     g_UiMgr->Init();
-    g_UiMgr->SetRes();
 
     // load strings for inventory items.
     //g_StringTableMgr.LoadTable( "Inventory", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_Inventory_strings.stringbin" ) );
     g_StringTableMgr.LoadTable( "Inventory", "ENG_Inventory_strings.stringbin" );
 
+    if( !StartupSettingsLoaded )
+    {
+        g_StateMgr.GetActiveSettings().Reset( RESET_ALL );
+    }
+    g_StateMgr.GetActiveSettings().Commit();
+
     // initialize state manager
     // MUST be done AFTER resource manager init
     g_StateMgr.Init();
-
-    // initialize memcard manager
-    //g_MemcardMgr.Init();
-    //g_UIMemCardMgr.Init();
-
     g_RscMgr.TagResources();
 
     #if !defined(X_RETAIL) && defined(RSC_MGR_COLLECT_STATS)
@@ -1146,7 +1376,7 @@ void DoStartup( void )
 	
     // Init scripting
     g_ScriptMgr.Init();
-    g_ScriptMgr.RunFile( "scripts\\main.lua" );	
+    g_ScriptMgr.RunFile( "scripts/main.lua" );	
 }
 
 //==============================================================================
@@ -1154,11 +1384,14 @@ void DoStartup( void )
 void DoShutdown( void )
 {
     g_ScriptMgr.Kill();	
-    g_UIMemCardMgr.Kill();
+    g_SaveDataMgr.Kill();
     g_NetworkMgr.Kill();
     g_GameTextMgr.Kill();
     g_DecalMgr.Kill();
     g_PlaySurfaceMgr.Kill();
+    #ifdef USE_MOVIES
+    g_StateMgr.CloseMovie();
+    #endif
     #ifdef AUDIO_ENABLE
     g_ConverseMgr.Kill();
     g_AudioMgr.UnloadAllPackages();
@@ -1167,8 +1400,12 @@ void DoShutdown( void )
     g_StateMgr.Kill();
     g_TracerMgr.Kill();
     g_PhysicsMgr.Kill();
-    g_IoMgr.Kill();
+    delete g_UiMgr;
+    g_UiMgr = NULL;
     render::Kill();
+    eng_Kill();
+    g_LevelLoader.UnmountDefaultFilesystems();
+    g_IoMgr.Kill();
 }
 
 //==============================================================================
@@ -1179,31 +1416,36 @@ void RunFrontEnd( void )
 {
     MEMORY_OWNER( "RunFrontEnd()" );
 
+    FramePacer Pacer;
+
     // load lore strings
     //g_StringTableMgr.LoadTable( "lore", xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "ENG_lore_strings.stringbin") );
     g_StringTableMgr.LoadTable( "lore", "ENG_lore_strings.stringbin" );
 
-    xtimer FrontEndTimer;
-    FrontEndTimer.Start();
+    FrameTiming FrontEndTiming;
+    FrontEndTiming.Start();
 
     while( (g_StateMgr.GetState() != SM_MULTI_PLAYER_LOAD_MISSION) &&
            (g_StateMgr.GetState() != SM_SINGLE_PLAYER_LOAD_MISSION) &&
            (g_StateMgr.GetState() != SM_RELOAD_CHECKPOINT) &&
            (g_StateMgr.GetState() != SM_DEMO_EXIT) )
     {
-        UpdateFrontEnd( FrontEndTimer );
+        if( g_StateMgr.HasPendingSimpleMovie() )
+        {
+            g_StateMgr.ProcessPendingSimpleMovie();
+            FrontEndTiming.Restart();
+            continue;
+        }
 
-#ifdef TARGET_PC
-        if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
+        if( !UpdateFrontEnd( Pacer, FrontEndTiming ) )
+        {
+            break;
+        }
+
+#ifdef TARGET_DESKTOP
+        if( g_Input.GetFrameSnapshot().IsPressed( INPUT_MSG_EXIT ) )
             break;
 #endif
-    }
-
-    // update input - flush last keypress
-    g_Input.ClearFrameInput();
-    while( g_Input.PollHardwareState() )
-    {
-        g_Input.SampleFrameInput();
     }
 
     // unload string tables
@@ -1212,9 +1454,13 @@ void RunFrontEnd( void )
 
 //==============================================================================
 
+//==============================================================================
+
 void RunGame( void )
 {
     MEMORY_OWNER( "INGAME" );
+
+    FramePacer Pacer;
 
     #if !defined( CONFIG_RETAIL )
     g_MemoryLowWater = 0x7fffffff;
@@ -1243,7 +1489,7 @@ void RunGame( void )
             Trigger.ForceStartTrigger();
 
             // Run the trigger logic once.
-            Trigger.OnAdvanceLogic( 0.033f );
+            Trigger.OnAdvanceSimulation( 0.033f );
 
             // Now NUKE it!
             g_ObjMgr.DestroyObjectEx( GUID, TRUE );
@@ -1253,15 +1499,19 @@ void RunGame( void )
     // Level is fully loaded and startup trigger has run, notify scripts.
     g_ScriptMgr.NotifyLevelStart();
 
-    f32 DeltaTime = 0.0f;
-
-    xtimer GameTimer;
-    GameTimer.Start();
-    g_DeltaMgr.Reset();
+    FrameTiming GameTiming;
+    GameTiming.Start();
 
     // Run!  At least until we stop, that is.
     while( TRUE )
     {
+        if( g_StateMgr.HasPendingSimpleMovie() )
+        {
+            g_StateMgr.ProcessPendingSimpleMovie();
+            GameTiming.Restart();
+            continue;
+        }
+
         LOG_STAT( k_stats_CPU_Time );
 
         #if !defined( CONFIG_RETAIL )
@@ -1270,65 +1520,66 @@ void RunGame( void )
             g_MemoryLowWater = LowWater;
         #endif // !defined( CONFIG_RETAIL )
 
-        f32 RawDeltaTime = GameTimer.TripSec();
-        f32 UnscaledDeltaTime = g_DeltaMgr.ClampDeltaTimeToMax( RawDeltaTime );
-        f32 LocalDeltaTime    = g_DeltaMgr.ClampDeltaTimeToFallback( RawDeltaTime );
-
-        g_PerceptionMgr.Update( UnscaledDeltaTime );
-
-        f32 TimeScale = g_PerceptionMgr.GetGlobalTimeDialation();
-
-        #if !defined( CONFIG_RETAIL )
-        TimeScale *= g_WorldTimeDilation;
-        #endif
-
-        g_DeltaMgr.SetTimeScale( TimeScale );
-        g_DeltaMgr.Tick( RawDeltaTime );
-
-        DeltaTime = g_DeltaMgr.GetDeltaTime();
-
-        if( g_Input.SampleActionMaps( g_IngamePad, LocalDeltaTime, GetGameInputContext() ) )
+        f32 FrameDeltaSeconds = 0.0f;
+        if( !BeginTimedFrame( Pacer, GameTiming, FrameDeltaSeconds ) )
         {
-            g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
+            break;
         }
 
-        g_Input.CommitActionMapsFrame( g_IngamePad );
-
-        if( HandleInput( LocalDeltaTime ) == FALSE )
         {
-            g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
-        }
+            X_PROFILE_SCOPE_CATEGORY( "Frame", "Frame.Update" );
 
-        if( g_StateMgr.IsPaused() )
-        {
-            g_Input.ClearActionMapsFixed( g_IngamePad );
+            if( g_GameInput.UpdateFrame( FrameDeltaSeconds, GetGameInputContext() ) )
+            {
+                g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
+            }
+
+            if( HandleInput( FrameDeltaSeconds ) == FALSE )
+            {
+                g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
+            }
+
+            if( g_StateMgr.IsPaused() )
+            {
+                g_GameInput.ClearInput();
+            }
+
+            if( g_ActiveConfig.GetExitReason() == GAME_EXIT_CONTINUE )
+            {
+                g_PerceptionMgr.Update( FrameDeltaSeconds );
+
+                f32 TimeScale = g_PerceptionMgr.GetGlobalTimeDialation();
+
+                #if !defined( CONFIG_RETAIL )
+                TimeScale *= g_WorldTimeDilation;
+                #endif
+
+                if( !x_isvalid( TimeScale ) || (TimeScale < 0.0f) )
+                {
+                    ASSERT( FALSE );
+                    TimeScale = 0.0f;
+                }
+
+                g_NetworkMgr.BeginFrame( FrameDeltaSeconds );
+                UpdateFrameServices( FrameDeltaSeconds );
+
+                const f32 SimulationDeltaSeconds = ShouldAdvanceWorld()
+                                                   ? (FrameDeltaSeconds * TimeScale)
+                                                   : 0.0f;
+                if( SimulationDeltaSeconds > 0.0f )
+                {
+                    AdvanceSimulation( SimulationDeltaSeconds );
+                }
+
+                g_NetworkMgr.EndFrame( FrameDeltaSeconds );
+                UpdateRenderServices( FrameDeltaSeconds );
+            }
         }
 
         if( g_ActiveConfig.GetExitReason() != GAME_EXIT_CONTINUE )
+        {
+            FinishClearOnlyFrame();
             break;
-
-        g_Input.PrepareActionMapsFixed( g_IngamePad, g_DeltaMgr.GetPendingFixedStepCount() );
-
-        //
-        // We are "behind the times".  Catch up to the present.
-        //
-        while( g_DeltaMgr.HasFixedUpdate() )
-        {
-            Update( g_DeltaMgr.GetFixedUpdateDeltaTime() );
-            g_InterpolationMgr.Capture();
-            g_DeltaMgr.AdvanceFixedUpdate();
-
-            if( g_ActiveConfig.GetExitReason() != GAME_EXIT_CONTINUE )
-                break;
-        }
-
-        if( g_StateMgr.IsPaused() )
-        {
-            if( g_ActiveConfig.GetExitReason() == GAME_EXIT_CONTINUE )
-            {
-                ASSERT( g_StateMgr.IsBackgroundThreadRunning()==FALSE );
-                g_StateMgr.Update( LocalDeltaTime );
-            }
         }
 
         //
@@ -1336,13 +1587,19 @@ void RunGame( void )
         // NOW!  Do not pass GO.  Do not attempt to render.
         //
 
-        #ifdef TARGET_PC
-        if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
+        #ifdef TARGET_DESKTOP
+        if( g_Input.GetFrameSnapshot().IsPressed( INPUT_MSG_EXIT ) )
+        {
+            FinishClearOnlyFrame();
             break; // GAME OVER, DUDE!
+        }
         #endif
 
         if( g_ActiveConfig.GetExitReason() != GAME_EXIT_CONTINUE )
+        {
+            FinishClearOnlyFrame();
             break; // GAME OVER, DUDE!
+        }
 
         //
         // We are now reasonably caught up time-wise.  Lets show the situation.
@@ -1354,7 +1611,11 @@ void RunGame( void )
         {
             if( g_nLogicFramesAfterLoad > 10 )
             {
-                RenderGame( g_DeltaMgr.GetInterpolationAlpha() );
+                RenderGame();
+            }
+            else if( !ClearBackBuffer() )
+            {
+                break;
             }
 
             // render the pause
@@ -1362,16 +1623,15 @@ void RunGame( void )
 
             // Some extra stuff...
             {
-                // Update context stats.
-                x_ContextPrintProfile();
-                x_ContextResetProfile();
-
                 #if defined( ENABLE_DEBUG_MENU )
-                Stats( DeltaTime );
-                //AudioStats( DeltaTime );
+                Stats( FrameDeltaSeconds );
+                //AudioStats( FrameDeltaTime );
                 #endif // X_RETAIL
             }
-            eng_PageFlip();
+            if( !eng_EndFrame() )
+            {
+                break;
+            }
         }
         else
         {
@@ -1379,6 +1639,8 @@ void RunGame( void )
             {
                 g_ActiveConfig.SetExitReason( GAME_EXIT_ADVANCE_LEVEL );
             }
+            FinishClearOnlyFrame();
+            break;
         }
     }
     //
@@ -1495,9 +1757,10 @@ void AppMain( s32 argc, char* argv[] )
     //
     DoStartup();
 
-    // We have to reset these here as we should now have the stringtable
-    g_StateMgr.GetActiveSettings().Reset( RESET_ALL );
-    g_StateMgr.GetPendingSettings().Reset( RESET_ALL );
+    // Initialize editable settings from the values restored during startup.
+    g_StateMgr.InitPendingSettings();
+
+    FramePacer AppFramePacer;
 
     //
     // We're starting off with no exit condition. This will force the 'RunFrontEnd' to
@@ -1521,6 +1784,11 @@ void AppMain( s32 argc, char* argv[] )
         LOG_MEMMARK( "RunFrontEnd" );
         RunFrontEnd();
 
+        while( g_StateMgr.HasPendingSimpleMovie() )
+        {
+            g_StateMgr.ProcessPendingSimpleMovie();
+        }
+
         if( g_NetworkMgr.IsServer() )
         {
             CooldownState = SM_SERVER_COOLDOWN;
@@ -1532,54 +1800,64 @@ void AppMain( s32 argc, char* argv[] )
 
         LOG_MEMMARK( "LoadLevel" );
         // Bail if the app is closed
-#ifdef TARGET_PC
-        if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
+#ifdef TARGET_DESKTOP
+        if( g_Input.GetFrameSnapshot().IsPressed( INPUT_MSG_EXIT ) )
             break;
 #endif
+
+        xbool LoadEntireLevel = bFullLevelLoad;
 
         // Is this a new game or are we restoring from save data?
         if( g_StateMgr.IsRestoredGame() )
         {
             // Not a full level load...
             bFullLevelLoad = FALSE;
-
-            // Load the selected level (load the entire thing however.)
-            g_LevelLoader.LoadLevel( TRUE );
+            LoadEntireLevel = TRUE;
         }
-        else
+
+        // Keep the front end, slideshow, audio, input and network alive while
+        // the level loader advances one bounded stage at a time.
+        g_LevelLoader.BeginLevelLoad( LoadEntireLevel );
+
+        FrameTiming LevelLoadFrontEndTiming;
+        LevelLoadFrontEndTiming.Start();
+
+        while( !g_LevelLoader.IsLevelLoadComplete() )
         {
-            // Load the selected level.
-            g_LevelLoader.LoadLevel( bFullLevelLoad );
+            if( !UpdateLevelLoadingFrame( LevelLoadFrontEndTiming ) )
+            {
+                g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
+                break;
+            }
         }
 
-        //*BW*
-        // This causes us to bail early in this special case as it would mean we do not have
-        // the mission on the memory card. However, ideally LoadLevel would abort early should
-        // something like a disconnect happen and so we may have to end up fixing UnloadLevel
-        // so it will deal with partially, or no, loaded level data.
-        if( g_ActiveConfig.GetExitReason() == GAME_EXIT_INVALID_MISSION )
+        if( (g_ActiveConfig.GetExitReason() == GAME_EXIT_INVALID_MISSION) ||
+            (g_ActiveConfig.GetExitReason() == GAME_EXIT_INVALID_CAMPAIGN_MISSION) )
         {
             g_StateMgr.SetState( CooldownState );
             continue;
         }
+
         // Tell network manager load is complete!
         g_NetworkMgr.LoadMissionComplete();
 
 
-        xtimer SyncFrontEndTimer;
-        SyncFrontEndTimer.Start();
+        FrameTiming SyncFrontEndTiming;
+        SyncFrontEndTiming.Start();
         //
         // We have to wait until the statemgr has said that everything is ready to go. This is what detects whether or
         // not the sync phase has completed.
         //
         while( (g_StateMgr.GetState() != SM_PLAYING_GAME) && (g_ActiveConfig.GetExitReason() == GAME_EXIT_CONTINUE) )
         {
-            UpdateFrontEnd( SyncFrontEndTimer );
+            if( !UpdateFrontEnd( AppFramePacer, SyncFrontEndTiming ) )
+            {
+                g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
+                break;
+            }
         }
 
-        // Finish off the last-minute loading stuff that cannot occur
-        // from a background thread or that would cause a pause
-        // to happen in the slide show.
+        // Finish the level initialization that depends on front-end sync.
         g_LevelLoader.LoadLevelFinish();
 
         // During the level load process it is possible for an error such as duplicate logon to occur.
@@ -1624,8 +1902,8 @@ void AppMain( s32 argc, char* argv[] )
         g_Input.ClearFeedback();
 
         // Bail if the app is closed
-#ifdef TARGET_PC
-        if( g_Input.IsPressed( INPUT_MSG_EXIT ) )
+#ifdef TARGET_DESKTOP
+        if( g_Input.GetFrameSnapshot().IsPressed( INPUT_MSG_EXIT ) )
         {
             g_LevelLoader.UnloadLevel( TRUE );
             break;
@@ -1657,8 +1935,8 @@ void AppMain( s32 argc, char* argv[] )
             }
         }
 
-        xtimer CooldownFrontEndTimer;
-        CooldownFrontEndTimer.Start();
+        FrameTiming CooldownFrontEndTiming;
+        CooldownFrontEndTiming.Start();
 
         //
         // We have to wait until the statemgr has said all the subsystems have cooled down. This makes sure
@@ -1669,9 +1947,9 @@ void AppMain( s32 argc, char* argv[] )
             g_StateMgr.SetState( CooldownState );
         }
 
-        g_NetworkMgr.Update( 0.01f );
-        g_NetworkMgr.Update( 0.01f );
-        g_NetworkMgr.Update( 0.01f );
+        g_NetworkMgr.UpdateFrame( 0.01f );
+        g_NetworkMgr.UpdateFrame( 0.01f );
+        g_NetworkMgr.UpdateFrame( 0.01f );
 
         //
         // Unload the level
@@ -1681,7 +1959,11 @@ void AppMain( s32 argc, char* argv[] )
         LOG_FLUSH();
         while( g_StateMgr.GetState() == CooldownState )
         {
-            UpdateFrontEnd( CooldownFrontEndTimer );
+            if( !UpdateFrontEnd( AppFramePacer, CooldownFrontEndTiming ) )
+            {
+                g_ActiveConfig.SetExitReason( GAME_EXIT_PLAYER_QUIT );
+                break;
+            }
         }
     }
 

@@ -357,5 +357,4 @@ static s16 s_iicon_damage[] =
 };
 
 
-#define DRAW_ICON_DAMAGE() draw_icon( NUM_FACETS_ICON_DAMAGE, NUM_VERTICES_ICON_DAMAGE, s_vicon_damage, s_iicon_damage )
 

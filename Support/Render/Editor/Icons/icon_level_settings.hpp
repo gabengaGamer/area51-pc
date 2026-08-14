@@ -259,5 +259,4 @@ static s16 s_iicon_level_settings[] =
 };
 
 
-#define DRAW_ICON_LEVEL_SETTINGS() draw_icon( NUM_FACETS_ICON_LEVEL_SETTINGS, NUM_VERTICES_ICON_LEVEL_SETTINGS, s_vicon_level_settings, s_iicon_level_settings )
 

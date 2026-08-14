@@ -1,5 +1,7 @@
+#include "Render\PrimitiveDebug.hpp"
 #include "controller.hpp"
 #include "element_sprite.hpp"
+#include "PreviewRender.hpp"
 #include "effect.hpp"
 
 namespace fx_core
@@ -159,51 +161,28 @@ void element_sprite::Render( f32 T )
         GetPositionAtTime( T, Pos   );
         GetColorAtTime   ( T, Color );
 
-        // Clear L2W
-        draw_ClearL2W();
-
-        // Determine blend mode
-        s32 DrawBlendMode = 0;
-        switch( m_CombineMode )
-        {
-        case COMBINEMODE_ADDITIVE:
-            DrawBlendMode = DRAW_BLEND_ADD;
-            break;
-        case COMBINEMODE_SUBTRACTIVE:
-            DrawBlendMode = DRAW_BLEND_SUB;
-            break;
-        }
-
-         // draw flags
-        u32 DrawFlags   = DRAW_TEXTURED | DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DrawBlendMode;
-        if( !m_ZRead )  { DrawFlags |= DRAW_NO_ZBUFFER; }
-
-       // Start drawing
-        draw_Begin( DRAW_SPRITES, DrawFlags );
-
         // Setup bitmap
         if ( m_BitmapName.IsEmpty() )
             m_BitmapName = "fx_default.xbmp";
 
         g_pTextureMgr->ActivateBitmap( m_BitmapName );
 
-        // Draw the sprite
-        draw_SpriteUV( Pos,
-                       vector2(Scale[0], Scale[1]),
-                       vector2(0,0),
-                       vector2(1,1),
-                       Color,
-                       Rot[2] );
-
-        // End drawing
-        draw_End();
+        const render::primitive_draw_desc material =
+            CreatePreviewMaterial( g_pTextureMgr->GetTexture( m_BitmapName ), m_CombineMode, m_ZRead, TRUE, TRUE );
+        render::SubmitPrimitiveSprite( material,
+                                       Pos,
+                                       vector2(Scale[0], Scale[1]),
+                                       vector2(0,0),
+                                       vector2(1,1),
+                                       Color,
+                                       Rot[2] );
 
         // Render element bbox
         if ( m_pEffect->RenderBBoxesEnabled() )
         {
             bbox B;
             GetWorldBBoxAtTime( T, B ) ;
-            draw_BBox( B, IsSelected() ? XCOLOR_WHITE : XCOLOR_GREY );
+            render::debug::Box( B, IsSelected() ? XCOLOR_WHITE : XCOLOR_GREY );
         }
     }
 

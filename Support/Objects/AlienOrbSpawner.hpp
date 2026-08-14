@@ -10,10 +10,10 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Objects\Turret.hpp"
-#include "Animation\AnimPlayer.hpp"
-#include "ZoneMgr\ZoneMgr.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "Objects/Turret.hpp"
+#include "Animation/AnimPlayer.hpp"
+#include "ZoneMgr/ZoneMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 
 //==============================================================================
 //  NOTES
@@ -48,7 +48,7 @@ public:
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
 
-    virtual void                OnAdvanceLogic  ( f32 DeltaTime );
+    virtual void                OnAdvanceSimulation  ( f32 DeltaTime );
     virtual void                SetTargetGuid   ( guid Guid );
 
 #ifdef X_EDITOR

@@ -5,12 +5,13 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "ProjectileExplosiveBullett.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "gamelib\StatsMgr.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "Decals\DecalMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Decals/DecalMgr.hpp"
 
 
 //=========================================================================
@@ -69,8 +70,7 @@ explosive_bullet_projectile::~explosive_bullet_projectile()
 #ifndef X_RETAIL
 void explosive_bullet_projectile::OnDebugRender ( void )
 {
-    draw_ClearL2W();
-    draw_Sphere( GetPosition(), m_PainRadius, XCOLOR_RED );        
+    render::debug::Sphere( GetPosition(), m_PainRadius, XCOLOR_RED );        
 }
 #endif // X_RETAIL
 
@@ -148,9 +148,9 @@ void explosive_bullet_projectile::BroadcastPain( void )
 */
 //=============================================================================================
 
-void explosive_bullet_projectile::OnAdvanceLogic( f32 DeltaTime )
+void explosive_bullet_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "bullet_projectile::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "bullet_projectile::OnAdvanceSimulation" );
     LOG_STAT( k_stats_Projectiles);
     
 	//update collisions

@@ -9,7 +9,7 @@
 #ifndef TRIGGER_SET_HPP
 #define TRIGGER_SET_HPP
 
-#include "trigger.hpp"
+#include "Trigger.hpp"
 
 const s32 k_MAX_TRIGGERS_PER_SET = 8;
 

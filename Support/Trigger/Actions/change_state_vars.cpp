@@ -9,10 +9,10 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\change_state_vars.hpp"
+#include "../Support/Trigger/Actions/change_state_vars.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 
 #include "Entropy.hpp"
 
@@ -32,7 +32,7 @@ m_VarRaw(0)
 
 void change_state_vars::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION *change_state_vars::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION *change_state_vars::Execute" );
 
     (void) pParent;
 

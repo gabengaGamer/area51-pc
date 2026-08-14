@@ -1,271 +1,290 @@
+//==============================================================================
+//
+//  Speex.cpp
+//
+//==============================================================================
+
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "x_memory.hpp"
 #include "x_plus.hpp"
-#include "x_log.hpp"
 #include "x_debug.hpp"
-#include "x_math.hpp"
 
 #include "Speex.hpp"
-#include "Speex/Speex.h"
 
-//------------------------------------------------------------------------------
-// VARIABLES
-//------------------------------------------------------------------------------
+//==============================================================================
+//  VARIABLES
+//==============================================================================
 
-static SPEEX8 *g_SPEEX = NULL;
+static SPEEX8* g_SPEEX = NULL;
 
-//------------------------------------------------------------------------------
-// FORWARD DECLARATIONS
-//------------------------------------------------------------------------------
-
-int speex8_frame_encode(short* in, unsigned char* out, void* enc_param);
-int speex8_frame_decode(unsigned char* in, short* out, void* dec_param);
-
-//------------------------------------------------------------------------------
-// FUNCTIONS
-//------------------------------------------------------------------------------
-extern  void    speex_bits_init(SpeexBits* bits);
-extern  int     speex_decoder_ctl(void* state, int request, void* ptr);
-extern  int     speex_encoder_ctl(void* state, int request, void* ptr);
+//==============================================================================
+//  FUNCTIONS
+//==============================================================================
 
 xbool SpeexInit( void )
 {
-    SPEEX8* pcodec = (SPEEX8*)x_malloc(sizeof(SPEEX8));
-    int val;
-
-    x_memset(pcodec, 0, sizeof(SPEEX8));
-    g_SPEEX = pcodec;
-
-    // codec will allocate enc/dec states
-    pcodec->encode_state = speex_encoder_init(&speex_nb_mode);
-    pcodec->decode_state = speex_decoder_init(&speex_nb_mode);
-
-    // codec will allocate a bit array
-    speex_bits_init(&pcodec->speex_bits);
-
-    // set some control values
-    val=0;
-    speex_decoder_ctl(pcodec->decode_state, SPEEX_SET_ENH, &val);
-    val=0;
-    speex_encoder_ctl(pcodec->encode_state, SPEEX_SET_VBR, &val);
-    val=1;
-    speex_encoder_ctl(pcodec->encode_state, SPEEX_SET_QUALITY, &val);
-    val=1;
-    speex_encoder_ctl(pcodec->encode_state, SPEEX_SET_COMPLEXITY, &val);
-    return TRUE;
-}
-
-//------------------------------------------------------------------------------
-
-xbool SpeexKill( void )
-{
-    ASSERT( g_SPEEX != NULL );
-
-    speex_bits_destroy(&g_SPEEX->speex_bits);
-    x_free( g_SPEEX->encode_state );
-    x_free( g_SPEEX->decode_state );
-    x_free( g_SPEEX);
-        
-    return TRUE;
-}
-
-//------------------------------------------------------------------------------
-
-xbool SpeexEncode( const s16 *src, const u32 src_size, u8 *dest, s32 *dest_size )
-{
-    const s16 * next_sample_frame   = src;
-    u8 *        next_enc_frame      = dest;
-
-    s32 consume_samples             = 0;
-    s32 samples_to_encode           = 0;
-    s32 max_frames_to_decode        = 0;
-    s32 bytes_encoded               = 0;
-
-    ASSERT( src != NULL );
-    ASSERT( dest != NULL );
-    ASSERT( (src_size % sizeof(s16)) == 0 );
-    ASSERT( src_size > 0 );
-    ASSERT( dest_size != NULL );
-    ASSERT( *dest_size > 0 );
-
-    // quick check to make sure destination has enough space
-    max_frames_to_decode = (src_size/2)/SPEEX8_SAMPLES_PER_FRAME;
-    
-    // if there is residue in the encode_in buffer AND the dest_size is not a multiple of the bytes_per_enc_frame the caller is probably using an arbitrary buffer. be safe and require an extra frame
-    if (g_SPEEX->encode_in_samples && (*dest_size % SPEEX8_BYTES_PER_EFRAME))
+    if( g_SPEEX != NULL )
     {
-        max_frames_to_decode++;
-    }
-    
-    if (*dest_size < (max_frames_to_decode*SPEEX8_BYTES_PER_EFRAME))
-    {
-        LOG_ERROR( "SPEEXEncode", "ERROR: bytes provided = %d. Need=%d\n", *dest_size, max_frames_to_decode*SPEEX8_BYTES_PER_EFRAME );
-        *dest_size = 0;
-        return FALSE;
-    }
-
-    samples_to_encode = (src_size/2);
-
-    // clear output fields
-    x_memset( dest, 0, (u32)*dest_size );        
-    *dest_size = 0;
-
-    while (1)
-    {
-        // fill up the buffer (there may be samples already in the encoding buffer)
-        consume_samples = MIN( SPEEX8_SAMPLES_PER_FRAME - g_SPEEX->encode_in_samples, samples_to_encode );
-        x_memcpy( g_SPEEX->encode_in + g_SPEEX->encode_in_samples, next_sample_frame, (u32)consume_samples*2 );
-        g_SPEEX->encode_in_samples += consume_samples;
-        next_sample_frame += consume_samples;
-        
-        // encode it
-        if (g_SPEEX->encode_in_samples == SPEEX8_SAMPLES_PER_FRAME)
-        {
-            bytes_encoded += speex8_frame_encode( g_SPEEX->encode_in, next_enc_frame, g_SPEEX );
-
-            samples_to_encode -= consume_samples;
-            g_SPEEX->encode_in_samples = 0;
-            x_memset( g_SPEEX->encode_in, 0, (u32)sizeof(g_SPEEX->encode_in) );
-            next_enc_frame += SPEEX8_BYTES_PER_EFRAME;
-        }
-        else
-        {
-            // copy whatever is in the output buffer to the destination
-            *dest_size = bytes_encoded;
-            break;            
-        }
-
-    }
-
-    return TRUE;
-}
-
-//------------------------------------------------------------------------------
-
-xbool SpeexDecode( const u8 *src, const u32 src_size, s16 *dest, s32 *dest_size )
-{
-    const u8 *  next_enc_frame      = src;
-    s16 *       next_sample_frame   = dest;
-
-    s32         frames_to_decode    = 0;
-    s32         consume_bytes       = 0;
-    s32         samples_decoded     = 0;
-    s32         bytes_to_encode     = 0;
-    u32         dest_bytes_left     = 0;
-
-    ASSERT( src != NULL );
-    ASSERT( dest != NULL );
-    ASSERT( dest_size != NULL );
-    ASSERT( (*dest_size % sizeof(s16)) == 0 );
-    ASSERT( src_size > 0 );
-    ASSERT( *dest_size > 0 );
-
-    bytes_to_encode = src_size;
-    dest_bytes_left = *dest_size;
-
-    // we must have at least bytes_per_enc_frame bytes
-    frames_to_decode = src_size / SPEEX8_BYTES_PER_EFRAME;
-    if (frames_to_decode <= 0)
-    {
-        *dest_size = 0;
         return TRUE;
     }
 
-    frames_to_decode = MIN( *dest_size / (SPEEX8_SAMPLES_PER_FRAME * 2),     frames_to_decode );
-    bytes_to_encode  = MIN( frames_to_decode * SPEEX8_SAMPLES_PER_FRAME * 2, bytes_to_encode  );
-
-    // clear output fields
-    x_memset( dest, 0, (unsigned int)*dest_size );        
-    *dest_size = 0;
-
-    // decode the data
-    while (1)
+    SPEEX8* pCodec = reinterpret_cast<SPEEX8*>( x_malloc( sizeof( SPEEX8 ) ) );
+    if( pCodec == NULL )
     {
+        return FALSE;
+    }
 
-        // fill up the buffer (there may be samples already in the decoding buffer)
-        consume_bytes = MIN( SPEEX8_BYTES_PER_EFRAME - g_SPEEX->decode_in_bytes, bytes_to_encode );
-        x_memcpy( g_SPEEX->decode_in + g_SPEEX->decode_in_bytes, next_enc_frame, (u32)consume_bytes );
-        next_enc_frame += consume_bytes;
-        g_SPEEX->decode_in_bytes += consume_bytes;
+    x_memset( pCodec, 0, sizeof( SPEEX8 ) );
 
-        if (g_SPEEX->decode_in_bytes == SPEEX8_BYTES_PER_EFRAME && (dest_bytes_left >= (SPEEX8_SAMPLES_PER_FRAME*sizeof(s16))))
+    pCodec->encode_state = speex_encoder_init( &speex_nb_mode );
+    pCodec->decode_state = speex_decoder_init( &speex_nb_mode );
+    if( (pCodec->encode_state == NULL) || (pCodec->decode_state == NULL) )
+    {
+        if( pCodec->encode_state != NULL )
         {
-            speex8_frame_decode( g_SPEEX->decode_in, next_sample_frame, g_SPEEX );
+            speex_encoder_destroy( pCodec->encode_state );
+        }
 
-            samples_decoded += SPEEX8_SAMPLES_PER_FRAME;
-            bytes_to_encode -= SPEEX8_BYTES_PER_EFRAME;
-            next_sample_frame += SPEEX8_SAMPLES_PER_FRAME;
+        if( pCodec->decode_state != NULL )
+        {
+            speex_decoder_destroy( pCodec->decode_state );
+        }
+
+        x_free( pCodec );
+        return FALSE;
+    }
+
+    speex_bits_init( &pCodec->encode_bits );
+    speex_bits_init( &pCodec->decode_bits );
+
+    s32 Enhancement = 1;
+    s32 Vbr = 0;
+    s32 Quality = SPEEX8_QUALITY;
+    s32 Complexity = 4;
+
+    speex_decoder_ctl( pCodec->decode_state, SPEEX_SET_ENH, &Enhancement );
+    speex_encoder_ctl( pCodec->encode_state, SPEEX_SET_VBR, &Vbr );
+    speex_encoder_ctl( pCodec->encode_state, SPEEX_SET_QUALITY, &Quality );
+    speex_encoder_ctl( pCodec->encode_state, SPEEX_SET_COMPLEXITY, &Complexity );
+
+    g_SPEEX = pCodec;
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool SpeexKill( void )
+{
+    if( g_SPEEX == NULL )
+    {
+        return TRUE;
+    }
+
+    speex_bits_destroy( &g_SPEEX->encode_bits );
+    speex_bits_destroy( &g_SPEEX->decode_bits );
+    speex_encoder_destroy( g_SPEEX->encode_state );
+    speex_decoder_destroy( g_SPEEX->decode_state );
+    x_free( g_SPEEX );
+    g_SPEEX = NULL;
+
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool SpeexReset( void )
+{
+    if( g_SPEEX == NULL )
+    {
+        return FALSE;
+    }
+
+    g_SPEEX->encode_in_samples = 0;
+    x_memset( g_SPEEX->encode_in, 0, sizeof( g_SPEEX->encode_in ) );
+    speex_bits_reset( &g_SPEEX->encode_bits );
+
+    return speex_encoder_ctl( g_SPEEX->encode_state, SPEEX_RESET_STATE, NULL ) == 0;
+}
+
+//==============================================================================
+
+xbool SpeexEncode( const s16* pSrc, const u32 SrcSize, u8* pDest, s32* pDestSize )
+{
+    s32 DestinationCapacity;
+
+    if( pDestSize == NULL )
+    {
+        return FALSE;
+    }
+
+    DestinationCapacity = *pDestSize;
+    *pDestSize = 0;
+
+    if( (g_SPEEX == NULL) ||
+        (pSrc == NULL) ||
+        (pDest == NULL) ||
+        (SrcSize == 0) ||
+        (SrcSize > static_cast<u32>( S32_MAX )) ||
+        ((SrcSize % sizeof( s16 )) != 0) ||
+        (DestinationCapacity <= 0) )
+    {
+        return FALSE;
+    }
+
+    ASSERT( (SrcSize % sizeof( s16 )) == 0 );
+
+    const s32 InputSamples = static_cast<s32>( SrcSize / sizeof( s16 ) );
+    const s32 AvailableFrames = (g_SPEEX->encode_in_samples + InputSamples) /
+                                SPEEX8_SAMPLES_PER_FRAME;
+    if( (AvailableFrames > (DestinationCapacity / SPEEX8_BYTES_PER_EFRAME)) )
+    {
+        return FALSE;
+    }
+
+    const s16* pNextSample = pSrc;
+    s32 SamplesRemaining = InputSamples;
+    s32 BytesEncoded = 0;
+
+    x_memset( pDest, 0, static_cast<u32>( DestinationCapacity ) );
+
+    while( SamplesRemaining > 0 )
+    {
+        const s32 SamplesToCopy = MIN( SPEEX8_SAMPLES_PER_FRAME - g_SPEEX->encode_in_samples,
+                                       SamplesRemaining );
+        x_memcpy( g_SPEEX->encode_in + g_SPEEX->encode_in_samples,
+                  pNextSample,
+                  static_cast<u32>( SamplesToCopy * sizeof( s16 ) ) );
+        g_SPEEX->encode_in_samples += SamplesToCopy;
+        pNextSample += SamplesToCopy;
+        SamplesRemaining -= SamplesToCopy;
+
+        if( g_SPEEX->encode_in_samples == SPEEX8_SAMPLES_PER_FRAME )
+        {
+            speex_bits_reset( &g_SPEEX->encode_bits );
+            if( speex_encode_int( g_SPEEX->encode_state,
+                                  g_SPEEX->encode_in,
+                                  &g_SPEEX->encode_bits ) < 0 )
+            {
+                g_SPEEX->encode_in_samples = 0;
+                x_memset( g_SPEEX->encode_in, 0, sizeof( g_SPEEX->encode_in ) );
+                *pDestSize = 0;
+                return FALSE;
+            }
+
+            const s32 EncodedSize = speex_bits_write( &g_SPEEX->encode_bits,
+                                                      reinterpret_cast<char*>( pDest + BytesEncoded ),
+                                                      SPEEX8_BYTES_PER_EFRAME );
+            if( EncodedSize != SPEEX8_BYTES_PER_EFRAME )
+            {
+                g_SPEEX->encode_in_samples = 0;
+                x_memset( g_SPEEX->encode_in, 0, sizeof( g_SPEEX->encode_in ) );
+                *pDestSize = 0;
+                return FALSE;
+            }
+
+            BytesEncoded += SPEEX8_BYTES_PER_EFRAME;
+            g_SPEEX->encode_in_samples = 0;
+            x_memset( g_SPEEX->encode_in, 0, sizeof( g_SPEEX->encode_in ) );
+        }
+    }
+
+    *pDestSize = BytesEncoded;
+    return TRUE;
+}
+
+//==============================================================================
+
+xbool SpeexDecode( const u8* pSrc, const u32 SrcSize, s16* pDest, s32* pDestSize )
+{
+    s32 DestinationCapacity;
+    s32 DestinationFrames;
+    s32 AvailableFrames;
+    s32 FramesToDecode;
+    s32 BytesConsumed;
+    s16* pNextSample;
+
+    if( pDestSize == NULL )
+    {
+        return FALSE;
+    }
+
+    DestinationCapacity = *pDestSize;
+    *pDestSize = 0;
+
+    if( (g_SPEEX == NULL) ||
+        (pDest == NULL) ||
+        (DestinationCapacity <= 0) ||
+        ((DestinationCapacity % sizeof( s16 )) != 0) ||
+        ((SrcSize > 0) && (pSrc == NULL)) )
+    {
+        return FALSE;
+    }
+
+    if( SrcSize > static_cast<u32>( sizeof( g_SPEEX->decode_in ) - g_SPEEX->decode_in_bytes ) )
+    {
+        g_SPEEX->decode_in_bytes = 0;
+        return FALSE;
+    }
+
+    if( SrcSize > 0 )
+    {
+        x_memcpy( g_SPEEX->decode_in + g_SPEEX->decode_in_bytes,
+                  pSrc,
+                  static_cast<s32>( SrcSize ) );
+        g_SPEEX->decode_in_bytes += static_cast<s32>( SrcSize );
+    }
+
+    DestinationFrames = DestinationCapacity /
+                        (SPEEX8_SAMPLES_PER_FRAME * sizeof( s16 ));
+    AvailableFrames = g_SPEEX->decode_in_bytes / SPEEX8_BYTES_PER_EFRAME;
+    FramesToDecode = MIN( DestinationFrames, AvailableFrames );
+    if( FramesToDecode <= 0 )
+    {
+        return TRUE;
+    }
+
+    x_memset( pDest, 0, static_cast<u32>( DestinationCapacity ) );
+    pNextSample = pDest;
+
+    for( s32 Frame = 0; Frame < FramesToDecode; Frame++ )
+    {
+        speex_bits_reset( &g_SPEEX->decode_bits );
+        speex_bits_read_from( &g_SPEEX->decode_bits,
+                              reinterpret_cast<const char*>( g_SPEEX->decode_in +
+                                                             (Frame * SPEEX8_BYTES_PER_EFRAME) ),
+                              SPEEX8_BYTES_PER_EFRAME );
+        if( speex_decode_int( g_SPEEX->decode_state,
+                              &g_SPEEX->decode_bits,
+                              reinterpret_cast<spx_int16_t*>( pNextSample ) ) < 0 )
+        {
+            x_memset( pNextSample,
+                      0,
+                      SPEEX8_SAMPLES_PER_FRAME * sizeof( s16 ) );
+            *pDestSize = 0;
             g_SPEEX->decode_in_bytes = 0;
-            dest_bytes_left -= (samples_decoded * sizeof(short));
+            return FALSE;
         }
-        else
-        {
-            // mark the total bytes decoded
-            *dest_size = (samples_decoded * 2);
-            break;
-        }
+
+        pNextSample += SPEEX8_SAMPLES_PER_FRAME;
+        *pDestSize += SPEEX8_SAMPLES_PER_FRAME * sizeof( s16 );
+    }
+
+    BytesConsumed = FramesToDecode * SPEEX8_BYTES_PER_EFRAME;
+    if( BytesConsumed < g_SPEEX->decode_in_bytes )
+    {
+        const s32 BytesToKeep = g_SPEEX->decode_in_bytes - BytesConsumed;
+        x_memmove( g_SPEEX->decode_in,
+                   g_SPEEX->decode_in + BytesConsumed,
+                   static_cast<u32>( BytesToKeep ) );
+        g_SPEEX->decode_in_bytes = BytesToKeep;
+    }
+    else
+    {
+        g_SPEEX->decode_in_bytes = 0;
     }
 
     return TRUE;
-
-}
-
-
-int speex8_frame_encode(short* in, unsigned char* out, void* enc_param)
-{
-    SPEEX8* codec = (SPEEX8*)enc_param;
-    int enc_bytes = 0;
-
-    // reset the bits array
-    speex_bits_reset(&codec->speex_bits);
-
-    // encode it
-    speex_encode(codec->encode_state, in, &codec->speex_bits);
-
-    // copy the speex bits into the out buffer
-    enc_bytes = speex_bits_write(&codec->speex_bits, (char*)out, SPEEX8_BYTES_PER_EFRAME);
-
-    return SPEEX8_BYTES_PER_EFRAME;
-}
-
-int speex8_frame_decode(unsigned char* in, short* out, void* dec_param)
-{
-    SPEEX8* codec = (SPEEX8*)dec_param;
-
-    // copy the encoded buffer to the speex bits
-    speex_bits_reset(&codec->speex_bits);
-    speex_bits_read_from(&codec->speex_bits, (char*)in, SPEEX8_BYTES_PER_EFRAME);
-
-    // decode the float buffer
-    speex_decode(codec->decode_state, &codec->speex_bits, out);
-
-    return SPEEX8_SAMPLES_PER_FRAME;
-}
-
-extern "C"
-{
-    void *speex_alloc (int size)
-    {
-        void* ptr;
-       ptr = x_malloc(size);
-       if( ptr )
-       {
-        x_memset(ptr,0,size);
-       }
-       return ptr;
-    }
-
-    void *speex_realloc (void *ptr, int size)
-    {
-       return x_realloc(ptr, size);
-    }
-
-    void speex_free (void *ptr)
-    {
-       x_free(ptr);
-    }
-
-    void *speex_move (void *dest, void *src, int n)
-    {
-       return x_memmove(dest,src,n);
-    }
 }

@@ -11,7 +11,7 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
+#include "UI/ui_dialog.hpp"
 
 //==============================================================================
 //  dlg_mp_score
@@ -22,6 +22,7 @@ enum leaderboard_mode
     LEADERBOARD_FINAL,
     LEADERBOARD_INTERLEVEL,
     LEADERBOARD_PAUSE,
+    LEADERBOARD_OVERLAY,
 };
 
 class dlg_mp_score : public ui_dialog

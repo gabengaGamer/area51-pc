@@ -4,19 +4,21 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
 
+#include "dlg_PopUp.hpp"
 #include "dlg_AvatarSelect.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "SaveData/SaveDataMgr.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
@@ -25,7 +27,6 @@
 enum controls
 {
     IDC_AVATAR_SELECT_COMBO,
-    IDC_AVATAR_SELECT_NAV_TEXT,
     IDC_AVATAR_SELECT_BUTTON_ACCEPT,    
 };
 
@@ -33,9 +34,8 @@ enum controls
 ui_manager::control_tem AvatarSelectControls[] = 
 {
     // Frames.
-    { IDC_AVATAR_SELECT_COMBO,          "IDS_NULL",    "combo",  71,  50, 128, 256, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_AVATAR_SELECT_NAV_TEXT,       "IDS_NULL",    "text",    0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_AVATAR_SELECT_BUTTON_ACCEPT,  "IDS_ACCEPT",  "button", 71, 315, 128,  22, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_AVATAR_SELECT_COMBO,          "IDS_NULL",    "combo",  71,  50, 128, 256, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_AVATAR_SELECT_BUTTON_ACCEPT,  "IDS_ACCEPT",  "button", 71, 315, 128,  22, 0, 1, 1, 1, ui_win::WF_VISIBLE },
 };
 
 ui_manager::dialog_tem AvatarSelectDialog =
@@ -117,12 +117,10 @@ xbool dlg_avatar_select::Create( s32                        UserID,
 
     // find controls
     m_pAvatarSelect  = (ui_combo*)   FindChildByID( IDC_AVATAR_SELECT_COMBO    );
-    m_pNavText       = (ui_text*)    FindChildByID( IDC_AVATAR_SELECT_NAV_TEXT );
     m_pButtonAccept  = (ui_button*)  FindChildByID( IDC_AVATAR_SELECT_BUTTON_ACCEPT );
 
     // hide them
     m_pAvatarSelect ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText      ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pButtonAccept ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set up nav text
@@ -130,9 +128,7 @@ xbool dlg_avatar_select::Create( s32                        UserID,
     navText += g_StringTableMgr( "ui", "IDS_NAV_CANCEL" );
     navText += g_StringTableMgr( "ui", "IDS_NAV_CYCLE_AVATAR" );
    
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // check profile to see if alien avatars are unlocked
     player_profile& Profile = g_StateMgr.GetPendingProfile();
@@ -173,7 +169,7 @@ xbool dlg_avatar_select::Create( s32                        UserID,
     m_pAvatarSelect->AddItem  ( pNullStr, SKIN_TECH_2    );
     m_pAvatarSelect->AddItem  ( pNullStr, SKIN_TECH_3    );
 
-    if( Profile.m_bAlienAvatarsOn )
+    if( Profile.GetAlienAvatarsOn() )
     {
         m_pAvatarSelect->AddItem  ( pNullStr, SKIN_GREY_0    );
         m_pAvatarSelect->AddItem  ( pNullStr, SKIN_GREY_1    );
@@ -194,7 +190,7 @@ xbool dlg_avatar_select::Create( s32                        UserID,
     m_pAvatarSelect->SetItemBitmap( 10, ID10 );
     m_pAvatarSelect->SetItemBitmap( 11, ID11 );
 
-    if( Profile.m_bAlienAvatarsOn )
+    if( Profile.GetAlienAvatarsOn() )
     {
         m_pAvatarSelect->SetItemBitmap( 12, ID12 );
         m_pAvatarSelect->SetItemBitmap( 13, ID13 );
@@ -220,6 +216,10 @@ xbool dlg_avatar_select::Create( s32                        UserID,
     m_CurrHL = 0;
     GotoControl( (ui_control*)m_pAvatarSelect );
     m_CurrentControl = IDC_AVATAR_SELECT_COMBO;
+    m_OriginalProfile = g_StateMgr.GetPendingProfile();
+    m_OriginalProfile.Checksum();
+    m_PopUp = NULL;
+    m_PopUpResult = DLG_POPUP_IDLE;
     m_bRenderBlackout = FALSE;
 
     // initialize screen scaling
@@ -236,6 +236,7 @@ xbool dlg_avatar_select::Create( s32                        UserID,
 
 void dlg_avatar_select::Destroy( void )
 {
+    g_SaveDataMgr.CancelCallbacks( this );
     ui_dialog::Destroy();
 
     // unload avatars
@@ -272,9 +273,7 @@ void dlg_avatar_select::Render( s32 ox, s32 oy )
 
     if( m_bRenderBlackout )
     {
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-        rb.Set( 0, 0, XRes, YRes );
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
             xcolor(0,0,0,180),
             xcolor(0,0,0,180),
@@ -329,19 +328,19 @@ void dlg_avatar_select::Render( s32 ox, s32 oy )
 }
 //=========================================================================
 
-void dlg_avatar_select::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_avatar_select::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
         // check for changing sort key
         switch( Code )
         {
-            case ui_manager::NAV_LEFT:
+            case ui_navigation::Left:
                 // get the previous avatar
                 break;
-            case ui_manager::NAV_RIGHT:
+            case ui_navigation::Right:
                 // get the next avatar
                 break;
         }
@@ -350,13 +349,22 @@ void dlg_avatar_select::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 
 
 //=========================================================================
 
-void dlg_avatar_select::OnPadBack( ui_win* pWin )
+void dlg_avatar_select::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
-    // cancel
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
+        player_profile Candidate = g_StateMgr.GetPendingProfile();
+        Candidate.SetAvatarID( m_pAvatarSelect->GetSelectedItemData( 0 ) );
+
+        if( Candidate.HasChanged() )
+        {
+            g_StateMgr.GetPendingProfile() = Candidate;
+            OpenSavePopup();
+            return;
+        }
+
         g_AudioMgr.Play("Backup");
         m_State = DIALOG_STATE_BACK;
     }
@@ -364,7 +372,7 @@ void dlg_avatar_select::OnPadBack( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_avatar_select::OnPadSelect( ui_win* pWin )
+void dlg_avatar_select::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -372,14 +380,102 @@ void dlg_avatar_select::OnPadSelect( ui_win* pWin )
     {
         if( pWin == (ui_win*)m_pButtonAccept )
         {
-            // get the pending profile
-            player_profile& CurrentProfile = g_StateMgr.GetPendingProfile();
-            // store the avatar ID in the profile data
-            CurrentProfile.SetAvatarID( m_pAvatarSelect->GetSelectedItemData( 0 ) ); 
-            
+            player_profile Candidate = g_StateMgr.GetPendingProfile();
+            Candidate.SetAvatarID( m_pAvatarSelect->GetSelectedItemData( 0 ) );
+
+            if( !Candidate.HasChanged() )
+            {
+                g_AudioMgr.Play( "Select_Norm" );
+                m_State = DIALOG_STATE_BACK;
+                return;
+            }
+
+            g_StateMgr.GetPendingProfile() = Candidate;
             g_AudioMgr.Play("Select_Norm");
-            m_State = DIALOG_STATE_BACK;
+            OpenSavePopup();
         }       
+    }
+}
+
+//=========================================================================
+
+void dlg_avatar_select::BeginSave( void )
+{
+    s32 const ProfileIndex = g_StateMgr.GetPendingProfileIndex();
+    if( (ProfileIndex < 0) || (ProfileIndex >= SM_PROFILE_COUNT) )
+    {
+        RestoreProfile();
+        g_AudioMgr.Play( "Backup" );
+        m_State = DIALOG_STATE_BACK;
+        return;
+    }
+
+    if( g_StateMgr.GetProfileNotSaved( ProfileIndex ) )
+    {
+        g_StateMgr.GetPendingProfile().SetHash();
+        g_StateMgr.SetSelectedProfile( ProfileIndex, g_StateMgr.GetPendingProfile().GetHash() );
+        g_SaveDataMgr.CreateProfile( ProfileIndex, this, &dlg_avatar_select::OnSaveProfileCB );
+    }
+    else
+    {
+        profile_info* pProfileInfo = &g_SaveDataMgr.GetProfileInfo( ProfileIndex );
+        g_SaveDataMgr.SaveProfile( *pProfileInfo,
+                                   ProfileIndex,
+                                   this,
+                                   &dlg_avatar_select::OnSaveProfileCB );
+    }
+
+    m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
+}
+
+//=========================================================================
+
+void dlg_avatar_select::OpenSavePopup( void )
+{
+    irect const Bounds = g_UiMgr->GetUserBounds( g_UiUserID );
+    m_PopUp = static_cast<dlg_popup*>( g_UiMgr->OpenDialog( m_UserID,
+                                                            "popup",
+                                                            Bounds,
+                                                            NULL,
+                                                            ui_win::WF_VISIBLE | ui_win::WF_BORDER |
+                                                            ui_win::WF_DLG_CENTER | ui_win::WF_INPUTMODAL ) );
+    xwstring PopupNavText( g_StringTableMgr( "ui", "IDS_NAV_YES" ) );
+    PopupNavText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
+    SetNavTextVisible( FALSE );
+    m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_PROFILE_EDIT" ),
+                        TRUE,
+                        TRUE,
+                        FALSE,
+                        g_StringTableMgr( "ui", "IDS_PROFILE_EDIT_MSG" ),
+                        PopupNavText,
+                        &m_PopUpResult );
+    m_State = DIALOG_STATE_POPUP;
+}
+
+//=========================================================================
+
+void dlg_avatar_select::RestoreProfile( void )
+{
+    g_StateMgr.GetPendingProfile() = m_OriginalProfile;
+}
+
+//=========================================================================
+
+void dlg_avatar_select::OnSaveProfileCB( void )
+{
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
+    {
+        s32 const ProfileIndex = g_StateMgr.GetPendingProfileIndex();
+        g_StateMgr.SetProfileNotSaved( ProfileIndex, FALSE );
+        g_StateMgr.ActivatePendingProfile();
+        g_StateMgr.InitPendingProfile( ProfileIndex );
+        g_AudioMgr.Play( "Select_Norm" );
+        m_State = DIALOG_STATE_BACK;
+    }
+    else
+    {
+        g_AudioMgr.Play( "Backup" );
+        m_State = DIALOG_STATE_SAVE_DATA_ERROR;
     }
 }
 
@@ -392,6 +488,25 @@ void dlg_avatar_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
     s32 highLight = -1;
 
+    if( m_PopUp && (m_PopUpResult != DLG_POPUP_IDLE) )
+    {
+        s32 const Result = m_PopUpResult;
+        m_PopUp = NULL;
+        m_PopUpResult = DLG_POPUP_IDLE;
+        SetNavTextVisible( TRUE );
+
+        if( Result == DLG_POPUP_YES )
+        {
+            BeginSave();
+        }
+        else
+        {
+            RestoreProfile();
+            g_AudioMgr.Play( "Backup" );
+            m_State = DIALOG_STATE_BACK;
+        }
+    }
+
     // scale window if necessary
     if( g_UiMgr->IsScreenScaling() )
     {
@@ -399,7 +514,6 @@ void dlg_avatar_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         {
             // turn on the controls
             m_pAvatarSelect ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pButtonAccept ->SetFlag(ui_win::WF_VISIBLE, TRUE); 
             GotoControl( (ui_control*)m_pAvatarSelect );
             g_UiMgr->SetScreenHighlight( m_pAvatarSelect->GetPosition() );
@@ -410,13 +524,13 @@ void dlg_avatar_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     g_UiMgr->UpdateGlowBar(DeltaTime);
     
     // update labels    
-    if( m_pAvatarSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pAvatarSelect->IsFocused() )
     {
         highLight = 0;
         g_UiMgr->SetScreenHighlight( m_pAvatarSelect->GetPosition() );
     }    
     
-    if( m_pButtonAccept->GetFlags(WF_HIGHLIGHT) )
+    if( m_pButtonAccept->IsFocused() )
     {
         highLight = 1;
         g_UiMgr->SetScreenHighlight( m_pButtonAccept->GetPosition() );

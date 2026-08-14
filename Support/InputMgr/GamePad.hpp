@@ -19,10 +19,7 @@
 #endif
 
 #include "../Menu/DebugMenuDefine.hpp"
-
-#ifndef MAX_LOCAL_PLAYERS
-#define MAX_LOCAL_PLAYERS 4
-#endif
+#include "../Objects/Player/PlayerDefines.hpp"
 
 //=========================================================================
 // DEFINES
@@ -108,12 +105,63 @@ public:
         ACTION_MP_FLASHLIGHT,
         ACTION_MP_MUTATE,
         ACTION_DROP_FLAG,
-        ACTION_PAUSE_CONTEXT,
+        ACTION_SCOREBOARD,
 
         GAMEPLAY_ACTION_END,
+        MAX_ACTION = GAMEPLAY_ACTION_END
+    };
 
-        FRONTEND_ACTION_FIRST = GAMEPLAY_ACTION_END,
-        UI_UP = FRONTEND_ACTION_FIRST,
+                        ingame_pad      ( void );
+
+    logical&            GetFrameLogical ( s32 I );
+    const logical&      GetFrameLogical ( s32 I ) const;
+
+    virtual void        Sample          ( input_snapshot const& Snapshot, f32 DeltaTime );
+
+    static  const char* GetLogicalIDName    ( s32 Index );
+    static  const char* GetLogicalIDEnum    ( void );
+    static  logical_id  GetLogicalIDByName  ( const char* pName );
+
+protected:
+
+    void                OnInitialize    ( void );
+    virtual void        OnActionValue   ( s32 ActionID, f32 Value );
+};
+
+//=========================================================================
+
+class system_pad : public input_action_map
+{
+public:
+
+    enum logical_id
+    {
+        PAUSE = 0,
+
+        MAX_ACTION,
+    };
+
+                        system_pad      ( void );
+
+    const input_action_state& GetFrameLogical( s32 I ) const;
+
+private:
+
+    void                OnInitialize    ( void );
+    virtual void        OnActionValue   ( s32 ActionID, f32 Value );
+};
+
+//=========================================================================
+
+class frontend_pad : public input_action_map
+{
+public:
+
+    using logical = input_action_state;
+
+    enum logical_id
+    {
+        UI_UP = 0,
         UI_DOWN,
         UI_LEFT,
         UI_RIGHT,
@@ -127,11 +175,8 @@ public:
         UI_SHOULDER_R2,
         UI_HELP,
 
-        FRONTEND_ACTION_END,
-
 #if defined( ENABLE_DEBUG_MENU )
-        DEBUG_MENU_ACTION_FIRST = FRONTEND_ACTION_END,
-        DEBUG_MENU_NEXT_PAGE = DEBUG_MENU_ACTION_FIRST,
+        DEBUG_MENU_NEXT_PAGE,
         DEBUG_MENU_PREV_PAGE,
         DEBUG_MENU_NEXT_ITEM,
         DEBUG_MENU_PREV_ITEM,
@@ -140,38 +185,84 @@ public:
         DEBUG_MENU_ACTION,
         DEBUG_MENU_EXIT_MODIFIER,
         DEBUG_MENU_EXIT,
-
-        DEBUG_MENU_ACTION_END,
-        MAX_ACTION = DEBUG_MENU_ACTION_END
-#else
-        MAX_ACTION = FRONTEND_ACTION_END
 #endif
+
+        MAX_ACTION,
     };
 
-                        ingame_pad      ( void );
+                        frontend_pad    ( void );
 
-    logical&            GetLogical      ( s32 I );
-    const logical&      GetLogical      ( s32 I ) const;
+    logical&            GetFrameLogical ( s32 I );
+    const logical&      GetFrameLogical ( s32 I ) const;
 
-    virtual void        SampleFrame     ( f32 DeltaTime );
-
-    static  const char* GetLogicalIDName    ( s32 Index );
-    static  const char* GetLogicalIDEnum    ( void );
-    static  logical_id  GetLogicalIDByName  ( const char* pName );
-    static  input_gadget GetInputPromptGadget( const xwchar* pToken );
-
-protected:
+private:
 
     void                OnInitialize    ( void );
-    xbool               ShouldPollInput ( void ) const;
     virtual void        OnActionValue   ( s32 ActionID, f32 Value );
 };
+
+//=========================================================================
+
+class frontend_input
+{
+public:
+
+    enum
+    {
+        MAX_CONTROLLERS = 4,
+    };
+
+                        frontend_input  ( void );
+
+    void                Update          ( f32 DeltaTime );
+    void                SampleFrame     ( input_snapshot const& Snapshot, f32 DeltaTime, u32 Context );
+    frontend_pad&       GetPad          ( s32 ControllerID );
+    const frontend_pad& GetPad          ( s32 ControllerID ) const;
+
+private:
+
+    frontend_pad        m_Pads[MAX_CONTROLLERS];
+};
+
+//=========================================================================
+
+class game_input
+{
+public:
+
+                        game_input          ( void );
+
+    xbool               UpdateFrame         ( f32 DeltaTime, u32 Context );
+    void                ClearInput          ( void );
+
+    const ingame_pad&   GetPlayer           ( s32 PlayerIndex ) const;
+    const ingame_pad&   operator[]          ( s32 PlayerIndex ) const;
+    void                SetPlayerDevice     ( s32 PlayerIndex, s32 DeviceID );
+    s32                 GetPlayerDevice     ( s32 PlayerIndex ) const;
+    void                ClearPlayerDevice   ( s32 PlayerIndex );
+    void                ClearPlayerDevices  ( void );
+    void                ClearPlayerActions  ( s32 PlayerIndex );
+
+    s32                 GetPauseController  ( void ) const;
+
+private:
+
+    ingame_pad          m_Players[MAX_LOCAL_PLAYERS];
+    system_pad          m_SystemPads[frontend_input::MAX_CONTROLLERS];
+};
+
+//=========================================================================
+// FUNCTIONS
+//=========================================================================
+
+input_gadget input_GetPromptGadget( const xwchar* pToken, input_platform Platform );
 
 //=========================================================================
 // GLOBAL STATE
 //=========================================================================
 
-extern ingame_pad g_IngamePad[ MAX_LOCAL_PLAYERS ];
+extern frontend_input g_FrontendInput;
+extern game_input     g_GameInput;
 
 //=========================================================================
 #endif // GAME_PAD_HPP

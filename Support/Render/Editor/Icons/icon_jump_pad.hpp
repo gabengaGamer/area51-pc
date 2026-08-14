@@ -372,5 +372,4 @@ static s16 s_iicon_jump_pad[] =
 };
 
 
-#define DRAW_ICON_JUMP_PAD() draw_icon( NUM_FACETS_ICON_JUMP_PAD, NUM_VERTICES_ICON_JUMP_PAD, s_vicon_jump_pad, s_iicon_jump_pad )
 

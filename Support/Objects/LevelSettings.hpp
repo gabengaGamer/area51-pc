@@ -11,8 +11,8 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Obj_mgr\Obj_mgr.hpp"
-#include "Render\Texture.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
 
 //==============================================================================
 //  TYPES

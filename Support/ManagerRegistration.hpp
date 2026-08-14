@@ -1,7 +1,7 @@
 #ifndef REGISTRATION_OF_INGAME_MANAGERS_HPP
 #define	REGISTRATION_OF_INGAME_MANAGERS_HPP
 
-#include "MiscUtils\Property.hpp"
+#include "MiscUtils/Property.hpp"
 
 //=========================================================================
 

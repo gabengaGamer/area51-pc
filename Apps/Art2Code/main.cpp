@@ -165,20 +165,6 @@ void CompileMesh( const char* Input, const char* Output )
     }
     x_fprintf( FP, "};\n\n");
 
-
-    // 
-    // Output the draw macro
-    //
-    char UCName[X_MAX_FNAME];
-    char LCName[X_MAX_FNAME];
-    x_strcpy(UCName, FileName);
-    x_strcpy(LCName, FileName);
-    x_strtoupper(UCName);
-    x_strtolower(LCName);
-
-    x_fprintf( FP, "\n#define DRAW_%s() draw_icon( NUM_FACETS_%s, NUM_VERTICES_%s, s_v%s, s_i%s )\n\n", 
-        UCName, UCName, UCName, LCName, LCName );
-
     x_fclose( FP );
 }
 

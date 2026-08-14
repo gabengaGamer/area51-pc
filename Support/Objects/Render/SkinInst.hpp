@@ -5,9 +5,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "Render\SkinGeom.hpp"
-#include "Objects\Render\RenderInst.hpp"
-#include "Objects\Render\VirtualTextureMask.hpp"
+#include "Render/SkinGeom.hpp"
+#include "Objects/Render/RenderInst.hpp"
+#include "Objects/Render/VirtualTextureMask.hpp"
 
 //=========================================================================
 // CLASS

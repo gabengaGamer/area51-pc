@@ -7,14 +7,15 @@
 //==============================================================================
 // INCLUDES
 //==============================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "Ragdoll.hpp"
 #include "Entropy.hpp"
-#include "GameLib\StatsMgr.hpp"
-#include "Objects\BaseProjectile.hpp"
-#include "Objects\PlaySurface.hpp"
-#include "Objects\DeadBody.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Loco\LocoCharAnimPlayer.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "Objects/BaseProjectile.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "Objects/DeadBody.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Loco/LocoCharAnimPlayer.hpp"
 #include "VerletCollision.hpp"
 
 #include "GrayRagdoll.hpp"
@@ -122,50 +123,6 @@ const char* s_LowerBodyParticles[] =
 } ;
 
 //==============================================================================
-// SCRATCH PAD DMA FUNCTIONS
-//==============================================================================
-
-#ifdef TARGET_PS2
-
-inline
-void spad_DmaTo( u32 SpadOffset, const void* pSrc, s32 NBytes )
-{
-    ASSERTS( ( (u32)pSrc & 63 ) == 0, "Source must be 64 byte aligned!" );
-    ASSERTS( ( NBytes & 15    ) == 0, "Size must be 16 byte aligned!" );
-    
-    *D9_MADR = ((u32)pSrc)&0x0fffffff;
-    *D9_SADR = SpadOffset;
-    *D9_QWC  = NBytes/16;
-    *D9_CHCR = (1<<8);
-    asm __volatile__ ( "sync.l" );
-}
-
-//=========================================================================
-
-inline
-void spad_SyncDmaTo( void )
-{
-    while ( *D9_CHCR & (1<<8) )
-    {
-        // intentionally empty loop
-    }
-}
-
-//=========================================================================
-
-inline
-void spad_CopyTo( u32 SpadOffset, const void* pSrc, s32 NBytes )
-
-{
-    //x_memcpy( (void*)0x70000000 + SpadOffset, pSrc, NBytes );
-    spad_DmaTo( SpadOffset, pSrc, NBytes );
-    spad_SyncDmaTo();
-};
-
-#endif  //#ifdef TARGET_PS2
-
-
-//==============================================================================
 // CLASSES
 //==============================================================================
 
@@ -173,6 +130,8 @@ ragdoll::ragdoll()
 {
     m_pDef         = NULL ;
     m_NParticles   = 0 ;
+    m_DeltaTime    = 0.0f ;
+    m_ObjectGuid   = NULL_GUID ;
     m_BodyImpactSoundID  = 0;
 
 #ifdef X_DEBUG
@@ -458,7 +417,7 @@ void ragdoll::KeepOnPlane( const vector3&   Point,
 
 void ragdoll::ApplyHumanConstraints( void )
 {
-    CONTEXT("ragdoll::ApplyHumanConstraints") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ragdoll::ApplyHumanConstraints") ;
 
     s32     i ;
     vector3 Point, Normal, Out ;
@@ -568,15 +527,10 @@ void ragdoll::ApplyHumanConstraints( void )
 
 void ragdoll::ApplyDistConstraints( void )
 {
-    CONTEXT("ragdoll::ApplyDistConstraints") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ragdoll::ApplyDistConstraints") ;
 
-#ifdef TARGET_PS2
-    // Rules have been dma'd to scratch pad
-    dist_rule* DistRules = (dist_rule*)0x70000000;
-#else
     // Use statically defined rules
     dist_rule* DistRules  = m_pDef->m_DistRules ;
-#endif
     
     // Apply distance constraints
     s32 NDistRules = m_pDef->m_NDistRules ;
@@ -665,7 +619,7 @@ void ragdoll::ApplyRagdollBoneColl( vector3& BoneStart, vector3& BoneEnd )
 
 void ragdoll::ApplyRagdollConstraints( ragdoll& Ragdoll )
 {
-    CONTEXT("ragdoll::ApplyRagdollConstraints") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ragdoll::ApplyRagdollConstraints") ;
 
     // Check both sides of ragdoll
     const joints& Joints = Ragdoll.m_Joints ;
@@ -715,7 +669,7 @@ bbox ragdoll::ComputeWorldBBox( void ) const
 
 void ragdoll::ApplyCharacterConstraints( void )
 {
-    CONTEXT("ragdoll::ApplyCharacterConstraints") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ragdoll::ApplyCharacterConstraints") ;
 
     // Compute world bbox of ragdoll
     bbox WorldBBox = ComputeWorldBBox() ;
@@ -775,7 +729,7 @@ void ragdoll::ApplyCharacterConstraints( void )
 
 void ragdoll::ApplyCollConstraints( void )
 {
-    CONTEXT("ragdoll::ApplyCollConstraints") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ragdoll::ApplyCollConstraints") ;
 
     s32 i ;
 
@@ -988,7 +942,7 @@ void ragdoll::ApplyCollConstraints( void )
 
 void ragdoll::ApplyConstraints( void )
 {
-    CONTEXT("ragdoll::ApplyConstraints") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ragdoll::ApplyConstraints") ;
 
     s32 i,j ;
 
@@ -997,12 +951,6 @@ void ragdoll::ApplyConstraints( void )
     {
         // Collision with world
         ApplyCollConstraints() ;
-
-#ifdef TARGET_PS2
-        // DMA distance rules to scratch pad
-        if( m_pDef->m_NDistRules )
-            spad_CopyTo( 0, m_pDef->m_DistRules, m_pDef->m_NDistRules * sizeof(dist_rule) );
-#endif
 
         // Model constraints
         for (i = 0 ; i < RAGDOLL_ITER_COUNT ; i++)
@@ -1063,7 +1011,7 @@ void ragdoll::ApplyConstraints( void )
 
 //==============================================================================
 
-// Framerate dependent integration
+// Verlet integration
 void ragdoll::Integrate( f32 DeltaTime )
 {
     // Nothing to do?
@@ -1101,7 +1049,7 @@ void ragdoll::Integrate( f32 DeltaTime )
 
 void ragdoll::UpdateStickBones( void )
 {
-    CONTEXT("ragdoll::UpdateStickBones") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ragdoll::UpdateStickBones") ;
 
     vector3 AxisX, AxisY, AxisZ, Start, End ;
 
@@ -1251,7 +1199,7 @@ xbool ragdoll::Init( const char*         pSkinGeomName,
                            ragdoll::type RagdollType, 
                            guid          ObjectGuid )
 {
-    CONTEXT("ragdoll::Init") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ragdoll::Init") ;
 
     s32 i ;
 
@@ -1411,10 +1359,10 @@ xbool ragdoll::Init( const char*         pSkinGeomName,
     m_StickBones.m_Head.Init ("Head",   XCOLOR_YELLOW) ;
 
     // Initialize ragdoll definition with distance rules and geometry bones?
-    if (!RagdollDef.m_bInitialized)
+    if (!RagdollDef.m_isInitialized)
     {
         // Flag it's initialized
-        RagdollDef.m_bInitialized = TRUE ;
+        RagdollDef.m_isInitialized = TRUE ;
         RagdollDef.m_pSkinGeom    = pSkinGeomName;
         RagdollDef.m_pAnim        = pAnimName;
         RagdollDef.m_pType        = s_TypeList.GetString( RagdollType );
@@ -1766,7 +1714,7 @@ void ragdoll::Kill( void )
 
 void ragdoll::ComputeMatrices( matrix4* pMatrices, s32 nBones )
 {
-    CONTEXT("ragdoll::ComputeMatrices") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ragdoll::ComputeMatrices") ;
 
     // Lookup geom and stick bones
     ASSERT(m_pDef) ;
@@ -2025,7 +1973,7 @@ void ragdoll::RenderSkeleton( void )
 
     // Render debug planes
     for (i = 0 ; i < m_NDebugPlanes ; i++)
-        draw_Plane(m_DebugPlanes[i].Point, m_DebugPlanes[i].Normal, m_DebugPlanes[i].Color, 3.0f) ;
+        RenderDebugPlane(m_DebugPlanes[i].Point, m_DebugPlanes[i].Normal, m_DebugPlanes[i].Color, 3.0f) ;
 
     // Render stick bones
     for (i = 0 ; i < m_StickBones.GetCount() ; i++)
@@ -2043,10 +1991,10 @@ void ragdoll::RenderSkeleton( void )
         if( Parent != -1 )
             PP = GetGeomBonePos( Parent );
 
-        draw_Line( BP, PP, XCOLOR_GREEN );
-        draw_Marker( BP, XCOLOR_RED );
+        render::debug::Line( BP, PP, XCOLOR_GREEN );
+        render::debug::Marker( BP, XCOLOR_RED );
 
-        draw_Label( BP, XCOLOR_WHITE, pAnimGroup->GetBone(i).Name );
+        render::debug::Label( BP, XCOLOR_WHITE, pAnimGroup->GetBone(i).Name );
     }
 */
 }
@@ -2090,7 +2038,10 @@ void ragdoll::Advance( f32 DeltaTime )
 {
     LOG_STAT(k_stats_Ragdoll);
 
-    CONTEXT("ragdoll::Advance") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "ragdoll::Advance") ;
+
+    if( !x_isvalid( DeltaTime ) || (DeltaTime < 0.0f) )
+        return;
 
     vector3 Center(0,0,0);
 
@@ -2246,7 +2197,7 @@ f32 ragdoll::GetKineticEnergy( void ) const
 #ifdef X_DEBUG
 
 // Draws a plane
-void draw_Plane( const vector3& MidPt, const vector3& Normal, xcolor Color, f32 Size /*= 40 */)
+void RenderDebugPlane( const vector3& MidPt, const vector3& Normal, xcolor Color, f32 Size /*= 40 */)
 {
     vector3 Temp( Normal );
     Temp.Normalize() ;
@@ -2259,13 +2210,9 @@ void draw_Plane( const vector3& MidPt, const vector3& Normal, xcolor Color, f32 
     vector3 Corner = MidPt - (Side*Size) - (Out*Size) ;
     vector3 Edge1  = 2*Side*Size ;
     vector3 Edge2  = 2*Out*Size ;
-    draw_Grid(Corner, Edge1, Edge2, Color, 4) ;
+    render::debug::Grid(Corner, Edge1, Edge2, Color, 4) ;
 
-    draw_Begin(DRAW_LINES, DRAW_NO_ZBUFFER) ;
-    draw_Color(Color) ;
-    draw_Vertex(MidPt) ;
-    draw_Vertex(MidPt + (10 * Temp)) ;
-    draw_End() ;
+    render::debug::Line( MidPt, MidPt + (10 * Temp), Color, render::PRIMITIVE_DEPTH_DISABLED );
 }
 
 #endif
@@ -2312,4 +2259,3 @@ void RagdollType_OnProperty ( prop_query& I, ragdoll::type& RagdollType )
 }
 
 //==============================================================================
-

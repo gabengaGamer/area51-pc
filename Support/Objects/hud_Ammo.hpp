@@ -13,9 +13,9 @@
 // INCLUDES
 //==============================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "x_bitmap.hpp"
-#include "Objects\Player.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
+#include "Objects/Player/Player.hpp"
 
 #include "hud_Renderable.hpp"
 
@@ -30,9 +30,11 @@ public:
     virtual        ~hud_ammo                    ( void ) {};
 
             void    Init                        ( void );
+            void    UpdateAmmoState             ( player*       pPlayer, f32 DeltaTime );
+            void    UpdateWarningAlpha          ( f32 DeltaTime );
 
     virtual void    OnRender                    ( player*       pPlayer );
-    virtual void    OnAdvanceLogic              ( player*       pPlayer, f32 DeltaTime );
+    virtual void    OnAdvanceSimulation              ( player*       pPlayer, f32 DeltaTime );
     virtual xbool   OnProperty                  ( prop_query&   rPropQuery );
     virtual void    OnEnumProp                  ( prop_enum&    List );
 
@@ -48,21 +50,19 @@ public:
 //------------------------------------------------------------------------------
 // Public Storage
 public:
-    //static rhandle<xbitmap>            m_AmmoBar;
-    rhandle<xbitmap>            m_FragAmmoIcon;
-    rhandle<xbitmap>            m_JBeanAmmoIcon;
-    rhandle<xbitmap>            m_JBeanXAmmoIcon;
-    rhandle<xbitmap>            m_AmmoBoxBMP;
-    rhandle<xbitmap>            m_AmmoBoxBMP_Clip;
-    rhandle<xbitmap>            m_AmmoBoxBMP_Resv;
-    rhandle<xbitmap>            m_AmmoBoxBMP_Nads;
+    rhandle<texture>            m_FragAmmoIcon;
+    rhandle<texture>            m_JBeanAmmoIcon;
+    rhandle<texture>            m_JBeanXAmmoIcon;
+    rhandle<texture>            m_AmmoBoxBMP;
+    rhandle<texture>            m_AmmoBoxBMP_Clip;
+    rhandle<texture>            m_AmmoBoxBMP_Resv;
+    rhandle<texture>            m_AmmoBoxBMP_Nads;
 
     xbool                       m_MultiPlayerHud;
     xbool                       m_AmmoHudInited;
 
     xwstring                    m_WeaponAmmoCount;
 
-    irect                       m_AmmoRect;
     s32                         m_CurrentWeaponAmmoIndex;
     s32                         m_CurrentWeaponAmmo;
 
@@ -80,11 +80,9 @@ public:
     static xcolor                      m_FragGrenadeColor;
     static xcolor                      m_GravGrenadeColor;
 
-    rhandle<xbitmap>            m_WeaponIcons[ INVEN_NUM_WEAPONS ];
+    rhandle<texture>            m_WeaponIcons[ INVEN_NUM_WEAPONS ];
 
     vector3                     m_WeaponIconPos;
-
-    vector2                     m_Dimensions;
 
     // These are for aligning the ammo count numbers.
     s32                         m_LeftMag;
@@ -114,3 +112,5 @@ protected:
 };
 
 #endif
+
+

@@ -1,8 +1,26 @@
+//==============================================================================
+//
+//  audio_package.hpp
+//
+//==============================================================================
+
 #ifndef AUDIO_PACKAGE_HPP
 #define AUDIO_PACKAGE_HPP
 
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "x_types.hpp"
-#include "audio_private.hpp"
+#include "Audio/audio_types.hpp"
+
+//==============================================================================
+//  STRUCTS
+//==============================================================================
+
+struct audio_runtime;
+
+//------------------------------------------------------------------------------
 
 struct music_intensity
 {
@@ -10,22 +28,21 @@ struct music_intensity
     u8  Descriptor[31];
 };
 
+//==============================================================================
+//  AUDIO PACKAGE CLASS
+//==============================================================================
+
 class audio_package
 {
-
-//------------------------------------------------------------------------------
-// Public defines.
-
 public:
 
 friend class audio_voice_mgr;
-friend class audio_hardware;
+friend class audio_backend;
 friend class audio_stream_mgr;
+friend class audio_package_registry;
+friend class audio_descriptor_runtime;
 
 #define AUDIO_PACKAGE_FILENAME_LENGTH (128)
-
-//------------------------------------------------------------------------------
-// Private structs
 
 private:
 
@@ -36,14 +53,13 @@ struct package_link
     audio_package* pPackage;
 };
 
-//------------------------------------------------------------------------------
-// Public functions.
-
 public:
 
                             audio_package               ( void );
                            ~audio_package               ( void );
-            xbool           Init                        ( const char* pFilename );
+            xbool           Init                        ( audio_runtime& Runtime,
+                                                          const char*    pFilename,
+                                                          const char*    pLookupName );
             void            Kill                        ( void );
                                    
             void            SetUserVolume               ( f32 Volume );
@@ -81,21 +97,18 @@ inline      f32             GetComputedFarDiffuse       ( void )                
                                                                                 
 inline      char*           GetPackageIdentifier        ( void )                { return m_Filename; }
 
-//------------------------------------------------------------------------------
-// Private functions.
-
 private:
+
+inline      audio_runtime&  Runtime                    ( void ) { ASSERT( m_pRuntime ); return *m_pRuntime; }
 
             u32             LoadHotSample               ( X_FILE* f, 
-                                                          hot_sample* pHotSample,
+                                                          hot_sample* pHotSample, 
                                                           uaddr Aram );
-
-//------------------------------------------------------------------------------
-// Private data.
 
 private:
 
-    char                    m_Filename[AUDIO_PACKAGE_FILENAME_LENGTH];    // Filename
+    char                    m_Filename[AUDIO_PACKAGE_FILENAME_LENGTH];       // Physical filename.
+    char                    m_LookupName[AUDIO_PACKAGE_FILENAME_LENGTH];     // Requested filename.
     package_link            m_Link;                         // Link
     package_header          m_Header;                       // Package header.
                                                             
@@ -138,14 +151,15 @@ private:
     uaddr*                  m_DescriptorTable;              // Pointer to the descriptor table
     u16*                    m_DescriptorBuffer;             // Pointer to the descriptor buffer
     void*                   m_HotSamples;                   // Table of hot samples.
-    void*                   m_WarmSamples;                  // Table of warm samples.
     void*                   m_ColdSamples;                  // Table of cold samples.
 
     u16*                    m_SampleIndices[NUM_TEMPERATURES];
     uaddr                   m_AudioRam;
+    audio_runtime*          m_pRuntime;
 
 friend class audio_mgr;
-
 };
 
+//==============================================================================
 #endif // AUDIO_PACKAGE_HPP
+//==============================================================================

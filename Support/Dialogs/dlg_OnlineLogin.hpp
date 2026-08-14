@@ -11,17 +11,17 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_listbox.hpp"
-#include "ui\ui_blankbox.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_listbox.hpp"
+#include "UI/ui_blankbox.hpp"
 
-#include "dialogs\dlg_popup.hpp"
+#include "Dialogs/dlg_PopUp.hpp"
 
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 
 //==============================================================================
 //  dlg_online_login
@@ -59,8 +59,8 @@ public:
 
     virtual void        Render                  ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect             ( ui_win* pWin );
-    virtual void        OnPadBack               ( ui_win* pWin );
+    virtual void        OnAccept             ( ui_win* pWin );
+    virtual void        OnCancel               ( ui_win* pWin );
     virtual void        OnUpdate                ( ui_win* pWin, f32 DeltaTime );
     
 protected:
@@ -77,7 +77,6 @@ protected:
     void                UpdateWaitForLogin      ( void );
     void                UpdateAcquirePassword   ( void );
 
-    ui_text*            m_pNavText;
 
     dlg_popup*          m_pPopup;
     s32                 m_PopUpResult;

@@ -111,5 +111,4 @@ static s16 s_iicon_ctf_flag[] =
 };
 
 
-#define DRAW_ICON_CTF_FLAG() draw_icon( NUM_FACETS_ICON_CTF_FLAG, NUM_VERTICES_ICON_CTF_FLAG, s_vicon_ctf_flag, s_iicon_ctf_flag )
 

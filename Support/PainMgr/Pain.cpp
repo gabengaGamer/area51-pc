@@ -11,12 +11,12 @@
 //  INCLUDES
 //==============================================================================
 #include "Pain.hpp"
-#include "Obj_Mgr/Obj_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 
 // Need this to handle factions.  
 // Too bad base class object can't handle it.
 #include "Objects/Actor/Actor.hpp"
-#include "Objects/Player.hpp"
+#include "Objects/Player/Player.hpp"
 #include "NetworkMgr/GameMgr.hpp"
 
 //==============================================================================
@@ -172,7 +172,7 @@ void pain::SetCustomScalar( f32 CustomScalar )
 void pain::SetCollisionInfo( const collision_mgr::collision& CollisionInfo )
 {
     ASSERT( m_bSetupCalled );
-    m_Collision = CollisionInfo;
+    m_collision = CollisionInfo;
     m_ImpactPoint = CollisionInfo.Point;
     m_ImpactNormal = CollisionInfo.Plane.Normal;
     m_bCollisionAvailable = TRUE;
@@ -297,7 +297,7 @@ const collision_mgr::collision& pain::GetCollision( void ) const
 {
     ASSERT( m_bSetupCalled );
     ASSERT( m_bCollisionAvailable );
-    return m_Collision;
+    return m_collision;
 }
 
 //==============================================================================

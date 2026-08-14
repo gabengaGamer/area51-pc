@@ -9,14 +9,14 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\game_music_intensity.hpp"
+#include "../Support/Trigger/Actions/game_music_intensity.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
-#include "..\Support\Objects\MusicLogic.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
+#include "../Support/Objects/MusicLogic.hpp"
 
-#include "Music_mgr\Music_mgr.hpp"
-#include "AudioMgr\AudioMgr.hpp"
+#include "Music_mgr/music_mgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 #include "Entropy.hpp"
 
 //=========================================================================
@@ -39,7 +39,7 @@ game_music_intensity::game_music_intensity ( guid ParentGuid ) : actions_base( P
 
 void game_music_intensity::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * game_music_intensity::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * game_music_intensity::Execute" );
     
     (void) pParent;
 

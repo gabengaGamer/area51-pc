@@ -12,13 +12,14 @@
 // INCLUDE
 //==========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "condition_line_of_sight.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "collisionmgr\collisionmgr.hpp"
-#include "objects\player.hpp"
-#include "characters\character.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Characters/Character.hpp"
 
 //==========================================================================
 // DEFINES
@@ -185,18 +186,18 @@ void condition_line_of_sight::OnDebugRender ( s32 Index )
         if (pObject1)
         {
             if( !m_CanSee )
-                draw_Line( pObject1->GetPosition(), pObject2->GetPosition(), XCOLOR_RED );
+                render::debug::Line( pObject1->GetPosition(), pObject2->GetPosition(), XCOLOR_RED );
             else
-                draw_Line( pObject1->GetPosition(), pObject2->GetPosition(), XCOLOR_GREEN );
+                render::debug::Line( pObject1->GetPosition(), pObject2->GetPosition(), XCOLOR_GREEN );
         }
 
         if (!GetElse())
         {
-            draw_Label( pObject2->GetPosition(), XCOLOR_PURPLE, xfs("[If %d]%s", Index, Info.Get()) );
+            render::debug::Label( pObject2->GetPosition(), XCOLOR_PURPLE, xfs("[If %d]%s", Index, Info.Get()) );
         }
         else
         {
-            draw_Label( pObject2->GetPosition(), XCOLOR_PURPLE, xfs("[Else If %d]%s", Index, Info.Get()) );
+            render::debug::Label( pObject2->GetPosition(), XCOLOR_PURPLE, xfs("[Else If %d]%s", Index, Info.Get()) );
         }
     }
 }

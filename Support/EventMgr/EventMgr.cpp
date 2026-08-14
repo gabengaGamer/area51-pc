@@ -10,12 +10,12 @@
 //==============================================================================
 
 #include "EventMgr.hpp"
-#include "Objects\Event.hpp"
-#include "Sound\EventSoundEmitter.hpp"
-#include "Objects\ParticleEventEmitter.hpp"
-#include "Animation\AnimData.hpp"
-#include "Objects\Player.hpp"
-#include "Debris\Debris_mgr.hpp"
+#include "Objects/Event.hpp"
+#include "Sound/EventSoundEmitter.hpp"
+#include "Objects/ParticleEventEmitter.hpp"
+#include "Animation/AnimData.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Debris/debris_mgr.hpp"
 
 //==============================================================================
 //  TYPES
@@ -666,7 +666,7 @@ void event_mgr::HandleIntensityEvent( const event& Event, object* pParentObj )
 }
 
 //==============================================================================
-#include "Objects\Player.hpp"
+#include "Objects/Player/Player.hpp"
 
 void event_mgr::HandleDebrisEvent( const event& Event, object* pParentObj )
 {

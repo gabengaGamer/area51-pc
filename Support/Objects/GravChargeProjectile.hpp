@@ -10,8 +10,8 @@
 //=========================================================================
 
 #include "NetProjectile.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "Decals\DecalPackage.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Decals/DecalPackage.hpp"
 //=========================================================================
 
 class grav_charge_projectile : public net_proj
@@ -58,7 +58,7 @@ public:
     virtual bbox    GetLocalBBox        ( void ) const;
     virtual void    OnMove              ( const vector3& rNewPos );
     virtual void    OnRender            ( void );
-    virtual void    OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void    OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void    OnImpact            ( collision_mgr::collision& Coll, object* pTarget );
     virtual void    OnExplode           ( void );
     xbool   LoadInstance        ( const char* pFileName );

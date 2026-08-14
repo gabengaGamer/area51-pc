@@ -326,5 +326,4 @@ static s16 s_iicon_gear[] =
 };
 
 
-#define DRAW_ICON_GEAR() draw_icon( NUM_FACETS_ICON_GEAR, NUM_VERTICES_ICON_GEAR, s_vicon_gear, s_iicon_gear )
 

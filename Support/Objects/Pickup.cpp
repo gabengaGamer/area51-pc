@@ -8,11 +8,12 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "Pickup.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 #include "Entropy.hpp"
 #include "Inventory/Inventory2.hpp"
-#include "Objects/Player.hpp"
+#include "Objects/Player/Player.hpp"
 #include "../Support/NetworkMgr/NetworkMgr.hpp"
 #include "NetworkMgr/GameMgr.hpp"
 
@@ -387,7 +388,7 @@ xbool pickup::ShouldHidePickup( void )
 
 void pickup::OnRender ( void )
 {
-    CONTEXT( "pickup::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "pickup::OnRender" );
 
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
 
@@ -411,7 +412,7 @@ void pickup::OnRender ( void )
         // draw the BBox so we can still see it, then get out
         if( ShouldHidePickup() )
         {
-            draw_BBox(GetBBox());
+        render::debug::Box(GetBBox());
             return;
         }
 
@@ -430,7 +431,7 @@ void pickup::OnRender ( void )
     else
     {
 #ifdef X_EDITOR
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif
     }
 }
@@ -497,9 +498,9 @@ void pickup::OnColCheck ( void )
 
 //==============================================================================
 
-void pickup::OnAdvanceLogic  ( f32 DeltaTime )
+void pickup::OnAdvanceSimulation  ( f32 DeltaTime )
 {
-    m_Inst.OnAdvanceLogic( DeltaTime );
+    m_Inst.OnAdvanceSimulation( DeltaTime );
 
 #ifndef X_EDITOR
     if( GameMgr.IsGameMultiplayer() )
@@ -546,7 +547,7 @@ void pickup::OnAdvanceLogic  ( f32 DeltaTime )
 #endif
 
     if( m_State != STATE_DESTROY )
-        net_proj::OnAdvanceLogic( DeltaTime );
+        net_proj::OnAdvanceSimulation( DeltaTime );
 
     // Fallen out of world?
     vector3 Position  = GetPosition();
@@ -1069,4 +1070,3 @@ const char* pickup::GetSound()
 }
 
 //==============================================================================
-

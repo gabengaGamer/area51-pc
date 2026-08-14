@@ -1,6 +1,6 @@
 #include "texinfo.hpp"
-#include "Parsing\TextIn.hpp"
-#include "Parsing\tokenizer.hpp"
+#include "Parsing/TextIn.hpp"
+#include "Parsing/tokenizer.hpp"
 
 //=========================================================================
 // IMPLEMENTATION

@@ -8,18 +8,19 @@
 // INCLUDES
 //=============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "DestructibleObj.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "Render\Render.hpp"
-#include "Debris\Debris_mgr.hpp"
-#include "Objects\ParticleEmiter.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Decals\DecalMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "Render/Render.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Decals/DecalMgr.hpp"
 
 //=============================================================================
 // CONSTANTS
@@ -229,18 +230,17 @@ void destructible_obj::OnColNotify( object& Object )
 #ifndef X_RETAIL
 void destructible_obj::OnDebugRender ( void )
 {
-    draw_ClearL2W();
-    draw_Sphere( GetPosition(), m_PainRadius, XCOLOR_RED );    
-    draw_Marker( GetPosition(), XCOLOR_BLUE );
-    draw_Point( GetPosition(), XCOLOR_BLUE );
+    render::debug::Sphere( GetPosition(), m_PainRadius, XCOLOR_RED );
+    render::debug::Marker( GetPosition(), XCOLOR_BLUE );
+    render::debug::Point( GetPosition(), XCOLOR_BLUE );
     
     s32 i;
     for (i=0;i<MAX_PAIN_RESPONSES;i++)
     {
         if (s_PainResponseInfo[i].AudioVoice != 0)
         {
-            draw_Point( s_PainResponseInfo[i].Pos );
-            draw_Label( s_PainResponseInfo[i].Pos, XCOLOR_RED, "Voice %d",s_PainResponseInfo[i].AudioVoice );
+            render::debug::Point( s_PainResponseInfo[i].Pos );
+            render::debug::Label( s_PainResponseInfo[i].Pos, XCOLOR_RED, "Voice %d",s_PainResponseInfo[i].AudioVoice );
         }        
     }
 
@@ -253,13 +253,12 @@ void destructible_obj::OnDebugRender ( void )
 
 void destructible_obj::OnRender( void )
 {
-    CONTEXT( "prop_surface::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "prop_surface::OnRender" );
 
     rigid_geom* pRigidGeom = m_Inst.GetRigidGeom();
     
     if( pRigidGeom )
     {
-        const matrix4& RenderL2W = GetRenderL2W();
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         
         if ( pRigidGeom->m_nBones > 1 )
@@ -268,13 +267,13 @@ void destructible_obj::OnRender( void )
         }
         else
         {
-            m_Inst.Render( &RenderL2W, Flags | GetRenderMode() );
+            m_Inst.Render( &GetL2W(), Flags | GetRenderMode() );
         }
     }
     else
     {
 #ifdef X_EDITOR
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif // X_EDITOR
     }
 }
@@ -419,6 +418,7 @@ void CreatePainResponse( guid               OwnerGuid,
     s_iNextPainResponse = (s_iNextPainResponse+1) % MAX_PAIN_RESPONSES;
 }
 
+//=============================================================================
 
 void destructible_obj::OnPain ( const pain& Pain )   // Tells object to recieve pain
 {
@@ -621,12 +621,15 @@ void destructible_obj::SetDestroyed( void )
 
 //=============================================================================
 
-void destructible_obj::OnAdvanceLogic( f32 DeltaTime )
+void destructible_obj::OnAdvanceSimulation( f32 DeltaTime )
 {
     if( m_DestructionTime > 0.0f )
     {
         m_DestructionTime -= DeltaTime;
-        return;
+        if( m_DestructionTime > 0.0f )
+            return;
+
+        m_DestructionTime = 0.0f;
     }
 
     if( m_Health <= 0.0f )
@@ -1024,8 +1027,3 @@ xbool destructible_obj::OnProperty( prop_query&   I    )
 
     return FALSE;
 }
-
-
-
-
-//=============================================================================

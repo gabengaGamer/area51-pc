@@ -1,24 +1,16 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "Entropy.hpp"
 #include "Pip.hpp"
 #include "Camera.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "EventMgr\EventMgr.hpp"
-#include "Render\LightMgr.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "EventMgr/EventMgr.hpp"
+#include "Render/LightMgr.hpp"
 #include "PlaySurface.hpp"
-#include "GameLib\RenderContext.hpp"
-
-#ifdef TARGET_XBOX
-extern s32 xbox_GetPipTexture(void);
-#endif
-
-#if defined(TARGET_PS2)
-#include "Entropy\PS2\ps2_misc.hpp"
-#endif
-
+#include "GameLib/RenderContext.hpp"
 
 //=========================================================================
 // OBJECT DESCRIPTION
@@ -52,7 +44,7 @@ static struct pip_desc : public object_desc
             //pPip->OnRender();
         }
 
-        return EDITOR_ICON_PIP;
+        return static_cast<s32>( EditorIcon::PictureInPicture );
     }
 
 #endif // X_EDITOR
@@ -80,7 +72,6 @@ const object_desc& pip::GetObjectType( void )
 
 pip::pip( void )
 {
-    m_PipVramID     = 0;
     m_Width         = 256;
     m_Height        = 128;
     m_nTextureRefs  = 0;
@@ -192,26 +183,14 @@ void pip::OnInit( void )
     // Initialize animation
     m_AnimPlayer.SetAnimGroup(m_hAnimGroup);
 
-    // Setup vram texture
+    // Create the PIP render target.
     m_Width  = 256;
     m_Height = 128;
 
-#ifdef TARGET_PS2
-    // Register a locked area of vram
-    m_PipVramID    = vram_RegisterLocked(m_Width, m_Height, 32);
-#endif
-
-#ifdef TARGET_XBOX
-    // Figure out what the pip render target id is
-    m_PipVramID   = xbox_GetPipTexture();
-#endif
-
-#if defined(TARGET_PC)
-    if( m_RenderTarget.Create( m_Width, m_Height ) )
-        m_PipVramID = m_RenderTarget.VRAMID;
-    else
-        m_PipVramID = 0;
-#endif
+    if( !m_RenderTarget.Create( m_Width, m_Height ) )
+    {
+        x_DebugMsg( "pip: Failed to create render target\n" );
+    }
 
     // Reset state
     SetupState(STATE_INACTIVE);
@@ -221,25 +200,10 @@ void pip::OnInit( void )
 
 void pip::OnKill( void )
 {
-#ifdef TARGET_PS2
-    // Release vram
-    vram_Unregister(m_PipVramID);
-#endif
-
-#ifdef TARGET_XBOX
-    // note: doesn't need to destroy anything
-#endif
-
     // Turn off pip texture
     ActivatePipTexture(FALSE);
 
-#if defined(TARGET_PC)
-    if( m_RenderTarget.bValid )
-    {
-        m_RenderTarget.Destroy();
-        m_PipVramID = 0;
-    }
-#endif
+    m_RenderTarget.Destroy();
 
     // Destroy ear?
     if (m_EarID)
@@ -263,15 +227,7 @@ void pip::OnRender( void )
 {
     s32 i;
 
-    CONTEXT("pip::OnRender" );
-
-#ifdef TARGET_PS2
-    // Since post effects has cleared vram, we need to reserve the pip vram id again!
-    if (m_PipVramID != -1)
-    {
-        vram_Activate(m_PipVramID);
-    }
-#endif
+    X_PROFILE_SCOPE_CATEGORY( "Context", "pip::OnRender" );
 
     // Should only get here for the hud render!
     ASSERT(m_Type == pip::TYPE_HUD);
@@ -284,7 +240,7 @@ void pip::OnRender( void )
     pView->GetViewport(Viewport.l, Viewport.t, Viewport.r, Viewport.b);
 
     // Clear all of z buffer
-    draw_ClearZBuffer(Viewport);
+    render::SetDepthRect( Viewport, 1.0f );
 
     // Compute L2W to be infront of view
     matrix4 L2W;
@@ -312,7 +268,7 @@ void pip::OnRender( void )
 #endif
 
         // Compute LOD mask
-        u64 LODMask = m_RenderInst.GetLODMask(GetL2W());
+        u64 LODMask = m_RenderInst.GetLODMask( GetL2W() );
         if (LODMask == 0)
             return;
 
@@ -347,14 +303,14 @@ void pip::OnRender( void )
     else
     {
 #if !defined( CONFIG_RETAIL )
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif // !defined( CONFIG_RETAIL )
     }
 }
 
 //=========================================================================
 
-void pip::OnAdvanceLogic( f32 DeltaTime )
+void pip::OnAdvanceSimulation( f32 DeltaTime )
 {
     // Advance animation
     if (m_hAnimGroup.IsLoaded())
@@ -392,28 +348,22 @@ void pip::RenderView( void )
         // Setup viewport
         irect Viewport;
 
-#if defined(TARGET_PC)
         if( !m_RenderTarget.bValid )
+        {
             return;
-#endif
+        }
 
         Viewport.l = 0;
         Viewport.t = 0;
         Viewport.r = m_Width;
         Viewport.b = m_Height;
 
-#if defined(TARGET_PC)
         if( !g_RenderContext.BeginPipRender( &m_RenderTarget ) )
+        {
             return;
-#else
-        g_RenderContext.SetPipRender( TRUE );
-#endif
-        pCamera->RenderView(Viewport, m_PipVramID, m_Width, m_Height);
-#if defined(TARGET_PC)
+        }
+        pCamera->RenderView( Viewport );
         g_RenderContext.EndPipRender();
-#else
-        g_RenderContext.SetPipRender( FALSE );
-#endif		
     }
 }
 
@@ -448,30 +398,32 @@ void pip::AddTextureRefs( object* pObject )
         }
     }
 
-    // Force render library to use top mip (we only have 1!) always since the render
-    // library thinks the bitmap has mips since we just cheated and set the bitmap vram id 
-    // to use the pips!
+    // Force the render library to use the top mip because the PIP target has one level.
     pGeom->m_pSubMesh[iSubMesh].WorldPixelSize = 1000.0f;
 
     // Lookup material on this submesh
     material& Material = render::GetMaterial(pRenderInst->GetInst(), iSubMesh);
 
     // Lookup texture handle
-    texture::handle hTexture = Material.m_DiffuseMap;
+    texture::handle hTexture = Material.m_diffuseMap;
 
     // Lookup texture
     texture* pTexture = hTexture.GetPointer();
     if (!pTexture)
+    {
         return;
+    }
 
     // Setup next texture ref
     ASSERT(m_nTextureRefs <= MAX_TEXTURE_REFS);
-	if( m_nTextureRefs >= MAX_TEXTURE_REFS )
+    if( m_nTextureRefs >= MAX_TEXTURE_REFS )
+    {
         return;
-	
+    }
+
     texture_ref& Ref = m_TextureRefs[m_nTextureRefs++];
     Ref.m_hTexture = hTexture;
-    Ref.m_VramID   = pTexture->m_Bitmap.GetVRAMID();
+    Ref.m_pOriginalResourceOverride = pTexture->GetShaderResourceOverride();
 }
 
 //=========================================================================
@@ -510,6 +462,20 @@ void pip::ActivatePipTexture( xbool bEnable )
     if( m_nTextureRefs == 0 )
         return;
 
+    const shader_resource* pPipResource = NULL;
+    if( bEnable )
+    {
+        if( !m_RenderTarget.bValid ||
+            !rtarget_HasShaderResource( m_RenderTarget.ColorTarget ) )
+        {
+            return;
+        }
+
+        pPipResource = rtarget_GetShaderResource( m_RenderTarget.ColorTarget );
+        if( !pPipResource )
+            return;
+    }
+
     // Update all texture refs
     for (s32 i = 0; i < m_nTextureRefs; i++)
     {
@@ -523,11 +489,12 @@ void pip::ActivatePipTexture( xbool bEnable )
         // Turn on?
         if (bEnable)
         {
-            if( m_PipVramID )
-                pTexture->m_Bitmap.SetVRAMID(m_PipVramID); // Set pip
+            pTexture->SetShaderResourceOverride( pPipResource );
         }
         else
-            pTexture->m_Bitmap.SetVRAMID(Ref.m_VramID);    // Restore
+        {
+            pTexture->SetShaderResourceOverride( Ref.m_pOriginalResourceOverride );
+        }
     }
 }
 
@@ -537,6 +504,7 @@ void pip::SetupState( state State )
 {
     // Record and setup new state
     m_State = State;
+
     switch(State)
     {
         case STATE_INACTIVE:

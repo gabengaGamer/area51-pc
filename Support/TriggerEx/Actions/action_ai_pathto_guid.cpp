@@ -9,8 +9,8 @@
 //=========================================================================
 
 #include "action_ai_pathto_guid.hpp"
-#include "..\Support\Characters\Character.hpp"
-#include "objects\group.hpp"
+#include "../Support/Characters/Character.hpp"
+#include "Objects/Group.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS

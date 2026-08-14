@@ -2,8 +2,8 @@
 // INCLUDES
 //=========================================================================
 #include "Tracker.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 
 //=========================================================================
@@ -34,12 +34,12 @@ static struct tracker_desc : public object_desc
         // editing the path the tracker is attached too!
         object_ptr<tracker> pTracker(Object.GetGuid()) ;
         if (pTracker)
-            pTracker->Update(FALSE) ;
+            pTracker->UpdateTrackedTransform(FALSE) ;
 
         // Call default render
         object_desc::OnEditorRender( Object );
         //return -1 ;
-        return EDITOR_ICON_TRACKER; 
+        return static_cast<s32>( EditorIcon::Tracker );
     }
 
 #endif // X_EDITOR
@@ -110,10 +110,16 @@ xbool tracker::OnProperty( prop_query& I )
     // Call base class
     if( object::OnProperty( I ) )
     {
-        // Initialize the zone tracker
-        if( I.IsVar( "Base\\Position" )) 
+        // Position establishes the movement baseline. ZoneInfo is loaded
+        // separately and is the explicit authored seed for that baseline.
+        if( I.IsVar( "Base\\Position" ) || I.IsVar( "Base\\ZoneInfo" ) )
         {
-            g_ZoneMgr.InitZoneTracking( *this, m_ZoneTracker );
+            g_ZoneMgr.RebaseZoneTracking( *this,
+                                          m_ZoneTracker,
+                                          GetPosition(),
+                                          GetZone1(),
+                                          GetZone2(),
+                                          zone_mgr::SeedSource::Object );
         }
     
         return TRUE ;
@@ -165,7 +171,7 @@ xbool tracker::OnProperty( prop_query& I )
 
         // Update position if user has entered a value
         if (I.IsRead() == FALSE)
-            OnAdvanceLogic(0) ;
+            UpdateTrackedTransform(FALSE) ;
 
         return TRUE ;
     }
@@ -216,7 +222,10 @@ void tracker::OnMove( const vector3& NewPos )
     object::OnMove(NewPos) ;
 
     // Update zone tracking
-    g_ZoneMgr.UpdateZoneTracking( *this, m_ZoneTracker, NewPos );
+    g_ZoneMgr.AdvanceZoneTracking( *this,
+                                   m_ZoneTracker,
+                                   NewPos,
+                                   GetZoneTrackingMode() );
 }
 
 //=========================================================================
@@ -227,7 +236,17 @@ void tracker::OnTransform( const matrix4& L2W )
     object::OnTransform(L2W) ;
 
     // Update zone tracking
-    g_ZoneMgr.UpdateZoneTracking( *this, m_ZoneTracker, L2W.GetTranslation() );
+    g_ZoneMgr.AdvanceZoneTracking( *this,
+                                   m_ZoneTracker,
+                                   L2W.GetTranslation(),
+                                   GetZoneTrackingMode() );
+}
+
+//=========================================================================
+
+zone_mgr::TrackingMode tracker::GetZoneTrackingMode( void ) const
+{
+    return zone_mgr::TrackingMode::PortalTraversal;
 }
     
 //=========================================================================
@@ -242,10 +261,10 @@ void tracker::OnInit( void )
 void tracker::OnDebugRender  ( void )
 {
 #ifdef X_EDITOR
-    CONTEXT("tracker::OnDebugRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "tracker::OnDebugRender" );
 
     // Make sure position is up to date
-    Update(FALSE) ;
+    UpdateTrackedTransform(FALSE) ;
 
     // Call base class
     object::OnDebugRender() ;
@@ -255,7 +274,7 @@ void tracker::OnDebugRender  ( void )
 
 //=========================================================================
 
-void tracker::OnAdvanceLogic( f32 DeltaTime )
+void tracker::OnAdvanceSimulation( f32 DeltaTime )
 {
     // Keep previous time
     m_PrevTime = m_Time ;
@@ -287,7 +306,7 @@ void tracker::OnAdvanceLogic( f32 DeltaTime )
 
                     // Send events for last key
                     m_Time = 0 ;
-                    Update(TRUE) ;
+                    UpdateTrackedTransform(TRUE) ;
 
                     // If we were deactivated - bail!
                     if (!IsActive())
@@ -320,7 +339,7 @@ void tracker::OnAdvanceLogic( f32 DeltaTime )
 
                     // Send events for last key
                     m_Time = TotalTime ;
-                    Update(TRUE) ;
+                    UpdateTrackedTransform(TRUE) ;
 
                     // If we were deactivated - bail!
                     if (!IsActive())
@@ -344,14 +363,18 @@ void tracker::OnAdvanceLogic( f32 DeltaTime )
     }
 
     // Make sure position is up to date
-    Update(TRUE) ;
+    UpdateTrackedTransform(TRUE) ;
 
     if (bUsePathZones)
     {
         SetZone1( pPath->GetZone1() );
         SetZone2( pPath->GetZone2() );
-
-        m_ZoneTracker.SetMainZone( (u8)GetZone1() );
+        g_ZoneMgr.RebaseZoneTracking( *this,
+                                      m_ZoneTracker,
+                                      GetPosition(),
+                                      GetZone1(),
+                                      GetZone2(),
+                                      zone_mgr::SeedSource::Object );
     }
 }
 
@@ -365,7 +388,7 @@ void tracker::OnActivate( xbool bFlag )
 
 //=========================================================================
 
-void tracker::Update( xbool bSendKeyEvents )
+void tracker::UpdateTrackedTransform( xbool bSendKeyEvents )
 {
     // Get path
     object_ptr<path> pPath(m_PathGuid) ;
@@ -470,7 +493,7 @@ xbool tracker::IsEditorSelected( void )
 void tracker::SetTime( f32 Time )
 {
     m_PrevTime = m_Time = Time;
-    OnAdvanceLogic(0);
+    UpdateTrackedTransform(FALSE);
 }
 
 //=========================================================================
@@ -500,4 +523,3 @@ void tracker::SetPath( guid gPath )
 }
 
 //=========================================================================
-

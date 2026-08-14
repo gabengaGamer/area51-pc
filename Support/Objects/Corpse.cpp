@@ -9,22 +9,23 @@
 //==============================================================================
 
 
-#include "Entropy\Entropy.hpp"
-#include "Characters\Character.hpp"
-#include "Loco\Loco.hpp"
-#include "Objects\BaseProjectile.hpp"
-#include "NetworkMgr\NetObj.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "Characters\ActorEffects.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Entropy/Entropy.hpp"
+#include "Characters/Character.hpp"
+#include "Loco/Loco.hpp"
+#include "Objects/BaseProjectile.hpp"
+#include "NetworkMgr/NetObj.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Characters/ActorEffects.hpp"
 #include "Corpse.hpp"
 #include "CorpsePain.hpp"
-#include "PhysicsMgr\PhysicsMgr.hpp"
-#include "Objects\ParticleEmiter.hpp"
-#include "Objects\Player.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Objects\DamageField.hpp"
-#include "Objects\Actor\Actor.hpp"
+#include "PhysicsMgr/PhysicsMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/DamageField.hpp"
+#include "Objects/Actor/Actor.hpp"
 
 
 
@@ -36,9 +37,21 @@ static  s32    CORPSE_MAX_DYNAMIC_COUNT         = 3;
 static  s32    CORPSE_MAX_ACTIVE_COUNT          = 4;
 static  f32    CORPSE_FADEOUT_START_TIME        = 8.0f;
 static  f32    CORPSE_FADEOUT_TIME              = 1.0f;
-static  f32    CORPSE_IMPACT_SFX_SPEED_SQR      = 300.0f * 300.0f;
-static  f32    CORPSE_IMPACT_SFX_INTERVAL_TIME  = 0.1f;
 static  f32    CORPSE_BLEND_CONSTRAINTS_TIME    = 1.0f;
+
+struct corpse_feedback_profile
+{
+    f32         m_ImpactSoundMinSpeedCmPerSecond;
+    f32         m_ImpactSoundCooldownSeconds;
+    const char* m_pImpactSound;
+};
+
+static const corpse_feedback_profile k_CorpseFeedbackProfile =
+{
+    300.0f,
+    0.1f,
+    "TerroristA_Bodyfall"
+};
 
 
 //=========================================================================
@@ -50,8 +63,8 @@ s32 corpse::m_ActiveCount = 0;          // # of active (moving) corpses
 // Workspace data for corpses for initialization. Using scratchmem would
 // be preferable, but this needs to be used in the loading screen where
 // smem isn't available to us.
-static matrix4  s_InitMatrices[MAX_ANIM_BONES] PS2_ALIGNMENT(16);
-static anim_key s_InitAnimKeys[MAX_ANIM_BONES] PS2_ALIGNMENT(16);
+static matrix4  s_InitMatrices[MAX_ANIM_BONES];
+static anim_key s_InitAnimKeys[MAX_ANIM_BONES];
 
 
 // Material type enum
@@ -213,8 +226,6 @@ corpse::corpse( void ) :
                                  vector3(  100,   50,  100 ) ) );
 
     m_FadeOutTime = CORPSE_FADEOUT_TIME;
-
-    InitSimpleAnimInterpCache( m_RenderCache );
 }
 
 //=========================================================================
@@ -244,6 +255,12 @@ void corpse::OnKill( void )
 
 void corpse::OnMove( const vector3& NewPos )
 {
+    if( !NewPos.IsValid() )
+    {
+        ASSERTS( FALSE, "Corpse received an invalid physics position" );
+        return;
+    }
+
     // Call base class
     object::OnMove( NewPos );
 
@@ -254,7 +271,7 @@ void corpse::OnMove( const vector3& NewPos )
 #endif // X_EDITOR
 
     // Update zone tracking
-    g_ZoneMgr.UpdateZoneTracking( *this, m_ZoneTracker, NewPos );
+    g_ZoneMgr.AdvanceZoneTracking( *this, m_ZoneTracker, NewPos );
     m_PhysicsInst.SetZone( m_ZoneTracker.GetMainZone() );
 
     // Move flaming damage field
@@ -284,27 +301,27 @@ void corpse::OnTransform( const matrix4& L2W )
 #endif // X_EDITOR
 
     // Update zone tracking
-    g_ZoneMgr.UpdateZoneTracking( *this, m_ZoneTracker, L2W.GetTranslation() );
+    g_ZoneMgr.AdvanceZoneTracking( *this, m_ZoneTracker, L2W.GetTranslation() );
     m_PhysicsInst.SetZone( m_ZoneTracker.GetMainZone() );
 }
 
 //=========================================================================
 
-bbox corpse::GetLocalBBox( void ) const
+bbox corpse::GetLocalBBox(void) const
 {
     // Get bbox from geom? (Fixes punch bag collision since it's so tall!)
     const geom* pGeom = GetSkinInst().GetGeom();
-    if( pGeom )
+    if (pGeom)
     {
-        bbox BBox( vector3( 0.0f, 0.0f, 0.0f ), pGeom->m_BBox.GetRadius() );
+        bbox BBox(vector3(0.0f, 0.0f, 0.0f), pGeom->m_BBox.GetRadius());
         return BBox;
     }
     else
     {
         // Use generic bbox
-        return bbox( vector3(-150, -150, -150), vector3(150,150,150) );
+        return bbox(vector3(-150, -150, -150), vector3(150, 150, 150));
     }
-}        
+}
 
 //===========================================================================
 
@@ -422,124 +439,68 @@ xbool corpse::ReachedMaxActiveLimit( void )
 
 //===========================================================================
 
-void corpse::CaptureRenderInterpState( void )
-{
-    simple_anim_interp_state& Snapshot = BeginCaptureInterpCache( m_RenderCache );
-    InitSimpleAnimInterpState( Snapshot );
-    m_PhysicsInst.CaptureRenderInterpState( Snapshot );
-
-    if( !Snapshot.Valid )
-    {
-        InitSimpleAnimInterpCache( m_RenderCache );
-        return;
-    }
-
-    if( FinishCaptureInterpCache( m_RenderCache, ShouldSnapSimpleAnimInterpState ) == INTERP_CAPTURE_CHANGED )
-        RegisterRenderInterpUpdate();
-}
-
-//===========================================================================
-
-void corpse::UpdateRenderInterpState( f32 Alpha )
-{
-    UpdateSimpleAnimInterpCache( m_RenderCache, Alpha );
-}
-
-//===========================================================================
-
-void corpse::ClearRenderInterpState( void )
-{
-    ClearSimpleAnimInterpCache( m_RenderCache );
-}
-
-//===========================================================================
-
-void corpse::InvalidateRenderInterpState( void )
-{
-    object::InvalidateRenderInterpState();
-    InvalidateSimpleAnimInterpCache( m_RenderCache );
-}
-
-//===========================================================================
-
-void corpse::SnapRenderInterpState( void )
-{
-    object::SnapRenderInterpState();
-
-    simple_anim_interp_state Snapshot;
-    InitSimpleAnimInterpState( Snapshot );
-    m_PhysicsInst.CaptureRenderInterpState( Snapshot );
-
-    if( Snapshot.Valid )
-        SnapInterpCache( m_RenderCache, Snapshot );
-    else
-        InvalidateSimpleAnimInterpCache( m_RenderCache );
-}
-
-//===========================================================================
-
-xbool corpse::Initialize( actor& Actor, xbool bDoBodyFade, actor_effects* pActorEffects )
+xbool corpse::Initialize(actor& Actor, xbool bDoBodyFade, actor_effects* pActorEffects)
 {
     // Keep owner
     m_OriginGuid = Actor.GetGuid();
 
     // copy in the actor effects
-    if( m_pActorEffects )
+    if (m_pActorEffects)
     {
         delete m_pActorEffects;
     }
     m_pActorEffects = pActorEffects;
     m_bPermanent = !bDoBodyFade;
-    
+
     // Initialize the ragdoll with pop fixing and blending in the constraints
-    if( !m_PhysicsInst.Init( Actor.GetSkinInst(), TRUE, CORPSE_BLEND_CONSTRAINTS_TIME ) )
+    if (!m_PhysicsInst.Init(Actor.GetSkinInst(), TRUE, CORPSE_BLEND_CONSTRAINTS_TIME))
         return FALSE;
 
     // Set the zone info
     m_ZoneTracker = Actor.GetZoneTracker();
-    SetZone1( Actor.GetZone1() );
-    SetZone2( Actor.GetZone2() );
-    
+    SetZone1(Actor.GetZone1());
+    SetZone2(Actor.GetZone2());
+
     // Copy the time when It was created
     m_TimeAlive = 0.0f;
-    
+
     // Copy floor properties
     m_FloorProperties = Actor.GetFloorProperties();
 
     // Now setup the matrices of the ragdoll from the current animation to inherit velocities
     loco* pLoco = Actor.GetLocoPointer();
-    if( pLoco )
-        m_PhysicsInst.SetMatrices( pLoco->m_Player, pLoco->GetDeltaPos() );
+    if (pLoco)
+        m_PhysicsInst.SetAnimatedPose(pLoco->m_Player, pLoco->m_Physics.GetLastMoveVelocity());
 
     // Now rigid body matrices have been setup, update the object transform, which will
     // correctly update the world bounding box and zone
-    OnMove( m_PhysicsInst.GetPosition() );
+    OnMove(m_PhysicsInst.GetPosition());
 
     // copy the decal data
-    m_hBloodDecalPackage.SetName( Actor.GetBloodDecalPackage() );
+    m_hBloodDecalPackage.SetName(Actor.GetBloodDecalPackage());
     m_BloodDecalGroup = Actor.GetBloodDecalGroup();
 
     // If we're on fire, create a damage field
-    if ( m_pActorEffects && m_pActorEffects->IsEffectOn( actor_effects::FX_FLAME ) )
+    if (m_pActorEffects && m_pActorEffects->IsEffectOn(actor_effects::FX_FLAME))
     {
-        if ( m_FlamingDamageField != NULL_GUID )
+        if (m_FlamingDamageField != NULL_GUID)
         {
-            object* pObject = g_ObjMgr.GetObjectByGuid( m_FlamingDamageField );
-            if ( pObject )
+            object* pObject = g_ObjMgr.GetObjectByGuid(m_FlamingDamageField);
+            if (pObject)
             {
-                g_ObjMgr.DestroyObject( pObject->GetSlot() );
+                g_ObjMgr.DestroyObject(pObject->GetSlot());
             }
         }
-        m_FlamingDamageField = g_ObjMgr.CreateObject( damage_field::GetObjectType() );
-        damage_field* pDamageField = (damage_field*)g_ObjMgr.GetObjectByGuid( m_FlamingDamageField );
+        m_FlamingDamageField = g_ObjMgr.CreateObject(damage_field::GetObjectType());
+        damage_field* pDamageField = (damage_field*)g_ObjMgr.GetObjectByGuid(m_FlamingDamageField);
 
-        if ( pDamageField )
+        if (pDamageField)
         {
             damage_field& DF = *pDamageField;
-            DF.SetSpatialType       ( damage_field::SPATIAL_TYPE_SPHERICAL  );
-            DF.SetSpatialTargets    ( damage_field::DF_TARGET_PLAYER        );
-            DF.SetActive            ( TRUE                                  );
-            DF.SetDimension         ( 0, 50.0f                              );
+            DF.SetSpatialType(damage_field::SPATIAL_TYPE_SPHERICAL);
+            DF.SetSpatialTargets(damage_field::DF_TARGET_PLAYER);
+            DF.SetActive(TRUE);
+            DF.SetDimension(0, 50.0f);
         }
     }
 
@@ -550,22 +511,22 @@ xbool corpse::Initialize( actor& Actor, xbool bDoBodyFade, actor_effects* pActor
 //===============================================================================
 
 // This function is only called when creating permanent dead bodies in the editor
-xbool corpse::Initialize( const char*           pGeomName,
-                          const char*           pAnimGroupName,
-                          const char*           pAnimName,
-                                s32             AnimFrame )
+xbool corpse::Initialize(const char* pGeomName,
+    const char* pAnimGroupName,
+    const char* pAnimName,
+    s32             AnimFrame)
 {
     // Must be valid
-    if( ( !pGeomName ) || ( !pAnimGroupName ) || ( !pAnimName ) )
+    if ((!pGeomName) || (!pAnimGroupName) || (!pAnimName))
         return FALSE;
 
     // Initialize the ragdoll (no need to fix popping)
-    if( !m_PhysicsInst.Init( pGeomName, FALSE, 0.0f ) )
+    if (!m_PhysicsInst.Init(pGeomName, FALSE, 0.0f))
         return FALSE;
 
     // Lookup geom
     const skin_geom* pGeom = GetSkinInst().GetSkinGeom();
-    if( !pGeom )
+    if (!pGeom)
         return FALSE;
 
     // Copy the time when It was created
@@ -573,59 +534,59 @@ xbool corpse::Initialize( const char*           pGeomName,
 
     // Lookup animation group
     anim_group::handle& hAnimGroup = m_PhysicsInst.GetAnimGroupHandle();
-    hAnimGroup.SetName( pAnimGroupName );
+    hAnimGroup.SetName(pAnimGroupName);
     const anim_group* pAnimGroup = hAnimGroup.GetPointer();
-    if( !pAnimGroup )
+    if (!pAnimGroup)
         return FALSE;
 
     // Lookup animation info
     s32 nBones = pAnimGroup->GetNBones();
-    s32 iAnim  = pAnimGroup->GetAnimIndex( pAnimName );
-    if( iAnim == -1 )
+    s32 iAnim = pAnimGroup->GetAnimIndex(pAnimName);
+    if (iAnim == -1)
         return FALSE;
-    const anim_info& AnimInfo = pAnimGroup->GetAnimInfo( iAnim );
+    const anim_info& AnimInfo = pAnimGroup->GetAnimInfo(iAnim);
 
     // Clamp frame
     s32 LastFrame = x_max(0, AnimInfo.GetNFrames() - 2);
-    if( AnimFrame > LastFrame )
+    if (AnimFrame > LastFrame)
         AnimFrame = LastFrame;
 
     // Setup ptrs
-    matrix4*  pMatrices = s_InitMatrices;
-    anim_key* pKeys     = s_InitAnimKeys;
+    matrix4* pMatrices = s_InitMatrices;
+    anim_key* pKeys = s_InitAnimKeys;
 
     // Compute matrices
-    AnimInfo.GetInterpKeys( (f32)AnimFrame, pKeys, nBones );
-    pAnimGroup->ComputeBonesL2W( GetL2W(), pKeys, nBones, pMatrices, TRUE );
+    AnimInfo.GetInterpKeys((f32)AnimFrame, pKeys, nBones);
+    pAnimGroup->ComputeBonesL2W(GetL2W(), pKeys, nBones, pMatrices, TRUE);
 
     // Setup the ragdoll bodies
-    m_PhysicsInst.SetMatrices( pMatrices, nBones, FALSE );
+    m_PhysicsInst.SetPose(pMatrices, nBones);
 
     // Create body -> world constraints from events in animation
-    for( s32 iEvent = 0; iEvent < AnimInfo.GetNEvents(); iEvent++ )
+    for (s32 iEvent = 0; iEvent < AnimInfo.GetNEvents(); iEvent++)
     {
         // Lookup event
-        const anim_event& Event = AnimInfo.GetEvent( iEvent );
-        
+        const anim_event& Event = AnimInfo.GetEvent(iEvent);
+
         // Is this a generic super event?
         const char* pEventType = Event.GetType();
-        if( x_stricmp( pEventType, "Generic" ) == 0 )
+        if (x_stricmp(pEventType, "Generic") == 0)
         {
             // Is this a "PinToWorld" event?
-            const char* pType = Event.GetString( anim_event::STRING_IDX_GENERIC_TYPE );
-            if( x_stricmp( pType, "Pin_To_World" ) == 0 )
+            const char* pType = Event.GetString(anim_event::STRING_IDX_GENERIC_TYPE);
+            if (x_stricmp(pType, "Pin_To_World") == 0)
             {
                 // Walk up hierarchy to get a valid bone
-                s32 iBone = Event.GetInt( anim_event::INT_IDX_BONE );
-                while( iBone >= pGeom->m_nBones )
-                    iBone = pAnimGroup->GetBoneParent( iBone );
-            
+                s32 iBone = Event.GetInt(anim_event::INT_IDX_BONE);
+                while (iBone >= pGeom->m_nBones)
+                    iBone = pAnimGroup->GetBoneParent(iBone);
+
                 // Compute event world position
-                matrix4& BoneL2W  = pMatrices[ iBone ];
-                vector3  WorldPos = BoneL2W * Event.GetPoint( anim_event::POINT_IDX_OFFSET );
-                
+                matrix4& BoneL2W = pMatrices[iBone];
+                vector3  WorldPos = BoneL2W * Event.GetPoint(anim_event::POINT_IDX_OFFSET);
+
                 // Finally, create the constraint
-                m_PhysicsInst.AddBodyWorldConstraint( pGeom->m_pBone[ iBone ].iRigidBody, WorldPos, 0.0f );
+                m_PhysicsInst.AddBodyWorldConstraint(pGeom->m_pBone[iBone].iRigidBody, WorldPos, 0.0f);
             }
         }
     }
@@ -666,16 +627,14 @@ xbool corpse::InitializeEditorPlaced( void )
     }
     
     // Run the physics for the specified simulation time...
-    f32 Step = 1.0f / 30.0f;
-    for ( f32 Time = 0; Time < m_SimulationTime; Time += Step )
+    if( m_SimulationTime > 0.0f )
     {
         // Force activation incase bodies deactivate
         m_PhysicsInst.Activate();
         
         // Advance simulation
-        g_PhysicsMgr.Advance( Step );
+        g_PhysicsMgr.Advance( m_SimulationTime );
     }
-    g_PhysicsMgr.ClearDeltaTime();
     
     // Finally activate or deactivate physics instance (since sim time maybe zero)?
     if( m_bActive )
@@ -707,43 +666,22 @@ xbool corpse::InitializeEditorPlaced( void )
 
 void corpse::OnRenderShadowCast( u64 ProjMask )
 {
-    // Compute LOD mask for the shadow render (by forcing 0 for the screen size
-    // we are sure to get the lowest LOD)
-    u64 ShadLODMask = GetSkinInst().GetLODMask(0);
-    if( ShadLODMask == 0 )
+    // Compute matrices
+    u64 LODMask;
+    s32 nActiveBones;
+    const matrix4* pMatrices = m_PhysicsInst.GetBoneL2Ws( LODMask, nActiveBones );
+    if( !pMatrices || ( LODMask == 0 ) || ( nActiveBones <= 0 ) )
         return;
 
     // Setup render flags
     u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
-
-    if( HasSimpleAnimInterpCache( m_RenderCache ) )
-    {
-        s32 nActiveBones = MIN( GetSkinInst().GetNActiveBones( ShadLODMask ), m_RenderCache.Interp.NBones );
-        if( nActiveBones <= 0 )
-            return;
-
-        GetSkinInst().RenderShadowCast( &m_RenderCache.Interp.L2W,
-                                        m_RenderCache.Interp.Bones,
-                                        nActiveBones,
-                                        Flags,
-                                        ShadLODMask,
-                                        ProjMask );
-        return;
-    }
-
-    // Compute bones
-    u64 LODMask;
-    s32 nActiveBones;
-    const matrix4* pMatrices = m_PhysicsInst.GetBoneL2Ws( LODMask, nActiveBones );
-    if( !pMatrices )
-        return;
 
     // Render
     GetSkinInst().RenderShadowCast( &GetL2W(),
                                     pMatrices,
                                     nActiveBones,
                                     Flags,
-                                    ShadLODMask,
+                                    LODMask,
                                     ProjMask );
 }
 
@@ -784,32 +722,8 @@ void corpse::OnRender( void )
         Ambient.A  = (u8)(Alpha*255.0f);
     }
 
-    if( HasSimpleAnimInterpCache( m_RenderCache ) )
-    {
-        const matrix4& RenderL2W = m_RenderCache.Interp.L2W;
-        const u64 LODMask = GetSkinInst().GetLODMask( RenderL2W );
-        if( LODMask )
-        {
-            s32 nActiveBones = MIN( GetSkinInst().GetNActiveBones( LODMask ), m_RenderCache.Interp.NBones );
-            if( nActiveBones > 0 )
-            {
-                GetSkinInst().Render( &RenderL2W,
-                                      m_RenderCache.Interp.Bones,
-                                      nActiveBones,
-                                      Flags,
-                                      LODMask,
-                                      Ambient );
-            }
-        }
-
-        if( m_bActiveWhenVisible )
-            m_PhysicsInst.Activate();
-    }
-    else
-    {
-        // Render that puppy!
-        m_PhysicsInst.Render( Flags, Ambient );
-    }
+    // Render that puppy!
+    m_PhysicsInst.Render( Flags, Ambient );
 }
 
 //===============================================================================
@@ -818,8 +732,6 @@ void corpse::OnRender( void )
 
 void corpse::OnDebugRender( void )
 {
-    draw_ClearL2W();
-    
     // Loop through constraints
     for( s32 i = 0; i < m_PhysicsInst.GetNBodyWorldConstraints(); i++ )
     {
@@ -827,8 +739,8 @@ void corpse::OnDebugRender( void )
         constraint& Constraint = m_PhysicsInst.GetBodyWorldConstraint( i );
             
         // Render
-        draw_Sphere( Constraint.GetWorldPos( 0 ), 5.0f, XCOLOR_RED );             
-        draw_Sphere( Constraint.GetWorldPos( 1 ), 5.0f, XCOLOR_YELLOW );             
+        render::debug::Sphere( Constraint.GetWorldPos( 0 ), 5.0f, XCOLOR_RED );
+        render::debug::Sphere( Constraint.GetWorldPos( 1 ), 5.0f, XCOLOR_YELLOW );
     }
 }
 
@@ -865,113 +777,114 @@ void corpse::OnRenderTransparent( void )
 
 //===============================================================================
 
-void corpse::OnAdvanceLogic( f32 DeltaTime )
+void corpse::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "corpse::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY("Context", "corpse::OnAdvanceSimulation");
 
     // update any actor effects
-    if( m_pActorEffects )
-        m_pActorEffects->Update( this, DeltaTime );
+    if (m_pActorEffects)
+        m_pActorEffects->Update(this, DeltaTime);
 
     // Flagged to be destroyed?
-    if( m_bDestroy )
+    if (m_bDestroy)
     {
-        ASSERT( !m_bPermanent );
-        g_ObjMgr.DestroyObject( GetGuid() );
+        ASSERT(!m_bPermanent);
+        g_ObjMgr.DestroyObject(GetGuid());
         return;
     }
 
     // Time out and delete his body?
-    if( ( m_bCanDelete ) && ( !m_bPermanent ) && ( m_TimeAlive >= ( CORPSE_FADEOUT_START_TIME + m_FadeOutTime ) ) )
+    if ((m_bCanDelete) && (!m_bPermanent) && (m_TimeAlive >= (CORPSE_FADEOUT_START_TIME + m_FadeOutTime)))
     {
-        g_ObjMgr.DestroyObject( GetGuid() );
+        g_ObjMgr.DestroyObject(GetGuid());
         return;
     }
 
     // Update the timer.
-    if( m_bPermanent )
+    if (m_bPermanent)
     {
         // Reset time
         m_TimeAlive = 0.0f;
-    }        
+    }
     else
     {
         // Update time
         m_TimeAlive += DeltaTime;
-        
+
         // If fading out, put the rigid bodies to sleep so that the physics system does not run out of constraints
-        if( m_TimeAlive >= CORPSE_FADEOUT_START_TIME )
+        if (m_TimeAlive >= CORPSE_FADEOUT_START_TIME)
         {
             m_PhysicsInst.Deactivate();
-            m_PhysicsInst.SetInstCollision( FALSE );
-        }        
+            m_PhysicsInst.SetInstCollision(FALSE);
+        }
     }
-    
+
     // Okay lets assume next time we can be deleted
     m_bCanDelete = TRUE;
 
     // Get current position from physics instance
     vector3 NewPos = m_PhysicsInst.GetPosition();
-    
+
     // Update base object position?
-    if( NewPos != GetPosition() )
-        OnMove( NewPos );
+    if (NewPos != GetPosition())
+        OnMove(NewPos);
 
     // Update ambient color for rendering
-    m_FloorProperties.Update( NewPos, DeltaTime );
+    m_FloorProperties.Update(NewPos, DeltaTime);
 
     // Update instance house keeping
-    m_PhysicsInst.Advance( DeltaTime );
+    m_PhysicsInst.Advance(DeltaTime);
 
     // Possibly play an impact?
-    if( m_ImpactSfxTimer == 0.0f )
+    if (m_ImpactSfxTimer == 0.0f)
     {
         // Are rigid bodies active?
         physics_inst& PhysicsInst = GetPhysicsInst();
-        if( PhysicsInst.IsActive() )
+        if (PhysicsInst.IsActive())
         {
             // Loop through all rigid bodies looking for fastest collision
             f32 ImpactSpeedSqr = 0.0f;
-            s32 iImpactBody     = -1;
-            for( s32 i = 0; i < PhysicsInst.GetNRigidBodies(); i++ )
+            s32 iImpactBody = -1;
+            const f32 MinImpactSpeedSqr = x_sqr( k_CorpseFeedbackProfile.m_ImpactSoundMinSpeedCmPerSecond );
+            for (s32 i = 0; i < PhysicsInst.GetNRigidBodies(); i++)
             {
                 // Lookup body
                 rigid_body& Body = PhysicsInst.GetRigidBody(i);
-                
+
                 // Collision occurred?
-                if( Body.HasCollided() )
+                if (Body.HasCollided())
                 {
                     // Biggest so far?
-                    f32 CollisionSpeedSqr = Body.GetCollisionSpeedSqr();
-                    if(     ( CollisionSpeedSqr > CORPSE_IMPACT_SFX_SPEED_SQR ) 
-                        &&  ( CollisionSpeedSqr > ImpactSpeedSqr ) )
+                    const f32 BodyImpactSpeedSqr = Body.GetImpactSpeedSqr();
+                    if ((BodyImpactSpeedSqr > MinImpactSpeedSqr)
+                        && (BodyImpactSpeedSqr > ImpactSpeedSqr))
                     {
                         // Record
-                        iImpactBody    = i;
-                        ImpactSpeedSqr = CollisionSpeedSqr;
-                    }                    
+                        iImpactBody = i;
+                        ImpactSpeedSqr = BodyImpactSpeedSqr;
+                    }
                 }
             }
-            
+
             // Play impact?                            
-            if( iImpactBody != -1 ) 
+            if (iImpactBody != -1)
             {
                 // Play impact sfx
-                g_AudioMgr.Play( "TerroristA_Bodyfall", 
-                                 PhysicsInst.GetRigidBody( iImpactBody ).GetPosition(), 
-                                 GetZone1(), 
-                                 TRUE );
-                                 
+                g_AudioMgr.Play(k_CorpseFeedbackProfile.m_pImpactSound,
+                    PhysicsInst.GetRigidBody(iImpactBody).GetPosition(),
+                    GetZone1(),
+                    TRUE);
+
                 // Setup delay before next impact
-                m_ImpactSfxTimer = CORPSE_IMPACT_SFX_INTERVAL_TIME;                           
+                m_ImpactSfxTimer = k_CorpseFeedbackProfile.m_ImpactSoundCooldownSeconds;
             }
         }
     }
     else
     {
         // Update impact sfx timer
-        m_ImpactSfxTimer = x_max( 0.0f, m_ImpactSfxTimer - DeltaTime );
-    }    
+        m_ImpactSfxTimer = x_max(0.0f, m_ImpactSfxTimer - DeltaTime);
+    }
 }
 
 //===============================================================================
@@ -1100,73 +1013,73 @@ void corpse::CreateImpactEffect( const pain& Pain )
 
 //===============================================================================
 
-void corpse::OnPain( const pain& Pain )
+void corpse::OnPain(const pain& Pain)
 {
     // Skip?
-    if( !IsRagdollEnabled() )
+    if (!IsRagdollEnabled())
         return;
-        
+
     // If we've already starting fading the body out, don't do any more splatting
-    if( m_TimeAlive >= CORPSE_FADEOUT_START_TIME )
+    if (m_TimeAlive >= CORPSE_FADEOUT_START_TIME)
         return;
 
     // If corpse is not active and there are already too many active, leave alone
-    if( ( m_PhysicsInst.IsActive() == FALSE ) && ( ReachedMaxActiveLimit() ) )
+    if ((m_PhysicsInst.IsActive() == FALSE) && (ReachedMaxActiveLimit()))
         return;
 
     // Triggers can create npc ragdolls that do not have any pain setup, but still
     // go through through character death state which always calls this function upon
     // creating a ragdoll.
-    if( Pain.SetupCalled() == FALSE )
+    if (Pain.SetupCalled() == FALSE)
         return;
 
     // Setup corpse pain and apply to self
     corpse_pain CorpsePain;
-    CorpsePain.Setup( Pain, *this );
-    CorpsePain.Apply( *this );
-    
+    CorpsePain.Setup(Pain, *this);
+    CorpsePain.Apply(*this);
+
     // Record pain in origin actor so it can be sent over the net in MP?
-    object_ptr<actor> pActor( m_OriginGuid );
-    if( pActor)
+    object_ptr<actor> pActor(m_OriginGuid);
+    if (pActor)
     {
         // Keep
         pActor->GetCorpseDeathPain() = CorpsePain;
-        
+
         // Only record once so death pain is not overwritten
         m_OriginGuid = 0;
     }
-            
+
     // Create blood on ground?
-    if( m_Material == object::MAT_TYPE_FLESH )
+    if (m_Material == object::MAT_TYPE_FLESH)
         CreateSplatDecalOnGround();
 }
 
 //===============================================================================
 
-void corpse::OnColCheck( void )
+void corpse::OnColCheck(void)
 {
     // Get moving object
     guid    MovingGuid = g_CollisionMgr.GetMovingObjGuid();
-    object* pObject    = g_ObjMgr.GetObjectByGuid(MovingGuid);
-    
+    object* pObject = g_ObjMgr.GetObjectByGuid(MovingGuid);
+
 #ifdef X_EDITOR
     // Allow ragdoll to be selected in the editor?
-    if( g_CollisionMgr.IsEditorSelectRay() )
+    if (g_CollisionMgr.IsEditorSelectRay())
     {
         // Let physics instance check for collision...
-        m_PhysicsInst.OnColCheck( GetGuid() );
+        m_PhysicsInst.OnColCheck(GetGuid());
     }
-    
+
 #endif // X_EDITOR
 
     // Only collide with bullets/grenades/player/character melee during game
-    if(     ( pObject ) 
-        &&  (       ( pObject->IsKindOf( net_proj::GetRTTI()        ) )
-                ||  ( pObject->IsKindOf( base_projectile::GetRTTI() ) )
-                ||  ( pObject->IsKindOf( character::GetRTTI()       ) )
-                ||  ( pObject->IsKindOf( player::GetRTTI()          ) ) ) )
+    if ((pObject)
+        && ((pObject->IsKindOf(net_proj::GetRTTI()))
+            || (pObject->IsKindOf(base_projectile::GetRTTI()))
+            || (pObject->IsKindOf(character::GetRTTI()))
+            || (pObject->IsKindOf(player::GetRTTI()))))
     {
-        m_PhysicsInst.OnColCheck( GetGuid() );
+        m_PhysicsInst.OnColCheck(GetGuid());
     }
 }
 
@@ -1230,7 +1143,12 @@ xbool corpse::OnProperty( prop_query&   I )
         // Initialize zone tracker?
         if( I.IsVar( "Base\\Position" ) )
         {
-            g_ZoneMgr.InitZoneTracking( *this, m_ZoneTracker );
+            g_ZoneMgr.RebaseZoneTracking( *this,
+                                          m_ZoneTracker,
+                                          GetPosition(),
+                                          GetZone1(),
+                                          GetZone2(),
+                                          zone_mgr::SeedSource::Object );
         }
 
         // Update physics instance zone                    

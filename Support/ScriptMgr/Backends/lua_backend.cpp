@@ -8,7 +8,7 @@
 //  INCLUDES
 //==============================================================================
 
-#include "3rdParty\Lua\5.5.0\lua.hpp"
+#include "3rdParty/Lua/5.5.0/lua.hpp"
 #include "lua_backend.hpp"
 #include "x_files.hpp"
 

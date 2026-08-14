@@ -32,8 +32,13 @@ loco_eye_controller::loco_eye_controller() :
     m_TargetBlendSpeed  ( 1.0f ),       // Speed to blend towards target
                             
     m_LookAt            ( 0, 0, 0 ),    // Current position that the eyes are looking at
-    m_TargetLookAt      ( 0, 0, 0 )     // Target position that the eyes need to look towards
+    m_TargetLookAt      ( 0, 0, 0 ),    // Target position that the eyes need to look towards
+    m_bUseReferenceCache( FALSE )
 {
+    m_UDReferenceCache.Active[0] = FALSE;
+    m_UDReferenceCache.Active[1] = FALSE;
+    m_LRReferenceCache.Active[0] = FALSE;
+    m_LRReferenceCache.Active[1] = FALSE;
 }
 
 //=========================================================================
@@ -119,6 +124,7 @@ void loco_eye_controller::SetAnimGroup( const anim_group::handle& hAnimGroup )
 
     // Turn off by default
     m_Weight = 0.0f ;
+    m_bUseReferenceCache = FALSE;
 
     // Lookup animations and bones
     const anim_group& AnimGroup = GetAnimGroup() ;
@@ -150,10 +156,96 @@ void loco_eye_controller::SetAnimGroup( const anim_group::handle& hAnimGroup )
         
         m_MinPitch = MinUD.Pitch;
         m_MaxPitch = MaxUD.Pitch;
+
+        m_bUseReferenceCache =
+            CacheAdditiveReferences( UDAnimInfo, (UDAnimInfo.GetNFrames()-1) >> 1, m_UDReferenceCache ) &&
+            CacheAdditiveReferences( LRAnimInfo, (LRAnimInfo.GetNFrames()-1) >> 1, m_LRReferenceCache );
                 
         // Turn on
         m_Weight = 1.0f ;
     }        
+}
+
+//=========================================================================
+
+xbool loco_eye_controller::CacheAdditiveReferences( const anim_info& AnimInfo,
+                                                     s32              iRefFrame,
+                                                     additive_reference_cache& Cache )
+{
+    Cache.Active[0] = FALSE;
+    Cache.Active[1] = FALSE;
+
+    const s32 iBoneMin = AnimInfo.GetAnimBoneMinIndex();
+    const s32 iBoneMax = AnimInfo.GetAnimBoneMaxIndex();
+    if( (iBoneMin < 0) || (iBoneMax < iBoneMin) )
+        return FALSE;
+
+    for( s32 iBone = iBoneMin; iBone <= iBoneMax; ++iBone )
+    {
+        if( AnimInfo.IsBoneMasked( iBone ) )
+            continue;
+
+        s32 iEye = -1;
+        if( iBone == m_iLEyeBone )
+            iEye = 0;
+        else if( iBone == m_iREyeBone )
+            iEye = 1;
+        else
+            return FALSE;
+
+        AnimInfo.GetRawKey( iRefFrame, iBone, Cache.Key[iEye] );
+        Cache.Active[iEye] = TRUE;
+    }
+
+    return Cache.Active[0] || Cache.Active[1];
+}
+
+//=========================================================================
+
+void loco_eye_controller::MixCachedAdditive( const info&       Info,
+                                              const anim_info&  AnimInfo,
+                                              f32               Frame,
+                                              const additive_reference_cache& Cache,
+                                              anim_key*         pDestKey )
+{
+    const s32 EyeBone[2] = { m_iLEyeBone, m_iREyeBone };
+    for( s32 iEye = 0; iEye < 2; ++iEye )
+    {
+        const s32 iBone = EyeBone[iEye];
+        if( !Cache.Active[iEye] || (iBone >= Info.m_nActiveBones) )
+            continue;
+
+        const anim_key& RefKey = Cache.Key[iEye];
+        anim_key CurrKey;
+        AnimInfo.GetInterpKey( Frame, iBone, CurrKey );
+
+        if( RefKey.Translation == CurrKey.Translation )
+        {
+            const f32 CosAngle = (RefKey.Rotation.X * CurrKey.Rotation.X) +
+                                 (RefKey.Rotation.Y * CurrKey.Rotation.Y) +
+                                 (RefKey.Rotation.Z * CurrKey.Rotation.Z) +
+                                 (RefKey.Rotation.W * CurrKey.Rotation.W);
+            if( CosAngle > 0.99999999f )
+                continue;
+        }
+
+        anim_key InvRefKey = RefKey;
+        InvRefKey.Rotation.Invert();
+        InvRefKey.Translation = -InvRefKey.Translation;
+
+        anim_key AddKey;
+        AddKey.Rotation    = CurrKey.Rotation    * InvRefKey.Rotation;
+        AddKey.Translation = CurrKey.Translation + InvRefKey.Translation;
+
+        if( m_Weight != 1.0f )
+        {
+            AddKey.Rotation = BlendToIdentity( AddKey.Rotation, 1.0f - m_Weight );
+            AddKey.Translation *= m_Weight;
+        }
+
+        pDestKey[iBone].Rotation    = AddKey.Rotation    * pDestKey[iBone].Rotation;
+        pDestKey[iBone].Translation = AddKey.Translation + pDestKey[iBone].Translation;
+    }
 }
 
 //=========================================================================
@@ -210,6 +302,8 @@ static f32 ComputeFrame( radian Angle,
 
 void loco_eye_controller::MixKeys( const info& Info, anim_key* pDestKey )
 {
+    X_PROFILE_SCOPE_CATEGORY( "Animation", "loco_eye_controller::MixKeys" );
+
     // Turned off?
     if( m_Weight == 0 )
         return ;
@@ -248,11 +342,17 @@ void loco_eye_controller::MixKeys( const info& Info, anim_key* pDestKey )
     f32 PitchFrame = ComputeFrame( -Pitch, m_MinPitch, m_MaxPitch, 0.0f, (f32)nUDFrames - 0.0001f ) ;
     f32 YawFrame   = ComputeFrame( -Yaw,  m_MinYaw,   m_MaxYaw,   0.0f, (f32)nLRFrames - 0.0001f ) ;
 
-    // Add pitch keys to eyes
-    AdditiveMixKeys( Info, m_iUDAnim, PitchFrame, nUDFrames >> 1, pDestKey ) ;
-
-    // Add yaw keys to eyes
-    AdditiveMixKeys( Info, m_iLRAnim, YawFrame  , nLRFrames >> 1, pDestKey ) ;
+    if( m_bUseReferenceCache )
+    {
+        MixCachedAdditive( Info, UDAnimInfo, PitchFrame, m_UDReferenceCache, pDestKey );
+        MixCachedAdditive( Info, LRAnimInfo, YawFrame,   m_LRReferenceCache, pDestKey );
+    }
+    else
+    {
+        // Preserve the generic path when an eye clip affects other bones.
+        AdditiveMixKeys( Info, m_iUDAnim, PitchFrame, nUDFrames >> 1, pDestKey );
+        AdditiveMixKeys( Info, m_iLRAnim, YawFrame,   nLRFrames >> 1, pDestKey );
+    }
 }
     
 //=========================================================================

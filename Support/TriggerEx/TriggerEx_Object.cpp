@@ -8,21 +8,22 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "TriggerEx_Object.hpp"
-#include "..\Support\TriggerEx\TriggerEx_Manager.hpp"
+#include "../Support/TriggerEx/TriggerEx_Manager.hpp"
 #include "Entropy.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "..\Support\Globals\Global_Variables_Manager.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "../Support/Globals/Global_Variables_Manager.hpp"
 
-#include "Meta\trigger_meta_label.hpp"
-#include "Meta\trigger_meta_breakpoint.hpp"
+#include "Meta/trigger_meta_label.hpp"
+#include "Meta/trigger_meta_breakpoint.hpp"
 
-#include "Objects\BaseProjectile.hpp"
-#include "Objects\Player.hpp"
-#include "characters\character.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "Objects/BaseProjectile.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Characters/Character.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 #ifdef X_EDITOR
-#include "actions\action_play_2d_sound.hpp"
+#include "Actions/action_play_2d_sound.hpp"
 #endif
 
 //========================================================================
@@ -163,7 +164,7 @@ struct trigger_ex_object_desc : public object_desc
     virtual s32  OnEditorRender( object& Object ) const
     {
         //object_desc::OnEditorRender( Object );
-        editor_icon Icon = EDITOR_ICON_TRIGGER;
+        EditorIcon Icon = EditorIcon::Trigger;
 
         if( Object.IsKindOf( trigger_ex_object::GetRTTI() ) )
         {
@@ -173,7 +174,7 @@ struct trigger_ex_object_desc : public object_desc
             {
                 //selected
                 Trigger.OnDebugRender();
-                draw_Label( Trigger.GetPosition(), xcolor(255,255,255,255), Trigger.GetTriggerName() );
+                render::debug::Label( Trigger.GetPosition(), xcolor(255,255,255,255), Trigger.GetTriggerName() );
             }
 
             if ( m_bRenderSpatial || ( Trigger.GetAttrBits() & object::ATTR_EDITOR_SELECTED ))
@@ -183,23 +184,23 @@ struct trigger_ex_object_desc : public object_desc
             
             if (g_game_running && Trigger.IsActive())
             {
-                draw_Sphere( Trigger.GetPosition(), 50, Trigger.m_CurrentColor );
+                render::debug::Sphere( Trigger.GetPosition(), 50, Trigger.m_CurrentColor );
             }
 
             switch (Trigger.GetTriggerType())
             {
             case trigger_ex_object::TRIGGER_TYPE_SIMPLE:
-                Icon = EDITOR_ICON_TRIGGER_SIMPLE;
+                Icon = EditorIcon::SimpleTrigger;
                 break;
             case trigger_ex_object::TRIGGER_TYPE_SPATIAL:
-                Icon = EDITOR_ICON_TRIGGER_SPATIAL;
+                Icon = EditorIcon::SpatialTrigger;
                 break;
             case trigger_ex_object::TRIGGER_TYPE_VIEWABLE:
-                Icon = EDITOR_ICON_TRIGGER_VIEWABLE;
+                Icon = EditorIcon::ViewableTrigger;
                 break;
             }      
             
-            EditorIcon_Draw( Icon, Trigger.GetL2W(), FALSE, Trigger.m_CurrentColor );
+            DrawEditorIcon( Icon, Trigger.GetL2W(), FALSE, Trigger.m_CurrentColor );
             
             if (Trigger.m_DrawActivationIcon > 0)
             {
@@ -219,7 +220,7 @@ struct trigger_ex_object_desc : public object_desc
                     Color = xcolor( 255, 0, 0, 255);
                 }
 
-                EditorIcon_Draw( EDITOR_ICON_LOOP, Trigger.GetL2W(), FALSE, Color );
+                DrawEditorIcon( EditorIcon::Loop, Trigger.GetL2W(), FALSE, Color );
                 return -1;
             }
         }
@@ -708,13 +709,13 @@ void trigger_ex_object::OnRenderSpatial( void )
         case SPATIAL_TYPE_AXIS_CUBE:       
             {
                 // Renders a volume given a BBox
-                draw_Volume ( GetBBox(), xcolor(DrawColor.R, DrawColor.G,DrawColor.B, 50));
-                draw_BBox   ( GetBBox(), DrawColor);  
+                render::debug::Volume ( GetBBox(), xcolor(DrawColor.R, DrawColor.G,DrawColor.B, 50));
+                render::debug::Box   ( GetBBox(), DrawColor);  
             }
             break;
 
         case SPATIAL_TYPE_SPHERICAL:         
-            draw_Sphere( object::GetPosition(), m_Dimensions[0], DrawColor );
+            render::debug::Sphere( object::GetPosition(), m_Dimensions[0], DrawColor );
             break;
 
         default:
@@ -2950,9 +2951,9 @@ void trigger_ex_object::ForceStartTrigger( void )
 
 //=============================================================================
 
-void trigger_ex_object::OnAdvanceLogic( f32 DeltaTime )
+void trigger_ex_object::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "trigger_ex_object::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "trigger_ex_object::OnAdvanceSimulation" );
 
     (void)DeltaTime;
     g_TriggerAdvLogicCount++;
@@ -3103,14 +3104,6 @@ xbool trigger_ex_object::ExecuteIndividualAction ( actions_ex_base* pAction, s32
 
     if ( pAction->IsKindOf( trigger_meta_base::GetRTTI() ) )
     {
-#ifdef TARGET_PS2
-        if ( pAction->IsKindOf( trigger_meta_breakpoint::GetRTTI() ) )
-        {
-            //this is a breakpoint, don't stop on the PS2
-            return TRUE;
-        }
-#endif
-
         if ( pAction->IsKindOf( trigger_meta_label::GetRTTI() ) )
         {
             //this is a label, this should not stop the advance

@@ -6,10 +6,10 @@
 // INCLUDES
 //=========================================================================
 #include "ProjectileBullett.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "gamelib\StatsMgr.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "objects\Player.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Objects/Player/Player.hpp"
 
 //=========================================================================
 // OBJECT DESC.
@@ -64,9 +64,9 @@ bullet_projectile::~bullet_projectile()
 
 //=============================================================================================
 
-void bullet_projectile::OnAdvanceLogic( f32 DeltaTime )
+void bullet_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "bullet_projectile::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "bullet_projectile::OnAdvanceSimulation" );
     LOG_STAT( k_stats_Projectiles);
     
 	//update collisions

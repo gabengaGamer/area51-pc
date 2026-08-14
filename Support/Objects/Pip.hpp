@@ -5,12 +5,14 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Objects\Render\SkinInst.hpp"
-#include "Animation\AnimData.hpp"
-#include "Animation\AnimPlayer.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Render/SkinInst.hpp"
+#include "Animation/AnimData.hpp"
+#include "Animation/AnimPlayer.hpp"
 
 #include "GameLib/RenderContext.hpp"
+
+struct shader_resource;
 
 //=========================================================================
 // CLASS
@@ -60,14 +62,14 @@ public:
     struct texture_ref
     {
         // Data
-        texture::handle     m_hTexture ;    // Handle of texture to override
-        s32                 m_VramID ;      // Original vram ID
+        texture::handle        m_hTexture ;    // Handle of texture to override
+        const shader_resource* m_pOriginalResourceOverride;
 
         // Constructor
         texture_ref()
         {
             //m_hTexture = HNULL ;
-            m_VramID   = -1 ;
+            m_pOriginalResourceOverride = NULL;
         }
     } ;
 
@@ -95,7 +97,7 @@ protected:
     virtual void            OnInit              ( void );     
     virtual void            OnKill              ( void );     
     virtual void            OnRender            ( void );
-    virtual void            OnAdvanceLogic      ( f32 DeltaTime ) ;
+    virtual void            OnAdvanceSimulation      ( f32 DeltaTime ) ;
     virtual void            OnActivate          ( xbool bFlag ) ;    
     
 //=====================================================================
@@ -116,6 +118,7 @@ private:
 public:
             type            GetType             ( void ) const { return m_Type ;  }
             state           GetState            ( void ) const { return m_State ; }
+            guid            GetCameraGuid       ( void ) const { return m_CameraGuid; }
             s32             GetWidth            ( void ) const { return m_Width; }
             s32             GetHeight           ( void ) const { return m_Height; }
 
@@ -134,8 +137,7 @@ protected:
     skin_inst               m_RenderInst ;      // Render instance
     simple_anim_player      m_AnimPlayer ;      // Animation player
 
-    // Texture         
-    s32                     m_PipVramID ;       // VRAM ID of pip texture
+    // Texture
     s32                     m_Width, m_Height ; // Size of texture
 
     // Camera
@@ -151,10 +153,7 @@ protected:
     guid                    m_WorldObjectGuids[MAX_WORLD_OBJECTS];  // Guid of objects to control
     texture_ref             m_TextureRefs[MAX_TEXTURE_REFS] ;       // List of texture refs
     s32                     m_nTextureRefs ;                        // # of texture refs
-	
-#if defined(TARGET_PC)
-    pip_render_target_pc    m_RenderTarget;
-#endif	
+    pip_render_target       m_RenderTarget;
 };
 
 //=========================================================================

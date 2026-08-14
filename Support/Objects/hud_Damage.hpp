@@ -13,9 +13,9 @@
 // INCLUDES
 //==============================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "x_bitmap.hpp"
-#include "Objects\Player.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
+#include "Objects/Player/Player.hpp"
 
 #include "hud_Renderable.hpp"
 
@@ -36,7 +36,7 @@ public:
     virtual        ~hud_damage      ( void ) {};
 
     virtual void    OnRender        ( player*       pPlayer );
-    virtual void    OnAdvanceLogic  ( player*       pPlayer, f32 DeltaTime );
+    virtual void    OnAdvanceSimulation  ( player*       pPlayer, f32 DeltaTime );
     virtual xbool   OnProperty      ( prop_query&   rPropQuery );
     virtual void    OnEnumProp      ( prop_enum&    List );
 
@@ -46,7 +46,7 @@ public:
 //------------------------------------------------------------------------------
 // Public Storage
 public:
-    static rhandle<xbitmap>            m_DamageBitmap;
+    static rhandle<texture>            m_DamageBitmap;
     static f32                         m_DamageTimeTillFade;
 
 
@@ -71,3 +71,5 @@ public:
 };
 
 #endif
+
+

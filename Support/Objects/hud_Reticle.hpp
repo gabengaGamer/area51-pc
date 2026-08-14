@@ -13,9 +13,9 @@
 // INCLUDES
 //==============================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "x_bitmap.hpp"
-#include "Objects\Player.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Render/Texture.hpp"
 
 #include "hud_Renderable.hpp"
 
@@ -30,12 +30,19 @@ public:
     virtual        ~hud_reticle     ( void ) {};
 
     virtual void    OnRender        ( player*       pPlayer );
-    virtual void    OnAdvanceLogic  ( player*       pPlayer, f32 DeltaTime );
+    virtual void    OnAdvanceSimulation( player* pPlayer, f32 DeltaTime );
     virtual xbool   OnProperty      ( prop_query&   rPropQuery );
     virtual void    OnEnumProp      ( prop_enum&    List );
 
-    guid    m_LastTarget;
-    f32     m_LockonTime;
+private:
+    guid                    m_WeaponGuid;
+    f32                     m_AimDegradation;
+    xbool                   m_ShouldRender;
+    xbool                   m_IsZoomed;
+    xbool                   m_UsesMutationReticle;
+    xbool                   m_UsesCardinalEdges;
+    xbool                   m_HasLiveEnemyTarget;
+    rhandle<texture>        m_MutationReticle;
 
 };
 

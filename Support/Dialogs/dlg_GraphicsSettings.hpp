@@ -11,15 +11,19 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui/ui_dialog.hpp"
-#include "ui/ui_frame.hpp"
-#include "ui/ui_text.hpp"
-#include "ui/ui_combo.hpp"
-#include "ui/ui_slider.hpp"
-#include "ui/ui_check.hpp"
-#include "ui/ui_button.hpp"
+#include "UI/ui_dialog.hpp"
+#include "StateMgr/GlobalSettings.hpp"
 
-#include "dlg_PopUp.hpp"
+//==============================================================================
+//  FORWARD DECLARATIONS
+//==============================================================================
+
+class ui_button;
+class dlg_popup;
+class ui_check;
+class ui_combo;
+class ui_slider;
+class ui_text;
 
 //==============================================================================
 //  dlg_graphics_settings
@@ -31,45 +35,53 @@ extern ui_win*  dlg_graphics_settings_factory   ( s32 UserID, ui_manager* pManag
 class dlg_graphics_settings : public ui_dialog
 {
 public:
-                        dlg_graphics_settings     ( void );
-    virtual            ~dlg_graphics_settings     ( void );
+                        dlg_graphics_settings ( void );
+    virtual            ~dlg_graphics_settings ( void );
 
-    xbool               Create                  ( s32                       UserID,
-                                                  ui_manager*               pManager,
-                                                  ui_manager::dialog_tem*   pDialogTem,
-                                                  const irect&              Position,
-                                                  ui_win*                   pParent,
-                                                  s32                       Flags,
-                                                  void*                     pUserData );
-    virtual void        Destroy                 ( void );
+    xbool               Create                ( s32                       UserID,
+                                                ui_manager*               pManager,
+                                                ui_manager::dialog_tem*   pDialogTem,
+                                                const irect&              Position,
+                                                ui_win*                   pParent,
+                                                s32                       Flags,
+                                                void*                     pUserData );
+    virtual void        Destroy               ( void );
 
-    virtual void        Render                  ( s32 ox=0, s32 oy=0 );
+    virtual void        Render                ( s32 ox=0, s32 oy=0 );
+    virtual void        OnAccept              ( ui_win* pWin );
+    virtual void        OnCancel              ( ui_win* pWin );
+    virtual void        OnDelete              ( ui_win* pWin );
+    virtual void        OnUpdate              ( ui_win* pWin, f32 DeltaTime );
 
-    virtual void        OnNotify                ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData );
-    virtual void        OnPadSelect             ( ui_win* pWin );
-    virtual void        OnPadBack               ( ui_win* pWin );
-    virtual void        OnPadDelete             ( ui_win* pWin );
-    virtual void        OnUpdate                ( ui_win* pWin, f32 DeltaTime );
-
-    void                EnableBlackout          ( void )                    { m_bRenderBlackout = TRUE; }
+    void                EnableBlackout        ( void ) { m_bRenderBlackout = TRUE; }
 
 protected:
-    ui_combo*           m_pResolution;
-    ui_combo*           m_pDisplayMode;
-    ui_slider*          m_pGamma;
-    ui_slider*          m_pFov;
-    ui_check*           m_pVSync;
+    void                ApplySettings      ( global_settings& Settings );
+    void                BeginSave          ( void );
+    void                OpenSavePopup      ( void );
+    void                RestoreSettings    ( void );
+    void                OnSaveSettingsCB   ( void );
+
+    ui_slider*          m_pFieldOfView;
+    ui_check*           m_pDynamicShadows;
+    ui_combo*           m_pShadowFilter;
+    ui_slider*          m_pFilmGrain;
+    ui_check*           m_pBackgroundBlur;
+    ui_combo*           m_pAntiAliasing;
     ui_button*          m_pButtonApply;
 
-    ui_text*            m_pResolutionText;
-    ui_text*            m_pDisplayModeText;
-    ui_text*            m_pGammaText;
-    ui_text*            m_pFovText;
-    ui_text*            m_pVSyncText;
-    ui_text*            m_pNavText;
+    ui_text*            m_pFieldOfViewText;
+    ui_text*            m_pDynamicShadowsText;
+    ui_text*            m_pShadowFilterText;
+    ui_text*            m_pFilmGrainText;
+    ui_text*            m_pBackgroundBlurText;
+    ui_text*            m_pAntiAliasingText;
 
     s32                 m_CurrHL;
     xbool               m_bRenderBlackout;
+    global_settings     m_OriginalSettings;
+    dlg_popup*          m_PopUp;
+    s32                 m_PopUpResult;
 };
 
 //==============================================================================

@@ -8,7 +8,7 @@
 // INCLUDES
 //=========================================================================
 
-#include "animdata.hpp"
+#include "AnimData.hpp"
 #include "x_bytestream.hpp"
 
 xbytestream* anim_event::m_pEventByteStream;

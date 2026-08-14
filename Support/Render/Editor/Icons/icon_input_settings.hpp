@@ -176,5 +176,4 @@ static s16 s_iicon_input_settings[] =
 };
 
 
-#define DRAW_ICON_INPUT_SETTINGS() draw_icon( NUM_FACETS_ICON_INPUT_SETTINGS, NUM_VERTICES_ICON_INPUT_SETTINGS, s_vicon_input_settings, s_iicon_input_settings )
 

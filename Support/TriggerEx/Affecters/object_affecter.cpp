@@ -9,11 +9,11 @@
 //=========================================================================
 
 #include "object_affecter.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "..\Support\Globals\Global_Variables_Manager.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "..\TriggerEx_Object.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Support/Globals/Global_Variables_Manager.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "../TriggerEx_Object.hpp"
 
 
 big_string object_affecter::m_Description;

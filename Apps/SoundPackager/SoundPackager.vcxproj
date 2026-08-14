@@ -21,11 +21,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -107,7 +107,7 @@
   <ItemGroup>
     <ClInclude Include="aiff_file.hpp" />
     <ClInclude Include="audio_file.hpp" />
-    <ClInclude Include="audio_private_pkg.hpp" />
+    <ClInclude Include="packages/audio_package_format.hpp" />
     <ClInclude Include="Compress.hpp" />
     <ClInclude Include="DspTool.hpp" />
     <ClInclude Include="ENCVAG.H" />

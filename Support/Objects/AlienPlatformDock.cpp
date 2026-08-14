@@ -1,11 +1,12 @@
 
+#include "Render/PrimitiveDebug.hpp"
 #include "AlienPlatformDock.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "Objects\Player.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "Objects/Player/Player.hpp"
 
 
 //=============================================================================
@@ -236,9 +237,9 @@ xbool alien_platform_dock::OnProperty      ( prop_query&   I    )
 
 //=============================================================================
 
-void alien_platform_dock::OnAdvanceLogic  ( f32 DeltaTime )
+void alien_platform_dock::OnAdvanceSimulation  ( f32 DeltaTime )
 {
-    anim_surface::OnAdvanceLogic( DeltaTime );
+    anim_surface::OnAdvanceSimulation( DeltaTime );
 /*
     xbool m_bPlayerWasOn = m_bPlayerOn;
 
@@ -353,21 +354,21 @@ void alien_platform_dock::OnRender( void )
     {
         if (m_bPlayerOn)
         {
-            bbox Box = GetBBox();
+        bbox Box = GetBBox();
             Box.Inflate( 50,50,50 );
 
-            draw_BBox( Box, XCOLOR_YELLOW );
+            render::debug::Box( Box, XCOLOR_YELLOW );
         }
         if (m_bHighlighted)
         {
-            bbox Box = GetBBox();
+        bbox Box = GetBBox();
             Box.Inflate( 50,50,50 );
 
-            draw_BBox( Box, XCOLOR_RED );
+            render::debug::Box( Box, XCOLOR_RED );
         }
 
-        sphere Sphere(GetBBox());
-        draw_Sphere( Sphere.Pos, Sphere.R, XCOLOR_RED );
+        sphere Sphere( GetBBox() );
+        render::debug::Sphere( Sphere.Pos, Sphere.R, XCOLOR_RED );
     }
 
 }

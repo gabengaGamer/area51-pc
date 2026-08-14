@@ -12,8 +12,8 @@
 // INCLUDES
 //=========================================================================
  
-#include "..\Support\Trigger\Trigger_Actions.hpp"
-#include "..\Support\Objects\Door.hpp"
+#include "../Support/Trigger/Trigger_Actions.hpp"
+#include "../Support/Objects/Door.hpp"
 
 //=========================================================================
 // MOVE_OBJECT

@@ -4,24 +4,24 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_textbox.hpp"
-#include "ui\ui_edit.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_textbox.hpp"
+#include "UI/ui_edit.hpp"
 
 #include "dlg_OnlineHostOptions.hpp"
-#include "dlg_popup.hpp"
+#include "dlg_PopUp.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 #include "Configuration/GameConfig.hpp"
 
 //=========================================================================
@@ -45,7 +45,6 @@ enum controls
     IDC_ONLINE_HOST_FFIRE_SELECTOR,
     IDC_ONLINE_HOST_CONTINUE,
 
-    IDC_ONLINE_HOST_NAV_TEXT,
 };
 
 //-------------------------------------------------------------------------
@@ -53,23 +52,22 @@ enum controls
 ui_manager::control_tem OnlineHostOptionsControls[] = 
 {
     // Frames.
-    { IDC_ONLINE_HOST_NUM_PLAYERS,          "IDS_HOST_NUM_PLAYERS",     "text",    40,  40, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_SCORE,                "IDS_HOST_SCORE",           "text",    40,  75, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_TIME_LIMIT,           "IDS_HOST_TIME_LIMIT",      "text",    40, 110, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_VOTE,                 "IDS_HOST_VOTE_PASS",       "text",    40, 145, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_MAP_SCALING,          "IDS_HOST_MAP_SCALING",     "text",    40, 180, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_FFIRE,                "IDS_HOST_FRIENDLY_FIRE",   "text",    40, 215, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_ONLINE_HOST_NUM_PLAYERS,          "IDS_HOST_NUM_PLAYERS",     "text",    40,  40, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_SCORE,                "IDS_HOST_SCORE",           "text",    40,  75, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_TIME_LIMIT,           "IDS_HOST_TIME_LIMIT",      "text",    40, 110, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_VOTE,                 "IDS_HOST_VOTE_PASS",       "text",    40, 145, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_MAP_SCALING,          "IDS_HOST_MAP_SCALING",     "text",    40, 180, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_FFIRE,                "IDS_HOST_FRIENDLY_FIRE",   "text",    40, 215, 220, 40,  0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_ONLINE_HOST_PLAYER_SELECTOR,      "IDS_NULL",                 "combo",  300,  40, 150, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_SCORE_SELECTOR,       "IDS_NULL",                 "combo",  300,  75, 150, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_TIME_SELECTOR,        "IDS_NULL",                 "combo",  300, 110, 150, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_VOTE_SELECTOR,        "IDS_NULL",                 "combo",  300, 145, 150, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_SCALING_SELECTOR,     "IDS_NULL",                 "combo",  300, 180, 150, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_HOST_FFIRE_SELECTOR,       "IDS_NULL",                 "combo",  300, 215, 150, 40,  0, 5, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_ONLINE_HOST_PLAYER_SELECTOR,      "IDS_NULL",                 "combo",  300,  40, 150, 40,  0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_SCORE_SELECTOR,       "IDS_NULL",                 "combo",  300,  75, 150, 40,  0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_TIME_SELECTOR,        "IDS_NULL",                 "combo",  300, 110, 150, 40,  0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_VOTE_SELECTOR,        "IDS_NULL",                 "combo",  300, 145, 150, 40,  0, 3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_SCALING_SELECTOR,     "IDS_NULL",                 "combo",  300, 180, 150, 40,  0, 4, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_HOST_FFIRE_SELECTOR,       "IDS_NULL",                 "combo",  300, 215, 150, 40,  0, 5, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_ONLINE_HOST_CONTINUE,             "IDS_HOST_CONTINUE",        "button",  40, 285, 220, 40,  0, 6, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_ONLINE_HOST_CONTINUE,             "IDS_HOST_CONTINUE",        "button",  40, 285, 220, 40,  0, 6, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_ONLINE_HOST_NAV_TEXT,             "IDS_NULL",                 "text",     0,   0,   0,  0,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -159,7 +157,6 @@ xbool dlg_online_host_options::Create( s32                        UserID,
     m_pVoteText         = (ui_text*)FindChildByID( IDC_ONLINE_HOST_VOTE        );
     m_pMapScalingText   = (ui_text*)FindChildByID( IDC_ONLINE_HOST_MAP_SCALING );
     m_pFriendlyFireText = (ui_text*)FindChildByID( IDC_ONLINE_HOST_FFIRE       );
-    m_pNavText          = (ui_text*)FindChildByID( IDC_ONLINE_HOST_NAV_TEXT    );
 
     m_pNumPlayerSelect  = (ui_combo*)FindChildByID( IDC_ONLINE_HOST_PLAYER_SELECTOR  );
     m_pScoreSelect      = (ui_combo*)FindChildByID( IDC_ONLINE_HOST_SCORE_SELECTOR   );
@@ -181,11 +178,7 @@ xbool dlg_online_host_options::Create( s32                        UserID,
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);    
-
+    SetNavText( navText );
     // set up num player selector 
     m_pNumPlayerSelect->SetNavFlags( ui_combo::CB_CHANGE_ON_NAV | ui_combo::CB_CHANGE_ON_SELECT );
     s32 i;
@@ -369,7 +362,7 @@ xbool dlg_online_host_options::Create( s32                        UserID,
 
     // set initial highlight/control
     m_CurrHL = 5;
-    m_pContinueButton->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pContinueButton->SetActive( TRUE );
     GotoControl( (ui_control*)m_pContinueButton );
 
     // initialize num players
@@ -496,14 +489,7 @@ void dlg_online_host_options::Render( s32 ox, s32 oy )
     
     if( m_bRenderBlackout )
     {
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-        // Nasty hack to force PS2 to draw to rb.l = 0
-        rb.Set( -1, 0, XRes, YRes );
-#else
-        rb.Set( 0, 0, XRes, YRes );
-#endif
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
             xcolor(0,0,0,180),
             xcolor(0,0,0,180),
@@ -556,14 +542,14 @@ void dlg_online_host_options::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_online_host_options::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_online_host_options::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 }
 
 //=========================================================================
 
-void dlg_online_host_options::OnPadBack( ui_win* pWin )
+void dlg_online_host_options::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -576,7 +562,7 @@ void dlg_online_host_options::OnPadBack( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_online_host_options::OnPadSelect( ui_win* pWin )
+void dlg_online_host_options::OnAccept( ui_win* pWin )
 {
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
@@ -637,7 +623,6 @@ void dlg_online_host_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pVoteText         ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pMapScalingText   ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pFriendlyFireText ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText          ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 
             m_pNumPlayerSelect  ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pScoreSelect      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
@@ -648,7 +633,6 @@ void dlg_online_host_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pContinueButton   ->SetFlag(ui_win::WF_VISIBLE, TRUE);
     
             GotoControl( (ui_control*)m_pContinueButton );
-            m_pContinueButton->SetFlag(ui_win::WF_HIGHLIGHT, TRUE);
             g_UiMgr->SetScreenHighlight( m_pContinueButton->GetPosition() );
         }
     }
@@ -657,7 +641,7 @@ void dlg_online_host_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
     // update labels  
-    if( m_pNumPlayerSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pNumPlayerSelect->IsFocused() )
     {
         highLight = 0;
         m_pNumPlayerText->SetLabelColor( xcolor(255,252,204,255) );
@@ -666,7 +650,7 @@ void dlg_online_host_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pNumPlayerText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pScoreSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pScoreSelect->IsFocused() )
     {
         highLight = 1;
         m_pScoreText->SetLabelColor( xcolor(255,252,204,255) );
@@ -675,7 +659,7 @@ void dlg_online_host_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pScoreText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pTimeSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pTimeSelect->IsFocused() )
     {
         highLight = 2;
         m_pTimeLimitText->SetLabelColor( xcolor(255,252,204,255) );
@@ -684,7 +668,7 @@ void dlg_online_host_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pTimeLimitText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pVoteSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pVoteSelect->IsFocused() )
     {
         highLight = 3;
         m_pVoteText->SetLabelColor( xcolor(255,252,204,255) );
@@ -693,7 +677,7 @@ void dlg_online_host_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pVoteText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pMapScalingSelect->GetFlags(WF_HIGHLIGHT) )
+    if( m_pMapScalingSelect->IsFocused() )
     {
         highLight = 4;
         m_pMapScalingText->SetLabelColor( xcolor(255,252,204,255) );
@@ -704,7 +688,7 @@ void dlg_online_host_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
     if( m_pFriendlyFireText->GetFlags(WF_DISABLED) == FALSE )
     {
-        if( m_pFireSelect->GetFlags(WF_HIGHLIGHT) )
+        if( m_pFireSelect->IsFocused() )
         {
             highLight = 5;
             m_pFriendlyFireText->SetLabelColor( xcolor(255,252,204,255) );
@@ -714,7 +698,7 @@ void dlg_online_host_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pFriendlyFireText->SetLabelColor( xcolor(126,220,60,255) );
     }
 
-    if( m_pContinueButton->GetFlags(WF_HIGHLIGHT) )
+    if( m_pContinueButton->IsFocused() )
     {
         highLight = 6;
         g_UiMgr->SetScreenHighlight( m_pContinueButton->GetPosition() );
@@ -730,4 +714,3 @@ void dlg_online_host_options::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 }
 
 //=========================================================================
-

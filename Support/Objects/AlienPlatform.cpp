@@ -1,17 +1,18 @@
 
+#include "Render/PrimitiveDebug.hpp"
 #include "AlienPlatform.hpp"
 #include "AlienPlatformDock.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "..\Support\Objects\Player.hpp"
-#include "InputMgr\GamePad.hpp"
-#include "Objects\Path.hpp"
-#include "Objects\Tracker.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "../Support/Objects/Player/Player.hpp"
+#include "InputMgr/GamePad.hpp"
+#include "Objects/Path.hpp"
+#include "Objects/Tracker.hpp"
 
 //=============================================================================
 // CONSTANTS
@@ -217,9 +218,9 @@ xbool alien_platform::OnProperty      ( prop_query&   I    )
 
 //=============================================================================
 
-void alien_platform::OnAdvanceLogic  ( f32 DeltaTime )
+void alien_platform::OnAdvanceSimulation  ( f32 DeltaTime )
 {
-    anim_surface::OnAdvanceLogic( DeltaTime );
+    anim_surface::OnAdvanceSimulation( DeltaTime );
 
     switch(m_State)
     {
@@ -381,8 +382,9 @@ xbool alien_platform::IsUsePressed( void )
     if ( !pPlayer )
         return FALSE;
 
-    f32 WasVal = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( ingame_pad::ACTION_USE ).GetWasValue();
-    f32 IsVal  = g_IngamePad[ pPlayer->GetActivePlayerPad() ].GetLogical( ingame_pad::ACTION_USE ).GetIsValue();
+    PlayerActionState const& UseAction = pPlayer->GetInputState().GetAction( PlayerAction::Use );
+    f32 WasVal = UseAction.PressedValue;
+    f32 IsVal  = UseAction.Value;
     xbool WasPressed = WasVal > 0.25f;
     xbool IsPressed  = IsVal  > 0.25f;
 
@@ -435,15 +437,15 @@ void alien_platform::OnRender( void )
     {
         if (IsPlayerOn())
         {
-            bbox Box = GetBBox();
+        bbox Box = GetBBox();
             Box.Inflate( 50,50,50 );
 
-            draw_BBox( Box, XCOLOR_YELLOW );
+            render::debug::Box( Box, XCOLOR_YELLOW );
         }
 
         vector3 Dir = m_DbgEyeDir;
         Dir.NormalizeAndScale( 2000 );
-        draw_Line( m_DbgEyePos, m_DbgEyePos + Dir, XCOLOR_YELLOW );
+        render::debug::Line( m_DbgEyePos, m_DbgEyePos + Dir, XCOLOR_YELLOW );
     }
 #endif
 }

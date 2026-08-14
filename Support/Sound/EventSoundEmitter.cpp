@@ -1,23 +1,26 @@
 //==============================================================================
-// EVENT SOUND EMITTERS
+// 
+// EventSoundEmitter.cpp
+//
 //==============================================================================
 
 //==============================================================================
 // INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "EventSoundEmitter.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Animation\AnimData.hpp"
-#include "Objects\Event.hpp"
-#include "ConversationMgr\ConversationMgr.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "gamelib\StatsMgr.hpp"
-#include "Characters\Character.hpp"
-#include "Objects\Player.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Animation/AnimData.hpp"
+#include "Objects/Event.hpp"
+#include "ConversationMgr/ConversationMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "GameLib/StatsMgr.hpp"
+#include "Characters/Character.hpp"
+#include "Objects/Player/Player.hpp"
 
 #ifndef X_EDITOR
-#include "Objects\NetGhost.hpp"
+#include "Objects/NetGhost.hpp"
 #endif
 
 //=========================================================================
@@ -35,8 +38,8 @@ xbool s_EventContactDebug = FALSE;
 // OBJECT DESCRIPTION
 //=========================================================================
 
-//=========================================================================
-static struct event_sound_emitter_desc : public object_desc
+static 
+struct event_sound_emitter_desc : public object_desc
 {
     event_sound_emitter_desc( void ) : object_desc( 
         object::TYPE_EVENT_SND_EMITTER, 
@@ -69,11 +72,8 @@ const object_desc&  event_sound_emitter::GetObjectType( void )
     return s_EventSoundEmitter_Desc;
 }
 
-
 //=========================================================================
 // FUNCTIONS
-//=========================================================================
-
 //=========================================================================
 
 event_sound_emitter::event_sound_emitter( void ) 
@@ -94,11 +94,11 @@ event_sound_emitter::event_sound_emitter( void )
 
 //=========================================================================
 
-void event_sound_emitter::OnAdvanceLogic ( f32 DeltaTime )
+void event_sound_emitter::OnAdvanceSimulation ( f32 DeltaTime )
 {
     LOG_STAT(k_stats_Sound);
 	
-    CONTEXT( "event_sound_emitter::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "event_sound_emitter::OnAdvanceSimulation" );
     (void)DeltaTime;
     
     // Check if its time for the sound to start yet.
@@ -487,10 +487,10 @@ const char* event_sound_emitter::GetMaterialType( void )
 #if !defined( CONFIG_RETAIL )
     if( s_EventContactDebug )
     {
-        draw_Marker( GetPosition(), XCOLOR_BLUE );
-        draw_Marker( Start, XCOLOR_BLUE );
-        draw_Line( Start, End, XCOLOR_BLUE );
-        draw_Marker( End, XCOLOR_BLUE );
+        render::debug::Marker( GetPosition(), XCOLOR_BLUE );
+        render::debug::Marker( Start, XCOLOR_BLUE );
+        render::debug::Line( Start, End, XCOLOR_BLUE );
+        render::debug::Marker( End, XCOLOR_BLUE );
     }
 #endif // !defined( CONFIG_RETAIL )
 

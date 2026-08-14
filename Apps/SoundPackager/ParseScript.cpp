@@ -3,7 +3,7 @@
 #include "ExportPackage.hpp"
 #include "SoundPackager.hpp"
 #include "Endian.hpp"
-#include "parsing\tokenizer.hpp"
+#include "Parsing/tokenizer.hpp"
 
 char* s_MusicTypes[NUM_MUSIC_TYPES] = 
                                 {   "type:", 
@@ -17,7 +17,7 @@ char* s_DescriptorTypes[NUM_DESCRIPTOR_TYPES] =
                                 };
 char* s_TemperatureTypes[NUM_TEMPERATURES] = 
                                 {   "hot", 
-                                    "warm", 
+                                    0,
                                     "cold" 
                                 };
 char* s_ParameterTypes[NUM_PARAMETERS] = 
@@ -736,7 +736,7 @@ xbool ParseFiles( token_stream* Tokenizer )
                 {
                     for( i=0 ; i<NUM_TEMPERATURES ; i++ )
                     {
-                        if( !x_stricmp( Tokenizer->String(), s_TemperatureTypes[i] ) )
+                        if( s_TemperatureTypes[i] && !x_stricmp( Tokenizer->String(), s_TemperatureTypes[i] ) )
                             break;
                     }
                     
@@ -1554,7 +1554,6 @@ xbool ResolveReferences( void )
 }
 
 //------------------------------------------------------------------------------
-
 
 
 

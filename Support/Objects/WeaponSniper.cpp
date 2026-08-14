@@ -1,16 +1,16 @@
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "ProjectileBullett.hpp"
 #include "WeaponSniper.hpp"
 #include "e_View.hpp"
-#include "Player.hpp"
-#include "InputMgr\GamePad.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "Objects\Projector.hpp"
-#include "render\LightMgr.hpp"
-#include "Objects\ParticleEmiter.hpp"
+#include "Player/Player.hpp"
+#include "InputMgr/GamePad.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Objects/Projector.hpp"
+#include "Render/LightMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
 
 #ifndef X_EDITOR
-#include "NetworkMgr\GameMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 #endif
 
 //=========================================================================
@@ -151,12 +151,12 @@ void weapon_sniper_rifle::ResetWeapon( void )
 
 //==============================================================================
 
-void weapon_sniper_rifle::OnAdvanceLogic( f32 DeltaTime )
+void weapon_sniper_rifle::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "sniper_rifle::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "sniper_rifle::OnAdvanceSimulation" );
 
     //update the base class
-    new_weapon::OnAdvanceLogic( DeltaTime );
+    new_weapon::OnAdvanceSimulation( DeltaTime );
 
     //if the player is holding the sniper rifle, check for zoom mode
     if ( m_CurrentRenderState == RENDER_STATE_PLAYER )
@@ -220,7 +220,7 @@ void weapon_sniper_rifle::BeginZooming( void )
         
         if (PlayerObj.IsValid())
         {
-            view& rView = PlayerObj.m_pObject->GetInterpView();
+            view& rView = PlayerObj.m_pObject->GetSimulationView();
 
             m_CurrentViewX = rView.GetXFOV() - R_20;
             m_CurrentViewY = rView.GetYFOV() - R_20;
@@ -334,7 +334,7 @@ void weapon_sniper_rifle::EndState( void )
 
 xbool weapon_sniper_rifle::FireWeaponProtected( const vector3& InitPos , const vector3& InheritedVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint )
 {
-    CONTEXT( "sniper_rifle::FireWeapon" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "sniper_rifle::FireWeapon" );
 
     ( void )InitPos;
     ( void )Power;
@@ -486,7 +486,7 @@ s32 weapon_sniper_rifle::IncrementZoom( void )
 
     case 1:
     {
-        view& rView = Player.GetInterpView();
+        view& rView = Player.GetSimulationView();
 
         m_ViewClickDimension = rView.GetXFOV() / s_FirstMagnification;
         Player.ResetStickSensitivity();

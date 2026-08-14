@@ -8,7 +8,7 @@
 // INCLUDES
 //=========================================================================
 
-#include "animdata.hpp"
+#include "AnimData.hpp"
 
 //=========================================================================
 
@@ -48,6 +48,14 @@ void anim_info::GetRawKeys( s32 iFrame, anim_key* pKey ) const
 
 //=========================================================================
 
+void anim_info::GetRawKeys( s32 iFrame, anim_key* pKey, s32 iBoneMin, s32 iBoneMax ) const
+{
+    iFrame = iFrame % m_nFrames;
+    m_AnimKeys.GetRawKeys( *m_pAnimGroup, iFrame, pKey, iBoneMin, iBoneMax );
+}
+
+//=========================================================================
+
 void anim_info::GetInterpKeys( f32  Frame, anim_key* pKey ) const
 {
     Frame = x_fmod(Frame,(f32)(m_nFrames-1));
@@ -60,6 +68,14 @@ void anim_info::GetInterpKeys( f32  Frame, anim_key* pKey, s32 nBones ) const
 {
     Frame = x_fmod(Frame,(f32)(m_nFrames-1));
     m_AnimKeys.GetInterpKeys( *m_pAnimGroup, Frame, pKey, nBones );
+}
+
+//=========================================================================
+
+void anim_info::GetInterpKeys( f32 Frame, anim_key* pKey, s32 iBoneMin, s32 iBoneMax ) const
+{
+    Frame = x_fmod(Frame,(f32)(m_nFrames-1));
+    m_AnimKeys.GetInterpKeys( *m_pAnimGroup, Frame, pKey, iBoneMin, iBoneMax );
 }
 
 //=========================================================================

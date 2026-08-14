@@ -4,8 +4,8 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
-#include "..\AudioMgr\audioMgr.hpp"
+#include "Entropy.hpp"
+#include "../AudioMgr/AudioMgr.hpp"
 
 #include "ui_slider.hpp"
 #include "ui_manager.hpp"
@@ -47,7 +47,6 @@ ui_slider::ui_slider( void )
 
 ui_slider::~ui_slider( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -71,11 +70,10 @@ xbool ui_slider::Create( s32 UserID, ui_manager* pManager, const irect& Position
     m_Step  = 5;
     m_StepScaler    = 1;
     m_StepScalerMax = 1;
+    m_RepeatCount   = 0;
     m_UseSound = TRUE;
 
-#ifdef TARGET_PC
-    m_MouseDown = FALSE;
-#endif
+    m_IsDragging = FALSE;
 
     return Success;
 }
@@ -84,70 +82,23 @@ xbool ui_slider::Create( s32 UserID, ui_manager* pManager, const irect& Position
 
 void ui_slider::Render( s32 ox, s32 oy )
 {
-    s32     State = ui_manager::CS_NORMAL;
-
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
-        xcolor  TextColor1 = XCOLOR_WHITE;
-        xcolor  TextColor2 = XCOLOR_BLACK;
+        s32 const State = GetVisualState( IsActive() );
 
         // Calculate rectangle
         irect    r;
         r.Set( (m_Position.l+ox), (m_Position.t+oy), (m_Position.r+ox), (m_Position.b+oy) );
 
-        // Render appropriate state
-        if( m_Flags & WF_DISABLED )
-        {
-            State = ui_manager::CS_DISABLED;
-            TextColor1 = XCOLOR_GREY;
-            TextColor2 = xcolor(0,0,0,0);
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_HIGHLIGHT )
-        {
-            State = ui_manager::CS_HIGHLIGHT;
-            TextColor1 = XCOLOR_WHITE;
-            TextColor2 = XCOLOR_BLACK;
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_SELECTED )
-        {
-            State = ui_manager::CS_SELECTED;
-            TextColor1 = XCOLOR_WHITE;
-            TextColor2 = XCOLOR_BLACK;
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == (WF_HIGHLIGHT|WF_SELECTED) )
-        {
-            State = ui_manager::CS_HIGHLIGHT_SELECTED;
-            TextColor1 = XCOLOR_WHITE;
-            TextColor2 = XCOLOR_BLACK;
-        }
-        else
-        {
-            State = ui_manager::CS_NORMAL;
-            TextColor1 = XCOLOR_WHITE;
-            TextColor2 = XCOLOR_BLACK;
-        }
-
         // Determine Bar & Thumb positions and render
         irect r2 = r;
 
-        // Stupid hack
-        //r2.t += 1; 
-
-        //r2.t = (r.t+r.b)/2 - 2;
-        //r2.b = r2.t + 4;
         if( m_Max > m_Min )
             r.l += (r.r-r.l-5) * (m_Value-m_Min) / (m_Max-m_Min);
         r.r = r.l + 6;
         m_pManager->RenderElement( m_iElementBar,   r2, 0     );
         m_pManager->RenderElement( m_iElementThumb, r , State );
-
-#ifdef TARGET_PC
-        m_Thumb = r;
-#endif
-        // Add Highlight to list
-        if( m_Flags & WF_HIGHLIGHT )
-            m_pManager->AddHighlight( m_UserID, r );
 
         // Render children
         for( s32 i=0 ; i<m_Children.GetCount() ; i++ )
@@ -159,106 +110,65 @@ void ui_slider::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void ui_slider::OnUpdate( f32 DeltaTime )
+void ui_slider::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    (void)DeltaTime;
-}
-
-//=========================================================================
-
-void ui_slider::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
-{
-    xbool       Processed = FALSE;
-    s32         dx = 0;
-    static s32  ScaleCounter = 0;
+    s32 Direction = 0;
 
     // Determine movement required
     switch( Code )
     {
-    case ui_manager::NAV_LEFT:
+        case ui_navigation::Left:
+            Direction = -1;
+            break;
+
+        case ui_navigation::Right:
+            Direction = 1;
+            break;
+
+        default:
+            break;
+    }
+
+    if( Direction == 0 )
+    {
+        ui_win::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+        return;
+    }
+
+    if( Presses > 0 )
+    {
+        m_RepeatCount = 0;
+        m_StepScaler = 1;
+    }
+    else if( Repeats > 0 )
+    {
+        m_RepeatCount += Repeats;
+        if( m_RepeatCount >= 10 )
         {
-            // Reset Scaler on Press
-            if( Presses != 0 )
-            {
-                ScaleCounter = 0;
-                m_StepScaler = 1;
-            }
-            dx = -m_Step;
-        }
-        break;
-    case ui_manager::NAV_RIGHT:
-        {
-            // Reset Scaler on Press
-            if( Presses != 0 )
-            {
-                ScaleCounter = 0;
-                m_StepScaler = 1;
-            }
-            dx =  m_Step;
+            m_StepScaler = MIN( m_StepScaler * 10, m_StepScalerMax );
+            m_RepeatCount = 0;
         }
     }
 
-    // Check for scaling movement
-    if( Presses == 0 )
+    s32 const OldValue = m_Value;
+    SetValue( m_Value + Direction * m_Step * m_StepScaler );
+    if( m_Value == OldValue )
     {
-//        ScaleCounter++;
-        if( ScaleCounter >= 10 )
-        {
-            m_StepScaler *= 10;
-            if( m_StepScaler > m_StepScalerMax )
-                m_StepScaler = m_StepScalerMax;
-            ScaleCounter = 0;
-        }
+        g_AudioMgr.Play( "InvalidEntry" );
     }
-
-    // Apply movement
-    if( dx != 0 )
+    else if( m_UseSound )
     {
-        s32 OldValue = m_Value;
-
-        m_Value += dx * m_StepScaler;
-        if( m_Value <  m_Min )
-        {
-            m_Value = m_Min;
-            g_AudioMgr.Play( "InvalidEntry" );
-        }
-        else if( m_Value >= m_Max )
-        {
-            m_Value = m_Max;
-            g_AudioMgr.Play( "InvalidEntry" );
-        }
-        else
-        {
-            if( m_UseSound )
-                g_AudioMgr.Play( "Slider" );
-        }
-
-        if( (m_Value != OldValue) && m_pParent )
-        {
-            if( m_Max > m_Min )
-                m_ValueParametric = (f32)(m_Value - m_Min) / (f32)(m_Max-m_Min);
-
-            m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)(uaddr)m_Value );
-        }
-
-        Processed = TRUE;
-    }
-
-    // Pass up chain if not processed
-    if( !Processed )
-    {
-        if( m_pParent )
-            m_pParent->OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+        g_AudioMgr.Play( "Slider" );
     }
 }
 
 //=========================================================================
 
-void ui_slider::OnPadSelect( ui_win* pWin )
+void ui_slider::OnAccept( ui_win* pWin )
 {
     // Pass up to parent
     if( m_pParent )
-        m_pParent->OnPadSelect( pWin );
+        m_pParent->OnAccept( pWin );
 }
 
 //=========================================================================
@@ -275,8 +185,8 @@ void ui_slider::SetRange( s32 Min, s32 Max )
     }
     else
     {
-        if( m_Value <  m_Min ) m_Value = m_Min;
-        if( m_Value >= m_Max ) m_Value = m_Max;
+        if( m_Value < m_Min ) m_Value = m_Min;
+        if( m_Value > m_Max ) m_Value = m_Max;
     }
 }
 
@@ -292,9 +202,12 @@ void ui_slider::GetRange( s32& Min, s32& Max ) const
 
 void ui_slider::SetStep( s32 Step, s32 StepScalerMax )
 {
+    ASSERT( Step > 0 );
+    ASSERT( StepScalerMax > 0 );
     m_Step          = Step;
     m_StepScaler    = 1;
     m_StepScalerMax = StepScalerMax;
+    m_RepeatCount   = 0;
 }
 
 //=========================================================================
@@ -308,8 +221,8 @@ s32 ui_slider::GetStep( void ) const
 
 void ui_slider::SetValue( s32 Value )
 {
-    if( Value <  m_Min ) Value = m_Min;
-    if( Value >= m_Max ) Value = m_Max;
+    if( Value < m_Min ) Value = m_Min;
+    if( Value > m_Max ) Value = m_Max;
 
     if( Value != m_Value )
     {
@@ -318,7 +231,7 @@ void ui_slider::SetValue( s32 Value )
             m_ValueParametric = (f32)(Value - m_Min) / (m_Max-m_Min);
         else
             m_ValueParametric = 0.0f;
-        m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)(uaddr)m_Value );
+        Notify( ui_notification_type::SliderChanged, static_cast<s32>( m_Value  ) );
     }
 }
 
@@ -331,125 +244,73 @@ s32 ui_slider::GetValue( void ) const
 
 //=========================================================================
 
-void ui_slider::OnLBDown( ui_win* pWin )
+void ui_slider::OnPointerDown( ui_win* pWin, s32 x, s32 y )
 {
     (void)pWin;
-
-#ifdef TARGET_PC
-    // Allow dragging when clicking anywhere on the slider bar.
-    s32 x, y;
-    m_pManager->GetMousePos( m_UserID, x, y );
-    ScreenToLocal( x, y );
-
-    m_MouseX = x;
-    m_MouseY = y;
-    m_MouseDown = TRUE;
-
-    s32 OldValue = m_Value;
-
-    f32 Value = (f32)x / (f32)m_Position.GetWidth();
-    Value *= (f32)m_Max;
-    m_Value = (s32)Value;
-
-    if( Value > (f32)m_Value )
-        m_Value += 1;
-
-    if( m_Value <  m_Min ) m_Value = m_Min;
-    if( m_Value >= m_Max ) m_Value = m_Max;
-
-    if( (m_Value != OldValue) && m_pParent )
-    {
-        if( m_Max > m_Min )
-            m_ValueParametric = (f32)(m_Value - m_Min) / (f32)(m_Max - m_Min);
-
-        m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)(uaddr)m_Value );
-    }
-#endif
-}
-
-//=========================================================================
-
-void ui_slider::OnMouseMove( ui_win* pWin, s32 x, s32 y )
-{
-    (void) pWin;
-    (void)x;
     (void)y;
 
-#ifdef TARGET_PC
-
-    // We are still dragging the thumb.
-    if( m_MouseDown )
-    {
-        s32 OldValue = m_Value;
-
-        ScreenToLocal( x, y );
-
-        // Get the ratio to multily by.
-        f32 Value = (f32)x/(f32)m_Position.GetWidth();
-        Value *= (f32)m_Max;
-        m_Value = (s32)Value;
-        
-        // Try to minimize the loss from float to int conversion.
-        if( Value > (f32)m_Value )
-            m_Value += 1;
-        
-        // Is it in bound.
-        if( m_Value <  m_Min ) m_Value = m_Min;
-        if( m_Value >= m_Max ) m_Value = m_Max;
-
-        if( (m_Value != OldValue) && m_pParent )
-        {
-            if( m_Max > m_Min )
-                m_ValueParametric = (f32)(m_Value - m_Min) / (f32)(m_Max - m_Min);
-
-            m_pParent->OnNotify( m_pParent, this, WN_SLIDER_CHANGE, (void*)(uaddr)m_Value );
-//            audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-        }
-    }
-    
-    // The current mouse position.
-    m_MouseX = x;
-    m_MouseY = y;
-#endif
+    // Allow dragging when clicking anywhere on the slider bar.
+    m_IsDragging = TRUE;
+    m_pManager->SetCapture( m_UserID, this );
+    SetValueFromPointer( x );
 }
 
 //=========================================================================
 
-void ui_slider::OnLBUp( ui_win* pWin )
+void ui_slider::OnPointerMove( ui_win* pWin, s32 x, s32 y )
+{
+    (void) pWin;
+    (void)y;
+
+    // We are still dragging the thumb.
+    if( m_IsDragging )
+    {
+        SetValueFromPointer( x );
+    }
+}
+
+//=========================================================================
+
+void ui_slider::OnPointerUp( ui_win* pWin, s32 x, s32 y )
 {
     (void)pWin;
+    (void)y;
 
-#ifdef TARGET_PC
     // Stop dragging the thumb.
-    if( m_MouseDown )
-        m_MouseDown = FALSE;
-    
-    if( m_pParent )
-        m_pParent->OnLBUp( pWin );
-#endif
-
+    if( m_IsDragging )
+    {
+        SetValueFromPointer( x );
+        m_IsDragging = FALSE;
+        m_pManager->ReleaseCapture( m_UserID );
+    }
 }
 
 //=========================================================================
 
 void ui_slider::OnFocusLost ( ui_win* pWin )
 {
-    (void)pWin;
-
-#ifdef TARGET_PC
-
     // Stop dragging the thumb.
-    if( m_MouseDown )
-        m_MouseDown = FALSE;
-
-#endif
+    if( m_IsDragging )
+    {
+        m_IsDragging = FALSE;
+        m_pManager->ReleaseCapture( m_UserID );
+    }
     // Turn off the highlight.
     ui_win::OnFocusLost( pWin );
+}
 
-    if( m_pParent )
-    {
-        m_pParent->OnFocusLost( pWin );
-    }
+//=========================================================================
+
+void ui_slider::SetValueFromPointer( s32 x )
+{
+    s32 y = 0;
+    ScreenToLocal( x, y );
+
+    s32 const TrackWidth = MAX( 1, m_Position.GetWidth() - 5 );
+    s32 const LocalX = x_clamp( x, 0, TrackWidth );
+    s32 const Range = m_Max - m_Min;
+    s32 const Value = m_Min + ((LocalX * Range + TrackWidth / 2) / TrackWidth);
+    SetValue( Value );
 }
 
 //=========================================================================

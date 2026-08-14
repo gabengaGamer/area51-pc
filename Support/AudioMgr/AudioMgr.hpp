@@ -5,7 +5,7 @@
 // INCLUDE
 //==============================================================================
 #include "Entropy.hpp"
-#include "Characters\AlertPackage.hpp"
+#include "Characters/AlertPackage.hpp"
 
 //==============================================================================
 // DEFINES

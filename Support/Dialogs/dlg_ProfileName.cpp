@@ -4,23 +4,23 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_listbox.hpp"
-#include "ui\ui_dlg_vkeyboard.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_listbox.hpp"
+#include "UI/ui_dlg_vkeyboard.hpp"
 
 #include "dlg_PopUp.hpp"
 #include "dlg_ProfileName.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Parsing/textin.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Parsing/TextIn.hpp"
 
 
 
@@ -28,24 +28,12 @@
 //  Main Menu Dialog
 //=========================================================================
 
-enum controls
-{
-    IDC_PROFILE_NAME_NAV_TEXT,
-};
-
-
-ui_manager::control_tem ProfileNameControls[] = 
-{
-    // Frames.
-    { IDC_PROFILE_NAME_NAV_TEXT,    "IDS_NULL",    "text",   0,  0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-};
-
 ui_manager::dialog_tem ProfileNameDialog =
 {
     "IDS_PROFILE_NAME",
     1, 9,
-    sizeof(ProfileNameControls)/sizeof(ui_manager::control_tem),
-    &ProfileNameControls[0],
+    0,
+    NULL,
     0
 };
 
@@ -117,15 +105,11 @@ xbool dlg_profile_name::Create( s32                        UserID,
 	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // initialize nav text
-    m_pNavText = (ui_text*)FindChildByID( IDC_PROFILE_NAME_NAV_TEXT );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
 
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
   
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     
     // get profile data
@@ -170,14 +154,7 @@ void dlg_profile_name::Render( s32 ox, s32 oy )
     // render background filter
     if( m_bRenderBlackout )
     {
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-        // Nasty hack to force PS2 to draw to rb.l = 0
-        rb.Set( -1, 0, XRes, YRes );
-#else
-        rb.Set( 0, 0, XRes, YRes );
-#endif
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
             xcolor(0,0,0,180),
             xcolor(0,0,0,180),
@@ -230,14 +207,14 @@ void dlg_profile_name::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_profile_name::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_profile_name::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 }
 
 //=========================================================================
 
-void dlg_profile_name::OnPadSelect( ui_win* pWin )
+void dlg_profile_name::OnAccept( ui_win* pWin )
 {
     (void)pWin;
        
@@ -245,7 +222,7 @@ void dlg_profile_name::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_profile_name::OnPadBack( ui_win* pWin )
+void dlg_profile_name::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -269,10 +246,9 @@ void dlg_profile_name::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         if( UpdateScreenScaling( DeltaTime ) == FALSE )
         {
             // turn on the nav text
-            m_pNavText->SetFlag( ui_win::WF_VISIBLE, TRUE );
 
             // open a VK to enter the profile name
-            m_pVKeyboard = (ui_dlg_vkeyboard*)m_pManager->OpenDialog( m_UserID, "ui_vkeyboard", m_Position, this, ui_win::WF_VISIBLE|ui_win::WF_USE_ABSOLUTE );
+            m_pVKeyboard = (ui_dlg_vkeyboard*)m_pManager->OpenDialog( m_UserID, "ui_vkeyboard", m_Position, this, ui_win::WF_VISIBLE );
             m_pVKeyboard->Configure( TRUE );
             m_pVKeyboard->SetLabel( g_StringTableMgr( "ui", "IDS_PROFILE_NAME_EDIT" ) );
             m_pVKeyboard->ConnectString( &m_ProfileName, SM_PROFILE_NAME_LENGTH );
@@ -282,15 +258,12 @@ void dlg_profile_name::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
             navText += g_StringTableMgr( "ui", "IDS_NAV_DELETE" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
 
             // set the highlight
             g_UiMgr->SetScreenHighlight( m_pVKeyboard->GetPosition() );
         }
     }
-
-    if( m_pVKeyboard )
-        m_pVKeyboard->OnUpdate(pWin, DeltaTime);
 
     // update the glow bar
     g_UiMgr->UpdateGlowBar(DeltaTime);

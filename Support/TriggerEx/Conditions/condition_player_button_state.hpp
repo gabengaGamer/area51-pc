@@ -13,9 +13,9 @@
 //=========================================================================
 
 #include "x_types.hpp"
-#include "Auxiliary\MiscUtils\PropertyEnum.hpp"
-#include "..\TriggerEx_Conditionals.hpp"
-#include "InputMgr\GamePad.hpp"
+#include "Auxiliary/MiscUtils/PropertyEnum.hpp"
+#include "../TriggerEx_Conditionals.hpp"
+#include "InputMgr/GamePad.hpp"
 
 //=========================================================================
 // Check Property

@@ -7,19 +7,18 @@
 //=========================================================================
 // INCLUDES
 //=========================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "TeamProp.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "x_context.hpp"
-#include "NetworkMgr\NetObjMgr.hpp"
-#include "Player.hpp"
-#include "Render\LightMgr.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "x_profile.hpp"
+#include "NetworkMgr/NetObjMgr.hpp"
+#include "Player/Player.hpp"
+#include "Render/LightMgr.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
 
 #ifndef X_EDITOR
-#include "GameLib\RenderContext.hpp"
+#include "GameLib/RenderContext.hpp"
 #endif
-
-//=========================================================================
 
 //=========================================================================
 // OBJECT DESCRIPTION
@@ -126,7 +125,7 @@ void team_prop::OnInit( void )
 
 void team_prop::OnRender( void )
 {
-    CONTEXT( "team_prop::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "team_prop::OnRender" );
 
 #ifndef X_EDITOR
     if( m_Circuit.GetCircuit() == 15 )
@@ -215,16 +214,16 @@ void team_prop::OnRender( void )
     else
     {
 #ifdef X_EDITOR
-        draw_BBox( GetBBox() );
+        render::debug::Box( GetBBox() );
 #endif // X_EDITOR
     }
 }
 
 //=========================================================================
 
-void team_prop::OnAdvanceLogic ( f32 DeltaTime )
+void team_prop::OnAdvanceSimulation ( f32 DeltaTime )
 {
-    CONTEXT( "team_prop::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "team_prop::OnAdvanceSimulation" );
 
     u32 TeamBits = m_Circuit.GetTeamBits();
     
@@ -286,5 +285,3 @@ s32 team_prop::OnValidateProperties( xstring& ErrorMsg )
     return nErrors;
 }
 #endif
-
-//=============================================================================

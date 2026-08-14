@@ -223,10 +223,6 @@ virtual void*   PreLoad         ( X_FILE*& Fp, const char* pFileName );
 protected:
                 rsc_loader      ( const char* pType, const char* pExt );
 
-#ifdef TARGET_XBOX
-    char* m_pFileName;
-#endif
-
 //------------------------------------------------------------------------------
 //  Private Data
 //------------------------------------------------------------------------------

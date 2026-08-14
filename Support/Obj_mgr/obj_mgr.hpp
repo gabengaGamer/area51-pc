@@ -11,19 +11,19 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Objects\Object.hpp"
-#include "PainMgr\Pain.hpp"
-#include "TweakMgr\TweakMgr.hpp"
-#include "Animation\CharAnimPlayer.hpp"
-#include "Objects\ProxyPlaySurface.hpp"
-#include "miscutils\Guid.hpp"
+#include "Objects/object.hpp"
+#include "PainMgr/Pain.hpp"
+#include "TweakMgr/TweakMgr.hpp"
+#include "Animation/CharAnimPlayer.hpp"
+#include "Objects/ProxyPlaySurface.hpp"
+#include "MiscUtils/Guid.hpp"
 #include "x_time.hpp"
 #include "x_stdio.hpp"
 #include "x_array.hpp"
 #include "x_string.hpp"
-#include "SpatialDBase\SpatialDBase.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "Render\Editor\editor_icons.hpp"
+#include "SpatialDBase/SpatialDBase.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Render/Editor/EditorIcons.hpp"
 
 //==============================================================================
 //  FLAGS
@@ -92,6 +92,7 @@ public:
 #endif
         xtick           GetGameTime             ( void ) const;
         f32             GetGameDeltaTime        ( xtick LastTime ) const;
+        f64             GetSimulationTimeSeconds( void ) const;
 
         void            Render                  ( xbool DoPortalWalk, const view& PortalView, u8 StartZone );
 
@@ -114,7 +115,7 @@ public:
 
         void            SetProxyPlaySurface     ( object* pObject );
 
-        void            AdvanceAllLogic         ( f32 DeltaTime );
+        void            AdvanceSimulation       ( f32 DeltaTime );
 
         object::type    GetTypeFromName         ( const char* pName );
         const char*     GetNameFromType         ( object::type Type );
@@ -310,6 +311,7 @@ protected:
         object*         m_pAdvanceLogicActiveObject;                    // This is the current object that we are advancing the logic for
         object*         m_pProxyPlaySurface;                            // This is a proxy playsurface for doing collisions, etc.
         xtick           m_GameTime;
+        f64             m_SimulationTimeSeconds;
         xarray<slot_id> m_DeleteObject;
         f32             m_TimeDilation;
         bbox            m_SafeBBox;
@@ -425,7 +427,7 @@ protected:
     virtual object*   Create            ( void          ) = 0;
 
     virtual xbool     OnBeginRender     ( void );
-    virtual void      OnEndRender       ( void ) { CONTEXT( "object_desc::OnEndRender" ); }
+    virtual void      OnEndRender       ( void ) { X_PROFILE_SCOPE_CATEGORY( "Context", "object_desc::OnEndRender" ); }
     virtual xbool     OnBeginLogic      ( void );
     virtual void      OnEndLogic        ( void ){}
 
@@ -677,16 +679,24 @@ void object_desc::AddObjectCount( s32 N ) const
 inline 
 f32 obj_mgr::GetGameDeltaTime( xtick LastTime ) const
 {
-    s64 Delta = ( m_GameTime - LastTime )/x_GetTicksPerMs();    
-    f32 Time  = ((f32)Delta) * (1/1000.0f);
-    return Time;
+    const f64 TicksPerSecond = (f64)x_GetTicksPerMs() * 1000.0;
+    return (f32)((f64)(m_GameTime - LastTime) / TicksPerSecond);
 }
 
 //==============================================================================
+
 inline
 xtick obj_mgr::GetGameTime( void ) const
 {    
     return m_GameTime;
+}
+
+//==============================================================================
+
+inline
+f64 obj_mgr::GetSimulationTimeSeconds( void ) const
+{
+    return m_SimulationTimeSeconds;
 }
 
 //==============================================================================

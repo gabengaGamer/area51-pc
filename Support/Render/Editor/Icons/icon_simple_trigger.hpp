@@ -330,5 +330,4 @@ static s16 s_iicon_simple_trigger[] =
 };
 
 
-#define DRAW_ICON_SIMPLE_TRIGGER() draw_icon( NUM_FACETS_ICON_SIMPLE_TRIGGER, NUM_VERTICES_ICON_SIMPLE_TRIGGER, s_vicon_simple_trigger, s_iicon_simple_trigger )
 

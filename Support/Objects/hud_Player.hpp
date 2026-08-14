@@ -53,7 +53,8 @@ class player_hud
 public:
                         player_hud              ( void );
     void                OnRender                ( void );
-    void                OnAdvanceLogic          ( f32 DeltaTime );
+    void                OnAdvanceSimulation          ( f32 DeltaTime );
+    void                UpdateTextWidth         ( void );
     void                TriggerAutoSaveON       ( void ) {};
     void                TriggerAutoSaveOFF      ( void ) {};
     void                UpdateMPIcons           ( f32 DeltaTime, player* pPlayer );
@@ -69,6 +70,7 @@ public:
     f32                 m_Height;
     f32                 m_CenterX;
     f32                 m_CenterY;
+    rect                m_ViewDimensions;
 
     f32                 m_HowTextTimer;
     s32                 m_HowLastMode;
@@ -76,13 +78,13 @@ public:
 
     s32                 m_Type;
 
-    rhandle<xbitmap>    m_HowTeamBMP;
-    rhandle<xbitmap>    m_HowLocalBMP;
-    rhandle<xbitmap>    m_HowGlobalBMP;
-    rhandle<xbitmap>    m_WhoBMP;
-    rhandle<xbitmap>    m_FriendReqBMP;
-    rhandle<xbitmap>    m_GameInviteBMP;
-    rhandle<xbitmap>    m_AutoSave;
+    rhandle<texture>    m_HowTeamBMP;
+    rhandle<texture>    m_HowLocalBMP;
+    rhandle<texture>    m_HowGlobalBMP;
+    rhandle<texture>    m_WhoBMP;
+    rhandle<texture>    m_FriendReqBMP;
+    rhandle<texture>    m_GameInviteBMP;
+    rhandle<texture>    m_AutoSave;
 
     icon                m_NotificationIcon;
     xbool               m_ReceivedFriendReq;
@@ -112,15 +114,7 @@ public:
 
     hud_renderable*     m_HudComponents[ HUD_ELEMENT_NUM_ELEMENTS ];
 
-    // QUESTION: Is hud_player the best place for this?!?
-    // We want the hud to add icons for enemies an allies in a multi-player game.
-    // Before this was done in player, actor, and hud_reticle. This gets it all
-    // in one place, but is it the right place?!?
-    // Also, this brings a question of whether or not this is really part of
-    // logic or render? The AddIcon calls were previously in both logic and
-    // render. So what should it be?
-    f32                 m_EnemySightDelay[32];
-    f32                 m_MPIconOpacities[32];
 };
 
 #endif
+

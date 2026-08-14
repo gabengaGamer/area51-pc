@@ -12,7 +12,7 @@
 //=========================================================================
 
 #include "trigger_meta_base.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 //=========================== ==============================================
 // trigger_meta_label

@@ -8,6 +8,7 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "GameProp.hpp"
 
 //==============================================================================
@@ -43,7 +44,7 @@ static struct game_prop_desc : public object_desc
         {
             game_prop GameProp = game_prop::GetSafeType( Object );
 
-            EditorIcon_Draw( EDITOR_ICON_CTF_FLAG, 
+            DrawEditorIcon( EditorIcon::CaptureTheFlag, 
                 GameProp.GetL2W(), 
                 !!(GameProp.GetAttrBits() & object::ATTR_EDITOR_SELECTED), 
                 GameProp.GetCircuit().GetColor() );
@@ -58,9 +59,9 @@ static struct game_prop_desc : public object_desc
                     xcolor  Color = GameProp.GetCircuit().GetColor();
                     vector3 Center( 0, GameProp.m_Elevation, 0 );
                     Center = GameProp.GetL2W().Transform( Center );
-                    draw_Marker( Center, Color );
-                    draw_Sphere( Center, GameProp.m_Radius, Color );
-                    draw_Line  ( Center, GameProp.GetPosition(), Color );
+                    render::debug::Marker( Center, Color );
+                    render::debug::Sphere( Center, GameProp.m_Radius, Color );
+                    render::debug::Line  ( Center, GameProp.GetPosition(), Color );
                 }
             }
         }
@@ -124,11 +125,11 @@ void game_prop::OnEnumProp( prop_enum& List )
                         "Provides position for game type specific objects.", 
                         PROP_TYPE_DONT_SAVE | 
                         PROP_TYPE_DONT_EXPORT | 
-                        PROP_TYPE_DONT_SAVE_MEMCARD );
+                        PROP_TYPE_DONT_SAVE_GAME );
     List.PropEnumEnum( "GameProp\\Kind", 
                         "Flag Base\0Capture Point\0", 
                         "What kind of game prop?", 
-                        PROP_TYPE_DONT_SAVE_MEMCARD |
+                        PROP_TYPE_DONT_SAVE_GAME |
                         PROP_TYPE_MUST_ENUM );
     List.PropEnumEnum( "GameProp\\Team", 
                         "Team 0 (Alpha)\0Team 1 (Omega)\0All\0None\0", 
@@ -136,7 +137,7 @@ void game_prop::OnEnumProp( prop_enum& List )
                         PROP_TYPE_DONT_SHOW |
                         PROP_TYPE_DONT_SAVE | 
                         PROP_TYPE_DONT_EXPORT | 
-                        PROP_TYPE_DONT_SAVE_MEMCARD );
+                        PROP_TYPE_DONT_SAVE_GAME );
 
     // Capture point specific.
     {
@@ -146,15 +147,15 @@ void game_prop::OnEnumProp( prop_enum& List )
                         Show |
                         PROP_TYPE_DONT_SAVE | 
                         PROP_TYPE_DONT_EXPORT | 
-                        PROP_TYPE_DONT_SAVE_MEMCARD );
+                        PROP_TYPE_DONT_SAVE_GAME );
         List.PropEnumFloat( "Capture Point\\Radius", 
                         "Range of influence.",
                         Show |
-                        PROP_TYPE_DONT_SAVE_MEMCARD );
+                        PROP_TYPE_DONT_SAVE_GAME );
         List.PropEnumFloat( "Capture Point\\Elevation", 
                         "Elevation of sphere from base.",
                         Show |
-                        PROP_TYPE_DONT_SAVE_MEMCARD );
+                        PROP_TYPE_DONT_SAVE_GAME );
     }
 
     m_Circuit.OnEnumProp( List );

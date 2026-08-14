@@ -10,10 +10,7 @@
 
 #include "RenderContext.hpp"
 
-#if defined(TARGET_PC)
-#include "Render\PC\GBufferMgr.hpp"
-#include "Entropy\e_VRAM.hpp"
-#endif
+#include "Render/PC/GBufferMgr.hpp"
 
 //==============================================================================
 //  STORAGE
@@ -23,6 +20,41 @@ render_context g_RenderContext;
 
 //==============================================================================
 //  FUNCTIONS
+//==============================================================================
+
+static
+xbool BeginPipPass( pip_render_target& Target )
+{
+    static const f32 ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+    if( !rtarget_HasRenderTarget( Target.ColorTarget ) ||
+        !rtarget_HasDepthStencil( Target.DepthTarget ) )
+    {
+        return FALSE;
+    }
+
+    rtarget_color_attachment_desc Color;
+    Color.pTarget       = &Target.ColorTarget;
+    Color.LoadOp        = RTARGET_LOAD_CLEAR;
+    Color.StoreOp       = RTARGET_STORE_STORE;
+    Color.ClearColor[0] = ClearColor[0];
+    Color.ClearColor[1] = ClearColor[1];
+    Color.ClearColor[2] = ClearColor[2];
+    Color.ClearColor[3] = ClearColor[3];
+
+    rtarget_depth_attachment_desc Depth;
+    Depth.pTarget        = &Target.DepthTarget;
+    Depth.DepthLoadOp    = RTARGET_LOAD_CLEAR;
+    Depth.DepthStoreOp   = RTARGET_STORE_STORE;
+    Depth.StencilLoadOp  = RTARGET_LOAD_CLEAR;
+    Depth.StencilStoreOp = RTARGET_STORE_STORE;
+    Depth.ClearDepth     = 1.0f;
+    Depth.ClearStencil   = 0;
+
+    rtarget_EndPass();
+    return rtarget_BeginPass( &Color, 1, &Depth );
+}
+
 //==============================================================================
 
 void render_context::Set( s32   aLocalPlayerIndex, 
@@ -35,31 +67,18 @@ void render_context::Set( s32   aLocalPlayerIndex,
     NetPlayerSlot    = aNetPlayerSlot;
     TeamBits         = aTeamBits;
     m_bIsMutated     = bIsMutated;
-    m_bIsPipRender   = bIsPipRender;
-#if defined(TARGET_PC)
-    m_pActivePipTarget = NULL;
-    m_bPipTargetsActive = FALSE;
-#endif	
-}
-
-//==============================================================================
-
-void render_context::SetPipRender( xbool bIsPipRender )
-{
-    m_bIsPipRender = bIsPipRender;
-#if defined(TARGET_PC)
-    if( bIsPipRender == FALSE )
+    if( m_bPipTargetsActive )
     {
         EndPipRender();
     }
-#endif	
+
+    m_bPipTargetsActive = FALSE;
+    m_bIsPipRender      = bIsPipRender;
 }
 
 //==============================================================================
 
-#if defined(TARGET_PC)
-
-xbool pip_render_target_pc::Create( s32 TargetWidth, s32 TargetHeight )
+xbool pip_render_target::Create( s32 TargetWidth, s32 TargetHeight )
 {
     Destroy();
 
@@ -67,7 +86,6 @@ xbool pip_render_target_pc::Create( s32 TargetWidth, s32 TargetHeight )
     Height = TargetHeight;
 
     rtarget_desc colorDesc;
-    x_memset( &colorDesc, 0, sizeof(colorDesc) );
     colorDesc.Width          = (u32)Width;
     colorDesc.Height         = (u32)Height;
     colorDesc.Format         = RTARGET_FORMAT_RGBA8;
@@ -91,67 +109,48 @@ xbool pip_render_target_pc::Create( s32 TargetWidth, s32 TargetHeight )
         return FALSE;
     }
 
-    VRAMID = vram_Register( ColorTarget.pTexture );
-    if( !VRAMID )
-    {
-        Destroy();
-        return FALSE;
-    }
-
     bValid = TRUE;
     return TRUE;
 }
 
 //==============================================================================
 
-void pip_render_target_pc::Destroy( void )
+void pip_render_target::Destroy( void )
 {
-    if( VRAMID )
-        vram_Unregister( VRAMID );
-
-    if( ColorTarget.pTexture )
+    if( rtarget_HasTexture( ColorTarget ) )
         rtarget_Destroy( ColorTarget );
 
-    if( DepthTarget.pTexture )
+    if( rtarget_HasTexture( DepthTarget ) )
         rtarget_Destroy( DepthTarget );
 
-    x_memset( this, 0, sizeof(pip_render_target_pc) );
+    Width  = 0;
+    Height = 0;
+    bValid = FALSE;
 }
 
 //==============================================================================
 
-xbool render_context::BeginPipRender( pip_render_target_pc* pTarget )
+xbool render_context::BeginPipRender( pip_render_target* pTarget )
 {
-    if( m_bPipTargetsActive || m_pActivePipTarget )
+    if( m_bPipTargetsActive )
         EndPipRender();
 
     if( !pTarget || !pTarget->bValid )
         return FALSE;
 
     m_bIsPipRender      = TRUE;
-    m_pActivePipTarget = pTarget;
 
-    if( !rtarget_PushTargets() )
+    if( !BeginPipPass( *pTarget ) )
     {
-        EndPipRender();
-        return FALSE;
-    }
-
-    if( !rtarget_SetTargets( &pTarget->ColorTarget, 1, &pTarget->DepthTarget ) )
-    {
-        rtarget_PopTargets();
         EndPipRender();
         return FALSE;
     }
 
     const rtarget* pPipDepth = ( pTarget->DepthTarget.bIsDepthTarget &&
-                                 pTarget->DepthTarget.pDepthStencilView )
+                                 rtarget_HasDepthStencil( pTarget->DepthTarget ) )
                                ? &pTarget->DepthTarget : NULL;
 
     g_GBufferMgr.SetTargetOverride( &pTarget->ColorTarget, pPipDepth );
-
-    f32 ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    rtarget_Clear( RTARGET_CLEAR_COLOR | RTARGET_CLEAR_DEPTH, ClearColor, 1.0f, 0 );
 
     m_bPipTargetsActive = TRUE;
     return TRUE;
@@ -163,30 +162,13 @@ void render_context::EndPipRender( void )
 {
     if( m_bPipTargetsActive )
     {
-        rtarget_PopTargets();
+        rtarget_EndPass();
         m_bPipTargetsActive = FALSE;
     }
 
     g_GBufferMgr.SetTargetOverride( NULL, NULL );
 
-    m_pActivePipTarget = NULL;
     m_bIsPipRender     = FALSE;
 }
-
-//==============================================================================
-
-pip_render_target_pc* render_context::GetActivePipTarget( void ) const
-{
-    return m_pActivePipTarget;
-}
-
-//==============================================================================
-
-xbool render_context::ArePipTargetsActive( void ) const
-{
-    return m_bPipTargetsActive;
-}
-
-#endif
 
 //==============================================================================

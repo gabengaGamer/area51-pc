@@ -4,23 +4,23 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_listbox.hpp"
-#include "ui\ui_dlg_vkeyboard.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_listbox.hpp"
+#include "UI/ui_dlg_vkeyboard.hpp"
 
 #include "dlg_PopUp.hpp"
 #include "dlg_BuddyList.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Parsing/textin.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Parsing/TextIn.hpp"
 
 
 
@@ -31,15 +31,13 @@
 enum controls
 {
 	IDC_BUDDY_LIST_LISTBOX,
-    IDC_BUDDY_LIST_NAV_TEXT,
 };
 
 
 ui_manager::control_tem BuddyListControls[] = 
 {
     // Frames.
-    { IDC_BUDDY_LIST_LISTBOX,   "IDS_BUDDY_LIST",   "listbox",  45,  60, 180, 238, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_BUDDY_LIST_NAV_TEXT,  "IDS_NULL",         "text",      0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_BUDDY_LIST_LISTBOX,   "IDS_BUDDY_LIST",   "listbox",  45,  60, 180, 238, 0, 0, 1, 1, ui_win::WF_VISIBLE },
 };
 
 ui_manager::dialog_tem BuddyListDialog =
@@ -120,24 +118,20 @@ xbool dlg_buddy_list::Create( s32                        UserID,
 
     // find controls
     m_pBuddyList       = (ui_listbox*)    FindChildByID( IDC_BUDDY_LIST_LISTBOX  );
-    m_pNavText         = (ui_text*)       FindChildByID( IDC_BUDDY_LIST_NAV_TEXT );
 
     // hide them
     m_pBuddyList      ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText        ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set up nav text
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
     navText += g_StringTableMgr( "ui", "IDS_NAV_DELETE" );
    
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
 
     // set up level list
-    m_pBuddyList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pBuddyList->SetActive( TRUE );
     m_pBuddyList->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pBuddyList->DisableFrame();
     m_pBuddyList->SetExitOnSelect(FALSE);
@@ -234,24 +228,14 @@ void dlg_buddy_list::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_buddy_list::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_buddy_list::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    (void)pWin;
-    (void)pSender;
-    (void)Command;
-    (void)pData;
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 }
 
 //=========================================================================
 
-void dlg_buddy_list::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
-{
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
-}
-
-//=========================================================================
-
-void dlg_buddy_list::OnPadSelect( ui_win* pWin )
+void dlg_buddy_list::OnAccept( ui_win* pWin )
 {
     (void)pWin;
     
@@ -270,7 +254,7 @@ void dlg_buddy_list::OnPadSelect( ui_win* pWin )
         // edit a buddy name
         // open a VK to edit the buddy name
         irect   r = m_pManager->GetUserBounds( m_UserID );
-        ui_dlg_vkeyboard* pVKeyboard = (ui_dlg_vkeyboard*)m_pManager->OpenDialog( m_UserID, "ui_vkeyboard", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+        ui_dlg_vkeyboard* pVKeyboard = (ui_dlg_vkeyboard*)m_pManager->OpenDialog( m_UserID, "ui_vkeyboard", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_INPUTMODAL );
         pVKeyboard->SetLabel( g_StringTableMgr( "ui", "IDS_BUDDY_EDIT" ) );
         m_BuddyName = xwstring( tempString );
         pVKeyboard->ConnectString( &m_BuddyName, SM_BUDDY_STRING_LENGTH );
@@ -281,7 +265,7 @@ void dlg_buddy_list::OnPadSelect( ui_win* pWin )
         // add a new buddy       
         // open a VK to enter the buddy name
         irect   r = m_pManager->GetUserBounds( m_UserID );
-        ui_dlg_vkeyboard* pVKeyboard = (ui_dlg_vkeyboard*)m_pManager->OpenDialog( m_UserID, "ui_vkeyboard", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+        ui_dlg_vkeyboard* pVKeyboard = (ui_dlg_vkeyboard*)m_pManager->OpenDialog( m_UserID, "ui_vkeyboard", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_INPUTMODAL );
         pVKeyboard->SetLabel( g_StringTableMgr( "ui", "IDS_BUDDY_CREATE" ) );
         m_BuddyName = xwstring( "" );
         pVKeyboard->ConnectString( &m_BuddyName, SM_BUDDY_STRING_LENGTH );
@@ -292,12 +276,12 @@ void dlg_buddy_list::OnPadSelect( ui_win* pWin )
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
     navText += g_StringTableMgr( "ui", "IDS_NAV_DELETE" );
-    m_pNavText->SetLabel( navText );
+    SetNavText( navText );
 }
 
 //=========================================================================
 
-void dlg_buddy_list::OnPadBack( ui_win* pWin )
+void dlg_buddy_list::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -310,7 +294,7 @@ void dlg_buddy_list::OnPadBack( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_buddy_list::OnPadDelete( ui_win* pWin )
+void dlg_buddy_list::OnDelete( ui_win* pWin )
 {
     (void)pWin;
     // delete the buddy
@@ -326,12 +310,12 @@ void dlg_buddy_list::OnPadDelete( ui_win* pWin )
     {
         // open delete confirmation dialog
         irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
         // set nav text
         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
         navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-        m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+        SetNavTextVisible( FALSE );
         
 
         m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_BUDDY_DELETE" ), 
@@ -347,7 +331,7 @@ void dlg_buddy_list::OnPadDelete( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_buddy_list::OnPadActivate( ui_win* pWin )
+void dlg_buddy_list::OnAlternate( ui_win* pWin )
 {
     (void)pWin;
 }
@@ -369,7 +353,6 @@ void dlg_buddy_list::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         {
             // turn on the controls
             m_pBuddyList ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText   ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             GotoControl( (ui_control*)m_pBuddyList );
             g_UiMgr->SetScreenHighlight( m_pBuddyList->GetPosition() );
         }
@@ -417,7 +400,7 @@ void dlg_buddy_list::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp = NULL;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
         }
     }
     else
@@ -429,14 +412,14 @@ void dlg_buddy_list::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
             navText += g_StringTableMgr( "ui", "IDS_NAV_DELETE" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
         }
         else
         {
             // update nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-            m_pNavText->SetLabel( navText );
+            SetNavText( navText );
         }
     }
 }

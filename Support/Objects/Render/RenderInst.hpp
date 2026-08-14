@@ -5,10 +5,10 @@
 // INCLUDES
 //=========================================================================
 
-#include "MiscUtils\PropertyEnum.hpp"
-#include "MiscUtils\Property.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Render\Render.hpp"
+#include "MiscUtils/PropertyEnum.hpp"
+#include "MiscUtils/Property.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Render/Render.hpp"
 #include "VirtualMeshMask.hpp"
 
 //=========================================================================
@@ -25,7 +25,7 @@ public:
     virtual xbool       OnProperty          ( prop_query&   I    );
     
             void        StartFade           ( s8 Direction, f32 TimeToFade );
-            void        OnAdvanceLogic      ( f32 DeltaTime );
+            void        OnAdvanceSimulation      ( f32 DeltaTime );
             u8          GetAlpha            ( void ) const              { return m_Alpha; }
     virtual void        LoadColorTable      ( const char* pFileName )   { (void)pFileName; }
     virtual void        RenderShadowCast    ( const matrix4* pL2W,
@@ -34,7 +34,7 @@ public:
     virtual geom*       GetGeom             ( void ) const = 0;
     virtual const char* GetGeomName         ( void ) const { return ""; }
 
-    render::hgeom_inst          GetInst             ( void                      ) const;
+    render::GeometryInstanceHandle          GetInst             ( void                      ) const;
     bbox&                       GetBBox             ( void                      ) const;
     u64                         GetLODMask          ( const matrix4& L2W        );
     u64                         GetLODMask          ( u16            ScreenSize );
@@ -54,7 +54,7 @@ public:
 #endif // X_EDITOR
 
 protected:
-    render::hgeom_inst          m_hInst;            // Handle to the instance in the Render Manager
+    render::GeometryInstanceHandle          m_hInst;            // Handle to the instance in the Render Manager
 
     virtual_mesh_mask           m_VMeshMask;                // which vmeshes are turned on?
     f32                         m_FadeTimeElapsed;          // how much time since we've started fading?
@@ -80,7 +80,7 @@ protected:
 
 //=========================================================================
 
-inline render::hgeom_inst render_inst::GetInst( void ) const
+inline render::GeometryInstanceHandle render_inst::GetInst( void ) const
 {
     return m_hInst;
 }

@@ -8,14 +8,16 @@
 //  INCLUDES
 //==============================================================================
 
+#include "Render\PrimitiveDebug.hpp"
 #include "stdafx.h"
 
 #include "notepad_object.hpp"
 #include "x_color.hpp"
 #include "CollisionMgr\CollisionMgr.hpp"
 #include "Entropy.hpp"
-#include "Parsing\TextIn.hpp"
-#include "Render\Editor\editor_icons.hpp"
+#include "Parsing/TextIn.hpp"
+#include "Render\Editor\EditorIcons.hpp"
+#include "UI\ui_renderer.hpp"
 
 const f32 c_Sphere_Radius = 25.0f;
 
@@ -49,7 +51,7 @@ static struct notepad_object_desc : public object_desc
     virtual s32  OnEditorRender( object& Object ) const
     {
         (void)Object;
-        return EDITOR_ICON_NOTE;
+        return static_cast<s32>( EditorIcon::Note );
     }
 
 } s_notepad_object_Desc;
@@ -223,45 +225,17 @@ void notepad_object::OnRender ( void )
                 // Return to original color
                 text_PopColor();
 
-                // Draw away.
-                draw_Begin( DRAW_QUADS, DRAW_2D );
-                {
-                    s32 nX = nWidthMax/2 + 4;
-                    s32 nY = (CharHeight*NLines)/2 + 4;
-
-                    draw_Color( m_crNote );
-                    draw_Vertex( ScreenPos.X-nX,       ScreenPos.Y+nY, 0 );
-                    draw_Vertex( ScreenPos.X+nX,       ScreenPos.Y+nY, 0 );
-                    draw_Vertex( ScreenPos.X+nX,       ScreenPos.Y-nY, 0 );
-                    draw_Vertex( ScreenPos.X-nX,       ScreenPos.Y-nY, 0 );
-
-                }
-                draw_End();
-                draw_Frustum(*eng_GetActiveView(0));
+                const s32 HalfWidth = nWidthMax / 2 + 4;
+                const s32 HalfHeight = ( CharHeight * NLines ) / 2 + 4;
+                g_UIRenderer.DrawRect( irect( (s32)ScreenPos.X - HalfWidth,
+                                              (s32)ScreenPos.Y - HalfHeight,
+                                              (s32)ScreenPos.X + HalfWidth,
+                                              (s32)ScreenPos.Y + HalfHeight ),
+                                       m_crNote );
+                render::debug::Frustum(*eng_GetActiveView(0));
             }
         }
     }
-    /*
-    else
-    {
-        if ( GetAttrBits() & ATTR_EDITOR_PLACEMENT_OBJECT )
-        {
-            draw_editor_icon(EDITOR_ICON_NOTE, Pos, xcolor(255,0,0,150));
-        }
-        else if (GetAttrBits() & ATTR_EDITOR_BLUE_PRINT)
-        {
-            draw_editor_icon(EDITOR_ICON_NOTE, Pos);
-            if (GetAttrBits() & ATTR_EDITOR_SELECTED)
-                draw_editor_icon(EDITOR_ICON_NOTE, Pos, xcolor(100,255,0,100));
-        }
-        else
-        {
-            draw_editor_icon(EDITOR_ICON_NOTE, Pos);
-            if (GetAttrBits() & ATTR_EDITOR_SELECTED)
-                draw_editor_icon(EDITOR_ICON_NOTE, Pos, xcolor(255,0,100,100));
-        }
-    }
-    */
 }
      
 //==============================================================================

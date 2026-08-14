@@ -25,12 +25,12 @@
 
 #include "x_math.hpp"
 #include "x_bitstream.hpp"
-#include "MiscUtils\RTTI.hpp"
-#include "MiscUtils\Property.hpp"
-#include "Animation\AnimData.hpp"
-#include "Render\CollisionVolume.hpp"
+#include "MiscUtils/RTTI.hpp"
+#include "MiscUtils/Property.hpp"
+#include "Animation/AnimData.hpp"
+#include "Render/CollisionVolume.hpp"
 #ifdef X_EDITOR
-#include "Render\Render.hpp"
+#include "Render/Render.hpp"
 #endif
 
 //==============================================================================
@@ -61,7 +61,7 @@ class  render_inst;
 class  pain;
 struct event;
 class  object;
-class  shadow_map_mgr;
+class  ShadowMapMgr;
 class object_affecter;
 class simple_anim_player;
 
@@ -226,7 +226,7 @@ public:
         TYPE_PATH,
         TYPE_CAMERA,
         TYPE_PIP,
-        TYPE_THIRD_PERSON_CAMERA,
+        TYPE_THIRD_PERSON_CAMERA,           // Reserved legacy numeric slot.
         TYPE_NAV_POINT,
         TYPE_EXPLOSIVE_BULLET_PROJECTILE,
         
@@ -508,11 +508,6 @@ public:
     virtual       f32           GetLookAtExtent ( void ) const { return .95f; }
                   type          GetType         ( void ) const;      
 
-    static        void          CaptureRenderInterpStates( void );
-    static        void          UpdateRenderInterpStates ( f32 Alpha );
-    static        void          ClearRenderInterpStates  ( void );
-    static        void          ClearRenderInterpStatesPerView( void );
-
             const bbox&         GetBBox         ( void );                
     virtual       bbox          GetColBBox      ( void );                
     virtual       bbox          GetScreenBBox   ( const view& rView );
@@ -521,7 +516,6 @@ public:
     virtual       void          ScaleVelocity   ( const vector3& PlaneNormal, f32 PerpScale, f32 ParaScale );
     
             const matrix4&      GetL2W          ( void ) const;          
-
             u32                 GetRenderMode   ( void ) const;
             u32                 GetAttrBits     ( void ) const;
             void                SetAttrBits     ( u32 NewBits );
@@ -631,7 +625,7 @@ protected:
 //
 // OnKill               - When the object is decided to be kill then this function is call.
 // 
-// OnAdvanceLogic       - This function is call when the object is requested to advance its logid.
+// OnAdvanceSimulation       - This function is call when the object is requested to advance its logid.
 //
 // OnSpacialUpdate      - Updates the spacial data base with the new bbox
 //
@@ -650,7 +644,7 @@ protected:
 
     virtual void                OnInit              ( void );     
     virtual void                OnKill              ( void );               
-    virtual void                OnAdvanceLogic      ( f32 DeltaTime );      
+    virtual void                OnAdvanceSimulation      ( f32 DeltaTime );      
     virtual void                OnSpacialUpdate     ( void );               
     virtual void                OnColCheck          ( void );    
 
@@ -660,13 +654,13 @@ protected:
 #endif    
     virtual void                OnCollectLight          ( void );
     virtual void                OnRenderShadowCast      ( u64 ProjMask );
-    virtual void                OnRenderShadowReceive   ( u64 ProjMask );
 #ifndef X_RETAIL
     virtual void                OnColRender             ( xbool bRenderHigh );
 #endif
     virtual void                OnRenderTransparent     ( void );
             xbool               NeedsClipping           ( void );
     virtual void                OnAnimEvent             ( void );
+
 
 //------------------------------------------------------------------------------
 // FUNCTIONS
@@ -684,15 +678,6 @@ protected:
     void                        SetTransform    ( const matrix4& L2W );
     void                        UpdateTransform ( void );
     xbool                       IsLoading       ( void );
-    void                        RegisterRenderInterpUpdate( void );
-    virtual void                CaptureRenderInterpState( void );
-    virtual void                UpdateRenderInterpState ( f32 Alpha );
-    virtual void                ClearRenderInterpState  ( void );
-    virtual void                InvalidateRenderInterpState( void );
-    virtual void                SnapRenderInterpState   ( void );
-    virtual void                ClearRenderInterpStatePerView( void ) {}
-    
-    
     void                        SetNewZoneInfo          ( u16 ZoneInfo );
     void                        UpdateRenderableLinks   ( void );
 
@@ -762,7 +747,7 @@ public:
 //------------------------------------------------------------------------------
 
     friend class obj_mgr;
-    friend class shadow_map_mgr;
+    friend class ShadowMapMgr;
     friend class collision_mgr;
 };
 
@@ -792,9 +777,9 @@ const bbox& object::GetBBox( void )
 
 //==============================================================================
 inline 
-void object::OnAdvanceLogic( f32 DeltaTime )
+void object::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "object::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "object::OnAdvanceSimulation" );
 
     // KSS -- commenting this out until Craig gets a chance to look into it further -- As per Craig.
     //ASSERTS( 0, "Why are we advancing logic for for a base object?" );
@@ -807,7 +792,7 @@ void object::OnAdvanceLogic( f32 DeltaTime )
 inline
 vector3 object::GetPosition( void ) const
 {
-    return m_L2W.GetTranslation();
+    return GetL2W().GetTranslation();
 }
 
 //==============================================================================
@@ -835,7 +820,7 @@ vector3 object::GetSubPosition( s32 ID )
 {
     (void)ID;
 
-    return m_L2W.GetTranslation();
+    return GetL2W().GetTranslation();
 }
 
 //==============================================================================
@@ -964,7 +949,7 @@ s32 object::GetSlot( void ) const
 inline
 void object::OnRender( void ) 
 {
-    CONTEXT( "object::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "object::OnRender" );
 
     ASSERT( 0 );
 }
@@ -983,7 +968,7 @@ void object::OnCollectLight( void )
 inline
 void object::OnRenderCloth( void )
 {
-    CONTEXT( "object::OnRenderCloth" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "object::OnRenderCloth" );
 
     ASSERT( 0 );
 }
@@ -1187,6 +1172,5 @@ void  object::SetSelectable( xbool bSelectable )
 //==============================================================================
 #endif // OBJECT_HPP
 //==============================================================================
-
 
 

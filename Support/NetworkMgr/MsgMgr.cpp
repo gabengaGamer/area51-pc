@@ -14,8 +14,8 @@
 #include "ConnMgr.hpp"
 #include "GameMgr.hpp"
 #include "NetworkMgr.hpp"
-#include "StringMgr\StringMgr.hpp"
-#include "PainMgr\PainTypes.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "PainMgr/PainTypes.hpp"
 
 #include "MsgClient.hpp"
 

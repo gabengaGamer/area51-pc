@@ -8,12 +8,13 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_object_move.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "Characters\Character.hpp"
-#include "Objects\Player.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "Characters/Character.hpp"
+#include "Objects/Player/Player.hpp"
 
 static const xcolor s_MoveColor             (255,0,255);
 
@@ -62,21 +63,31 @@ xbool action_object_move::Execute ( f32 DeltaTime )
             // Update polycache around the object
             g_PolyCache.InvalidateCells( pObject->GetBBox(), pObject->GetGuid() );
 
-            //some objects require zones set first, some after, doing both to be safe
-            pObject->SetZone1( pMarker->GetZone1() );
-            pObject->SetZone2( pMarker->GetZone2() );   
-            pObject->OnTriggerTransform( M );
-            pObject->SetZone1( pMarker->GetZone1() );
-            pObject->SetZone2( pMarker->GetZone2() );
-
             if( pObject->IsKindOf( player::GetRTTI() ) )
             {
-                ((player*)pObject)->Teleport( pObject->GetPosition(), FALSE, FALSE );
+                radian3 const Rotation = M.GetRotation();
+                static_cast<player*>( pObject )->Teleport(
+                    M.GetTranslation(),
+                    Rotation.Pitch,
+                    Rotation.Yaw,
+                    static_cast<zone_mgr::zone_id>( pMarker->GetZone1() ),
+                    static_cast<zone_mgr::zone_id>( pMarker->GetZone2() ),
+                    PlayerTeleportVelocityPolicy::Clear,
+                    FALSE,
+                    FALSE );
             }
-            else if( pObject->IsKindOf( actor::GetRTTI() ) )
+            else
             {
-                actor* pActor = (actor*)pObject;
-                pActor->InitZoneTracking();
+                pObject->SetZone1( pMarker->GetZone1() );
+                pObject->SetZone2( pMarker->GetZone2() );
+                pObject->OnTriggerTransform( M );
+                pObject->SetZone1( pMarker->GetZone1() );
+                pObject->SetZone2( pMarker->GetZone2() );
+
+                if( pObject->IsKindOf( actor::GetRTTI() ) )
+                {
+                    static_cast<actor*>( pObject )->InitZoneTracking();
+                }
             }
 
             // Update polycache around the object
@@ -98,15 +109,15 @@ void action_object_move::OnDebugRender ( s32 Index )
     object* pObject = m_ObjectAffecter.GetObjectPtr();
     if (pObject)
     {
-        draw_Line( GetPositionOwner(), pObject->GetPosition(), s_MoveColor );
-        draw_BBox( bbox(pObject->GetPosition(), 100.0f), s_MoveColor );
+        render::debug::Line( GetPositionOwner(), pObject->GetPosition(), s_MoveColor );
+        render::debug::Box( bbox(pObject->GetPosition(), 100.0f), s_MoveColor );
         if (!GetElse())
         {
-            draw_Label( pObject->GetPosition(), s_MoveColor, xfs("[%d]Move Object", Index) );
+            render::debug::Label( pObject->GetPosition(), s_MoveColor, xfs("[%d]Move Object", Index) );
         }
         else
         {
-            draw_Label( pObject->GetPosition(), s_MoveColor, xfs("[Else %d]Move Object", Index) );
+            render::debug::Label( pObject->GetPosition(), s_MoveColor, xfs("[Else %d]Move Object", Index) );
         }
 
         if (m_Marker != 0)
@@ -114,15 +125,15 @@ void action_object_move::OnDebugRender ( s32 Index )
             object *pMarker = g_ObjMgr.GetObjectByGuid(m_Marker);
             if (pMarker)
             {
-                draw_Line( pObject->GetPosition(), pMarker->GetPosition(), XCOLOR_WHITE );
-                draw_BBox( bbox(pMarker->GetPosition(), 100.0f), XCOLOR_WHITE );
+                render::debug::Line( pObject->GetPosition(), pMarker->GetPosition(), XCOLOR_WHITE );
+                render::debug::Box( bbox(pMarker->GetPosition(), 100.0f), XCOLOR_WHITE );
                 if (!GetElse())
                 {
-                    draw_Label( pObject->GetPosition(), s_MoveColor, xfs("[%d]Move Here", Index) );
+                    render::debug::Label( pObject->GetPosition(), s_MoveColor, xfs("[%d]Move Here", Index) );
                 }
                 else
                 {
-                    draw_Label( pObject->GetPosition(), s_MoveColor, xfs("[Else %d]Move Here", Index) );
+                    render::debug::Label( pObject->GetPosition(), s_MoveColor, xfs("[Else %d]Move Here", Index) );
                 }
             }
         }

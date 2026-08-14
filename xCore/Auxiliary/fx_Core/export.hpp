@@ -60,7 +60,7 @@ public:
         s32         TotalSize;     // In 32-bit values.
         s32         TypeIndex;     // Has no meaningful value in file.
         xbool       ReadZ;
-        s32         CombineMode;    // -1 = sub, 0 = multiplicative, 1 = additive
+        s32         CombineMode;    // Serialized runtime material mode.
         s32         CtrlOffsets[13];// Where to get SRT/C values from Staging Area?
         f32         Scale[3];       // Constant values for S.
         f32         Rotate[3];      // Constant values for R.

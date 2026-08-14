@@ -1,7 +1,7 @@
 #include "Character_Alarm_State.hpp"
-#include "..\Character.hpp"
-#include "navigation\alarmNode.hpp"
-#include "objects\NewWeapon.hpp"
+#include "../Character.hpp"
+#include "Navigation/AlarmNode.hpp"
+#include "Objects/NewWeapon.hpp"
 
 //=========================================================================
 // GRAY ALARM STATE

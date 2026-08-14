@@ -10,6 +10,24 @@ namespace fx_core
 texture_mgr* g_pTextureMgr = new texture_mgr;
 
 //============================================================================
+texture_mgr::record::record()
+    : IsLoaded( FALSE ),
+      Texture(),
+      UsedFlag( FALSE )
+{
+    Path[0] = 0;
+    CreationTime.dwHighDateTime = 0;
+    CreationTime.dwLowDateTime = 0;
+}
+
+//============================================================================
+texture_mgr::record::~record()
+{
+    if( Texture.m_texture )
+        vram_DestroyTexture( Texture.m_texture );
+}
+
+//============================================================================
 // Constructor
 texture_mgr::texture_mgr()
 {
@@ -90,7 +108,6 @@ xbool texture_mgr::ActivateBitmap ( const char* pFileName )
         pRec = new texture_mgr::record;
         pRec->UsedFlag = FALSE;
         pRec->IsLoaded = FALSE;
-        pRec->ID       = -1;
         pRec->CreationTime.dwHighDateTime = 0;
         pRec->CreationTime.dwLowDateTime  = 0;
 
@@ -103,12 +120,12 @@ xbool texture_mgr::ActivateBitmap ( const char* pFileName )
         }
 
         // if it is not, then load it!
-        if( auxbmp_LoadNative( pRec->Bitmap, pFileName ) )
+        if( auxbmp_LoadNative( pRec->Texture.m_bitmap, pFileName ) )
         {
             ReadFileCreationTime( pFileName, pRec->CreationTime );
 
-            s32 Width = pRec->Bitmap.GetWidth();
-            s32 Height = pRec->Bitmap.GetHeight();
+            s32 Width = pRec->Texture.m_bitmap.GetWidth();
+            s32 Height = pRec->Texture.m_bitmap.GetHeight();
 
             if ( !(ispow2(Width) && ispow2(Height)) )
             {
@@ -121,8 +138,11 @@ xbool texture_mgr::ActivateBitmap ( const char* pFileName )
             {
                 if( m_UseVRAM )
                 {
-                    pRec->ID = vram_Register( pRec->Bitmap );
-                    vram_Activate( pRec->Bitmap );
+                    if( !vram_CreateTexture( pRec->Texture.m_texture, pRec->Texture.m_bitmap, TRUE, "fx_core" ) )
+                    {
+                        delete pRec;
+                        return FALSE;
+                    }
                 }
                 x_strcpy( pRec->Path, pFileName );
                 m_Records.Append( pRec );
@@ -142,7 +162,7 @@ xbool texture_mgr::ActivateBitmap ( const char* pFileName )
             x_memset( pData + (64*32*4), 128, 64*16*4 );
             x_memset( pData + (64*48*4),  64, 64*16*4 );
             
-            pRec->Bitmap.Setup( xbitmap::FMT_32_ARGB_8888, 64, 64, TRUE, pData );
+            pRec->Texture.m_bitmap.Setup( xbitmap::FMT_32_ARGB_8888, 64, 64, TRUE, pData );
             
             if ( x_strlen(pFileName) == 0 )
                 x_strcpy( pRec->Path, "fx_default.xbmp" );
@@ -151,8 +171,11 @@ xbool texture_mgr::ActivateBitmap ( const char* pFileName )
 
             if( m_UseVRAM )
             {
-                pRec->ID = vram_Register( pRec->Bitmap );
-                vram_Activate( pRec->Bitmap );
+                if( !vram_CreateTexture( pRec->Texture.m_texture, pRec->Texture.m_bitmap, TRUE, "fx_core_default" ) )
+                {
+                    delete pRec;
+                    return FALSE;
+                }
             }
             m_Records.Append( pRec );
 
@@ -163,10 +186,7 @@ xbool texture_mgr::ActivateBitmap ( const char* pFileName )
     }
     else
     {
-        if( m_UseVRAM )
-        {
-            vram_Activate( pRec->ID );
-        }
+        (void)m_UseVRAM;
     }
 
     return TRUE;
@@ -190,17 +210,17 @@ xbool texture_mgr::DeActivateBitmap ( const char* pFileName )
 }
 //============================================================================
 // Given a string, see if it's loaded and if it is, return the ID
-s32 texture_mgr::GetBitmapID( const char* pFileName )
+const texture* texture_mgr::GetTexture( const char* pFileName )
 {
     record* pRec;
 
     // check to see if the bitmap is already loaded
     pRec = Lookup( pFileName );
 
-    if ( pRec )
-        return pRec->ID;
-    else
-        return -1;
+    if( !pRec || !pRec->IsLoaded || !pRec->Texture.GetShaderResource() )
+        return NULL;
+
+    return &pRec->Texture;
 }
 
 //============================================================================
@@ -281,7 +301,7 @@ void texture_mgr::ExportList( const char* pFileName, s32 ExportTarget )
             {
             case EXPORT_TARGET_PC:
                 {
-                    xbool Success = pRec->Bitmap.Save( FP );
+                    xbool Success = pRec->Texture.m_bitmap.Save( FP );
                     if( !Success )
                         g_ErrorLog.Append( xfs("Error - Saving xbitmap \"%s\"", FP) );
                 }
@@ -289,7 +309,7 @@ void texture_mgr::ExportList( const char* pFileName, s32 ExportTarget )
 
             case EXPORT_TARGET_GCN:
                 {
-                    xbool Success = pRec->Bitmap.Save( FP );
+                    xbool Success = pRec->Texture.m_bitmap.Save( FP );
                     if( !Success )
                         g_ErrorLog.Append( xfs("Error - Saving xbitmap \"%s\"", FP) );
                 }
@@ -297,7 +317,7 @@ void texture_mgr::ExportList( const char* pFileName, s32 ExportTarget )
 
             case EXPORT_TARGET_PS2:
                 {
-                    xbool Success = pRec->Bitmap.Save( FP );
+                    xbool Success = pRec->Texture.m_bitmap.Save( FP );
                     if( !Success )
                         g_ErrorLog.Append( xfs("Error - Saving xbitmap \"%s\"", FP) );
                 }
@@ -305,7 +325,7 @@ void texture_mgr::ExportList( const char* pFileName, s32 ExportTarget )
 
             case EXPORT_TARGET_XBOX:
                 {
-                    xbool Success = pRec->Bitmap.Save( FP );
+                    xbool Success = pRec->Texture.m_bitmap.Save( FP );
                     if( !Success )
                         g_ErrorLog.Append( xfs("Error - Saving xbitmap \"%s\"", FP) );
                 }
@@ -363,7 +383,7 @@ void texture_mgr::ExportNames( xbytestream& Stream, s32 ExportTarget )
                     //      Write the filename.
                     //      Write a NULL name.
 
-                    if( pRec->Bitmap.HasAlphaBits() )
+                    if( pRec->Texture.m_bitmap.HasAlphaBits() )
                     {
                         x_strcpy( FNameA, FName );
                         x_strcat( FName , "[D].xbmp" );
@@ -410,7 +430,7 @@ void texture_mgr::ExportXBMPs( const char* pFileName, s32 ExportTarget )
 
         if( pRec->UsedFlag && pRec->IsLoaded )
         {
-            Diffuse = pRec->Bitmap;
+            Diffuse = pRec->Texture.m_bitmap;
 
             x_splitpath( (LPCTSTR)Key, NULL, NULL, FName, NULL );
             x_makepath( FullName, Drive, Dir, FName, ".xbmp" );

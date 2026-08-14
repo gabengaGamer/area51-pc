@@ -179,7 +179,7 @@ protected:
     s32         m_nFacetRefsAllocated;
     s32         m_nFacetRefs;
 
-    bbox        m_BBox;                             // BBox of the world
+    bbox        m_bBox;                             // BBox of the world
     s32         m_TotalVerticesRemoved;             // Tells how many vertices have been collapse when preparing the mesh
 
     s32         m_CollisionIndexFacet;              // Index to the facet which we have collided

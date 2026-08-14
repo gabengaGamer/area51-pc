@@ -126,48 +126,69 @@ int file_reader::Length(long long* total, long long* available)
 // CONTAINER HELPER IMPLEMENTATION
 //==============================================================================
 
-static 
-const char* GetPreferredAudioLanguage(void)
+static
+xbool GetPrimaryLanguageCode( const char* pLanguage, char (&Code)[4] )
 {
-    const char* pLocale = x_GetLocaleString(XL_LOCALE_CODE_ISO_639_2);
+    if( !pLanguage ||
+        !pLanguage[0] ||
+        !pLanguage[1] ||
+        !pLanguage[2] ||
+        (pLanguage[3] && (pLanguage[3] != '-')) )
+    {
+        return FALSE;
+    }
 
-    if (!pLocale || !pLocale[0])
-        return "eng";
-
-    // TODO: Update thiese ISO_639_2 CODES !!!!
-    if (x_stricmp(pLocale, "FRE") == 0)
-        return "fra";
-
-    if (x_stricmp(pLocale, "GER") == 0)
-        return "deu";
-
-    return pLocale;
+    Code[0] = (char)x_tolower( pLanguage[0] );
+    Code[1] = (char)x_tolower( pLanguage[1] );
+    Code[2] = (char)x_tolower( pLanguage[2] );
+    Code[3] = 0;
+    return TRUE;
 }
 
 //==============================================================================
 
-static 
-xbool IsAudioLanguageMatch(const mkvparser::Track* pTrack, const char* pLanguage)
+static
+xbool IsLanguageCodePair( const char* pFirst,
+                          const char* pSecond,
+                          const char* pCodeA,
+                          const char* pCodeB )
 {
-    if (!pTrack || !pLanguage || !pLanguage[0])
+    return ((x_stricmp( pFirst,  pCodeA ) == 0) && (x_stricmp( pSecond, pCodeB ) == 0)) ||
+           ((x_stricmp( pFirst,  pCodeB ) == 0) && (x_stricmp( pSecond, pCodeA ) == 0));
+}
+
+//==============================================================================
+
+static
+xbool IsAudioLanguageMatch( const mkvparser::Track* pTrack, const char* pLanguage )
+{
+    if( !pTrack || !pLanguage || !pLanguage[0] )
+    {
         return FALSE;
+    }
 
     const char* pTrackLanguage = pTrack->GetLanguage();
 
-    if (!pTrackLanguage || !pTrackLanguage[0])
+    if( !pTrackLanguage || !pTrackLanguage[0] )
+    {
         return FALSE;
+    }
 
-    if (x_stricmp(pTrackLanguage, pLanguage) == 0)
+    char PreferredCode[4];
+    char TrackCode[4];
+    if( !GetPrimaryLanguageCode( pLanguage, PreferredCode ) ||
+        !GetPrimaryLanguageCode( pTrackLanguage, TrackCode ) )
+    {
+        return FALSE;
+    }
+
+    if( x_stricmp( PreferredCode, TrackCode ) == 0 )
+    {
         return TRUE;
+    }
 
-    // TODO: Update thiese ISO_639_2 CODES !!!!
-    if ((x_stricmp(pLanguage, "fra") == 0) && (x_stricmp(pTrackLanguage, "fre") == 0))
-        return TRUE;
-
-    if ((x_stricmp(pLanguage, "deu") == 0) && (x_stricmp(pTrackLanguage, "ger") == 0))
-        return TRUE;
-
-    return FALSE;
+    return IsLanguageCodePair( PreferredCode, TrackCode, "fre", "fra" ) ||
+           IsLanguageCodePair( PreferredCode, TrackCode, "ger", "deu" );
 }
 
 //==============================================================================
@@ -358,7 +379,7 @@ xbool container::AcquireSample(sample& OutSample)
         OutSample.pCluster    = m_pCluster;
         OutSample.TimeSeconds = (f64)pBlock->GetTime(m_pCluster) / WEBM_NANOSEC;
         OutSample.IsKeyFrame  = pBlock->IsKey();
-        OutSample.Type        = (trackNumber == m_VideoTrack) ? STREAM_TYPE_VIDEO : STREAM_TYPE_AUDIO;
+        OutSample.Type        = (trackNumber == m_VideoTrack) ? STREAm_Type_VIDEO : STREAm_Type_AUDIO;
         return TRUE;
     }
 
@@ -405,7 +426,8 @@ xbool container::SelectTracks(player_config& Config)
         return FALSE;
 
     const u32 trackCount = (u32)m_pTracks->GetTracksCount();
-    const char* pPreferredAudioLanguage = GetPreferredAudioLanguage();
+    const char* pPreferredAudioLanguage = x_GetLocaleString( Config.AudioLanguage,
+                                                             XL_LOCALE_CODE_ISO_639_2 );
     const mkvparser::Track* pFirstAudioTrack = NULL;
     const mkvparser::Track* pSelectedAudioTrack = NULL;
 
@@ -431,12 +453,12 @@ xbool container::SelectTracks(player_config& Config)
             if (!pFirstAudioTrack)
                 pFirstAudioTrack = pTrack;
 
-            if (!pSelectedAudioTrack && IsAudioLanguageMatch(pTrack, pPreferredAudioLanguage))
+            if( !pSelectedAudioTrack && IsAudioLanguageMatch( pTrack, pPreferredAudioLanguage ) )
                 pSelectedAudioTrack = pTrack;
         }
     }
 
-    if (!pSelectedAudioTrack)
+    if( !pSelectedAudioTrack )
         pSelectedAudioTrack = pFirstAudioTrack;
 
     if (pSelectedAudioTrack)

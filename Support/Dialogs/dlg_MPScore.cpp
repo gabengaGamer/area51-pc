@@ -4,12 +4,12 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_manager.hpp"
+#include "UI/ui_manager.hpp"
 
 #include "dlg_MPScore.hpp"
-#include "StateMgr\StateMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
 
 //=========================================================================
 //  Multi-player score screen dialog

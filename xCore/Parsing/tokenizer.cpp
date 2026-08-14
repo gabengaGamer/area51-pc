@@ -9,7 +9,7 @@
 #include "x_memory.hpp"
 #include "tokenizer.hpp"
 
-#ifndef TARGET_PC
+#if !defined( TARGET_DESKTOP )
 #define USING_STREAMING
 #endif
 
@@ -23,6 +23,11 @@ static const s32            BUFFER_SIZE = 1024*32;
 
 char token_stream::CHAR( s32 FilePos )
 {
+    if( (FilePos < 0) || (FilePos >= m_FileSize) )
+    {
+        return 0;
+    }
+
     if( m_bBuffered )
     {
         if( (FilePos >= m_CurBufferStart) && (FilePos <= m_CurBufferEnd) )
@@ -61,7 +66,7 @@ xbool token_stream::OpenFile( const char* pFileName )
     m_FileSize   = 0;
     m_FilePos    = 0;
     m_LineNumber = 1;
-    m_Type = TOKEN_NONE;
+    m_type = TOKEN_NONE;
     
     if( x_strlen(pFileName)>63 )
     {
@@ -82,7 +87,12 @@ xbool token_stream::OpenFile( const char* pFileName )
     m_CurBufferStart = -1;
     m_CurBufferEnd   = -1;
     m_CurBuffer      = (char*)x_malloc(BUFFER_SIZE);
-    ASSERT(m_CurBuffer);
+    if( m_CurBuffer == NULL )
+    {
+        x_fclose( m_pFile );
+        m_pFile = NULL;
+        return FALSE;
+    }
 
     // Find how large the file is
     m_FileSize = x_flength(m_pFile);
@@ -102,7 +112,7 @@ xbool token_stream::OpenFile( X_FILE *fp )
     m_FileSize          = 0;
     m_FilePos           = 0;
     m_LineNumber        = 1;
-    m_Type              = TOKEN_NONE;
+    m_type              = TOKEN_NONE;
     
     m_pFile = fp;
 
@@ -113,12 +123,17 @@ xbool token_stream::OpenFile( X_FILE *fp )
     m_CurBufferStart    = -1;
     m_CurBufferEnd      = -1;
     m_CurBuffer         = (char*)x_malloc(BUFFER_SIZE);
-    ASSERT(m_CurBuffer);
+    if( m_CurBuffer == NULL )
+    {
+        x_fclose( m_pFile );
+        m_pFile = NULL;
+        return FALSE;
+    }
 
     // Find how large the file is
     m_FileSize          = x_flength(m_pFile);
     m_StartPosition     = x_ftell(m_pFile);
-    m_FileSize         -= x_ftell(m_pFile);
+    m_FileSize         -= m_StartPosition;
 
     Rewind();
 
@@ -131,7 +146,7 @@ xbool token_stream::OpenFile( X_FILE *fp )
 #else 
 //==============================================================================
 
-#define CHAR(s) m_FileBuffer[(s)]
+#define CHAR(s) ( ((s) >= 0) && ((s) < m_FileSize) ? m_FileBuffer[(s)] : 0 )
 
 //==============================================================================
 
@@ -143,7 +158,7 @@ xbool    token_stream::OpenFile    ( const char* pFileName )
     m_FileSize          = 0;
     m_FilePos           = 0;
     m_LineNumber        = 1;
-    m_Type              = TOKEN_NONE;
+    m_type              = TOKEN_NONE;
     m_bBuffered         = FALSE;
 
     if( x_strlen(pFileName)>63 )
@@ -166,13 +181,18 @@ xbool    token_stream::OpenFile    ( const char* pFileName )
     // Allocate a buffer to hold the file
     m_FileBuffer = (char*)x_malloc(m_FileSize+1);
     if( m_FileBuffer == NULL )
+    {
+        x_fclose( fp );
         return FALSE;
+    }
 
     // Load the entire file into the buffer
     m_FileBuffer[m_FileSize] = 0;
     if( x_fread( m_FileBuffer, 1, m_FileSize, fp ) != m_FileSize )
     {
         x_free(m_FileBuffer);
+        m_FileBuffer = NULL;
+        x_fclose( fp );
         return FALSE;
     }
     
@@ -193,7 +213,7 @@ xbool token_stream::OpenFile( X_FILE* fp )
     m_FileSize   = 0;
     m_FilePos    = 0;
     m_LineNumber = 1;
-    m_Type = TOKEN_NONE;
+    m_type = TOKEN_NONE;
     m_bBuffered = FALSE;
 
     if( fp == NULL )
@@ -210,7 +230,10 @@ xbool token_stream::OpenFile( X_FILE* fp )
     //Make sure the end of the array is touched to keep purify happy
 
     if( m_FileBuffer == NULL )
+    {
+        x_fclose( fp );
         return FALSE;
+    }
 
     // Load the entire file into the buffer
     m_FileBuffer[m_FileSize] = 0;
@@ -220,6 +243,8 @@ xbool token_stream::OpenFile( X_FILE* fp )
     if( x_fread( m_FileBuffer, 1, m_FileSize, fp ) != m_FileSize )
     {
         x_free(m_FileBuffer);
+        m_FileBuffer = NULL;
+        x_fclose( fp );
         return FALSE;
     }
     
@@ -309,7 +334,7 @@ char* token_stream::GetDelimeter( void )
 
 //==============================================================================
 
-void token_stream::SetDelimeter( char* pStr )
+void token_stream::SetDelimeter( const char* pStr )
 {
     ASSERT( x_strlen( pStr ) >= 2 );
     x_strcpy(m_DelimiterStr, pStr);
@@ -339,6 +364,7 @@ void    token_stream::CloseFile   ( void )
         x_free(m_FileBuffer);
         m_FileBuffer = NULL;
         m_FileSize = 0;
+        m_pFile = NULL;
     }    
 }
 
@@ -348,7 +374,7 @@ void    token_stream::Rewind      ( void )
 {
     m_FilePos          = 0;
     m_LineNumber       = 1;
-    m_Type             = TOKEN_NONE;
+    m_type             = TOKEN_NONE;
     m_Delimiter        = ' ';
     m_Float            = 0.0f;
     m_Int              = 0;
@@ -362,7 +388,7 @@ void    token_stream::SetCursor      ( s32 Pos )
     ASSERT( (Pos>=0) && (Pos<m_FilePos) );
     m_FilePos          = Pos;
     m_LineNumber       = 1;
-    m_Type             = TOKEN_NONE;
+    m_type             = TOKEN_NONE;
     m_Delimiter        = ' ';
     m_Float            = 0.0f;
     m_Int              = 0;
@@ -385,7 +411,7 @@ xbool   token_stream::Find        ( const char* TokenStr, xbool FromBeginning )
 
     Read();
 
-    while( m_Type != TOKEN_EOF )
+    while( m_type != TOKEN_EOF )
     {
         if( x_stricmp(m_String,TokenStr)==0 ) return TRUE;
         Read();
@@ -405,10 +431,10 @@ void token_stream::SkipToNextLine( void )
 
         // Move forward to end of line
         {
-            while( (CHAR(m_FilePos)!='\n') && (m_FilePos<m_FileSize))
+            while( (m_FilePos < m_FileSize) && (CHAR(m_FilePos)!='\n') )
                 m_FilePos++;
 
-            if( CHAR(m_FilePos)=='\n' ) 
+            if( (m_FilePos < m_FileSize) && (CHAR(m_FilePos)=='\n') )
             {
                 m_LineNumber++;
                 m_FilePos++;
@@ -443,14 +469,15 @@ void token_stream::SkipWhitespace( void )
         }
 
         // Watch for line comment
-        if( (CHAR(m_FilePos+0) == '/') && (CHAR(m_FilePos+1) == '/') )
+        if( (m_FilePos < m_FileSize) &&
+            (CHAR(m_FilePos+0) == '/') && (CHAR(m_FilePos+1) == '/') )
         {
             m_FilePos += 2;
 
-            while( (CHAR(m_FilePos)!='\n') && (m_FilePos<m_FileSize))
+            while( (m_FilePos < m_FileSize) && (CHAR(m_FilePos)!='\n') )
                 m_FilePos++;
 
-            if( CHAR(m_FilePos)=='\n' ) 
+            if( (m_FilePos < m_FileSize) && (CHAR(m_FilePos)=='\n') )
             {
                 m_LineNumber++;
                 m_FilePos++;
@@ -460,13 +487,15 @@ void token_stream::SkipWhitespace( void )
         }
 
         // Watch for block comment
-        if( (CHAR(m_FilePos+0) == '/') && (CHAR(m_FilePos+1) == '*') )
+        if( (m_FilePos < m_FileSize) &&
+            (CHAR(m_FilePos+0) == '/') && (CHAR(m_FilePos+1) == '*') )
         {
             m_FilePos += 2;
 
-            while( m_FilePos <= m_FileSize-1 )
+            while( m_FilePos < m_FileSize )
             {
-                if( (CHAR(m_FilePos+0) == '*') && (CHAR(m_FilePos+1) == '/') )
+                if( (m_FilePos + 1 < m_FileSize) &&
+                    (CHAR(m_FilePos+0) == '*') && (CHAR(m_FilePos+1) == '/') )
                 {
                     m_FilePos += 2;
                     break;
@@ -498,7 +527,7 @@ token_stream::type    token_stream::Read        ( s32 NTokens )
         char    ch;
 
         // Clear the current settings
-        m_Type          = TOKEN_NONE;
+        m_type          = TOKEN_NONE;
         m_Delimiter     = ' ';
         m_Float         = 0.0f;
         m_Int           = 0;
@@ -513,7 +542,7 @@ token_stream::type    token_stream::Read        ( s32 NTokens )
         // Watch for end of file
         if( m_FilePos >= m_FileSize )
         {
-            m_Type = TOKEN_EOF;
+            m_type = TOKEN_EOF;
             continue;
         }
 
@@ -524,13 +553,13 @@ token_stream::type    token_stream::Read        ( s32 NTokens )
             // Copy number into string buffer
             i=0;
             m_IsFloat = FALSE;
-            while( 1 )
+            while( m_FilePos < m_FileSize )
             {
                 ch = CHAR(m_FilePos);
-                if( !m_IsCharNumber[ch] )
+                if( !m_IsCharNumber[ static_cast<byte>( ch ) ] )
                     break;
                 m_String[i] = ch;
-                m_IsFloat |= m_IsCharNumber[ch];
+                m_IsFloat |= m_IsCharNumber[ static_cast<byte>( ch ) ];
                 m_FilePos++;
                 i++;
                 ASSERT( i < TOKEN_STRING_SIZE-1 );
@@ -543,13 +572,13 @@ token_stream::type    token_stream::Read        ( s32 NTokens )
             {
                 m_Float     = x_atof( m_String );
                 m_Int       = (s32)m_Float;
-                m_Type      = TOKEN_NUMBER;
+                m_type      = TOKEN_NUMBER;
             }
             else
             {
                 m_Int       = x_atoi( m_String );
                 m_Float     = (f32)m_Int;
-                m_Type      = TOKEN_NUMBER;
+                m_type      = TOKEN_NUMBER;
             }
         
             continue;
@@ -560,7 +589,7 @@ token_stream::type    token_stream::Read        ( s32 NTokens )
         {
             m_FilePos++;        
             i=0;
-            while( CHAR(m_FilePos)!='"' )
+            while( (m_FilePos < m_FileSize) && (CHAR(m_FilePos)!='"') )
             {
                 // Check for illegal ending of a string
                 ASSERT((m_FilePos < m_FileSize) && "EOF in quote");
@@ -573,9 +602,17 @@ token_stream::type    token_stream::Read        ( s32 NTokens )
                 ASSERT( i < TOKEN_STRING_SIZE-1 );
             }
 
+            if( m_FilePos >= m_FileSize )
+            {
+                ASSERT( FALSE && "EOF in quote" );
+                m_String[i] = 0;
+                m_type = TOKEN_EOF;
+                continue;
+            }
+
             m_FilePos++;
             m_String[i]  = 0;
-            m_Type       = TOKEN_STRING;
+            m_type       = TOKEN_STRING;
 
             continue;
         }
@@ -588,7 +625,7 @@ token_stream::type    token_stream::Read        ( s32 NTokens )
         if( m_DelimiterStr[i] )
         {
             m_FilePos++;
-            m_Type           = TOKEN_DELIMITER;
+            m_type           = TOKEN_DELIMITER;
             m_Delimiter      = ch;
             m_String[0]      = ch;
             m_String[1]      = 0;
@@ -612,12 +649,12 @@ token_stream::type    token_stream::Read        ( s32 NTokens )
             }
 
             m_String[i] = 0;
-            m_Type      = TOKEN_SYMBOL;
+            m_type      = TOKEN_SYMBOL;
             continue;
         }
     }
 
-    return m_Type;
+    return m_type;
 }
 
 //==============================================================================
@@ -626,15 +663,22 @@ f32     token_stream::ReadFloat   ( void )
 {
     SkipWhitespace();
 
+    if( m_FilePos >= m_FileSize )
+    {
+        ASSERT( FALSE && "EOF while reading float" );
+        m_type = TOKEN_EOF;
+        return 0.0f;
+    }
+
     char ch = CHAR(m_FilePos);
     ASSERT(((ch>='0') && (ch<='9')) || (ch=='-') || (ch=='+'));
 
     // Copy number into string buffer
     s32 i=0;
-    while( 1 )
+    while( m_FilePos < m_FileSize )
     {
         ch = CHAR(m_FilePos);
-        if( !m_IsCharNumber[ch] )
+        if( !m_IsCharNumber[ static_cast<byte>( ch ) ] )
             break;
         m_String[i] = ch;
         m_FilePos++;
@@ -646,7 +690,7 @@ f32     token_stream::ReadFloat   ( void )
     m_String[i] = 0;
     m_Float     = x_atof( m_String );
     m_Int       = (s32)m_Float;
-    m_Type      = TOKEN_NUMBER;
+    m_type      = TOKEN_NUMBER;
     m_IsFloat   = TRUE;
 
     return m_Float;
@@ -661,7 +705,7 @@ f32 token_stream::ReadF32FromString( void )
     // Transform string into a float
     m_Float     = x_atof( m_String );
     m_Int       = (s32)m_Float;
-    m_Type      = TOKEN_NUMBER;
+    m_type      = TOKEN_NUMBER;
     m_IsFloat   = TRUE;
 
     return m_Float;
@@ -676,7 +720,7 @@ s32 token_stream::ReadS32FromString( void )
     // Transform string into a s32
     m_Int       = x_atoi( m_String );
     m_Float     = (f32)m_Int;
-    m_Type      = TOKEN_NUMBER;
+    m_type      = TOKEN_NUMBER;
     m_IsFloat   = FALSE;
 
     return m_Int;
@@ -691,7 +735,7 @@ xbool token_stream::ReadBoolFromString( void )
     // Transform string into an xbool
     m_Int       = x_atoi( m_String );
     m_Float     = (f32)m_Int;
-    m_Type      = TOKEN_NUMBER;
+    m_type      = TOKEN_NUMBER;
     m_IsFloat   = FALSE;
 
     return (m_Int) ? (TRUE):(FALSE);
@@ -703,15 +747,22 @@ s32     token_stream::ReadInt     ( void )
 {
     SkipWhitespace();
 
+    if( m_FilePos >= m_FileSize )
+    {
+        ASSERT( FALSE && "EOF while reading integer" );
+        m_type = TOKEN_EOF;
+        return 0;
+    }
+
     char ch = CHAR(m_FilePos);
     ASSERT(((ch>='0') && (ch<='9')) || (ch=='-') || (ch=='+'));
 
     // Copy number into string buffer
     s32 i=0;
-    while( 1 )
+    while( m_FilePos < m_FileSize )
     {
         ch = CHAR(m_FilePos);
-        if( !m_IsCharNumber[ch] )
+        if( !m_IsCharNumber[ static_cast<byte>( ch ) ] )
             break;
         m_String[i] = ch;
         m_FilePos++;
@@ -723,7 +774,7 @@ s32     token_stream::ReadInt     ( void )
     m_String[i] = 0;
     m_Int       = x_atoi( m_String );
     m_Float     = (f32)m_Int;
-    m_Type      = TOKEN_NUMBER;
+    m_type      = TOKEN_NUMBER;
     m_IsFloat   = FALSE;
 
     //x_DebugMsg("Read integer: %d\n", m_Int);
@@ -736,9 +787,22 @@ s32     token_stream::ReadHex     ( void )
 {
     SkipWhitespace();
 
+    if( m_FilePos >= m_FileSize )
+    {
+        ASSERT( FALSE && "EOF while reading hexadecimal value" );
+        m_type = TOKEN_EOF;
+        return 0;
+    }
+
     char ch = CHAR(m_FilePos);
     m_FilePos++;
     ASSERT( ch == '0' );
+    if( m_FilePos >= m_FileSize )
+    {
+        ASSERT( FALSE && "EOF while reading hexadecimal value" );
+        m_type = TOKEN_EOF;
+        return 0;
+    }
     ch = CHAR(m_FilePos);
     m_FilePos++;
     ASSERT( ch == 'x' );
@@ -748,7 +812,7 @@ s32     token_stream::ReadHex     ( void )
     s32 i=2;
     m_String[0] = '0';
     m_String[1] = 'x';
-    while( 1 )
+    while( m_FilePos < m_FileSize )
     {
         ch = x_toupper(CHAR(m_FilePos));
         if( x_ishex( ch ) )
@@ -769,7 +833,7 @@ s32     token_stream::ReadHex     ( void )
     m_String[i] = 0;
     m_Int       = Number;
     m_Float     = (f32)m_Int;
-    m_Type      = TOKEN_NUMBER;
+    m_type      = TOKEN_NUMBER;
     m_IsFloat   = FALSE;
 
     return m_Int;
@@ -799,7 +863,7 @@ char*   token_stream::ReadSymbol  ( void )
     }
 
     m_String[i] = 0;
-    m_Type      = TOKEN_SYMBOL;
+    m_type      = TOKEN_SYMBOL;
     return m_String;
 }
 
@@ -813,7 +877,7 @@ char*   token_stream::ReadString  ( void )
 
     m_FilePos++;        
     s32 i=0;
-    while( CHAR(m_FilePos)!='"' )
+    while( (m_FilePos < m_FileSize) && (CHAR(m_FilePos)!='"') )
     {
         // Check for illegal ending of a string
         ASSERT((m_FilePos < m_FileSize) && "EOF in quote");
@@ -826,9 +890,17 @@ char*   token_stream::ReadString  ( void )
         ASSERT( i < TOKEN_STRING_SIZE-1 );
     }
 
+    if( m_FilePos >= m_FileSize )
+    {
+        ASSERT( FALSE && "EOF in quote" );
+        m_String[i] = 0;
+        m_type = TOKEN_EOF;
+        return m_String;
+    }
+
     m_FilePos++;
     m_String[i]  = 0;
-    m_Type       = TOKEN_STRING;
+    m_type       = TOKEN_STRING;
     return m_String;
 }
 
@@ -853,7 +925,7 @@ char* token_stream::ReadLine( void )
 
     // Terminate the string
     m_String[i] = 0;
-    m_Type      = TOKEN_SYMBOL;
+    m_type      = TOKEN_SYMBOL;
 
     // Skip end of line feeds
     while(m_FilePos<m_FileSize)
@@ -874,7 +946,7 @@ char* token_stream::ReadLine( void )
 char*   token_stream::ReadToSymbol ( char Sym )
 {
     s32 i=0;
-    while( CHAR(m_FilePos)!= Sym )
+    while( (m_FilePos < m_FileSize) && (CHAR(m_FilePos)!= Sym) )
     {
         // Check for illegal ending of a string
         ASSERT((m_FilePos < m_FileSize) && "EOF in quote");
@@ -885,9 +957,17 @@ char*   token_stream::ReadToSymbol ( char Sym )
         m_FilePos++;
     }
 
+    if( m_FilePos >= m_FileSize )
+    {
+        ASSERT( FALSE && "Symbol not found before EOF" );
+        m_String[i] = 0;
+        m_type = TOKEN_EOF;
+        return m_String;
+    }
+
     m_FilePos++;
     m_String[i]  = 0;
-    m_Type       = TOKEN_STRING;
+    m_type       = TOKEN_STRING;
     return m_String;
 }
 
@@ -902,7 +982,7 @@ void token_stream::OpenText( const char* pTextString )
     m_FileSize   = 0;
     m_FilePos    = 0;
     m_LineNumber = 1;
-    m_Type = TOKEN_NONE;
+    m_type = TOKEN_NONE;
 
     x_strcpy( m_Filename, "<internal string>" );
 

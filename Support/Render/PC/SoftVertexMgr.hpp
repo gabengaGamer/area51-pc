@@ -1,90 +1,116 @@
 //=========================================================================
-//  
-//  Soft Vertex Manager for PC
-//  
+//
+//  SoftVertexMgr.hpp
+//
 //=========================================================================
 
 #ifndef SOFT_VERTEX_MANAGER_HPP
 #define SOFT_VERTEX_MANAGER_HPP
 
 //=========================================================================
-//  PLATFORM CHECK
+//  BASE INCLUDES
 //=========================================================================
 
 #include "x_types.hpp"
-
-#if !defined(TARGET_PC)
-#error "This is only for the PC target platform. Please check build exclusion rules"
-#endif
 
 //=========================================================================
 // INCLUDES
 //=========================================================================
 
 #include "VertexMgr.hpp"
-#include "Render/SkinGeom.hpp"
 
 //=========================================================================
 // CLASS
 //=========================================================================
 
-class soft_vertex_mgr : protected vertex_mgr
+struct SkinGpuVertex
+{
+    vector4 Position;
+    vector4 Normal;
+    vector4 UVWeights;
+};
+
+class SoftVertexMgr
 {
 public:
-
-    void        Init                ( void );
-    void        Kill                ( void );
-    xhandle     AddDList            ( void*                   pVertex, 
-                                      s32                     nVertices, 
-                                      u16*                    pIndex, 
-                                      s32                     nIndices, 
-                                      s32                     nPrims, 
-                                      s32                     nCmds, 
-                                      skin_geom::command_pc*  pCmd );
-
-    void        DelDList            ( xhandle hDList );
-    void        BeginRender         ( void );
-    void        DrawDList           ( xhandle hDList, const matrix4* pBone );
-    void        DrawDListInstanced  ( xhandle hDList, s32 nInstances );
-    void        InvalidateCache     ( void );
-
-protected:
-
     enum
     {
-        INVALID_BONE_REMAP = 0xFFFF
+        INVALID_BONE_REMAP = 0xFFFF,
+        MAX_BONE_PALETTE = 96
     };
-
-    //----------------------------------------
-
-    struct soft_section
+    
+    struct SoftSection
     {
-        s16 Start;
-        s16 End;
-        u16 BoneRemap[MAX_SKIN_BONES];
+        s32 FirstIndex;
+        s32 IndexCount;
+        u16 BoneRemap[MAX_BONE_PALETTE];
+    
+        SoftSection( void );
     };
-
-    //----------------------------------------
-
-    struct soft_dlist
-    {   
-        xhandle         hDList;      // Display List
-        s32             nSections;   // Draw sections
-        soft_section*   pSection;    // Section descriptors
+    
+    struct PreparedMesh
+    {
+        VertexMgr::PreparedMesh VertexData;
+        xarray<SoftSection>     Sections;
+    
+        void Clear( void );
     };
-
-protected:
-
-    xharray<soft_dlist>     m_lSoftDList;
+    
+    struct SectionInput
+    {
+        s32        FirstIndex;
+        s32        IndexCount;
+        u16 const* pBoneRemap;
+        s32        BoneCount;
+    };
+    
+    struct MeshView
+    {
+        VertexMgr::mesh_range Geometry;
+        SoftSection const*    pSections;
+        s32                   SectionCount;
+    
+        MeshView( void ) : Geometry(), pSections( NULL ), SectionCount( 0 )
+        {
+        }
+    };
+    
+public:
+    void Init ( void );
+    void Kill ( void );
+    
+    static xbool PrepareMesh ( PreparedMesh& prepared, SkinGpuVertex const* pVertex, s32 nVertices, u16 const* pIndex,
+                               s32 nIndices, s32 nBones, SectionInput const* pSections, s32 nSections );
+    
+    xhandle AddMesh    ( PreparedMesh const& prepared );
+    void    RemoveMesh ( xhandle hMesh );
+    
+    xbool BindPools   ( VertexMgr::mesh_range const& range ) const;
+    xbool GetMeshView ( xhandle hMesh, MeshView& view ) const;
+    
+private:
+    struct SkinMesh
+    {
+        xhandle             hGeometry;
+        xarray<SoftSection> Sections;
+    
+        SkinMesh( void ) : hGeometry(), Sections()
+        {
+            hGeometry.Handle = HNULL;
+        }
+    };
+    
+private:
+    VertexMgr         m_vertexMgr;
+    xharray<SkinMesh> m_meshes;
 };
 
 //=========================================================================
 //  GLOBAL INSTANCE
 //=========================================================================
 
-extern soft_vertex_mgr g_SkinVertMgr;
+extern SoftVertexMgr g_SkinVertMgr;
 
 //=========================================================================
-// END
+#endif // SOFT_VERTEX_MANAGER_HPP
 //=========================================================================
-#endif

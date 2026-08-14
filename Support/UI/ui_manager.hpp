@@ -16,13 +16,10 @@
 #include "x_math.hpp"
 #endif
 
-#include "Obj_mgr\obj_mgr.hpp"
-
-//==============================================================================
-//  Controller button mapping
-//==============================================================================
-
-#define INPUT_MAX_CONTROLLER_COUNT 2
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
+#include "e_Input.hpp"
+#include "ui_input.hpp"
 
 //==============================================================================
 //  Externals
@@ -32,12 +29,6 @@ class ui_win;
 class ui_font;
 class ui_dialog;
 class ui_control;
-
-#if !defined(X_RETAIL)
-// debug variable - UI input access is only valid from within a limited
-// context. this will allow asserts to work in that case.
-extern xbool bInProcessInput;
-#endif
 
 //==============================================================================
 //  Types
@@ -108,6 +99,11 @@ class ui_manager
 {
 public:
 
+    enum
+    {
+        MAX_INPUT_CONTROLLERS = 4,
+    };
+
     //==========================================================================
     //  Templates for dialogs and controls
     //==========================================================================
@@ -146,9 +142,6 @@ public:
     {
     public:
         xbool       State;
-        f32         AnalogScaler;
-        f32         AnalogEngage;
-        f32         AnalogDisengage;
         f32         RepeatDelay;
         f32         RepeatInterval;
         f32         RepeatTimer;
@@ -157,39 +150,17 @@ public:
         s32         nReleases;
 
     public:
-                    button              ( void ) { State = 0; nPresses = 0; nRepeats = 0; nReleases = 0; RepeatDelay = 0.200f; RepeatInterval = 0.060f; AnalogScaler = 1.0f; AnalogEngage = 0.5f; AnalogDisengage = 0.3f; };
+                    button              ( void ) { State = 0; nPresses = 0; nRepeats = 0; nReleases = 0; RepeatDelay = 0.200f; RepeatInterval = 0.060f; RepeatTimer = 0.0f; };
                    ~button              ( void ) {};
 
         void        Clear               ( void )                    { State = 0; nPresses = 0; nRepeats = 0; nReleases = 0; };
 
         void        SetupRepeat         ( f32 Delay, f32 Interval ) { RepeatDelay = Delay; RepeatInterval = Interval; };
-        void        SetupAnalog         ( f32 s, f32 e, f32 d )     { AnalogScaler = s ; AnalogEngage = e; AnalogDisengage = d; };
-    };
-
-    //==========================================================================
-    //  Control States
-    //==========================================================================
-
-    enum control_state
-    {
-        CS_NORMAL               = 0,
-        CS_HIGHLIGHT,
-        CS_SELECTED,
-        CS_HIGHLIGHT_SELECTED,
-        CS_DISABLED
     };
 
     //==========================================================================
     //  User Data
     //==========================================================================
-
-    enum user_navigate
-    {
-        NAV_UP,
-        NAV_DOWN,
-        NAV_LEFT,
-        NAV_RIGHT,
-    };
 
     struct user
     {
@@ -200,40 +171,35 @@ public:
         s32                     Data;
         s32                     Height;
         ui_win*                 pCaptureWindow;
-        ui_win*                 pFocusedWindow;               // Window that currently has focus (set by mouse hover or pad nav)
+        ui_win*                 pPressedWindow;               // Window that owns the current primary press
+        ui_win*                 pFocusedWindow;               // Window that currently has keyboard/gamepad focus
         ui_win*                 pHoveredWindow;               // Window currently under the mouse cursor
+        ui_input_device         InputDevice;
+        input_platform          InputPlatform;
         xstring                 Background;
-        s32                     iHighlightElement;
 
-        xbool                   bMouseMode;                   // TRUE when mouse is the active input device
         xbool                   MouseVisible;                 // TRUE when mouse cursor is visible
-        s32                     MouseX;                       // Mouse cursor X
-        s32                     MouseY;                       // Mouse cursor Y
-        s32                     LastMouseX;                   // Last frame mouse cursor X
-        s32                     LastMouseY;                   // Last frame mouse cursor Y
-        button                  ButtonLB;
-        button                  ButtonMB;
-        button                  ButtonRB;
+        f32                     MouseX;                       // Mouse cursor X in logical coordinates
+        f32                     MouseY;                       // Mouse cursor Y in logical coordinates
+        f32                     LastMouseX;                   // Last frame mouse cursor X
+        f32                     LastMouseY;                   // Last frame mouse cursor Y
+        button                  PointerPrimary;
 
-        button                  DPadUp            [INPUT_MAX_CONTROLLER_COUNT];
-        button                  DPadDown          [INPUT_MAX_CONTROLLER_COUNT];
-        button                  DPadLeft          [INPUT_MAX_CONTROLLER_COUNT];
-        button                  DPadRight         [INPUT_MAX_CONTROLLER_COUNT];
-        button                  PadSelect         [INPUT_MAX_CONTROLLER_COUNT];
-        button                  PadBack           [INPUT_MAX_CONTROLLER_COUNT];
-        button                  PadDelete         [INPUT_MAX_CONTROLLER_COUNT];
-        button                  PadActivate       [INPUT_MAX_CONTROLLER_COUNT];   
-        button                  PadHelp           [INPUT_MAX_CONTROLLER_COUNT];
-        button                  PadShoulderL      [INPUT_MAX_CONTROLLER_COUNT];
-        button                  PadShoulderR      [INPUT_MAX_CONTROLLER_COUNT];
-        button                  PadShoulderL2     [INPUT_MAX_CONTROLLER_COUNT];
-        button                  PadShoulderR2     [INPUT_MAX_CONTROLLER_COUNT];
-        button                  LStickUp          [INPUT_MAX_CONTROLLER_COUNT];
-        button                  LStickDown        [INPUT_MAX_CONTROLLER_COUNT];
-        button                  LStickLeft        [INPUT_MAX_CONTROLLER_COUNT];
-        button                  LStickRight       [INPUT_MAX_CONTROLLER_COUNT];      
-
+        button                  NavigateUp        [MAX_INPUT_CONTROLLERS];
+        button                  NavigateDown      [MAX_INPUT_CONTROLLERS];
+        button                  NavigateLeft      [MAX_INPUT_CONTROLLERS];
+        button                  NavigateRight     [MAX_INPUT_CONTROLLERS];
+        button                  Accept            [MAX_INPUT_CONTROLLERS];
+        button                  Cancel            [MAX_INPUT_CONTROLLERS];
+        button                  Delete            [MAX_INPUT_CONTROLLERS];
+        button                  Alternate         [MAX_INPUT_CONTROLLERS];
+        button                  Help              [MAX_INPUT_CONTROLLERS];
+        button                  PagePrevious      [MAX_INPUT_CONTROLLERS];
+        button                  PageNext          [MAX_INPUT_CONTROLLERS];
+        button                  First             [MAX_INPUT_CONTROLLERS];
+        button                  Last              [MAX_INPUT_CONTROLLERS];
         xarray<ui_dialog*>      DialogStack;
+        u32                     DialogRevision;
     };
 
     //==========================================================================
@@ -250,15 +216,25 @@ public:
     //  Graphic Element for UI
     //==========================================================================
 
-    struct element
+    struct element_desc
     {
-        xstring           Name;
-        //xbitmap         Bitmap;
-        rhandle<xbitmap>  Bitmap;
+        const char*       pName;
+        const char*       pBitmapName;
         s32               nStates;
         s32               cx;
         s32               cy;
-        xarray<irect>     r;
+        f32               TexelsPerUIUnit;
+    };
+
+    struct element
+    {
+        xstring           Name;
+        rhandle<texture>  Bitmap;
+        s32               nStates;
+        s32               cx;
+        s32               cy;
+        xarray<irect>     TextureRects;
+        xarray<irect>     LayoutRects;
     };
 
     //==========================================================================
@@ -269,7 +245,7 @@ public:
     {
         xstring           Name;
         xstring           BitmapName;
-        rhandle<xbitmap>  Bitmap;
+        rhandle<texture>  Bitmap;
     };
 
     //==========================================================================
@@ -280,7 +256,7 @@ public:
     {
         xstring           Name;
         xstring           BitmapName;
-        rhandle<xbitmap>  Bitmap;
+        rhandle<texture>  Bitmap;
     };
 
     //==========================================================================
@@ -304,44 +280,16 @@ public:
         dialog_tem*     pDialogTem;
     };
 
-    //==========================================================================
-    //  Clip Record
-    //==========================================================================
-
-    struct cliprecord
-    {
-        irect           r;
-    };
-
-    //==========================================================================
-    //  Highlight
-    //==========================================================================
-
-    struct highlight
-    {
-        irect           r;
-        s32             iElement;
-        xbool           Flash;
-    };
-
-    //==========================================================================
-    //  Wipe trail element
-    //==========================================================================
-
-    struct wipeElement
-    {
-
-        irect           Position;
-        xbool           Active;
-    };
-
 //==============================================================================
 //  Functions
 //==============================================================================
 
 protected:
+    void            UpdateViewport          ( void );
     void            UpdateButton            ( ui_manager::button& Button, xbool State, f32 DeltaTime );
-    void            UpdateAnalog            ( ui_manager::button& Button, f32 Value, f32 DeltaTime );
+    void            SetHoveredWindow        ( user* pUser, ui_win* pWin );
+    void            SetInputMode            ( user* pUser, ui_input_device Device, input_platform Platform );
+    void            RenderNavText           ( const user* pUser ) const;
 
 public:
                     ui_manager              ( void );
@@ -362,12 +310,11 @@ public:
     void            RenderBitmap            ( s32 iBitmap, const irect& Position, xcolor Color = XCOLOR_WHITE ) const;
     void            RenderBitmapUV          ( s32 iBitmap, const irect& Position, const vector2& UV0, const vector2& UV1, xcolor Color = XCOLOR_WHITE ) const;
 
-    s32             LoadElement             ( const char* pName, const char* pPathName, s32 nStates, s32 cx, s32 cy );
+    s32             LoadElement             ( const element_desc& Desc );
     s32             FindElement             ( const char* pName ) const;
     void            RenderElement           ( s32 iElement, const irect& Position,       s32 State, const xcolor& Color = XCOLOR_WHITE, xbool IsAdditive = FALSE ) const;
     void            RenderElementUV         ( s32 iElement, const irect& Position, const irect& UV, const xcolor& Color = XCOLOR_WHITE, xbool IsAdditive = FALSE ) const;
     void            RenderElementUV         ( s32 iElement, const irect& Position, const vector2& UV0, const vector2& UV1, const xcolor& Color = XCOLOR_WHITE, xbool IsAdditive = FALSE ) const;
-    const element*  GetElement              ( s32 iElement ) const;
 
     s32             LoadFont                ( const char* pName, const char* pPathName );
     s32             FindFont                ( const char* pName ) const;
@@ -375,6 +322,7 @@ public:
     void            RenderText              ( s32 iFont, const irect& Position, s32 Flags, const xcolor& Color, const   char* pString, xbool IgnoreEmbeddedColor = TRUE, xbool UseGradient = TRUE, f32 FlareAmount = R_0  ) const;
     void            RenderText              ( s32 iFont, const irect& Position, s32 Flags, const xcolor& Color, const xwchar* pString, xbool IgnoreEmbeddedColor = TRUE, xbool UseGradient = TRUE, f32 FlareAmount = R_0  ) const;
     void            RenderText              ( s32 iFont, const irect& Position, s32 Flags,       s32     Alpha, const xwchar* pString, xbool IgnoreEmbeddedColor = TRUE, xbool UseGradient = TRUE, f32 FlareAmount = R_0  ) const;
+    void            RenderInputText         ( s32 iFont, const irect& Position, s32 Flags, const xcolor& Color, const xwchar* pString, input_platform Platform ) const;
     void            RenderText_Wrap         ( s32 iFont, const irect& Position, s32 Flags, const xcolor& Color, const xwstring& Text,  xbool IgnoreEmbeddedColor = TRUE, xbool UseGradient = TRUE, f32 FlareAmount = R_0  );
 
     s32             TextWidth               ( s32 iFont, const xwchar* pString, s32 Count = -1 ) const;
@@ -402,9 +350,11 @@ public:
     user*           GetUserById             ( s32 UserID ) const;
     s32             GetUserData             ( s32 UserID ) const;
     ui_win*         GetFocusedWindow        ( s32 UserID ) const;
+    ui_input_device GetInputDevice          ( s32 UserID ) const;
+    input_platform  GetInputPlatform        ( s32 UserID ) const;
+    xbool           DispatchInput           ( ui_win* pTarget, ui_input_event& Event );
     void            SetMouseVisible         ( s32 UserID, xbool State );
     xbool           GetMouseVisible         ( s32 UserID ) const;
-    xbool           IsGamepadActiveInput    ( void ) const;
     void            SetMousePos             ( s32 UserID, s32  x, s32  y );
     void            GetMousePos             ( s32 UserID, s32& x, s32& y ) const;
     void            SetFocusWindow          ( s32 UserID, ui_win* pWin );
@@ -412,9 +362,10 @@ public:
     void            ReleaseCapture          ( s32 UserID );
     void            SetUserBackground       ( s32 UserID, const char* pName );
     const irect&    GetUserBounds           ( s32 UserID ) const;
+    void            SetUserScale            ( f32 Scale );
+    f32             GetUserScale            ( void ) const;
     void            EnableUser              ( s32 UserID, xbool State );
     xbool           IsUserEnabled           ( s32 UserID ) const;
-    void            AddHighlight            ( s32 UserID, irect& r, xbool Flash = TRUE );
     void            SetUserController       ( s32 UserID, s32 ControllerID );
 
     void            PushClipWindow          ( const irect &r );
@@ -433,9 +384,6 @@ public:
     void            WordWrapString          ( s32 iFont, const irect& r, const char* pString, xwstring& RetVal );
     void            WordWrapString          ( s32 iFont, const irect& r, const xwstring& String, xwstring& RetVal );
 
-    void            CheckRes                ( void );
-    void            SetRes                  ( void );
-
     void            CheckForEndDialog       ( s32 UserID );
 
     u32             GetActiveController     ( void )                { return m_ActiveController; }
@@ -443,21 +391,17 @@ public:
     f32             GetAlphaTime            ( void )                { return m_AlphaTime; }
 
     // button icons
-    xbitmap*        GetButtonTexture        ( s32 buttonCode );      
-    s32             LookUpButtonCode        ( const xwchar* pString, s32 iStart ) const;
-
-    // scale factors
-    f32             GetScaleX               ( void )                { return m_ScaleX; }
-    f32             GetScaleY               ( void )                { return m_ScaleY; }
+    texture*        GetButtonTexture        ( s32 buttonCode );
+    s32             LookUpButtonCode        ( const xwchar* pString, s32 iStart, input_device Device, input_platform Platform ) const;
 
     // Screen wipe
-    void            InitScreenWipe          ( void );
-    void            RenderScreenWipe        ( void );
+    void            InitScreenWipe          ( ui_dialog* pOwner );
+    void            RenderScreenWipe        ( const ui_dialog* pOwner );
     void            UpdateScreenWipe        ( f32 DeltaTime );
     void            ResetScreenWipe         ( void );
-    void            GetWipePos              ( irect &pos )          { pos = m_wipePos; }
-    f32             GetWipeSpeed            ( void )                { return m_wipeSpeed; }
-    xbool           IsWipeActive            ( void )                { return m_wipeActive; }
+    s32             GetWipeRevealY          ( void ) const          { return m_wipeRevealY; }
+    xbool           IsWipeActive            ( void ) const          { return m_wipeActive; }
+    xbool           IsWipeActiveFor         ( const ui_dialog* pOwner ) const;
 
     // Refresh bar
     void            InitRefreshBar          ( void );
@@ -505,6 +449,7 @@ public:
 //==============================================================================
 
 protected:
+    void                    DestroyDeferredDialogs( void );
 
     f32                     m_AlphaTime;
 
@@ -519,37 +464,27 @@ protected:
     xarray<font*>           m_Fonts;
     xbool                   m_EnableBackground;
 
-    xarray<cliprecord>      m_ClipStack;
-
-    xarray<highlight>       m_Highlights;
+    xarray<ui_dialog*>      m_DeferredDialogs;
+    s32                     m_CallbackDepth;
 
     xbool                   m_EnableUserInput;
 
     u32                     m_ActiveController;
 
-    xbitmap                 m_Mouse;
-    xcolor                  m_MouseColor;
-
     // button icons
-    rhandle<xbitmap>        m_ButtonTextures[NUM_BUTTON_TEXTURES];
+    rhandle<texture>        m_ButtonTextures[NUM_BUTTON_TEXTURES];
 
     xbool                   m_isScaling;
 
-    // resolution scale factors
-    f32                     m_ScaleX;
-    f32                     m_ScaleY;
-
     // screen wipe controls
     xbool                   m_wipeActive;
-    s32                     m_wipeStartY;
-    s32                     m_wipeEndY;
-    xbool                   m_wipeDown;
+    xbool                   m_wipeFading;
+    ui_dialog*              m_pWipeOwner;
+    irect                   m_wipeBounds;
+    s32                     m_wipeRevealY;
     f32                     m_wipeSpeed;
-    f32                     m_WipeStepAccumulator;
-    irect                   m_wipePos;
-    wipeElement             m_wipeTrail[16];
-    s32                     m_wipeCount;
-    u32                     m_wipeWidth;
+    f32                     m_wipeHeadY;
+    f32                     m_wipeFade;
 
     // refresh bar controls
     f32                     m_RefreshSpeed;
@@ -586,10 +521,7 @@ protected:
 
     // debugging tools
     xbool                   m_RenderSafeArea;
-
-#ifdef TARGET_PC
-    xarray<ui_dialog*>      m_KillDialogStack;
-#endif
+    xbool                   m_isInitialized;
 
 public:
     xstring*            m_log;

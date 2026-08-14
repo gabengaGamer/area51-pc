@@ -5,9 +5,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "x_bitmap.hpp"
-#include "Objects\Render\RigidInst.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
+#include "Objects/Render/RigidInst.hpp"
 
 enum select_type 
 {
@@ -52,6 +52,7 @@ public:
 
     virtual bbox            GetLocalBBox                        ( void ) const;      
             bbox            GetFocusBBox                        ( void ) const;
+            bbox            GetRenderFocusBBox                  ( void ) const;
 
 	virtual	void	        OnEnumProp		                    ( prop_enum& list );
 	virtual	xbool	        OnProperty		                    ( prop_query& rPropQuery );
@@ -61,7 +62,7 @@ public:
             
     virtual void            OnActivate                          ( xbool Flag );
     virtual void            OnAcquire                           ( xbool bIsRestoring = FALSE );
-    void                    OnAdvanceLogic                      ( f32 DeltaTime );
+    void                    OnAdvanceSimulation                      ( f32 DeltaTime );
     virtual xbool           IsTrueLoreObject                    ( void ) { return m_LoreID < NONLORE_OBJECT_OFFSET; }
 
     xbool                   HasFocus                            ( void );
@@ -77,7 +78,6 @@ public:
 #ifndef X_RETAIL
     virtual void                OnColRender     ( xbool bRenderHigh );
 #endif
-
 #ifdef X_EDITOR
     virtual s32             OnValidateProperties    ( xstring& ErrorMsg );
     virtual xbool           IsIconSelectable        ( void );
@@ -112,7 +112,6 @@ protected:
     f32         m_AnimState;
     f32         m_TextAlphaState;
     xbool       m_bLookingAt;
-    xbool       m_bRendered;
 
     xbool       m_bHasLOS;
     xbool       m_bInViewRange;
@@ -125,9 +124,8 @@ protected:
     xbool       m_bUseGeometrySize;         // use geometry size or use size variable?
     s32         m_LoreID;
 
-    static rhandle<xbitmap>     m_Bracket;
+    static rhandle<texture>     m_Bracket;
 
-    matrix4                     m_RenderL2W;
     rigid_inst                  m_RigidInst;        // Instance for rendering object.
     u32                         m_VMeshMask;
 

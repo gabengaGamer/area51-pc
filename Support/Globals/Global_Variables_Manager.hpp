@@ -14,21 +14,10 @@
 
 #include <x_types.hpp>
 #include <x_array.hpp>
-#include "Auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include <x_profile.hpp>
+#include "Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "x_bitstream.hpp"
-
-//=========================================================================
-// GLOBALS
-//=========================================================================
-
-//#define _ENABLE_GLOBAL_VARIABLE_PROFILING_   
-                         
-#ifdef _ENABLE_GLOBAL_VARIABLE_PROFILING_
-    #define VAR_MNGR_CONTEXT( exp )  CONTEXT( exp )                 
-#else
-    #define VAR_MNGR_CONTEXT( exp ) /*no-op*/
-#endif  
 
 //=========================================================================
 // CLASS

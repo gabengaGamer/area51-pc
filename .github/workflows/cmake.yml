@@ -1,0 +1,38 @@
+name: CMake portability
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  windows-x64:
+    name: Windows x64 / MSVC
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake --preset windows-vs2022-x64
+
+      - name: Build portable tools
+        run: >-
+          cmake --build --preset windows-vs2022-x64-debug
+          --target Entropy AudioMgr Render xbmptool dfsTool Art2Code --parallel 4
+
+  linux-x64:
+    name: Linux x64 / GCC
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake --preset linux-gcc-x64
+
+      - name: Validate generated Linux graph
+        run: >-
+          cmake --build --preset linux-gcc-x64-debug
+          --target Entropy AudioMgr Render --parallel 4

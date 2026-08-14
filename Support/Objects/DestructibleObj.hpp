@@ -5,9 +5,9 @@
 // INCLUDES
 //=========================================================================
 
-#include "Objects\PlaySurface.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "Decals\DecalPackage.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Decals/DecalPackage.hpp"
 
 //=============================================================================
 // INSTANCE
@@ -28,7 +28,7 @@ public:
     virtual void            OnPain              ( const pain& Pain ) ;  // Tells object to recieve pain
     virtual f32             GetHealth           ( void );
     virtual void            SetHealth           ( f32 newHealth );
-    virtual void            OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void            OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void            OnRender            ( void );
 
     virtual const object_desc&  GetTypeDesc     ( void ) const;

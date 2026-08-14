@@ -167,7 +167,7 @@ void loco_aim_controller::MixKeys( const info& Info, anim_key* pDestKey )
 {
     s32 i ;
 
-    CONTEXT("loco_aim_controller::MixKeys") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "loco_aim_controller::MixKeys") ;
 
     // Skip if controller has no weight
     if (m_Weight == 0.0f)

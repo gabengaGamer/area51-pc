@@ -1,12 +1,12 @@
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "ProjectileBullett.hpp"
 #include "WeaponSMP.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "objects\Projector.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Debris\debris_mgr.hpp"
-#include "render\LightMgr.hpp"
-#include "Objects\Player.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/Projector.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Debris/debris_mgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Objects/Player/Player.hpp"
 
 //=========================================================================
 // STATIC DEFINTIONS AND CONSTANTS
@@ -259,9 +259,9 @@ void weapon_smp::ProcessSfx( void )
 
 //==============================================================================
 
-void weapon_smp::OnAdvanceLogic( f32 DeltaTime )
+void weapon_smp::OnAdvanceSimulation( f32 DeltaTime )
 {
-    new_weapon::OnAdvanceLogic( DeltaTime );
+    new_weapon::OnAdvanceSimulation( DeltaTime );
 
     // Are we in zoom mode.
     if( IsZoomEnabled() )

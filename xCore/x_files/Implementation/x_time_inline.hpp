@@ -8,18 +8,7 @@
 #define X_TIME_INLINE_HPP
 
 //==============================================================================
-//  EXTERNAL DECLARATIONS
-//==============================================================================
-
-#ifdef TARGET_PC
-extern f64     g_PCInvFrequency;
-extern f64     g_PCInvFrequency2;
-#endif
-
-//==============================================================================
-//  INLINE FUNCTION IMPLEMENTATIONS
-//==============================================================================
-
+//  INLINE FUNCTIONS
 //==============================================================================
 
 inline void xtimer::Start( void )
@@ -28,7 +17,7 @@ inline void xtimer::Start( void )
     {
         m_StartTime = x_GetTime();
         m_Running   = TRUE;        
-        m_NSamples++;
+        m_NSamples = 1;
     }
 }
 
@@ -127,7 +116,7 @@ inline xtick xtimer::Trip( void )
         Ticks = m_TotalTime + (Now - m_StartTime);
         m_TotalTime = 0;
         m_StartTime = Now;
-        m_NSamples++;
+        m_NSamples = 1;
     }
     return Ticks;
 }
@@ -143,7 +132,7 @@ inline f32 xtimer::TripMs( void )
         Ticks = m_TotalTime + (Now - m_StartTime);
         m_TotalTime = 0;
         m_StartTime = Now;
-        m_NSamples++;
+        m_NSamples = 1;
     }
 
     return x_TicksToMs( Ticks );
@@ -160,7 +149,7 @@ inline f32 xtimer::TripSec( void )
         Ticks = m_TotalTime + (Now - m_StartTime);
         m_TotalTime = 0;
         m_StartTime = Now;
-        m_NSamples++;
+        m_NSamples = 1;
     }
 
     return (f32)x_TicksToSec( Ticks );

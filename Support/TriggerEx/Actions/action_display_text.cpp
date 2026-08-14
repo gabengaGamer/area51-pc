@@ -12,11 +12,11 @@
 #include "action_display_text.hpp"
 
 #include "Entropy.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Objects\HudObject.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "GameTextMgr\GameTextMgr.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Objects/HudObject.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "GameTextMgr/GameTextMgr.hpp"
 
 static const xcolor s_LogicColor          (100,100,0);
 

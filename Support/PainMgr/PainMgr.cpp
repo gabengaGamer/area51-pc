@@ -9,8 +9,8 @@
 //==============================================================================
 
 #include "x_files.hpp"
-#include "PainMgr\PainMgr.hpp"
-#include "parsing\tokenizer.hpp"
+#include "PainMgr/PainMgr.hpp"
+#include "Parsing/tokenizer.hpp"
 #include "NetworkMgr/NetworkMgr.hpp"
 #include "NetworkMgr/GameMgr.hpp"
 

@@ -8,10 +8,11 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
-#include "obj_mgr\obj_mgr.hpp"
-#include "..\objects\Render\RigidInst.hpp"
-#include "..\PainMgr\Pain.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Objects/Render/RigidInst.hpp"
+#include "../PainMgr/Pain.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Render/PrimitiveBatch.hpp"
 
 class play_surface;
 
@@ -37,7 +38,7 @@ public:
     virtual bbox        GetLocalBBox        ( void ) const;
     virtual s32         GetMaterial         ( void ) const { return MAT_TYPE_CONCRETE;}
 
-    virtual void        OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void        UpdatePhysics       ( f32 DeltaTime );
 
     virtual void        OnMove				( const vector3& rNewPos );
@@ -76,12 +77,15 @@ protected:
     pain                m_SourcePain;
     f32                 m_MinStartTime;
     f32                 m_MaxStartTime;
+    f32                 m_NextAudioImpactTime;
 
     // Render data
     vector3             m_pLocalPos[ MAX_SHARDS*3 ];
     vector3             m_pPos     [ MAX_SHARDS*3 ];  
     vector2             m_pUV      [ MAX_SHARDS*3 ];
-// TODO: ?  u32                 m_pColor   [ MAX_SHARDS*3 ];
+    render::primitive_vertex m_RenderVertices[ MAX_SHARDS*3 ];
+    u16                      m_RenderIndices [ MAX_SHARDS*3 ];
+    texture::handle          m_BrokenGlassTexture;
 
     bbox                m_BBox;
 };

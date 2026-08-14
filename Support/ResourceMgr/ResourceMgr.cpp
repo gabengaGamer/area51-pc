@@ -13,7 +13,7 @@
 #include "x_string.hpp"
 #include "x_log.hpp"
 #include "x_time.hpp"
-#include "x_context.hpp"
+#include "x_profile.hpp"
 
 //==============================================================================
 //  DEFINES
@@ -49,14 +49,6 @@ static char     FixupBuffer[ 1024 ];
 void* rsc_loader::PreLoad( X_FILE*& Fp, const char* pFileName )
 {
     MEMORY_OWNER( "PRELOAD" );
-
-#ifdef TARGET_XBOX
-    // We need to track the resource name for validation and sanity
-    extern void xbox_SetAllocationName( const char* );
-    xbox_SetAllocationName( pFileName );
-    m_pFileName = (char*)pFileName;
-#endif
-
     ASSERT( pFileName );
     Fp = x_fopen( pFileName, "rb" );
     if( Fp == NULL ) return NULL;
@@ -667,7 +659,7 @@ void rsc_mgr::Load( const char* pResourceName )
         if(m_pResource[I].State != FAILED_LOAD)
             Stats.numFailedLoadResources++;
 #endif // RSC_MGR_COLLECT_STATS
-        x_DebugMsg( "RSCMGR: Could not open for reading (%s)\n", pResourceName );
+        x_DebugMsg( "RSCMGR: Failed while resolving (%s)\n", pResourceName );
         m_pResource[I].State = FAILED_LOAD;
         return;
     }
@@ -750,7 +742,7 @@ void rsc_mgr::Unload( const char* pResourceName )
 
 void rsc_mgr::Refresh( const char* pResourceName )
 {
-    CONTEXT( "rsc_mgr::Refresh" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "rsc_mgr::Refresh" );
 
     s16 I = FindEntry( pResourceName );
     
@@ -1012,4 +1004,3 @@ const char* rsc_mgr::FixupFilename( const char* Filename )
 
     return FixupBuffer;
 }
-

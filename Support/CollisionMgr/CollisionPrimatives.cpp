@@ -1,4 +1,4 @@
-#include "entropy.hpp"
+#include "Entropy.hpp"
 //    vector3 g_LastBBoxTris[12][3];
 //    xbool   g_LastBBoxSet = FALSE;
 //    vector3 g_LastRaySelect[2];

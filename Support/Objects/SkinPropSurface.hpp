@@ -6,13 +6,12 @@
 // INCLUDES
 //=========================================================================
 #include "x_color.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Objects\Interpolation\SimpleAnimInterpolation.hpp"
-#include "Objects\Render\SkinInst.hpp"
-#include "Animation\AnimPlayer.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Characters\FloorProperties.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Objects/Render/SkinInst.hpp"
+#include "Animation/AnimPlayer.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Characters/FloorProperties.hpp"
 
 //=========================================================================
 // CLASS
@@ -56,15 +55,6 @@ public:
 
 protected:
 
-    virtual void                CaptureRenderInterpState ( void );
-    virtual void                UpdateRenderInterpState  ( f32 Alpha );
-    virtual void                ClearRenderInterpState   ( void );
-    virtual void                InvalidateRenderInterpState( void );
-    virtual void                SnapRenderInterpState    ( void );
-    void                        InvalidateRenderState( void );
-    const matrix4&              GetRenderL2W       ( void ) const;
-    xbool                       GetRenderBoneL2W   ( s32 iBone, matrix4& L2W );
-
     enum anims_type
     {
         ANIM_INVLAID = -1,
@@ -75,7 +65,7 @@ protected:
 
 protected:
 
-    virtual void                OnAdvanceLogic  ( f32 DeltaTime );
+    virtual void                OnAdvanceSimulation  ( f32 DeltaTime );
     virtual void                OnRender        ( void );
     virtual void                OnRenderShadowCast( u64 ProjMask );
     virtual void                OnColCheck      ( void );
@@ -95,7 +85,6 @@ protected:
     anim_group::handle          m_hAnimGroup;
     rhandle<char>               m_hAudioPackage;
     simple_anim_player          m_AnimPlayer;
-    simple_anim_interp_cache    m_RenderCache;
     s16                         m_iBackupAnimString;
     s32                         m_iMaterial;
     floor_properties            m_FloorProperties;

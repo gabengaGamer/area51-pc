@@ -11,8 +11,8 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_text.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_text.hpp"
 
 //==============================================================================
 //  dlg_level_desc
@@ -46,7 +46,7 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnPadSelect         ( ui_win* pWin );
+    virtual void        OnAccept         ( ui_win* pWin );
 
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 

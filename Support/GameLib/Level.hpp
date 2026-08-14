@@ -1,9 +1,9 @@
 #ifndef LEVEL_HPP
 #define LEVEL_HPP
 
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Parsing\TextIn.hpp"
-#include "Parsing\TextOut.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Parsing/TextIn.hpp"
+#include "Parsing/TextOut.hpp"
 
 //=============================================================================
 

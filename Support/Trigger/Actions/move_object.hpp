@@ -13,7 +13,7 @@
 //=========================================================================
 
  
-#include "..\Support\Trigger\Trigger_Actions.hpp"
+#include "../Support/Trigger/Trigger_Actions.hpp"
 
 //=========================================================================
 // MOVE_OBJECT

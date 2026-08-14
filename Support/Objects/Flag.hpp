@@ -11,11 +11,12 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "NetworkMgr\NetObj.hpp"
-#include "Objects\Render\RigidInst.hpp"
-#include "Cloth\Cloth.hpp"
-#include "Auxiliary\fx_RunTime\Fx_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "NetworkMgr/NetObj.hpp"
+#include "Objects/Render/RigidInst.hpp"
+#include "Objects/Cloth.hpp"
+#include "Objects/Render/ClothInst.hpp"
+#include "FX/fx_Mgr.hpp"
 
 
 //==============================================================================
@@ -89,10 +90,8 @@ public:
                     s32             GetVTexture         ( void );
 
     virtual         void            OnRender            ( void );
-#ifdef TARGET_XBOX    
-    virtual         void            OnRenderCloth       ( void );
-#endif    
-    virtual         void            OnAdvanceLogic      ( f32 DeltaTime );
+    virtual         void            OnRenderShadowCast  ( u64 ProjMask );
+    virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
     virtual         void            OnPain              ( const pain& Pain );    
     
                     void            OnRenderTransparent ( void );
@@ -132,7 +131,6 @@ protected:
     xbool           m_Attached;
     s32             m_Player;
     s32             m_Bone;
-    s32             m_Holes;
 
     u32             m_IgnoreBits;
     f32             m_IgnoreTimer;
@@ -144,7 +142,6 @@ protected:
 
     vector3         m_VanishPos;
 
-    xbool           m_bRendered;
     f32             m_IconOpacity;
     f32             m_BaseAlpha;
 
@@ -178,8 +175,9 @@ public:
             virtual         void            OnTransform         ( const matrix4& L2W    );
             void            InitCloth           ( void );
 
-            cloth           m_Cloth;
-            f32             m_ActiveTimer;  // If >0, cloth is updated.   
+            cloth           m_ClothSim;
+            cloth_inst      m_ClothRender;
+            f32             m_ActiveTimer;  // If >0, cloth is updated.
 };
 
 //==============================================================================

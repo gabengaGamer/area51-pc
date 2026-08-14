@@ -7,7 +7,7 @@
 
 #include "Entropy.hpp"
 #include "Tracker.hpp"
-#include "TriggerEx\Affecters\object_affecter.hpp"
+#include "TriggerEx/Affecters/object_affecter.hpp"
 
 //=========================================================================
 // CLASS
@@ -35,6 +35,7 @@ public:
     virtual xbool           OnProperty      ( prop_query& I );
     virtual void            OnMove          ( const vector3& NewPos   );        
     virtual void            OnTransform     ( const matrix4& L2W      ); 
+    virtual zone_mgr::TrackingMode GetZoneTrackingMode ( void ) const;
 
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
@@ -46,7 +47,7 @@ public:
 protected:
     virtual void            OnInit              ( void );     
     virtual void            OnRender            ( void );
-    virtual void            OnAdvanceLogic	    ( f32 DeltaTime );
+    virtual void            OnAdvanceSimulation	    ( f32 DeltaTime );
 
 #ifndef X_RETAIL
     virtual void            OnDebugRender       ( void );
@@ -56,27 +57,17 @@ protected:
 // PRIVATE FUNCTIONS
 //=====================================================================
             
-    virtual void            Update              ( xbool bSendKeyEvents ) ;
-
-            void            RenderViewBegin     ( const irect& Viewport, 
-                                                        s32    VramID    = -1 ) ;
-
-            void            RenderViewEnd       ( const irect& Viewport, 
-                                                        s32    VramID    = -1,
-                                                        s32    TexWidth  = -1,
-                                                        s32    TexHeight = -1 ) ;
+    virtual void            UpdateTrackedTransform ( xbool bSendKeyEvents ) ;
 
 //=====================================================================
 // PUBLIC FUNCTIONS
 //=====================================================================
 public:
 
-            void            RenderView          ( const irect& Viewport, 
-                                                        s32    VramID    = -1,
-                                                        s32    TexWidth  = -1,
-                                                        s32    TexHeight = -1 ) ;
+            void            RenderView          ( const irect& Viewport ) ;
 
             view&           GetView             ( void ) { return m_View ; }
+      const view&           GetView             ( void ) const { return m_View ; }
             xbool           IsEditorSelected    ( void );
             
 #ifdef X_EDITOR

@@ -38,9 +38,8 @@ public:
 
     virtual void    Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void    OnMouseMove         ( ui_win* pWin, s32 x, s32 y );
-    virtual void    OnLBDown            ( ui_win* pWin );
-    virtual void    OnNotify            ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData );
+    virtual void    OnPointerDown       ( ui_win* pWin, s32 x, s32 y );
+    virtual void    OnNotify( ui_notification const& Event );
 
     ui_listbox*     GetListBox          ( void );
     void            SetResultPtr        ( s32* pResultPtr );
@@ -48,10 +47,6 @@ public:
 protected:
     ui_listbox*     m_pList;
     s32*            m_pResultPtr;
-#ifdef TARGET_PC
-    xbool           m_InsideListBox;        // Check if the mouse cursor is not inside the dialog
-    s32             m_UserID;
-#endif
 };
 
 //==============================================================================

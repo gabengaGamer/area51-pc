@@ -8,6 +8,7 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_save_game.hpp"
 #include "Entropy.hpp"
 
@@ -39,7 +40,7 @@ void action_save_game::OnDebugRender ( s32 Index )
 {
     (void)Index;
 
-    draw_Label( GetPositionOwner(), s_SaveGameColor, "Save Game" );
+    render::debug::Label( GetPositionOwner(), s_SaveGameColor, "Save Game" );
 }
 #endif // X_RETAIL
 

@@ -5,17 +5,17 @@
 //=============================================================================================
 // INCLUDES
 //=============================================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "ProjectileMutantContagion.hpp"
-#include "Entropy\e_Draw.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Render\LightMgr.hpp"
-#include "Tracers\TracerMgr.hpp"
-#include "Objects\actor\actor.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "Objects\Player.hpp"
-#include "Characters\MutantTank\Mutant_Tank.hpp"
-#include "Objects\ParticleEmiter.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Tracers/TracerMgr.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Characters/MutantTank/Mutant_Tank.hpp"
+#include "Objects/ParticleEmiter.hpp"
 
 #define CONTAGION_AUDIO_BRANCH      "Contagion_Branch"
 #define CONTAGION_AUDIO_ATTACK      "Contagion_Attack"
@@ -154,11 +154,11 @@ bbox mutant_contagion_projectile::GetLocalBBox( void ) const
 
 //=============================================================================
 
-void mutant_contagion_projectile::OnAdvanceLogic( f32 DeltaTime )
+void mutant_contagion_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
     if( m_Exploded )
     {
-        net_proj::OnAdvanceLogic( DeltaTime );
+        net_proj::OnAdvanceSimulation( DeltaTime );
         return;
     }
 
@@ -302,7 +302,7 @@ void mutant_contagion_projectile::net_Deactivate( void )
 
 void mutant_contagion_projectile::UpdateTravel( void )
 {
-    net_proj::OnAdvanceLogic( m_DeltaTime );
+    net_proj::OnAdvanceSimulation( m_DeltaTime );
     g_AudioMgr.SetPosition( m_FlyVoiceID, GetPosition(), GetZone1() );
 
     // Update effect
@@ -1164,11 +1164,11 @@ void contagion::Render( void )
     /*
     if( C != XCOLOR_WHITE )
     {
-        draw_Sphere( m_CurrentPos, 25.0f, C );
+        render::debug::Sphere( m_CurrentPos, 25.0f, C );
         vector3 Dir = m_CurrentPos - m_PrevPos;
         Dir.SafeNormalize();
         Dir *= 75.0f;
-        draw_Line( m_CurrentPos, m_CurrentPos+Dir, XCOLOR_GREEN );
+        render::debug::Line( m_CurrentPos, m_CurrentPos+Dir, XCOLOR_GREEN );
     }
     */
 

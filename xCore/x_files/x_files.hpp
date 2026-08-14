@@ -19,6 +19,10 @@
 #include "x_types.hpp"
 #endif
 
+#ifndef X_ATOMIC_HPP
+#include "x_atomic.hpp"
+#endif
+
 #ifndef X_BITMAP_HPP
 #include "x_bitmap.hpp"
 #endif
@@ -67,14 +71,21 @@
 #include "x_time.hpp"
 #endif
 
-#ifndef X_CONTEXT_HPP
-#include "x_context.hpp"
+#ifndef X_PROFILE_HPP
+#include "x_profile.hpp"
 #endif
 
 #ifndef X_LOG_HPP
 #include "x_log.hpp"
 #endif
 
+#ifndef X_COMMAND_QUEUE_HPP
+#include "x_command_queue.hpp"
+#endif
+
+#ifndef X_WORKERS_HPP
+#include "x_workers.hpp"
+#endif
 
 //==============================================================================
 //  FUNCTIONS

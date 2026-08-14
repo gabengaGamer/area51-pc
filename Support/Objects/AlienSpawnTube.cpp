@@ -1,21 +1,21 @@
 
 #include "AlienSpawnTube.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
-#include "GameLib\RigidGeomCollision.hpp"
-#include "Render\Render.hpp"
-#include "EventMgr\EventMgr.hpp"
-#include "alienorb.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "Loco\LocoUtil.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "Characters\Soldiers\Soldier.hpp"
-#include "Characters\CharacterState.hpp"
-#include "EventMgr\EventMgr.hpp"
-#include "Objects\Group.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
+#include "GameLib/RigidGeomCollision.hpp"
+#include "Render/Render.hpp"
+#include "EventMgr/EventMgr.hpp"
+#include "AlienOrb.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Loco/LocoUtil.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "Characters/Soldiers/Soldier.hpp"
+#include "Characters/CharacterState.hpp"
+#include "EventMgr/EventMgr.hpp"
+#include "Objects/Group.hpp"
 
 //=============================================================================
 // CONSTANTS
@@ -316,9 +316,9 @@ xbool alien_spawn_tube::OnProperty( prop_query&   I    )
 }
 
 
-void alien_spawn_tube::OnAdvanceLogic( f32 DeltaTime )
+void alien_spawn_tube::OnAdvanceSimulation( f32 DeltaTime )
 {
-    anim_surface::OnAdvanceLogic( DeltaTime );
+    anim_surface::OnAdvanceSimulation( DeltaTime );
 
     if (m_State == STATE_SPAWNING_PREWAIT)
     {

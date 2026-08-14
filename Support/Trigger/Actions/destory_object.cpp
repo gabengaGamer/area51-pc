@@ -9,10 +9,11 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Trigger\Actions\destory_object.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "../Support/Trigger/Actions/destory_object.hpp"
 
-#include "..\Support\Trigger\Trigger_Manager.hpp"
-#include "..\Support\Trigger\Trigger_Object.hpp"
+#include "../Support/Trigger/Trigger_Manager.hpp"
+#include "../Support/Trigger/Trigger_Object.hpp"
 
 #include "Entropy.hpp"
 
@@ -31,7 +32,7 @@ m_ObjectGuid(NULL)
 
 void destory_object::Execute ( trigger_object* pParent )
 {
-    TRIGGER_CONTEXT( "ACTION * destory_object::Execute" );
+    X_PROFILE_SCOPE_CATEGORY( "Trigger", "ACTION * destory_object::Execute" );
 
     (void) pParent;
 
@@ -63,9 +64,9 @@ void destory_object::OnRender ( void )
 
 #ifdef TARGET_PC
     vector3 MyPosition =  GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
-    draw_Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_DestroyColor );
-    draw_BBox( ObjectPtr.m_pObject->GetBBox(), s_DestroyColor );
-    draw_Label( ObjectPtr.m_pObject->GetPosition(), s_DestroyColor, GetTypeName() );
+    render::debug::Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_DestroyColor );
+    render::debug::Box( ObjectPtr.m_pObject->GetBBox(), s_DestroyColor );
+    render::debug::Label( ObjectPtr.m_pObject->GetPosition(), s_DestroyColor, GetTypeName() );
 #endif
 }
 

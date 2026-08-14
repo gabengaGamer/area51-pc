@@ -5,22 +5,22 @@
 //=============================================================================================
 // INCLUDES
 //=============================================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "ProjectileMutantTendril.hpp"
-#include "Entropy\e_Draw.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "render\LightMgr.hpp"
-#include "Objects\actor\actor.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "objects\ParticleEmiter.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "player.hpp"
-#include "Characters\character.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "Characters\GenericNPC\GenericNPC.hpp"
-#include "Objects\Corpse.hpp"
-#include "Characters\MutantTank\Mutant_Tank.hpp"
-#include "Objects\WeaponMutation.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Objects/Actor/Actor.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Player/Player.hpp"
+#include "Characters/Character.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "Characters/GenericNPC/GenericNPC.hpp"
+#include "Objects/Corpse.hpp"
+#include "Characters/MutantTank/Mutant_Tank.hpp"
+#include "Objects/WeaponMutation.hpp"
 
 //=============================================================================================
 // STATICS & CONSTANTS
@@ -336,12 +336,12 @@ void mutant_tendril_projectile::OnRender( void )
 #ifndef X_RETAIL
     if( g_TendrilTweaks.m_bDrawLineToTarget )
     {
-        draw_Line( GetPosition(), GetAimAtPosition(), XCOLOR_RED );
+        render::debug::Line( GetPosition(), GetAimAtPosition(), XCOLOR_RED );
     }
 
     if( g_TendrilTweaks.m_bDrawBBox )
     {
-        draw_BBox(GetBBox());
+        render::debug::Box(GetBBox());
     }
 
     xcolor tColor[MAX_SEGMENTS] = { XCOLOR_GREEN,   XCOLOR_RED,     XCOLOR_BLUE, 
@@ -353,18 +353,18 @@ void mutant_tendril_projectile::OnRender( void )
     {        
         for( u32 i = 0; i < MAX_SEGMENTS; i++ )
         {
-            draw_Sphere( m_SegmentPositions[i], g_TendrilTweaks.m_SegmentSize, tColor[i] );
+            render::debug::Sphere( m_SegmentPositions[i], g_TendrilTweaks.m_SegmentSize, tColor[i] );
 
             // draw connectors
             if( i < (MAX_SEGMENTS-1) )
             {
                 if( m_bLeft )
                 {
-                    draw_Line( m_SegmentPositions[i], m_SegmentPositions[i+1], XCOLOR_RED );
+                    render::debug::Line( m_SegmentPositions[i], m_SegmentPositions[i+1], XCOLOR_RED );
                 }
                 else
                 {
-                    draw_Line( m_SegmentPositions[i], m_SegmentPositions[i+1], XCOLOR_YELLOW );
+                    render::debug::Line( m_SegmentPositions[i], m_SegmentPositions[i+1], XCOLOR_YELLOW );
                 }
             }
         }
@@ -372,7 +372,7 @@ void mutant_tendril_projectile::OnRender( void )
     else
     if( g_TendrilTweaks.m_bOnlyRenderHead )
     {
-        draw_Sphere( m_SegmentPositions[0], g_TendrilTweaks.m_SegmentSize, tColor[0] );
+        render::debug::Sphere( m_SegmentPositions[0], g_TendrilTweaks.m_SegmentSize, tColor[0] );
     }
 
 #endif
@@ -423,7 +423,7 @@ void mutant_tendril_projectile::OnRender( void )
         }
 
         // Compute LOD mask
-        u64 LODMask = m_SkinInst.GetLODMask(GetL2W());
+    u64 LODMask = m_SkinInst.GetLODMask(GetL2W());
 
         if (LODMask == 0)
             return;
@@ -432,7 +432,7 @@ void mutant_tendril_projectile::OnRender( void )
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0 ;
 
         // Render that puppy!
-        m_SkinInst.Render( &GetL2W(), 
+    m_SkinInst.Render( &GetL2W(), 
             mat,
             pSkinGeom->m_nBones, 
             Flags | GetRenderMode(),
@@ -788,7 +788,7 @@ void mutant_tendril_projectile::UpdateSegments( object *pOwner, f32 DeltaTime )
 }
 
 //=============================================================================
-void mutant_tendril_projectile::OnAdvanceLogic( f32 DeltaTime )
+void mutant_tendril_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
     object* pOwner = g_ObjMgr.GetObjectByGuid( m_OriginGuid );
 
@@ -870,7 +870,7 @@ void mutant_tendril_projectile::OnAdvanceLogic( f32 DeltaTime )
     // if we're retracting, don't do normal net projectile behavior
     if( !m_bRetractTendrils )
     {
-        net_proj::OnAdvanceLogic( DeltaTime );
+        net_proj::OnAdvanceSimulation( DeltaTime );
     }
 
     OnTransform(GetL2W());

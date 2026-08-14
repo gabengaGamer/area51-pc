@@ -13,13 +13,13 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 #include "x_types.hpp"
-#include "Render\RigidGeom.hpp"
-#include "Render\Render.hpp"
-#include "Objects\Render\RigidInst.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "Render/RigidGeom.hpp"
+#include "Render/Render.hpp"
+#include "Objects/Render/RigidInst.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 //nclude "Hud\Focus_Inst.hpp"
 #include "Inventory/Inventory2.hpp"
 #include "NetProjectile.hpp"
@@ -106,7 +106,7 @@ protected:
 
 virtual         void            OnInit              ( void );
 virtual         void            OnKill              ( void );
-virtual         void            OnAdvanceLogic      ( f32 DeltaTime );      
+virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );      
 virtual         void            OnColNotify         ( object& Object );
 
                 void            ProcessTake         ( actor& Actor );

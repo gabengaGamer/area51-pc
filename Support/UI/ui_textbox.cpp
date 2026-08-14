@@ -4,14 +4,12 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
-#include "..\AudioMgr\audioMgr.hpp"
+#include "Entropy.hpp"
+#include "../AudioMgr/AudioMgr.hpp"
 
 #include "ui_textbox.hpp"
 #include "ui_manager.hpp"
 #include "ui_font.hpp"
-//#include "ui_dlg_combolist.hpp"
-
 #include "StateMgr/StateMgr.hpp"
 
 //=========================================================================
@@ -54,7 +52,6 @@ ui_textbox::ui_textbox( void )
 
 ui_textbox::~ui_textbox( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -70,32 +67,19 @@ xbool ui_textbox::Create( s32 UserID, ui_manager* pManager, const irect& Positio
     m_BackgroundColor = xcolor(0,0,0,0);
 
     // Initialize data
-    m_iElementFrame         = m_pManager->FindElement( "sb_frame" );
-    m_iElement_sb_arrowdown = m_pManager->FindElement( "sb_arrowdown" );
-    m_iElement_sb_arrowup   = m_pManager->FindElement( "sb_arrowup" );
-    m_iElement_sb_container = m_pManager->FindElement( "sb_container" );
-    m_iElement_sb_thumb     = m_pManager->FindElement( "sb_thumb" );
+    m_iElementFrame = m_pManager->FindElement( "sb_frame" );
     ASSERT( m_iElementFrame != -1 );
-    ASSERT( m_iElement_sb_arrowdown != -1 );
-    ASSERT( m_iElement_sb_arrowup   != -1 );
-    ASSERT( m_iElement_sb_container != -1 );
-    ASSERT( m_iElement_sb_thumb     != -1 );
+    Success &= m_ScrollBar.Create( m_pManager );
 
     m_ExitOnSelect      = FALSE;
     m_ExitOnBack        = FALSE;
-    m_Font              = g_UiMgr->FindFont( "small" );
+    m_Font              = m_pManager->FindFont( "small" );
     m_LineHeight        = m_pManager->GetLineHeight( m_Font );
     m_iFirstVisibleLine = 0;
     m_nLines            = 0;
     m_ShowBorders       = TRUE;
     m_ShowFrame         = TRUE;
-    m_nVisibleLines     = (m_Position.GetHeight()-SPACE_TOP-SPACE_BOTTOM) / m_LineHeight;
-
-#ifdef TARGET_PC
-    m_ScrollTime = 0.0f;
-    m_MouseDown = FALSE;
-    m_ScrollDown = FALSE;
-#endif
+    m_nVisibleLines     = MAX( 1, (m_Position.GetHeight()-SPACE_TOP-SPACE_BOTTOM) / m_LineHeight );
 
     return Success;
 }
@@ -124,56 +108,10 @@ void ui_textbox::Render( s32 ox, s32 oy )
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
-        xcolor  c1  = XCOLOR_WHITE;
-        xcolor  c2  = XCOLOR_BLACK;
-        s32     State       = ui_manager::CS_NORMAL;
-
         // Calculate rectangle
-        irect   br;
         irect   r;
-        irect   r2;
-        br.Set( (m_Position.l+ox), (m_Position.t+oy), (m_Position.r+ox), (m_Position.b+oy) );
-        r = br;
-        r2 = r;
+        r.Set( (m_Position.l+ox), (m_Position.t+oy), (m_Position.r+ox), (m_Position.b+oy) );
         r.r -= 14;
-        r2.l = r.r;
-
-        // Render appropriate state
-        if( m_Flags & WF_DISABLED )
-        {
-            State = ui_manager::CS_DISABLED;
-            c1  = XCOLOR_GREY;
-            c2  = xcolor(0,0,0,0);
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_HIGHLIGHT )
-        {
-            State = ui_manager::CS_HIGHLIGHT;
-            c1  = XCOLOR_WHITE;
-            c2  = XCOLOR_BLACK;
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_SELECTED )
-        {
-            
-            State = ui_manager::CS_SELECTED;
-            c1  = XCOLOR_WHITE;
-            c2  = XCOLOR_BLACK;
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == (WF_HIGHLIGHT|WF_SELECTED) )
-        {
-            State = ui_manager::CS_HIGHLIGHT_SELECTED;
-            c1  = XCOLOR_WHITE;
-            c2  = XCOLOR_BLACK;
-        }
-        else
-        {
-            State = ui_manager::CS_NORMAL;
-            c1  = XCOLOR_WHITE;
-            c2  = XCOLOR_BLACK;
-        }
-
-        // Add Highlight to list
-        if( m_Flags & WF_HIGHLIGHT )
-            m_pManager->AddHighlight( m_UserID, br, !(m_Flags & WF_SELECTED) );
 
         // Render background color
         irect   rb = r;
@@ -182,6 +120,18 @@ void ui_textbox::Render( s32 ox, s32 oy )
             rb.Deflate( 1, 1 );
 
         m_pManager->RenderRect( rb, m_BackgroundColor, FALSE );
+        if( !(m_Flags & WF_DISABLED) )
+        {
+            if( IsFocused() || IsActive() )
+            {
+                m_pManager->RenderRect( rb, xcolor( 79, 214, 60, 48 ), FALSE );
+            }
+
+            if( IsHovered() && !m_ScrollBar.IsHovered() )
+            {
+                m_pManager->RenderRect( rb, xcolor( 79, 214, 60, 32 ), FALSE );
+            }
+        }
 
         // Render text offset by first visible line
         irect rt = r;
@@ -202,68 +152,22 @@ void ui_textbox::Render( s32 ox, s32 oy )
         u32 renderFlags = (m_LabelFlags & ~(ui_font::v_center | ui_font::v_bottom)) |
                           ui_font::v_top |
                           ui_font::clip_character;
-        m_pManager->RenderText( m_Font, rt, renderFlags, xcolor(255,252,204,255), pVisibleText );
+        xcolor const TextColor = (m_Flags & WF_DISABLED)
+                               ? XCOLOR_GREY
+                               : xcolor( 255, 252, 204, 255 );
+        m_pManager->RenderText( m_Font, rt, renderFlags, TextColor, pVisibleText );
 
         if (m_ShowBorders)
         {
             // Render Frame
             if (m_ShowFrame)
-                m_pManager->RenderElement( m_iElementFrame, r, 0 );
-
-            irect r3 = r2;
-            irect r4 = r2;
-            r3.t -= 1;
-            r3.b = r3.t + 16;
-            r4.b -= 1;
-            r4.t = r4.b - 16;
-            r2.t = r3.b;
-            r2.b = r4.t;
-
-#ifdef TARGET_PC
-            m_UpArrow = r3;
-            m_DownArrow = r4;
-#endif
-            m_pManager->RenderElement( m_iElement_sb_container, r2, State );
-            m_pManager->RenderElement( m_iElement_sb_arrowup,   r3, State );
-            m_pManager->RenderElement( m_iElement_sb_arrowdown, r4, State );
-
-            // Render thumb background
-            r2.Deflate( 1, 1 );
-            r2.t -= 1;
-            r2.b -= 1;
-            r2.l += 1;
-            m_pManager->RenderRect( r2, xcolor(20,80,13,128), FALSE );
-
-            // Render thumb background
-            r2.Deflate( 1, 1 );
-            r2.l += 1;
-            m_pManager->RenderRect( r2, xcolor(20,80,13,128), FALSE );
-
-            // Render Thumb
-            r2.Deflate( 1, 1 );
-            r2.l -= 1;
-            r2.t += 1;
-
-            if( m_nLines > m_nVisibleLines )
             {
-                s32 ThumbSize = (s32)(r2.GetHeight() * ((f32)m_nVisibleLines / m_nLines));
-                if( ThumbSize < 16 )
-                    ThumbSize = 16;
-
-                s32 ThumbPos  = (s32)((r2.GetHeight()-ThumbSize) * ((f32)m_iFirstVisibleLine / (m_nLines - m_nVisibleLines)));
-
-                r2.Set( r2.l, r2.t + ThumbPos, r2.r, r2.t + ThumbPos + ThumbSize );
+                m_pManager->RenderElement( m_iElementFrame, r, 0 );
             }
 
-            m_pManager->RenderElement( m_iElement_sb_thumb, r2, State );
-
-#ifdef TARGET_PC
-            m_ScrollBar = r2;
-#endif
+            UpdateScrollBar();
+            m_ScrollBar.Render( (m_Flags & WF_DISABLED) == 0 );
         }
-        
-        if( m_Flags & WF_SELECTED )
-            m_pManager->AddHighlight( m_UserID, r2 );
 
         // Render children
         for( s32 i=0 ; i<m_Children.GetCount() ; i++ )
@@ -278,109 +182,104 @@ void ui_textbox::Render( s32 ox, s32 oy )
 void ui_textbox::SetPosition( const irect& Position )
 {
     m_Position      = Position;
-    m_nVisibleLines = (m_Position.GetHeight()-SPACE_TOP-SPACE_BOTTOM) / m_LineHeight;
+    m_nVisibleLines = MAX( 1, (m_Position.GetHeight()-SPACE_TOP-SPACE_BOTTOM) / m_LineHeight );
+    SetFirstVisibleLine( m_iFirstVisibleLine );
 }
 
 //=========================================================================
 
-void ui_textbox::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void ui_textbox::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    xbool       Processed = FALSE;
-    s32         dy = 0;
+    s32 Direction = 0;
 
     // Determine movement required
     switch( Code )
     {
-    case ui_manager::NAV_UP:
-        dy = -1;
-        break;
-    case ui_manager::NAV_DOWN:
-        dy =  1;
+        case ui_navigation::Up:
+            Direction = -1;
+            break;
+
+        case ui_navigation::Down:
+            Direction = 1;
+            break;
+
+        default:
+            break;
     }
 
-    // Apply movement
-    if( m_Flags & WF_SELECTED )
+    if( IsActive() && (Direction != 0) )
     {
-        if( dy != 0 )
+        if( SetFirstVisibleLine( m_iFirstVisibleLine + Direction ) )
         {
-            xbool   Limited      = FALSE;
-            s32     FirstVisible = m_iFirstVisibleLine;
-            
-            FirstVisible += dy;
-            if( FirstVisible > (m_nLines-m_nVisibleLines) )
-            {
-                FirstVisible = (m_nLines-m_nVisibleLines);
-                Limited = TRUE;
-            }
-            if( FirstVisible < 0 )
-            {
-                FirstVisible = 0;
-                Limited = TRUE;
-            }
-
-            // Check for error at top and bottom of scroll range
-            if( Limited && (Presses > 0) )
-                g_AudioMgr.Play( "InvalidEntry" );
-
-            // Set new position back into first visible
-            if( FirstVisible != m_iFirstVisibleLine )
-            {
-                g_AudioMgr.Play( "Cusor_Norm" );
-                m_iFirstVisibleLine = FirstVisible;
-            }
-
-            Processed = TRUE;
+            g_AudioMgr.Play( "Cusor_Norm" );
         }
+        else if( Presses > 0 )
+        {
+            g_AudioMgr.Play( "InvalidEntry" );
+        }
+        return;
     }
 
-    // Pass up chain if not processed
-    if( !Processed )
+    ui_win::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+}
+
+//=========================================================================
+
+void ui_textbox::OnPage( ui_win* pWin, s32 Direction )
+{
+    (void)pWin;
+
+    s32 const PageStep = MAX( 1, m_nVisibleLines - 1 );
+    if( SetFirstVisibleLine( m_iFirstVisibleLine + PageStep * Direction ) )
     {
-        if( m_pParent )
-            m_pParent->OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+        g_AudioMgr.Play( "Cusor_Norm" );
     }
 }
 
 //=========================================================================
 
-void ui_textbox::OnPadSelect( ui_win* pWin )
+void ui_textbox::OnJump( ui_win* pWin, s32 Direction )
 {
-    if ( ( m_Flags & WF_SELECTED ) && ( m_ExitOnSelect ) )
+    (void)pWin;
+
+    s32 const FirstVisible = (Direction < 0) ? 0 : MAX( 0, m_nLines - m_nVisibleLines );
+    if( SetFirstVisibleLine( FirstVisible ) )
+    {
+        g_AudioMgr.Play( "Cusor_Norm" );
+    }
+}
+
+//=========================================================================
+
+void ui_textbox::OnAccept( ui_win* pWin )
+{
+    if ( ( IsActive() ) && ( m_ExitOnSelect ) )
     {
         if( m_pParent )
-            m_pParent->OnPadSelect( pWin );
+            m_pParent->OnAccept( pWin );
     }
     else
     {
         // Toggle Selected
-        m_Flags ^= WF_SELECTED;
+        SetActive( !IsActive() );
 
-        if( m_Flags & WF_SELECTED )
-        {
-    //        audio_Play( SFX_FRONTEND_SELECT_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-        }
-        else
-        {
-    //        audio_Play( SFX_FRONTEND_CANCEL_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-        }
     }
 
 }
 
 //=========================================================================
 
-void ui_textbox::OnPadBack( ui_win* pWin )
+void ui_textbox::OnCancel( ui_win* pWin )
 {
-    if( ( m_Flags & WF_SELECTED ) && ( !m_ExitOnBack ) )
+    if( ( IsActive() ) && ( !m_ExitOnBack ) )
     {
         // Clear selected
-        m_Flags &= ~WF_SELECTED;
-//        audio_Play( SFX_FRONTEND_CANCEL_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
+        SetActive( FALSE );
     }
     else
     {
         if( m_pParent )
-            m_pParent->OnPadBack( pWin );
+            m_pParent->OnCancel( pWin );
     }
 }
 
@@ -400,133 +299,117 @@ xcolor ui_textbox::GetBackgroundColor( void ) const
 
 //=========================================================================
 
-void ui_textbox::OnMouseMove ( ui_win* pWin, s32 x, s32 y )
+s32 ui_textbox::GetLineCount( void ) const
+{
+    return m_nLines;
+}
+
+//=========================================================================
+
+void ui_textbox::EnsureVisible( s32 iLine )
+{
+    if( iLine < m_iFirstVisibleLine )
+    {
+        SetFirstVisibleLine( iLine );
+    }
+    else if( iLine >= (m_iFirstVisibleLine + m_nVisibleLines) )
+    {
+        SetFirstVisibleLine( iLine - m_nVisibleLines + 1 );
+    }
+}
+
+//=========================================================================
+
+xbool ui_textbox::SetFirstVisibleLine( s32 FirstVisibleLine )
+{
+    s32 const MaxFirstVisibleLine = MAX( 0, m_nLines - m_nVisibleLines );
+    FirstVisibleLine = x_clamp( FirstVisibleLine, 0, MaxFirstVisibleLine );
+    if( FirstVisibleLine == m_iFirstVisibleLine )
+    {
+        return FALSE;
+    }
+
+    m_iFirstVisibleLine = FirstVisibleLine;
+    return TRUE;
+}
+
+//=========================================================================
+
+void ui_textbox::UpdateScrollBar( void )
+{
+    irect Bounds( GetWidth() - 14, 0, GetWidth(), GetHeight() );
+    LocalToScreen( Bounds );
+    m_ScrollBar.SetBounds( Bounds );
+    m_ScrollBar.SetRange( m_nLines, m_nVisibleLines, m_iFirstVisibleLine );
+}
+
+//=========================================================================
+
+void ui_textbox::OnPointerMove ( ui_win* pWin, s32 x, s32 y )
 {
     (void)pWin;
-#ifndef TARGET_PC
+    UpdateScrollBar();
+    if( m_ShowBorders && m_ScrollBar.OnPointerMove( x, y ) )
+    {
+        SetFirstVisibleLine( m_ScrollBar.GetPosition() );
+    }
+    else if( !m_ShowBorders )
+    {
+        m_ScrollBar.OnPointerLeave();
+    }
+}
+
+//=========================================================================
+
+void ui_textbox::OnPointerLeave( ui_win* pWin )
+{
+    (void)pWin;
+    m_ScrollBar.OnPointerLeave();
+}
+
+//=========================================================================
+
+void ui_textbox::OnPointerWheel( ui_win* pWin, s32 Delta )
+{
+    UpdateScrollBar();
+    if( m_ScrollBar.OnWheel( Delta ) )
+    {
+        SetFirstVisibleLine( m_ScrollBar.GetPosition() );
+        return;
+    }
+
+    ui_win::OnPointerWheel( pWin, Delta );
+}
+
+//=========================================================================
+
+void ui_textbox::OnPointerDown( ui_win* pWin, s32 x, s32 y )
+{
+    (void)pWin;
+
+    UpdateScrollBar();
+    if( m_ShowBorders && m_ScrollBar.OnPointerDown( x, y ) )
+    {
+        SetFirstVisibleLine( m_ScrollBar.GetPosition() );
+        if( m_ScrollBar.IsInteracting() )
+        {
+            m_pManager->SetCapture( m_UserID, this );
+        }
+    }
+}
+
+//=========================================================================
+
+void ui_textbox::OnPointerUp( ui_win* pWin, s32 x, s32 y )
+{
+    (void)pWin;
     (void)x;
     (void)y;
-    return;
-#else
-    
-    if( m_ScrollDown )
-    {    
-        if( m_ScrollBar.PointInRect( m_MouseX, m_MouseY ) )
-        {
-            
-            s32 FirstVisible = m_iFirstVisibleLine;
-            s32 diff = (y - m_MouseY);
 
-            if( diff > 0 )
-            {
-                diff = (s32)((f32)diff/4);
-                FirstVisible += diff;
-        
-                if( FirstVisible > (m_nLines-m_nVisibleLines) )
-                    FirstVisible = (m_nLines-m_nVisibleLines);
-
-                // Set new position back into first visible
-                if( FirstVisible != m_iFirstVisibleLine )
-                {
-//                    audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-                    m_iFirstVisibleLine = FirstVisible;
-                }
-            }
-            else if( diff < 0 )
-            {
-                diff = (s32)((f32)diff/4);
-                FirstVisible += diff;
-
-                if( FirstVisible < 0 )
-                    FirstVisible = 0;
-
-                // Set new position back into first visible
-                if( FirstVisible != m_iFirstVisibleLine )
-                {
-//                    audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-                    m_iFirstVisibleLine = FirstVisible;
-                }
-            }
-        }
-    }
-
-    if( m_MouseDown )
+    if( m_ScrollBar.OnPointerUp() )
     {
-        // Just move the selected item down one.
-        if( m_DownArrow.PointInRect( m_MouseX, m_MouseY ) )
-        {
-            m_MouseDown = TRUE;
-        }
-        // Just move the selected item up one.
-        else if( m_UpArrow.PointInRect( m_MouseX, m_MouseY ) )
-        {
-            m_MouseDown = TRUE;
-        }    
-        else
-        {
-            m_MouseDown = FALSE;
-        }
-    }   
-
-    // Store the latest mouse position.
-    m_MouseX = x;
-    m_MouseY = y;
-#endif
-}
-
-//=========================================================================
-
-void ui_textbox::OnLBDown ( ui_win* pWin )
-{
-    (void)pWin;
-
-#ifdef TARGET_PC
-    s32 FirstVisible = m_iFirstVisibleLine;
-
-    // Just move the selected item down one.
-    if( m_DownArrow.PointInRect( m_MouseX, m_MouseY ) )
-    {
-        FirstVisible++;
-        
-        if( FirstVisible > (m_nLines-m_nVisibleLines) )
-            FirstVisible = (m_nLines-m_nVisibleLines);
-        m_MouseDown = TRUE;
+        m_pManager->ReleaseCapture( m_UserID );
     }
-
-    // Just move the selected item up one.
-    else if( m_UpArrow.PointInRect( m_MouseX, m_MouseY ) )
-    {
-        FirstVisible--;
-        if( FirstVisible < 0 )
-            FirstVisible = 0;
-        m_MouseDown = TRUE;
-    }
-    // Did the mouse click on the scroll bar.    
-    else if( m_ScrollBar.PointInRect( m_MouseX, m_MouseY ) )
-        m_ScrollDown = TRUE;
-
-    if( m_MouseDown )
-    {
-        // Set new position back into first visible
-        if( FirstVisible != m_iFirstVisibleLine )
-        {
-//            audio_Play( SFX_FRONTEND_CURSOR_MOVE_02,AUDFLAG_CHANNELSAVER );	//-- Jhowa
-            m_iFirstVisibleLine = FirstVisible;
-        }
-    }
-#endif
-}
-
-//=========================================================================
-
-void ui_textbox::OnLBUp ( ui_win* pWin )
-{
-    (void)pWin;
-
-#ifdef TARGET_PC    
-    m_MouseDown = FALSE;
-    m_ScrollDown = FALSE;
-#endif
 }
 
 //=========================================================================
@@ -535,56 +418,25 @@ void ui_textbox::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 {
     (void)pWin;
 
-#ifdef TARGET_PC
-    if( m_MouseDown )
-    {    
-        m_ScrollTime += DeltaTime;
-    
-        // Set a delay to scroll.
-        if( m_ScrollTime < 0.3f )
-            return;
-        else
-            m_ScrollTime = 0.0f;
-
-        s32 FirstVisible = m_iFirstVisibleLine;
-
-        // Just move the selected item down one.
-        if( m_DownArrow.PointInRect( m_MouseX, m_MouseY ) )
-        {
-            FirstVisible++;
-        
-            if( FirstVisible > (m_nLines-m_nVisibleLines) )
-                FirstVisible = (m_nLines-m_nVisibleLines);
-        }
-
-        // Just move the selected item up one.
-        else if( m_UpArrow.PointInRect( m_MouseX, m_MouseY ) )
-        {
-            FirstVisible--;
-            if( FirstVisible < 0 )
-                FirstVisible = 0;
-        }
-        
-        // Set new position back into first visible
-        if( FirstVisible != m_iFirstVisibleLine )
-        {
-//            audio_Play( SFX_FRONTEND_CURSOR_MOVE_02 ,AUDFLAG_CHANNELSAVER);	//-- Jhowa
-            m_iFirstVisibleLine = FirstVisible;
-        }
+    UpdateScrollBar();
+    if( m_ScrollBar.OnUpdate( DeltaTime ) )
+    {
+        SetFirstVisibleLine( m_ScrollBar.GetPosition() );
     }
-#endif
 }
 
 //=========================================================================
 
 void ui_textbox::OnFocusLost ( ui_win* pWin )
 {
-#ifdef TARGET_PC
-    m_MouseDown = FALSE;
-    m_ScrollDown = FALSE;
-#endif
-    ui_win::OnFocusLost( pWin );
+    xbool const HadScrollCapture = m_ScrollBar.IsInteracting();
+    m_ScrollBar.CancelInteraction();
+    if( HadScrollCapture )
+    {
+        m_pManager->ReleaseCapture( m_UserID );
+    }
 
+    ui_win::OnFocusLost( pWin );
 }
 
 //=========================================================================

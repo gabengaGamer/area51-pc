@@ -5,15 +5,15 @@
 //=============================================================================================
 // INCLUDES
 //=============================================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "GravChargeProjectile.hpp"
-#include "Entropy\e_Draw.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "render\LightMgr.hpp"
-#include "..\Support\Tracers\TracerMgr.hpp"
-#include "Decals\DecalMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "../Support/Tracers/TracerMgr.hpp"
+#include "Decals/DecalMgr.hpp"
 #include "NetworkMgr/NetworkMgr.hpp"
 #include "NetworkMgr/GameMgr.hpp"
-#include "..\Debris\Debris_Mgr.hpp"
+#include "../Debris/debris_mgr.hpp"
 
 
 //=============================================================================================
@@ -226,7 +226,7 @@ bbox grav_charge_projectile::GetLocalBBox( void ) const
 
     if( pRigidGeom )
     {
-        return( pRigidGeom->m_Collision.BBox );
+        return( pRigidGeom->m_collision.BBox );
     }
     
     return( bbox( vector3( 10.0f, 10.0f, 10.0f),
@@ -235,13 +235,13 @@ bbox grav_charge_projectile::GetLocalBBox( void ) const
 
 //=============================================================================================
 
-void grav_charge_projectile::OnAdvanceLogic( f32 DeltaTime )
+void grav_charge_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
-    CONTEXT( "grav_charge_projectile::OnAdvanceLogic" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "grav_charge_projectile::OnAdvanceSimulation" );
 
     if( m_Exploded )
     {
-        net_proj::OnAdvanceLogic( DeltaTime );
+        net_proj::OnAdvanceSimulation( DeltaTime );
         return;
     }
 
@@ -258,7 +258,7 @@ void grav_charge_projectile::OnAdvanceLogic( f32 DeltaTime )
     }
 
     // This is at the bottom because the projectile can be destroyed in the call
-    net_proj::OnAdvanceLogic( DeltaTime );
+    net_proj::OnAdvanceSimulation( DeltaTime );
 }
 
 //==============================================================================
@@ -393,14 +393,14 @@ void grav_charge_projectile::OnRender( void )
     }
     else
     {
-        //draw_BBox( GetBBox(), XCOLOR_RED );
+        //render::debug::Box( GetBBox(), XCOLOR_RED );
     }
 
     net_proj::OnRender();
 
 #ifdef X_EDITOR
-//    draw_Line( GetPosition() , GetPosition() + m_NormalCollision );
-//    draw_Line( GetPosition() , GetPosition() + m_Velocity , XCOLOR_BLUE );
+//    render::debug::Line( GetPosition() , GetPosition() + m_NormalCollision );
+//    render::debug::Line( GetPosition() , GetPosition() + m_Velocity , XCOLOR_BLUE );
 #endif // X_EDITOR
 }
 

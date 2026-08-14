@@ -5,8 +5,8 @@
 #include "Obj_Mgr\Obj_Mgr.hpp"
 #include "CollisionMgr\PolyCache.hpp"
 #include "Render\LightMgr.hpp"
-#include "Parsing\TextIn.hpp"
-#include "Parsing\TextOut.hpp"
+#include "Parsing/TextIn.hpp"
+#include "Parsing/TextOut.hpp"
 #include "CollisionMgr\CollisionMgr.hpp"
 #include "Objects\PlaySurface.hpp"
 #include "PlaySurfaceMgr\PlaySurfaceMgr.hpp"
@@ -33,7 +33,7 @@
 #include "Objects\door.hpp"
 #include "Objects\ParticleEmiter.hpp"
 #include "Objects\Portal.hpp"
-#include "Objects\Player.hpp"
+#include "Objects\Player\Player.hpp"
 #include "Objects\ClothObject.hpp"
 #include "Objects\Corpse.hpp"
 #include "Objects\TeamProp.hpp"
@@ -1835,33 +1835,22 @@ s32 world_editor::GetTotalObjectCount( void )
 
 void world_editor::AdvanceLogic( f32 DeltaTime )
 {
-    g_Input.SampleActionMaps( g_IngamePad, DeltaTime, FRONTEND_CONTEXT );
-    g_Input.CommitActionMapsFrame( g_IngamePad );
-    g_Input.ClearActionMapsFixed( g_IngamePad );
+    g_FrontendInput.Update( DeltaTime );
 
     // DX9 reference for the DX11 port:
     // d3deng_SetMouseMode( MOUSE_MODE_NEVER );
 
-    g_ObjMgr.AdvanceAllLogic(DeltaTime);
-
-    render::Update( DeltaTime );
-    
-    g_LightMgr.OnUpdate( DeltaTime );
-    
-    //old trigger manager
-//    g_TriggerMgr.OnUpdate( DeltaTime );
-
+    // The editor uses the same frame-delta path as the game.
+    corpse::LimitCount();
+    g_PhysicsMgr.Advance( DeltaTime );
+    g_ObjMgr.AdvanceSimulation( DeltaTime );
+    g_AlienGlobMgr.Advance( DeltaTime );
     g_TriggerExMgr.OnUpdate( DeltaTime );
 
+    render::Update( DeltaTime );
+    g_LightMgr.OnUpdate( DeltaTime );
     g_DecalMgr.OnUpdate( DeltaTime );
-
     g_TracerMgr.OnUpdate( DeltaTime );
-
-    // Limit dynamic dead bodies before advancing physics so that it doesn't get overloaded 
-    // and or/run out of constraints
-    corpse::LimitCount();
-    
-    g_PhysicsMgr.Advance( DeltaTime );
 
     g_ConverseMgr.Update( DeltaTime );
 
@@ -1873,7 +1862,6 @@ void world_editor::AdvanceLogic( f32 DeltaTime )
 
     g_GameTextMgr.Update( DeltaTime );
 
-    g_AlienGlobMgr.Advance( DeltaTime );
 }
 
 //=========================================================================

@@ -5,7 +5,7 @@
 //=========================================================================
 
 #include "x_color.hpp"
-#include "Objects\Player.hpp"
+#include "Objects/Player/Player.hpp"
 
 //=========================================================================
 
@@ -18,6 +18,8 @@ public:
     void    Init        ( void );
     void    OnUpdate    ( f32 DeltaTime );
     void    Render      ( void );
+    void    SetFilmGrainStrength( s32 Strength );
+    void    SetBackgroundBlurEnabled( xbool Enabled );
 
     // Fog must be done separately for particles to get fogged properly
     void    RenderFog   ( void );
@@ -43,6 +45,8 @@ protected:
     f32     m_FadeTimeElapsed;
     f32     m_FadeTime;
     xbool   m_bFadeAudio;           // WARNING: HACK - SEE CPP FILE FOR DETAILS
+    s32     m_FilmGrainStrength;
+    xbool   m_bBackgroundBlurEnabled;
 };
 
 //=========================================================================

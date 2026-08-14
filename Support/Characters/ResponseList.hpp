@@ -1,8 +1,8 @@
 #ifndef _RESPONSE_LIST_HPP_
 #define _RESPONSE_LIST_HPP_
 
-#include "x_files\x_types.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
+#include "x_files/x_types.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
 
 struct response_list
 {

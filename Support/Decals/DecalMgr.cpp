@@ -14,14 +14,16 @@
 #include "DecalMgr.hpp"
 #include "DecalDefinition.hpp"
 #include "DecalPackage.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Objects\PlaySurface.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "PlaySurfaceMgr\PlaySurfaceMgr.hpp"
-#include "Render\Texture.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "PlaySurfaceMgr/PlaySurfaceMgr.hpp"
+#include "Render/DecalBatch.hpp"
+#include "Render/Render.hpp"
+#include "Render/SurfaceColor.hpp"
+#include "Render/Texture.hpp"
 
-#include "entropy.hpp"
-#include "e_draw.hpp"
+#include "Entropy.hpp"
 #include "e_ScratchMem.hpp"
 
 //==============================================================================
@@ -37,9 +39,9 @@ decal_mgr   g_DecalMgr;
 
 static const f32    kBulletHoleCoplanarDistCheck = 2.0f;
 static const f32    kCoplanarDistanceCheck       = 2.5f;
-static const f32    kNearZBias                   = 0.01f;
 static const radian kIncomingAngleMinimum        = R_20;
 static const f32    kEpsilon                     = 0.005f;
+static const f32    kAmbientRayHalfLength        = 5.0f;
 
 #define CLIP_DECAL_VERT_NEG_X   0x01
 #define CLIP_DECAL_VERT_POS_X   0x02
@@ -53,8 +55,6 @@ static const f32    kEpsilon                     = 0.005f;
 #define CLIP_DECAL_TRI_POS_Y    ((CLIP_DECAL_VERT_POS_Y<<12)+(CLIP_DECAL_VERT_POS_Y<<6)+CLIP_DECAL_VERT_POS_Y)
 #define CLIP_DECAL_TRI_NEG_Z    ((CLIP_DECAL_VERT_NEG_Z<<12)+(CLIP_DECAL_VERT_NEG_Z<<6)+CLIP_DECAL_VERT_NEG_Z)
 #define CLIP_DECAL_TRI_POS_Z    ((CLIP_DECAL_VERT_POS_Z<<12)+(CLIP_DECAL_VERT_POS_Z<<6)+CLIP_DECAL_VERT_POS_Z)
-
-static matrix4  s_IdentityL2W   PS2_ALIGNMENT(16);
 
 //==============================================================================
 // Helper functions
@@ -76,6 +76,21 @@ vector3 GetTriNormal( const vector3& P0,
 // Implementation
 //==============================================================================
 
+decal_mgr::decal_span::decal_span( void ) :
+    SourceStart     ( 0 ),
+    SourceCount     ( 0 ),
+    DecalStart      ( 0 ),
+    DecalCount      ( 0 ),
+    Zone            ( 0xffffffffu ),
+    Bounds          ( vector3( 0.0f, 0.0f, 0.0f ) ),
+    GeometricNormal ( 0.0f, 1.0f, 0.0f ),
+    Ambient         ( 64, 64, 64, 255 ),
+    IsValid         ( FALSE )
+{
+}
+
+//==============================================================================
+
 decal_mgr::registration_info::registration_info( void ) :
     m_nVertsAllocated   ( 0 ),
     m_Start             ( 0 ),
@@ -85,6 +100,10 @@ decal_mgr::registration_info::registration_info( void ) :
     m_pUVs              ( NULL ),
     m_pColors           ( NULL ),
     m_pElapsedTimes     ( NULL ),
+    m_pDynamicSpans     ( NULL ),
+    m_nDynamicSpans     ( 0 ),
+    m_nDynamicSpansAllocated( 0 ),
+    m_NextDynamicSpan   ( 0 ),
     m_BlendMode         ( decal_definition::DECAL_BLEND_ADD ),
     m_Flags             ( 0 ),
     m_FadeoutTime       ( 1.5f ),
@@ -96,7 +115,9 @@ decal_mgr::registration_info::registration_info( void ) :
     m_pStaticUVs            ( NULL ),
     m_pStaticColors         ( NULL ),
 #endif
-    m_StaticDataOffset  ( -1 )
+    m_StaticDataOffset  ( -1 ),
+    m_StaticSpanStart   ( 0 ),
+    m_StaticSpanCount   ( 0 )
 {
     ForceDecalLoaderLink();
 }
@@ -116,6 +137,10 @@ void decal_mgr::registration_info::Kill( void )
     {
         x_free( m_pPositions );
     }
+    if ( m_pDynamicSpans )
+    {
+        x_free( m_pDynamicSpans );
+    }
     m_nVertsAllocated = 0;
     m_Start           = 0;
     m_End             = 0;
@@ -124,6 +149,10 @@ void decal_mgr::registration_info::Kill( void )
     m_pUVs            = NULL;
     m_pColors         = NULL;
     m_pElapsedTimes   = NULL;
+    m_pDynamicSpans   = NULL;
+    m_nDynamicSpans   = 0;
+    m_nDynamicSpansAllocated = 0;
+    m_NextDynamicSpan = 0;
 #ifdef X_EDITOR
     if ( m_nStaticVertsAlloced )
     {
@@ -140,6 +169,8 @@ void decal_mgr::registration_info::Kill( void )
     m_FadeoutTime      = 1.5f;
     m_Color            = XCOLOR_WHITE;
     m_StaticDataOffset = -1;
+    m_StaticSpanStart  = 0;
+    m_StaticSpanCount  = 0;
 }
 
 //==============================================================================
@@ -181,6 +212,15 @@ void decal_mgr::registration_info::AllocVertList( s32 nVerts )
         }
         ASSERT( pAllocAddress == ((byte*)m_pPositions)+AllocSize );
 
+        m_nDynamicSpansAllocated = MAX( 1, nVerts / 3 );
+        m_pDynamicSpans = static_cast<decal_span*>(
+            x_malloc( m_nDynamicSpansAllocated * sizeof( decal_span ) ) );
+        ASSERT( m_pDynamicSpans );
+        for ( s32 i = 0; i < m_nDynamicSpansAllocated; ++i )
+        {
+            m_pDynamicSpans[i] = decal_span();
+        }
+
         #ifdef X_EDITOR
         GrowStaticVertListBy( nVerts );
         #endif
@@ -210,8 +250,6 @@ decal_mgr::decal_mgr( void ) :
     {
         m_DynamicQueue[i].Valid = FALSE;
     }
-    s_IdentityL2W.Identity();
-
     // Setup triangle template for bulletholes etc.
     m_TriangleTemplateUV[0].U = (s16)((+0.500f) * 4096.0f);
     m_TriangleTemplateUV[0].V = (s16)((+1.500f) * 4096.0f);
@@ -235,7 +273,6 @@ void decal_mgr::Init( void )
 {
     m_RegisteredDefs.Clear();
     m_RegisteredDefs.GrowListBy( decal_mgr::MAX_DECAL_RESOURCES );
-    s_IdentityL2W.Identity();
 }
 
 //==============================================================================
@@ -244,6 +281,7 @@ void decal_mgr::Kill( void )
 {
     UnloadStaticDecals();
     m_RegisteredDefs.Clear();
+    m_StaticSpans.Clear();
 
     ClearDynamicQueue();
 }
@@ -273,6 +311,12 @@ void decal_mgr::ResetDynamicDecals( void )
         RegInfo.m_Start = 0;
         RegInfo.m_End   = 0;
         RegInfo.m_Blank = 0;
+        RegInfo.m_nDynamicSpans = 0;
+        RegInfo.m_NextDynamicSpan = 0;
+        for ( s32 iSpan = 0; iSpan < RegInfo.m_nDynamicSpansAllocated; ++iSpan )
+        {
+            RegInfo.m_pDynamicSpans[iSpan].IsValid = FALSE;
+        }
     }
 
     ClearDynamicQueue();
@@ -286,7 +330,7 @@ void decal_mgr::CreateDecalFromRayCast( const decal_definition& Def,
                                         const vector2&          Size,
                                         radian                  Roll )
 {
-    CONTEXT( "decal_mgr::CreateDecalFromRayCast" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "decal_mgr::CreateDecalFromRayCast" );
 
     // cast a ray, and see if there were any collisions
     g_CollisionMgr.RaySetup( NULL_GUID, Start, End );
@@ -336,7 +380,7 @@ void  decal_mgr::CreateBulletHole( const decal_definition& Def,
                                    const plane&            Plane,
                                    const vector3*          pTriPos )
 {
-    CONTEXT( "decal_mgr::CreateBulletHole" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "decal_mgr::CreateBulletHole" );
 
     // Assumptions:
     // - Decal will not be clipped.
@@ -475,6 +519,8 @@ void  decal_mgr::CreateBulletHole( const decal_definition& Def,
                 pTime[1] = 0.0f;
                 pTime[2] = 0.0f;
             }
+
+            BuildDynamicSpans( RegInfo, iDecalStart, 3 );
         }
     }
 }
@@ -487,7 +533,7 @@ void decal_mgr::CreateDecalAtPoint( const decal_definition& Def,
                                     const vector2&          Size,
                                     radian                  Roll )
 {
-    CONTEXT( "decal_mgr::CreateDecalAtPoint" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "decal_mgr::CreateDecalAtPoint" );
 
     matrix4     L2W;
     decal_vert  DecalVerts[MAX_VERTS_PER_DECAL];
@@ -531,7 +577,7 @@ xhandle decal_mgr::RegisterDefinition( decal_definition& Def )
     char* p = &Def.m_BitmapName[x_strlen(Def.m_BitmapName)];
     while( (p > Def.m_BitmapName) && (*(p-1) != '\\') && (*(p-1) != '/') )
         p--;
-    RegInfo.m_Bitmap.SetName( p );
+    RegInfo.m_bitmap.SetName( p );
 
     // how much vert space should we allocate? make sure to align it to the
     // hardware buffer size
@@ -549,6 +595,7 @@ xhandle decal_mgr::RegisterDefinition( decal_definition& Def )
 
     // allocate vert space
     RegInfo.AllocVertList( nVertsToAlloc );
+    ReserveRenderCapacity();
 
     return Def.m_Handle;
 }
@@ -561,6 +608,7 @@ void decal_mgr::UnregisterDefinition( decal_definition& Def )
     RegInfo.Kill();
     
     m_RegisteredDefs.DeleteByHandle( Def.m_Handle );
+    ReserveRenderCapacity();
 }
 
 //==============================================================================
@@ -671,7 +719,7 @@ s32 decal_mgr::CalcProjectedDecal( const vector3&    Point,
                                    decal_vert        Verts[MAX_VERTS_PER_DECAL],
                                    matrix4&          L2W )
 {
-    CONTEXT( "decal_mgr::CalcProjectedDecal" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "decal_mgr::CalcProjectedDecal" );
 
     ////////////////////////////////////////////////////////////////////////////
     // Time for some ascii art fun...
@@ -953,7 +1001,7 @@ void decal_mgr::CalcDecalVertsFromVolume( const bbox&    WorldBBox,
                                           const vector3& ProjectionRay,
                                           working_data&  WD )
 {
-    CONTEXT( "decal_mgr::CalcDecalVertsFromVolume" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "decal_mgr::CalcDecalVertsFromVolume" );
 
     WD.nVerts = 0;
 
@@ -970,10 +1018,10 @@ void decal_mgr::CalcDecalVertsFromVolume( const bbox&    WorldBBox,
         // grab the information needed by the volume clipper
         play_surface&       Surface    = play_surface::GetSafeType( *g_ObjMgr.GetObjectBySlot(ID) );
         rigid_inst&         RigidInst  = Surface.GetRigidInst();
-        render::hgeom_inst  hGeomInst  = RigidInst.GetInst();
+        render::GeometryInstanceHandle  hGeomInst  = RigidInst.GetInst();
         const rigid_geom*   pRigidGeom = (const rigid_geom*)render::GetGeom( hGeomInst );
 
-        if ( pRigidGeom && (pRigidGeom->m_Collision.nHighClusters!=0) )
+        if ( pRigidGeom && (pRigidGeom->m_collision.nHighClusters!=0) )
         {
             AddGeometryToDecal( pRigidGeom, Surface.GetL2W(), OrthoProjection, ProjectionRay, WD );
         }
@@ -987,10 +1035,10 @@ void decal_mgr::CalcDecalVertsFromVolume( const bbox&    WorldBBox,
     playsurface_mgr::surface* pSurface = g_PlaySurfaceMgr.GetNextSurface();
     while ( pSurface != NULL )
     {
-        render::hgeom_inst hGeomInst  = pSurface->RenderInst;
+        render::GeometryInstanceHandle hGeomInst  = pSurface->RenderInst;
         const rigid_geom*  pRigidGeom = (const rigid_geom*)render::GetGeom( hGeomInst );
 
-        if ( pRigidGeom && (pRigidGeom->m_Collision.nHighClusters!=0) )
+        if ( pRigidGeom && (pRigidGeom->m_collision.nHighClusters!=0) )
         {
             AddGeometryToDecal( pRigidGeom, pSurface->L2W, OrthoProjection, ProjectionRay, WD );
         }
@@ -1237,9 +1285,9 @@ void decal_mgr::AddGeometryToDecal( const rigid_geom* pRigidGeom,
     vector3 ClipVerts[2][10];   // a clipped tri has at most 9 verts, plus duplicate the first for simplicity
     s32     Buff = 0;
     
-    for ( s32 iCluster = 0; iCluster < pRigidGeom->m_Collision.nHighClusters; iCluster++ )
+    for ( s32 iCluster = 0; iCluster < pRigidGeom->m_collision.nHighClusters; iCluster++ )
     {
-        for ( s32 iTri = 0; iTri < pRigidGeom->m_Collision.pHighCluster[iCluster].nTris; iTri++ )
+        for ( s32 iTri = 0; iTri < pRigidGeom->m_collision.pHighCluster[iCluster].nTris; iTri++ )
         {
             s32 Key = (iCluster<<16) | iTri;
             
@@ -2147,7 +2195,7 @@ void decal_mgr::Triangulate( working_data&  WD,
 
 void decal_mgr::CombineCoplanarPolys( working_data& WD )
 {
-    CONTEXT( "decal_mgr::CombineCoplanarPolys" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "decal_mgr::CombineCoplanarPolys" );
 
     // build a list of unique vertices, and a way to remap them
     CreateIndexedVertPool( WD );
@@ -2481,6 +2529,7 @@ void decal_mgr::AddDecal( xhandle                 RegInfoHandle,
         }
 
         RegInfo.m_pPositions[DecalStart].Flags |= decal_vert::FLAG_DECAL_START;
+        BuildDynamicSpans( RegInfo, DecalStart, nVerts );
     }
 }
 
@@ -2517,234 +2566,358 @@ void decal_mgr::AddClippedToQueue( const decal_definition& DecalDef,
 
 //==============================================================================
 
-void decal_mgr::RenderVerts( s32 nVerts, position_data* pPos, uv_data* pUV, u32* pColor )
+namespace
 {
-#ifdef X_EDITOR
-    static const f32 ItoFScale = 1.0f/4096.0f;
-    
-    xbool WindingCW = TRUE;
-    s32   iVert;
-    for ( iVert = 0; iVert < nVerts; iVert++ )
+    static render::decal_blend_mode GetDecalBlendMode( u16 BlendMode )
     {
-        // start of a new strip?
-        if ( pPos[iVert].Flags & decal_vert::FLAG_SKIP_TRIANGLE )
+        switch( BlendMode )
         {
-            WindingCW = TRUE;
-            continue;
+            case decal_definition::DECAL_BLEND_ADD:       return render::DECAL_BLEND_ADDITIVE;
+            case decal_definition::DECAL_BLEND_SUBTRACT:  return render::DECAL_BLEND_SUBTRACTIVE;
+            case decal_definition::DECAL_BLEND_INTENSITY: return render::DECAL_BLEND_INTENSITY;
+            case decal_definition::DECAL_BLEND_NORMAL:
+            default:                                      return render::DECAL_BLEND_ALPHA;
         }
-
-        // fill in the verts
-        ASSERT( iVert >= 2 );
-        if ( WindingCW )
-        {
-            draw_Color      ( pColor[iVert-2] );
-            draw_UV         ( (f32)pUV[iVert-2].U*ItoFScale, (f32)pUV[iVert-2].V*ItoFScale );
-            draw_Vertex     ( pPos[iVert-2].Pos );
-        
-            draw_Color      ( pColor[iVert-1] );
-            draw_UV         ( (f32)pUV[iVert-1].U*ItoFScale, (f32)pUV[iVert-1].V*ItoFScale );
-            draw_Vertex     ( pPos[iVert-1].Pos );
-        
-            draw_Color      ( pColor[iVert-0] );
-            draw_UV         ( (f32)pUV[iVert-0].U*ItoFScale, (f32)pUV[iVert-0].V*ItoFScale );
-            draw_Vertex     ( pPos[iVert-0].Pos );
-        }
-        else
-        {
-            draw_Color      ( pColor[iVert-0] );
-            draw_UV         ( (f32)pUV[iVert-0].U*ItoFScale, (f32)pUV[iVert-0].V*ItoFScale );
-            draw_Vertex     ( pPos[iVert-0].Pos );
-        
-            draw_Color      ( pColor[iVert-1] );
-            draw_UV         ( (f32)pUV[iVert-1].U*ItoFScale, (f32)pUV[iVert-1].V*ItoFScale );
-            draw_Vertex     ( pPos[iVert-1].Pos );
-
-            draw_Color      ( pColor[iVert-2] );
-            draw_UV         ( (f32)pUV[iVert-2].U*ItoFScale, (f32)pUV[iVert-2].V*ItoFScale );
-            draw_Vertex     ( pPos[iVert-2].Pos );
-        }
-
-        WindingCW = !WindingCW;
     }
-#else
-    render::RenderRawStrips( nVerts,
-        s_IdentityL2W,
-        (vector4*)pPos,
-        (s16*)pUV,
-        pColor );	
-#endif
+
+    static xcolor GetDecalColor( u32 Color )
+    {
+        return xcolor( (u8)( Color        & 0xff ),
+                       (u8)((Color >>  8) & 0xff ),
+                       (u8)((Color >> 16) & 0xff ),
+                       (u8)((Color >> 24) & 0xff ) );
+    }
 }
 
 //==============================================================================
 
-void decal_mgr::RenderDynamicDecals( registration_info& RegInfo )
+xbool decal_mgr::BuildSpan( decal_span& Span,
+                            s32         SourceStart,
+                            s32         SourceCount,
+                            s32         DecalStart,
+                            s32         DecalCount,
+                            u32         Zone,
+                            const position_data* pPos ) const
 {
-    s32 HWBufferSize = render::GetHardwareBufferSize();
+    if ( !pPos || ( SourceStart < 0 ) || ( SourceCount < 3 ) ||
+         ( SourceCount > MAX_VERTS_PER_DECAL ) )
+    {
+        return FALSE;
+    }
+
+    Span = decal_span();
+    Span.SourceStart = SourceStart;
+    Span.SourceCount = SourceCount;
+    Span.DecalStart = DecalStart;
+    Span.DecalCount = DecalCount;
+    Span.Zone = Zone;
+
+    vector3 firstPosition( pPos[SourceStart].Pos.X, pPos[SourceStart].Pos.Y, pPos[SourceStart].Pos.Z );
+    Span.Bounds.Set( firstPosition, 0.0f );
+    for ( s32 i = 1; i < SourceCount; ++i )
+    {
+        position_data const& source = pPos[SourceStart + i];
+        Span.Bounds += vector3( source.Pos.X, source.Pos.Y, source.Pos.Z );
+    }
+    Span.Bounds.Inflate( 1.0f, 1.0f, 1.0f );
+
+    vector3 normal( 0.0f, 0.0f, 0.0f );
+    xbool windingCW = TRUE;
+    for ( s32 i = SourceStart + 2; i < SourceStart + SourceCount; ++i )
+    {
+        if ( pPos[i].Flags & decal_vert::FLAG_SKIP_TRIANGLE )
+        {
+            windingCW = TRUE;
+            continue;
+        }
+
+        vector3 const p0( pPos[i - 2].Pos.X, pPos[i - 2].Pos.Y, pPos[i - 2].Pos.Z );
+        vector3 const p1( pPos[i - 1].Pos.X, pPos[i - 1].Pos.Y, pPos[i - 1].Pos.Z );
+        vector3 const p2( pPos[i].Pos.X, pPos[i].Pos.Y, pPos[i].Pos.Z );
+        normal += windingCW ? v3_Cross( p1 - p0, p2 - p0 ) : v3_Cross( p1 - p2, p0 - p2 );
+        windingCW = !windingCW;
+    }
+
+    if ( !normal.SafeNormalize() )
+    {
+        return FALSE;
+    }
+
+    Span.GeometricNormal = normal;
+    Span.Ambient = SampleSpanAmbient( Span );
+    Span.IsValid = TRUE;
+    return TRUE;
+}
+
+//==============================================================================
+
+void decal_mgr::BuildDynamicSpans( registration_info& RegInfo, s32 DecalStart, s32 nVerts )
+{
+    s32 const decalEnd = DecalStart + nVerts;
+    for ( s32 i = 0; i < RegInfo.m_nDynamicSpans; ++i )
+    {
+        decal_span& span = RegInfo.m_pDynamicSpans[i];
+        s32 const spanEnd = span.DecalStart + span.DecalCount;
+        if ( span.IsValid && ( DecalStart < spanEnd ) && ( span.DecalStart < decalEnd ) )
+        {
+            span.IsValid = FALSE;
+        }
+    }
+
+    s32 spanStart = -1;
+    for ( s32 i = DecalStart + 2; i <= decalEnd; ++i )
+    {
+        xbool const isEnd = i == decalEnd;
+        xbool const skipsTriangle = !isEnd && ( RegInfo.m_pPositions[i].Flags & decal_vert::FLAG_SKIP_TRIANGLE );
+        if ( !isEnd && !skipsTriangle && ( spanStart < 0 ) )
+        {
+            spanStart = i - 2;
+        }
+
+        if ( ( spanStart < 0 ) || ( !isEnd && !skipsTriangle ) )
+        {
+            continue;
+        }
+
+        s32 destination = -1;
+        for ( s32 j = 0; j < RegInfo.m_nDynamicSpans; ++j )
+        {
+            if ( !RegInfo.m_pDynamicSpans[j].IsValid ||
+                 !IsDynamicSpanActive( RegInfo, RegInfo.m_pDynamicSpans[j] ) )
+            {
+                destination = j;
+                break;
+            }
+        }
+        if ( ( destination < 0 ) && ( RegInfo.m_nDynamicSpans < RegInfo.m_nDynamicSpansAllocated ) )
+        {
+            destination = RegInfo.m_nDynamicSpans++;
+        }
+        if ( destination < 0 )
+        {
+            destination = RegInfo.m_NextDynamicSpan;
+            RegInfo.m_NextDynamicSpan =
+                ( RegInfo.m_NextDynamicSpan + 1 ) % RegInfo.m_nDynamicSpansAllocated;
+        }
+
+        BuildSpan( RegInfo.m_pDynamicSpans[destination], spanStart, i - spanStart,
+                   DecalStart, nVerts, 0xffffffffu, RegInfo.m_pPositions );
+        spanStart = -1;
+    }
+}
+
+//==============================================================================
+
+xcolor decal_mgr::SampleSpanAmbient( const decal_span& Span ) const
+{
+    xcolor const fallback( 64, 64, 64, 255 );
+    vector3 const center = Span.Bounds.GetCenter();
+    vector3 const ray = Span.GeometricNormal * kAmbientRayHalfLength;
+
+    g_CollisionMgr.RaySetup( NULL_GUID, center + ray, center - ray );
+    g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES,
+                                    object::ATTR_COLLIDABLE,
+                                    object::ATTR_LIVING | object::ATTR_COLLISION_PERMEABLE );
+
+    for ( s32 i = 0; i < g_CollisionMgr.m_nCollisions; ++i )
+    {
+        collision_mgr::collision const& collision = g_CollisionMgr.m_Collisions[i];
+        if ( collision.PrimitiveKey < 0 )
+        {
+            continue;
+        }
+
+        object* pObject = g_ObjMgr.GetObjectByGuid( collision.ObjectHitGuid );
+        object::detail_tri triangle;
+        xcolor ambient;
+        if ( pObject && pObject->GetColDetails( collision.PrimitiveKey, triangle ) &&
+             render::SampleSurfaceColor( triangle, collision.Point, ambient ) )
+        {
+            return ambient;
+        }
+    }
+
+    return fallback;
+}
+
+//==============================================================================
+
+xbool decal_mgr::IsDynamicSpanActive( const registration_info& RegInfo, const decal_span& Span ) const
+{
+    if ( !Span.IsValid || ( RegInfo.m_Blank == 0 ) )
+    {
+        return FALSE;
+    }
+
+    s32 const position = Span.DecalStart;
     if ( RegInfo.m_End > RegInfo.m_Start )
     {
-        // the verts are in order
-        s32 VertStart  = RegInfo.m_Start / HWBufferSize;
-        VertStart     *= HWBufferSize;
-        
-        s32 nVerts = RegInfo.m_End-VertStart;
-        if ( nVerts )
-        {
-            RenderVerts( nVerts,
-                         &RegInfo.m_pPositions[VertStart],
-                         &RegInfo.m_pUVs[VertStart],
-                         &RegInfo.m_pColors[VertStart] );
-        }
+        return ( position >= RegInfo.m_Start ) && ( position < RegInfo.m_End );
     }
-    else
+    if ( RegInfo.m_End < RegInfo.m_Start )
     {
-        // the vert buffer is wrapped around...do the start and end positions
-        // share the same hw buffer?
-        if ( (RegInfo.m_End / HWBufferSize) ==
-             (RegInfo.m_Start / HWBufferSize) )
-        {
-            s32 nVerts = RegInfo.m_Blank;
+        return ( position < RegInfo.m_End ) ||
+               ( ( position >= RegInfo.m_Start ) && ( position < RegInfo.m_Blank ) );
+    }
+    return FALSE;
+}
 
-            // just render everything to the blank point
-            if ( nVerts )
-            {
-                RenderVerts( nVerts,
-                             RegInfo.m_pPositions,
-                             RegInfo.m_pUVs,
-                             RegInfo.m_pColors );
-            }
+//==============================================================================
+
+xbool decal_mgr::SubmitSpan( const registration_info& RegInfo,
+                             const decal_span&         Span,
+                             const position_data*      pPos,
+                             const uv_data*            pUV,
+                             const u32*                pColor,
+                             const texture&            Texture ) const
+{
+    static f32 const UVScale = 1.0f / 4096.0f;
+    render::decal_vertex vertices[MAX_VERTS_PER_DECAL];
+    u16 indices[( MAX_VERTS_PER_DECAL - 2 ) * 3];
+    s32 indexCount = 0;
+
+    if ( !Span.IsValid || !pPos || !pUV || !pColor ||
+         ( Span.SourceCount < 3 ) || ( Span.SourceCount > MAX_VERTS_PER_DECAL ) )
+    {
+        return FALSE;
+    }
+
+    for ( s32 i = 0; i < Span.SourceCount; ++i )
+    {
+        s32 const sourceIndex = Span.SourceStart + i;
+        vector3 const position( pPos[sourceIndex].Pos.X, pPos[sourceIndex].Pos.Y, pPos[sourceIndex].Pos.Z );
+        vector2 const uv( static_cast<f32>( pUV[sourceIndex].U ) * UVScale,
+                          static_cast<f32>( pUV[sourceIndex].V ) * UVScale );
+        vertices[i] = render::decal_vertex( position, uv, GetDecalColor( pColor[sourceIndex] ) );
+    }
+
+    xbool windingCW = TRUE;
+    for ( s32 i = 2; i < Span.SourceCount; ++i )
+    {
+        s32 const sourceIndex = Span.SourceStart + i;
+        if ( pPos[sourceIndex].Flags & decal_vert::FLAG_SKIP_TRIANGLE )
+        {
+            windingCW = TRUE;
+            continue;
         }
-        else
-        {
-            // render everything up to the end point
-            s32 nVerts = RegInfo.m_End;
-            RenderVerts( nVerts,
-                         RegInfo.m_pPositions,
-                         RegInfo.m_pUVs,
-                         RegInfo.m_pColors );
 
-            // render everything after the end point skipping blank space
-            // if we can
-            s32 VertStart  = RegInfo.m_Start / HWBufferSize;
-            VertStart     *= HWBufferSize;
-            nVerts         = RegInfo.m_Blank-VertStart;
-            if ( nVerts )
-            {
-                RenderVerts( nVerts,
-                             &RegInfo.m_pPositions[VertStart],
-                             &RegInfo.m_pUVs[VertStart],
-                             &RegInfo.m_pColors[VertStart] );
-            }
+        u16 const index0 = static_cast<u16>( i - 2 );
+        u16 const index1 = static_cast<u16>( i - 1 );
+        u16 const index2 = static_cast<u16>( i );
+        indices[indexCount++] = windingCW ? index0 : index2;
+        indices[indexCount++] = index1;
+        indices[indexCount++] = windingCW ? index2 : index0;
+        windingCW = !windingCW;
+    }
+
+    if ( indexCount == 0 )
+    {
+        return TRUE;
+    }
+
+    render::decal_draw_desc desc;
+    desc.pTexture = &Texture;
+    desc.Blend = GetDecalBlendMode( RegInfo.m_BlendMode );
+    desc.Flags = render::DECAL_DRAW_FLAG_NONE;
+    if ( RegInfo.m_Flags & decal_definition::DECAL_FLAG_ADD_GLOW )
+    {
+        desc.Flags |= render::DECAL_DRAW_FLAG_GLOW;
+    }
+    if ( RegInfo.m_Flags & decal_definition::DECAL_FLAG_ENV_MAPPED )
+    {
+        desc.Flags |= render::DECAL_DRAW_FLAG_ENV_MAPPED;
+    }
+    desc.Bounds = Span.Bounds;
+    desc.GeometricNormal = Span.GeometricNormal;
+    desc.Ambient = Span.Ambient;
+    return render::SubmitDecalBatch( desc, vertices, Span.SourceCount, indices, indexCount );
+}
+
+//==============================================================================
+
+xbool decal_mgr::RenderDynamicDecals( registration_info& RegInfo, const texture& Texture )
+{
+    for ( s32 i = 0; i < RegInfo.m_nDynamicSpans; ++i )
+    {
+        decal_span const& span = RegInfo.m_pDynamicSpans[i];
+        if ( IsDynamicSpanActive( RegInfo, span ) &&
+             !SubmitSpan( RegInfo, span, RegInfo.m_pPositions, RegInfo.m_pUVs, RegInfo.m_pColors, Texture ) )
+        {
+            return FALSE;
         }
     }
+    return TRUE;
+}
+
+//==============================================================================
+
+void decal_mgr::ReserveRenderCapacity( void ) const
+{
+    s32 vertexCount = 0;
+    s32 indexCount = 0;
+    s32 drawCount = 0;
+    for ( s32 i = 0; i < m_RegisteredDefs.GetCount(); ++i )
+    {
+        registration_info const& regInfo = m_RegisteredDefs[i];
+        vertexCount += regInfo.m_nVertsAllocated;
+        indexCount += regInfo.m_nVertsAllocated * 3;
+        drawCount += regInfo.m_nDynamicSpansAllocated;
+#ifdef X_EDITOR
+        vertexCount += regInfo.m_nStaticVertsAlloced;
+        indexCount += regInfo.m_nStaticVertsAlloced * 3;
+        drawCount += regInfo.m_nStaticVertsAlloced / 3;
+#endif
+    }
+    for ( s32 i = 0; i < m_StaticSpans.GetCount(); ++i )
+    {
+        vertexCount += m_StaticSpans[i].SourceCount;
+        indexCount += ( m_StaticSpans[i].SourceCount - 2 ) * 3;
+        ++drawCount;
+    }
+
+    render::ReserveDecalSubmissionCapacity( MAX( vertexCount, 1 ), MAX( indexCount, 3 ), MAX( drawCount, 1 ) );
 }
 
 //==============================================================================
 
 void decal_mgr::OnRender( void )
 {
-    CONTEXT( "decal_mgr::OnRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "decal_mgr::OnRender" );
 
-    // bias the z-value for the view
-    f32 OldNear, OldFar;
-    view DecalView = *eng_GetView();
-    DecalView.GetZLimits( OldNear, OldFar );
-    if ( 1 )
+    for ( s32 i = 0; i < m_RegisteredDefs.GetCount(); ++i )
     {
-        f32 NearZOffset = OldNear*kNearZBias;
-        DecalView.SetZLimits( OldNear + NearZOffset, OldFar );
-    }
-    else
-    {
-        DecalView.SetZLimits( OldNear, OldFar );
-    }
-    eng_SetView( DecalView );
-
-#ifndef X_EDITOR
-    render::StartRawDataMode();
-#endif
-
-    // render all of the static decals
-    for ( s32 i = 0; i < m_RegisteredDefs.GetCount(); i++ )
-    {
-        registration_info& RegInfo = m_RegisteredDefs[i];
-
-        // if this definition doesn't have any decals, just skip over it
-        if ( (RegInfo.m_Blank == 0) &&
+        registration_info& regInfo = m_RegisteredDefs[i];
+        if ( ( regInfo.m_Blank == 0 ) &&
 #ifdef X_EDITOR
-             (RegInfo.m_nStaticVerts == 0) &&
+             ( regInfo.m_nStaticVerts == 0 ) &&
 #endif
-             (RegInfo.m_StaticDataOffset == -1) )
+             ( regInfo.m_StaticDataOffset == -1 ) )
+        {
             continue;
+        }
 
-        // if we can't get a valid bitmap pointer, we can't draw the decal
-        texture* pTexture = RegInfo.m_Bitmap.GetPointer();
+        texture* pTexture = regInfo.m_bitmap.GetPointer();
         if ( !pTexture )
+        {
             continue;
-
-        // draw the decals
-#ifdef X_EDITOR
-        // set up the texture and l2w
-        draw_SetTexture( pTexture->m_Bitmap );
-        draw_ClearL2W();
-
-        // figure out the blend mode
-        u32 DrawFlags = DRAW_USE_ALPHA | DRAW_NO_ZWRITE | DRAW_TEXTURED | DRAW_UV_CLAMP;
-        switch ( RegInfo.m_BlendMode )
-        {
-        default:
-        case decal_definition::DECAL_BLEND_NORMAL:
-        case decal_definition::DECAL_BLEND_INTENSITY:
-            break;
-
-        case decal_definition::DECAL_BLEND_ADD:
-            DrawFlags |= DRAW_BLEND_ADD;
-            break;
-
-        case decal_definition::DECAL_BLEND_SUBTRACT:
-            DrawFlags |= DRAW_BLEND_SUB;
-            break;
         }
 
-        // start it up, and set the blending equation
-        draw_Begin( DRAW_TRIANGLES, DrawFlags );
-#else
-        // figure out the blend mode
-        s32 BlendMode;
-        switch ( RegInfo.m_BlendMode )
+        if ( !RenderDynamicDecals( regInfo, *pTexture ) ||
+             !RenderStaticDecals( regInfo, *pTexture ) )
         {
-        default:
-        case decal_definition::DECAL_BLEND_NORMAL:      BlendMode = render::BLEND_MODE_NORMAL;      break;
-        case decal_definition::DECAL_BLEND_ADD:         BlendMode = render::BLEND_MODE_ADDITIVE;    break;
-        case decal_definition::DECAL_BLEND_SUBTRACT:    BlendMode = render::BLEND_MODE_SUBTRACTIVE; break;
-        case decal_definition::DECAL_BLEND_INTENSITY:   BlendMode = render::BLEND_MODE_INTENSITY;   break;
+            break;
         }
-
-        // set up the texture, and blend mode
-        if( RegInfo.m_Flags & decal_definition::DECAL_FLAG_ADD_GLOW )
-            render::SetGlowMaterial( pTexture->m_Bitmap, BlendMode );
-        else if( RegInfo.m_Flags & decal_definition::DECAL_FLAG_ENV_MAPPED )
-            render::SetEnvMapMaterial( pTexture->m_Bitmap, BlendMode );
-        else
-            render::SetDiffuseMaterial( pTexture->m_Bitmap, BlendMode );
-#endif
-
-        // render all of the verts
-        RenderDynamicDecals( RegInfo );
-        RenderStaticDecals( RegInfo );
-
-#ifdef X_EDITOR
-        draw_End();
-#endif
     }
-
-#ifndef X_EDITOR
-    render::EndRawDataMode();
-#endif
-
-    // restore the original view
-    DecalView.SetZLimits( OldNear, OldFar );
-    eng_SetView( DecalView );
 }
+
+//==============================================================================
+
+#ifdef X_EDITOR
+void decal_mgr::OnRenderEditorWireframes( void )
+{
+    RenderEditorStaticWireframes();
+}
+#endif
 
 //==============================================================================
 
@@ -2766,7 +2939,7 @@ void decal_mgr::UpdateAlphaFade( f32 DeltaTime, f32 FadeTime, s32 nVerts, u32* p
 
 void decal_mgr::OnUpdate( f32 DeltaTime )
 {
-    CONTEXT( "decal_mgr::OnUpdate" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "decal_mgr::OnUpdate" );
     (void)DeltaTime;
 
     // update any fading decals

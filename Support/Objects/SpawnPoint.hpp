@@ -13,8 +13,8 @@
 
 #include "Circuit.hpp"
 
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // CLASS

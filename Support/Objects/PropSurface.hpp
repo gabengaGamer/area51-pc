@@ -5,8 +5,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "Objects\PlaySurface.hpp"
-#include "Debris\debris_mgr.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "Debris/debris_mgr.hpp"
 
 //=========================================================================
 // DEFINES
@@ -30,7 +30,7 @@ public:
     virtual void                OnEnumProp                  ( prop_enum&    List );
     virtual xbool               OnProperty                  ( prop_query&   I    );
     virtual void                OnRender                    ( void );
-    virtual void                OnAdvanceLogic              ( f32 DeltaTime );
+    virtual void                OnAdvanceSimulation              ( f32 DeltaTime );
 
     virtual void                OnMove                      ( const vector3& NewPos   );      
     virtual void                OnTransform                 ( const matrix4& L2W      );

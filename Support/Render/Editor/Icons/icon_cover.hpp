@@ -289,5 +289,4 @@ static s16 s_iicon_cover[] =
 };
 
 
-#define DRAW_ICON_COVER() draw_icon( NUM_FACETS_ICON_COVER, NUM_VERTICES_ICON_COVER, s_vicon_cover, s_iicon_cover )
 

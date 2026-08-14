@@ -21,9 +21,9 @@
 
 void xmemfile::EnsureCapacity( s32 Capacity )
 {
-    if( Capacity > m_Capacity )
+    if( Capacity > m_capacity )
     {
-        s32 NewCapacity = m_Capacity;
+        s32 NewCapacity = m_capacity;
 
         if( NewCapacity == 0 )
             NewCapacity = 1024;
@@ -35,7 +35,7 @@ void xmemfile::EnsureCapacity( s32 Capacity )
         // Realloc the buffer
         m_pData = (byte*)x_realloc( m_pData, NewCapacity );
         ASSERT( m_pData );
-        m_Capacity = NewCapacity;
+        m_capacity = NewCapacity;
     }
 }
 
@@ -44,7 +44,7 @@ void xmemfile::EnsureCapacity( s32 Capacity )
 xmemfile::xmemfile( void )
 {
     m_pData     = 0;
-    m_Capacity  = 0;
+    m_capacity  = 0;
     m_Position  = 0;
     m_EOF       = 0;
 }
@@ -53,12 +53,12 @@ xmemfile::xmemfile( void )
 
 xmemfile::xmemfile( const xmemfile& MemFile )
 {
-    m_pData = (byte*)x_malloc( MemFile.m_Capacity );
+    m_pData = (byte*)x_malloc( MemFile.m_capacity );
     ASSERT( m_pData );
-    m_Capacity  = MemFile.m_Capacity;
+    m_capacity  = MemFile.m_capacity;
     m_Position  = MemFile.m_Position;
     m_EOF       = MemFile.m_EOF;
-    x_memcpy( m_pData, MemFile.m_pData, m_Capacity );
+    x_memcpy( m_pData, MemFile.m_pData, m_capacity );
 }
 
 //==============================================================================
@@ -89,10 +89,10 @@ void xmemfile::Clear( void )
 
 void xmemfile::FreeExtra( void )
 {
-    if( m_Capacity > m_EOF )
+    if( m_capacity > m_EOF )
     {
         m_pData = (byte*)x_realloc( m_pData, m_EOF );
-        m_Capacity = m_EOF;
+        m_capacity = m_EOF;
     }
 }
 

@@ -4,32 +4,30 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_listbox.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_listbox.hpp"
 
 #include "dlg_PopUp.hpp"
 #include "dlg_OnlineLevelSelect.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "Parsing/textin.hpp"
-#include "StateMgr/mapList.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Parsing/TextIn.hpp"
+#include "StateMgr/MapList.hpp"
 #include "Configuration/GameConfig.hpp"
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
 #else
 #include "../../Apps/GameApp/Config.hpp"	
 #endif
-#include "e_Memcard.hpp"
-#include "MemCardMgr/MemCardMgr.hpp"
-#include "dlg_download.hpp"
+#include "SaveData/SaveDataMgr.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
@@ -40,7 +38,6 @@ enum controls
 	IDC_ONLINE_LEVEL_SELECT_LISTBOX,
     IDC_ONLINE_LEVEL_SELECT_CYCLE,
     IDC_ONLINE_LEVEL_SELECT_LAUNCH,
-    IDC_ONLINE_LEVEL_SELECT_NAV_TEXT,
 };
 
 //-------------------------------------------------------------------------
@@ -57,12 +54,11 @@ enum popup_message
 ui_manager::control_tem OnlineLevelSelectControls[] = 
 {
     // Frames.
-    { IDC_ONLINE_LEVEL_SELECT_LISTBOX,   "IDS_MAP_NAME",    "listbox",   40,  40, 180, 222,  0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_ONLINE_LEVEL_SELECT_CYCLE,     "IDS_MAP_CYCLE",   "listbox",  240,  40, 180, 222,  1, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_ONLINE_LEVEL_SELECT_LISTBOX,   "IDS_MAP_NAME",    "listbox",   40,  40, 180, 222,  0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_ONLINE_LEVEL_SELECT_CYCLE,     "IDS_MAP_CYCLE",   "listbox",  240,  40, 180, 222,  1, 0, 1, 1, ui_win::WF_VISIBLE },
 	
-    { IDC_ONLINE_LEVEL_SELECT_LAUNCH,    "IDS_LAUNCH",      "button",    40, 285, 220,  40,  0, 1, 2, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_ONLINE_LEVEL_SELECT_LAUNCH,    "IDS_LAUNCH",      "button",    40, 285, 220,  40,  0, 1, 2, 1, ui_win::WF_VISIBLE },
 	
-    { IDC_ONLINE_LEVEL_SELECT_NAV_TEXT,  "IDS_NULL",        "text",       0,   0,   0,   0,  0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 //-------------------------------------------------------------------------
@@ -146,7 +142,6 @@ xbool dlg_online_level_select::Create( s32                        UserID,
     m_pLevelList     = (ui_listbox*)    FindChildByID( IDC_ONLINE_LEVEL_SELECT_LISTBOX  );
     m_pLevelCycle    = (ui_listbox*)    FindChildByID( IDC_ONLINE_LEVEL_SELECT_CYCLE    );
     m_pLaunchButton  = (ui_button*)     FindChildByID( IDC_ONLINE_LEVEL_SELECT_LAUNCH   );
-    m_pNavText       = (ui_text*)       FindChildByID( IDC_ONLINE_LEVEL_SELECT_NAV_TEXT );
 
     // initialize type
     m_Type = MAP_SELECT_ONLINE;
@@ -210,10 +205,7 @@ xbool dlg_online_level_select::Create( s32                        UserID,
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
     navText += g_StringTableMgr( "ui", "IDS_NAV_ROTATE_CYCLE" );
     navText += g_StringTableMgr( "ui", "IDS_NAV_LAUNCH" );
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);    
+    SetNavText( navText );
 
     // set up level list
     FillLevelList();
@@ -221,7 +213,7 @@ xbool dlg_online_level_select::Create( s32                        UserID,
     {
         m_pLevelList->SetSelection( 0 );
     }
-    //m_pLevelList->SetFlag(ui_win::WF_SELECTED, TRUE);
+    //m_pLevelList->SetActive( TRUE );
     m_pLevelList->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pLevelList->SetBackgroundColor( xcolor (39,117,28,128) );
     m_pLevelList->DisableFrame();
@@ -288,9 +280,8 @@ xbool dlg_online_level_select::Create( s32                        UserID,
 
 void dlg_online_level_select::Destroy( void )
 {
+    g_SaveDataMgr.CancelCallbacks( this );
     ui_dialog::Destroy();
-
-    g_UIMemCardMgr.ClearCallback();
     // kill screen wipe
     g_UiMgr->ResetScreenWipe();
 }
@@ -380,14 +371,7 @@ void dlg_online_level_select::Render( s32 ox, s32 oy )
 
     if( m_bRenderBlackout )
     {
-        s32 XRes, YRes;
-        eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-        // Nasty hack to force PS2 to draw to rb.l = 0
-        rb.Set( -1, 0, XRes, YRes );
-#else
-        rb.Set( 0, 0, XRes, YRes );
-#endif
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
             xcolor(0,0,0,180),
             xcolor(0,0,0,180),
@@ -440,19 +424,18 @@ void dlg_online_level_select::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_online_level_select::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_online_level_select::OnNotify( ui_notification const& Event )
 {
-    (void)pWin;
-    (void)pSender;
-    (void)Command;
-    (void)pData;
+    (void)Event.m_pSender;
+    (void)Event.m_Type;
+    (void)Event.m_pText;
 
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
-        if (Command == WN_LIST_ACCEPTED)
+        if (Event.m_Type == ui_notification_type::ListAccepted)
         {
             // check which listbox
-            if ( pSender == (ui_win*)m_pLevelList )
+            if ( Event.m_pSender == (ui_win*)m_pLevelList )
             {
                 // level selection listbox
 
@@ -523,14 +506,14 @@ void dlg_online_level_select::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Comm
 
 //=========================================================================
 
-void dlg_online_level_select::OnPadNavigate( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
+void dlg_online_level_select::OnNavigate( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX, xbool WrapY )
 {
-    ui_dialog::OnPadNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
+    ui_dialog::OnNavigate( pWin, Code, Presses, Repeats, WrapX, WrapY );
 }
 
 //=========================================================================
 
-void dlg_online_level_select::OnPadSelect( ui_win* pWin )
+void dlg_online_level_select::OnAccept( ui_win* pWin )
 {
     if( m_State == DIALOG_STATE_ACTIVE )
     {
@@ -544,7 +527,7 @@ void dlg_online_level_select::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_online_level_select::OnPadBack( ui_win* pWin )
+void dlg_online_level_select::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -557,7 +540,7 @@ void dlg_online_level_select::OnPadBack( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_online_level_select::OnPadActivate( ui_win* pWin )
+void dlg_online_level_select::OnAlternate( ui_win* pWin )
 {
     (void)pWin;
 
@@ -576,7 +559,7 @@ void dlg_online_level_select::OnPadActivate( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_online_level_select::OnPadDelete( ui_win* pWin )
+void dlg_online_level_select::OnDelete( ui_win* pWin )
 {
     (void)pWin;
 
@@ -603,7 +586,6 @@ void dlg_online_level_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pLevelList    ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pLevelCycle   ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             m_pLaunchButton ->SetFlag( ui_win::WF_VISIBLE, TRUE );
-            m_pNavText      ->SetFlag( ui_win::WF_VISIBLE, TRUE );
             
             GotoControl( (ui_control*)m_pLaunchButton );
             g_UiMgr->SetScreenHighlight( m_pLaunchButton->GetPosition() );
@@ -619,7 +601,7 @@ void dlg_online_level_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_PopUp = NULL;
 
             // turn on nav text
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+            SetNavTextVisible( TRUE );
 
             switch( m_PopUpType )
             {
@@ -628,7 +610,7 @@ void dlg_online_level_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     // empty cycle handled!
 
                     // turn on nav text
-                    m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+                    SetNavTextVisible( TRUE );
                 }
                 break;
 
@@ -650,28 +632,6 @@ void dlg_online_level_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                             g_StateMgr.ActivatePendingSettings( TRUE ); // mark dirty
                             m_State = DIALOG_STATE_ACTIVATE;
 
-#if 0 
-                            // MAB: Don't save to the memory card during online session!
-                            // check if the settings are saved 
-                            if( g_StateMgr.GetSettingsCardSlot() == -1 )
-                            {
-#ifdef TARGET_PS2
-                                // not saved - goto memory card select screen
-                                m_State = DIALOG_STATE_MEMCARD_ERROR;
-#else
-                                // attempt to create settings
-                                g_StateMgr.SetSettingsCardSlot( 0 );
-                                g_UIMemCardMgr.CreateSettings( this, &dlg_online_level_select::OnSaveSettingsCB );
-                                m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
-#endif
-                            }
-                            else
-                            {                            
-                                // attempt to save the changes to the memcard
-                                g_UIMemCardMgr.SaveSettings( this, &dlg_online_level_select::OnSaveSettingsCB );
-                                m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
-                            }
-#endif
                             break;
                     }                    
                 }
@@ -686,25 +646,8 @@ void dlg_online_level_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                             // save changes
                             g_AudioMgr.Play("Select_Norm");
 
-                            // check if the settings are saved 
-                            if( g_StateMgr.GetSettingsCardSlot() == -1 )
-                            {
-#ifdef TARGET_PS2
-                                // not saved - goto memory card select screen
-                                m_State = DIALOG_STATE_MEMCARD_ERROR;
-#else
-                                // attempt to create settings
-                                g_StateMgr.SetSettingsCardSlot( 0 );
-                                g_UIMemCardMgr.CreateSettings( this, &dlg_online_level_select::OnSaveSettingsCB );
-                                m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
-#endif
-                            }
-                            else
-                            {                            
-                                // attempt to save the changes to the memcard
-                                g_UIMemCardMgr.SaveSettings( this, &dlg_online_level_select::OnSaveSettingsCB );
-                                m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
-                            }
+                            g_SaveDataMgr.SaveSettings( this, &dlg_online_level_select::OnSaveSettingsCB );
+                            m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
                         }
                         break;
 
@@ -729,12 +672,12 @@ void dlg_online_level_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
     s32 Highlight;
 
-    if (m_pLevelList->GetFlags() & ui_win::WF_SELECTED)
+    if (m_pLevelList->IsActive())
     {
         Highlight = 0;
         g_UiMgr->SetScreenHighlight( m_pLevelList->GetPosition() );
     }
-    else if (m_pLevelCycle->GetFlags() & ui_win::WF_SELECTED)
+    else if (m_pLevelCycle->IsActive())
     {
         Highlight = 1;
         g_UiMgr->SetScreenHighlight( m_pLevelList->GetPosition() );
@@ -755,7 +698,7 @@ void dlg_online_level_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
                 navText += g_StringTableMgr( "ui", "IDS_NAV_ROTATE_CYCLE" );
                 navText += g_StringTableMgr( "ui", "IDS_NAV_LAUNCH" );
-                m_pNavText->SetLabel( navText );
+                SetNavText( navText );
 
                 // set list cursor
                 s32 selection = m_pLevelCycle->GetSelection();
@@ -787,7 +730,7 @@ void dlg_online_level_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
                 navText += g_StringTableMgr( "ui", "IDS_NAV_ROTATE_CYCLE" );
                 navText += g_StringTableMgr( "ui", "IDS_NAV_LAUNCH" );
-                m_pNavText->SetLabel( navText );
+                SetNavText( navText );
 
                 // set list cursor
                 s32 selection = m_pLevelList->GetSelection();
@@ -819,7 +762,7 @@ void dlg_online_level_select::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
                 navText += g_StringTableMgr( "ui", "IDS_NAV_ROTATE_CYCLE" );
                 navText += g_StringTableMgr( "ui", "IDS_NAV_LAUNCH" );
-                m_pNavText->SetLabel( navText );
+                SetNavText( navText );
             }
             break;
         }
@@ -914,23 +857,10 @@ void dlg_online_level_select::FillMapCycleList( void )
 
 void dlg_online_level_select::OnSaveSettingsCB( void )
 {
-    // check if the save was successful (OR user wants to continue without saving)
-#ifdef TARGET_PS2
-    MemCardMgr::condition& Condition1 = g_UIMemCardMgr.GetCondition( g_StateMgr.GetSettingsCardSlot() );
-#else
-    MemCardMgr::condition& Condition1 = g_UIMemCardMgr.GetCondition( 0 );
-#endif
-    if( Condition1.SuccessCode )
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
     {
         // activate the new settings
         g_StateMgr.ActivatePendingSettings();
-
-        // continue without saving?
-        if( Condition1.bCancelled )
-        {
-            // clear settings card slot
-            g_StateMgr.SetSettingsCardSlot(-1);
-        }
 
         // save successful - return to main menu
         g_AudioMgr.Play( "Select_Norm" );
@@ -938,14 +868,11 @@ void dlg_online_level_select::OnSaveSettingsCB( void )
     }
     else
     {
-        // save failed! - goto memcard select dialog
+        // save failed; let the state manager open the save data retry dialog
         g_AudioMgr.Play( "Backup" );
 
-        // clear settings card slot
-        g_StateMgr.SetSettingsCardSlot(-1);
-
         // handle error condition
-        m_State = DIALOG_STATE_MEMCARD_ERROR;
+        m_State = DIALOG_STATE_SAVE_DATA_ERROR;
     }
 }
 
@@ -973,11 +900,11 @@ void dlg_online_level_select::LaunchServer( void )
     if( g_StateMgr.GetMapCycleCount() == 0 )
     {
         irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
         // set nav text
         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_OK" ));
-        m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+        SetNavTextVisible( FALSE );
 
         // configure message
         m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_MAP_CYCLE" ), 
@@ -996,13 +923,13 @@ void dlg_online_level_select::LaunchServer( void )
     {
         // confirm reconfigure server
         irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+        m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
         // set nav text
         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_APPLY_NOW" ));
         navText += g_StringTableMgr( "ui", "IDS_NAV_APPLY_AFTER" );
         navText += g_StringTableMgr( "ui", "IDS_NAV_CANCEL" );
-        m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+        SetNavTextVisible( FALSE );
 
         irect ApplyRect;
         ApplyRect.Set(0,0,280,240);
@@ -1093,12 +1020,12 @@ void dlg_online_level_select::LaunchServer( void )
         {
             // settings have changed - save changes?
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
 
             // configure message
             m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_GAMEMGR_POPUP" ), 

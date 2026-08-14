@@ -1,6 +1,7 @@
 
 #include "BaseStdAfx.h"
 #include "Grid3d.hpp"
+#include "Render/PrimitiveDebug.hpp"
 
 //=========================================================================
 // FUNCTIONS
@@ -61,84 +62,14 @@ void grid3d::SetSize( f32 X, f32 Z )
 void grid3d::Render( void )
 {
     ASSERT( eng_InBeginEnd() );
-
-    // Legacy DX9 render path kept as a reference for the DX11 port.
-    /*
-    if( !g_pd3dDevice )
+    if( (m_SeparationX <= 0.0f) || (m_SeparationZ <= 0.0f) )
         return;
 
-    static vertex   Buffer[1024];
-    f32             x, z;
-    matrix4         L2W;
-    s32             nVertex=0;
-
-    L2W.Identity();
-    L2W.SetTranslation( vector3( m_OffSetX, m_OffSetY, m_OffSetZ ) );
-
-    g_pd3dDevice->SetTransform( D3DTS_WORLDMATRIX(0), (D3DMATRIX*)&L2W );
-
-    g_pd3dDevice->SetRenderState( D3DRS_LIGHTING,           FALSE   );
-    g_pd3dDevice->SetRenderState( D3DRS_TEXTUREFACTOR,      m_Color );
-    g_pd3dDevice->SetRenderState( D3DRS_ALPHABLENDENABLE,   TRUE );
-    g_pd3dDevice->SetRenderState( D3DRS_SRCBLEND,           D3DBLEND_SRCALPHA );
-    g_pd3dDevice->SetRenderState( D3DRS_DESTBLEND,          D3DBLEND_INVSRCALPHA );
-
-    g_pd3dDevice->SetFVF( D3DFVF_XYZ );
-
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLOROP,      D3DTOP_SELECTARG1 );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_COLORARG1,    D3DTA_TFACTOR     );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAOP,      D3DTOP_SELECTARG1 );
-    g_pd3dDevice->SetTextureStageState( 0, D3DTSS_ALPHAARG1,    D3DTA_TFACTOR     );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_COLOROP,      D3DTOP_DISABLE    );
-    g_pd3dDevice->SetTextureStageState( 1, D3DTSS_ALPHAOP,      D3DTOP_DISABLE    );
-
-    for( x = -m_SizeX; x <= m_SizeX; x += m_SeparationX )
-    {
-        Buffer[nVertex++].Pos.Set( x, 0, -m_SizeZ );
-        Buffer[nVertex++].Pos.Set( x, 0,  m_SizeZ );
-    }
-
-    for( z = -m_SizeZ; z <= m_SizeZ; z += m_SeparationZ )
-    {
-        Buffer[nVertex++].Pos.Set( -m_SizeX, 0, z );
-        Buffer[nVertex++].Pos.Set(  m_SizeX, 0, z );
-    }
-
-    for( x = -m_SizeX; x <= m_SizeX; x += m_SeparationX*5 )
-    {
-        Buffer[nVertex++].Pos.Set( x, 0, -m_SizeZ );
-        Buffer[nVertex++].Pos.Set( x, 0,  m_SizeZ );
-    }
-
-    for( z = -m_SizeZ; z <= m_SizeZ; z += m_SeparationZ*5 )
-    {
-        Buffer[nVertex++].Pos.Set( -m_SizeX, 0, z );
-        Buffer[nVertex++].Pos.Set(  m_SizeX, 0, z );
-    }
-
-    g_pd3dDevice->DrawPrimitiveUP( D3DPT_LINELIST, nVertex/2, Buffer, sizeof(vertex) );
-
-    xcolor C( iMin( m_Color.R+50, 255 ),
-              iMin( m_Color.G+50, 255 ),
-              iMin( m_Color.B+50, 255 ),
-              255 );
-
-    nVertex = 0;
-
-    g_pd3dDevice->SetRenderState( D3DRS_TEXTUREFACTOR, C );
-
-    Buffer[nVertex++].Pos.Set( 0, 0, -m_SizeZ );
-    Buffer[nVertex++].Pos.Set( 0, 0,  m_SizeZ );
-
-    Buffer[nVertex++].Pos.Set( -m_SizeX, 0, 0 );
-    Buffer[nVertex++].Pos.Set(  m_SizeX, 0, 0 );
-
-    // Label the axis in the legacy GL path.
-    // glRasterPos3f (  m_SizeX,  0,   0      ); glCallLists (1, GL_UNSIGNED_BYTE, "X");
-    // glRasterPos3f ( -m_SizeX,  0,   0      ); glCallLists (1, GL_UNSIGNED_BYTE, "x");
-    // glRasterPos3f (  0,        0,   m_SizeZ); glCallLists (1, GL_UNSIGNED_BYTE, "Z");
-    // glRasterPos3f (  0,        0,  -m_SizeZ); glCallLists (1, GL_UNSIGNED_BYTE, "z");
-    // glPopMatrix();
-    */
-
+    const vector3 Corner( m_OffSetX - m_SizeX, m_OffSetY, m_OffSetZ - m_SizeZ );
+    const vector3 EdgeX( m_SizeX * 2.0f, 0.0f, 0.0f );
+    const vector3 EdgeZ( 0.0f, 0.0f, m_SizeZ * 2.0f );
+    const s32 XDivisions = MAX( 1, (s32)x_ceil( (m_SizeX * 2.0f) / m_SeparationX ) );
+    const s32 ZDivisions = MAX( 1, (s32)x_ceil( (m_SizeZ * 2.0f) / m_SeparationZ ) );
+    VERIFY( render::debug::Grid( Corner, EdgeX, EdgeZ, m_Color, XDivisions, ZDivisions,
+                                 render::PRIMITIVE_DEPTH_READ_ONLY ) );
 }

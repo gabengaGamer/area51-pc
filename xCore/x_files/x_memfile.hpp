@@ -79,7 +79,7 @@ const   xmemfile&       operator +=     ( const xwstring&   String  );
 
 protected:
         byte*       m_pData;
-        s32         m_Capacity;
+        s32         m_capacity;
         s32         m_EOF;
         s32         m_Position;
 };

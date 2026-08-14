@@ -1,14 +1,12 @@
 
+#include "Render/Render.hpp"
 #include "ZoneMgr.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "Objects\Object.hpp"
+#include "UI/ui_renderer.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Objects/object.hpp"
 
 #ifndef X_EDITOR
-#include "NetworkMgr\GameMgr.hpp"
-#endif
-
-#ifdef TARGET_PS2
-#include "ps2\ps2_misc.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 #endif
 
 //=========================================================================
@@ -21,6 +19,9 @@ zone_mgr g_ZoneMgr;
 #define U8BIT_TO_FLOAT1( n )                    ((f32)n / 255.0f)        
 #define MAX_FARCLIP_SCALE                       10.0f
 #define MIN_ZONE_VALUE                          0.01f
+
+static const f32 s_PortalPlaneEpsilon       = 0.01f;
+static const f32 s_PortalIntersectionEpsilon = 0.00001f;
 
 //==============================================================================
 // DEBUG
@@ -124,6 +125,8 @@ void zone_mgr::Reset( void )
     m_bAddMode          = FALSE;
     m_MaxPortals        = 0;
     m_nFrustums         = 0;
+    m_bPortalCullingEnabled    = FALSE;
+    m_bHasValidVisibilityState = FALSE;
 
     m_GuidLookup.Clear();
 }
@@ -141,6 +144,9 @@ zone_mgr::zone_mgr( void )
     m_pVisivilityBits   = NULL;
     m_bAddMode          = FALSE;
     m_nFrustums         = 0;
+    m_MaxPortals        = 0;
+    m_bPortalCullingEnabled    = FALSE;
+    m_bHasValidVisibilityState = FALSE;
 
     
 }
@@ -594,16 +600,19 @@ void zone_mgr::PortalWalk( frustum* pFrustum, const frustum& ParentFrustum )
 //=========================================================================
 void zone_mgr::PortalWalk( const view& View, s32 iZone )
 {
-    CONTEXT( "zone_mgr::PortalWalk" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "zone_mgr::PortalWalk" );
 
     s32         i;
 
-    // Nothing to do.
-    if( iZone == 0 )
+    // Match the original renderer: without a valid starting zone there is no
+    // portal walk, so render the view with portal culling disabled.
+    if( (iZone <= 0) || (iZone >= m_nZones) )
     {
-        m_nFrustums = 0;
+        TurnOff();
         return;
     }
+
+    m_bPortalCullingEnabled = TRUE;
         
     ASSERT( iZone < m_nZones );
 
@@ -667,6 +676,8 @@ void zone_mgr::PortalWalk( const view& View, s32 iZone )
         m_ZoneToFrustum[ m_Frustum[i].iZone ] = (s8)i;
     }
 
+    m_bHasValidVisibilityState = TRUE;
+
     //
     // TODO: here we may choose to merge frustrums that exits in the same zone.
     //       Some case this will work better some cases it will not. 
@@ -678,7 +689,12 @@ void zone_mgr::PortalWalk( const view& View, s32 iZone )
 
 s32 zone_mgr::GetLastPortalWalkZone( void ) const
 {
-    // Last zone walked is tored here
+    if( !m_bHasValidVisibilityState )
+    {
+        return 0;
+    }
+
+    // Last zone walked is stored here.
     return m_Frustum[0].iZone ;
 }
 
@@ -692,33 +708,22 @@ void zone_mgr::Render( void ) const
 
     if( eng_Begin("ZoneMgrDebugRender") )
     {
+        VERIFY( render::BeginPrimitiveRender() );
+
         //
         // Render the portals 
         //
-        draw_ClearL2W();
-
         if( 1 )
         {
-            draw_Begin( DRAW_LINES );
             for( i=0; i<m_nPortals; i++ )
             {
                 portal& Portal = m_pPortal[i];
 
-                draw_Color( xcolor(255,255,255,255) );
-
-                draw_Vertex( Portal.Edges[0] );
-                draw_Vertex( Portal.Edges[1] );
-
-                draw_Vertex( Portal.Edges[1] );
-                draw_Vertex( Portal.Edges[2] );
-
-                draw_Vertex( Portal.Edges[2] );
-                draw_Vertex( Portal.Edges[3] );
-
-                draw_Vertex( Portal.Edges[3] );
-                draw_Vertex( Portal.Edges[0] );
+                render::debug::Line( Portal.Edges[0], Portal.Edges[1] );
+                render::debug::Line( Portal.Edges[1], Portal.Edges[2] );
+                render::debug::Line( Portal.Edges[2], Portal.Edges[3] );
+                render::debug::Line( Portal.Edges[3], Portal.Edges[0] );
             }
-            draw_End();
         }
 
         //
@@ -727,14 +732,20 @@ void zone_mgr::Render( void ) const
         if( 1 )
         {
             x_srand( 12312 );
-            draw_Begin( DRAW_TRIANGLES, DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_NO_ZWRITE );
+            const render::primitive_draw_desc Material( NULL,
+                                                        render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                        render::PRIMITIVE_BLEND_ALPHA,
+                                                        render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                        render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                        render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                        render::PRIMITIVE_LAYER_TRANSPARENT );
+            render::PrimitiveBatch Batch( Material );
             for( i=0; i<m_nFrustums; i++ )
             {
                 const frustum& Frustum = m_Frustum[i];
 
                 xcolor C( x_rand() );
                 C.A = 64;
-                draw_Color( C );
                 for( s32 j=0; j<Frustum.nPlanes; j++ )
                 {
                     s32     t;
@@ -777,13 +788,15 @@ void zone_mgr::Render( void ) const
                     // Now we are ready to render it
                     for( s32 k=0; k < (Count[t]-2); k++ )
                     {
-                        draw_Vertex( Points[t][0] );
-                        draw_Vertex( Points[t][k+1] );
-                        draw_Vertex( Points[t][k+2] );
+                        Batch.AddTriangle( render::primitive_vertex( Points[t][0], vector2( 0.0f, 0.0f ), C ),
+                                           render::primitive_vertex( Points[t][k+1], vector2( 0.0f, 0.0f ), C ),
+                                           render::primitive_vertex( Points[t][k+2], vector2( 0.0f, 0.0f ), C ) );
                     }
                 }
             }
-            draw_End();   
+            matrix4 Identity;
+            Identity.Identity();
+            Batch.Submit( Identity );
         }
 
         //
@@ -792,20 +805,17 @@ void zone_mgr::Render( void ) const
         if( 1 )
         {
             x_srand( 12312 );
-            draw_Begin( DRAW_LINES );
             for( i=1; i<m_nFrustums; i++ )
             {
                 const frustum& Frustum = m_Frustum[i];
 
-                draw_Color( xcolor( x_rand(), x_rand(), x_rand(), 255 ) );
+                const xcolor Color( x_rand(), x_rand(), x_rand(), 255 );
 
                 for( s32 k=0; k<Frustum.nEdges; k++ )
                 {
-                    draw_Vertex( Frustum.Edges[k] );
-                    draw_Vertex( Frustum.Edges[(k+1)%Frustum.nEdges] );
+                    render::debug::Line( Frustum.Edges[k], Frustum.Edges[(k+1)%Frustum.nEdges], Color );
                 }
             }
-            draw_End();
         }
 
         //
@@ -815,7 +825,7 @@ void zone_mgr::Render( void ) const
         {
             for( i=0; i<m_nZones; i++ )
             {
-                draw_BBox( m_pZone[i].BBox );
+                render::debug::Box( m_pZone[i].BBox );
             }
         }
 
@@ -826,225 +836,22 @@ void zone_mgr::Render( void ) const
         {
             for( i=0; i<m_nPortals; i++ )
             {
-                draw_BBox( m_pPortal[i].BBox );
+                render::debug::Box( m_pPortal[i].BBox );
             }
         }
 
+        render::EndPrimitiveRender();
         eng_End();
+        render::ExecuteForwardRender();
     }
 }
 
 #endif // !defined( CONFIG_RETAIL )
 
-//=========================================================================
-
-#ifdef TARGET_PS2
-// NOTE: Blech. I don't like putting this here, but we really don't have a
-// good place for it. Using draw is not sufficient because drawing a big
-// rectangle is VERY inefficient for the hardware. The PS2 likes long
-// vertical strips for good fill-rate.
-static
-void ps2_FullScreenQuad( xcolor Color )
-{
-    s32 XRes, YRes;
-    eng_GetRes( XRes, YRes );
-
-    s32 ColumnWidth = 64;
-    s32 nColumns    = XRes / ColumnWidth;
-    Color.A = (Color.A==255) ? 128 : (Color.A>>1);
-
-    gsreg_Begin( 2 + nColumns*2 );
-    gsreg_Set( SCE_GS_PRIM, SCE_GS_SET_PRIM( SCE_GS_PRIM_SPRITE, 0, 0, 0, 1, 0, 0, 0, 0 ) );
-    gsreg_Set( SCE_GS_RGBAQ, SCE_GS_SET_RGBAQ( Color.R, Color.G, Color.B, Color.A, 0x3f800000 ) );
-
-    s32 X  = (2048-(VRAM_FRAME_BUFFER_WIDTH/2));
-    s32 Y0 = (2048-(VRAM_FRAME_BUFFER_HEIGHT/2));
-    s32 Y1 = Y0 + YRes;
-    s32 i;
-    for( i = 0; i < nColumns; i++ )
-    {
-        s32 X0 = X;
-        s32 X1 = X0 + ColumnWidth;
-
-        gsreg_Set( SCE_GS_XYZ2, SCE_GS_SET_XYZ( (X0 << 4), (Y0 << 4), 0 ) );
-        gsreg_Set( SCE_GS_XYZ2, SCE_GS_SET_XYZ( (X1 << 4), (Y1 << 4), 0 ) );
-
-        X += ColumnWidth;
-    }
-
-    gsreg_End();
-}
-#endif
-
-//=========================================================================
-
-void zone_mgr::RenderMPZoneStates( void ) const
-{
-    #ifdef TARGET_XBOX
-    ASSERT( eng_InBeginEnd() );
-
-    extern void xbox_SetBackSurfaceWithZ( xbool Enable );
-
-    xbox_SetBackSurfaceWithZ( TRUE );
-    if( GameMgr.IsZoneColored( m_Frustum[0].iZone ) )
-    {
-        g_pd3dDevice->Clear( 0,0,D3DCLEAR_STENCIL,0,0.0f,1 );
-    }
-    else
-    {
-        g_pd3dDevice->Clear( 0,0,D3DCLEAR_STENCIL,0,0.0f,0 );
-    }
-
-    // Now loop through all the visible portals and determine if they need
-    // to set or clear a stencil bit. Note that because the frustums are always
-    // listed in front-to-back order, this should be perfectly safe to do and
-    // *should* handle the case of looking through multiple portals.
-
-    g_RenderState.Set( D3DRS_STENCILPASS,D3DSTENCILOP_REPLACE );
-    g_RenderState.Set( D3DRS_STENCILZFAIL,D3DSTENCILOP_KEEP );
-    g_RenderState.Set( D3DRS_STENCILFUNC,D3DCMP_ALWAYS );
-    g_RenderState.Set( D3DRS_STENCILENABLE, TRUE );
-    g_RenderState.Set( D3DRS_COLORWRITEENABLE,0 );
-
-    s32 Count = 0;
-    DWORD StencilTest;
-    for( s32 i=1; i<m_nFrustums; i++ )
-    {
-        xbool bZoneLocked = GameMgr.IsZoneColored( m_Frustum[i].iZone );
-        if( bZoneLocked )
-            g_RenderState.Set( D3DRS_STENCILREF,1 );
-        else
-            g_RenderState.Set( D3DRS_STENCILREF,0 );
-
-        draw_ClearL2W();
-        draw_Begin( DRAW_TRIANGLES, DRAW_NO_ZWRITE | DRAW_USE_ALPHA | DRAW_CULL_NONE | DRAW_KEEP_STATES );
-        draw_Color( xcolor(0,0,0,0) );
-
-        const portal& Portal = m_pPortal[m_Frustum[i].iPortal];
-        draw_Vertex( Portal.Edges[0] );
-        draw_Vertex( Portal.Edges[1] );
-        draw_Vertex( Portal.Edges[2] );
-        draw_Vertex( Portal.Edges[2] );
-        draw_Vertex( Portal.Edges[3] );
-        draw_Vertex( Portal.Edges[0] );
-
-        draw_End();
-    }
-
-    g_RenderState.Set( D3DRS_STENCILZFAIL,D3DSTENCILOP_KEEP );
-    g_RenderState.Set( D3DRS_STENCILPASS,D3DSTENCILOP_KEEP );
-    g_RenderState.Set( D3DRS_STENCILFUNC,D3DCMP_NOTEQUAL );
-    g_RenderState.Set( D3DRS_STENCILREF,0 );
-    g_RenderState.Set( D3DRS_COLORWRITEENABLE,
-        D3DCOLORWRITEENABLE_RED   |
-        D3DCOLORWRITEENABLE_GREEN |
-        D3DCOLORWRITEENABLE_BLUE  );
-
-    rect Rect;
-    eng_GetView()->GetViewport(Rect);
-
-    extern xbool m_SatCompensation;
-    xbool OldSat=m_SatCompensation;
-    m_SatCompensation = FALSE;
-
-    draw_Rect( irect( s32(Rect.Min.X),s32(Rect.Min.Y),s32(Rect.Max.X),s32(Rect.Max.Y) ),
-            GameMgr.GetZoneColor(),
-            FALSE,
-            DRAW_UI_RTARGET );
-
-    g_RenderState.Set( D3DRS_STENCILENABLE,FALSE );
-    xbox_SetBackSurfaceWithZ( FALSE );
-    m_SatCompensation = OldSat;
-    #endif
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    #ifdef TARGET_PS2
-    ASSERT( eng_InBeginEnd() );
-
-    // set up our frame buffer mask so that we only mess with the alpha
-    // channel for now, and we never want to update the zbuffer
-    gsreg_Begin( 3 );
-    gsreg_SetFBMASK( 0x00ffffff );
-    gsreg_SetAlphaAndZBufferTests( FALSE, ALPHA_TEST_GEQUAL, 0, ALPHA_TEST_FAIL_KEEP,
-                                   FALSE, DEST_ALPHA_TEST_0, TRUE, ZBUFFER_TEST_ALWAYS );
-    gsreg_SetZBufferUpdate( FALSE );
-    gsreg_End();
-
-    // initialize the stencil buffer based on whether or not we're in a
-    // zone that is turned off at the moment
-    if( GameMgr.IsZoneColored( m_Frustum[0].iZone ) )
-    {
-        ps2_FullScreenQuad( xcolor(0,0,0,255) );
-    }
-    else
-    {
-        ps2_FullScreenQuad( xcolor(0,0,0,0) );
-    }
-
-    // re-enable the z-buffer test
-    gsreg_Begin( 1 );
-    gsreg_SetAlphaAndZBufferTests( FALSE, ALPHA_TEST_GEQUAL, 0, ALPHA_TEST_FAIL_KEEP,
-                                   FALSE, DEST_ALPHA_TEST_0, TRUE, ZBUFFER_TEST_GEQUAL );
-    gsreg_End();
-
-    // Now loop through all the visible portals and determine if they need
-    // to set or clear a stencil bit. Note that because the frustums are always
-    // listed in front-to-back order, this should be perfectly safe to do and
-    // *should* handle the case of looking through multiple portals.
-    s32 i;
-    for( i = 1; i < m_nFrustums; i++ )
-    {
-        xbool bZoneLocked = GameMgr.IsZoneColored( m_Frustum[i].iZone );
-        const portal& Portal = m_pPortal[m_Frustum[i].iPortal];
-
-        draw_ClearL2W();
-        draw_Begin( DRAW_TRIANGLES, DRAW_NO_ZWRITE | DRAW_USE_ALPHA | DRAW_CULL_NONE );
-        gsreg_Begin( 1 );
-        gsreg_Set( SCE_GS_ALPHA_1, SCE_GS_SET_ALPHA( C_ZERO, C_ZERO, A_SRC, C_DST, 0 ) );
-        gsreg_End();
-
-        if( bZoneLocked )
-        {
-            draw_Color( xcolor(255,255,255,255) );
-        }
-        else
-        {
-            draw_Color( xcolor(255,255,255,0) );
-        }
-        draw_Vertex( Portal.Edges[0] );
-        draw_Vertex( Portal.Edges[1] );
-        draw_Vertex( Portal.Edges[2] );
-
-        draw_Vertex( Portal.Edges[2] );
-        draw_Vertex( Portal.Edges[3] );
-        draw_Vertex( Portal.Edges[0] );
-        draw_End();
-    }
-
-    // now render a big alpha-blended quad using a dest alpha test
-    gsreg_Begin( 4 );
-    gsreg_SetFBMASK( 0x00000000 );
-    gsreg_SetAlphaAndZBufferTests( FALSE, ALPHA_TEST_GEQUAL, 0, ALPHA_TEST_FAIL_KEEP,
-                                   TRUE, DEST_ALPHA_TEST_1, TRUE, ZBUFFER_TEST_ALWAYS );
-    gsreg_SetZBufferUpdate( FALSE );
-    gsreg_SetAlphaBlend( ALPHA_BLEND_INTERP, 0 );
-    gsreg_End();
-
-    // render a big quad that fills the screen red (using the stencil buffer)
-    ps2_FullScreenQuad( GameMgr.GetZoneColor() );
-
-    // re-enable the z-buffer test
-    gsreg_Begin( 1 );
-    gsreg_SetAlphaAndZBufferTests( FALSE, ALPHA_TEST_GEQUAL, 0, ALPHA_TEST_FAIL_KEEP,
-                                   FALSE, DEST_ALPHA_TEST_0, TRUE, ZBUFFER_TEST_GEQUAL );
-    gsreg_End();
-    #endif
-}
-
 //=============================================================================
 
-zone_mgr::zone_id zone_mgr::FindZone( const vector3& Position ) const
+#if !defined( CONFIG_RETAIL )
+zone_mgr::zone_id zone_mgr::FindZoneByBoundsDebug( const vector3& Position ) const
 {
     for( s32 i=1; i<m_nZones; i++ )
     {
@@ -1054,18 +861,7 @@ zone_mgr::zone_id zone_mgr::FindZone( const vector3& Position ) const
 
     return (zone_id)0;
 }
-
-//=========================================================================
-
-zone_mgr::zone_id zone_mgr::GetTrackerZoneAtPosition( const tracker& Tracker, const vector3& Position ) const
-{
-    if( m_nZones == 0 )
-        return (zone_id)0;
-
-    tracker TempTracker = Tracker;
-    MoveTracker( TempTracker, Position );
-    return TempTracker.GetMainZone();
-}
+#endif
 
 //=========================================================================
 
@@ -1134,9 +930,15 @@ void zone_mgr::GetBBoxMaxNormalMasks( const plane& Plane, vector3& Mask0, vector
 
 xbool zone_mgr::IsBBoxVisible( const bbox& BBox, zone_id Zone1, zone_id Zone2 ) const
 {
-    // make sure that we have Frustums to check with
-    if( m_nFrustums == 0 )
+    if( !m_bPortalCullingEnabled )
+    {
         return TRUE;
+    }
+
+    if( !m_bHasValidVisibilityState )
+    {
+        return (Zone1 == 0) && (Zone2 == 0);
+    }
 
 	// Must be in the global zone
     if( Zone1 == 0 && Zone2 == 0  )
@@ -1179,30 +981,63 @@ xbool zone_mgr::IsBBoxVisible( const bbox& BBox, zone_id Zone1, zone_id Zone2 ) 
 
 //=========================================================================
 
-xbool zone_mgr::LineCrossPortal( const portal& Portal, const vector3& P0, const vector3& P1 ) const
+xbool zone_mgr::IsValidZone( zone_id Zone ) const
 {
-    f32 t;
-    xbool bFront = Portal.Plane.InFront( P0 );
+    return (Zone > 0) && (Zone < m_nZones);
+}
 
-    if( bFront == Portal.Plane.InFront( P1 ) )
-        return FALSE;
+//=========================================================================
 
+xbool zone_mgr::LineCrossPortal( const portal& Portal,
+                                 const vector3& P0,
+                                 const vector3& P1,
+                                 const vector3& LastDirection,
+                                 f32& T ) const
+{
+    f32 Distance0 = Portal.Plane.Distance( P0 );
+    f32 const Distance1 = Portal.Plane.Distance( P1 );
 
-    if( Portal.Plane.Intersect( t, P0, P1 ) == FALSE )
-        return FALSE;
-
-
-    if( (t < 0) || (t > 1.0f) )
-        return FALSE;    
-    
-
-    vector3 Point = P0 + t * (P1-P0);
-
-    for( s32 i=0; i<4; i++ )
+    // If the previous sample landed exactly on the plane, use the previous
+    // non-zero travel direction to recover the side it approached from.
+    if( x_abs( Distance0 ) <= s_PortalPlaneEpsilon )
     {
-        vector3 Normal = Portal.Plane.Normal.Cross( Portal.Edges[(i+1)%4] - Portal.Edges[ i ] );
+        if( LastDirection.LengthSquared() <= F32_MIN )
+        {
+            return FALSE;
+        }
 
-        if( Normal.Dot( Point - Portal.Edges[i] ) < -0.0001f )
+        Distance0 = Portal.Plane.Distance( P0 - (LastDirection * s_PortalPlaneEpsilon) );
+    }
+
+    // Defer an endpoint on the plane until the next movement sample. This
+    // prevents a tracker from toggling while it is stationary on a portal.
+    if( x_abs( Distance1 ) <= s_PortalPlaneEpsilon )
+    {
+        return FALSE;
+    }
+
+    if( ((Distance0 > 0.0f) && (Distance1 > 0.0f)) ||
+        ((Distance0 < 0.0f) && (Distance1 < 0.0f)) )
+    {
+        return FALSE;
+    }
+
+    if( !Portal.Plane.Intersect( T, P0, P1 ) ||
+        (T < -s_PortalIntersectionEpsilon) ||
+        (T > 1.0f + s_PortalIntersectionEpsilon) )
+    {
+        return FALSE;
+    }
+
+    T = x_clamp( T, 0.0f, 1.0f );
+    vector3 const Point = P0 + (T * (P1 - P0));
+
+    for( s32 i = 0; i < 4; i++ )
+    {
+        vector3 const Normal = Portal.Plane.Normal.Cross(
+            Portal.Edges[(i + 1) % 4] - Portal.Edges[i] );
+
+        if( Normal.Dot( Point - Portal.Edges[i] ) < -s_PortalPlaneEpsilon )
         {
             return FALSE;
         }
@@ -1213,125 +1048,350 @@ xbool zone_mgr::LineCrossPortal( const portal& Portal, const vector3& P0, const 
 
 //=========================================================================
 
-void zone_mgr::MoveTracker( tracker& Tracker, const vector3& NewPosition ) const
+void zone_mgr::UpdateTemporaryZone( tracker& Tracker ) const
 {
-    if( m_nZones == 0 )
+    Tracker.iTempZone = 0;
+    if( !IsValidZone( Tracker.iCurrentZone ) )
     {
         return;
     }
 
-    if( NewPosition == vector3(0,0,0) )
-        return;
+    bbox WorldBBox;
+    WorldBBox.Clear();
+    WorldBBox += Tracker.LastPosition + Tracker.BBox.Min;
+    WorldBBox += Tracker.LastPosition + Tracker.BBox.Max;
 
-    vector3 Distance;
+    zone const& Zone = m_pZone[Tracker.iCurrentZone];
+    f32 ClosestDistance = F32_MAX;
+    s32 ClosestIndex = -1;
 
-    Distance = NewPosition - Tracker.LastPosition;
-    if( Distance.LengthSquared() < (0.1f*0.1f) )
-        return;
-
-    ASSERT( Tracker.iCurrentZone < m_nZones );
-    zone&	Zone			= m_pZone[ Tracker.iCurrentZone ];
-    
-	f32		ClosestPortal	= 100000000.0f;
-	s32		ClosestIndex	= -1;
-	s32		i;    
-            
-	bbox MoveBBox;
-	MoveBBox.Clear();
-
-    vector3 Temp = NewPosition + Tracker.BBox.Min;
-	MoveBBox += Temp;
-
-    Temp = NewPosition + Tracker.BBox.Max;
-	MoveBBox += Temp;
-
-    Temp = Tracker.LastPosition + Tracker.BBox.Min;
-	MoveBBox += Temp;
-
-    Temp = Tracker.LastPosition + Tracker.BBox.Max;
-	MoveBBox += Temp;
-
-    //
-    // Check if we are near a portal
-    //
-    for( i=0; i<Zone.nPortals; i++ )
+    for( s32 i = 0; i < Zone.nPortals; i++ )
     {
-		s32   Index;
-
-        Index = m_pZone2Portal[ Zone.iPortal2Portal + i ];
-        portal& Portal = m_pPortal[ Index ];
-
-        if( Portal.BBox.Intersect( MoveBBox ) )
-		{
-			vector3 ClosestPoint;
-			f32 Distance = NewPosition.ClosestPointToRectangle( 
-							Portal.Edges[0],
-							Portal.Edges[1] - Portal.Edges[0],
-							Portal.Edges[3] - Portal.Edges[0],
-							ClosestPoint );
-
-			if( Distance < ClosestPortal )
-			{
-				ClosestPortal = Distance;
-				ClosestIndex  = Index;
-			}
-		}
-    }
-
-    //
-    // Okay we are close to a portal check whether we have penetrade the portal
-    //
-    if( ClosestIndex != -1 )
-    {
-        portal& Portal = m_pPortal[ ClosestIndex ];
-
-        if( LineCrossPortal( Portal, Tracker.LastPosition, NewPosition ) )
+        s32 const Index = m_pZone2Portal[Zone.iPortal2Portal + i];
+        portal const& Portal = m_pPortal[Index];
+        if( !Portal.BBox.Intersect( WorldBBox ) )
         {
-            // Okay we must be in the other zone.
-            Tracker.iCurrentZone = (Portal.iZone[0] == Tracker.iCurrentZone)?Portal.iZone[1]:Portal.iZone[0];
+            continue;
+        }
+
+        vector3 ClosestPoint;
+        f32 const Distance = Tracker.LastPosition.ClosestPointToRectangle(
+            Portal.Edges[0],
+            Portal.Edges[1] - Portal.Edges[0],
+            Portal.Edges[3] - Portal.Edges[0],
+            ClosestPoint );
+
+        if( (Distance < ClosestDistance) ||
+            ((x_abs( Distance - ClosestDistance ) <= s_PortalIntersectionEpsilon) &&
+             ((ClosestIndex == -1) || (Index < ClosestIndex))) )
+        {
+            ClosestDistance = Distance;
+            ClosestIndex = Index;
         }
     }
 
-    //
-    // Update tracker new position
-    //
-    Tracker.LastPosition = NewPosition;
-
-    //
-    // Update the temporart zone
-    //
-    if( ClosestIndex != -1)
+    if( ClosestIndex != -1 )
     {
-		portal& Portal = m_pPortal[ ClosestIndex ];		
-		Tracker.iTempZone = (Portal.iZone[0] == Tracker.iCurrentZone)?Portal.iZone[1]:Portal.iZone[0];
-	}
-	else
-	{
-		Tracker.iTempZone = 0;
-	}
+        portal const& Portal = m_pPortal[ClosestIndex];
+        Tracker.iTempZone = (Portal.iZone[0] == Tracker.iCurrentZone)
+                          ? Portal.iZone[1]
+                          : Portal.iZone[0];
+    }
 }
 
 //=========================================================================
 
-void zone_mgr::InitZoneTracking( object& Object, tracker& Tracker ) const
+void zone_mgr::MoveCameraTracker( tracker& Tracker, const vector3& NewPosition ) const
 {
-    Tracker.SetPosition( Object.GetPosition() );
-    Tracker.SetMainZone( (u8)Object.GetZone1() );
-    Tracker.SetZone2   ( (u8)Object.GetZone2() );
+    vector3 const Segment = NewPosition - Tracker.LastPosition;
+    f32 const SegmentLengthSquared = Segment.LengthSquared();
+    if( SegmentLengthSquared <= F32_MIN )
+    {
+        UpdateTemporaryZone( Tracker );
+        return;
+    }
+
+    vector3 Direction = Segment;
+    Direction.Normalize();
+
+    if( IsValidZone( Tracker.iCurrentZone ) )
+    {
+        bbox MoveBBox;
+        MoveBBox.Clear();
+        MoveBBox += NewPosition + Tracker.BBox.Min;
+        MoveBBox += NewPosition + Tracker.BBox.Max;
+        MoveBBox += Tracker.LastPosition + Tracker.BBox.Min;
+        MoveBBox += Tracker.LastPosition + Tracker.BBox.Max;
+
+        zone const& Zone = m_pZone[Tracker.iCurrentZone];
+        f32 ClosestDistance = F32_MAX;
+        s32 ClosestIndex = -1;
+
+        for( s32 i = 0; i < Zone.nPortals; i++ )
+        {
+            s32 const Index = m_pZone2Portal[Zone.iPortal2Portal + i];
+            portal const& Portal = m_pPortal[Index];
+            if( !Portal.BBox.Intersect( MoveBBox ) )
+            {
+                continue;
+            }
+
+            vector3 ClosestPoint;
+            f32 const Distance = NewPosition.ClosestPointToRectangle(
+                Portal.Edges[0],
+                Portal.Edges[1] - Portal.Edges[0],
+                Portal.Edges[3] - Portal.Edges[0],
+                ClosestPoint );
+
+            if( (Distance < ClosestDistance) ||
+                ((x_abs( Distance - ClosestDistance ) <= s_PortalIntersectionEpsilon) &&
+                 ((ClosestIndex == -1) || (Index < ClosestIndex))) )
+            {
+                ClosestDistance = Distance;
+                ClosestIndex = Index;
+            }
+        }
+
+        if( ClosestIndex != -1 )
+        {
+            portal const& Portal = m_pPortal[ClosestIndex];
+            zone_id const PreviousZone = Tracker.iCurrentZone;
+            xbool const PortalContainsCurrentZone =
+                (Portal.iZone[0] == PreviousZone) ||
+                (Portal.iZone[1] == PreviousZone);
+            f32 IntersectionT = 0.0f;
+
+            if( PortalContainsCurrentZone &&
+                LineCrossPortal( Portal,
+                                 Tracker.LastPosition,
+                                 NewPosition,
+                                 Tracker.LastDirection,
+                                 IntersectionT ) )
+            {
+                Tracker.iCurrentZone = (Portal.iZone[0] == PreviousZone)
+                                     ? Portal.iZone[1]
+                                     : Portal.iZone[0];
+            }
+        }
+    }
+
+    Tracker.LastPosition = NewPosition;
+    Tracker.LastDirection = Direction;
+    UpdateTemporaryZone( Tracker );
 }
 
 //=========================================================================
 
-void zone_mgr::UpdateZoneTracking( object& Object, tracker& Tracker, const vector3& NewPosition ) const
+void zone_mgr::MoveTracker( tracker& Tracker,
+                            const vector3& NewPosition,
+                            TrackingMode Mode ) const
 {
-    // Get current zones from object
-    Tracker.SetMainZone( (u8)Object.GetZone1() );
-    Tracker.SetZone2   ( (u8)Object.GetZone2() );
-    
-    // Update tracker zone info
-    MoveTracker( Tracker, NewPosition ); 
-    
-    // Update object zones
+    if( Mode == TrackingMode::CameraPath )
+    {
+        MoveCameraTracker( Tracker, NewPosition );
+        return;
+    }
+
+    vector3 const Segment = NewPosition - Tracker.LastPosition;
+    f32 const SegmentLengthSquared = Segment.LengthSquared();
+    if( SegmentLengthSquared <= F32_MIN )
+    {
+        UpdateTemporaryZone( Tracker );
+        return;
+    }
+
+    vector3 const PreviousDirection = Tracker.LastDirection;
+    vector3 Direction = Segment;
+    Direction.Normalize();
+
+    if( IsValidZone( Tracker.iCurrentZone ) )
+    {
+        f32 SegmentT = 0.0f;
+        s32 PreviousPortalIndex = -1;
+        s32 CrossingCount = 0;
+
+        while( TRUE )
+        {
+            zone const& Zone = m_pZone[Tracker.iCurrentZone];
+            f32 ClosestT = F32_MAX;
+            s32 ClosestIndex = -1;
+
+            for( s32 i = 0; i < Zone.nPortals; i++ )
+            {
+                s32 const Index = m_pZone2Portal[Zone.iPortal2Portal + i];
+                portal const& Portal = m_pPortal[Index];
+                f32 IntersectionT = 0.0f;
+                if( !LineCrossPortal( Portal,
+                                      Tracker.LastPosition,
+                                      NewPosition,
+                                      PreviousDirection,
+                                      IntersectionT ) )
+                {
+                    continue;
+                }
+
+                if( IntersectionT + s_PortalIntersectionEpsilon < SegmentT )
+                {
+                    continue;
+                }
+
+                if( (Index == PreviousPortalIndex) &&
+                    (IntersectionT <= SegmentT + s_PortalIntersectionEpsilon) )
+                {
+                    continue;
+                }
+
+                if( (IntersectionT < ClosestT - s_PortalIntersectionEpsilon) ||
+                    ((x_abs( IntersectionT - ClosestT ) <= s_PortalIntersectionEpsilon) &&
+                     ((ClosestIndex == -1) || (Index < ClosestIndex))) )
+                {
+                    ClosestT = IntersectionT;
+                    ClosestIndex = Index;
+                }
+            }
+
+            if( ClosestIndex == -1 )
+            {
+                break;
+            }
+
+            if( CrossingCount >= m_nPortals )
+            {
+                break;
+            }
+
+            portal const& Portal = m_pPortal[ClosestIndex];
+            zone_id const PreviousZone = Tracker.iCurrentZone;
+            zone_id const NewZone = (Portal.iZone[0] == PreviousZone)
+                                 ? Portal.iZone[1]
+                                 : Portal.iZone[0];
+            Tracker.iCurrentZone = NewZone;
+
+            PreviousPortalIndex = ClosestIndex;
+            SegmentT = ClosestT + s_PortalIntersectionEpsilon;
+            CrossingCount++;
+
+            if( !IsValidZone( Tracker.iCurrentZone ) )
+            {
+                break;
+            }
+        }
+    }
+
+    Tracker.LastPosition = NewPosition;
+    Tracker.LastDirection = Direction;
+    UpdateTemporaryZone( Tracker );
+}
+
+//=========================================================================
+
+void zone_mgr::AdvanceZoneTracking( object& Object,
+                                    tracker& Tracker,
+                                    const vector3& NewPosition ) const
+{
+    AdvanceZoneTracking( Object,
+                         Tracker,
+                         NewPosition,
+                         TrackingMode::PortalTraversal );
+}
+
+//=========================================================================
+
+void zone_mgr::AdvanceZoneTracking( object& Object,
+                                    tracker& Tracker,
+                                    const vector3& NewPosition,
+                                    TrackingMode Mode ) const
+{
+    AdvanceZoneTracking( Tracker, NewPosition, Mode );
+    Object.SetZone1( Tracker.GetMainZone() );
+    Object.SetZone2( Tracker.GetZone2() );
+}
+
+//=========================================================================
+
+void zone_mgr::AdvanceZoneTracking( tracker& Tracker,
+                                    const vector3& NewPosition ) const
+{
+    AdvanceZoneTracking( Tracker, NewPosition, TrackingMode::PortalTraversal );
+}
+
+//=========================================================================
+
+void zone_mgr::AdvanceZoneTracking( tracker& Tracker,
+                                    const vector3& NewPosition,
+                                    TrackingMode Mode ) const
+{
+    MoveTracker( Tracker, NewPosition, Mode );
+}
+
+//=========================================================================
+
+void zone_mgr::RebaseZoneTracking( tracker& Tracker,
+                                   const vector3& Position,
+                                   zone_id Zone1,
+                                   zone_id Zone2,
+                                   SeedSource Source ) const
+{
+    // Binary objects are populated before level_data.zone is loaded. An
+    // explicit non-zero ZoneInfo must survive that phase so it can become a
+    // validated seed as soon as the zone database is available.
+    xbool const CanValidateZones = (m_nZones > 0);
+    xbool const Zone1Valid = CanValidateZones ? IsValidZone( Zone1 )
+                                               : (Zone1 != 0);
+    xbool const Zone2Valid = CanValidateZones ? IsValidZone( Zone2 )
+                                               : (Zone2 != 0);
+    zone_id const PreviousZone = Tracker.iCurrentZone;
+    xbool const PreviousZoneValid = CanValidateZones
+                                  ? IsValidZone( PreviousZone )
+                                  : (PreviousZone != 0);
+    xbool const ClearInvalidCameraSeed =
+        (Source == SeedSource::Camera) && !Zone1Valid && !Zone2Valid;
+    zone_id SelectedZone = 0;
+
+    if( PreviousZoneValid &&
+        ((PreviousZone == Zone1) || (PreviousZone == Zone2)) )
+    {
+        SelectedZone = PreviousZone;
+    }
+    else if( Zone1Valid )
+    {
+        SelectedZone = Zone1;
+    }
+    else if( Zone2Valid )
+    {
+        SelectedZone = Zone2;
+    }
+    else if( PreviousZoneValid && !ClearInvalidCameraSeed )
+    {
+        SelectedZone = PreviousZone;
+    }
+
+    Tracker.iCurrentZone = SelectedZone;
+    Tracker.iTempZone = 0;
+    if( (SelectedZone == Zone1) && Zone2Valid && (Zone2 != SelectedZone) )
+    {
+        Tracker.iTempZone = Zone2;
+    }
+    else if( (SelectedZone == Zone2) && Zone1Valid && (Zone1 != SelectedZone) )
+    {
+        Tracker.iTempZone = Zone1;
+    }
+
+    Tracker.LastPosition = Position;
+    Tracker.LastDirection.Zero();
+
+}
+
+//=========================================================================
+
+void zone_mgr::RebaseZoneTracking( object& Object,
+                                   tracker& Tracker,
+                                   const vector3& Position,
+                                   zone_id Zone1,
+                                   zone_id Zone2,
+                                   SeedSource Source ) const
+{
+    RebaseZoneTracking( Tracker, Position, Zone1, Zone2, Source );
     Object.SetZone1( Tracker.GetMainZone() );
     Object.SetZone2( Tracker.GetZone2() );
 }
@@ -1340,7 +1400,9 @@ void zone_mgr::UpdateZoneTracking( object& Object, tracker& Tracker, const vecto
 
 void zone_mgr::TurnOff( void )
 {
-    m_nFrustums = 0;
+    m_nFrustums                  = 0;
+    m_bPortalCullingEnabled      = FALSE;
+    m_bHasValidVisibilityState   = FALSE;
 }
 
 //=========================================================================
@@ -1580,9 +1642,9 @@ void zone_mgr::SanityCheck( void )
 zone_mgr::tracker::tracker( void )
 {
     LastPosition.Zero();
+    LastDirection.Zero();
     iTempZone = iCurrentZone = 0;
     BBox.Set( vector3(0,0,0), 100 );
 }
 
 //=============================================================================
-

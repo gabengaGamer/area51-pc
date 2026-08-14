@@ -16,7 +16,12 @@
 #endif
 
 #ifdef __cplusplus
-#include <new>
+    #include <cstddef>
+    #include <cstdint>
+    #include <new>
+#else
+    #include <stddef.h>
+    #include <stdint.h>
 #endif
 
 //
@@ -55,7 +60,7 @@
     #ifndef WIN32_LEAN_AND_MEAN
     #define WIN32_LEAN_AND_MEAN
     #endif
-    
+
     //#ifndef WIN64
     //#define POINTER_64
     //#else
@@ -148,37 +153,57 @@
 
 //==============================================================================
 
-#ifdef TARGET_PC
-    #ifndef __cplusplus
-    #include <stdint.h>
+#ifdef TARGET_DESKTOP
+    #ifdef __cplusplus
+        typedef std::uint8_t        u8;
+        typedef std::uint16_t       u16;
+        typedef std::uint32_t       u32;
+        typedef std::uint64_t       u64;
+        typedef std::int8_t         s8;
+        typedef std::int16_t        s16;
+        typedef std::int32_t        s32;
+        typedef std::int64_t        s64;
+    #else
+        typedef uint8_t             u8;
+        typedef uint16_t            u16;
+        typedef uint32_t            u32;
+        typedef uint64_t            u64;
+        typedef int8_t              s8;
+        typedef int16_t             s16;
+        typedef int32_t             s32;
+        typedef int64_t             s64;
     #endif
-    typedef uint8_t             u8;
-    typedef uint16_t            u16;
-    typedef uint32_t            u32;
-    typedef uint64_t            u64;
-    typedef int8_t              s8;
-    typedef int16_t             s16;
-    typedef int32_t             s32;
-    typedef int64_t             s64;
+
     typedef float               f32;
     typedef double              f64;
     typedef u8                  byte;
     typedef s32                 xbool;
+
     #ifdef __cplusplus
-    typedef char16_t            xwchar;
+        typedef char16_t            xwchar;
     #else
-    typedef unsigned short      xwchar;
+        typedef unsigned short      xwchar;
     #endif
-    typedef uintptr_t           uaddr;
-    typedef ptrdiff_t           saddr;
-    typedef size_t              usize;
-    typedef intptr_t            sptr;
+
+    #ifdef __cplusplus
+        typedef std::uintptr_t      uaddr;
+        typedef std::ptrdiff_t      saddr;
+        typedef std::size_t         usize;
+        typedef std::intptr_t       sptr;
+    #else
+        typedef uintptr_t           uaddr;
+        typedef ptrdiff_t           saddr;
+        typedef size_t              usize;
+        typedef intptr_t            sptr;
+    #endif
+
     #define X_SECTION(x) 
 #endif
 
 //------------------------------------------------------------------------------
 // For C++ Only
 //------------------------------------------------------------------------------
+
 #ifdef __cplusplus
 
 //------------------------------------------------------------------------------

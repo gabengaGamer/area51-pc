@@ -8,10 +8,10 @@
 //=============================================================================
 // INCLUDES
 //=============================================================================
-#include "obj_mgr\obj_mgr.hpp"
-#include "..\objects\Render\RigidInst.hpp"
-#include "..\PainMgr\Pain.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "../Objects/Render/RigidInst.hpp"
+#include "../PainMgr/Pain.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 //=============================================================================
 class debris : public object
@@ -41,7 +41,7 @@ public:
     virtual bbox        GetLocalBBox        ( void ) const;
     virtual s32         GetMaterial         ( void ) const { return MAT_TYPE_CONCRETE;}
 
-    virtual void        OnAdvanceLogic      ( f32 DeltaTime );
+    virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void        UpdatePhysics       ( f32 DeltaTime );
     virtual void        OnBounce            ( void );     
 

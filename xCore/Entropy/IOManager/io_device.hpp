@@ -19,7 +19,6 @@
 #define VALID_DEVICE_FILE( pFile )  ((pFile != NULL) && (pFile->pDevice!=NULL))
 #define SUPPORTED_DEVICE( pDevice ) ( pDevice->m_IsSupported ) 
 #define GET_DEVICE_FROM_INDEX( i )  (g_IoMgr.m_Devices[ i ])
-#define GET_DISPATCHER_MQ()         g_IoMgr.m_DispatcherMQ
 
 //==============================================================================
 
@@ -53,7 +52,6 @@ class io_device
 {
 
 friend void  ProcessEndOfRequest         ( io_device* pDevice, s32 Status );
-friend void  io_dispatcher               ( void );
 friend class io_mgr;
 friend class io_request;
 friend class io_cache;
@@ -141,7 +139,7 @@ protected:
         void            SetPathPrefix               ( const char *pPrefix );
         void            GetPathPrefix               ( char* pBuffer  );
 virtual device_data*    GetDeviceData               ( void );
-virtual void            CleanFilename               ( char* pClean, char* pFilename );
+virtual void            CleanFilename               ( char* pClean, const char* pFilename );
 virtual xbool           DeviceOpen                  ( const char* pFilename, io_device_file* pFile, open_flags OpenFlags );
 virtual xbool           DeviceRead                  ( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace );
 virtual xbool           DeviceWrite                 ( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace );

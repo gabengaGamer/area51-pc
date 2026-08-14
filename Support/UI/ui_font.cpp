@@ -4,34 +4,45 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
-#include "Bitmap\aux_bitmap.hpp"
+#include "Entropy.hpp"
+#include "Bitmap/aux_Bitmap.hpp"
 #include "ui_font.hpp"
-//#include "guid/guid.hpp"
-#include "ui/ui_manager.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_renderer.hpp"
 
 //=========================================================================
 
-#define OFFSET_X    (2048-(512/2))
-#define OFFSET_Y    (2048-(512/2))
-
-#define CHAR_WIDTH          13
-#define CHAR_HEIGHT         18
-#define XBORDER              8
-#define YBORDER              8
-
 #define HELP_TEXT_SPACING            8
-#define BUTTON_START_SPRITE_WIDTH   24
 
-static xbool ScaleText = FALSE;
+static s32 ui_GetEmbeddedButtonAdvance( s32 ButtonCode )
+{
+    return (ButtonCode == INPUT_KBD_RETURN) ? 24 : BUTTON_SPRITE_WIDTH;
+}
 
 //=========================================================================
 //  Font
 //=========================================================================
 
-xbool ui_font::Load( const char* pPathName )
+ui_font::ui_font( void )
 {
-    xbitmap *pBitmap;
+    m_BmWidth    = 0;
+    m_BmHeight   = 0;
+    m_AvgWidth   = 0;
+    m_Height     = 0;
+    m_Characters = NULL;
+    m_CMap       = NULL;
+    m_CMapSize   = 0;
+    m_NumChars   = 0;
+    m_pManager   = NULL;
+}
+
+//=========================================================================
+
+xbool ui_font::Load( ui_manager* pManager, const char* pPathName )
+{
+
+    ASSERT( pManager );
+    m_pManager = pManager;
 
     xstring	FontName;
 
@@ -42,7 +53,6 @@ xbool ui_font::Load( const char* pPathName )
     // load the map
 
     X_FILE* pFontFile = x_fopen( FontName, "rb" );
-    //X_FILE* pFontFile = x_fopen(g_RscMgr.FixupFilename(FontName), "rb");
 
     ASSERTS( pFontFile, xfs("ui_font::Load() failed %s", (const char*)FontName));
 
@@ -85,13 +95,17 @@ xbool ui_font::Load( const char* pPathName )
     }
 
     // Load font image
-    m_Bitmap.SetName( pPathName );
-    pBitmap = m_Bitmap.GetPointer();
-    ASSERTS( pBitmap, xfs("ui_font::Load() failed %s",pPathName));
+    m_bitmap.SetName( pPathName );
+    texture* pTexture = m_bitmap.GetPointer();
+    ASSERTS( pTexture, xfs("ui_font::Load() failed %s",pPathName));
+    if( !pTexture )
+        return FALSE;
+
+    const xbitmap& Bitmap = pTexture->m_bitmap;
 
     // Get info from bitmap size
-    m_BmWidth   = pBitmap->GetWidth();
-    m_BmHeight  = pBitmap->GetHeight();
+    m_BmWidth   = Bitmap.GetWidth();
+    m_BmHeight  = Bitmap.GetHeight();
 
     // Set AvgWidth
     m_AvgWidth = m_Characters[ LookUpCharacter('x') ].W;
@@ -105,7 +119,7 @@ void ui_font::Kill( void )
 {
     x_free( m_CMap );
     x_free( m_Characters );
-    m_Bitmap.Destroy(); // Make sure this guy actually unloads
+    m_bitmap.Destroy(); // Make sure this guy actually unloads
 }
 
 //=========================================================================
@@ -115,17 +129,6 @@ void ui_font::TextSize( irect& Rect, const char* pString, s32 Count ) const
     s32 Height    = m_Height;
     s32 BestWidth = 0;
     s32 Width     = 0;
-    f32 ScaleX=1;
-    f32 ScaleY=1;
-
-    if( ScaleText )
-    {
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        ScaleX = (f32)XRes / 512.0f;
-        ScaleY = (f32)YRes / 448.0f;
-    }
-
     ASSERT( pString );
 
     if( pString )
@@ -146,14 +149,7 @@ void ui_font::TextSize( irect& Rect, const char* pString, s32 Count ) const
             // Normal character.
             {
                 // Add character to width.
-                if( ScaleText )
-                {
-                    Width += (u32)((f32)m_Characters[ LookUpCharacter(c) ].W * ScaleX );
-                }
-                else
-                {
-                    Width += m_Characters[ LookUpCharacter(c) ].W;
-                }
+                Width += m_Characters[ LookUpCharacter(c) ].W;
                 Width += 1;
             }             
 
@@ -175,17 +171,6 @@ void ui_font::TextSize( irect& Rect, const xwchar* pString, s32 Count ) const
     s32 Height    = m_Height;
     s32 BestWidth = 0;
     s32 Width     = 0;
-    f32 ScaleX=1;
-    f32 ScaleY=1;
-
-    if( ScaleText )
-    {
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        ScaleX = (f32)XRes / 512.0f;
-        ScaleY = (f32)YRes / 448.0f;
-    }
-
     ASSERT( pString );
 
     if( pString )
@@ -219,23 +204,17 @@ void ui_font::TextSize( irect& Rect, const xwchar* pString, s32 Count ) const
                 c = *pString++;
 
                 // If this is a ButtonIcon then Add Sprite Width
-                s32 buttonCode = g_UiMgr->LookUpButtonCode( pString, 0 );
+                s32 buttonCode = m_pManager->LookUpButtonCode( pString,
+                                                               0,
+                                                               g_Input.GetCurrentInputDevice(),
+                                                               g_Input.GetCurrentInputPlatform() );
 
                 if( buttonCode == CREDIT_TITLE_LINE || buttonCode == NEW_CREDIT_PAGE || buttonCode == CREDIT_END )
                     buttonCode = -1;
 
                 if( buttonCode != -1 )
                 {
-#if defined(TARGET_PC)
-                    if( buttonCode == INPUT_KBD_RETURN )
-                    {
-                        Width += BUTTON_START_SPRITE_WIDTH; 
-                    }
-                    else
-                    {
-                        Width += BUTTON_SPRITE_WIDTH; 
-                    }  
-#endif
+                    Width += ui_GetEmbeddedButtonAdvance( buttonCode );
                 }
 
                 // Loop past control code.
@@ -247,14 +226,7 @@ void ui_font::TextSize( irect& Rect, const xwchar* pString, s32 Count ) const
             else
             // Normal character.
             {
-                if( ScaleText )
-                {
-                    Width += (u32)((f32)m_Characters[ LookUpCharacter(c) ].W * ScaleX );
-                }
-                else
-                {
-                    Width += m_Characters[ LookUpCharacter(c) ].W;
-                }
+                Width += m_Characters[ LookUpCharacter(c) ].W;
                 Width += 1;
             }             
 
@@ -275,17 +247,6 @@ s32 ui_font::TextWidth( const xwchar* pString, s32 Count ) const
 {
     s32 BestWidth = 0;
     s32 Width     = 0;
-    f32 ScaleX=1;
-    f32 ScaleY=1;
-
-    if( ScaleText )
-    {
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        ScaleX = (f32)XRes / 512.0f;
-        ScaleY = (f32)YRes / 448.0f;
-    }
-
     ASSERT( pString );
 
     if( pString )
@@ -317,23 +278,17 @@ s32 ui_font::TextWidth( const xwchar* pString, s32 Count ) const
             {
 
                 // If this is a ButtonIcon then Add Sprite Width
-                s32 ButtonCode = g_UiMgr->LookUpButtonCode( pString, 0 );
+                s32 ButtonCode = m_pManager->LookUpButtonCode( pString,
+                                                               0,
+                                                               g_Input.GetCurrentInputDevice(),
+                                                               g_Input.GetCurrentInputPlatform() );
 
                 if( ButtonCode == CREDIT_TITLE_LINE || ButtonCode == NEW_CREDIT_PAGE || ButtonCode == CREDIT_END )
                     ButtonCode = -1;
 
                 if( ButtonCode != -1 )
                 {
-#if defined(TARGET_PC)
-                    if( ButtonCode == INPUT_KBD_RETURN )
-                    {
-                        Width += BUTTON_START_SPRITE_WIDTH; 
-                    }
-                    else
-                    {
-                        Width += BUTTON_SPRITE_WIDTH; 
-                    }  
-#endif
+                    Width += ui_GetEmbeddedButtonAdvance( ButtonCode );
                 }
 
                 // Loop past control code.
@@ -347,14 +302,7 @@ s32 ui_font::TextWidth( const xwchar* pString, s32 Count ) const
             // Normal character.
             {
                 // Add character to width
-                if( ScaleText )
-                {
-                    Width += (u32)((f32)m_Characters[ LookUpCharacter(c) ].W * ScaleX );
-                }
-                else
-                {
-                    Width += m_Characters[ LookUpCharacter(c) ].W;
-                }
+                Width += m_Characters[ LookUpCharacter(c) ].W;
                 Width += 1;
             }             
 
@@ -442,7 +390,6 @@ u32 ui_font::LookUpCharacter(u32 c ) const
 
     if( c < 256 )
     {
-        //ASSERTS((c < 0x10) || (m_CMap[c].character != 0), "character not in font.");
         // All our fonts should contain a character (a square) to designate an unsupported character.
         // in the event that even this character is not present, display an 'x'.
         // (that character MUST be present, as it's used for 'average width').
@@ -459,7 +406,7 @@ u32 ui_font::LookUpCharacter(u32 c ) const
     }
     else
     {
-        ASSERTS( m_CMapSize > 256, "No extended characters (>256) in font." );
+        //ASSERTS( m_CMapSize > 256, "No extended characters (>256) in font." );
         s32 imax = m_CMapSize;
         s32 imin = 256;
         xbool bFound = FALSE;
@@ -489,7 +436,7 @@ u32 ui_font::LookUpCharacter(u32 c ) const
             }
         }
 
-        ASSERTS((0), "could not look up character");
+//ASSERTS((0), "could not look up character");
 
         // return unknown character (see above)
         if( m_CMap[UNDEFINED_CHARACTER].character != 0 )
@@ -514,16 +461,6 @@ const ui_font::Character& ui_font::GetCharacter( s32 Index ) const
 const xwchar* ui_font::ClipEllipsis( const xwchar* pString, const irect& Rect ) const
 {
     static xwstring ClippedString;
-    f32 ScaleX=1;
-    f32 ScaleY=1;
-
-    if( ScaleText )
-    {
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        ScaleX = (f32)XRes / 512.0f;
-        ScaleY = (f32)YRes / 448.0f;
-    }
 
     // Should we be clipping?
     if( TextWidth( pString ) > Rect.GetWidth() )
@@ -561,14 +498,7 @@ const xwchar* ui_font::ClipEllipsis( const xwchar* pString, const irect& Rect ) 
                 if( !Clipping )
                 {
                     // Add character to width
-                    if( ScaleText )
-                    {
-                        Width += (u32)((f32)m_Characters[ LookUpCharacter(c) ].W * ScaleX );
-                    }
-                    else
-                    {
-                        Width += m_Characters[ LookUpCharacter(c) ].W;
-                    }
+                    Width += m_Characters[ LookUpCharacter(c) ].W;
                     Width += 1;
 
                     // Width still in range?
@@ -601,16 +531,6 @@ const xwchar* ui_font::ClipEllipsis( const xwchar* pString, const irect& Rect ) 
 void ui_font::TextWrap( const xwchar* pString, const irect& Rect, xwstring& WrappedString ) 
 {
     const xwchar* pStart = pString;
-    f32 ScaleX=1;
-    f32 ScaleY=1;
-
-    if( ScaleText )
-    {
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        ScaleX = (f32)XRes / 512.0f;
-        ScaleY = (f32)YRes / 448.0f;
-    }
 
     // Should we be clipping?
     if( TextWidth( pString ) > Rect.GetWidth() )
@@ -645,23 +565,17 @@ void ui_font::TextWrap( const xwchar* pString, const irect& Rect, xwstring& Wrap
             else if( c == 0xAB ) // '?'
             {
                 // If this is a ButtonIcon then Add Sprite Width
-                s32 ButtonCode = g_UiMgr->LookUpButtonCode( pString, 0 );
+                s32 ButtonCode = m_pManager->LookUpButtonCode( pString,
+                                                               0,
+                                                               g_Input.GetCurrentInputDevice(),
+                                                               g_Input.GetCurrentInputPlatform() );
 
                 if( ButtonCode == CREDIT_TITLE_LINE || ButtonCode == NEW_CREDIT_PAGE || ButtonCode == CREDIT_END )
                     ButtonCode = -1;
 
                 if( ButtonCode != -1 )
                 {
-#if defined(TARGET_PC)
-                    if( ButtonCode == INPUT_KBD_RETURN )
-                    {
-                        Width += BUTTON_START_SPRITE_WIDTH; 
-                    }
-                    else
-                    {
-                        Width += BUTTON_SPRITE_WIDTH; 
-                    }  
-#endif
+                    Width += ui_GetEmbeddedButtonAdvance( ButtonCode );
                 }
                 
                 WrappedString += c;
@@ -679,14 +593,7 @@ void ui_font::TextWrap( const xwchar* pString, const irect& Rect, xwstring& Wrap
                 if( !Clipping )
                 {
                     // Add character to width
-                    if( ScaleText )
-                    {
-                        Width += (u32)((f32)m_Characters[ LookUpCharacter(c) ].W * ScaleX );
-                    }
-                    else
-                    {
-                        Width += m_Characters[ LookUpCharacter(c) ].W;
-                    }
+                    Width += m_Characters[ LookUpCharacter(c) ].W;
                     Width += 1;
 
                     // Width still in range?
@@ -726,7 +633,6 @@ void ui_font::TextWrap( const xwchar* pString, const irect& Rect, xwstring& Wrap
 
                         Width            = 0;
                         WrappedString   += '\n';
-                     //   Clipping = TRUE;
                     }
                 }
             }
@@ -742,56 +648,32 @@ void ui_font::TextWrap( const xwchar* pString, const irect& Rect, xwstring& Wrap
 
 //=========================================================================
 
-void ui_font::RenderHelpText( const irect&  Rect, 
-                                    u32     Flags, 
-                              const xcolor& aColor, 
-                              const xwchar* pString, 
-                                    xbool   IgnoreEmbeddedColor,
-                                    xbool   UseGradient, 
-                                    f32     FlareAmount ) const
+void ui_font::RenderInputText( const irect&    Rect,
+                                    u32       Flags,
+                              const xcolor&   aColor,
+                              const xwchar*   pString,
+                                    input_platform Platform ) const
 {
-    (void)UseGradient;
-    (void)FlareAmount;
-
-
     s32     c;
     s32     sx;
     s32     sy;
     s32     tx       = Rect.l;
     s32     ty       = Rect.t;
     s32     iStart   = 0;
-    //s32     iEnd     = 0;
     s32     Width    = 0;
     s32     MaxWidth = 0;
     s32     CurrWidth = 0;
     s32     Height;    
     xcolor  Color    = aColor;
     xbool   bFirstButton = TRUE;
-    f32 ScaleX=1;
-    f32 ScaleY=1;
-    xbitmap *pBitmap;
+    texture* pFontTexture = m_bitmap.GetPointer();
+    if( !pFontTexture )
+        return;
 
     ASSERT( pString );
-    (void)IgnoreEmbeddedColor;
-
-    // calculate scale factors
-    if( ScaleText )
-    {
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        ScaleX = (f32)XRes / 512.0f;
-        ScaleY = (f32)YRes / 448.0f;
-    }
-
     vector2 uv0;
     vector2 uv1;   
     vector2 Size( 0, (f32)m_Height );
-
-    // Prepare to draw characters.
-    draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER | DRAW_UV_CLAMP );
-
-    pBitmap = m_Bitmap.GetPointer();
-    draw_SetTexture( *pBitmap );
 
     // Get size for vertical positioning.
     Height = TextHeight( pString );
@@ -822,7 +704,7 @@ void ui_font::RenderHelpText( const irect&  Rect,
             if ((c & 0xff) == 0xAB ) // '?'
             {
                 // get the button code
-                s32 buttonCode = g_UiMgr->LookUpButtonCode( pString, iStart );
+                s32 buttonCode = m_pManager->LookUpButtonCode( pString, iStart, INPUT_DEVICE_GAMEPAD, Platform );
 
                 while( (c & 0xff) != 0xBB ) // '?'
                 {
@@ -847,16 +729,7 @@ void ui_font::RenderHelpText( const irect&  Rect,
                 {
                     Width   += HELP_TEXT_SPACING;
                 }				
-#if defined(TARGET_PC)
-                if( buttonCode == INPUT_KBD_RETURN )
-                {
-                    Width   += BUTTON_START_SPRITE_WIDTH;
-                }
-                else
-                {
-                    Width   += BUTTON_SPRITE_WIDTH;
-                }  
-#endif
+                Width += ui_GetEmbeddedButtonAdvance( buttonCode );
                 CurrWidth    = 0;
                 MaxWidth     = 0;
             }
@@ -872,10 +745,6 @@ void ui_font::RenderHelpText( const irect&  Rect,
             {
                 // add the width of the character
                 s32 w  = m_Characters[ LookUpCharacter(c) ].W;
-                if( ScaleText )
-                {
-                    w = (u32)((f32)w * ScaleX);
-                }
                 CurrWidth += w + 1;
             }
 
@@ -918,30 +787,13 @@ void ui_font::RenderHelpText( const irect&  Rect,
     {
         c = pString[iStart];
 
-        // Look for an embedded color code.
-        //if( (c & 0xFF00) == 0xFF00 )
-        //{
-        //    if( IgnoreEmbeddedColor )
-        //    {
-        //        iStart++;
-        //    }
-        //    else
-        //    {
-        //        Color.R = (c & 0x00FF);
-        //        iStart++;
-        //        c = pString[iStart];
-        //        Color.G = (c & 0xFF00) >> 8;
-        //        Color.B = (c & 0x00FF);
-        //    }
-        //    continue;
-        //}
         if( (c & 0xff) == 0xAB ) // '?' 
         {
             // Check for Command Codes
             iStart++;
 
             // get the button code
-            s32 buttonCode = g_UiMgr->LookUpButtonCode( pString, iStart );
+            s32 buttonCode = m_pManager->LookUpButtonCode( pString, iStart, INPUT_DEVICE_GAMEPAD, Platform );
 
             if( buttonCode == CREDIT_TITLE_LINE || buttonCode == NEW_CREDIT_PAGE || buttonCode == CREDIT_END)
                 buttonCode = -1;
@@ -979,38 +831,33 @@ void ui_font::RenderHelpText( const irect&  Rect,
                 MaxWidth  = 0;
                 CurrWidth = 0;
 
-                draw_End();
-                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
-                
-                xbitmap* button = g_UiMgr->GetButtonTexture( buttonCode );
-        		draw_SetTexture( *button );				
+                texture* pButton = m_pManager->GetButtonTexture( buttonCode );
+                if( !pButton )
+                    continue;
 
-                if( buttonCode == INPUT_KBD_RETURN )
-                {
-                    draw_Sprite( vector3((f32)sx+1, (f32)sy+1, 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(0,0,0,255) );
-                    draw_Sprite( vector3((f32)sx, (f32)sy, 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(255,255,255) );
+                g_UIRenderer.DrawImage( *pButton,
+                                        vector2( (f32)sx + 1.0f, (f32)sy + 1.0f ),
+                                        vector2( BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH ),
+                                        vector2( 0.0f, 0.0f ),
+                                        vector2( 1.0f, 1.0f ),
+                                        xcolor( 0, 0, 0, 255 ),
+                                        0.0f,
+                                        UI_BLEND_ALPHA,
+                                        UI_SAMPLER_LINEAR_CLAMP );
+                g_UIRenderer.DrawImage( *pButton,
+                                        vector2( (f32)sx, (f32)sy ),
+                                        vector2( BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH ),
+                                        vector2( 0.0f, 0.0f ),
+                                        vector2( 1.0f, 1.0f ),
+                                        XCOLOR_WHITE,
+                                        0.0f,
+                                        UI_BLEND_ALPHA,
+                                        UI_SAMPLER_LINEAR_CLAMP );
 
-                    // set new block start
-                    sx += BUTTON_START_SPRITE_WIDTH;
-                }
-                else
-                {
-                    draw_Sprite( vector3((f32)sx+1, (f32)sy+1, 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(0,0,0,255) );
-                    draw_Sprite( vector3((f32)sx, (f32)sy, 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(255,255,255) );
-
-                    // set new block start
-                    sx += BUTTON_SPRITE_WIDTH;
-                }
+                sx += ui_GetEmbeddedButtonAdvance( buttonCode );
 
                 tx = sx;
                 ty = sy;
-
-                draw_End();
-
-                draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
-		        
-                pBitmap = m_Bitmap.GetPointer();
-                draw_SetTexture( *pBitmap );
             }
         }
         else if ( pString[iStart] == '\n' )
@@ -1033,27 +880,25 @@ void ui_font::RenderHelpText( const irect&  Rect,
             s32 y  = m_Characters[ ci ].Y;
             s32 w  = m_Characters[ ci ].W;
 
-            f32 u0 = (x            + 0.5f) / m_BmWidth;
-            f32 u1 = (x + w        + 0.5f) / m_BmWidth;
-            f32 v0 = (y            + 0.5f) / m_BmHeight;
-            f32 v1 = (y + m_Height + 0.5f) / m_BmHeight;
+            const f32 u0 = (f32)x              / m_BmWidth;
+            const f32 u1 = (f32)(x + w)        / m_BmWidth;
+            const f32 v0 = (f32)y              / m_BmHeight;
+            const f32 v1 = (f32)(y + m_Height) / m_BmHeight;
 
             Size.X = (f32)w;
             Size.Y = (f32)m_Height;
 
-            // scale for resolution
-            if( ScaleText )
-            {
-                Size.X *= ScaleX;
-                Size.Y *= ScaleY;
-                
-                w = (u32)((f32)w * ScaleX);
-            }
-            // end scale
-
             uv0.Set( u0, v0 );
             uv1.Set( u1, v1 );
-            draw_SpriteUV( vector3((f32)tx,(f32)ty,10.0f), Size, uv0, uv1, Color );
+            g_UIRenderer.DrawImage( *pFontTexture,
+                                    vector2( (f32)tx, (f32)ty ),
+                                    Size,
+                                    uv0,
+                                    uv1,
+                                    Color,
+                                    0.0f,
+                                    UI_BLEND_ALPHA,
+                                    UI_SAMPLER_POINT_CLAMP );
         
             tx        += w + 1;
             CurrWidth += w + 1;
@@ -1062,7 +907,6 @@ void ui_font::RenderHelpText( const irect&  Rect,
         // get new character
         iStart++;
     }
-    draw_End();
 }
 //=========================================================================
 
@@ -1127,42 +971,20 @@ void ui_font::RenderText( const irect&  Rect,
         Color2.B = (Color2.B + BrightnessDelta) > 255 ? 255 : Color2.B + BrightnessDelta;
     }
 
-    xbitmap* pBitmap =  m_Bitmap.GetPointer();
+    texture* pFontTexture = m_bitmap.GetPointer();
+    if( !pFontTexture )
+        return;
     
-    f32 ScaleX=1;
-    f32 ScaleY=1;
-
-    if( ScaleText )
-    {
-        s32 XRes, YRes;
-        eng_GetRes( XRes, YRes );
-        ScaleX = (f32)XRes / 512.0f;
-        ScaleY = (f32)YRes / 448.0f;
-    }
     const xbool ClipText = (Flags & clip_character) != 0;
 
     ASSERT( pString );
 
-    if (Flags & ui_font::is_help_text)
-    {
-        RenderHelpText( Rect, Flags, aColor, pString, IgnoreEmbeddedColor, UseGradient, FlareAmount );
-        return;
-    }
+    const ui_blend_mode FontBlend = (Flags & ui_font::blend_additive)
+                                   ? UI_BLEND_ADDITIVE
+                                   : UI_BLEND_ALPHA;
 
-    //f32     BmWidth  = 1.0f / (f32)m_BmWidth;
-    //f32     BmHeight = 1.0f / (f32)m_BmHeight;
-
-    // Prepare to draw characters.
-    s32 DrawFlags = DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_UV_CLAMP | DRAW_CULL_NONE ;
-    if( Flags & ui_font::blend_additive )
-        DrawFlags |= DRAW_BLEND_ADD;
-    draw_Begin( DRAW_TRIANGLES, DrawFlags );
-    draw_SetTexture( *pBitmap );
-
-    // Turn off BILINEAR.
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_MINFILTER, D3DTEXF_POINT );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_MAGFILTER, D3DTEXF_POINT );
-    //g_pd3dDevice->SetTextureStageState( 0, D3DTSS_MIPFILTER, D3DTEXF_POINT );
+    if( ClipText )
+        g_UIRenderer.PushClipRect( Rect );
 
     // Get size for vertical positioning.
     Height = TextHeight( pString );
@@ -1262,7 +1084,10 @@ void ui_font::RenderText( const irect&  Rect,
                 if( pString[ iStart ] == 0 ) continue; // shouldn't happen, but much safer.
 
                 // get the button code
-                buttonCode = g_UiMgr->LookUpButtonCode( pString, iStart );
+                buttonCode = m_pManager->LookUpButtonCode( pString,
+                                                           iStart,
+                                                           g_Input.GetCurrentInputDevice(),
+                                                           g_Input.GetCurrentInputPlatform() );
 
                 if( buttonCode == CREDIT_TITLE_LINE || buttonCode == NEW_CREDIT_PAGE || buttonCode == CREDIT_END )
                     buttonCode = -1;
@@ -1288,36 +1113,11 @@ void ui_font::RenderText( const irect&  Rect,
                         ASSERTS( FALSE, "Too many buttons in this string!" );
                         continue;
                     }
-                    //draw_End();
-                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
-                    
-                    //xbitmap* button = g_UiMgr->GetButtonTexture( buttonCode );
-        		    //draw_SetTexture( *button );
-
                     ButtonCodes[ NumButtons ] = buttonCode;
                     Button_X[ NumButtons ] = (f32)(tx);
-	        	    Button_Y[ NumButtons ] = (f32)(ty);
-
-                    //draw_Sprite( vector3((f32)tx+1, (f32)ty+1, 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(0,0,0,255) );
-	        	    //draw_Sprite( vector3((f32)tx, (f32)ty, 0), vector2(BUTTON_SPRITE_WIDTH, BUTTON_SPRITE_WIDTH), xcolor(255,255,255) );
-#if defined(TARGET_PC)
-                if( buttonCode == INPUT_KBD_RETURN )
-                {
-                    tx += BUTTON_SPRITE_WIDTH;
-                }
-                else
-                {
-                    tx += BUTTON_START_SPRITE_WIDTH;
-                }  
-#endif               
-                    //draw_End();
-                    
+                    Button_Y[ NumButtons ] = (f32)(ty);
+                    tx += ui_GetEmbeddedButtonAdvance( buttonCode );
                     NumButtons++;
-
-                    //draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
-		            
-                    //xbitmap* pBitmap = m_Bitmap.GetPointer();
-                    //draw_SetTexture( *pBitmap );
                 }
                 continue;
             }
@@ -1351,30 +1151,24 @@ void ui_font::RenderText( const irect&  Rect,
             s32 y  = m_Characters[ ci ].Y;
             s32 w  = m_Characters[ ci ].W;
 
-            //Color.A = 255;
 
-            f32 u0 = (x            + 0.5f) / m_BmWidth;
-            f32 u1 = (x + w        + 0.5f) / m_BmWidth;
-            f32 v0 = (y            + 0.5f) / m_BmHeight;
-            f32 v1 = (y + m_Height + 0.5f) / m_BmHeight;
+            const f32 u0 = (f32)x              / m_BmWidth;
+            const f32 u1 = (f32)(x + w)        / m_BmWidth;
+            const f32 v0 = (f32)y              / m_BmHeight;
+            const f32 v1 = (f32)(y + m_Height) / m_BmHeight;
 		    
-            if( ScaleText )
-            {
-                w = (u32)((f32)w * ScaleX);
-            }
-
-            RenderGlyphQuad( MakeGlyphQuad( (f32)tx,
-                                             (f32)ty,
-                                             (f32)(tx + w),
-                                             (f32)(ty + m_Height),
-                                             u0,
-                                             v0,
-                                             u1,
-                                             v1 ),
+            RenderGlyphQuad( *pFontTexture,
+                             MakeGlyphQuad( (f32)tx,
+                                            (f32)ty,
+                                            (f32)(tx + w),
+                                            (f32)(ty + m_Height),
+                                            u0,
+                                            v0,
+                                            u1,
+                                            v1 ),
                              Color2,
                              Color1,
-                             ClipText,
-                             Rect );
+                             FontBlend );
             tx += w + 1;
         }
 
@@ -1385,46 +1179,44 @@ void ui_font::RenderText( const irect&  Rect,
             iStart++;
         }
     }
-    draw_End();
-
 #if !defined(APP_EDITOR)
     if( NumButtons > 0 && UseGradient )
     {
-        // now draw the buttons
-        draw_Begin( DRAW_SPRITES, DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_USE_ALPHA | DRAW_NO_ZBUFFER  );
-
         s32 i;
         for( i = 0; i < NumButtons; i++ )
         {
-                        
-            xbitmap* button = g_UiMgr->GetButtonTexture( ButtonCodes[ i ] );
-            draw_SetTexture( *button );
-            RenderGlyphSprite( MakeGlyphQuad( Button_X[ i ] + 1.0f,
-                                               Button_Y[ i ] + 1.0f,
-                                               Button_X[ i ] + 1.0f + BUTTON_SPRITE_WIDTH,
-                                               Button_Y[ i ] + 1.0f + BUTTON_SPRITE_WIDTH,
+            texture* pButton = m_pManager->GetButtonTexture( ButtonCodes[i] );
+            if( !pButton )
+                continue;
+
+            RenderGlyphSprite( *pButton,
+                               MakeGlyphQuad( Button_X[ i ] + 1.0f,
+                                              Button_Y[ i ] + 1.0f,
+                                              Button_X[ i ] + 1.0f + BUTTON_SPRITE_WIDTH,
+                                              Button_Y[ i ] + 1.0f + BUTTON_SPRITE_WIDTH,
                                                0.0f,
                                                0.0f,
                                                1.0f,
                                                1.0f ),
                                xcolor(0,0,0,255),
-                               ClipText,
-                               Rect );
-            RenderGlyphSprite( MakeGlyphQuad( Button_X[ i ],
-                                               Button_Y[ i ],
-                                               Button_X[ i ] + BUTTON_SPRITE_WIDTH,
-                                               Button_Y[ i ] + BUTTON_SPRITE_WIDTH,
+                               UI_BLEND_ALPHA );
+            RenderGlyphSprite( *pButton,
+                               MakeGlyphQuad( Button_X[ i ],
+                                              Button_Y[ i ],
+                                              Button_X[ i ] + BUTTON_SPRITE_WIDTH,
+                                              Button_Y[ i ] + BUTTON_SPRITE_WIDTH,
                                                0.0f,
                                                0.0f,
                                                1.0f,
                                                1.0f ),
                                xcolor(255,255,255),
-                               ClipText,
-                               Rect );
+                               UI_BLEND_ALPHA );
         }
-        draw_End();
     }
 #endif
+
+    if( ClipText )
+        g_UIRenderer.PopClipRect();
 }
 //=========================================================================
 
@@ -1439,14 +1231,7 @@ void ui_font::RenderText( const irect&  Rect,
     xcolor Color = XCOLOR_PURPLE;
     Color.A = Alpha;
 
-    if (Flags & ui_font::is_help_text)
-    {
-        RenderHelpText( Rect, Flags, Color, pString, IgnoreEmbeddedColor, UseGradient, FlareAmount );
-    }
-    else
-    {
-        RenderText( Rect, Flags, Color, pString, IgnoreEmbeddedColor, UseGradient, FlareAmount );
-    }
+    RenderText( Rect, Flags, Color, pString, IgnoreEmbeddedColor, UseGradient, FlareAmount );
 }
 
 //=========================================================================
@@ -1462,14 +1247,7 @@ void ui_font::RenderText( const irect&  R,
 {
     xwstring t( pString );
 
-    if (Flags & ui_font::is_help_text)
-    {
-        RenderHelpText( R, Flags, Color, (const xwchar*)t, IgnoreEmbeddedColor, UseGradient, FlareAmount );
-    }
-    else
-    {
-        RenderText( R, Flags, Color, (const xwchar*)t, IgnoreEmbeddedColor, UseGradient, FlareAmount );
-    }
+    RenderText( R, Flags, Color, (const xwchar*)t, IgnoreEmbeddedColor, UseGradient, FlareAmount );
 }
 
 //=========================================================================
@@ -1485,23 +1263,22 @@ void ui_font::RenderStateControlledText( const irect& Rect, u32 Flags, const xco
     s32     Height;    
     s32     buttonCode = -1;
     xcolor  Color1    = Color;
-    //xcolor  Color2    = Color;
     xbool   WasEllipsisClipped = FALSE;
 
-    xbitmap* pBitmap =  m_Bitmap.GetPointer();
+    texture* pFontTexture = m_bitmap.GetPointer();
+    if( !pFontTexture )
+        return;
 
     ASSERT( pString );
 
-    f32 ScaleX=1;
-    f32 ScaleY=1;
     const xbool ClipText = (Flags & clip_character) != 0;
 
-    // Prepare to draw characters.
-    s32 DrawFlags = DRAW_USE_ALPHA | DRAW_TEXTURED | DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER | DRAW_NO_ZWRITE | DRAW_UV_CLAMP ;
-    if( Flags & ui_font::blend_additive )
-        DrawFlags |= DRAW_BLEND_ADD;
-    draw_Begin( DRAW_SPRITES, DrawFlags );
-    draw_SetTexture( *pBitmap );
+    const ui_blend_mode FontBlend = (Flags & ui_font::blend_additive)
+                                   ? UI_BLEND_ADDITIVE
+                                   : UI_BLEND_ALPHA;
+
+    if( ClipText )
+        g_UIRenderer.PushClipRect( Rect );
 
     // Get size for vertical positioning.
     Height = TextHeight( pString );
@@ -1601,7 +1378,10 @@ void ui_font::RenderStateControlledText( const irect& Rect, u32 Flags, const xco
                 if( pString[ iStart ] == 0 ) continue; // shouldn't happen, but much safer.
 
                 // get the button code
-                buttonCode = g_UiMgr->LookUpButtonCode( pString, iStart );
+                buttonCode = m_pManager->LookUpButtonCode( pString,
+                                                           iStart,
+                                                           g_Input.GetCurrentInputDevice(),
+                                                           g_Input.GetCurrentInputPlatform() );
 
                 if( buttonCode == CREDIT_TITLE_LINE || buttonCode == NEW_CREDIT_PAGE || buttonCode == CREDIT_END )
                     buttonCode = -1;
@@ -1640,33 +1420,28 @@ void ui_font::RenderStateControlledText( const irect& Rect, u32 Flags, const xco
             s32 w  = m_Characters[ ci ].W;
             s32 dw = w;
 
-            if( ScaleText )
-            {
-                dw = (u32)((f32)dw * ScaleX);
-            }
-
             if( (((CustomRenderStruct*)StateData)[iStart]).m_State == s_render )
             {                
-                f32 u0 = (x            + 0.5f) / m_BmWidth;
-                f32 u1 = (x + w        + 0.5f) / m_BmWidth;
-                f32 v0 = (y            + 0.5f) / m_BmHeight;
-                f32 v1 = (y + m_Height + 0.5f) / m_BmHeight;
+                const f32 u0 = (f32)x              / m_BmWidth;
+                const f32 u1 = (f32)(x + w)        / m_BmWidth;
+                const f32 v0 = (f32)y              / m_BmHeight;
+                const f32 v1 = (f32)(y + m_Height) / m_BmHeight;
 
                 xcolor RenderColor = Color1;
                 RenderColor.A = (u8)(((CustomRenderStruct*)StateData)[iStart]).m_Value;
 
                 // aharp TODO need to add gradient font
-                RenderGlyphSprite( MakeGlyphQuad( (f32)tx,
-                                                   (f32)ty,
-                                                   (f32)(tx + dw),
-                                                   (f32)(ty + m_Height),
-                                                   u0,
+                RenderGlyphSprite( *pFontTexture,
+                                   MakeGlyphQuad( (f32)tx,
+                                                  (f32)ty,
+                                                  (f32)(tx + dw),
+                                                  (f32)(ty + m_Height),
+                                                  u0,
                                                    v0,
                                                    u1,
                                                    v1 ),
                                    RenderColor,
-                                   ClipText,
-                                   Rect );
+                                   FontBlend );
             }
             tx += dw + 1;
         }
@@ -1678,20 +1453,9 @@ void ui_font::RenderStateControlledText( const irect& Rect, u32 Flags, const xco
             iStart++;
         }
     }
-    draw_End();
-}
 
-//=========================================================================
-
-xcolor ui_font::LerpColor( const xcolor& C0, const xcolor& C1, f32 T )
-{
-    if( T < 0.0f ) T = 0.0f;
-    if( T > 1.0f ) T = 1.0f;
-
-    return xcolor( (u8)((f32)C0.R + ((f32)C1.R - (f32)C0.R) * T + 0.5f),
-                   (u8)((f32)C0.G + ((f32)C1.G - (f32)C0.G) * T + 0.5f),
-                   (u8)((f32)C0.B + ((f32)C1.B - (f32)C0.B) * T + 0.5f),
-                   (u8)((f32)C0.A + ((f32)C1.A - (f32)C0.A) * T + 0.5f) );
+    if( ClipText )
+        g_UIRenderer.PopClipRect();
 }
 
 //=========================================================================
@@ -1709,100 +1473,50 @@ ui_font::glyph_quad ui_font::MakeGlyphQuad( f32 X0, f32 Y0, f32 X1, f32 Y1,
     Quad.V0 = V0;
     Quad.U1 = U1;
     Quad.V1 = V1;
-    Quad.T0 = 0.0f;
-    Quad.T1 = 1.0f;
 
     return Quad;
 }
 
 //=========================================================================
 
-xbool ui_font::ClipGlyphQuad( glyph_quad& Quad, const irect& Clip )
-{
-    if( (Clip.r <= Clip.l) || (Clip.b <= Clip.t) )
-        return FALSE;
-
-    const f32 OrigX0 = Quad.X0;
-    const f32 OrigY0 = Quad.Y0;
-    const f32 OrigX1 = Quad.X1;
-    const f32 OrigY1 = Quad.Y1;
-    const f32 OrigU0 = Quad.U0;
-    const f32 OrigV0 = Quad.V0;
-    const f32 OrigU1 = Quad.U1;
-    const f32 OrigV1 = Quad.V1;
-    const f32 OrigW  = OrigX1 - OrigX0;
-    const f32 OrigH  = OrigY1 - OrigY0;
-
-    if( (OrigW <= 0.0f) || (OrigH <= 0.0f) )
-        return FALSE;
-
-    Quad.X0 = MAX( OrigX0, (f32)Clip.l );
-    Quad.Y0 = MAX( OrigY0, (f32)Clip.t );
-    Quad.X1 = MIN( OrigX1, (f32)Clip.r );
-    Quad.Y1 = MIN( OrigY1, (f32)Clip.b );
-
-    if( (Quad.X1 <= Quad.X0) || (Quad.Y1 <= Quad.Y0) )
-        return FALSE;
-
-    const f32 XClip0 = (Quad.X0 - OrigX0) / OrigW;
-    const f32 XClip1 = (Quad.X1 - OrigX0) / OrigW;
-    const f32 YClip0 = (Quad.Y0 - OrigY0) / OrigH;
-    const f32 YClip1 = (Quad.Y1 - OrigY0) / OrigH;
-
-    Quad.U0 = OrigU0 + (OrigU1 - OrigU0) * XClip0;
-    Quad.U1 = OrigU0 + (OrigU1 - OrigU0) * XClip1;
-    Quad.V0 = OrigV0 + (OrigV1 - OrigV0) * YClip0;
-    Quad.V1 = OrigV0 + (OrigV1 - OrigV0) * YClip1;
-    Quad.T0 = YClip0;
-    Quad.T1 = YClip1;
-
-    return TRUE;
-}
-
-//=========================================================================
-
-void ui_font::RenderGlyphQuad( glyph_quad Quad,
+void ui_font::RenderGlyphQuad( const texture& Texture,
+                               const glyph_quad& Quad,
                                const xcolor& TopColor,
                                const xcolor& BottomColor,
-                               xbool DoClip,
-                               const irect& Clip )
+                               ui_blend_mode Blend )
 {
-    if( DoClip && !ClipGlyphQuad( Quad, Clip ) )
-        return;
+    const ui_vertex Vertices[4] =
+    {
+        ui_vertex( vector2( Quad.X0, Quad.Y0 ), vector2( Quad.U0, Quad.V0 ), TopColor    ),
+        ui_vertex( vector2( Quad.X1, Quad.Y0 ), vector2( Quad.U1, Quad.V0 ), TopColor    ),
+        ui_vertex( vector2( Quad.X1, Quad.Y1 ), vector2( Quad.U1, Quad.V1 ), BottomColor ),
+        ui_vertex( vector2( Quad.X0, Quad.Y1 ), vector2( Quad.U0, Quad.V1 ), BottomColor )
+    };
+    static const u32 Indices[6] = { 0, 1, 2, 2, 3, 0 };
 
-    const xcolor ClippedTop    = LerpColor( TopColor, BottomColor, Quad.T0 );
-    const xcolor ClippedBottom = LerpColor( TopColor, BottomColor, Quad.T1 );
-
-    draw_Color( ClippedTop );
-    draw_UV( Quad.U0, Quad.V0 );
-    draw_Vertex( Quad.X0, Quad.Y0, 0.0f );
-    draw_UV( Quad.U1, Quad.V0 );
-    draw_Vertex( Quad.X1, Quad.Y0, 0.0f );
-    draw_Color( ClippedBottom );
-    draw_UV( Quad.U0, Quad.V1 );
-    draw_Vertex( Quad.X0, Quad.Y1, 0.0f );
-
-    draw_Vertex( Quad.X0, Quad.Y1, 0.0f );
-    draw_UV( Quad.U1, Quad.V1 );
-    draw_Vertex( Quad.X1, Quad.Y1, 0.0f );
-    draw_Color( ClippedTop );
-    draw_UV( Quad.U1, Quad.V0 );
-    draw_Vertex( Quad.X1, Quad.Y0, 0.0f );
+    g_UIRenderer.GetDrawList().AddTriangles( ui_material( Texture,
+                                                          Blend,
+                                                          UI_SAMPLER_POINT_CLAMP ),
+                                             Vertices,
+                                             4,
+                                             Indices,
+                                             6 );
 }
 
 //=========================================================================
 
-void ui_font::RenderGlyphSprite( glyph_quad Quad,
+void ui_font::RenderGlyphSprite( const texture& Texture,
+                                 const glyph_quad& Quad,
                                  const xcolor& Color,
-                                 xbool DoClip,
-                                 const irect& Clip )
+                                 ui_blend_mode Blend )
 {
-    if( DoClip && !ClipGlyphQuad( Quad, Clip ) )
-        return;
-
-    draw_SpriteUV( vector3( Quad.X0, Quad.Y0, 10.0f ),
-                   vector2( Quad.X1 - Quad.X0, Quad.Y1 - Quad.Y0 ),
-                   vector2( Quad.U0, Quad.V0 ),
-                   vector2( Quad.U1, Quad.V1 ),
-                   Color );
+    g_UIRenderer.DrawImage( Texture,
+                            vector2( Quad.X0, Quad.Y0 ),
+                            vector2( Quad.X1 - Quad.X0, Quad.Y1 - Quad.Y0 ),
+                            vector2( Quad.U0, Quad.V0 ),
+                            vector2( Quad.U1, Quad.V1 ),
+                            Color,
+                            0.0f,
+                            Blend,
+                            UI_SAMPLER_POINT_CLAMP );
 }

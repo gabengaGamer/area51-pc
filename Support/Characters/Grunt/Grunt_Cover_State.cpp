@@ -1,8 +1,8 @@
-#include "grunt_cover_state.hpp"
-#include "..\Character.hpp"
-#include "navigation\coverNode.hpp"
-#include "objects\NewWeapon.hpp"
-#include "audiomgr\audiomgr.hpp"
+#include "Grunt_Cover_State.hpp"
+#include "../Character.hpp"
+#include "Navigation/CoverNode.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "AudioMgr/AudioMgr.hpp"
 
 //=========================================================================
 // constants

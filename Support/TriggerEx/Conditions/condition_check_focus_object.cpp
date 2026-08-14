@@ -8,11 +8,12 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "condition_check_focus_object.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "..\Support\Objects\focusobject.hpp"
+#include "../Support/Objects/FocusObject.hpp"
 
 //=========================================================================
 // CLASS FUNCTIONS
@@ -72,15 +73,15 @@ void condition_check_focus_object::OnDebugRender ( s32 Index )
     object* pObject = g_ObjMgr.GetObjectByGuid(m_FocusObj);
     if (pObject)
     {
-        draw_BBox( pObject->GetBBox(), XCOLOR_PURPLE );
+        render::debug::Box( pObject->GetBBox(), XCOLOR_PURPLE );
 
         if (!GetElse())
         {
-            draw_Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[If %d]Check Focus", Index) );
+            render::debug::Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[If %d]Check Focus", Index) );
         }
         else
         {
-            draw_Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[Else If %d]Check Focus", Index) );
+            render::debug::Label( pObject->GetPosition(), XCOLOR_PURPLE, xfs("[Else If %d]Check Focus", Index) );
         }
     }
 }

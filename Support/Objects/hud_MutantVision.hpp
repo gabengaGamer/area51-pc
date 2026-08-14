@@ -13,10 +13,10 @@
 // INCLUDES
 //==============================================================================
 
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "x_bitmap.hpp"
-#include "Objects\Player.hpp"
-#include "Auxiliary\fx_RunTime\Fx_Mgr.hpp"
+#include "Objects/Player/Player.hpp"
+#include "FX/fx_Mgr.hpp"
 
 #include "hud_Renderable.hpp"
 

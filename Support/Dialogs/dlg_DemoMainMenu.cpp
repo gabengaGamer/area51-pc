@@ -4,18 +4,18 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_DemoMainMenu.hpp"
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "StateMgr/mapList.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "StateMgr/MapList.hpp"
 #include "Configuration/GameConfig.hpp"
 
 //=========================================================================
@@ -24,10 +24,9 @@
 
 ui_manager::control_tem DemoMainMenuControls[] = 
 {
-    { IDC_DEMO_MAIN_MENU_LEVEL_ONE,     "IDS_NULL",     "button",   60, 100, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_DEMO_MAIN_MENU_LEVEL_TWO,	    "IDS_NULL",     "button",   60, 160, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_DEMO_MAIN_MENU_LEVEL_THREE,	"IDS_NULL",     "button",   60, 220, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_DEMO_MAIN_MENU_NAV_TEXT,      "IDS_NULL",     "text",      0,   0,   0,  0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_DEMO_MAIN_MENU_LEVEL_ONE,     "IDS_NULL",     "button",   60, 100, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_DEMO_MAIN_MENU_LEVEL_TWO,	    "IDS_NULL",     "button",   60, 160, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_DEMO_MAIN_MENU_LEVEL_THREE,	"IDS_NULL",     "button",   60, 220, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
 };
 
 ui_manager::dialog_tem DemoMainMenuDialog =
@@ -109,7 +108,6 @@ xbool dlg_demo_main_menu::Create( s32                        UserID,
     m_pButtonLevelOne   = (ui_button*)  FindChildByID( IDC_DEMO_MAIN_MENU_LEVEL_ONE   );
     m_pButtonLevelTwo	= (ui_button*)  FindChildByID( IDC_DEMO_MAIN_MENU_LEVEL_TWO   );
     m_pButtonLevelThree = (ui_button*)  FindChildByID( IDC_DEMO_MAIN_MENU_LEVEL_THREE );
-    m_pNavText          = (ui_text*)    FindChildByID( IDC_DEMO_MAIN_MENU_NAV_TEXT    );
 
     GotoControl( (ui_control*)m_pButtonLevelOne );
     m_CurrentControl = 	IDC_DEMO_MAIN_MENU_LEVEL_ONE;
@@ -120,7 +118,6 @@ xbool dlg_demo_main_menu::Create( s32                        UserID,
     m_pButtonLevelOne   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pButtonLevelTwo   ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pButtonLevelThree ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText          ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // set labels
     m_pButtonLevelOne   ->SetLabel( xwstring("Dr. Cray") );
@@ -130,9 +127,7 @@ xbool dlg_demo_main_menu::Create( s32                        UserID,
     // set up nav text 
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
 
-    m_pNavText->SetLabel( xwstring(navText) );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( xwstring(navText) );
 
     // set the number of players to 0
     g_PendingConfig.SetPlayerCount( 0 );
@@ -222,7 +217,7 @@ void dlg_demo_main_menu::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_demo_main_menu::OnPadSelect( ui_win* pWin )
+void dlg_demo_main_menu::OnAccept( ui_win* pWin )
 {
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
@@ -268,10 +263,8 @@ void dlg_demo_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pButtonLevelOne       ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pButtonLevelTwo      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pButtonLevelThree ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText               ->SetFlag(ui_win::WF_VISIBLE, TRUE);
     
             GotoControl( (ui_control*)m_pButtonLevelOne );
-            m_pButtonLevelOne->SetFlag(WF_HIGHLIGHT, TRUE);        
             g_UiMgr->SetScreenHighlight( m_pButtonLevelOne->GetPosition() );
 
             if (g_UiMgr->IsScreenOn() == FALSE)
@@ -286,17 +279,17 @@ void dlg_demo_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     // update the glow bar
     g_UiMgr->UpdateGlowBar(DeltaTime);
 
-    if( m_pButtonLevelOne->GetFlags(WF_HIGHLIGHT) )
+    if( m_pButtonLevelOne->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonLevelOne->GetPosition() );
         highLight = 0;
     }
-    else if( m_pButtonLevelTwo->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonLevelTwo->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonLevelTwo->GetPosition() );
         highLight = 1;
     }
-    else if( m_pButtonLevelThree->GetFlags(WF_HIGHLIGHT) )
+    else if( m_pButtonLevelThree->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonLevelThree->GetPosition() );
         highLight = 2;

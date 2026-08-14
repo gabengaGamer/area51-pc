@@ -37,14 +37,12 @@ public:
                                           s32           Flags );
 
     virtual void    Render              ( s32 ox=0, s32 oy=0 );
-    virtual void    OnUpdate            ( f32 DeltaTime );
-
-    virtual void    OnPadNavigate           ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void    OnPadSelect             ( ui_win* pWin );
-    virtual void    OnLBDown                ( ui_win* pWin );
-    virtual void    OnLBUp                  ( ui_win* pWin );
-    virtual void    OnMouseMove             ( ui_win* pWin, s32 x, s32 y );
-    virtual void    OnFocusLost             ( ui_win* pWin );
+    virtual void    OnNavigate          ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void    OnAccept            ( ui_win* pWin );
+    virtual void    OnPointerDown       ( ui_win* pWin, s32 x, s32 y );
+    virtual void    OnPointerUp         ( ui_win* pWin, s32 x, s32 y );
+    virtual void    OnPointerMove       ( ui_win* pWin, s32 x, s32 y );
+    virtual void    OnFocusLost         ( ui_win* pWin );
 
     void            SetRange            ( s32 Min, s32 Max );
     void            GetRange            ( s32& Min, s32& Max ) const;
@@ -58,20 +56,18 @@ public:
     void            SetParametric       ( xbool State = TRUE );
 
 protected:
+    void            SetValueFromPointer ( s32 x );
+
     s32             m_iElementBar;
     s32             m_iElementThumb;
 
-#ifdef TARGET_PC
-    xbool           m_MouseDown;
-    irect           m_Thumb;
-    s32             m_MouseX;
-    s32             m_MouseY;
-#endif
+    xbool           m_IsDragging;
     s32             m_Min;
     s32             m_Max;
     s32             m_Step;
     s32             m_StepScaler;
     s32             m_StepScalerMax;
+    s32             m_RepeatCount;
     s32             m_Value;
 
     xbool           m_IsParametric;

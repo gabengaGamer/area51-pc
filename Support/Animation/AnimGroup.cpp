@@ -8,11 +8,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "animdata.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
-#include "e_Virtual.hpp"
-
-
+#include "AnimData.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 class anim_loader : public rsc_loader
 {
@@ -79,7 +76,7 @@ anim_loader AnimLoader2("Animation",".charanim");
 
 void* anim_loader::Load( X_FILE* pFP, const char* pFileName )
 {
-    CONTEXT( "anim_loader::Load" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "anim_loader::Load" );
 
     (void)pFileName;
     x_DebugMsg("loading animation\n");
@@ -281,20 +278,10 @@ void anim_group::Clear( void )
         for( s32 i=0; i<m_nKeyBlocks; i++ )
             m_pKeyBlock[i].ReleaseStreams();
 
-        if( 1 )
-        {
-            if( m_pUncompressedData )
-                x_free( m_pUncompressedData );
-            if( m_pCompressedData )
-                x_free( m_pCompressedData   );
-        }
-        else
-        {
-            if( m_pUncompressedData )
-                vm_Free( m_pUncompressedData );
-            if( m_pCompressedData )
-                vm_Free( m_pCompressedData   );
-        }
+        if( m_pUncompressedData )
+            x_free( m_pUncompressedData );
+        if( m_pCompressedData )
+            x_free( m_pCompressedData   );
 
         delete [] m_pEvent;
 
@@ -492,7 +479,7 @@ s32 anim_group::GetRandomAnimIndex( s32 iStartAnim, s32 iSkipAnim /*= -1*/ ) con
 
 void anim_group::ComputeBonesL2W ( const matrix4& L2W, anim_key* pKey, s32 nBones, matrix4* pBoneL2W, xbool bApplyTheBindPose ) const
 {
-    CONTEXT("anim_group::ComputeBonesL2W") ;
+    X_PROFILE_SCOPE_CATEGORY( "Context", "anim_group::ComputeBonesL2W") ;
 
     s32 i;
    
@@ -690,7 +677,7 @@ xbool anim_group::Load( X_FILE* fp, const char* pFileName )
         byte Hdr[176];
         x_fread( Hdr, sizeof(Hdr), 1, fp );
 
-        x_memcpy( &m_BBox,    &Hdr[ 0], 32 );
+        x_memcpy( &m_BBox ,    &Hdr[ 0], 32 );
         x_memcpy( m_FileName, &Hdr[32], 60 );
         x_memcpy( &m_Version,              &Hdr[ 96], 4 );
         x_memcpy( &m_TotalNFrames,         &Hdr[100], 4 );
@@ -786,7 +773,7 @@ xbool anim_group::Load( X_FILE* fp, const char* pFileName )
         {
             byte* s = pSrc + AnimOff + i*DiskInfo;
             byte* d = m_pUncompressedData + oAnim + i*(s32)sizeof(anim_info);
-            x_memcpy( d,      s,      48 );   // m_TotalTranslation + m_BBox
+            x_memcpy( d,      s,      48 );   // m_TotalTranslation + m_BBox 
             x_memcpy( d + 56, s + 52, 94 );   // m_nAnims .. m_AnimKeys
             ((anim_info*)d)->m_pAnimGroup = NULL;
         }

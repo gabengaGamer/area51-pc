@@ -57,12 +57,11 @@ void client_proxy::Init( net_socket*         pLocalSocket,
     x_memcpy(m_UniqueId,pUniqueId,sizeof(m_UniqueId));
     x_memcpy(m_Ticket,pTicket,sizeof(m_Ticket));
     m_Ticket[127]=0x0;
-
     m_UpdateMgr.Init( ClientIndex );
     m_PainQueue.Init( ClientIndex );
     m_GMMgr.Init();
-
     m_VoiceProxy.Init( ClientIndex );
+
     m_ConnMgr.Init( *pLocalSocket, 
                     Remote, 
                     &m_UpdateMgr,
@@ -83,9 +82,6 @@ void client_proxy::Kill( void )
     ASSERT( m_IsConnected );
     m_IsConnected = FALSE;
     SetState( STATE_CLIENT_IDLE );
-    // *NOTE* This is NOT the right way to kill the voice manager.
-    // This should be done for every player that has been registered
-    // but for now, we always assume 1 player registered.
     m_UpdateMgr.Kill();
     m_GMMgr.Kill();
     m_VoiceProxy.Kill();
@@ -105,10 +101,7 @@ void client_proxy::Update( f32 DeltaTime, server_state ServerState )
 
     UpdateState( DeltaTime );
 
-    if( m_PacketSendDelay > 0.0f )
-    {
-        m_PacketSendDelay -= DeltaTime;
-    }
+    m_PacketSendDelay -= DeltaTime;
 
     if( (m_ConnMgr.IsConnected()==FALSE) && m_IsConnected && (GetState()!=STATE_CLIENT_COOLDOWN) && (GetState()!=STATE_CLIENT_DISCONNECT) )
     {
@@ -167,9 +160,6 @@ void client_proxy::AddPlayer( s32 Index, const char* pName, u64 Identifier )
     m_PlayerIdentifier[m_LocalPlayerCount] = Identifier;
 
     m_LocalPlayerCount++;
-    // If we ever have more than one local player, then we will have multiple
-    // instances of the voice manager for those players
-    //
     m_VoiceProxy.SetPlayerSlot( Index );
 }
 
@@ -305,7 +295,7 @@ void client_proxy::QueueVoice(const byte* pBuffer, s32 Length)
     m_ConnMgr.QueueVoice(pBuffer,Length);
 }
 
-
+//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 const byte* client_proxy::GetUniqueId(void)
 {
@@ -344,7 +334,6 @@ xbool client_proxy::KickPlayer( s32 PlayerId )
 }
 
 //------------------------------------------------------------------------------
-
 s32 client_proxy::ReadFromVoiceFifo( byte* pBuffer, s32 MaxLength )
 {
     return m_VoiceProxy.Read( pBuffer, MaxLength );
@@ -357,6 +346,7 @@ void client_proxy::WriteToVoiceFifo( const byte* pBuffer, s32 Length )
 }
 
 //------------------------------------------------------------------------------
+
 void client_proxy::ProcessEndMission( netstream& BitStream )
 {
     (void)BitStream;

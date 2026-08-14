@@ -13,8 +13,8 @@
 
 #include "x_math.hpp"
 #include "x_time.hpp"
-#include "miscutils\Guid.hpp"
-#include "objects\object.hpp"
+#include "MiscUtils/Guid.hpp"
+#include "Objects/object.hpp"
 #include "CollisionPrimatives.hpp"
 
 //==============================================================================

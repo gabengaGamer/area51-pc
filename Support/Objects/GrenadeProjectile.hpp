@@ -10,7 +10,7 @@
 //=========================================================================
 
 #include "NetProjectile.hpp"
-#include "objects\ParticleEmiter.hpp"
+#include "Objects/ParticleEmiter.hpp"
 
 //=========================================================================
 
@@ -40,7 +40,7 @@ static  const   object_desc&    GetObjectType       ( void );
 
 virtual         xbool           GetDoCollisions     ( void );
 virtual         bbox            GetLocalBBox        ( void ) const;
-virtual         void            OnAdvanceLogic      ( f32 DeltaTime );
+virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
 virtual         void            OnRender            ( void );
 virtual         void            OnImpact            ( collision_mgr::collision& Coll, object* pTarget );
 virtual         void            OnExplode           ( void );

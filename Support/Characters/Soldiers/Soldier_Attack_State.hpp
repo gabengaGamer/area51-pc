@@ -1,7 +1,7 @@
 #ifndef _SOLDIER_ATTACK_STATE_HPP_
 #define _SOLDIER_ATTACK_STATE_HPP_
 
-#include "Characters\BaseStates\Character_Attack_State.hpp"
+#include "Characters/BaseStates/Character_Attack_State.hpp"
 
 class soldier_attack_state : public character_attack_state
 {

@@ -13,8 +13,8 @@
 //  INCLUDES
 //==============================================================================
 
-#include "..\io_device.hpp"
-#include "..\io_filesystem.hpp"
+#include "../io_device.hpp"
+#include "../io_filesystem.hpp"
 
 //==============================================================================
 //  IO DEVICE HOST CLASS
@@ -44,7 +44,7 @@ private:
     void                     LogDeviceWrite              ( io_device_file* pFile, s32 Length, s32 Offset );
 #endif        
     virtual device_data*     GetDeviceData               ( void );
-    virtual void             CleanFilename               ( char* pClean, const char* pFilename );
+    virtual void             CleanFilename               ( char* pClean, const char* pFilename ) override;
     virtual xbool            DeviceOpen                  ( const char* pFilename, io_device_file* pFile, io_device::open_flags OpenFlags );
     virtual xbool            DeviceRead                  ( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace );
     virtual xbool            DeviceWrite                 ( io_device_file* pFile, void* pBuffer, s32 Length, s32 Offset, s32 AddressSpace );

@@ -84,7 +84,6 @@ public:
             
             void            SetPosition         ( const vector3& Position ) X_SECTION(physics);
             vector3         GetPosition         ( void ) const X_SECTION(physics);
-            
             void            ComputeWorldInvInertia( void ) X_SECTION(physics);
 
             // Bounding box functions
@@ -119,7 +118,7 @@ public:
                             
             // Force/torque functions                            
             void            ClearForces         ( void ) X_SECTION(physics);
-            void            ComputeForces       ( f32 DeltaTime ) X_SECTION(physics);                
+            void            ComputeForces       ( void ) X_SECTION(physics);
 
             void            AddWorldForce       ( const vector3& Force ) X_SECTION(physics);
             void            AddWorldForce       ( const vector3& Force,  const vector3& Position ) X_SECTION(physics);
@@ -134,6 +133,9 @@ public:
             // Integration functions                            
             void            IntegratePosition   ( f32 DeltaTime ) X_SECTION(physics);
             void            IntegrateVelocity   ( f32 DeltaTime ) X_SECTION(physics);
+            void            ClearSplitVelocity  ( void ) X_SECTION(physics);
+            void            ApplySplitImpulse   ( const vector3& Impulse, const vector3& Position ) X_SECTION(physics);
+            void            IntegrateSplitPosition( f32 DeltaTime ) X_SECTION(physics);
                                     
             // Active functions                                     
             void            UpdateActiveState   ( f32 DeltaTime ) X_SECTION(physics);
@@ -144,7 +146,7 @@ public:
             void            Activate            ( void ) X_SECTION(physics);
 
             // Collision functions
-            void             SetCollisionShape  ( collision_shape* pCollisionShape, f32 Mass, f32 InertiaMax );
+            void             SetCollisionShape  ( collision_shape* pCollisionShape, f32 Mass, f32 MinInertiaExtent );
             collision_shape* GetCollisionShape  ( void ) const;
             void             SetCollisionInfo   ( s32 Group, s32 ID, u32 Mask );
             s32              GetCollisionID     ( void ) const X_SECTION(physics);
@@ -155,7 +157,7 @@ public:
             // Collision impact query functions
             void             ClearCollision     ( void );
             xbool            HasCollided        ( void ) const;
-            f32              GetCollisionSpeedSqr( void ) const;
+            f32              GetImpactSpeedSqr   ( void ) const;
 
             // Constraint functions
             void            SetPivotConstraint  ( constraint* pPivotConstraint );
@@ -201,6 +203,8 @@ mutable bbox                m_WorldBBox;            // World space bounding box
         matrix4             m_WorldInvInertia;      // World space inverse inertia tensor
         vector3             m_LinearVelocity;       // Linear (translation) velocity
         vector3             m_AngularVelocity;      // Angular (rotation) velocity
+        vector3             m_SplitLinearVelocity;  // Position-only correction velocity
+        vector3             m_SplitAngularVelocity; // Position-only angular correction velocity
 
         // Computed quantities about center of mass
         vector3             m_Force;                // Accumulated force to apply
@@ -214,7 +218,7 @@ mutable bbox                m_WorldBBox;            // World space bounding box
         s32                 m_CollisionID;          // Collision index
         u32                 m_CollisionBit;         // Collision bit mask ( 1 << m_CollisionID )
         u32                 m_CollisionMask;        // Collision mask (Mask & Bit) = Collision?
-        f32                 m_CollisionSpeedSqr;    // Biggest collision speed squared (if collision happened)
+        f32                 m_ImpactSpeedSqr;       // Biggest normal impact speed squared (if collision happened)
         
         // Constraint info
         constraint*         m_pPivotConstraint;     // Ptr to pivot constraint (or NULL)
@@ -461,6 +465,7 @@ const matrix4& rigid_body::GetWorldInvInertia ( void ) const
 inline
 void  rigid_body::SetLinearVelocity( const vector3& Velocity )
 {
+    ASSERT( Velocity.IsValid() );
     m_LinearVelocity = Velocity;
 }
 
@@ -485,6 +490,7 @@ vector3& rigid_body::GetLinearVelocity( void )
 inline
 void  rigid_body::SetAngularVelocity( const vector3& Velocity )
 {
+    ASSERT( Velocity.IsValid() );
     m_AngularVelocity = Velocity;
 }
 
@@ -509,6 +515,8 @@ vector3& rigid_body::GetAngularVelocity( void )
 inline
 void rigid_body::SetLinearDamping( f32 LinearDamping )
 {
+    ASSERT( x_isvalid( LinearDamping ) );
+    ASSERT( LinearDamping >= 0.0f );
     m_LinearDamping = LinearDamping;
 }
 
@@ -517,6 +525,8 @@ void rigid_body::SetLinearDamping( f32 LinearDamping )
 inline
 void rigid_body::SetAngularDamping( f32 AngularDamping )
 {
+    ASSERT( x_isvalid( AngularDamping ) );
+    ASSERT( AngularDamping >= 0.0f );
     m_AngularDamping = AngularDamping;
 }
 
@@ -583,6 +593,7 @@ void rigid_body::SetVelocity( const rigid_body::state& State )
 inline
 void rigid_body::SetPrevL2W( const matrix4& L2W )
 {
+    ASSERT( L2W.IsValid() );
     m_BackupState.m_L2W = L2W;
 }
 
@@ -653,52 +664,8 @@ void rigid_body::ApplyWorldImpulse( const vector3& Impulse, const vector3& Posit
 inline
 void rigid_body::ApplyLocalImpulse( const vector3& Impulse, const vector3& Position )
 {
-#ifdef TARGET_PS2
-
-    // ANGULAR-STEP1:   Cross = v3_Cross( Position, Impulse );
-    u128 Cross;
-    asm( "vopmula.xyz   acc,    VEC0,   VEC1
-          vopmsub.xyz   RES,    VEC1,   VEC0" :
-        "=j RES"  (Cross) :
-        "j  VEC0" (Position.GetU128()),
-        "j  VEC1" (Impulse.GetU128()) );
-
-    // LINEAR-STEP1:    DeltaLinearVelocity = Impulse * m_InvMass;
-    u128 DeltaLinearVelocity;
-    asm( "qmtc2         FSCL, VSCL"       : "=j VSCL" (DeltaLinearVelocity) : "r FSCL" (m_InvMass) );
-    asm( "vmulx.xyzw    VOUT, VIN, VSCLx" : "=j VOUT" (DeltaLinearVelocity) : "j VIN"  (Impulse.GetU128()), "j VSCL" (DeltaLinearVelocity) );
-    
-    // ANGULAR-STEP2:   DeltaAngularVelocity = m_WorldInvInertia.RotateVector( Cross )
-    u128 DeltaAngularVelocity;
-    asm( "vmulaz.xyzw acc,   COL2, VINz
-          vmadday.xyzw acc,  COL1, VINy
-          vmaddx.xyzw  VOUT, COL0, VINx" :
-        "=j VOUT" ( DeltaAngularVelocity ) :
-        "j  COL0" ( m_WorldInvInertia.GetCol0_U128() ),
-        "j  COL1" ( m_WorldInvInertia.GetCol1_U128() ),
-        "j  COL2" ( m_WorldInvInertia.GetCol2_U128() ),
-        "j  VIN"  ( Cross ) );
-
-    // LINEAR-STEP2:    m_LinearVelocity += DeltaLinearVelocity;
-    u128 LinearVelocity;
-    asm( "vadd.xyzw     VOUT, VEC0, VEC1" : "=j VOUT" (LinearVelocity) : "j VEC0" (m_LinearVelocity.GetU128()), "j VEC1" (DeltaLinearVelocity) );
-
-    // ANGULAR-STEP3:   m_AngularVelocity += DeltaAngularVelocity
-    u128 AngularVelocity;
-    asm( "vadd.xyzw     VOUT, VEC0, VEC1" : "=j VOUT" (AngularVelocity) : "j VEC0" (m_AngularVelocity.GetU128()), "j VEC1" (DeltaAngularVelocity) );
-    
-    // LINEAR-STEP3    
-    m_LinearVelocity.Set( LinearVelocity );
-    
-    // ANGULAR-STEP3    
-    m_AngularVelocity.Set( AngularVelocity );
-
-#else    
-    
     m_LinearVelocity  += Impulse * m_InvMass;
     m_AngularVelocity += m_WorldInvInertia.RotateVector( v3_Cross( Position, Impulse ) );
-
-#endif    
 }
 
 //==============================================================================
@@ -796,7 +763,7 @@ inline
 void  rigid_body::ClearCollision( void )
 {
     m_Flags &= ~FLAG_HAS_COLLIDED;
-    m_CollisionSpeedSqr = 0.0f;
+    m_ImpactSpeedSqr = 0.0f;
 }
 
 //==============================================================================
@@ -810,9 +777,9 @@ xbool rigid_body::HasCollided( void ) const
 //==============================================================================
 
 inline
-f32 rigid_body::GetCollisionSpeedSqr( void ) const
+f32 rigid_body::GetImpactSpeedSqr( void ) const
 {
-    return m_CollisionSpeedSqr;
+    return m_ImpactSpeedSqr;
 }
 
 //==============================================================================

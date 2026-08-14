@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{98DADE2B-1510-4E1D-930C-2DA4C9281B62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{82938179-A71A-4B07-8B22-D2F55B75CC38}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ShaderTool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ParseScript.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="DxcCompiler.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ShaderTool.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xCore\Entropy\ShaderContainerFormat.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

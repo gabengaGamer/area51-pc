@@ -9,9 +9,9 @@
 //==============================================================================
 
 #include "SpawnPoint.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
 #include "Entropy.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
 #include "InvisWall.hpp"
 
 //=========================================================================
@@ -53,7 +53,7 @@ static struct spawn_point_desc : public object_desc
                 default:            ASSERT( FALSE );            break;
                 }
 
-                EditorIcon_Draw( EDITOR_ICON_SPAWN_POINT, 
+                DrawEditorIcon( EditorIcon::SpawnPoint, 
                     SpawnPt.GetL2W(), 
                     !!(SpawnPt.GetAttrBits() & object::ATTR_EDITOR_SELECTED), 
                     Color );
@@ -118,7 +118,7 @@ void spawn_point::OnEnumProp( prop_enum& List )
     u32 Flags = PROP_TYPE_DONT_SAVE | 
         PROP_TYPE_DONT_SHOW | 
         PROP_TYPE_DONT_EXPORT | 
-        PROP_TYPE_DONT_SAVE_MEMCARD;
+        PROP_TYPE_DONT_SAVE_GAME;
 
     // NOTE: These fields will be removed in future versions.  They are here 
     // only for backwards compatibility.  Data in these fields is only loaded.

@@ -9,7 +9,7 @@
 //==============================================================================
 
 #include "Loco.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 
 //==============================================================================

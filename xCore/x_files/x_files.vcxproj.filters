@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0">
   <ItemGroup>
     <Filter Include="Implementation">
       <UniqueIdentifier>{1381684e-2b10-4c88-ab55-ee32312c89e7}</UniqueIdentifier>
@@ -18,6 +18,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Implementation\x_atomic.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="Implementation\x_atomic_pc.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
     <ClCompile Include="Implementation\x_bitmap.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
@@ -40,9 +46,6 @@
       <Filter>Implementation</Filter>
     </ClCompile>
     <ClCompile Include="Implementation\x_bytestream.cpp">
-      <Filter>Implementation</Filter>
-    </ClCompile>
-    <ClCompile Include="Implementation\x_context.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
     <ClCompile Include="Implementation\x_debug.cpp">
@@ -84,6 +87,12 @@
     <ClCompile Include="Implementation\x_plus.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
+    <ClCompile Include="Implementation\x_profile.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="Implementation\x_profile_tracy_client.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
     <ClCompile Include="Implementation\x_stdio.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
@@ -96,6 +105,9 @@
     <ClCompile Include="Implementation\x_threads_pc.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
+    <ClCompile Include="Implementation\x_workers.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
     <ClCompile Include="Implementation\x_time.cpp">
       <Filter>Implementation</Filter>
     </ClCompile>
@@ -104,6 +116,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="x_atomic.hpp" />
     <ClInclude Include="x_bitmap.hpp" />
     <ClInclude Include="x_bitstream.hpp" />
     <ClInclude Include="x_bytestream.hpp" />
@@ -117,10 +130,15 @@
     <ClInclude Include="x_stdio.hpp" />
     <ClInclude Include="x_string.hpp" />
     <ClInclude Include="x_threads.hpp" />
+    <ClInclude Include="x_workers.hpp" />
     <ClInclude Include="x_time.hpp" />
+    <ClInclude Include="x_profile.hpp" />
+    <ClInclude Include="Implementation\x_profile_tracy.hpp">
+      <Filter>Implementation</Filter>
+    </ClInclude>
     <ClInclude Include="x_array.hpp" />
     <ClInclude Include="x_color.hpp" />
-    <ClInclude Include="x_context.hpp" />
+    <ClInclude Include="x_command_queue.hpp" />
     <ClInclude Include="x_flare.hpp" />
     <ClInclude Include="x_memfile.hpp" />
     <ClInclude Include="x_plus.hpp" />

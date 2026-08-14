@@ -13,8 +13,8 @@
 //=========================================================================
 
 #include "action_ai_base.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 
 //=========================================================================
 // action_ai_dialog_line

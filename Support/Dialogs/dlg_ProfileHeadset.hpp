@@ -11,15 +11,15 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_slider.hpp"
-#include "ui\ui_check.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_slider.hpp"
+#include "UI/ui_check.hpp"
+#include "UI/ui_button.hpp"
 
-#include "StateMgr\StateMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
 
 //==============================================================================
 //  dlg_profile_headset
@@ -47,9 +47,9 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnNotify            ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData );
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
+    virtual void        OnNotify( ui_notification const& Event );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
 
     void                EnableBlackout      ( void )                    { m_bRenderBlackout = TRUE; }
@@ -68,7 +68,6 @@ protected:
    
     ui_button*          m_pRestoreDefaults;
 
-    ui_text*            m_pNavText;
 
     s32                 m_CurrHL;
 

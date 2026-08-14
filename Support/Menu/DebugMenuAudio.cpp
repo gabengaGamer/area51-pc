@@ -34,10 +34,6 @@ debug_menu_audio::debug_menu_audio( ) : debug_menu_page()
     m_pTitle = "Audio";
 
     AddItemBool( "Stream Debug",                    SHOW_STREAM_INFO    );
-#ifdef TARGET_PS2
-    m_pEnableVUMeter = AddItemBool( "Audio Level Meter", SHOW_AUDIO_LEVELS   );
-    AddItemBool( "Channel Monitor",                 SHOW_AUDIO_CHANNELS );
-#endif // TARGET_PS2
 #ifndef X_RETAIL
     AddItemBool( "Enable Audio Tweaks",             AUDIO_TWEAK   );
 #endif
@@ -61,14 +57,6 @@ void debug_menu_audio::OnChangeItem( debug_menu_item* pItem )
     if( pItem == m_pDumpLoadedPackages )
     {
         g_AudioMgr.DisplayPackages();
-    }
-
-    if( pItem == m_pEnableVUMeter )
-    {
-#ifdef TARGET_PS2
-        extern void EnableAudioLevels( xbool IsEnabled );
-        EnableAudioLevels( SHOW_AUDIO_LEVELS );
-#endif // TARGET_PS2
     }
 }
 

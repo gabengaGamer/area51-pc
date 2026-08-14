@@ -10,7 +10,7 @@
 #ifndef TRIGGER_VOLUME_HPP
 #define TRIGGER_VOLUME_HPP
 
-#include "object\spatial_volume.hpp"
+#include "object/spatial_volume.hpp"
 #include "trigger_volume.hpp"
 
 class trigger_object_in_volume : public trigger_volume

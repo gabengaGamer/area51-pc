@@ -9,14 +9,14 @@
 //=========================================================================
 
 #include "action_mission_failed.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Objects\HudObject.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "GameTextMgr\GameTextMgr.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Objects/HudObject.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "GameTextMgr/GameTextMgr.hpp"
 #include "Entropy.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "objects\player.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Objects/Player/Player.hpp"
 
 static const xcolor s_LogicColor          (200,200,0);
 

@@ -10,20 +10,21 @@
 // INCLUDES
 //==============================================================================
 
-#include "hudObject.hpp"
-#include "e_Draw.hpp"
+#include "HudObject.hpp"
 #include "e_View.hpp"
 #include "Entropy.hpp"
 #include "x_math.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "Objects\WeaponSniper.hpp"
-#include "GameTextMgr\GameTextMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "Ui\ui_font.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Objects/WeaponSniper.hpp"
+#include "GameTextMgr/GameTextMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_renderer.hpp"
 
 #ifndef X_EDITOR
-#include "StateMgr\StateMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
 #endif
 
 //=========================================================================
@@ -31,28 +32,14 @@
 //=========================================================================
 
 // Screen margins given in pixels
-#if defined(TARGET_PS2) || defined( TARGET_PC ) || defined( X_EDITOR )
+#if defined( TARGET_PC ) || defined( X_EDITOR )
 #define LEFTMARGIN              16
 #define TOPMARGIN               16
 #define RIGHTMARGIN             16
 #define BOTTOMMARGIN            16
 #endif
 
-#ifdef TARGET_XBOX
-extern u32 g_PhysW;
-extern u32 g_PhysH;
-extern u32 g_LEdge;
-extern u32 g_TEdge;
-extern u32 g_REdge;
-extern u32 g_BEdge;
-
-#define LEFTMARGIN              g_LEdge
-#define TOPMARGIN               g_TEdge
-#define RIGHTMARGIN             (g_PhysW-g_REdge)
-#define BOTTOMMARGIN            (g_PhysH-g_BEdge)
-#endif
-
-s32     hud_object::m_PulseAlpha;
+f32     hud_object::m_PulseAlpha;
 f32     hud_object::m_PulseRate;
 
 #if defined(X_DEBUG)
@@ -84,7 +71,7 @@ static struct hud_object_desc : public object_desc
         object::ATTR_RENDERABLE,
 
         FLAGS_GENERIC_EDITOR_CREATE | 
-        FLAGS_IS_DYNAMIC  ) {}         
+        FLAGS_IS_DYNAMIC ) {}
 
         //---------------------------------------------------------------------
 
@@ -129,13 +116,11 @@ hud_object::hud_object( void )
     m_FPSCount15        = 0;
     m_FPSCount20        = 0;
     m_FPSCount30        = 0;
-    m_Below30ImageCount = 0;
+    m_ShowBelow30Image = FALSE;
 
     m_bLetterBoxOn       = FALSE;
     m_LetterBoxCurrTime  = 1.0f;
     m_LetterBoxTotalTime = 1.0f;
-
-    m_ViewDimensions.Clear();
 
     // No point in waiting for InitHud to be called, since the array and the
     // components exist regardless of how many players there are.  Also,
@@ -191,6 +176,97 @@ hud_object::~hud_object( void )
 {
 }
 
+//==============================================================================
+
+void hud_object::LayoutPlayerHud( player_hud& PlayerHud, const rect& ViewDimensions )
+{
+    PlayerHud.m_ViewDimensions = ViewDimensions;
+
+    xbool UseLeftMargin   = FALSE;
+    xbool UseTopMargin    = FALSE;
+    xbool UseRightMargin  = FALSE;
+    xbool UseBottomMargin = FALSE;
+
+    switch( m_NumHuds )
+    {
+        case 1:
+            UseLeftMargin   = TRUE;
+            UseTopMargin    = TRUE;
+            UseRightMargin  = TRUE;
+            UseBottomMargin = TRUE;
+            break;
+
+        case 2:
+            ASSERT( (PlayerHud.m_LocalSlot >= 0) && (PlayerHud.m_LocalSlot < 2) );
+            UseLeftMargin   = TRUE;
+            UseRightMargin  = TRUE;
+            UseTopMargin    = (PlayerHud.m_LocalSlot == 0);
+            UseBottomMargin = (PlayerHud.m_LocalSlot == 1);
+            break;
+
+        case 3:
+            ASSERT( (PlayerHud.m_LocalSlot >= 0) && (PlayerHud.m_LocalSlot < 3) );
+            UseLeftMargin   = (PlayerHud.m_LocalSlot != 1);
+            UseTopMargin    = (PlayerHud.m_LocalSlot != 2);
+            UseRightMargin  = (PlayerHud.m_LocalSlot != 0);
+            UseBottomMargin = (PlayerHud.m_LocalSlot == 2);
+            break;
+
+        case 4:
+            ASSERT( (PlayerHud.m_LocalSlot >= 0) && (PlayerHud.m_LocalSlot < 4) );
+            UseLeftMargin   = ((PlayerHud.m_LocalSlot & 1) == 0);
+            UseTopMargin    = (PlayerHud.m_LocalSlot < 2);
+            UseRightMargin  = ((PlayerHud.m_LocalSlot & 1) != 0);
+            UseBottomMargin = (PlayerHud.m_LocalSlot >= 2);
+            break;
+
+        default:
+            ASSERT( FALSE );
+            return;
+    }
+
+    const f32 LeftInset   = UseLeftMargin   ? (f32)LEFTMARGIN   : 0.0f;
+    const f32 TopInset    = UseTopMargin    ? (f32)TOPMARGIN    : 0.0f;
+    const f32 RightInset  = UseRightMargin  ? (f32)RIGHTMARGIN  : 0.0f;
+    const f32 BottomInset = UseBottomMargin ? (f32)BOTTOMMARGIN : 0.0f;
+
+    PlayerHud.m_XPos   = ViewDimensions.Min.X + LeftInset + 2.0f;
+    PlayerHud.m_YPos   = ViewDimensions.Min.Y + TopInset  + 2.0f;
+    PlayerHud.m_Width  = ViewDimensions.GetWidth()  - LeftInset - RightInset  - 4.0f;
+    PlayerHud.m_Height = ViewDimensions.GetHeight() - TopInset  - BottomInset - 4.0f;
+
+    PlayerHud.m_CenterX = ViewDimensions.GetCenter().X;
+    PlayerHud.m_CenterY = ViewDimensions.GetCenter().Y;
+
+    PlayerHud.m_Reticle.m_XPos = PlayerHud.m_CenterX;
+    PlayerHud.m_Reticle.m_YPos = PlayerHud.m_CenterY;
+    PlayerHud.m_Damage.m_XPos  = PlayerHud.m_CenterX;
+    PlayerHud.m_Damage.m_YPos  = PlayerHud.m_CenterY;
+    PlayerHud.m_Icon.m_XPos    = PlayerHud.m_CenterX;
+    PlayerHud.m_Icon.m_YPos    = PlayerHud.m_CenterY;
+
+    PlayerHud.m_Text.m_XPos   = PlayerHud.m_XPos;
+    PlayerHud.m_Text.m_YPos   = PlayerHud.m_YPos;
+    PlayerHud.m_Health.m_XPos = PlayerHud.m_XPos;
+    PlayerHud.m_Health.m_YPos = PlayerHud.m_YPos + PlayerHud.m_Height;
+
+    PlayerHud.m_Vote.m_XPos = PlayerHud.m_CenterX - 46.0f;
+    PlayerHud.m_Vote.m_YPos = PlayerHud.m_CenterY + 108.0f;
+
+    PlayerHud.m_Ammo.m_XPos    = PlayerHud.m_XPos + PlayerHud.m_Width;
+    PlayerHud.m_Ammo.m_YPos    = PlayerHud.m_YPos + PlayerHud.m_Height;
+    PlayerHud.m_Scanner.m_XPos = PlayerHud.m_XPos + PlayerHud.m_Width;
+    PlayerHud.m_Scanner.m_YPos = PlayerHud.m_YPos + PlayerHud.m_Height;
+
+    PlayerHud.m_InfoBox.m_XPos = PlayerHud.m_XPos + PlayerHud.m_Width;
+    PlayerHud.m_InfoBox.m_YPos = PlayerHud.m_YPos;
+
+    PlayerHud.m_Sniper.m_ViewDimensions = ViewDimensions;
+    PlayerHud.UpdateTextWidth();
+}
+
+//==============================================================================
+
 void hud_object::InitHud( void )
 {
 #ifdef X_EDITOR
@@ -229,177 +305,6 @@ void hud_object::InitHud( void )
 #endif
             PlayerHud.m_Active      = TRUE;
 
-            // Find out what portion of the screen the player owns.
-            //rect m_ViewDimensions;
-            view& rView = pPlayer->GetInterpView();
-            rView.GetViewport( m_ViewDimensions );
-
-            // Set Hud dimensions!
-            switch( m_NumHuds )
-            {
-                // One player.
-                case 1:
-                    PlayerHud.m_XPos    = LEFTMARGIN    + 2.0f;
-                    PlayerHud.m_YPos    = TOPMARGIN     + 2.0f;
-                    PlayerHud.m_Width   = m_ViewDimensions.GetWidth()  - LEFTMARGIN - RIGHTMARGIN - 4.0f;
-                    PlayerHud.m_Height  = m_ViewDimensions.GetHeight() - TOPMARGIN  - BOTTOMMARGIN - 4.0f;
-                    break;
-
-
-                // Two players.
-                case 2:
-                    switch( PlayerHud.m_LocalSlot )
-                    {
-                        // Top Player.
-                        case 0:
-                            PlayerHud.m_XPos    = m_ViewDimensions.Min.X + LEFTMARGIN    + 2.0f;
-                            PlayerHud.m_YPos    = m_ViewDimensions.Min.Y + TOPMARGIN     + 2.0f;
-                            PlayerHud.m_Width   = m_ViewDimensions.GetWidth()  - LEFTMARGIN - RIGHTMARGIN - 4.0f;
-                            PlayerHud.m_Height  = m_ViewDimensions.GetHeight() - TOPMARGIN  - 4.0f;
-                            break;
-
-                        // Bottom Player.
-                        case 1:
-                            PlayerHud.m_XPos    = m_ViewDimensions.Min.X + LEFTMARGIN    + 2.0f;
-                            PlayerHud.m_YPos    = m_ViewDimensions.Min.Y + 2.0f;
-                            PlayerHud.m_Width   = m_ViewDimensions.GetWidth()  - LEFTMARGIN - RIGHTMARGIN - 4.0f;
-                            PlayerHud.m_Height  = m_ViewDimensions.GetHeight() - BOTTOMMARGIN - 4.0f;
-                            break;
-
-                        default:
-                            break;
-                    }
-                    break;
-
-                // Three/Four players.
-                case 3:
-                {
-                    switch( PlayerHud.m_LocalSlot )
-                    {
-                        // Top-left player.
-                    case 0:
-                        PlayerHud.m_XPos    = m_ViewDimensions.Min.X       + LEFTMARGIN + 2.0f;
-                        PlayerHud.m_YPos    = m_ViewDimensions.Min.Y       +  TOPMARGIN + 2.0f;
-                        PlayerHud.m_Width   = m_ViewDimensions.GetWidth()  - LEFTMARGIN - 4.0f;
-                        PlayerHud.m_Height  = m_ViewDimensions.GetHeight() -  TOPMARGIN - 4.0f;
-                        break;
-
-                        // Top-right player.
-                    case 1:
-                        PlayerHud.m_XPos    = m_ViewDimensions.Min.X                      + 2.0f;
-                        PlayerHud.m_YPos    = m_ViewDimensions.Min.Y       +    TOPMARGIN + 2.0f;
-                        PlayerHud.m_Width   = m_ViewDimensions.GetWidth () -  RIGHTMARGIN - 4.0f;
-                        PlayerHud.m_Height  = m_ViewDimensions.GetHeight() -    TOPMARGIN - 4.0f;
-                        break;
-
-                        // Bottom player.
-                    case 2:
-                        PlayerHud.m_XPos    = m_ViewDimensions.Min.X + LEFTMARGIN    + 2.0f;
-                        PlayerHud.m_YPos    = m_ViewDimensions.Min.Y + 2.0f;
-                        PlayerHud.m_Width   = m_ViewDimensions.GetWidth()  - LEFTMARGIN - RIGHTMARGIN - 4.0f;
-                        PlayerHud.m_Height  = m_ViewDimensions.GetHeight() - BOTTOMMARGIN - 4.0f;
-                        break;                        
-                    default:
-                        break;
-                    }
-                    break;
-                }
-                case 4:
-                {
-                    //f32 X    = m_ViewDimensions.Min.X;
-                    //f32 Y    = m_ViewDimensions.Min.Y;
-                    //f32 MidX = m_ViewDimensions.Min.X + ((m_ViewDimensions.Min.X + m_ViewDimensions.Max.X)/2.0f);
-                    //f32 MidY = m_ViewDimensions.Min.Y + ((m_ViewDimensions.Min.Y + m_ViewDimensions.Max.Y)/2.0f);
-
-                    switch( PlayerHud.m_LocalSlot )
-                    {
-                        // Top-left player.
-                        case 0:
-                            PlayerHud.m_XPos    = m_ViewDimensions.Min.X       + LEFTMARGIN + 2.0f;
-                            PlayerHud.m_YPos    = m_ViewDimensions.Min.Y       +  TOPMARGIN + 2.0f;
-                            PlayerHud.m_Width   = m_ViewDimensions.GetWidth()  - LEFTMARGIN - 4.0f;
-                            PlayerHud.m_Height  = m_ViewDimensions.GetHeight() -  TOPMARGIN - 4.0f;
-                            break;
-
-                        // Top-right player.
-                        case 1:
-                            PlayerHud.m_XPos    = m_ViewDimensions.Min.X                      + 2.0f;
-                            PlayerHud.m_YPos    = m_ViewDimensions.Min.Y       +    TOPMARGIN + 2.0f;
-                            PlayerHud.m_Width   = m_ViewDimensions.GetWidth () -  RIGHTMARGIN - 4.0f;
-                            PlayerHud.m_Height  = m_ViewDimensions.GetHeight() -    TOPMARGIN - 4.0f;
-                            break;
-
-                        // Bottom-left player.
-                        case 2:
-                            PlayerHud.m_XPos    = m_ViewDimensions.Min.X       +   LEFTMARGIN + 2.0f;
-                            PlayerHud.m_YPos    = m_ViewDimensions.Min.Y                      + 2.0f;
-                            PlayerHud.m_Width   = m_ViewDimensions.GetWidth()  -   LEFTMARGIN - 4.0f;
-                            PlayerHud.m_Height  = m_ViewDimensions.GetHeight() - BOTTOMMARGIN - 4.0f;
-                            break;
-
-                        // Bottom-right player (or not).
-                        case 3:
-                            PlayerHud.m_XPos    = m_ViewDimensions.Min.X                      + 2.0f;
-                            PlayerHud.m_YPos    = m_ViewDimensions.Min.Y                      + 2.0f;
-                            PlayerHud.m_Width   = m_ViewDimensions.GetWidth () -  RIGHTMARGIN - 4.0f;
-                            PlayerHud.m_Height  = m_ViewDimensions.GetHeight() - BOTTOMMARGIN - 4.0f;
-                            break;
-
-                        default:
-                            break;
-                    }
-                    break;
-                }
-
-                default:
-                    ASSERT( FALSE );
-                    break;
-            }
-
-            PlayerHud.m_CenterX = ((f32)m_ViewDimensions.Min.X+(m_ViewDimensions.GetWidth())/2.0f);
-            PlayerHud.m_CenterY = ((f32)m_ViewDimensions.Min.Y+(m_ViewDimensions.GetHeight())/2.0f);
-
-            // Ok, now lets initialize the hud elements.
-            {
-                // Centered.
-                PlayerHud.m_Reticle.m_XPos  = PlayerHud.m_CenterX;
-                PlayerHud.m_Reticle.m_YPos  = PlayerHud.m_CenterY;
-
-                PlayerHud.m_Damage.m_XPos   = PlayerHud.m_CenterX;
-                PlayerHud.m_Damage.m_YPos   = PlayerHud.m_CenterY;
-
-                PlayerHud.m_Icon.m_XPos     = PlayerHud.m_CenterX;
-                PlayerHud.m_Icon.m_YPos     = PlayerHud.m_CenterY;
-
-                // Top left.
-                PlayerHud.m_Text.m_XPos     = PlayerHud.m_XPos;
-                PlayerHud.m_Text.m_YPos     = PlayerHud.m_YPos;               
-
-                // Bottom left.
-                PlayerHud.m_Health.m_XPos   = PlayerHud.m_XPos;
-                PlayerHud.m_Health.m_YPos   = PlayerHud.m_Height + PlayerHud.m_YPos;
-
-                PlayerHud.m_Vote.m_XPos     = 210;
-                PlayerHud.m_Vote.m_YPos     = 332;
-
-                // Bottom right.
-                PlayerHud.m_Ammo.m_XPos     = PlayerHud.m_XPos + PlayerHud.m_Width;
-                PlayerHud.m_Ammo.m_YPos     = PlayerHud.m_YPos + PlayerHud.m_Height;
-
-                PlayerHud.m_Scanner.m_XPos  = PlayerHud.m_XPos + PlayerHud.m_Width;
-                PlayerHud.m_Scanner.m_YPos  = PlayerHud.m_YPos + PlayerHud.m_Height;
-
-                // Top right.
-                PlayerHud.m_InfoBox.m_XPos  = PlayerHud.m_XPos + PlayerHud.m_Width;
-                PlayerHud.m_InfoBox.m_YPos  = PlayerHud.m_YPos;
-
-                // Sniper
-                PlayerHud.m_Sniper.m_ViewDimensions = m_ViewDimensions;
-
-                PlayerHud.m_Text.SetMaxWidth( s32(PlayerHud.m_Width) - 4 );
-            }
-
-
             i++;
         }
 
@@ -412,7 +317,7 @@ void hud_object::InitHud( void )
 
 //==============================================================================
 
-void hud_object::OnAdvanceLogic( f32 DeltaTime )
+void hud_object::OnAdvanceSimulation( f32 DeltaTime )
 {
     // Currently, the HUD needs to initialize before it can do the logic,
     // and it needs to attempt to do the logic before it can initialize.
@@ -471,52 +376,59 @@ void hud_object::OnAdvanceLogic( f32 DeltaTime )
         m_TimerTime-=DeltaTime;
     }
 
-    // Objective Text update
+    // Objective text has a finite display lifetime.  Keep this timer in the
+    // simulation path so it cannot remain latched after the message expires.
     if( m_ObjectiveTime > 0.0f )
-        m_ObjectiveTime-=DeltaTime;
+        m_ObjectiveTime -= DeltaTime;
 
-    // Update pulsing elements.
-    m_PulseAlpha += (s32)( m_PulseRate * DeltaTime );
-
-    if( m_PulseAlpha > 255 )
+    // Update pulsing HUD elements.
+    m_PulseAlpha += m_PulseRate * DeltaTime;
+    if( m_PulseAlpha > 255.0f )
     {
-        m_PulseAlpha = 255;
-        m_PulseRate = -m_PulseRate;
+        m_PulseAlpha = 255.0f;
+        m_PulseRate  = -m_PulseRate;
     }
-
-    if( m_PulseAlpha < 64 )
+    if( m_PulseAlpha < 64.0f )
     {
-        m_PulseAlpha = 64;
-        m_PulseRate = -m_PulseRate;
+        m_PulseAlpha = 64.0f;
+        m_PulseRate  = -m_PulseRate;
     }
 
     // Do logic for all components.
     s32 i;
     for( i = 0; i < m_NumHuds; i++ )
     {
-        m_PlayerHuds[ i ].OnAdvanceLogic( DeltaTime );
+        m_PlayerHuds[ i ].OnAdvanceSimulation( DeltaTime );
     }
 
-    // Update the mutant vision effect manually. It is a special case because it uses
-    // a single static effect for all the player huds.
-    // We also do the contagious vision at the same time.
     hud_mutant_vision::UpdateEffects( DeltaTime );
     hud_contagious_vision::UpdateEffects( DeltaTime );
 
-    // Do the widescreen bars.
-    m_LetterBoxCurrTime = MINMAX(0.0f , m_LetterBoxCurrTime + DeltaTime, m_LetterBoxTotalTime );
+    // Advance cinematic bars independently of player HUD components.
+    m_LetterBoxCurrTime = MINMAX( 0.0f,
+                                  m_LetterBoxCurrTime + DeltaTime,
+                                  m_LetterBoxTotalTime );
 
-    // Note that the timings are exactly 30fps, that's only an estimate, so
-    // we'll give a smallish amount of leeway.
-#if (defined(TARGET_DEV) || defined(X_QA)) && defined(X_OPTIMIZED) && !defined(CONFIG_PROFILE)
-    f32 FPS = eng_GetFPS();
-    if ( FPS < 19.0f )      m_FPSCount15++;
-    else if ( FPS < 29.0f ) m_FPSCount20++;
-    else                    m_FPSCount30++;
+}
 
-    if ( FPS < 29.0f )
-        m_Below30ImageCount = 1;
-#endif // (TARGET_DEV || X_QA) && X_OPTIMIZED
+//==============================================================================
+
+void hud_object::BeginIconSnapshot( void )
+{
+    for( s32 i = 0; i < NET_MAX_PER_CLIENT; i++ )
+    {
+        m_PlayerHuds[i].m_Icon.BeginSimulationSnapshot();
+    }
+}
+
+//==============================================================================
+
+void hud_object::CommitIconSnapshot( void )
+{
+    for( s32 i = 0; i < NET_MAX_PER_CLIENT; i++ )
+    {
+        m_PlayerHuds[i].m_Icon.CommitSimulationSnapshot();
+    }
 }
 
 //==============================================================================
@@ -553,43 +465,27 @@ f32 hud_object::GetLetterBoxAmount( void ) const
 void hud_object::RenderLetterBox( const rect& VP, f32 Amount )
 {
     // Compute percentage of bar coverage
-    f32 Near      = 0.001f;
     f32 BarHeight = (f32)VP.GetHeight() * 0.2f * Amount;
 
     // Compute top bar
-    irect TopRect( (s32)( VP.Min.X - 1.0f ), 
+    irect TopRect( (s32)( VP.Min.X - 3.0f ),
         (s32)( VP.Min.Y - 1.0f ), 
-        (s32)( VP.Max.X ), 
+        (s32)( VP.Max.X + 2.0f ),
         (s32)( VP.Min.Y + BarHeight ) );
 
     // Compute bottom bar
-    irect BottomRect( (s32)( VP.Min.X - 1.0f ), 
+    irect BottomRect( (s32)( VP.Min.X - 3.0f ),
         (s32)( VP.Max.Y - BarHeight ),
-        (s32)( VP.Max.X ),
+        (s32)( VP.Max.X + 2.0f ),
         (s32)( VP.Max.Y ) );
 
-    // Render bars
-    draw_Begin( DRAW_QUADS, DRAW_2D | DRAW_UI_RTARGET | DRAW_NO_ZBUFFER );
-    
 #ifdef X_EDITOR    
-    draw_Color( XCOLOR_PURPLE );
+    const xcolor BarColor = XCOLOR_PURPLE;
 #else
-    draw_Color( XCOLOR_BLACK );
+    const xcolor BarColor = XCOLOR_BLACK;
 #endif
-
-    // Top bar.
-    draw_Vertex( (f32)TopRect.l, (f32)TopRect.t, Near );
-    draw_Vertex( (f32)TopRect.l, (f32)TopRect.b, Near );
-    draw_Vertex( (f32)TopRect.r, (f32)TopRect.b, Near );
-    draw_Vertex( (f32)TopRect.r, (f32)TopRect.t, Near );
-
-    // Bottom bar.
-    draw_Vertex( (f32)BottomRect.l, (f32)BottomRect.t, Near );
-    draw_Vertex( (f32)BottomRect.l, (f32)BottomRect.b, Near );
-    draw_Vertex( (f32)BottomRect.r, (f32)BottomRect.b, Near );
-    draw_Vertex( (f32)BottomRect.r, (f32)BottomRect.t, Near );
-
-    draw_End( );
+    g_UIRenderer.DrawRect( TopRect, BarColor );
+    g_UIRenderer.DrawRect( BottomRect, BarColor );
 }
 
 //==============================================================================
@@ -632,40 +528,66 @@ void hud_object::OnRender( void )
     InitHud();
 #endif
 
+#ifndef X_EDITOR
+    if( !( ( g_first_person ) && ( IsLetterBoxOn() ) ) &&
+        ( g_StateMgr.GetState() != SM_PLAYING_GAME ) )
+    {
+        return;
+    }
+#endif
+
+    player* pActivePlayer = SMP_UTIL_GetActivePlayer();
+    if( !pActivePlayer )
+        return;
+
+    rect ScreenViewDimensions;
+    pActivePlayer->GetRenderView().GetViewport( ScreenViewDimensions );
+
+    player_hud& PlayerHud = GetPlayerHud( g_RenderContext.LocalPlayerIndex );
+    const irect ScreenViewport( (s32)ScreenViewDimensions.Min.X,
+                                (s32)ScreenViewDimensions.Min.Y,
+                                (s32)ScreenViewDimensions.Max.X,
+                                (s32)ScreenViewDimensions.Max.Y );
+    const rect HudViewDimensions = g_UIRenderer.GetViewport().GetHudBounds( ScreenViewport );
+    if( (PlayerHud.m_ViewDimensions.Min.X != HudViewDimensions.Min.X) ||
+        (PlayerHud.m_ViewDimensions.Min.Y != HudViewDimensions.Min.Y) ||
+        (PlayerHud.m_ViewDimensions.Max.X != HudViewDimensions.Max.X) ||
+        (PlayerHud.m_ViewDimensions.Max.Y != HudViewDimensions.Max.Y) )
+    {
+        LayoutPlayerHud( PlayerHud, HudViewDimensions );
+    }
+
+    g_UIRenderer.PushHudSpace( ScreenViewport );
+
     // Draw the cinematic bars?
     if( ( g_first_person ) && ( IsLetterBoxOn() ) )
     {
-        RenderLetterBox( m_ViewDimensions, GetLetterBoxAmount() );
-        ((hud_renderable*)(GetPlayerHud( g_RenderContext.LocalPlayerIndex ).m_HudComponents[ HUD_ELEMENT_TEXT_BOX ]))->OnRender( SMP_UTIL_GetActivePlayer() );
+        RenderLetterBox( HudViewDimensions, GetLetterBoxAmount() );
+        ((hud_renderable*)PlayerHud.m_HudComponents[ HUD_ELEMENT_TEXT_BOX ])->OnRender( pActivePlayer );
     }
     else
     {
-#ifndef X_EDITOR
-        if( g_StateMgr.GetState() != SM_PLAYING_GAME )
-            return;
-#endif
-
-        GetPlayerHud( g_RenderContext.LocalPlayerIndex ).OnRender( );
+        PlayerHud.OnRender();
 
         // Timer
         if( m_RenderTimer )
-            RenderTimer();
+            RenderTimer( HudViewDimensions );
     }
 
-    // Clear any icons that might have accumulated this frame.
-    ((hud_icon*)(GetPlayerHud( g_RenderContext.LocalPlayerIndex ).m_HudComponents[ HUD_ELEMENT_ICON ]))->m_NumActiveIcons = 0;
+    g_UIRenderer.PopHudSpace();
 
+    g_UIRenderer.PushScreenSpace( ScreenViewport );
     RenderFrameRateInfo();
+    g_UIRenderer.PopScreenSpace();
 
-#ifdef X_EDITOR
-    m_LogicRunning = FALSE;
-#endif // X_EDITOR
 }
 //==============================================================================
-static irect TimerRect = irect(0,300,512,448);
-void hud_object::RenderTimer( void )
+void hud_object::RenderTimer( const rect& ViewDimensions )
 {
-    //irect TimerRect;
+    irect TimerRect( (s32)x_floor( ViewDimensions.Min.X ),
+                     300,
+                     (s32)x_ceil( ViewDimensions.Max.X ),
+                     (s32)x_ceil( ViewDimensions.Max.Y ) );
     xwchar TimeStr[32];
 
     s32 Seconds1 = ((s32)(m_TimerTime) % 60) / 10;
@@ -683,9 +605,6 @@ void hud_object::RenderTimer( void )
     Seconds2 = MAX( Seconds2, 0 );
     HthsSeconds2 = MAX( HthsSeconds2, 0 );
 
-    TimerRect.r = (s32)m_ViewDimensions.GetWidth();
-    TimerRect.b = (s32)m_ViewDimensions.GetHeight();
-
     xcolor TextColor;
     TextColor = XCOLOR_WHITE;
     x_wstrcpy( TimeStr, (const xwchar*)((xwstring)xfs( "%d%d:%d%d:%02d", Minutes1, Minutes2, Seconds1, Seconds2, HthsSeconds2)) );  
@@ -697,7 +616,7 @@ void hud_object::RenderTimer( void )
     if( m_TimerCritical )
     {
         TextColor = xcolor( 200,0,0,255 );
-        RenderLine( TimeStr, TimerRect, m_PulseAlpha, TextColor, 2, ui_font::h_center|ui_font::v_center, TRUE );
+        RenderLine( TimeStr, TimerRect, (s32)m_PulseAlpha, TextColor, 2, ui_font::h_center|ui_font::v_center, TRUE );
     }
     else
         RenderLine( TimeStr, TimerRect, 255, TextColor, 2, ui_font::h_center|ui_font::v_center, TRUE );
@@ -879,7 +798,7 @@ void hud_object::ResetFrameRateInfo( void )
     m_FPSCount15        = 0;
     m_FPSCount20        = 0;
     m_FPSCount30        = 0;
-    m_Below30ImageCount = 0;
+    m_ShowBelow30Image = FALSE;
 }
 
 //==============================================================================
@@ -894,9 +813,9 @@ void hud_object::RenderFrameRateInfo( void )
     {
 #if (defined(TARGET_DEV) || defined(X_QA)) && defined(X_OPTIMIZED)
         {
-            s32 TotalCount = m_FPSCount15+
-                m_FPSCount20+
-                m_FPSCount30;
+            const s32 TotalCount = m_FPSCount15 + m_FPSCount20 + m_FPSCount30;
+            if( TotalCount <= 0 )
+                return;
 #if defined(X_EDITOR)
             {
                 x_printfxy( 0, 2, ">=30:%03d%%(%d)", (s32)(100.0f*(f32)m_FPSCount30/(f32)TotalCount), m_FPSCount30 );
@@ -914,7 +833,7 @@ void hud_object::RenderFrameRateInfo( void )
                 s32 font = g_UiMgr->FindFont("small");
 
                 Rect.Set( x, y, x + 160, y + (g_UiMgr->GetLineHeight(font) * 3) );
-                draw_Rect( Rect, xcolor(0,0,0,128), FALSE, DRAW_UI_RTARGET );
+                g_UIRenderer.DrawRect( Rect, xcolor(0,0,0,128) );
 
                 xwstring Text1 = (const char *)xfs( ">=30:%03d%%(%d)", (s32)(100.0f*(f32)m_FPSCount30/(f32)TotalCount), m_FPSCount30 );
                 g_UiMgr->TextSize( font, Rect, Text1, Text1.GetLength());
@@ -935,27 +854,23 @@ void hud_object::RenderFrameRateInfo( void )
             }
 #endif //!defined X_EDITOR
 
-            if ( m_Below30ImageCount )
+            if( m_ShowBelow30Image )
             {
-                m_Below30ImageCount--;
-
                 s32 XRes,YRes;
                 eng_GetRes(XRes,YRes);
 
-                // draw the bad frame rate image
-                draw_Begin( DRAW_SPRITES, DRAW_USE_ALPHA|DRAW_TEXTURED|DRAW_2D|DRAW_UI_RTARGET|DRAW_NO_ZBUFFER );
+                rhandle<texture> ScreenEdgeTexture;
+                ScreenEdgeTexture.SetName( "HUD_30fps.xbmp" );
 
-                rhandle<xbitmap> m_ScreenEdgeBmp;
-                m_ScreenEdgeBmp.SetName( "HUD_30fps.xbmp" );
-
-                xbitmap* pBitmap = m_ScreenEdgeBmp.GetPointer();
-                if( pBitmap != NULL )
+                texture* pTexture = ScreenEdgeTexture.GetPointer();
+                if( pTexture != NULL )
                 {
-                    draw_SetTexture( *pBitmap );
-                    draw_Sprite( vector3((f32)XRes-200.0f,YRes-64.0f,0.0f), vector2((f32)64.0f, (f32)64.0f), xcolor(255,255,255,255) );
+                    g_UIRenderer.DrawImage( *pTexture,
+                                            vector2( (f32)XRes - 200.0f, (f32)YRes - 64.0f ),
+                                            vector2( 64.0f, 64.0f ),
+                                            vector2( 0.0f, 0.0f ),
+                                            vector2( 1.0f, 1.0f ) );
                 }
-
-                draw_End();
             }
 
             //eng_End();
@@ -1027,9 +942,11 @@ void hud_object::RenderObjectiveText( void )
     if( m_ObjectiveTime > 0.0f )
         return;
 
-    if( m_ObjectiveTableNameIndex != -1 && m_ObjectiveTitleStringIndex != -1 )
+    if( (m_ObjectiveTableNameIndex != -1) &&
+        (m_ObjectiveTitleStringIndex != -1) )
     {
-        g_GameTextMgr.DisplayMessage( g_StringMgr.GetString( m_ObjectiveTableNameIndex ), g_StringMgr.GetString( m_ObjectiveTitleStringIndex ) );   
+        g_GameTextMgr.DisplayMessage( g_StringMgr.GetString( m_ObjectiveTableNameIndex ),
+                                       g_StringMgr.GetString( m_ObjectiveTitleStringIndex ) );
         m_ObjectiveTime = 6.0f;
     }
 }

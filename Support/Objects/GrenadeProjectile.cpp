@@ -5,16 +5,16 @@
 //=============================================================================================
 // INCLUDES
 //=============================================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "GrenadeProjectile.hpp"
-#include "Entropy\e_Draw.hpp"
-#include "audiomgr\audiomgr.hpp"
-#include "render\LightMgr.hpp"
-#include "Objects\AnimSurface.hpp"
-#include "objects\ClothObject.hpp"
-#include "objects\DestructibleObj.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Objects/AnimSurface.hpp"
+#include "Objects/ClothObject.hpp"
+#include "Objects/DestructibleObj.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 #include "Objects/Actor/Actor.hpp"
 
 //=============================================================================================
@@ -163,7 +163,7 @@ bbox grenade_projectile::GetLocalBBox( void ) const
 
     if( pRigidGeom )
     {
-        return( pRigidGeom->m_Collision.BBox );
+        return( pRigidGeom->m_collision.BBox );
     }
     
     return( bbox( vector3( 10.0f, 10.0f, 10.0f),
@@ -173,9 +173,9 @@ bbox grenade_projectile::GetLocalBBox( void ) const
 //=============================================================================================
 radian3 g_GrenadeSpin = radian3(R_180, R_180, R_90);
 
-void grenade_projectile::OnAdvanceLogic( f32 DeltaTime )
+void grenade_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
-    net_proj::OnAdvanceLogic( DeltaTime );
+    net_proj::OnAdvanceSimulation( DeltaTime );
     if( m_Exploded )
         return;
 
@@ -215,7 +215,7 @@ void grenade_projectile::OnAdvanceLogic( f32 DeltaTime )
             NotifyPackage.m_FactionsSpecific = FACTION_NOT_SET;
             NotifyPackage.m_ZoneID = GetZone1();
             g_AudioManager.AppendAlertReceiver(NotifyPackage);
-            m_SinceLastBroadcast = 0.0f;
+            m_SinceLastBroadcast -= s_Grenade_Alert_Time;
         }
     }
 }
@@ -371,8 +371,8 @@ void grenade_projectile::OnRender( void )
         return;
 
     // Setup Render Matrix
-    m_RenderL2W = GetL2W();
-    m_RenderL2W.SetRotation(m_TotalSpin);
+    matrix4 RenderL2W = GetL2W();
+    RenderL2W.SetRotation( m_TotalSpin );
 
     rigid_geom* pRigidGeom = m_RigidInst.GetRigidGeom();
     
@@ -380,12 +380,12 @@ void grenade_projectile::OnRender( void )
     {
         u32 Flags = (GetFlagBits() & object::FLAG_CHECK_PLANES) ? render::CLIPPED : 0;
         
-        m_RigidInst.Render( &m_RenderL2W, Flags );
+        m_RigidInst.Render( &RenderL2W, Flags );
     }
 
 #ifdef X_EDITOR
-//    draw_Line( GetPosition() , GetPosition() + m_NormalCollision );
-//    draw_Line( GetPosition() , GetPosition() + m_Velocity , XCOLOR_BLUE );
+//    render::debug::Line( GetPosition() , GetPosition() + m_NormalCollision );
+//    render::debug::Line( GetPosition() , GetPosition() + m_Velocity , XCOLOR_BLUE );
 #endif // X_EDITOR
 }
 

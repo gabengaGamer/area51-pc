@@ -3,16 +3,16 @@
 //  INCLUDES
 //==============================================================================
 
-#include "StateMgr\StateMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
 
-#include "e_audio.hpp"
+#include "e_Audio.hpp"
 #include "music_mgr.hpp"
-#include "audio\audio_stream_mgr.hpp"
+#include "Audio/audio_stream_mgr.hpp"
 #include "x_types.hpp"
 #include "ResourceMgr/ResourceMgr.hpp"
 #include <stdio.h>
 #include "x_string.hpp"
-#include "PerceptionMgr\PerceptionMgr.hpp"
+#include "PerceptionMgr/PerceptionMgr.hpp"
 
 music_mgr g_MusicMgr;
 

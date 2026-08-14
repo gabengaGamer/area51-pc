@@ -27,6 +27,12 @@ extern ui_win* ui_button_factory( s32 UserID, ui_manager* pManager, const irect&
 class ui_button : public ui_control
 {
 public:
+    enum button_style
+    {
+        BUTTON_STYLE_STANDARD = 0,
+        BUTTON_STYLE_FLAT,
+    };
+
                     ui_button               ( void );
     virtual        ~ui_button               ( void );
 
@@ -37,7 +43,7 @@ public:
                                               s32           Flags );
 
     virtual void    Render                  ( s32 ox=0, s32 oy=0 );
-    virtual void    OnUpdate                ( f32 DeltaTime );
+    virtual void    OnUpdate                ( ui_win* pWin, f32 DeltaTime );
 
     void            SetBitmap               ( s32 ID )                  { m_BitmapID = ID; }
     s32             GetBitmap               ( void )                    { return m_BitmapID; }
@@ -47,6 +53,7 @@ public:
 
     void            UseSmallText            ( const xbool useSmall )    { m_useSmallText = useSmall;    }
     void            UseNativeColor          ( const xbool useNative )   { m_useNativeColor = useNative; }
+    void            SetButtonStyle          ( button_style Style )      { m_ButtonStyle = Style;        }
 
     void            EnablePulse             ( void )                    { m_bPulseOn = TRUE;  }
     void            DisablePulse            ( void )                    { m_bPulseOn = FALSE; }
@@ -68,6 +75,7 @@ protected:
     s32             m_iElement;
     s32             m_BitmapID;
     s32             m_Data;
+    button_style    m_ButtonStyle;
 
     // set once for all buttons
     static xcolor   m_TextColorNormal;

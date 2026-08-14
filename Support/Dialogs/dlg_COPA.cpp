@@ -4,21 +4,21 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_text.hpp"
-#include "ui\ui_font.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_combo.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_combo.hpp"
 
 #include "dlg_COPA.hpp"
 #include "dlg_PopUp.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "MemCardMgr/MemCardMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "SaveData/SaveDataMgr.hpp"
 
 //=========================================================================
 //  Main Menu Dialog
@@ -42,23 +42,21 @@ enum copa_controls
     IDC_COPA_YEAR_SELECT,
     IDC_COPA_ACCEPT_BUTTON,
 
-    IDC_COPA_NAV_TEXT,
 };
 
 ui_manager::control_tem COPAControls[] = 
 {
-    { IDC_COPA_MESSAGE_TEXT,    "IDS_COPA_MESSAGE",      "text",   40,  50, 200,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_COPA_MESSAGE_TEXT,    "IDS_COPA_MESSAGE",      "text",   40,  50, 200,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_COPA_MONTH_TEXT,      "IDS_COPA_SELECT_MONTH", "text",   40, 100,  80,  40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_COPA_DAY_TEXT,        "IDS_COPA_SELECT_DAY",   "text",   40, 135,  80,  40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_COPA_YEAR_TEXT,       "IDS_COPA_SELECT_YEAR",  "text",   40, 170,  80,  40, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_COPA_MONTH_TEXT,      "IDS_COPA_SELECT_MONTH", "text",   40, 100,  80,  40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_COPA_DAY_TEXT,        "IDS_COPA_SELECT_DAY",   "text",   40, 135,  80,  40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_COPA_YEAR_TEXT,       "IDS_COPA_SELECT_YEAR",  "text",   40, 170,  80,  40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 
-    { IDC_COPA_MONTH_SELECT,    "IDS_COPA_SELECT_MONTH", "combo", 140, 109, 100,  40, 0, 0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_COPA_DAY_SELECT,      "IDS_COPA_SELECT_DAY",   "combo", 140, 144, 100,  40, 0, 1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_COPA_YEAR_SELECT,     "IDS_COPA_SELECT_YEAR",  "combo", 140, 179, 100,  40, 0, 2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_COPA_ACCEPT_BUTTON,   "IDS_COPA_ACCEPT",       "button", 40, 285, 220,  40, 0, 3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_COPA_MONTH_SELECT,    "IDS_COPA_SELECT_MONTH", "combo", 140, 109, 100,  40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_COPA_DAY_SELECT,      "IDS_COPA_SELECT_DAY",   "combo", 140, 144, 100,  40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_COPA_YEAR_SELECT,     "IDS_COPA_SELECT_YEAR",  "combo", 140, 179, 100,  40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_COPA_ACCEPT_BUTTON,   "IDS_COPA_ACCEPT",       "button", 40, 285, 220,  40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
 
-    { IDC_COPA_NAV_TEXT,        "IDS_NULL",              "text",    0,   0,   0,   0, 0, 0, 0, 0, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
 };
 
 ui_manager::dialog_tem COPADialog =
@@ -115,7 +113,7 @@ dlg_copa::dlg_copa( void )
 
 dlg_copa::~dlg_copa( void )
 {
-    ui_dialog::Destroy();
+    Destroy();
 
     // kill screen wipe
     g_UiMgr->ResetScreenWipe();
@@ -199,16 +197,13 @@ xbool dlg_copa::Create( s32                        UserID,
     m_pYearCombo  ->SetSelection( m_pYearCombo->GetItemCount()-1 );
 
     // Initialize nav text
-    m_pNavText = (ui_text*)FindChildByID( IDC_COPA_NAV_TEXT );
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
     navText += g_StringTableMgr( "ui", "IDS_NAV_BACK" );
-    m_pNavText->SetLabel( navText );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( navText );
 
     // set initial highlight/control
     m_CurrHL = 3;
-    m_pButtonAccept->SetFlag(ui_win::WF_SELECTED, TRUE);
+    m_pButtonAccept->SetActive( TRUE );
     GotoControl( (ui_control*)m_pButtonAccept );
     g_UiMgr->SetScreenHighlight( m_pButtonAccept->GetPosition() );
     m_PopUp = NULL;
@@ -222,7 +217,6 @@ xbool dlg_copa::Create( s32                        UserID,
     m_pDayCombo     ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pYearCombo    ->SetFlag(ui_win::WF_VISIBLE, FALSE);
     m_pButtonAccept ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-    m_pNavText      ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 
     // initialize screen scaling
     InitScreenScaling( Position );
@@ -238,6 +232,7 @@ xbool dlg_copa::Create( s32                        UserID,
 
 void dlg_copa::Destroy( void )
 {
+    g_SaveDataMgr.CancelCallbacks( this );
     ui_dialog::Destroy();
 }
 
@@ -318,10 +313,9 @@ void dlg_copa::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pDayCombo     ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pYearCombo    ->SetFlag(ui_win::WF_VISIBLE, TRUE);
             m_pButtonAccept ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-            m_pNavText      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
 
             m_CurrHL = 3;
-            m_pButtonAccept->SetFlag(ui_win::WF_SELECTED, TRUE);
+            m_pButtonAccept->SetActive( TRUE );
             GotoControl( (ui_control*)m_pButtonAccept );
             g_UiMgr->SetScreenHighlight( m_pButtonAccept->GetPosition() );
         }
@@ -341,7 +335,7 @@ void dlg_copa::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                 // I'm sure that they won't lie! hmmmm.....
                 m_PopUp = NULL;
                 m_State = DIALOG_STATE_ACTIVE;
-                m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+                SetNavTextVisible( TRUE );
             }
             else
             {
@@ -356,18 +350,17 @@ void dlg_copa::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                     {
                         // not saved
                         // go to the profile select screen and pick a place to save it to
-                        m_State = DIALOG_STATE_MEMCARD_ERROR;
+                        m_State = DIALOG_STATE_SAVE_DATA_ERROR;
                     }
                     else
                     {
-                        // attempt to save the changes to the memcard
-                        profile_info* pProfileInfo = &g_UIMemCardMgr.GetProfileInfo( 0 );
-                        m_iCard = pProfileInfo->CardID;
-                        g_UIMemCardMgr.SaveProfile( *pProfileInfo, 0, this, &dlg_copa::OnSaveProfileCB );
+                        // attempt to save the profile changes
+                        profile_info* pProfileInfo = &g_SaveDataMgr.GetProfileInfo( 0 );
+                        g_SaveDataMgr.SaveProfile( *pProfileInfo, 0, this, &dlg_copa::OnSaveProfileCB );
                         // clear popup pointer
                         m_PopUp = NULL;
-                        // wait for the memcard manager to do it's thing
-                        m_State = DIALOG_STATE_WAIT_FOR_MEMCARD;
+                        // wait for the save data request
+                        m_State = DIALOG_STATE_WAIT_FOR_SAVE_DATA;
                     }
                 }
                 else
@@ -380,7 +373,7 @@ void dlg_copa::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     }
 
     // update labels
-    if( m_pMonthCombo->GetFlags(WF_HIGHLIGHT) )
+    if( m_pMonthCombo->IsFocused() )
     {
         highLight = 0;
         m_pMonthText->SetLabelColor( xcolor(255,252,204,255) );
@@ -389,7 +382,7 @@ void dlg_copa::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pMonthText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pDayCombo->GetFlags(WF_HIGHLIGHT) )
+    if( m_pDayCombo->IsFocused() )
     {
         highLight = 1;
         m_pDayText->SetLabelColor( xcolor(255,252,204,255) );
@@ -398,7 +391,7 @@ void dlg_copa::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pDayText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pYearCombo->GetFlags(WF_HIGHLIGHT) )
+    if( m_pYearCombo->IsFocused() )
     {
         highLight = 2;
         m_pYearText->SetLabelColor( xcolor(255,252,204,255) );
@@ -407,7 +400,7 @@ void dlg_copa::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     else
         m_pYearText->SetLabelColor( xcolor(126,220,60,255) );
 
-    if( m_pButtonAccept->GetFlags(WF_HIGHLIGHT) )
+    if( m_pButtonAccept->IsFocused() )
     {
         highLight = 3;
         g_UiMgr->SetScreenHighlight( m_pButtonAccept->GetPosition() );
@@ -424,22 +417,21 @@ void dlg_copa::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
 //=========================================================================
 
-void dlg_copa::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData )
+void dlg_copa::OnNotify( ui_notification const& Event )
 {
-    (void)pWin;
-    (void)pSender;
-    (void)Command;
-    (void)pData;
+    (void)Event.m_pSender;
+    (void)Event.m_Type;
+    (void)Event.m_pText;
 
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
-        if( Command == WN_COMBO_SELCHANGE )
+        if( Event.m_Type == ui_notification_type::ComboSelectionChanged )
         {
-            if( pSender == (ui_win*)m_pMonthCombo )
+            if( Event.m_pSender == (ui_win*)m_pMonthCombo )
             {
                 OnMonthChange();
             }
-            else if( pSender == (ui_win*)m_pYearCombo )
+            else if( Event.m_pSender == (ui_win*)m_pYearCombo )
             {
                 OnYearChange();
             }
@@ -449,7 +441,7 @@ void dlg_copa::OnNotify ( ui_win* pWin, ui_win* pSender, s32 Command, void* pDat
 
 //=========================================================================
 
-void dlg_copa::OnPadSelect( ui_win* pWin )
+void dlg_copa::OnAccept( ui_win* pWin )
 {
     (void)pWin;
 
@@ -460,7 +452,7 @@ void dlg_copa::OnPadSelect( ui_win* pWin )
             if( VerifyAge() )
             {
                 // set the age verified bit in the profile
-                g_StateMgr.GetActiveProfile(0).m_bAgeVerified = TRUE;
+                g_StateMgr.GetActiveProfile(0).SetAgeVerified( TRUE );
 
                 // continue on to authentication
                 //m_State = DIALOG_STATE_SELECT;
@@ -468,7 +460,7 @@ void dlg_copa::OnPadSelect( ui_win* pWin )
 
                 // prompt to save
                 irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|ui_win::WF_INPUTMODAL );
 
                 // set nav text
                 xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
@@ -489,11 +481,11 @@ void dlg_copa::OnPadSelect( ui_win* pWin )
             {
                 // not old enough, display pop up to inform them
                 irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+                m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
                 // set nav text
                 xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_OK" ));
-                m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+                SetNavTextVisible( FALSE );
 
                 m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_NETWORK_POPUP" ), 
                     TRUE, 
@@ -511,7 +503,7 @@ void dlg_copa::OnPadSelect( ui_win* pWin )
 
 //=========================================================================
 
-void dlg_copa::OnPadBack( ui_win* pWin )
+void dlg_copa::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -630,21 +622,8 @@ xbool dlg_copa::VerifyAge( void )
 
 void dlg_copa::OnSaveProfileCB( void )
 {
-#ifdef TARGET_PS2
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( m_iCard );
-#else
-    MemCardMgr::condition& Condition = g_UIMemCardMgr.GetCondition( 0 );
-#endif
-    // if the save was successful (OR user wants to continue without saving)
-    if( Condition.SuccessCode )
+    if( g_SaveDataMgr.GetLastResult().Succeeded() )
     {
-        // continue without saving?
-        if( Condition.bCancelled )
-        {
-            // flag the profile as not saved
-            g_StateMgr.SetProfileNotSaved( g_StateMgr.GetPendingProfileIndex(), TRUE ); 
-        }
-
         // update the changes in the profile
         g_StateMgr.ActivatePendingProfile();
 
@@ -656,13 +635,13 @@ void dlg_copa::OnSaveProfileCB( void )
     {
         // save failed!
         g_AudioMgr.Play( "Select_Norm" );
-        m_State = DIALOG_STATE_MEMCARD_ERROR;
+        m_State = DIALOG_STATE_SAVE_DATA_ERROR;
     }
 
     // get the profile list
     xarray<profile_info*>& ProfileNames = g_StateMgr.GetProfileList();
-    // get the current list from the memcard manager
-    g_UIMemCardMgr.GetProfileNames( ProfileNames );
+    // get the current list from the save data manager
+    g_SaveDataMgr.GetProfileNames( ProfileNames );
 }
 
 //=========================================================================

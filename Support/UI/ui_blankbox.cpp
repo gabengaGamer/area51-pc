@@ -4,8 +4,8 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
-#include "..\AudioMgr\audioMgr.hpp"
+#include "Entropy.hpp"
+#include "../AudioMgr/AudioMgr.hpp"
 
 #include "ui_blankbox.hpp"
 #include "ui_manager.hpp"
@@ -47,7 +47,6 @@ ui_blankbox::ui_blankbox( void )
 
 ui_blankbox::~ui_blankbox( void )
 {
-    Destroy();
 }
 
 //=========================================================================
@@ -62,7 +61,7 @@ xbool ui_blankbox::Create( s32 UserID, ui_manager* pManager, const irect& Positi
     m_LabelFlags = ui_font::h_center|ui_font::v_center|ui_font::clip_ellipsis|ui_font::clip_l_justify;
 
     // Initialize data
-    m_Font              = g_UiMgr->FindFont( "small" );
+    m_Font              = m_pManager->FindFont( "small" );
     m_HasTitleBar       = FALSE;
     m_TitleBarColor     = XCOLOR_BLACK;
     m_BackgroundColor   = xcolor( 0, 0, 0, 0 );
@@ -78,45 +77,9 @@ void ui_blankbox::Render( s32 ox, s32 oy )
     // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
-        xcolor  TextColor1  = XCOLOR_WHITE;
-        xcolor  TextColor2  = XCOLOR_BLACK;
-        s32     State       = ui_manager::CS_NORMAL;
-
         // Calculate rectangle
         irect   br;
         br.Set( (m_Position.l+ox), (m_Position.t+oy), (m_Position.r+ox), (m_Position.b+oy) );
-
-        // Render appropriate state
-        if( m_Flags & WF_DISABLED )
-        {
-            State = ui_manager::CS_DISABLED;
-            TextColor1  = XCOLOR_GREY;
-            TextColor2  = xcolor(0,0,0,0);
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_HIGHLIGHT )
-        {
-            State = ui_manager::CS_HIGHLIGHT;
-            TextColor1  = XCOLOR_WHITE;
-            TextColor2  = XCOLOR_BLACK;
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == WF_SELECTED )
-        {
-            State = ui_manager::CS_SELECTED;
-            TextColor1  = XCOLOR_WHITE;
-            TextColor2  = XCOLOR_BLACK;
-        }
-        else if( (m_Flags & (WF_HIGHLIGHT|WF_SELECTED)) == (WF_HIGHLIGHT|WF_SELECTED) )
-        {
-            State = ui_manager::CS_HIGHLIGHT_SELECTED;
-            TextColor1  = XCOLOR_WHITE;
-            TextColor2  = XCOLOR_BLACK;
-        }
-        else
-        {
-            State = ui_manager::CS_NORMAL;
-            TextColor1  = XCOLOR_WHITE;
-            TextColor2  = XCOLOR_BLACK;
-        }
 
         if ( m_HasTitleBar )
         {
@@ -213,12 +176,3 @@ void ui_blankbox::SetBitmap( s32 BitmapID, irect& Pos )
 }
 
 //=========================================================================
-
-void ui_blankbox::OnUpdate ( ui_win* pWin, f32 DeltaTime )
-{
-    (void)pWin;
-    (void)DeltaTime;  
-}
-
-//=========================================================================
-

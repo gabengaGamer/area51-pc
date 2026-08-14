@@ -7,6 +7,7 @@
 //==============================================================================
 // INCLUDES
 //==============================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "GeomBone.hpp"
 #include "Entropy.hpp"
 
@@ -76,14 +77,12 @@ void geom_bone::Render( stick_bone StickBones[] )
     matrix4 L2W ;
     
     GetBBoxL2W(StickBones, L2W) ;
-    draw_SetL2W(L2W) ;
-    draw_BBox(m_LocalBBox, m_Color) ;
-    draw_ClearL2W() ;
+    render::debug::Box( m_LocalBBox, L2W, m_Color );
     
     // Draw bind point
     //StickBones[m_StickBone].GetL2W(L2W, m_BindT) ;
     //L2W = StickBones[m_StickBone].GetL2W() ;
-    //draw_Point(L2W.GetTranslation(), XCOLOR_WHITE) ;
+    //render::debug::Point(L2W.GetTranslation(), XCOLOR_WHITE) ;
 }
 
 #endif

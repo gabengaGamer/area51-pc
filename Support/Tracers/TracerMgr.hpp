@@ -1,9 +1,9 @@
 #ifndef TRACERMGR_HPP
 #define TRACERMGR_HPP
 
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
+#include "Render/Texture.hpp"
 #include "x_math.hpp"
-#include "x_bitmap.hpp"
 
 //=========================================================================
 
@@ -68,10 +68,10 @@ protected:
         xcolor  Color;
         u16     Sequence;
     };
-    typedef rhandle<xbitmap> tracer_bitmap;   
+    typedef rhandle<texture> tracer_texture;
 
     tracer*         m_pTracers[NUM_TRACER_TYPES];
-    tracer_bitmap   m_Bitmaps[NUM_TRACER_BMPS];
+    tracer_texture  m_Textures[NUM_TRACER_BMPS];
     u16             m_Sequence;
 };
 

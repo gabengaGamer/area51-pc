@@ -1,128 +1,99 @@
 //=========================================================================
-//  
-//  RigidGeom.cpp  
+//
+//  RigidGeom.cpp
 //
 //=========================================================================
 
 //=========================================================================
-//  Includes
+//  INCLUDES
 //=========================================================================
 
 #include "RigidGeom.hpp"
+#include "GeomFile.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 //=========================================================================
-
-rigid_geom::rigid_geom( void ) : geom()
-{
-}
-
+//  RESOURCE LOADER
 //=========================================================================
 
-rigid_geom::rigid_geom( fileio& File ) : geom( File ), m_Collision( File )
+static struct rigid_geom_loader : public rsc_loader
 {
-    (void)File;
-}
-
-//=========================================================================
-
-void rigid_geom::FileIO( fileio& File )
-{
-    geom::FileIO( File );
-
-    File.Static( m_Collision );
-    File.Static( m_nDList );
-
-    switch( m_Platform )
+    rigid_geom_loader( void ) : rsc_loader( "RIGID GEOM", ".rigidgeom" )
     {
-        case PLATFORM_XBOX :
-            File.Static( m_System.pXbox, m_nDList );
-            break;
-
-        case PLATFORM_PS2 :
-            File.Static( m_System.pPS2, m_nDList );
-            break;
-
-        case PLATFORM_PC :
-            File.Static( m_System.pPC, m_nDList );
-            break;
-        
-        default :
-            ASSERT( 0 );
-            break;
     }
-} 
+
+    //--------------------------------------------------------------------------
+
+    virtual void* PreLoad( X_FILE* pFile )
+    {
+        MEMORY_OWNER( "RIGID GEOM DATA" );
+
+        rigid_geom* pGeom = NULL;
+        xstring     error;
+        if ( !geom_file::LoadRigid( pFile, pGeom, error ) )
+        {
+            x_DebugMsg( "RIGIDGEOM: load failed: %s\n", (char const*)error );
+            x_throw( (char const*)error );
+        }
+
+        return ( pGeom );
+    }
+
+    //--------------------------------------------------------------------------
+
+    virtual void* Resolve( void* pData )
+    {
+        return ( pData );
+    }
+
+    //--------------------------------------------------------------------------
+
+    virtual void Unload( void* pData )
+    {
+        rigid_geom* pRigidGeom = static_cast<rigid_geom*>( pData );
+        ASSERT( pRigidGeom );
+
+        delete pRigidGeom;
+    }
+
+} s_RigidGeomLoader;
 
 //=========================================================================
+//  RIGID GEOM
+//=========================================================================
 
-void rigid_geom::dlist_xbox::FileIO( fileio& File )
+rigid_geom::rigid_geom( void )
+    : geom(), m_collision(), m_nSections( 0 ), m_pSection( NULL ), m_nIndices( 0 ), m_pIndex( NULL ),
+      m_nVertexData( 0 ), m_pVertex( NULL )
 {
-    File.Static ( nIndices );
-    File.Static ( pIndices, nIndices );
-    File.Static ( nPushSize );
-    File.Static ( pPushBuffer,nPushSize );
-    File.Static ( nVerts );
-    File.Dynamic( pVert,nVerts );
-    File.Static ( iBone );
-    File.Static ( iColor );
 }
 
 //=========================================================================
 
-void rigid_geom::dlist_ps2::FileIO( fileio& File )
+rigid_geom::~rigid_geom( void )
 {
-    File.Static( nVerts );
-    File.Static( pUV,       nVerts*2 );
-    File.Static( pNormal,   nVerts*3 );
-    File.Static( pPosition, nVerts*1 );
-    File.Static( iBone  );
-    File.Static( iColor );
+    delete[] m_collision.pHighCluster;
+    delete[] m_collision.pHighIndexToVert0;
+    delete[] m_collision.pLowCluster;
+    delete[] m_collision.pLowVector;
+    delete[] m_collision.pLowQuad;
+    delete[] m_pSection;
+    delete[] m_pIndex;
+    delete[] m_pVertex;
 }
 
 //=========================================================================
 
-void rigid_geom::dlist_pc::FileIO( fileio& File )
-{
-    File.Static( nIndices );
-    File.Static( pIndices, nIndices );
-    File.Static( nVerts );
-    File.Static( pVert, nVerts );
-    File.Static( iBone );
-    File.Static( iColor );
-}
+extern xbool RigidGeom_GetTriangle( rigid_geom const* pRigidGeom, s32 key, vector3& p0, vector3& p1, vector3& p2 );
 
 //=========================================================================
 
-void rigid_geom::vertex_xbox::FileIO( fileio& File )
+xbool rigid_geom::GetGeoTri( s32 key, vector3& v0, vector3& v1, vector3& v2 ) const
 {
-    File.Static( Pos          );
-    File.Static( PackedNormal );
-    File.Static( UV           );
-}
+    if ( key == -1 )
+    {
+        return ( FALSE );
+    }
 
-//=========================================================================
-
-void rigid_geom::vertex_pc::FileIO( fileio& File )
-{
-    File.Static( Pos     );
-    File.Static( Normal  );
-    File.Static( Color   );
-    File.Static( UV      );
-}
-
-//=========================================================================
-
-extern
-xbool RigidGeom_GetTriangle( const rigid_geom*          pRigidGeom,
-                             s32                   Key,
-                             vector3&              P0,
-                             vector3&              P1,
-                             vector3&              P2);
-
-xbool rigid_geom::GetGeoTri( s32 Key, vector3& V0, vector3& V1, vector3& V2 ) const
-{
-    if( Key == -1 )
-        return( FALSE );
-
-    return RigidGeom_GetTriangle( this, Key, V0, V1, V2 );
-
+    return ( RigidGeom_GetTriangle( this, key, v0, v1, v2 ) );
 }

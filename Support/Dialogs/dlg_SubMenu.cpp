@@ -4,14 +4,14 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_button.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_font.hpp"
-#include "stringmgr\stringmgr.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_button.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_font.hpp"
+#include "StringMgr/StringMgr.hpp"
 
 #include "dlg_SubMenu.hpp"    // Include Header file 
 
@@ -30,11 +30,11 @@ enum controls
 
 ui_manager::control_tem SubMenuControls[] =
 {
-    { IDC_BUTTON_ONE,    "IDS_NULL",    "button", 3,  60, 294, 20, 0,  0, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_BUTTON_TWO,    "IDS_NULL",    "button", 3,  85, 294, 20, 0,  1, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_BUTTON_THREE,  "IDS_NULL",    "button", 3, 110, 294, 20, 0,  2, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_BUTTON_FOUR,   "IDS_NULL",    "button", 3, 135, 294, 20, 0,  3, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
-    { IDC_BUTTON_FIVE,   "IDS_NULL",    "button", 3, 160, 294, 20, 0,  4, 1, 1, ui_win::WF_VISIBLE | ui_win::WF_SCALE_XPOS | ui_win::WF_SCALE_XSIZE },
+    { IDC_BUTTON_ONE,    "IDS_NULL",    "button", 3,  60, 294, 20, 0,  0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_BUTTON_TWO,    "IDS_NULL",    "button", 3,  85, 294, 20, 0,  1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_BUTTON_THREE,  "IDS_NULL",    "button", 3, 110, 294, 20, 0,  2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_BUTTON_FOUR,   "IDS_NULL",    "button", 3, 135, 294, 20, 0,  3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_BUTTON_FIVE,   "IDS_NULL",    "button", 3, 160, 294, 20, 0,  4, 1, 1, ui_win::WF_VISIBLE },
 };
 
 ui_manager::dialog_tem SubMenuDialog =
@@ -272,14 +272,7 @@ void dlg_submenu::Render( s32 ox, s32 oy )
         // dim the background dialog
         if( m_bDoBlackout )
         {
-	        s32 XRes, YRes;
-            eng_GetRes(XRes, YRes);
-    #ifdef TARGET_PS2
-            // Nasty hack to force PS2 to draw to rb.l = 0
-            irect rb( -1, 0, XRes, YRes );
-    #else
-            irect rb( 0, 0, XRes, YRes );
-    #endif
+	        irect rb = g_UiMgr->GetUserBounds( m_UserID );
             g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                            xcolor(0,0,0,180),
                                            xcolor(0,0,0,180),
@@ -345,13 +338,13 @@ void dlg_submenu::OnUpdate(ui_win *pWin, f32 DeltaTime)
 
     if( m_CurrHL != -1 )
     {
-        if( m_pButtonOne->GetFlags(WF_HIGHLIGHT) )
+        if( m_pButtonOne->IsFocused() )
             highLight = 0;
-        else if( m_pButtonTwo->GetFlags(WF_HIGHLIGHT) )
+        else if( m_pButtonTwo->IsFocused() )
             highLight = 1;
-        else if( m_pButtonThree->GetFlags(WF_HIGHLIGHT) )
+        else if( m_pButtonThree->IsFocused() )
             highLight = 2;
-        else if( m_pButtonFour->GetFlags(WF_HIGHLIGHT) )
+        else if( m_pButtonFour->IsFocused() )
             highLight = 4;
 
 
@@ -367,7 +360,7 @@ void dlg_submenu::OnUpdate(ui_win *pWin, f32 DeltaTime)
 
 //=========================================================================
 
-void dlg_submenu::OnPadSelect( ui_win* pWin )
+void dlg_submenu::OnAccept( ui_win* pWin )
 {
     if( pWin == (ui_win*)m_pButtonOne )
     {
@@ -413,7 +406,7 @@ void dlg_submenu::OnPadSelect( ui_win* pWin )
 }
 
 //=========================================================================
-void dlg_submenu::OnPadBack( ui_win* pWin )
+void dlg_submenu::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 

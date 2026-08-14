@@ -1,9 +1,10 @@
+#include "Render/PrimitiveDebug.hpp"
 #include "Projector.hpp"
-#include "Parsing\TextIn.hpp"
+#include "Parsing/TextIn.hpp"
 #include "Entropy.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "Render\Editor\editor_icons.hpp"
-#include "Render\ProjTextureMgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Render/Editor/EditorIcons.hpp"
+#include "Render/ProjTextureMgr.hpp"
 
 //=========================================================================
 // OBJECT DESCRIPTION
@@ -33,7 +34,7 @@ static struct projector_obj_desc : public object_desc
     virtual s32  OnEditorRender( object& Object ) const
     {
         object_desc::OnEditorRender( Object );
-        return EDITOR_ICON_PROJECTOR;
+        return static_cast<s32>( EditorIcon::Projector );
     }
 
 #endif // X_EDITOR
@@ -83,7 +84,7 @@ projector_obj::~projector_obj( void )
 #ifndef X_RETAIL
 void projector_obj::OnDebugRender  ( void )
 {
-    CONTEXT( "projector_obj::OnDebugRender" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "projector_obj::OnDebugRender" );
 
     // get the viewport dimensions
     s32 W, H;
@@ -91,8 +92,8 @@ void projector_obj::OnDebugRender  ( void )
     {
         // get the viewport dimensions from the texture
         texture* pTex = m_hTexture.GetPointer();
-        W = pTex->m_Bitmap.GetWidth();
-        H = pTex->m_Bitmap.GetHeight();
+        W = pTex->m_bitmap.GetWidth();
+        H = pTex->m_bitmap.GetHeight();
     }
     else
     {
@@ -114,11 +115,11 @@ void projector_obj::OnDebugRender  ( void )
     {
         if( GetAttrBits() & ATTR_EDITOR_SELECTED )
         {
-            draw_Frustum(ProjView, XCOLOR_RED, GetLength());
+            render::debug::Frustum(ProjView, XCOLOR_RED, GetLength());
         }
         else
         {
-            draw_Frustum(ProjView, XCOLOR_WHITE, GetLength());
+            render::debug::Frustum(ProjView, XCOLOR_WHITE, GetLength());
         }
     }
 }
@@ -131,9 +132,13 @@ void projector_obj::OnRender( void )
     if ( IsActive() )
     {
         if( IsShadow() )
-		    g_ProjTextureMgr.AddProjShadow( GetL2W(), GetFOV(), GetLength(), GetTexture() );
+		{
+	        g_ProjTextureMgr.AddProjShadow( GetL2W(), GetFOV(), GetLength(), GetTexture() );
+		}
         else
-		    g_ProjTextureMgr.AddProjLight( GetL2W(), GetFOV(), GetLength(), GetTexture() );
+		{
+	        g_ProjTextureMgr.AddProjLight( GetL2W(), GetFOV(), GetLength(), GetTexture() );
+		}
     }
 }
 
@@ -152,8 +157,8 @@ bbox projector_obj::GetLocalBBox( void ) const
     {
         // get the viewport dimensions from the texture
         texture* pTex = m_hTexture.GetPointer();
-        W = pTex->m_Bitmap.GetWidth();
-        H = pTex->m_Bitmap.GetHeight();
+        W = pTex->m_bitmap.GetWidth();
+        H = pTex->m_bitmap.GetHeight();
     }
     else
     {
@@ -260,4 +265,3 @@ xbool projector_obj::OnProperty( prop_query& I )
 
     return TRUE;
 }
-

@@ -77,11 +77,18 @@ bbox spatial_dbase::GetCellBBox( const spatial_cell& Cell ) const
 //==============================================================================
 
 inline
-s32 spatial_dbase::GetBBoxLevel( const bbox& BBox ) const
+xbool spatial_dbase::TryGetBBoxLevel( const bbox& BBox, s32& Level ) const
 {
     // Get largest dimension...treat it as a cube
-    vector3 Size = BBox.GetSize();
-    f32     S    = fMax( fMax(Size.GetX(), Size.GetY()), Size.GetZ());
+    vector3 const Size = BBox.GetSize();
+    if( !BBox.Min.IsValid() || !BBox.Max.IsValid() ||
+        !Size.IsValid() ||
+        (Size.GetX() < 0.0f) || (Size.GetY() < 0.0f) || (Size.GetZ() < 0.0f) )
+    {
+        return FALSE;
+    }
+
+    f32 const S = fMax( fMax(Size.GetX(), Size.GetY()), Size.GetZ() );
 
     // Find level such that S <= CellWidth
     for( s32 i=0; i<MAX_LEVELS; i++ )
@@ -92,14 +99,31 @@ s32 spatial_dbase::GetBBoxLevel( const bbox& BBox ) const
         if( x_abs(S-m_CellWidth[i]) < 2.0f )
         {
             i++;
-            ASSERT( i<MAX_LEVELS );
+            if( i >= MAX_LEVELS )
+            {
+                return FALSE;
+            }
         }
 
-        return i;
+        Level = i;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+//==============================================================================
+
+inline
+s32 spatial_dbase::GetBBoxLevel( const bbox& BBox ) const
+{
+    s32 Level;
+    if( TryGetBBoxLevel( BBox, Level ) )
+    {
+        return Level;
     }
 
     // Object too big or too few levels
-    
     x_throw( "Object too big or too few levels" );
     return 0;
 }

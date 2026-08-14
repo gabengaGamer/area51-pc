@@ -180,5 +180,4 @@ static s16 s_iicon_pip[] =
 };
 
 
-#define DRAW_ICON_PIP() draw_icon( NUM_FACETS_ICON_PIP, NUM_VERTICES_ICON_PIP, s_vicon_pip, s_iicon_pip )
 

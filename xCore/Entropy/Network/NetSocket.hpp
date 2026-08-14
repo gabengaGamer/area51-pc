@@ -70,8 +70,8 @@ public:
         xbool           CanReceive          ( void );
         xbool           CanSend             ( void );
 
-        void            SetFlags            ( s32 Flags )                       { m_Flags = Flags;                          };
-        s32             GetFlags            ( void )                            { return m_Flags;                           };
+        void            SetFlags            ( s32 Flags )                       { m_flags = Flags;                          };
+        s32             GetFlags            ( void )                            { return m_flags;                           };
 
         // Stats
         s64             GetBytesSent        ( void )          const             { return m_BytesSent;                       };
@@ -84,7 +84,7 @@ public:
 private:
         net_address     m_Address;
         uaddr           m_Socket;
-        s32             m_Flags;
+        s32             m_flags;
         s64             m_BytesSent;
         s64             m_BytesReceived;
         s64             m_PacketsSent;

@@ -5,42 +5,37 @@
 //=============================================================================================
 // INCLUDES
 //=============================================================================================
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "NewWeapon.hpp"
 #include "e_ScratchMem.hpp"
-#include "Render\SkinGeom.hpp"
+#include "Render/SkinGeom.hpp"
 
-#include "Entropy\e_Draw.hpp"
-#include "player.hpp"
+#include "e_Engine.hpp"
+#include "Player/Player.hpp"
 #include "ProjectileBullett.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "objects\GrenadeProjectile.hpp"
-#include "Dictionary\global_dictionary.hpp"
-#include "TemplateMgr\TemplateMgr.hpp"
-#include "EventMgr\EventMgr.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "render\LightMgr.hpp"
-#include "GameLib\RenderContext.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "Objects/GrenadeProjectile.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
+#include "EventMgr/EventMgr.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "Render/LightMgr.hpp"
+#include "GameLib/RenderContext.hpp"
 #include "hud_Player.hpp"
 #include "HudObject.hpp"
 #include "hud_Ammo.hpp"
-#include "OccluderMgr\OccluderMgr.hpp"
-#include "Characters\character.hpp"
+#include "OccluderMgr/OccluderMgr.hpp"
+#include "Characters/Character.hpp"
 
-#if defined(TARGET_PS2)
-#include "Entropy\PS2\ps2_misc.hpp"
-#endif
-
-#if defined(TARGET_PC)
-#include "Entropy/D3DEngine/d3deng_rtarget.hpp"
-#include "Render\PC\GBufferMgr.hpp"
-#endif
+#include "e_RenderTarget.hpp"
+#include "Render/PC/GBufferMgr.hpp"
 
 #if !defined(X_EDITOR)
 #include "NetworkMgr/NetworkMgr.hpp"
-#include "NetworkMgr\MsgMgr.hpp"
+#include "NetworkMgr/MsgMgr.hpp"
 #endif
-#include "Gamelib/DebugCheats.hpp"
+#include "GameLib/DebugCheats.hpp"
 
 //=========================================================================
 // DEBUG
@@ -70,14 +65,10 @@ static matrix4 WeaponMatrix;
 // STATICS
 //=========================================================================
 
-s32 new_weapon::m_OrigScopeVramId    = -1;
-s32 new_weapon::m_ScopeRefCount      = 0;
-s32 new_weapon::m_ScopeTextureVramId = -1;
+s32 new_weapon::m_ScopeRefCount = 0;
 
-#if defined(TARGET_PC)
 static rtarget s_ScopeRenderTarget;
-static xbool   s_bScopeRenderTargetValid = FALSE;
-#endif
+static const shader_resource* s_pOriginalScopeResourceOverride = NULL;
 
 #ifndef X_EDITOR
 extern xbool s_bDegradeAim;
@@ -87,8 +78,8 @@ extern xbool s_bDegradeAim;
 // CONSTS
 //=========================================================================
 
-static const s32 kScopeTextureW = 64;
-static const s32 kScopeTextureH = 64;
+static const s32 kScopeTextureW = 256;
+static const s32 kScopeTextureH = 256;
 
 static const f32   k_npc_frag_scaling_const = 2.5f;
 static vector3 s_ZeroVec( 0.0f, 0.0f, 0.0f );
@@ -286,6 +277,7 @@ new_weapon::new_weapon( void ) :
         m_AltFiringPointBoneIndex   [i] = -1;
         m_AimPointBoneIndex         [i] = -1;
         m_AltAimPointBoneIndex      [i] = -1;
+
     }
 
     for( i = 0; i < MAX_FACTION_COUNT; i++ )
@@ -321,8 +313,7 @@ new_weapon::new_weapon( void ) :
     m_LastRotation = 0;
     m_AngularSpeed = 0;
     
-#if defined(TARGET_PC)
-    if( m_ScopeTextureVramId == -1 )
+    if( !rtarget_HasRenderTarget( s_ScopeRenderTarget ) )
     {
         rtarget_desc Desc;
         Desc.Width          = kScopeTextureW;
@@ -331,34 +322,13 @@ new_weapon::new_weapon( void ) :
         Desc.SampleCount    = 1;
         Desc.SampleQuality  = 0;
         Desc.bBindAsTexture = TRUE;
+        Desc.pDebugName     = "WeaponScope";
 
-        if( rtarget_Create( s_ScopeRenderTarget, Desc ) )
-        {
-            m_ScopeTextureVramId = vram_Register( s_ScopeRenderTarget.pTexture );
-            if( m_ScopeTextureVramId == 0 )
-            {
-                x_DebugMsg( "new_weapon: Failed to register scope render target\n" );
-                rtarget_Destroy( s_ScopeRenderTarget );
-                s_bScopeRenderTargetValid = FALSE;
-            }
-            else
-            {
-                s_bScopeRenderTargetValid = TRUE;
-            }
-        }
-        else
+        if( !rtarget_Create( s_ScopeRenderTarget, Desc ) )
         {
             x_DebugMsg( "new_weapon: Failed to create scope render target\n" );
-            s_bScopeRenderTargetValid = FALSE;
         }
     }
-#else
-    if( m_ScopeTextureVramId == -1 )
-    {
-        // register the custom scope texture
-        m_ScopeTextureVramId = vram_RegisterLocked( kScopeTextureW, kScopeTextureH, 32 );
-    }
-#endif
 }
     
 //==============================================================================
@@ -751,6 +721,11 @@ void new_weapon::SetupDualAmmo( inven_item OtherWeaponItem )
         return;
     }
 
+    if( !pObj->IsKindOf( actor::GetRTTI() ) )
+    {
+        return;
+    }
+
     actor* pParent = (actor*)pObj;
 
     // other weapon is the "parent" weapon, i.e. INVEN_WEAPON_SMP is the parent of INVEN_WEAPON_DUAL_SMP
@@ -1131,13 +1106,13 @@ void new_weapon::OnRender( void )
         }        
         else
         {
-//            draw_BBox( GetBBox() );
+//            render::debug::Box( GetBBox() );
         }
     }
 
     else
     {
-//        draw_BBox( GetBBox() );
+//        render::debug::Box( GetBBox() );
     }
 }
 
@@ -1158,8 +1133,8 @@ void new_weapon::OnRenderTransparent(void)
             /*
             vector3 BonePos;
             GetFiringBonePosition(BonePos);
-            draw_Sphere(BonePos, 5.0f);
-            draw_Line(GetPosition(), BonePos);
+            render::debug::Sphere(BonePos, 5.0f);
+            render::debug::Line(GetPosition(), BonePos);
             */
 
             //render aim points
@@ -1171,10 +1146,10 @@ void new_weapon::OnRenderTransparent(void)
                 TargetingDir.Normalize();
                 TargetingDir *= 2000; //give it some distance
 
-                draw_Line(FirePos, FirePos + TargetingDir);
+                render::debug::Line(FirePos, FirePos + TargetingDir);
 
-                draw_Sphere(FirePos, 6.0f, XCOLOR_GREEN);
-                draw_Sphere(AimPos, 6.0f, XCOLOR_RED);
+                render::debug::Sphere(FirePos, 6.0f, XCOLOR_GREEN);
+                render::debug::Sphere(AimPos, 6.0f, XCOLOR_RED);
             }
         }
     #endif
@@ -1197,17 +1172,16 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
     if (m_FiringPointBoneIndex!=-1)
     {
         const matrix4 BoneL2W = m_AnimPlayer[ m_CurrentRenderState ].GetBoneL2W( m_FiringPointBoneIndex );
-        draw_Sphere( BoneL2W.GetTranslation(), s_SphereRadius, xcolor(255,0,0) );
-
-        SMP_UTIL_draw_MatrixAxis( BoneL2W );
+        render::debug::Sphere( BoneL2W.GetTranslation(), s_SphereRadius, xcolor(255,0,0) );
+        render::debug::Axis( BoneL2W, 100.0f );
     }
 */
 #endif
 
 
 #ifdef DEBUG_NPC_WEAPON
-     draw_Sphere( WeaponPos, 100.0f, xcolor(255,0,0) );
-     SMP_UTIL_draw_MatrixAxis( WeaponMatrix );
+     render::debug::Sphere( WeaponPos, 100.0f, xcolor(255,0,0) );
+     render::debug::Axis( WeaponMatrix, 100.0f );
 #endif
 
 
@@ -1223,10 +1197,10 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
             TargetingDir.Normalize();
             TargetingDir *= 2000; //give it some distance
 
-            draw_Line(FirePos, FirePos + TargetingDir);
+            render::debug::Line(FirePos, FirePos + TargetingDir);
 
-            draw_Sphere(FirePos, 6.0f, XCOLOR_GREEN);
-            draw_Sphere(AimPos, 6.0f, XCOLOR_RED);
+            render::debug::Sphere(FirePos, 6.0f, XCOLOR_GREEN);
+            render::debug::Sphere(AimPos, 6.0f, XCOLOR_RED);
          }
      }
 #endif // X_EDITOR
@@ -1236,17 +1210,12 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
     if( CurAnimGroup.GetPointer() && m_Skin[ m_CurrentRenderState ].GetSkinGeom() )
     {
+        // if we are owned by a player, then we need to ask for his offset
         object*        pOwner    = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
         vector3        Offset    ( 0.0f, 0.0f, 0.0f );
-        matrix4        RenderL2W ( GetL2W() );
-        const matrix4* pRenderBones = NULL;
-        s32            RenderNBones = 0;
-        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
+        if ( pOwner && pOwner->IsKindOf( player::GetRTTI() ) )
         {
-            actor& OwnerActor = actor::GetSafeType( *pOwner );
-            Offset = OwnerActor.GetRenderWeaponCollisionOffset( m_CurrentRenderState );
-            OwnerActor.GetRenderWeaponL2W( RenderL2W, m_CurrentRenderState );
-            pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones, m_CurrentRenderState );
+            Offset = ((player*)pOwner)->GetCurrentWeaponCollisionOffset();
         }
 
         // accumulate clipping flags and whether or not we should glow
@@ -1261,7 +1230,7 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
         {
             const anim_group* pAnimGroup = CurAnimGroup.GetPointer();
             bbox RenderBBox = pAnimGroup->GetBBox();
-            RenderBBox.Transform( RenderL2W );
+            RenderBBox.Transform( GetL2W() );
             RenderBBox.Translate( Offset );
 
             // Perform clipping test, and skip render if outside the view
@@ -1276,7 +1245,6 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
         s32            nBones    = m_AnimPlayer[ m_CurrentRenderState ].GetNBones();
         matrix4*       pBone     = (matrix4*)smem_BufferAlloc( nBones * sizeof( matrix4 ) );
         const matrix4* pAnimBone = m_AnimPlayer[ m_CurrentRenderState ].GetBoneL2Ws();
-        const anim_group& BoneAnimGroup = *CurAnimGroup.GetPointer();
 
         // if our owner is spawning, we need ALPHA for fading
         if (   pOwner 
@@ -1288,11 +1256,7 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
         for( s32 i=0; i<nBones; i++ )
         {
-            if( pRenderBones && (RenderNBones == nBones) )
-                pBone[i] = pRenderBones[i] * BoneAnimGroup.GetBoneBindInvMatrix( i );
-            else
-                pBone[i] = pAnimBone[i];
-
+            pBone[i] = pAnimBone[i];
             pBone[i].Translate( Offset );
         }
 
@@ -1300,17 +1264,17 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
         if ( Cloaked )
         {
-            SkinInst.RenderDistortion( &RenderL2W,
+            SkinInst.RenderDistortion( &GetL2W(),
                                        pBone,
                                        nBones,
                                        Flags,
-                                       SkinInst.GetLODMask(RenderL2W),
+                                       SkinInst.GetLODMask(GetL2W()),
                                        radian3(R_0,R_0,R_0),
                                        Ambient );
         }
         else
         {
-            u64 MeshMask = SkinInst.GetLODMask( RenderL2W );
+            u64 MeshMask = SkinInst.GetLODMask( GetL2W() );
 
             // render the scope mesh if one is there
             if ( (m_ScopeMesh != -1)            &&
@@ -1322,16 +1286,16 @@ void new_weapon::RenderWeapon( xbool bDebug, const xcolor& Ambient, xbool Cloake
 
                 // render the scope mesh
                 MeshMask &= ~ScopeMask;
-                SkinInst.Render( &RenderL2W,
+                SkinInst.Render( &GetL2W(),
                                  pBone,
                                  nBones,
-                                 Flags | render::FORCE_LAST,
+                                 Flags,
                                  ScopeMask,
                                  Ambient );
             }
 
             // render the normal mesh
-            SkinInst.Render( &RenderL2W,
+            SkinInst.Render( &GetL2W(),
                              pBone,
                              nBones,
                              Flags,
@@ -1348,63 +1312,63 @@ void new_weapon::RenderWeaponShadow( u64 ProjMask )
     if( !m_IsVisible || (m_CurrentRenderState != RENDER_STATE_NPC) )
         return;
 
+    //get the current anim group that needs to be rendered.
     anim_group::handle& CurAnimGroup = m_AnimGroup[ m_CurrentRenderState ];
     if( !CurAnimGroup.GetPointer() || !m_Skin[ m_CurrentRenderState ].GetSkinGeom() )
         return;
 
-    object*        pOwner       = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
-    matrix4        RenderL2W    ( GetL2W() );
-    const matrix4* pRenderBones = NULL;
-    s32            RenderNBones = 0;
-
-    if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
-    {
-        actor& OwnerActor = actor::GetSafeType( *pOwner );
-        OwnerActor.GetRenderWeaponL2W( RenderL2W, m_CurrentRenderState );
-        pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones, m_CurrentRenderState );
-    }
-
     skin_inst& SkinInst = m_Skin[ m_CurrentRenderState ];
-    u64 ShadLODMask = SkinInst.GetLODMask( 0 );
-    if( ShadLODMask == 0 )
+
+    u64 MeshMask = SkinInst.GetLODMask( GetL2W() );
+    if( MeshMask == 0 )
         return;
 
-    s32            nBones    = m_AnimPlayer[ m_CurrentRenderState ].GetNBones();
+    s32 nBones  = m_AnimPlayer[ m_CurrentRenderState ].GetNBones();
     if( nBones <= 0 )
         return;
 
     matrix4*       pBone     = (matrix4*)smem_BufferAlloc( nBones * sizeof( matrix4 ) );
     const matrix4* pAnimBone = m_AnimPlayer[ m_CurrentRenderState ].GetBoneL2Ws();
-    const anim_group& BoneAnimGroup = *CurAnimGroup.GetPointer();
 
     for( s32 i = 0; i < nBones; i++ )
     {
-        if( pRenderBones && (RenderNBones == nBones) )
-            pBone[i] = pRenderBones[i] * BoneAnimGroup.GetBoneBindInvMatrix( i );
-        else
-            pBone[i] = pAnimBone[i];
+        pBone[i] = pAnimBone[i];
     }
 
     const u32 Flags = ( GetFlagBits() & object::FLAG_CHECK_PLANES ) ? render::CLIPPED : 0;
-    SkinInst.RenderShadowCast( &RenderL2W,
+    SkinInst.RenderShadowCast( &GetL2W(),
                                pBone,
                                nBones,
                                Flags,
-                               ShadLODMask,
+                               MeshMask,
                                ProjMask );
 }
 
 //==============================================================================
 f32 s_LowAmmoPercent     = 0.3f;
 f32 s_LowAmmoMsgFadeTime = 2.5f;
-void new_weapon::OnAdvanceLogic( f32 DeltaTime )
+void new_weapon::OnAdvanceSimulation( f32 DeltaTime )
 {
     const vector3 Position = GetPosition();
-    m_Velocity = (Position - m_LastPosition) / DeltaTime;
+    if( DeltaTime > F32_MIN )
+    {
+        m_Velocity = (Position - m_LastPosition) / DeltaTime;
+    }
+    else
+    {
+        m_Velocity.Zero();
+    }
     m_LastPosition = Position;
 
     const radian Rot = GetYaw();
-    m_AngularSpeed = (Rot - m_LastRotation) / DeltaTime;
+    if( DeltaTime > F32_MIN )
+    {
+        m_AngularSpeed = (Rot - m_LastRotation) / DeltaTime;
+    }
+    else
+    {
+        m_AngularSpeed = 0.0f;
+    }
     m_LastRotation = Rot;
 
     vector3 Pos;
@@ -1469,7 +1433,7 @@ void new_weapon::OnAdvanceLogic( f32 DeltaTime )
 void new_weapon::NotifyAmmoFull( player *pPlayer )
 {
 #if !defined(X_EDITOR)
-    f32 currentTime = (f32)x_GetTimeSec();
+    f32 currentTime = (f32)g_ObjMgr.GetSimulationTimeSeconds();
 
     // make sure we don't flood the player with info.
     if( (currentTime - m_fLastAmmoFullTime) > Ammo_Full_Msg_DelayTimeTweak.GetF32() )
@@ -1617,11 +1581,12 @@ void new_weapon::RenderMuzzleFx( void )
     // Do the players muzzle render logic...
     if ( m_CurrentRenderState == RENDER_STATE_PLAYER )
     {
+        // if we are owned by a player, then we need to ask for his offset
         object*        pOwner    = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
         vector3        Offset    ( 0.0f, 0.0f, 0.0f );
-        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
+        if ( pOwner && pOwner->IsKindOf( player::GetRTTI() ) )
         {
-            Offset = actor::GetSafeType( *pOwner ).GetRenderWeaponCollisionOffset( m_CurrentRenderState );
+            Offset = ((player*)pOwner)->GetCurrentWeaponCollisionOffset();
         }
 
         for( s32 i = 0; i < FIRE_POINT_COUNT; i++ )
@@ -2695,24 +2660,6 @@ xbool new_weapon::GetFlashlightTransformInfo( matrix4& incMatrix,  vector3 &incV
 {
     if ( m_CurrentRenderState == RENDER_STATE_PLAYER )
     {
-        object*        pOwner       = g_ObjMgr.GetObjectByGuid( m_OwnerGuid );
-        const matrix4* pRenderBones = NULL;
-        s32            RenderNBones = 0;
-
-        if( pOwner && pOwner->IsKindOf( actor::GetRTTI() ) )
-        {
-            actor& OwnerActor = actor::GetSafeType( *pOwner );
-            pRenderBones = OwnerActor.GetRenderWeaponBones( RenderNBones, m_CurrentRenderState );
-        }
-
-        if( pRenderBones && (m_FlashlightBoneIndex >= 0) && (m_FlashlightBoneIndex < RenderNBones ) )
-        {
-            incMatrix = pRenderBones[ m_FlashlightBoneIndex ] *
-                        m_AnimGroup[ m_CurrentRenderState ].GetPointer()->GetBoneBindInvMatrix( m_FlashlightBoneIndex );
-            incVect = m_AnimPlayer[ m_CurrentRenderState ].GetBindPosition( m_FlashlightBoneIndex );
-            return TRUE;
-        }
-
         // return the matrix and the bone vector
         incMatrix = m_AnimPlayer[ m_CurrentRenderState ].GetBoneL2W( m_FlashlightBoneIndex );
         incVect = m_AnimPlayer[ m_CurrentRenderState ].GetBindPosition( m_FlashlightBoneIndex );
@@ -2853,7 +2800,7 @@ void new_weapon::DecrementAmmo( const ammo_priority& rAmmoPriority, const s32& n
 
     object *pObj = g_ObjMgr.GetObjectByGuid(m_ParentGuid);
 
-    if( DEBUG_INFINITE_AMMO == FALSE && !pObj->IsKindOf( character::GetRTTI() ) )
+    if( DEBUG_INFINITE_AMMO == FALSE && (!pObj || !pObj->IsKindOf( character::GetRTTI() ) ) )
     {
         // also, take away from total if we aren't unlimited ammo
         m_WeaponAmmo[ rAmmoPriority ].m_AmmoAmount -= nAmt;
@@ -2883,14 +2830,14 @@ void new_weapon::ActivateItem( void )
 
 //==============================================================================
 
-xbitmap* new_weapon::GetCenterReticleBmp( void )
+texture* new_weapon::GetCenterReticleTexture( void )
 {
     return m_ReticleCenter.GetPointer();
 }
 
 //==============================================================================
 
-xbitmap* new_weapon::GetEdgeReticleBmp( void )
+texture* new_weapon::GetEdgeReticleTexture( void )
 {
     return m_ReticleEdge.GetPointer();
 }
@@ -3050,13 +2997,13 @@ void new_weapon::UpdateAmmoWarning( void )
     s32 fTotalAmmo  = m_WeaponAmmo[AMMO_PRIMARY].m_AmmoAmount;
 
     object* pObj = g_ObjMgr.GetObjectByGuid( m_ParentGuid );
-    if( pObj )
+    if( pObj && pObj->IsKindOf( player::GetRTTI() ) )
     {
         player* pPlayer = (player*)pObj;
 
         hud_object* Hud = pPlayer->GetHud();
 
-        if( Hud && Hud->m_Initialized )
+        if( Hud && Hud->m_Initialized && (fMaxAmmo > F32_MIN) )
         {
             // if we have low ammo, warn the player
             if( (fCurAmmo/fMaxAmmo) <= s_LowAmmoPercent )
@@ -3108,6 +3055,7 @@ void new_weapon::UpdateAmmoWarning( void )
 }
 
 //==============================================================================
+
 void new_weapon::SetAmmoHudColor(player *pPlayer, hud_object* Hud, xcolor HudColor )
 {
     ASSERT(Hud);
@@ -3137,6 +3085,7 @@ xbool new_weapon::CheckReticleLocked( void )
 }
 
 //==============================================================================
+
 void new_weapon::SetRenderState( render_state RenderState )
 {
     (void)RenderState;
@@ -3330,6 +3279,8 @@ geom* new_weapon::GetGeomPtr( void )
     return ( pRenderInst != NULL ) ? pRenderInst->GetGeom() : NULL;
 }
 
+//==============================================================================
+
 anim_group::handle* new_weapon::GetAnimGroupHandlePtr( void )
 {
     if( IN_RANGE( 0, m_CurrentRenderState, RENDER_STATE_MAX ) )
@@ -3380,89 +3331,9 @@ void new_weapon::SetAmmoState2( ammo_priority Priority,
     m_WeaponAmmo[ Priority ].m_AmmoInCurrentClip  = AmmoInCurrentClip;
 }
 
-//===========================================================================
-// this function is used to orient a sprite to a collision plane to cover up the ugliness of two Oriented Quads intersecting
-void new_weapon::DrawLaserFixupBitmap( xbitmap* pBitmap, f32 Radius, xcolor cColor, collision_mgr::collision& Coll )
-{
-    vector3 theNormal   = Coll.Plane.Normal;
-    vector3 CenterPoint = Coll.Point;
+//==============================================================================
 
-    // set fixup texture
-    draw_SetTexture( *pBitmap );
-
-    // pull back point a tad along Normal
-    CenterPoint = CenterPoint + theNormal * 0.5f;
-
-    //
-    // Get the plane-parallel axiis and build the three world-space positions.
-    // Because of floating-point error, the ortho vectors can get turned 90 degrees
-    // when hitting a wall. Handle that as a special-case by forcing the "up"
-    // vector to be the Y axis.
-    //
-    vector3 AxisA, AxisB;
-    if( theNormal.GetY() < 0.001f )
-    {
-        vector3 Dir( 0.0f, 1.0f, 0.0f );
-        AxisA = theNormal.Cross( Dir );
-        AxisB = theNormal.Cross( AxisA );
-        AxisA.Normalize();
-        AxisB.Normalize();
-    }
-    else
-    {
-        Coll.Plane.GetOrthoVectors( AxisA, AxisB );
-    }
-
-    // Scale the axis    
-    AxisA *= Radius;
-    AxisB *= Radius;
-
-    // Vertices
-    //  0,5 _____ 1
-    //      |\  |
-    //      | \ |
-    //    4 |__\| 2,3
-
-    // UVs
-    //(0,0),(0,0)_____(1,0)
-    //           |\  |
-    //           | \ |
-    //  (0,1)    |__\| (1,1), (1,1)
-
-    // Build the quad points from the axis (Clock-wise)
-    vector3 Pos[6];
-    Pos[0] = CenterPoint + AxisA + AxisB;
-    Pos[1] = CenterPoint + AxisA - AxisB;
-    Pos[2] = CenterPoint - AxisA - AxisB;
-    Pos[3] = CenterPoint - AxisA - AxisB;
-    Pos[4] = CenterPoint - AxisA + AxisB;
-    Pos[5] = CenterPoint + AxisA + AxisB;
-    
-    // set up the draw color to the same color as the "laser"
-    draw_Color(cColor);
-
-    draw_UV(0.0f, 0.0f);
-    draw_Vertex(Pos[0]);
-
-    draw_UV(1.0f, 0.0f);
-    draw_Vertex(Pos[1]);
-
-    draw_UV(1.0f, 1.0f);
-    draw_Vertex(Pos[2]);
-
-    draw_UV(1.0f, 1.0f);
-    draw_Vertex(Pos[3]);
-
-    draw_UV(0.0f, 1.0f);
-    draw_Vertex(Pos[4]);
-
-    draw_UV(0.0f, 0.0f);
-    draw_Vertex(Pos[5]);
-}
-
-//=============================================================================
-
-xbitmap* new_weapon::GetScopeTexture( void )
+texture* new_weapon::GetScopeTextureResource( void )
 {
     if ( m_ScopeMesh < 0 )
         return NULL;
@@ -3482,7 +3353,7 @@ xbitmap* new_weapon::GetScopeTexture( void )
     if ( !pTexture )
         return NULL;
 
-    return &pTexture->m_Bitmap;
+    return pTexture;
 }
 
 //=============================================================================
@@ -3494,8 +3365,10 @@ void new_weapon::InstallCustomScope( void )
     // already had
     UninstallCustomScope();
 
-    if( m_ScopeTextureVramId <= 0 )
+    if( !rtarget_HasShaderResource( s_ScopeRenderTarget ) )
+    {
         return;
+    }
 
     // no geometry == no scope texture
     skin_inst& Skin  = m_Skin[ RENDER_STATE_PLAYER ];
@@ -3513,28 +3386,21 @@ void new_weapon::InstallCustomScope( void )
         m_ScopeLensMesh = pGeom->GetMeshIndex( "SCOPE_LENS" );
 
         // set up the custom scope texture
-        xbitmap* pBitmap = GetScopeTexture();
-        ASSERT( pBitmap );
-        if ( pBitmap  )
+        texture* pTexture = GetScopeTextureResource();
+        ASSERT( pTexture );
+        if ( pTexture  )
         {
-            // patch the scope with our custom texture if no other
-            // instance has done it yet
-            s32 VramID = pBitmap->GetVRAMID();
-            if( VramID != m_ScopeTextureVramId )
-            {
-                ASSERT( m_OrigScopeVramId == -1 );
-                m_OrigScopeVramId = VramID;
-                pBitmap->SetVRAMID( m_ScopeTextureVramId );
-                CLOG_MESSAGE( LOG_SCOPE_PATCHING, "SCOPE", "Patched OrigId=%d, ScopeId=%d", m_OrigScopeVramId, m_ScopeTextureVramId );
-            }
+            if( m_ScopeRefCount == 0 )
+                s_pOriginalScopeResourceOverride = pTexture->GetShaderResourceOverride();
+
+            pTexture->SetShaderResourceOverride( rtarget_GetShaderResource( s_ScopeRenderTarget ) );
+            CLOG_MESSAGE( LOG_SCOPE_PATCHING, "SCOPE", "Patched scope render target" );
 
             // let everyone know we're using the custom texture now
             m_ScopeRefCount++;
         }
         
-        // Force render library to use top mip (we only have 1!) always since the render
-        // library thinks the bitmap has mips since we just cheated and set the bitmap vram id 
-        // to use the pips!
+        // Force the render library to use the top mip because the scope target has one level.
         geom::mesh& Mesh = pGeom->m_pMesh[m_ScopeMesh];
         pGeom->m_pSubMesh[Mesh.iSubMesh].WorldPixelSize = 1000.0f;
     }
@@ -3549,9 +3415,9 @@ void new_weapon::UninstallCustomScope( void )
     {
         CLOG_MESSAGE( LOG_SCOPE_PATCHING, "SCOPE", "Uninstall Ref(%d), Guid(%08X:%08X)", m_ScopeRefCount, GetGuid().GetHigh(), GetGuid().GetLow() );
 
-        xbitmap* pBitmap = GetScopeTexture();
-        ASSERT( pBitmap );
-        if( pBitmap )
+        texture* pTexture = GetScopeTextureResource();
+        ASSERT( pTexture );
+        if( pTexture )
         {
             m_ScopeRefCount--;
             ASSERT( m_ScopeRefCount >= 0 );
@@ -3560,10 +3426,9 @@ void new_weapon::UninstallCustomScope( void )
             // geometry back to its original state
             if( m_ScopeRefCount == 0 )
             {
-                CLOG_MESSAGE( LOG_SCOPE_PATCHING, "SCOPE", "Restore OrigId=%d, ScopeId=%d", m_OrigScopeVramId, m_ScopeTextureVramId );
-                ASSERT( m_OrigScopeVramId != -1 );
-                pBitmap->SetVRAMID( m_OrigScopeVramId );
-                m_OrigScopeVramId = -1;
+                pTexture->SetShaderResourceOverride( s_pOriginalScopeResourceOverride );
+                s_pOriginalScopeResourceOverride = NULL;
+                CLOG_MESSAGE( LOG_SCOPE_PATCHING, "SCOPE", "Restored scope render target" );
             }
         }
 
@@ -3573,87 +3438,13 @@ void new_weapon::UninstallCustomScope( void )
 
 //=============================================================================
 
-#define SCISSOR_LEFT    (2048-(VRAM_FRAME_BUFFER_WIDTH/2))
-#define SCISSOR_TOP     (2048-(VRAM_FRAME_BUFFER_HEIGHT/2))
-
 void new_weapon::CreateScopeTexture( void )
 {
-    if ( m_ScopeTextureVramId == -1 )
+    if( !rtarget_HasTexture( s_ScopeRenderTarget ) )
         return;
 
-    //TODO:wouldn't it be nice if there was a generic way to do this?!?
-#if defined(TARGET_PS2)
-    // flush the diffuse bank so we're guaranteed to be on a page boundary
-    vram_FlushBank( 0 );
-    vram_Activate( m_ScopeTextureVramId );
-
-    // copy out part of the frame buffer into this scope texture
-    const view* pActiveView = eng_GetView();
-
-    // grab the necessary texture addresses
-    s32 VramAddr = vram_GetPixelBaseAddr( m_ScopeTextureVramId );
-    s32 FBP      = eng_GetFrameBufferAddr( 0 ) / 2048;
-
-    // We really want the center 128x128 portion of the screen, but we'd like
-    // to keep the ratio similar for split-screen play. With a normal screen
-    // size of 512x448, this is the resulting formula.
-    s32 L, T, R, B;
-    pActiveView->GetViewport( L, T, R, B );
-    f32 U0 = L +  (3.0f/8.0f)*(f32)(R-L);
-    f32 U1 = L +  (5.0f/8.0f)*(f32)(R-L);
-    f32 V0 = T + (5.0f/14.0f)*(f32)(B-T);
-    f32 V1 = T + (9.0f/14.0f)*(f32)(B-T);
-
-    // now set up the appropriate frame buffer, texture, and alpha settings
-    // and copy off that portion of the screen
-    gsreg_Begin( 21 );
-    gsreg_Set( SCE_GS_TEX0_1, SCE_GS_SET_TEX0( FBP * 32,
-                                               VRAM_FRAME_BUFFER_WIDTH/64,
-                                               SCE_GS_PSMCT32,
-                                               vram_GetLog2(VRAM_FRAME_BUFFER_WIDTH),
-                                               vram_GetLog2(VRAM_FRAME_BUFFER_HEIGHT),
-                                               0, 0, 0, 0, 0, 0, 0 ) );
-    gsreg_Set( SCE_GS_FRAME_1, SCE_GS_SET_FRAME( VramAddr / 32,
-                                                 kScopeTextureW/64,
-                                                 SCE_GS_PSMCT32,
-                                                 0x00000000 ) );
-    gsreg_SetScissor( 0, 0, kScopeTextureW, kScopeTextureH );
-    gsreg_SetAlphaBlend( ALPHA_BLEND_MODE( C_ZERO, C_ZERO, A_FIX, C_SRC ) );
-    gsreg_SetAlphaAndZBufferTests( FALSE, ALPHA_TEST_GEQUAL, 64, ALPHA_TEST_FAIL_KEEP,
-                                   FALSE, DEST_ALPHA_TEST_0, TRUE, ZBUFFER_TEST_ALWAYS );
-    gsreg_SetZBufferUpdate( FALSE );
-    gsreg_Set( SCE_GS_TEXFLUSH, 0 );
-    gsreg_Set( SCE_GS_PRIM,     SCE_GS_SET_PRIM( GIF_PRIM_SPRITE, 0, 1, 0, 0, 0, 1, 0, 0 ) );
-    gsreg_Set( SCE_GS_RGBAQ,    SCE_GS_SET_RGBAQ( 0x80, 0x80, 0x80, 0x80, 0x3f800000 ) );
-    gsreg_Set( SCE_GS_UV,       SCE_GS_SET_UV( (s32)(U0*16.0f), (s32)(V0*16.0f) ) );
-    gsreg_Set( SCE_GS_XYZ2,     SCE_GS_SET_XYZ2( SCISSOR_LEFT<<4, SCISSOR_TOP<<4, 0 ) );
-    gsreg_Set( SCE_GS_UV,       SCE_GS_SET_UV( (s32)(U1*16.0f), (s32)(V1*16.0f) ) );
-    gsreg_Set( SCE_GS_XYZ2,     SCE_GS_SET_XYZ2( (SCISSOR_LEFT+kScopeTextureW)<<4, (SCISSOR_TOP+kScopeTextureH)<<4, 0 ) );
-    gsreg_Set( SCE_GS_FRAME_1, SCE_GS_SET_FRAME( VramAddr / 32,
-                                                 kScopeTextureW/64,
-                                                 SCE_GS_PSMCT32,
-                                                 0x00FFFFFF ) );
-    gsreg_Set( SCE_GS_PRIM,     SCE_GS_SET_PRIM( GIF_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0 ) );
-    gsreg_Set( SCE_GS_RGBAQ,    SCE_GS_SET_RGBAQ( 0x80, 0x80, 0x80, 64, 0x3f800000 ) );
-    gsreg_Set( SCE_GS_XYZ2,     SCE_GS_SET_XYZ2( SCISSOR_LEFT<<4, SCISSOR_TOP<<4, 0 ) );
-    gsreg_Set( SCE_GS_XYZ2,     SCE_GS_SET_XYZ2( (SCISSOR_LEFT+kScopeTextureW)<<4, (SCISSOR_TOP+kScopeTextureH)<<4, 0 ) );
-    gsreg_Set( SCE_GS_TEXFLUSH, 0 );
-    gsreg_SetScissor( L, T, R, B );
-    gsreg_SetFBMASK( 0x00000000 );  // will restore the frame buffer
-    gsreg_End();
-	
-#elif defined(TARGET_PC)
-    if( (m_ScopeTextureVramId <= 0) || (s_bScopeRenderTargetValid == FALSE) )
-        return;
-
-    if( !g_pd3dContext )
-        return;
-
-    if( !s_ScopeRenderTarget.pTexture )
-        return;
-
-    const rtarget* pSceneTarget = g_GBufferMgr.GetGBufferTarget( GBUFFER_FINAL_COLOR );
-    if( !pSceneTarget || !pSceneTarget->pTexture )
+    const rtarget* pSceneTarget = g_GBufferMgr.GetGBufferTarget( GBufferTarget::FinalColor );
+    if( !pSceneTarget || !rtarget_HasTexture( *pSceneTarget ) )
         return;
 
     const view* pActiveView = eng_GetView();
@@ -3673,28 +3464,13 @@ void new_weapon::CreateScopeTexture( void )
     s32 SrcLeft   = L + (ViewportWidth  - SrcWidth)  / 2;
     s32 SrcTop    = T + (ViewportHeight - SrcHeight) / 2;
 
-    D3D11_BOX SrcBox;
-    SrcBox.left   = SrcLeft;
-    SrcBox.top    = SrcTop;
-    SrcBox.front  = 0;
-    SrcBox.right  = SrcLeft + SrcWidth;
-    SrcBox.bottom = SrcTop + SrcHeight;
-    SrcBox.back   = 1;
-
-    g_pd3dContext->CopySubresourceRegion( s_ScopeRenderTarget.pTexture,
-                                          0,
-                                          0,
-                                          0,
-                                          0,
-                                          pSceneTarget->pTexture,
-                                          0,
-                                          &SrcBox );	
-#elif defined(TARGET_XBOX)
-
-    extern void xbox_FrameCopy( s32 VRAMID );
-    {
-        xbox_FrameCopy( m_ScopeTextureVramId );
-    }
-
-#endif // TARGET_??
+    rtarget_EndPass();
+    rtarget_CopyRegion( s_ScopeRenderTarget,
+                        0,
+                        0,
+                        *pSceneTarget,
+                        SrcLeft,
+                        SrcTop,
+                        SrcWidth,
+                        SrcHeight );
 }

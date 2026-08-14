@@ -1,8 +1,8 @@
-#include "leaper_attack_state.hpp"
-#include "grunt.hpp"
-#include "Objects\WeaponSMP.hpp"
-#include "Objects\WeaponShotgun.hpp"
-#include "Objects\Player.hpp"
+#include "Leaper_Attack_State.hpp"
+#include "Grunt.hpp"
+#include "Objects/WeaponSMP.hpp"
+#include "Objects/WeaponShotgun.hpp"
+#include "Objects/Player/Player.hpp"
 
 
 //=========================================================================

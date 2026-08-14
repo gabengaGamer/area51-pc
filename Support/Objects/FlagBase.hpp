@@ -11,12 +11,12 @@
 //  INCLUDES
 //==============================================================================
 
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "NetworkMgr\NetObj.hpp"
-#include "Objects\Circuit.hpp"
-#include "Objects\TeamProp.hpp"
-#include "Objects\AnimSurface.hpp"
-#include "Auxiliary\fx_RunTime\Fx_Mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "NetworkMgr/NetObj.hpp"
+#include "Objects/Circuit.hpp"
+#include "Objects/TeamProp.hpp"
+#include "Objects/AnimSurface.hpp"
+#include "FX/fx_Mgr.hpp"
 
 //==============================================================================
 //  TYPES
@@ -42,7 +42,7 @@ virtual         s32             GetMaterial         ( void ) const;
 //              xbool           OnProperty          ( prop_query& Query );
 
 //rtual         void            OnRender            ( void );
-//rtual         void            OnAdvanceLogic      ( f32 DeltaTime );
+//rtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
 //rtual         void            OnRenderTransparent ( void );
 
 //------------------------------------------------------------------------------
@@ -65,7 +65,7 @@ protected:
 //  s32             m_Circuit;      // Which circuit to control?
 
     guid            m_BaseGuid;
-    xbool           m_bInitialized;
+    xbool           m_isInitialized;
 
 //  fx_handle       m_Top;
 //  fx_handle       m_Bottom;

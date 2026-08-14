@@ -6,8 +6,8 @@
 #include "Project.hpp"
 #include "ProjectDoc.h"
 #include "x_files.hpp"
-#include "Parsing\TextIn.hpp"
-#include "Parsing\TextOut.hpp"
+#include "Parsing/TextIn.hpp"
+#include "Parsing/TextOut.hpp"
 #include "..\PropertyEditor\PropertyEditorDoc.h"
 #include "..\WorldEditor\WorldEditor.hpp"
 #include "..\WinControls\FileSearch.h"
@@ -360,7 +360,7 @@ void CProjectDoc::RemoveTheme( void )
 
 xbool CProjectDoc::LoadProject( const char* fullLevelName )
 {      
-    CONTEXT( "CProjectDoc::LoadProject" );
+    X_PROFILE_SCOPE_CATEGORY( "Context", "CProjectDoc::LoadProject" );
 
     if (CFileSearch::DoesFileExist(fullLevelName))
     {

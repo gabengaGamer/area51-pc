@@ -1,6 +1,7 @@
 // EditorView.cpp : implementation of the CEditorView class
 //
 
+#include "Render\PrimitiveDebug.hpp"
 #include "StdAfx.h"
 
 #include "..\Editor\MainFrm.h"
@@ -10,13 +11,13 @@
 #include "EditorLayerView.h"
 #include "ai_editor.hpp"
 #include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Objects\Player.hpp"
+#include "Objects\Player\Player.hpp"
 #include "Objects\LevelSettings.hpp"
 #include "WorldEditor.hpp"
 #include "transaction_mgr.hpp"
 #include "EditorPaletteDoc.h"
 #include "nav_connection2_editor.hpp"
-#include "Parsing\TextOut.hpp"
+#include "Parsing/TextOut.hpp"
 #include "..\EDRscDesc\RscDesc.hpp"
 #include "..\PropertyEditor\PropertyEditorDoc.h"
 #include "..\editor\resource.h"
@@ -206,7 +207,7 @@ void CEditorView::OnPaint()
 
 	// Do not call CView3D::OnPaint() for painting messages
 
-	d3deng_UpdateDisplayWindow( GetSafeHwnd() );
+	eng_UpdateDisplayWindow( GetSafeHwnd() );
 
     if (m_MsgTimer.ReadSec() > 5.0f) //reset after 5 seconds
     {
@@ -246,7 +247,7 @@ void CEditorView::OnPaint()
         dc.FillSolidRect(rc,RGB(255,255,255));
     }
 
-//    f32 frames = eng_GetFPS();
+//    f32 frames = eng_GetCPUFrameRate();
 //    dc.TextOut(10,10,CString(xfs("fps(%d)",frames)));
 }
 
@@ -487,7 +488,7 @@ void CEditorView::RenderFPV()
 
         // set up the view
         view PortalView;
-        xbool bDoPortalWalk = SetupView(&pPlayers[iPlayer]->GetInterpView(), PortalView, TRUE);
+        xbool bDoPortalWalk = SetupView(&pPlayers[iPlayer]->GetSimulationView(), PortalView, TRUE);
 
         // render all objects
         g_WorldEditor.RenderObjects( bDoPortalWalk,
@@ -515,11 +516,15 @@ void CEditorView::RenderNormal()
     //
     view    PortalView;
     player* pPlayer       = SMP_UTIL_GetActivePlayer();
-    xbool   bDoPortalWalk = SetupView(pPlayer?&pPlayer->GetInterpView() : NULL, PortalView, FALSE);
+    xbool   bDoPortalWalk = SetupView(pPlayer?&pPlayer->GetSimulationView() : NULL, PortalView, FALSE);
     if (m_bShowSpacD) g_WorldEditor.RenderSpacialDBase();
     g_WorldEditor.RenderObjects( bDoPortalWalk,
                                  PortalView,
                                  bDoPortalWalk ? pPlayer->GetPlayerViewZone() : 0 );
+
+    if( !eng_Begin( "WorldEditor" ) )
+        return;
+    VERIFY( render::BeginPrimitiveRender() );
 
     //
     // Render the icons world 
@@ -536,8 +541,6 @@ void CEditorView::RenderNormal()
     m_Grid.SetTranslations(GetDocument()->GetGridPos());
     m_GridBaseline.SetTranslations(GetDocument()->GetGridPos());
 
-    if( eng_Begin("WorldEditor") )
-    {
         //
         // Show Focus
         //
@@ -549,7 +552,7 @@ void CEditorView::RenderNormal()
             //
             // Set the marker to indicate the center of the world
             //
-            draw_Marker(vector3(0,0,0), xcolor(255,0,0,255) );
+            render::debug::Marker(vector3(0,0,0), xcolor(255,0,0,255) );
         }
 
         if (m_bShowGrid) 
@@ -568,10 +571,10 @@ void CEditorView::RenderNormal()
         if (m_HighlightVolume.GetRadius() > 1)
         {
             //volume exists, so render
-            draw_Volume(m_HighlightVolume, m_HighlightColor);
+            render::debug::Volume(m_HighlightVolume, m_HighlightColor);
             xcolor FrameColor = m_HighlightColor;
             FrameColor.A = 255;
-            draw_BBox(m_HighlightVolume,FrameColor);
+            render::debug::Box(m_HighlightVolume,FrameColor);
         }
 
         guid GuidToSelect = 0;
@@ -587,9 +590,9 @@ void CEditorView::RenderNormal()
                     if( BBoxGuid.Min != BBoxGuid.Max )
                     {
                         xcolor SelectColor = xcolor(70,218,225,100);
-                        draw_Volume(BBoxGuid, SelectColor);
+                        render::debug::Volume(BBoxGuid, SelectColor);
                         SelectColor.A = 255;
-                        draw_BBox(BBoxGuid,SelectColor);
+                        render::debug::Box(BBoxGuid,SelectColor);
                     }
                 }
                 else
@@ -598,9 +601,9 @@ void CEditorView::RenderNormal()
                     if( BBoxGuid.Min != BBoxGuid.Max )
                     {
                         xcolor SelectColor = xcolor(189,230,66,100);
-                        draw_Volume(BBoxGuid, SelectColor);
+                        render::debug::Volume(BBoxGuid, SelectColor);
                         SelectColor.A = 255;
-                        draw_BBox(BBoxGuid,SelectColor);
+                        render::debug::Box(BBoxGuid,SelectColor);
                     }
                 }
             }
@@ -613,9 +616,9 @@ void CEditorView::RenderNormal()
             if( BBoxGuid.Min != BBoxGuid.Max )
             {
                 xcolor SelectColor = xcolor(128,0,128,100);
-                draw_Volume(BBoxGuid, SelectColor);
+                render::debug::Volume(BBoxGuid, SelectColor);
                 SelectColor.A = 255;
-                draw_BBox(BBoxGuid,SelectColor);
+                render::debug::Box(BBoxGuid,SelectColor);
             }
         }
 
@@ -632,9 +635,9 @@ void CEditorView::RenderNormal()
                 {
                     BBoxGuid.Inflate(20,20,20);
                     xcolor SelectColor(230,255,255,100);
-                    draw_Volume(BBoxGuid, SelectColor);
+                    render::debug::Volume(BBoxGuid, SelectColor);
                     SelectColor.A = 255;
-                    draw_BBox(BBoxGuid,SelectColor);
+                    render::debug::Box(BBoxGuid,SelectColor);
                 }
 
                 for (s32 i=0; i < GuidList.GetCount(); i++)
@@ -647,11 +650,11 @@ void CEditorView::RenderNormal()
                         BBoxAttach.Inflate(20,20,20);
 
                         xcolor SelectColor(69,231,231,100);
-                        draw_Volume(BBoxAttach, SelectColor);
+                        render::debug::Volume(BBoxAttach, SelectColor);
                         SelectColor.A = 255;
-                        draw_BBox(BBoxAttach,SelectColor);
+                        render::debug::Box(BBoxAttach,SelectColor);
 
-                        draw_Line( BBoxGuid.GetCenter(), BBoxAttach.GetCenter(), SelectColor );
+                        render::debug::Line( BBoxGuid.GetCenter(), BBoxAttach.GetCenter(), SelectColor );
                     }
                 }
             }
@@ -668,9 +671,9 @@ void CEditorView::RenderNormal()
                         BBoxAttach.Inflate(20,20,20);
 
                         xcolor SelectColor = xcolor(166,255,210,100);
-                        draw_Volume(BBoxAttach, SelectColor);
+                        render::debug::Volume(BBoxAttach, SelectColor);
                         SelectColor.A = 255;
-                        draw_BBox(BBoxAttach,SelectColor);
+                        render::debug::Box(BBoxAttach,SelectColor);
                     }
                 }
             }
@@ -678,22 +681,41 @@ void CEditorView::RenderNormal()
 
         if (GetDocument()->IsSchematicLoaded() && GetDocument()->DrawSchematic())
         {
-            draw_Begin( DRAW_QUADS, DRAW_TEXTURED | DRAW_USE_ALPHA );
-            draw_SetTexture( GetDocument()->GetSchematic() );
-        
-            draw_Color( xcolor( 255,255,255,GetDocument()->GetSchematicAlpha() ) );
-
-            s32 nScale = GetDocument()->GetSchematicScale();
-
-            draw_UV    ( 0,1 );     draw_Vertex( vector3( -float(nScale*100), GetDocument()->GetGridPos().GetY()-1, float(nScale*100) ) );
-            draw_UV    ( 1,1 );     draw_Vertex( vector3( float(nScale*100), GetDocument()->GetGridPos().GetY()-1, float(nScale*100)  ) );
-            draw_UV    ( 1,0 );     draw_Vertex( vector3( float(nScale*100), GetDocument()->GetGridPos().GetY()-1, -float(nScale*100) ) );
-            draw_UV    ( 0,0 );     draw_Vertex( vector3( -float(nScale*100), GetDocument()->GetGridPos().GetY()-1, -float(nScale*100) ) );
-
-            draw_End();
+            const f32 Scale = (f32)GetDocument()->GetSchematicScale() * 100.0f;
+            const f32 Height = GetDocument()->GetGridPos().GetY() - 1.0f;
+            const vector3 Positions[4] =
+            {
+                vector3( -Scale, Height,  Scale ),
+                vector3(  Scale, Height,  Scale ),
+                vector3(  Scale, Height, -Scale ),
+                vector3( -Scale, Height, -Scale )
+            };
+            const vector2 UVs[4] =
+            {
+                vector2( 0.0f, 1.0f ),
+                vector2( 1.0f, 1.0f ),
+                vector2( 1.0f, 0.0f ),
+                vector2( 0.0f, 0.0f )
+            };
+            const xcolor Color( 255, 255, 255, GetDocument()->GetSchematicAlpha() );
+            const xcolor Colors[4] = { Color, Color, Color, Color };
+            const render::primitive_draw_desc Material( &GetDocument()->GetSchematic(),
+                                                        render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                        render::PRIMITIVE_BLEND_ALPHA,
+                                                        render::PRIMITIVE_DEPTH_READ_ONLY,
+                                                        render::PRIMITIVE_RASTER_SOLID_NO_CULL,
+                                                        render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                                        render::PRIMITIVE_LAYER_TRANSPARENT );
+            render::PrimitiveBatch Batch( Material );
+            Batch.AddQuad( Positions, UVs, Colors );
+            matrix4 Identity;
+            Identity.Identity();
+            Batch.Submit( Identity );
         }
 
+        render::EndPrimitiveRender();
         eng_End();
+        render::ExecuteForwardRender();
     }
 }
 
@@ -703,13 +725,27 @@ void CEditorView::Render( )
 {
     x_try;
 
+    if( !eng_BeginFrame() )
+    {
+        return;
+    }
+
     eng_SetBackColor( GetDocument()->GetBackgroundColor());
+
+    rtarget_backbuffer_pass_desc PassDesc;
+    PassDesc.bUseDepth = FALSE;
+    if( !rtarget_BeginBackBufferPass( PassDesc ) )
+    {
+        eng_ResetAfterException();
+        return;
+    }
+    rtarget_EndPass();
 
     // force the player's view to update
     player* pPlayer = SMP_UTIL_GetActivePlayer();
     if( pPlayer != NULL )
     {
-        pPlayer->ComputeView( pPlayer->GetInterpView() );
+        pPlayer->ComputeView( pPlayer->GetSimulationView() );
     }   
 
     // if we're in first-person mode, we handle the view rendering differently
@@ -736,12 +772,14 @@ void CEditorView::Render( )
     render::GetStats().Print( render::stats::OUTPUT_TO_SCREEN );
     #endif
 
-    eng_PageFlip();
+    if( !eng_EndFrame() )
+    {
+        return;
+    }
 
     x_catch_begin;
 
     // Reset render operations
-    draw_ResetAfterException();
     eng_ResetAfterException();
     render::ResetAfterException();
     g_LightMgr.ResetAfterException();
@@ -2707,8 +2745,17 @@ xbool CEditorView::CheckForCameraDrop( void )
 
             matrix4 L2W = pPlayer->GetL2W();
             L2W.SetTranslation( End + vector3(0,2,0) );
-            //pPlayer->OnMove( End + vector3(0,2,0) );
-            ((object*)pPlayer)->OnTransform( L2W );
+            radian3 const Rotation = L2W.GetRotation();
+            zone_mgr::zone_id const DestinationZone =
+                g_ZoneMgr.FindZoneByBoundsDebug( L2W.GetTranslation() );
+            pPlayer->Teleport( L2W.GetTranslation(),
+                               Rotation.Pitch,
+                               Rotation.Yaw,
+                               DestinationZone,
+                               0,
+                               PlayerTeleportVelocityPolicy::Clear,
+                               FALSE,
+                               FALSE );
             return TRUE;
         }
     }

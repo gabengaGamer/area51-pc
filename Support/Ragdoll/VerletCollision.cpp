@@ -9,13 +9,14 @@
 //==============================================================================
 // INCLUDES
 //==============================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "VerletCollision.hpp"
-#include "Render\Geom.hpp"
+#include "Render/geom.hpp"
 #include "Entropy.hpp"
-#include "Objects\PlaySurface.hpp"
-#include "PlaySurfaceMgr\PlaySurfaceMgr.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "CollisionMgr\PolyCache.hpp"
+#include "Objects/PlaySurface.hpp"
+#include "PlaySurfaceMgr/PlaySurfaceMgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "CollisionMgr/PolyCache.hpp"
 
 #define VERLET_MAX_COLL_CLUSTERS    128
 poly_cache::cluster* s_ClusterPtr[VERLET_MAX_COLL_CLUSTERS];
@@ -34,13 +35,12 @@ bbox                 s_ClusterListBBox;
 
 void VerletCollision_Render( void )
 {
-    draw_ClearL2W();
-    draw_BBox( s_ClusterListBBox, XCOLOR_RED );
+    render::debug::Box( s_ClusterListBBox, XCOLOR_RED );
 
     for( s32 i=0; i<s_nClusters; i++ )
     {
         poly_cache::cluster* pCL = s_ClusterPtr[i];
-        draw_BBox(pCL->BBox,XCOLOR_WHITE);
+        render::debug::Box(pCL->BBox,XCOLOR_WHITE);
     }
 }
 

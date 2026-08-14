@@ -9,18 +9,18 @@
 //  INCLUDES
 //=========================================================================
 
-#include "..\Support\Globals\Global_Variables_Manager.hpp"
+#include "../Support/Globals/Global_Variables_Manager.hpp"
 
-#include "Parsing\TextIn.hpp"
-#include "Parsing\TextOut.hpp"
+#include "Parsing/TextIn.hpp"
+#include "Parsing/TextOut.hpp"
 
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 
 #ifdef X_EDITOR
 #include <windows.h>
 #endif // X_EDITOR
 
-#include "..\Support\Obj_mgr\obj_mgr.hpp"
+#include "../Support/Obj_mgr/obj_mgr.hpp"
 /*
 //=========================================================================
 // GLOVALS
@@ -310,7 +310,7 @@ void var_mngr::timer_key::Copy( const timer_key& rSource )
 
 xhandle var_mngr::RegisterFloat ( const char* pName )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::RegisterFloat" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::RegisterFloat" );
 
     return RegisterVariable( TYPE_FLOAT, pName );
 }
@@ -319,7 +319,7 @@ xhandle var_mngr::RegisterFloat ( const char* pName )
 
 xhandle var_mngr::RegisterInt ( const char* pName )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::RegisterInt" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::RegisterInt" );
 
     return RegisterVariable( TYPE_INT, pName );
 }
@@ -328,7 +328,7 @@ xhandle var_mngr::RegisterInt ( const char* pName )
 
 xhandle var_mngr::RegisterBool ( const char* pName )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::RegisterBool" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::RegisterBool" );
 
     return RegisterVariable( TYPE_BOOL, pName );
 }
@@ -337,7 +337,7 @@ xhandle var_mngr::RegisterBool ( const char* pName )
 
 xhandle var_mngr::RegisterVariable    ( variable_types Type, const char* pName )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::RegisterVariable" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::RegisterVariable" );
 
     xhandle new_handle;
     
@@ -391,7 +391,7 @@ xhandle var_mngr::RegisterVariable    ( variable_types Type, const char* pName )
 
 xhandle var_mngr::RegisterTimer( const char* pName )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::RegisterTimer" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::RegisterTimer" );
 
     xhandle new_handle;
     
@@ -416,7 +416,7 @@ xhandle var_mngr::RegisterTimer( const char* pName )
 
 xhandle var_mngr::RegisterGuid( const char* pName )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::RegisterGuid" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::RegisterGuid" );
 
     xhandle new_handle;
     
@@ -441,7 +441,7 @@ xhandle var_mngr::RegisterGuid( const char* pName )
 
 xbool var_mngr::DestroyVariable ( xhandle& rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::DestroyVariable" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::DestroyVariable" );
 
     ASSERT( rVarHandle.IsNonNull() );
     
@@ -454,7 +454,7 @@ xbool var_mngr::DestroyVariable ( xhandle& rVarHandle )
 
 xbool var_mngr::DestroyGuid ( xhandle& rGuidHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::DestroyGuid" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::DestroyGuid" );
 
     ASSERT( rGuidHandle.IsNonNull() );
     
@@ -467,7 +467,7 @@ xbool var_mngr::DestroyGuid ( xhandle& rGuidHandle )
 
 xbool var_mngr::DestroyTimer ( xhandle& rTimerHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::DestroyTimer" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::DestroyTimer" );
 
     ASSERT( rTimerHandle.IsNonNull() );
     
@@ -480,7 +480,7 @@ xbool var_mngr::DestroyTimer ( xhandle& rTimerHandle )
 
 f32 var_mngr::GetFloat ( xhandle& rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::GetFloat" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::GetFloat" );
 
     ASSERT( rVarHandle.IsNonNull() );
     
@@ -492,7 +492,7 @@ f32 var_mngr::GetFloat ( xhandle& rVarHandle )
 
 s32 var_mngr::GetInt ( xhandle& rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::GetInt" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::GetInt" );
 
     ASSERT( rVarHandle.IsNonNull() );
     
@@ -504,7 +504,7 @@ s32 var_mngr::GetInt ( xhandle& rVarHandle )
 
 xbool var_mngr::GetBool ( xhandle& rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::GetBool" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::GetBool" );
 
     ASSERT( rVarHandle.IsNonNull() );
     
@@ -516,7 +516,7 @@ xbool var_mngr::GetBool ( xhandle& rVarHandle )
 
 xbool var_mngr::GetVarHandle ( const char* pName, xhandle* rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::GetVarHandle" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::GetVarHandle" );
 
     ASSERT( pName != NULL );
     
@@ -540,7 +540,7 @@ xbool var_mngr::GetVarHandle ( const char* pName, xhandle* rVarHandle )
 
 xbool var_mngr::GetTimerHandle ( const char* pName, xhandle* rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::GetTimerHandle" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::GetTimerHandle" );
 
     ASSERT( pName != NULL );
     
@@ -564,7 +564,7 @@ xbool var_mngr::GetTimerHandle ( const char* pName, xhandle* rVarHandle )
 
 xbool var_mngr::GetGuidHandle ( const char* pName, xhandle* rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::GetGuidHandle" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::GetGuidHandle" );
 
     ASSERT( pName != NULL );
     
@@ -588,7 +588,7 @@ xbool var_mngr::GetGuidHandle ( const char* pName, xhandle* rVarHandle )
 
 var_mngr::variable_types  var_mngr::GetType( xhandle& rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::GetType" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::GetType" );
 
     ASSERT( rVarHandle.IsNonNull() );
 
@@ -604,7 +604,7 @@ var_mngr::variable_types  var_mngr::GetType( xhandle& rVarHandle )
 
 void var_mngr::SetFloat ( xhandle& rVarHandle, f32 Value )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::SetFloat" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::SetFloat" );
 
     ASSERT( rVarHandle.IsNonNull() );
     
@@ -619,7 +619,7 @@ void var_mngr::SetFloat ( xhandle& rVarHandle, f32 Value )
 
 void var_mngr::SetInt ( xhandle& rVarHandle, s32 Value  )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::SetInt" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::SetInt" );
 
     ASSERT( rVarHandle.IsNonNull() );
      
@@ -634,7 +634,7 @@ void var_mngr::SetInt ( xhandle& rVarHandle, s32 Value  )
 
 void var_mngr::SetBool ( xhandle& rVarHandle, xbool Value  )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::SetInt" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::SetInt" );
     
     ASSERT( rVarHandle.IsNonNull() );
     
@@ -649,7 +649,7 @@ void var_mngr::SetBool ( xhandle& rVarHandle, xbool Value  )
 
 void var_mngr::SetGuid ( xhandle& rGuidHandle, guid Value  )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::SetGuid" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::SetGuid" );
     
     ASSERT( rGuidHandle.IsNonNull() );
     
@@ -664,7 +664,7 @@ void var_mngr::SetGuid ( xhandle& rGuidHandle, guid Value  )
 
 guid var_mngr::GetGuid ( xhandle& rGuidHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::GetGuid" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::GetGuid" );
 
     ASSERT( rGuidHandle.IsNonNull() );
     
@@ -676,7 +676,7 @@ guid var_mngr::GetGuid ( xhandle& rGuidHandle )
 
 void var_mngr::ResetTimer( xhandle& rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::ResetTimer" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::ResetTimer" );
     
     ASSERT( rVarHandle.IsNonNull() );
 
@@ -691,7 +691,7 @@ void var_mngr::ResetTimer( xhandle& rVarHandle )
 
 void var_mngr::StartTimer( xhandle& rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::StartTimer" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::StartTimer" );
     
     ASSERT( rVarHandle.IsNonNull() );
     
@@ -706,7 +706,7 @@ void var_mngr::StartTimer( xhandle& rVarHandle )
 
 void var_mngr::StopTimer ( xhandle& rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::StopTimer" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::StopTimer" );
     
     ASSERT( rVarHandle.IsNonNull() );
     
@@ -721,7 +721,7 @@ void var_mngr::StopTimer ( xhandle& rVarHandle )
 
 f32 var_mngr::ReadTimer ( xhandle& rVarHandle )
 {
-    VAR_MNGR_CONTEXT( "var_mngr::StopTimer" );
+    X_PROFILE_SCOPE_CATEGORY( "GlobalVariables", "var_mngr::StopTimer" );
     
     ASSERT( rVarHandle.IsNonNull() );
     

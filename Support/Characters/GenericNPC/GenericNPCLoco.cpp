@@ -11,11 +11,6 @@
 
 //==============================================================================
 
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( push )
-    #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
-#endif
-
 generic_loco::generic_loco( void ) :
     loco(),
     m_PlayAnim  ( *this ),
@@ -23,12 +18,6 @@ generic_loco::generic_loco( void ) :
     m_Move      ( *this )
 {
 }
-
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( pop )
-#endif
-
-
 
 //==============================================================================
 //==============================================================================

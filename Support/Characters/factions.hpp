@@ -1,8 +1,8 @@
 #ifndef __FACTIONS_HPP
 #define __FACTIONS_HPP
 
-#include "..\Auxiliary\MiscUtils\Property.hpp"
-#include "..\Auxiliary\MiscUtils\PropertyEnum.hpp"
+#include "../Auxiliary/MiscUtils/Property.hpp"
+#include "../Auxiliary/MiscUtils/PropertyEnum.hpp"
 
 enum factions
 {

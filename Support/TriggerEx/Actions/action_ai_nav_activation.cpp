@@ -8,16 +8,17 @@
 //  INCLUDES
 //=========================================================================
 
+#include "Render/PrimitiveDebug.hpp"
 #include "action_ai_nav_activation.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
 #include "Entropy.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Obj_Mgr\Obj_Mgr.hpp"
-#include "Navigation\Nav_Map.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Navigation/Nav_Map.hpp"
 
 #ifdef X_EDITOR
-#include "..\..\Apps\WorldEditor\nav_connection2_editor.hpp"
+#include "../../Apps/WorldEditor/nav_connection2_editor.hpp"
 #endif // X_EDITOR
 
 static const xcolor s_ActivateColor          (0,255,0);
@@ -85,16 +86,16 @@ void action_ai_nav_activation::OnDebugRender ( s32 Index )
                 break;
             }
 
-            draw_Line( GetPositionOwner(), pObj->GetPosition(), Color );
-            draw_BBox( pObj->GetBBox(), Color );
+            render::debug::Line( GetPositionOwner(), pObj->GetPosition(), Color );
+            render::debug::Box( pObj->GetBBox(), Color );
 
             if (!GetElse())
             {
-                draw_Label( pObj->GetPosition(), Color, xfs("[%d]%s", Index, Info.Get()) );
+                render::debug::Label( pObj->GetPosition(), Color, xfs("[%d]%s", Index, Info.Get()) );
             }
             else
             {
-                draw_Label( pObj->GetPosition(), Color, xfs("[Else %d]%s", Index, Info.Get()) );
+                render::debug::Label( pObj->GetPosition(), Color, xfs("[Else %d]%s", Index, Info.Get()) );
             }
         }
     }

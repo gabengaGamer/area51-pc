@@ -13,8 +13,8 @@
 #include "x_files.hpp"
 #include "x_math.hpp"
 #include "x_bitstream.hpp"
-#include "animdata.hpp"
-#include "ResourceMgr\ResourceMgr.hpp"
+#include "AnimData.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 #include "AnimTrack.hpp"
 #include "SMemMatrixCache.hpp"
 #include "BasePlayer.hpp"
@@ -127,7 +127,7 @@ private:
     f32                 m_PrevFrame;                    // Previous Frame number
     s32                 m_PrevCycle;                    // Previous Cycle number
     f32                 m_Rate;                         // Playback rate (defaults to 1)
-    matrix4             m_L2W PS2_ALIGNMENT(16) ;       // Local -> world matrix
+    matrix4             m_L2W;                          // Local -> world matrix
     xbool               m_IsLooping;                    // Loop flag
     xbool               m_StopAtEnd;                    // Stop anim after 1 cycle flag
     xbool               m_bAtEnd;                       // TRUE if anim has played 1 cycle
@@ -141,7 +141,7 @@ private:
     xbool               m_bCachedApplyBind ;            // Apply bind cached value
     track_controller*   m_pTrackController[ 4 ];        // Pointer to last used track controllers        
 
-} PS2_ALIGNMENT(16) ;
+};
 
 //=========================================================================
 // INLINES

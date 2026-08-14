@@ -9,8 +9,8 @@
 // INCLUDES
 //=============================================================================
 
-#include "Debris\debris.hpp"
-#include "Objects\Render\RigidInst.hpp" 
+#include "Debris/debris.hpp"
+#include "Objects/Render/RigidInst.hpp" 
 
 //=============================================================================
 // EXTERNALS

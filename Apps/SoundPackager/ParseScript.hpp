@@ -2,7 +2,7 @@
 #define __PARSESCRIPT_HPP
 
 #include "x_files.hpp"
-#include "parsing\tokenizer.hpp"
+#include "Parsing/tokenizer.hpp"
 
 #define PACKAGE_SECTION    "package:"
 #define FILES_SECTION      "files:"

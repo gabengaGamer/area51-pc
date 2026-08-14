@@ -1,6 +1,6 @@
-#include "..\x_types.hpp"
-#include "..\x_debug.hpp"
-#include "..\x_threads.hpp"
+#include "../x_types.hpp"
+#include "../x_debug.hpp"
+#include "../x_threads.hpp"
 
 //==============================================================================
 // This file contains our base level atomic synchronisation primitives. All other
@@ -39,6 +39,8 @@ xmutex::xmutex( void )
 xmutex::~xmutex( void )
 {
     ASSERT(m_Initialized);
+    ASSERT(m_EnterCount == 0);
+    ASSERT(m_pOwner == NULL);
 #ifdef DEBUG_THREADS
     m_MasterMutexList.Delete( m_MasterMutexList.Find(this) );
 #endif
@@ -48,17 +50,49 @@ xmutex::~xmutex( void )
 
 xbool xmutex::Enter( s32 Flags )
 {
-    xbool status;
+    xthread* pCurrent;
 
     ASSERT(m_Initialized);
-    if( m_pOwner!=x_GetCurrentThread() )
+    pCurrent = x_GetCurrentThread();
+
+    if( !pCurrent )
     {
-        status = m_Semaphore.Acquire( Flags );
-        if( !status )
-            return FALSE;
-        m_pOwner = x_GetCurrentThread();
+        #if X_THREADS_DEBUG
+        x_RecordThreadDebugFailure( X_THREAD_DEBUG_FAILURE_MUTEX_CURRENT_THREAD, this, m_pOwner, NULL, m_EnterCount );
+        #endif
+        ASSERTS( FALSE, "xmutex::Enter could not identify the current thread" );
+        return FALSE;
     }
-    m_EnterCount++;
+
+    x_BeginAtomic();
+
+    if( m_pOwner == pCurrent )
+    {
+        m_EnterCount++;
+        x_EndAtomic();
+        return TRUE;
+    }
+
+    x_EndAtomic();
+
+    if( !m_Semaphore.Acquire( Flags ) )
+    {
+        #if X_THREADS_DEBUG
+        if( Flags & X_TH_BLOCK )
+        {
+            x_RecordThreadDebugFailure( X_THREAD_DEBUG_FAILURE_MUTEX_ENTER, this, m_pOwner, pCurrent, m_EnterCount );
+        }
+        #endif
+        return FALSE;
+    }
+
+    x_BeginAtomic();
+    ASSERT( m_pOwner == NULL );
+    ASSERT( m_EnterCount == 0 );
+    m_pOwner     = pCurrent;
+    m_EnterCount = 1;
+    x_EndAtomic();
+
     return TRUE;
 }
 
@@ -66,14 +100,48 @@ xbool xmutex::Enter( s32 Flags )
 
 xbool xmutex::Exit( s32 Flags )
 {
+    xbool Release;
+    xthread* pCurrent;
+
     ASSERT(m_Initialized);
-    ASSERT(m_EnterCount>0);
-    m_EnterCount--;
-    if( m_EnterCount==0 )
+    x_BeginAtomic();
+
+    pCurrent = x_GetCurrentThread();
+
+    ASSERT(m_EnterCount > 0);
+
+    if( m_pOwner != pCurrent )
     {
-        m_pOwner=NULL;
-        m_Semaphore.Release( Flags );
+        #if X_THREADS_DEBUG
+        x_RecordThreadDebugFailure( X_THREAD_DEBUG_FAILURE_MUTEX_EXIT_OWNER, this, m_pOwner, pCurrent, m_EnterCount );
+        #endif
+        ASSERTS( FALSE, "xmutex::Exit called by a thread that does not own the mutex" );
+        x_EndAtomic();
+        return FALSE;
     }
+
+    Release = FALSE;
+    m_EnterCount--;
+    if( m_EnterCount == 0 )
+    {
+        m_pOwner = NULL;
+        Release  = TRUE;
+    }
+
+    x_EndAtomic();
+
+    if( Release )
+    {
+        xbool const Released = m_Semaphore.Release( Flags );
+        #if X_THREADS_DEBUG
+        if( !Released )
+        {
+            x_RecordThreadDebugFailure( X_THREAD_DEBUG_FAILURE_MUTEX_SEMAPHORE_RELEASE, this, NULL, pCurrent, 0 );
+        }
+        #endif
+        return Released;
+    }
+
     return TRUE;
 }
 
@@ -81,6 +149,19 @@ xbool xmutex::Exit( s32 Flags )
 
 xsema::xsema( s32 count, s32 initial )
 {
+    ASSERT( count > 0 );
+    ASSERT( initial >= 0 );
+    ASSERT( initial <= count );
+
+    if( count <= 0 )
+        count = 1;
+
+    if( initial < 0 )
+        initial = 0;
+
+    if( initial > count )
+        initial = count;
+
     m_Initialized       = TRUE;
     m_Count             = count;
     m_Available         = initial;
@@ -230,4 +311,3 @@ xbool xsema::Release(s32 Flags)
     }
     return TRUE;
 }
-

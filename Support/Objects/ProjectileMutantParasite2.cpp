@@ -5,16 +5,16 @@
 //=============================================================================================
 // INCLUDES
 //=============================================================================================
+#include "Render/PrimitiveDebug.hpp"
 #include "ProjectileMutantParasite2.hpp"
-#include "Entropy\e_Draw.hpp"
-#include "AudioMgr\AudioMgr.hpp"
-#include "render\LightMgr.hpp"
-#include "Decals\DecalMgr.hpp"
-#include "Objects\ParticleEmiter.hpp"
-#include "Objects\Player.hpp"
-#include "Characters\MutantTank\Mutant_Tank.hpp"
-#include "Dictionary\Global_Dictionary.hpp"
-#include "NetworkMgr\NetworkMgr.hpp"
+#include "AudioMgr/AudioMgr.hpp"
+#include "Render/LightMgr.hpp"
+#include "Decals/DecalMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Characters/MutantTank/Mutant_Tank.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
 
 
 #include "Objects/ClothObject.hpp"
@@ -26,7 +26,7 @@
 #include "Objects/SuperDestructible.hpp"
 #include "Objects/Turret.hpp"
 #include "Objects/AlienShield.hpp"
-#include "Objects/alienglob.hpp"
+#include "Objects/AlienGlob.hpp"
 
 #define ENABLE_LOGGING 0
 
@@ -195,11 +195,11 @@ mutant_parasite_projectile::~mutant_parasite_projectile()
 
 //=============================================================================
 
-void mutant_parasite_projectile::OnAdvanceLogic( f32 DeltaTime )
+void mutant_parasite_projectile::OnAdvanceSimulation( f32 DeltaTime )
 {
     if( m_Exploded )
     {
-        net_proj::OnAdvanceLogic( DeltaTime );
+        net_proj::OnAdvanceSimulation( DeltaTime );
         
         m_ExplodeFadeTimer -= DeltaTime;
         if( m_ExplodeFadeTimer < 0.0f )
@@ -219,7 +219,7 @@ void mutant_parasite_projectile::OnAdvanceLogic( f32 DeltaTime )
     CLOG_MESSAGE( ENABLE_LOGGING, (const char*)xfs("mutant_parasite_projectile %04d",net_GetSlot() ), "OnAdvLogic: m_StartVel = [%f, %f, %f], Dirtybits=%08X",m_StartVel.GetX(),m_StartVel.GetY(),m_StartVel.GetZ(),m_NetDirtyBits);
 #endif
 
-    //net_proj::OnAdvanceLogic( DeltaTime );
+    //net_proj::OnAdvanceSimulation( DeltaTime );
     CheckInternalCollision( DeltaTime );
 
     ASSERT( m_StartVel.Length() > 1.0f );
@@ -387,15 +387,12 @@ void mutant_parasite_projectile::OnRender( void )
 #ifdef X_DEBUG
     if (!m_Velocity.IsValid())
         return;
-
-    draw_ClearL2W();
-
-    draw_Line( GetPosition(), m_TargetPoint, XCOLOR_RED );
+    render::debug::Line( GetPosition(), m_TargetPoint, XCOLOR_RED );
 
     vector3 Dir = m_Velocity;
     Dir.NormalizeAndScale( 400.0f );
 
-    draw_Line( GetPosition(), GetPosition() + Dir, XCOLOR_YELLOW );
+    render::debug::Line( GetPosition(), GetPosition() + Dir, XCOLOR_YELLOW );
 
     vector3 CurrentTraj = m_Velocity;
     vector3 IdealTraj   = m_TargetPoint - GetPosition();
@@ -419,12 +416,12 @@ void mutant_parasite_projectile::OnRender( void )
     quaternion Rot( Axis, Angle );
 
     Axis.NormalizeAndScale(400.0f);
-    draw_Line( GetPosition(), GetPosition() + Axis, XCOLOR_GREEN );
+    render::debug::Line( GetPosition(), GetPosition() + Axis, XCOLOR_GREEN );
 
     Dir = Rot.Rotate( Dir );
-    draw_Line( GetPosition(), GetPosition() + Dir, XCOLOR_AQUA );
+    render::debug::Line( GetPosition(), GetPosition() + Dir, XCOLOR_AQUA );
 
-    draw_Sphere( m_TargetPoint, 10, XCOLOR_RED );
+    render::debug::Sphere( m_TargetPoint, 10, XCOLOR_RED );
 #endif
 #endif
 }
@@ -442,15 +439,12 @@ void mutant_parasite_projectile::OnRenderTransparent( void )
 #ifdef X_DEBUG
     if (!m_Velocity.IsValid())
         return;
-
-    draw_ClearL2W();
-
-    draw_Line( GetPosition(), m_TargetPoint, XCOLOR_RED );
+    render::debug::Line( GetPosition(), m_TargetPoint, XCOLOR_RED );
 
     vector3 Dir = m_Velocity;
     Dir.NormalizeAndScale( 400.0f );
 
-    draw_Line( GetPosition(), GetPosition() + Dir, XCOLOR_YELLOW );
+    render::debug::Line( GetPosition(), GetPosition() + Dir, XCOLOR_YELLOW );
 
     vector3 CurrentTraj = m_Velocity;
     vector3 IdealTraj   = m_TargetPoint - GetPosition();
@@ -474,10 +468,10 @@ void mutant_parasite_projectile::OnRenderTransparent( void )
     quaternion Rot( Axis, Angle );
 
     Axis.NormalizeAndScale(400.0f);
-    draw_Line( GetPosition(), GetPosition() + Axis, XCOLOR_GREEN );
+    render::debug::Line( GetPosition(), GetPosition() + Axis, XCOLOR_GREEN );
 
     Dir = Rot.Rotate( Dir );
-    draw_Line( GetPosition(), GetPosition() + Dir, XCOLOR_AQUA );
+    render::debug::Line( GetPosition(), GetPosition() + Dir, XCOLOR_AQUA );
 #endif
 #endif
 }
@@ -1329,7 +1323,7 @@ f32 mutant_parasite_projectile::GetWanderScale( void )
 
 void mutant_parasite_projectile::CheckInternalCollision( f32 DeltaTime )
 {
-    // THIS IS AN ABRIDGED VERSION OF net_proj::OnAdvanceLogic
+    // THIS IS AN ABRIDGED VERSION OF net_proj::OnAdvanceSimulation
 
     // Age gracefully.
     m_Age   += DeltaTime;
@@ -1399,7 +1393,7 @@ void mutant_parasite_projectile::CheckInternalCollision( f32 DeltaTime )
             // Skip over collisions with unidentifiable objects.
             if( Coll.ObjectHitGuid == 0 )
             {
-                LOG_WARNING( (const char*)xfs("net_proj::OnAdvanceLogic %04d",net_GetSlot()),
+                LOG_WARNING( (const char*)xfs("net_proj::OnAdvanceSimulation %04d",net_GetSlot()),
                     "Collision with 'unidentifiable' object." );
                 continue;
             }
@@ -1408,7 +1402,7 @@ void mutant_parasite_projectile::CheckInternalCollision( f32 DeltaTime )
             object* pObject = g_ObjMgr.GetObjectByGuid( Coll.ObjectHitGuid );
             if( !pObject )
             {
-                LOG_WARNING( (const char*)xfs("net_proj::OnAdvanceLogic %04d",net_GetSlot()),
+                LOG_WARNING( (const char*)xfs("net_proj::OnAdvanceSimulation %04d",net_GetSlot()),
                     "Collision with 'unretrievable' object." );
                 continue;
             }
@@ -1509,7 +1503,7 @@ void mutant_parasite_projectile::CheckInternalCollision( f32 DeltaTime )
     //
 /*
     CLOG_MESSAGE( ENABLE_LOGGING, 
-        (const char*)xfs("net_proj::OnAdvanceLogic %04d",net_GetSlot()), 
+        (const char*)xfs("net_proj::OnAdvanceSimulation %04d",net_GetSlot()), 
         "TimeT:%4.2f - Position:(%4.2f,%4.2f,%4.2f) - Velocity:(%4.2f,%4.2f,%4.2f)", 
         m_TimeT,
         m_NewPos.GetX(),   m_NewPos.GetY(),   m_NewPos.GetZ(),
@@ -1531,7 +1525,7 @@ void mutant_parasite_projectile::CheckInternalCollision( f32 DeltaTime )
 
     }
 /*
-    CLOG_MESSAGE( ENABLE_LOGGING, (const char*)xfs("net_proj::OnAdvanceLogic %04d",net_GetSlot()),
+    CLOG_MESSAGE( ENABLE_LOGGING, (const char*)xfs("net_proj::OnAdvanceSimulation %04d",net_GetSlot()),
         "DONE StartVel (%f,%f,%f)",m_StartVel.GetX(), m_StartVel.GetY(), m_StartVel.GetZ() );        
 */
 

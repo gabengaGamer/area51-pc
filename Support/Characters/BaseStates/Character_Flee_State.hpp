@@ -1,7 +1,7 @@
 #ifndef _CHARACTER_FLEE_STATE_HPP_
 #define _CHARACTER_FLEE_STATE_HPP_
 
-#include "..\CharacterState.hpp"
+#include "../CharacterState.hpp"
 
 class character_flee_state : public character_state
 {

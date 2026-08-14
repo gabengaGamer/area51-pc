@@ -7,11 +7,6 @@
 //===========================================================================
 // friendly_scientist
 
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( push )
-    #pragma warning( disable:4355 ) // 'this' : used in base member initializer list
-#endif
-
 friendly_scientist::friendly_scientist() :
     m_Idle              ( *this, character_state::STATE_IDLE    ),
     m_Alert             ( *this, character_state::STATE_ALERT   ),
@@ -25,10 +20,6 @@ friendly_scientist::friendly_scientist() :
     m_Faction = FACTION_WORKERS ;
     m_FriendFlags |= ( FACTION_WORKERS | FACTION_GRAY | FACTION_MILITARY | FACTION_PLAYER_NORMAL ) ;
 }
-
-#if defined TARGET_XBOX && _MSC_VER >= 1300
-    #pragma warning( pop )
-#endif
 
 //===========================================================================
 

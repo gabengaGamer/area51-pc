@@ -268,5 +268,4 @@ static s16 s_iicon_trigger[] =
 };
 
 
-#define DRAW_ICON_TRIGGER() draw_icon( NUM_FACETS_ICON_TRIGGER, NUM_VERTICES_ICON_TRIGGER, s_vicon_trigger, s_iicon_trigger )
 

@@ -11,15 +11,17 @@
 // INCLUDES
 //=========================================================================
 
-#include "Obj_mgr\Obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
 #include "AStar.hpp"
-#include "Characters\AlertPackage.hpp"
-#include "Navigation\ng_connection2.hpp"
-#include "TriggerEX\Actions\action_music_intensity.hpp"
+#include "Characters/AlertPackage.hpp"
+#include "Navigation/ng_connection2.hpp"
+#include "TriggerEx/Actions/action_music_intensity.hpp"
 
 
 const s32 k_NumTargettingData = 32;
 const s32 k_MaxMeleeingPlayer = 2;
+
+class character;
 
 //=========================================================================
 // CLASSES
@@ -72,7 +74,7 @@ public:
 
     virtual void    OnActivate              ( xbool Flag );            
     virtual void    OnKill                  ( void );   
-    virtual void    OnAdvanceLogic          ( f32 DeltaTime );
+    virtual void    OnAdvanceSimulation          ( f32 DeltaTime );
 
 #ifndef X_RETAIL
     virtual void    OnDebugRender           ( void ) ;
@@ -116,6 +118,8 @@ protected:
     TargettingData      m_LastTickTargettingData[k_NumTargettingData];
 
     s32                 m_ActiveThinkID ;           // Current ID of character that can think
+    f32                 m_ThinkTimeAccumulator;
+    xarray<guid>        m_ActiveCharacterGuids;
     guid                m_MeleeingPlayerGuids[k_MaxMeleeingPlayer];       // guid of the NPC currently meleeing the player.   
     xtick               m_SoundTimer;
     xtick               m_GrenadeTimer;

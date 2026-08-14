@@ -9,6 +9,10 @@
 #ifndef GEOM_PIXEL_SHARED_HLSL
 #define GEOM_PIXEL_SHARED_HLSL
 
+//==============================================================================
+//  INCLUDES
+//==============================================================================
+
 #include "common/geom_pixel_core.hlsl"
 #include "common/geom_pixel_instances.hlsl"
 #include "common/geom_pixel_distortion.hlsl"

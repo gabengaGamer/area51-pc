@@ -9,10 +9,10 @@
 //=========================================================================
 
 #include "condition_player_has_item.hpp"
-#include "..\xcore\auxiliary\MiscUtils\Property.hpp"
-#include "..\MiscUtils\SimpleUtils.hpp"
-#include "..\Support\Objects\Player.hpp"
-#include "Dictionary\global_dictionary.hpp"
+#include "../xCore/Auxiliary/MiscUtils/Property.hpp"
+#include "../MiscUtils/SimpleUtils.hpp"
+#include "../Support/Objects/Player/Player.hpp"
+#include "Dictionary/Global_Dictionary.hpp"
 #include "Inventory/Inventory2.hpp"
 
 //=========================================================================

@@ -1,7 +1,7 @@
 
 #include "x_files.hpp"
 #include "CommandLine.hpp"
-#include "animcompiler.hpp"
+#include "AnimCompiler.hpp"
 #include "x_plus.hpp"
 
 #ifdef TARGET_PC

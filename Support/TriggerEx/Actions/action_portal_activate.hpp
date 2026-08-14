@@ -11,8 +11,8 @@
 // INCLUDES
 //=========================================================================
 
-#include "..\TriggerEx_Actions.hpp"
-#include "..\Affecters\object_affecter.hpp"
+#include "../TriggerEx_Actions.hpp"
+#include "../Affecters/object_affecter.hpp"
 
 //=========================== ==============================================
 // action_object_move

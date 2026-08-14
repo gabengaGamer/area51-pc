@@ -9,13 +9,13 @@
 #include "Auxiliary/CommandLine/CommandLine.hpp"
 #include "x_bytestream.hpp"
 #include "DspTool.hpp"
-#include "parsing\tokenizer.hpp"
+#include "Parsing/tokenizer.hpp"
 #include "x_debug.hpp"
 #include "aiff_file.hpp"
 #include "endian.hpp"
 #include <windows.h>
 #include <stdlib.h>
-#include "audio_private_pkg.hpp"
+#include "audio_package_format.hpp"
 #include "x_threads.hpp"
 
 #include "PackageTypes.hpp"
@@ -313,4 +313,3 @@ int main(int argc, char* argv[])
 }
 
 //==============================================================================
-

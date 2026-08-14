@@ -745,7 +745,7 @@ void CPartEdDoc::OnFileExportvideoavi()
         CAVIGenerator Avi( Options.GetFileName(), &bminfo, 30 );
 
         // temporarily muck with the render resolution
-        d3deng_SetResolution( bminfo.biWidth, bminfo.biHeight );
+        eng_SetResolution( bminfo.biWidth, bminfo.biHeight );
 
 
         if ( Avi.InitEngine() != AVIERR_OK )
@@ -775,7 +775,7 @@ void CPartEdDoc::OnFileExportvideoavi()
         // fix back the view
         RECT Window;
         ::GetWindowRect( ::GetDesktopWindow(), &Window );
-        d3deng_SetResolution( Window.right - Window.left, Window.bottom - Window.top );
+        eng_SetResolution( Window.right - Window.left, Window.bottom - Window.top );
         pView->RedrawWindow();
 
         Avi.ReleaseEngine();

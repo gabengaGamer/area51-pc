@@ -10,8 +10,8 @@
 #define TRIGGER_HPP
 
 #include "Entropy.hpp"
-#include "obj_mgr\Obj_Mgr.hpp"
-#include "resourcemgr\resourcemgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "ResourceMgr/ResourceMgr.hpp"
 
 
 class trigger 

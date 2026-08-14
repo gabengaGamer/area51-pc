@@ -5,9 +5,9 @@
 // INCLUDES
 //=========================================================================
 #include "Entropy.hpp"
-#include "Auxiliary\MiscUtils\Dictionary.hpp"
-#include "x_BitStream.hpp"
-#include "Objects\object.hpp"
+#include "Auxiliary/MiscUtils/dictionary.hpp"
+#include "x_bitstream.hpp"
+#include "Objects/object.hpp"
 
 //=========================================================================
 // PRE-DECL
@@ -31,9 +31,10 @@ public:
     //---------------------------------------------------------------------
     void        ClearData                   ( xbool bClearDictionary );
     xbool       LoadData                    ( const char* pFile, const char* pDictionary );
-    xbool       LoadLevel                   ( const char* pLevelName, const char* pDictionaryName, const char* pLoadOrderName );
+    xbool       BeginLevelLoad              ( const char* pLevelName, const char* pDictionaryName );
+    void        UpdateLevelLoad             ( f32 TimeBudgetSeconds );
+    xbool       IsLevelLoadComplete         ( void ) const;
     void        SetRigidColor               ( const char* pFileName );
-    void        PreloadDataFiles            ( const char* pLoadOrderName );
 
     void        SetDesireToSave             ( xbool bDesire ) { m_bWantsToSave = bDesire; }
     xbool       WantsToSave                 ( void ) { return m_bWantsToSave; }
@@ -67,6 +68,7 @@ protected:
     void        NullData                    ( xbool bClearDictionary ); 
     void        AddPropertyToObject         ( prop_entry& pe, object* pObject ); 
     void        AddDataToBitStream          ( prop_container& pc );
+    void        LoadLevelObject             ( s32 ObjectIndex );
 
 protected:
 
@@ -81,6 +83,9 @@ protected:
     xbool                   m_bIsRuntimeDynamicData;
     xbool                   m_bWantsToSave;
     xbool                   m_bWantsToLoad;
+    s32                     m_LevelLoadObject;
+    xbool                   m_bLevelLoadActive;
+    xbool                   m_bSuppressNetObjects;
     
 
 // the following functions are for editor use only

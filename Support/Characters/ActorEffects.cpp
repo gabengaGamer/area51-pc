@@ -5,21 +5,21 @@
 //==============================================================================
 
 #include "ActorEffects.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
-#include "CollisionMgr\CollisionMgr.hpp"
-#include "objects\actor\actor.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "CollisionMgr/CollisionMgr.hpp"
+#include "Objects/Actor/Actor.hpp"
 
 #ifndef X_EDITOR
-#include "objects\netghost.hpp"
+#include "Objects/NetGhost.hpp"
 #endif
 
-#include "objects\Corpse.hpp"
-#include "objects\NewWeapon.hpp"
-#include "GameLib\RenderContext.hpp"
-#include "objects\Player.hpp"
-#include "characters\MutantTank\Mutant_Tank.hpp"
+#include "Objects/Corpse.hpp"
+#include "Objects/NewWeapon.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Objects/Player/Player.hpp"
+#include "Characters/MutantTank/Mutant_Tank.hpp"
 
-#include "..\Support\Sound\EventSoundEmitter.hpp"
+#include "../Support/Sound/EventSoundEmitter.hpp"
 
 //==============================================================================
 

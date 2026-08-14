@@ -14,11 +14,12 @@
 //#ifndef X_TYPES_HPP
 #include "Entropy.hpp"
 #include "x_types.hpp"
-#include "Obj_mgr\obj_mgr.hpp"
+#include "Obj_mgr/obj_mgr.hpp"
+#include "Render/Texture.hpp"
 //#endif
 
 //==============================================================================
-//  font
+//  FONT
 //==============================================================================
 
 class font
@@ -45,9 +46,7 @@ public:
     };
 
 protected:
-    //xbitmap     m_Bitmap;
-
-    rhandle<xbitmap>    m_Bitmap;
+    rhandle<texture>    m_bitmap;
 
     s32         m_BmWidth;
     s32         m_BmHeight;
@@ -76,7 +75,12 @@ public:
 //  void                DrawFormattedText   ( const irect& R, u32 Flags, const xcolor& Color, const xwchar* pString ) const;
 };
 
+//==============================================================================
+//  GLOBAL INSTANCE
+//==============================================================================
+
 extern font g_Font;
+
 //==============================================================================
 #endif // FONT_HPP
 //==============================================================================

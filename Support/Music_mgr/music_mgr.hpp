@@ -1,8 +1,8 @@
 #ifndef MUSIC_MGR_HPP
 #define MUSIC_MGR_HPP
 
-#include "e_audio.hpp"
-#include "Parsing/textin.hpp"
+#include "e_Audio.hpp"
+#include "Parsing/TextIn.hpp"
 
 class music_mgr 
 {

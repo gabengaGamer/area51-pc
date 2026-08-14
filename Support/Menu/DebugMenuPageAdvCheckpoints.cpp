@@ -9,17 +9,12 @@
 
 #include "DebugMenu2.hpp"
 //#include "SaveMgr\SaveMgr.hpp"
-//#include "objects\player.hpp"
+//#include "Objects\Player\Player.hpp"
 //#include "StateMgr/mapList.hpp"
 //#include "Ui\ui_manager.hpp"
 //#include "Ui\ui_font.hpp"
 //#include "Configuration/GameConfig.hpp"
 //#include "PhysicsMgr\PhysicsMgr.hpp"
-
-//#if defined( TARGET_PS2 )
-//#include "StatsMgr.hpp"
-//#endif
-
 
 //==============================================================================
 

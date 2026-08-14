@@ -36,15 +36,16 @@
 // PLATFORM HEADERS
 //==============================================================================
 
-#ifdef TARGET_PC
 #include <stdio.h>  // for printf
+
+#ifdef TARGET_PC
 #include "../x_bytestream.hpp"
 #include <richedit.h>
 #endif
 
 //==============================================================================
 
-#if defined( X_RETAIL ) && !defined( X_QA ) && !defined( TARGET_PC )
+#if defined( X_RETAIL ) && !defined( X_QA ) && !defined( TARGET_DESKTOP )
 #error Exclude x_debug.cpp from retail builds.
 #endif
 
@@ -85,7 +86,7 @@ static      x_debug_msg_fn*     s_DebugMsgFunction = NULL;
 static      char                s_Cause[CAUSE_BUFFER_SIZE] = {0};
 #endif
 
-#ifdef TARGET_PC
+#ifdef TARGET_DESKTOP
 static      char                s_ErrorBuffer[ ERROR_BUFFER_SIZE ];
 static      s32                 s_iErrorBuffer = 0;
 static      s32                 s_iErrorLast   = 0;
@@ -115,7 +116,7 @@ xbool g_bSkipThrowCatchAssertDialogs = FALSE;
 
 //==============================================================================
 
-#ifdef TARGET_PC
+#ifdef TARGET_DESKTOP
 const char* xExceptionGetErrorString( void )
 {
     return s_ErrorBuffer;
@@ -196,11 +197,6 @@ s32 RTFDialog( const char* pTitle, const char* pMessage )
     // Send the RTF through the mailer if one is installed
     if( s_pRTFMailer )
         s_pRTFMailer( pTitle, pMessage );
-
-    {
-        OutputDebugString( xfs( "*** %s ***\n%s\n", pTitle ? pTitle : "", pMessage ? pMessage : "" ) );
-        return RTF_CONTINUE;
-    }
 
     // Create the dialog box template
     /* dlgVer */    b << (u16)1;
@@ -339,7 +335,7 @@ xbool xExceptionCatchHandler( const char* pFileName, s32 LineNum, const char* pM
 
 //==============================================================================
 
-#ifdef TARGET_PC
+#ifdef TARGET_DESKTOP
 
 xbool xExceptionThrowHandler( const char* pFileName, s32 LineNum, const char* pMessage, xbool bConcatenate, xbool& bSkipDialog )
 {
@@ -350,7 +346,7 @@ xbool xExceptionThrowHandler( const char* pFileName, s32 LineNum, const char* pM
 
 //==============================================================================
 
-#ifdef TARGET_PC
+#ifdef TARGET_DESKTOP
 
 xbool xExceptionThrowHandler( const char* pFileName, s32 LineNum, const char* pMessage, xbool bConcatenate, s32 Code, xbool& bSkipDialog )
 {
@@ -479,7 +475,7 @@ static void sys_dbg_OutputConsole(s32 Channel, const char* pString)
 
 #else
 
-#if defined(TARGET_PC) && !defined(X_RETAIL)
+#if defined(TARGET_DESKTOP) && !defined(X_RETAIL)
     if( s_DebugMsgFunction )
     {
         s_DebugMsgFunction(pString);

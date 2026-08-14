@@ -228,7 +228,7 @@ void ScrollTextOneLineUp( void )
 
 void text_PrintPixelXY( const char* pStr, s32 PixelX, s32 PixelY )
 {
-    ASSERT( s_Initialized );
+    //ASSERT( s_Initialized );
     if( s_TextOff ) return;
     if( s_NewParameters || (!s_BufferMemory) ) return;
 

@@ -12,7 +12,7 @@
 //=========================================================================
 
 #include "action_ai_base.hpp"
-#include "Inventory\Inventory2.hpp"
+#include "Inventory/Inventory2.hpp"
 
 //=========================== ==============================================
 // action_player_inventory

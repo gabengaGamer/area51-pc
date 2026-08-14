@@ -4,20 +4,20 @@
 //
 //=========================================================================
 
-#include "entropy.hpp"
+#include "Entropy.hpp"
 
-#include "ui\ui_font.hpp"
-#include "ui\ui_manager.hpp"
-#include "ui\ui_control.hpp"
-#include "ui\ui_button.hpp"
+#include "UI/ui_font.hpp"
+#include "UI/ui_manager.hpp"
+#include "UI/ui_control.hpp"
+#include "UI/ui_button.hpp"
 
 #include "dlg_Leaderboard.hpp"
 #include "dlg_TeamLeaderboard.hpp"
 
-#include "StateMgr\StateMgr.hpp"
-#include "stringmgr\stringmgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
-#include "NetworkMgr\Voice\VoiceMgr.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "StringMgr/StringMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "NetworkMgr/Voice/VoiceMgr.hpp"
 
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
@@ -31,20 +31,13 @@
 
 ui_manager::control_tem LeaderboardControls[] = 
 {
-    { IDC_LEADERBOARD_DETAILS,       "IDS_NULL",        "blankbox",   79,  36, 338, 283, 0, 0, 1, 1, ui_win::WF_VISIBLE|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_LEADERBOARD_FRAME_ONE,     "IDS_NULL",        "frame",      77,  34, 340, 285, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_LEADERBOARD_FRAME_MAIN,    "IDS_NULL",        "frame",      10,  24, 476, 309, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_LEADERBOARD_FRAME_TIMEOUT, "IDS_NULL",        "frame",     275, 345, 104,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_LEADERBOARD_TIMEOUT_TEXT,  "IDS_NULL",        "text",      135, 345, 104,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-#ifdef TARGET_XBOX
-    { IDC_LEADERBOARD_LOADING_TEXT,  "IDS_NULL",        "text",      235, 395, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_LEADERBOARD_LOADING_PIPS,  "IDS_NULL",        "text",      465, 395,  50,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_LEADERBOARD_NAV_TEXT,      "IDS_NULL",        "text",       25, 395, 200,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-#else
-    { IDC_LEADERBOARD_LOADING_TEXT,  "IDS_NULL",        "text",      235, 395, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_LEADERBOARD_LOADING_PIPS,  "IDS_NULL",        "text",      465, 395,  50,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-    { IDC_LEADERBOARD_NAV_TEXT,      "IDS_NULL",        "text",       25, 395, 200,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_SCALE_XPOS|ui_win::WF_SCALE_XSIZE },
-#endif
+    { IDC_LEADERBOARD_DETAILS,       "IDS_NULL",        "blankbox",   79,  36, 338, 283, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_LEADERBOARD_FRAME_ONE,     "IDS_NULL",        "frame",      77,  34, 340, 285, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_LEADERBOARD_FRAME_MAIN,    "IDS_NULL",        "frame",      10,  24, 476, 309, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_LEADERBOARD_FRAME_TIMEOUT, "IDS_NULL",        "frame",     275, 345, 104,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_LEADERBOARD_TIMEOUT_TEXT,  "IDS_NULL",        "text",      135, 345, 104,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_LEADERBOARD_LOADING_TEXT,  "IDS_NULL",        "text",      235, 395, 230,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
+    { IDC_LEADERBOARD_LOADING_PIPS,  "IDS_NULL",        "text",      465, 395,  50,  16, 0, 0, 0, 0, ui_win::WF_VISIBLE|ui_win::WF_STATIC },
 };
 
 ui_manager::dialog_tem LeaderboardDialog =
@@ -97,18 +90,6 @@ ui_win* dlg_leaderboard_factory( s32 UserID, ui_manager* pManager, ui_manager::d
 
 dlg_leaderboard::dlg_leaderboard( void )
 {
-#ifdef TARGET_PS2
-    if( x_GetTerritory() != XL_TERRITORY_AMERICA )
-    {
-        s_LineSpacing = 19;
-    }
-#endif
-
-#ifdef TARGET_XBOX
-    m_XBOXNotificationOffsetX = 16;
-    m_XBOXNotificationOffsetY = 44;
-    m_bUseTopmost             = 1;
-#endif
 }
 
 //=========================================================================
@@ -138,7 +119,6 @@ xbool dlg_leaderboard::Create( s32                        UserID,
     Success = dlg_mp_score::Create( UserID, pManager, pDialogTem, Position, pParent, Flags, pUserData );
 
     m_pPlayerBox	= (ui_blankbox*)    FindChildByID( IDC_LEADERBOARD_DETAILS       );
-    m_pNavText      = (ui_text*)        FindChildByID( IDC_LEADERBOARD_NAV_TEXT      );
     m_pFrameOne     = (ui_frame*)       FindChildByID( IDC_LEADERBOARD_FRAME_ONE     );
     m_pFrameMain    = (ui_frame*)       FindChildByID( IDC_LEADERBOARD_FRAME_MAIN    );
     m_pFrameTimeOut = (ui_frame*)       FindChildByID( IDC_LEADERBOARD_FRAME_TIMEOUT );
@@ -186,10 +166,8 @@ xbool dlg_leaderboard::Create( s32                        UserID,
     m_pLoadingPips->UseSmallText(TRUE);
 
     // initialize nav text
-    m_pNavText->SetLabel( g_StringTableMgr( "ui", "IDS_NULL") );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, FALSE );
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->UseSmallText(TRUE);
+    SetNavText( g_StringTableMgr( "ui", "IDS_NULL") );
+    SetNavTextVisible( FALSE );
                
     // Grab a bunch of strings.
     m_pStrLevelDesc  = g_StringTableMgr( "ui", "IDS_NAV_LEVEL_DESC"  );
@@ -239,14 +217,7 @@ void dlg_leaderboard::Render( s32 ox, s32 oy )
     }
 	irect rb;
 
-	s32 XRes, YRes;
-    eng_GetRes(XRes, YRes);
-#ifdef TARGET_PS2
-    // Nasty hack to force PS2 to draw to rb.l = 0
-    rb.Set( -1, 0, XRes, YRes );
-#else
-    rb.Set( 0, 0, XRes, YRes );
-#endif
+	rb = g_UiMgr->GetUserBounds( m_UserID );
     // render background filter
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
@@ -263,7 +234,7 @@ void dlg_leaderboard::Render( s32 ox, s32 oy )
 
 //=========================================================================
 
-void dlg_leaderboard::OnPadDelete( ui_win* pWin )
+void dlg_leaderboard::OnDelete( ui_win* pWin )
 {
     (void)pWin;      
 
@@ -278,7 +249,7 @@ void dlg_leaderboard::OnPadDelete( ui_win* pWin )
 
             // Open a dialog to confirm quitting the online game component
             irect r = g_UiMgr->GetUserBounds( g_UiUserID );
-            m_pPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL|ui_win::WF_USE_ABSOLUTE );
+            m_pPopUp = (dlg_popup*)g_UiMgr->OpenDialog(  m_UserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER|WF_INPUTMODAL );
 
             // get message text
             xwstring Message;
@@ -294,7 +265,7 @@ void dlg_leaderboard::OnPadDelete( ui_win* pWin )
             // set nav text
             xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
             navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
-            m_pNavText->SetFlag(ui_win::WF_VISIBLE, FALSE);
+            SetNavTextVisible( FALSE );
 
             m_pPopUp->Configure( g_StringTableMgr( "ui", "IDS_QUIT_POPUP" ), TRUE, TRUE, FALSE, Message, navText, &m_PopUpResult );
         }
@@ -302,8 +273,8 @@ void dlg_leaderboard::OnPadDelete( ui_win* pWin )
 }
 
 //=========================================================================
-#if !defined( TARGET_XBOX )
-void dlg_leaderboard::OnPadBack( ui_win* pWin )
+
+void dlg_leaderboard::OnCancel( ui_win* pWin )
 {
     (void)pWin;
 
@@ -317,13 +288,17 @@ void dlg_leaderboard::OnPadBack( ui_win* pWin )
         m_State = DIALOG_STATE_BACK;
     }
 }
-#endif // !TARGET_XBOX
 
 //=========================================================================
 
-void dlg_leaderboard::OnPadSelect( ui_win* pWin )
+void dlg_leaderboard::OnAccept( ui_win* pWin )
 {
     (void)pWin;
+
+    if( m_Mode == LEADERBOARD_OVERLAY )
+    {
+        return;
+    }
 
     if( m_State == DIALOG_STATE_ACTIVE )
     {
@@ -342,8 +317,7 @@ void dlg_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     // update list box
     FillScoreList();
 
-    m_pNavText->SetLabelFlags( ui_font::h_center|ui_font::v_top|ui_font::is_help_text );
-    m_pNavText->SetFlag( ui_win::WF_VISIBLE, TRUE );
+    SetNavTextVisible( TRUE );
 
     xwstring NavText;
 
@@ -360,9 +334,12 @@ void dlg_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         NavText += g_StringTableMgr( "ui", "IDS_NAV_ONLINE_MENU");
         break;
 
+    case LEADERBOARD_OVERLAY:
+        SetNavTextVisible( FALSE );
+        break;
+
     case LEADERBOARD_INTERLEVEL:
     {
-        m_pNavText->SetLabelFlags( ui_font::h_left|ui_font::v_top );
         NavText = m_pStrLevelDesc;
 
         xwstring LoadText("");
@@ -381,7 +358,7 @@ void dlg_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         ASSERT( FALSE );
     }
 
-    m_pNavText->SetLabel( NavText );
+    SetNavText( NavText );
 
     if( m_pPopUp )
     {
@@ -396,7 +373,7 @@ void dlg_leaderboard::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             else
             {
                 // return to dialog
-                m_pNavText->SetFlag(ui_win::WF_VISIBLE, TRUE);
+                SetNavTextVisible( TRUE );
                 m_pPopUp = NULL;
             }
         }
@@ -422,12 +399,14 @@ void dlg_leaderboard::Configure( leaderboard_mode Mode )
     case LEADERBOARD_FINAL:
         break;
     case LEADERBOARD_INTERLEVEL:
-        m_pNavText    ->SetLabelFlags( ui_font::h_left|ui_font::v_top );
-        m_pNavText    ->SetFlag( ui_win::WF_VISIBLE, TRUE );
+        SetNavTextVisible( TRUE );
         m_pLoadingText->SetFlag( ui_win::WF_VISIBLE, TRUE );
         m_pLoadingPips->SetFlag( ui_win::WF_VISIBLE, TRUE );
         break;
     case LEADERBOARD_PAUSE:
+        break;
+    case LEADERBOARD_OVERLAY:
+        SetNavTextVisible( FALSE );
         break;
     }
 }
@@ -569,7 +548,7 @@ void dlg_leaderboard::RenderScoreList( s32 ox, s32 oy )
     s32 i;
     irect r;
     xcolor ch(255,252,204,255);
-    s32 PlayerSize = (s32)(274.0f* m_pManager->GetScaleX());  // size allowed to player before any data columns
+    s32 PlayerSize = 274;  // size allowed to player before any data columns
 
     // get score data
     const game_score& ScoreData = GameMgr.GetScore();
@@ -588,29 +567,21 @@ void dlg_leaderboard::RenderScoreList( s32 ox, s32 oy )
     if( ScoreData.ScoreFieldMask & SCORE_VOTES )
         ColumnCount++;
 
-    PlayerSize -= (s32)( ( ColumnCount * 35.0f )* m_pManager->GetScaleX());  // size allowed to player before any data columns
+    PlayerSize -= ColumnCount * 35;  // size allowed to player before any data columns
 
     // render the main title bar
     r = GetPosition();
-    r.l += (s32)((79.0f + 5.0f)* m_pManager->GetScaleX());
+    r.l += 84;
     r.t += 36;
     r.b = r.t + 16;
-
-#ifdef TARGET_PS2
-    if( x_GetTerritory() != XL_TERRITORY_AMERICA )
-    {
-        r.t += 5;
-        r.b += 5;
-    }
-#endif
 
     // leave space for speaker icon   
     r.l += 16;
 
     m_pManager->RenderText( m_Font, r, ui_font::h_left|ui_font::v_center, ch, m_pStrPlayer );
     
-    r.l += PlayerSize + (s32)(5.0f * m_pManager->GetScaleX());
-    r.r = r.l + (s32)( 30.0f * m_pManager->GetScaleX());
+    r.l += PlayerSize + 5;
+    r.r = r.l + 30;
 
     if( ScoreData.ScoreFieldMask & SCORE_POINTS )
     {
@@ -619,36 +590,36 @@ void dlg_leaderboard::RenderScoreList( s32 ox, s32 oy )
     
     if( ScoreData.ScoreFieldMask & SCORE_KILLS )
     {
-        r.l += (s32)(35.0f * m_pManager->GetScaleX());
-        r.r += (s32)(35.0f * m_pManager->GetScaleX());
+        r.l += 35;
+        r.r += 35;
         m_pManager->RenderText( m_Font, r,  ui_font::h_right|ui_font::v_center, ch, m_pStrIconKills );
     }
 
     if( ScoreData.ScoreFieldMask & SCORE_TKS )
     {
-        r.l += (s32)(35.0f * m_pManager->GetScaleX());
-        r.r += (s32)(35.0f * m_pManager->GetScaleX());
+        r.l += 35;
+        r.r += 35;
         m_pManager->RenderText( m_Font, r,  ui_font::h_right|ui_font::v_center, ch, m_pStrIconTKs );
     }
 
     if( ScoreData.ScoreFieldMask & SCORE_DEATHS )
     {
-        r.l += (s32)(35.0f * m_pManager->GetScaleX());
-        r.r += (s32)(35.0f * m_pManager->GetScaleX());
+        r.l += 35;
+        r.r += 35;
         m_pManager->RenderText( m_Font, r,  ui_font::h_right|ui_font::v_center, ch, m_pStrIconDeaths );       
     }
 
     if( ScoreData.ScoreFieldMask & SCORE_VOTES )
     {
-        r.l += (s32)(35.0f * m_pManager->GetScaleX());
-        r.r += (s32)(35.0f * m_pManager->GetScaleX());
+        r.l += 35;
+        r.r += 35;
         m_pManager->RenderText( m_Font, r,  ui_font::h_right|ui_font::v_center, ch, m_pStrIconVotes );       
     }
 
     // render bars
     r = GetPosition();
-    r.l += (s32)(79.0f * m_pManager->GetScaleX());
-    r.r = r.l + (s32)(336.0f * m_pManager->GetScaleX());
+    r.l += 79;
+    r.r = r.l + 336;
     r.t += 36 + 24;
     r.b = r.t + 16;
     for( i=0; i<16; i++ )
@@ -672,18 +643,9 @@ void dlg_leaderboard::RenderScoreList( s32 ox, s32 oy )
 
     // render player data
     r = GetPosition();
-    r.l += (s32)((79.0f + 5.0f) * m_pManager->GetScaleX());
+    r.l += 84;
     r.r = r.l + 16;
-#ifdef TARGET_PS2
-    if( x_GetTerritory() != XL_TERRITORY_AMERICA )
-    {
-        r.t += 36 + 24;
-    }
-    else
-#endif
-    {
-        r.t += 36 + 22;
-    }
+    r.t += 36 + 22;
 
     r.b = r.t + 16;
 
@@ -709,8 +671,8 @@ void dlg_leaderboard::RenderScoreList( s32 ox, s32 oy )
             {
                 //c1 = XCOLOR_GREEN;
                 irect hr = r;
-                hr.l -= (s32)(5.0f * m_pManager->GetScaleX());
-                hr.r = hr.l + (s32)(336.0f * m_pManager->GetScaleX());
+                hr.l -= 5;
+                hr.r = hr.l + 336;
                 hr.t += 2;
                 hr.b += 2;
                 m_pManager->RenderRect( hr, xcolor(255,252,204,64), FALSE );
@@ -732,8 +694,8 @@ void dlg_leaderboard::RenderScoreList( s32 ox, s32 oy )
             r.r = r.l + PlayerSize;
             m_pManager->RenderText( m_Font, r, ui_font::h_left|ui_font::v_center|ui_font::clip_ellipsis, c1, m_PlayerData[i].NName );            
 
-            r.l += PlayerSize + (s32)(5.0f * m_pManager->GetScaleX());
-            r.r = r.l + (s32)(30.0f * m_pManager->GetScaleX());
+            r.l += PlayerSize + 5;
+            r.r = r.l + 30;
 
             if( ScoreData.ScoreFieldMask & SCORE_POINTS )
             {
@@ -742,33 +704,33 @@ void dlg_leaderboard::RenderScoreList( s32 ox, s32 oy )
             
             if( ScoreData.ScoreFieldMask & SCORE_KILLS )
             {
-                r.l += (s32)(35.0f * m_pManager->GetScaleX());
-                r.r += (s32)(35.0f * m_pManager->GetScaleX());
+                r.l += 35;
+                r.r += 35;
                 m_pManager->RenderText( m_Font, r, ui_font::h_right|ui_font::v_center, c1, xfs("%d",m_PlayerData[i].Kills) );
             }
 
             if( ScoreData.ScoreFieldMask & SCORE_TKS )
             {
-                r.l += (s32)(35.0f * m_pManager->GetScaleX());
-                r.r += (s32)(35.0f * m_pManager->GetScaleX());
+                r.l += 35;
+                r.r += 35;
                 m_pManager->RenderText( m_Font, r, ui_font::h_right|ui_font::v_center, c1, xfs("%d",m_PlayerData[i].TKs) );
             }
 
             if( ScoreData.ScoreFieldMask & SCORE_DEATHS )
             {
-                r.l += (s32)(35.0f * m_pManager->GetScaleX());
-                r.r += (s32)(35.0f * m_pManager->GetScaleX());
+                r.l += 35;
+                r.r += 35;
                 m_pManager->RenderText( m_Font, r, ui_font::h_right|ui_font::v_center, c1, xfs("%d",m_PlayerData[i].Deaths) );
             }
 
             if( ScoreData.ScoreFieldMask & SCORE_VOTES )
             {
-                r.l += (s32)(35.0f * m_pManager->GetScaleX());
-                r.r += (s32)(35.0f * m_pManager->GetScaleX());
+                r.l += 35;
+                r.r += 35;
                 m_pManager->RenderText( m_Font, r, ui_font::h_right|ui_font::v_center, c1, xfs("%d",m_PlayerData[i].Votes) );
             }
 
-            r.l = StartL; //-= (s32)(275.0f * m_pManager->GetScaleX());
+            r.l = StartL;
             r.r = StartR; //r.l + PlayerSize;
             r.t += s_LineSpacing;
             r.b += s_LineSpacing;

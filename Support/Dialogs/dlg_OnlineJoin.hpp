@@ -11,18 +11,18 @@
 //  INCLUDES
 //==============================================================================
 
-#include "ui\ui_dialog.hpp"
-#include "ui\ui_frame.hpp"
-#include "ui\ui_text.hpp"
-#include "ui\ui_combo.hpp"
-#include "ui\ui_listbox.hpp"
-#include "ui\ui_blankbox.hpp"
-#include "ui\ui_bitmap.hpp"
+#include "UI/ui_dialog.hpp"
+#include "UI/ui_frame.hpp"
+#include "UI/ui_text.hpp"
+#include "UI/ui_combo.hpp"
+#include "UI/ui_listbox.hpp"
+#include "UI/ui_blankbox.hpp"
+#include "UI/ui_bitmap.hpp"
 
-#include "dialogs\dlg_popup.hpp"
+#include "Dialogs/dlg_PopUp.hpp"
 
-#include "NetworkMgr\NetworkMgr.hpp"
-#include "NetworkMgr\GameMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
 
 //==============================================================================
 //  dlg_online_join
@@ -50,12 +50,11 @@ public:
 
     virtual void        Render              ( s32 ox=0, s32 oy=0 );
 
-    virtual void        OnNotify            ( ui_win* pWin, ui_win* pSender, s32 Command, void* pData );
-    virtual void        OnPadNavigate       ( ui_win* pWin, s32 Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
-    virtual void        OnPadSelect         ( ui_win* pWin );
-    virtual void        OnPadBack           ( ui_win* pWin );
-    virtual void        OnPadActivate       ( ui_win* pWin );
-    virtual void        OnPadDelete         ( ui_win* pWin );
+    virtual void        OnNavigate       ( ui_win* pWin, ui_navigation Code, s32 Presses, s32 Repeats, xbool WrapX = FALSE, xbool WrapY = FALSE );
+    virtual void        OnAccept         ( ui_win* pWin );
+    virtual void        OnCancel           ( ui_win* pWin );
+    virtual void        OnAlternate       ( ui_win* pWin );
+    virtual void        OnDelete         ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
     
     void                FillMatchList       ( void );
@@ -86,7 +85,6 @@ protected:
     ui_bitmap*              m_pStatusBox;
     ui_text*                m_pStatusText;
 
-    ui_text*                m_pNavText;
 
     dlg_popup*              m_PopUp;
 
