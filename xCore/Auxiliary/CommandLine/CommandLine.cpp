@@ -112,7 +112,7 @@ const xstring& command_line::GetArgument( s32 Index ) const
 
 //==============================================================================
 
-void command_line::StoreOption( s32 iOption, xstring& String )
+void command_line::StoreOption( s32 iOption, const xstring& String )
 {
     option_entry& o = m_Options.Append();
     o.OptionDefIndex = iOption;
@@ -138,7 +138,7 @@ void command_line::AddOptionDef( xstring Option, option_type OptionType )
 
 //==============================================================================
 
-xbool command_line::ReadResponseFile( xstring& PathName, xarray<xstring>& Args )
+xbool command_line::ReadResponseFile( const xstring& PathName, xarray<xstring>& Args )
 {
     xbool   Success;
     xstring r;

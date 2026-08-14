@@ -50,9 +50,9 @@ protected:
     xarray<option_entry>    m_Options;
     xarray<xstring>         m_Arguments;
 
-    void            StoreOption         ( s32 iOption, xstring& String );
+    void            StoreOption         ( s32 iOption, const xstring& String );
     void            StoreArgument       ( xstring &String );
-    xbool           ReadResponseFile    ( xstring& PathName, xarray<xstring>& Args );
+    xbool           ReadResponseFile    ( const xstring& PathName, xarray<xstring>& Args );
 
 public:
                     command_line        ( );
