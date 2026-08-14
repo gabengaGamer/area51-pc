@@ -12,7 +12,12 @@
 //  INCLUDES
 //==============================================================================
 
+#if defined(TARGET_PC)
 #include <io.h>
+#else
+#include <glob.h>
+#include <sys/stat.h>
+#endif
 #include "CommandLine.hpp"
 
 //==============================================================================
@@ -362,7 +367,6 @@ s32 command_line::Glob( const xstring& Pattern, xarray<xstring>& Results, xbool 
 {
     xstring         Path;
     xstring         File;
-    _finddata_t        Data;
     xarray<xstring> Folders;
 
     // Set basic capacity so Folders array will not need to grow much
@@ -372,6 +376,8 @@ s32 command_line::Glob( const xstring& Pattern, xarray<xstring>& Results, xbool 
     SplitPath( Pattern, Path, File );
 
     // Begin find
+#if defined(TARGET_PC)
+    _finddata_t Data;
     intptr_t handle = _findfirst( Pattern, &Data );
     if( handle != -1 )
     {
@@ -429,6 +435,50 @@ s32 command_line::Glob( const xstring& Pattern, xarray<xstring>& Results, xbool 
             Glob( JoinPath( JoinPath( Path, Folders[i] ) + "\\", File ), Results, Recursive );
         }
     }
+#else
+    glob_t Matches = {};
+    if( glob( Pattern, 0, NULL, &Matches ) == 0 )
+    {
+        for( size_t i = 0; i < Matches.gl_pathc; i++ )
+        {
+            struct stat FileInfo;
+            if( (stat( Matches.gl_pathv[i], &FileInfo ) == 0) && S_ISREG( FileInfo.st_mode ) )
+            {
+                if( Results.GetCapacity() == Results.GetCount() )
+                    Results.SetCapacity( Results.GetCapacity() * 2 );
+
+                Results.Append() = Matches.gl_pathv[i];
+            }
+        }
+    }
+    globfree( &Matches );
+
+    if( Recursive )
+    {
+        glob_t FolderMatches = {};
+        xstring FolderPattern = JoinPath( Path, xstring("*") );
+        if( glob( FolderPattern, 0, NULL, &FolderMatches ) == 0 )
+        {
+            for( size_t i = 0; i < FolderMatches.gl_pathc; i++ )
+            {
+                struct stat FileInfo;
+                if( (stat( FolderMatches.gl_pathv[i], &FileInfo ) == 0) && S_ISDIR( FileInfo.st_mode ) )
+                {
+                    if( Folders.GetCapacity() == Folders.GetCount() )
+                        Folders.SetCapacity( Folders.GetCapacity() * 2 );
+
+                    Folders.Append() = FolderMatches.gl_pathv[i];
+                }
+            }
+        }
+        globfree( &FolderMatches );
+
+        for( s32 i = 0; i < Folders.GetCount(); i++ )
+        {
+            Glob( JoinPath( Folders[i] + "/", File ), Results, Recursive );
+        }
+    }
+#endif
 
     // Return number of files found
     return Results.GetCount();
