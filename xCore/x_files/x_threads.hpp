@@ -39,8 +39,8 @@
 #include "x_types.hpp"
 #include "x_array.hpp"
 
-#include "implementation/x_files_private.hpp"
-#include "implementation/x_threads_private.hpp"
+#include "Implementation/x_files_private.hpp"
+#include "Implementation/x_threads_private.hpp"
 
 #define X_MAX_THREADS           16
 #if defined(TARGET_PC)
@@ -259,9 +259,9 @@ static      xarray<xthread*> m_MasterThreadList;
 #endif
 };
 
-#include "implementation/x_semaphore_private.hpp"
-#include "implementation/x_mutex_private.hpp"
-#include "implementation/x_mqueue_private.hpp"
+#include "Implementation/x_semaphore_private.hpp"
+#include "Implementation/x_mutex_private.hpp"
+#include "Implementation/x_mqueue_private.hpp"
 
 //==============================================================================
 // THREAD FUNCTIONS MAINLY PERFORMED ON THE CURRENT EXECUTING THREAD

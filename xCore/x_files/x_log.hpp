@@ -11,7 +11,7 @@
 // Legacy logging compatibility stubs
 //==============================================================================
 
-#include "implementation/x_log_private.hpp"
+#include "Implementation/x_log_private.hpp"
 
 //==============================================================================
 #endif // X_LOG_HPP
