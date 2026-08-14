@@ -376,14 +376,14 @@ void* x_bsearch ( const void*     pKey,           // Reference item to search fo
 //  interfere.
 //
 //  If you need reproducible random numbers, then use an instance of class
-//  random.  Each instance of random is independent from all others.  The 
-//  interface for class random is the same as the four global functions (minus 
+//  xrandom.  Each instance of xrandom is independent from all others.  The
+//  interface for class xrandom is the same as the four global functions (minus
 //  the "x_" prefix).  
 //  
-//  random::srand   - Same as x_srand.
-//  random::rand    - Same as x_rand.
-//  random::irand   - Same as x_irand.
-//  random::frand   - Same as x_frand.
+//  xrandom::srand   - Same as x_srand.
+//  xrandom::rand    - Same as x_rand.
+//  xrandom::irand   - Same as x_irand.
+//  xrandom::frand   - Same as x_frand.
 //  
 //==============================================================================
 
@@ -408,11 +408,11 @@ f32     x_frand     ( f32 Min, f32 Max );   // Result in [ Min, Max        ]
 
 //==============================================================================
 
-class random
+class xrandom
 {
 public:
-            random  ( void );
-            random  ( s32 Seed );
+            xrandom ( void );
+            xrandom ( s32 Seed );
 
     void    srand   ( s32 Seed );
     s32     rand    ( void );               // Result in [   0, X_RAND_MAX ]

@@ -2188,7 +2188,7 @@ void actor::net_DropWeapon( void )
     if( ((DropWeapon != INVEN_WEAPON_MESON_CANNON) || (CurrentAmmo > 0)) &&
          (DropWeapon != INVEN_NULL) )
     {
-        random r( x_rand() );
+        xrandom r( x_rand() );
         vector3 Velocity = r.v3( -50.0f, 50.0f, 
                                   20.0f, 50.0f, 
                                  -50.0f, 50.0f );
@@ -2207,7 +2207,7 @@ void actor::net_DropWeapon( void )
     {
         if( (x_rand() % 100) > 50 )
         {
-            random r( x_rand() );
+        xrandom r( x_rand() );
             vector3 Velocity = r.v3( -50.0f, 50.0f, 
                                       20.0f, 50.0f, 
                                      -50.0f, 50.0f );
@@ -2225,7 +2225,7 @@ void actor::net_DropWeapon( void )
     {
         if( (x_rand() % 100) > 50 )
         {
-            random r( x_rand() );
+        xrandom r( x_rand() );
             vector3 Velocity = r.v3( -50.0f, 50.0f, 20.0f, 50.0f, -50.0f, 50.0f );
             pickup::CreatePickup( GetGuid(), net_GetSlot(), 
                                   INVEN_GRENADE_JBEAN, 1.0f, 30.0f, 

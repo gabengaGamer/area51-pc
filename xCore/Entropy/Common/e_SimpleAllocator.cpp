@@ -406,7 +406,7 @@ void SimpleAllocatorStressTest( void )
     x_DebugMsg("TIME: %f\n",Timer.ReadMs());
 
 
-    random Rand;
+    xrandom Rand;
     Timer.Reset();
     Timer.Start();
     for( i=0; i<NUM_LOOPS; i++ )

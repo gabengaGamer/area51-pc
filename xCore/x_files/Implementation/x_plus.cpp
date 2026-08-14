@@ -524,14 +524,14 @@ void* x_bsearch( const void*  pKey,
 
 //==============================================================================
 //  
-//  We have a single global instance of class random to be used for the standard
+//  We have a single global instance of class xrandom to be used for the standard
 //  function calls (x_rand and such).  This instance is not thread aware, but it
 //  should be thread safe.  Even a worst case thread interaction should not
 //  cause it to fail.
 //  
 //==============================================================================
 
-static random s_Random( 2 );
+static xrandom s_Random( 2 );
 
 //==============================================================================
 //  Global "standard" pseudo random number generation functions.
@@ -564,31 +564,31 @@ f32 x_frand( f32 Min, f32 Max )
 }
 
 //==============================================================================
-//  Functions for class random.
+//  Functions for class xrandom.
 //==============================================================================
 
-random::random( void )
+xrandom::xrandom( void )
 {
     m_Seed = 2;
 }
 
 //==============================================================================
 
-random::random( s32 Seed )
+xrandom::xrandom( s32 Seed )
 {
     m_Seed = Seed;
 }                
 
 //==============================================================================
 
-void random::srand( s32 Seed )
+void xrandom::srand( s32 Seed )
 {
     m_Seed = Seed;
 }
 
 //==============================================================================
 
-s32 random::rand( void )
+s32 xrandom::rand( void )
 {
     m_Seed = m_Seed * 214013 + 2531011;
     return( (s32)((m_Seed >> 16) & X_RAND_MAX) );
@@ -596,7 +596,7 @@ s32 random::rand( void )
 
 //==============================================================================
 
-s32 random::irand( s32 Min, s32 Max )
+s32 xrandom::irand( s32 Min, s32 Max )
 {
     //ASSERT( Max >= Min );
     return( (rand() % (Max-Min+1)) + Min );
@@ -604,7 +604,7 @@ s32 random::irand( s32 Min, s32 Max )
 
 //==============================================================================
 
-f32 random::frand( f32 Min, f32 Max )
+f32 xrandom::frand( f32 Min, f32 Max )
 {
     //ASSERT( Max >= Min );
     return( (((f32)rand() / (f32)X_RAND_MAX) * (Max-Min)) + Min );
@@ -612,7 +612,7 @@ f32 random::frand( f32 Min, f32 Max )
 
 //==============================================================================
 
-vector2 random::v2( f32 MinX, f32 MaxX, f32 MinY, f32 MaxY )
+vector2 xrandom::v2( f32 MinX, f32 MaxX, f32 MinY, f32 MaxY )
 {
     return( vector2( frand(MinX,MaxX),
                      frand(MinY,MaxY) ) );
@@ -620,7 +620,7 @@ vector2 random::v2( f32 MinX, f32 MaxX, f32 MinY, f32 MaxY )
 
 //==============================================================================
 
-vector3 random::v3( f32 MinX, f32 MaxX, f32 MinY, f32 MaxY, f32 MinZ, f32 MaxZ )
+vector3 xrandom::v3( f32 MinX, f32 MaxX, f32 MinY, f32 MaxY, f32 MinZ, f32 MaxZ )
 {
     return( vector3( frand(MinX,MaxX),
                      frand(MinY,MaxY),
@@ -629,7 +629,7 @@ vector3 random::v3( f32 MinX, f32 MaxX, f32 MinY, f32 MaxY, f32 MinZ, f32 MaxZ )
 
 //==============================================================================
 
-xcolor random::color( u8 A )
+xcolor xrandom::color( u8 A )
 {
     u8 r = (u8)irand(0,255);
     u8 g = (u8)irand(0,255);

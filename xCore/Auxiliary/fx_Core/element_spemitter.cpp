@@ -1042,7 +1042,7 @@ void element_spemitter::SetParticlePositions( f32 T )
     f32     StartTime   = m_LifeStartFrame * (1.0f / 30.0f);
     f32     StopTime    = m_LifeStopFrame  * (1.0f / 30.0f);
     s32     nKeys       = m_Keys.GetCount();
-    random  r;
+    xrandom r;
 
     // Controlled values
     f32     Pos  [3];

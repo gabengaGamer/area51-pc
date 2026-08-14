@@ -50,7 +50,7 @@ extern tweak_handle Lore_Max_Detect_DistanceTweak;
 extern tweak_handle Lore_Min_Detect_DistanceTweak;
 
 // our random that we can seed
-static random Random;
+static xrandom Random;
 
 //==============================================================================
 

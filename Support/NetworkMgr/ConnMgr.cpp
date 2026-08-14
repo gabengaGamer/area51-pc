@@ -1689,7 +1689,7 @@ void conn_mgr::QueueVoice(const byte* pData, s32 Length)
 
 void conn_mgr::SetEncryption( xbool bEnableEncryption )
 {
-    random Random;
+    xrandom Random;
     s32 Seed;
 
     m_bEnableEncryption = bEnableEncryption;

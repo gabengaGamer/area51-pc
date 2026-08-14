@@ -965,7 +965,7 @@ private:
         s32                 m_PingIndex;
         xbool               m_NeedNewPing;
         xbool               m_NeedToNotifyBan;
-        random              m_Random;
+        xrandom             m_Random;
 
         xbool               m_LocalIsServer;
         xbool               m_RegistrationComplete;

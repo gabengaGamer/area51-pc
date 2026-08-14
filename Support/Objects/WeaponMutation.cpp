@@ -1665,7 +1665,7 @@ void weapon_mutation::SpawnMutagen( object *pObject ) const
 #ifndef SPAWNING_MUTAGEN
     pPlayer->AddMutagen( pPlayer->GetInventory2().GetMaxAmount( INVEN_MUTAGEN ) );
 #else
-    random r( x_rand() );
+    xrandom r( x_rand() );
 
     s32 iBone = pCharacter->GetLocoPointer()->m_Player.GetBoneIndex( "B_01_Spine02" );
     vector3 BonePos = pCharacter->GetLocoPointer()->m_Player.GetBonePosition( iBone );

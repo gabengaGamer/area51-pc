@@ -35,7 +35,7 @@
 
 f32 jumping_bean_projectile::s_JumpingBean_Alert_Time = 1.2f;
 
-static random Random;
+static xrandom Random;
 
 //==============================================================================
 // Tweaks

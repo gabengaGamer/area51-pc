@@ -7609,7 +7609,7 @@ void character::DropWeapon()
             inven_item Item = (inven_item)i;
             if( m_Inventory2.HasItem( Item ) )
             {
-                random r( x_rand() );
+                xrandom r( x_rand() );
                 vector3 Velocity = r.v3( -100.0f, 100.0f, 40.0f, 100.0f, -100.0f, 100.0f );
                 pickup::CreatePickup( GetGuid(), net_GetSlot(), Item, m_Inventory2.GetAmount( Item ), 30.0f, GetPosition() + vector3(0.0f, 100.0f, 0.0f), radian3(0.0f,r.frand(R_0,R_360),0.0f), Velocity, GetZone1(), GetZone2() );
 
@@ -7622,7 +7622,7 @@ void character::DropWeapon()
 
 void character::DropAmmoForWeapon( inven_item weaponItem )
 {
-    random r( x_rand() );
+    xrandom r( x_rand() );
     vector3 Velocity = r.v3( -50.0f, 50.0f, 20.0f, 50.0f, -50.0f, 50.0f );
     new_weapon* pWeapon = GetWeaponPtr( weaponItem );
     if( pWeapon )
@@ -7734,7 +7734,7 @@ void character::DropInventory( void )
         if( m_Inventory2.HasItem( Item ) &&
             x_irand(1,100) <= weaponDropPercent )
         {
-            random r( x_rand() );
+    xrandom r( x_rand() );
             vector3 Velocity = r.v3( -50.0f, 50.0f, 20.0f, 50.0f, -50.0f, 50.0f );
             pickup::CreatePickup( GetGuid(), net_GetSlot(), Item, m_Inventory2.GetAmount( Item ), 30.0f, GetPosition(), radian3(0.0f,r.frand(R_0,R_360),0.0f), Velocity, GetZone1(), GetZone2() );
 
@@ -7746,7 +7746,7 @@ void character::DropInventory( void )
     // Drop a grenade?
     if( x_irand(1,100) <= grenadeDropPercent )
     {
-        random r( x_rand() );
+    xrandom r( x_rand() );
         vector3 Velocity = r.v3( -50.0f, 50.0f, 20.0f, 50.0f, -50.0f, 50.0f );
         pickup::CreatePickup( GetGuid(), net_GetSlot(), INVEN_GRENADE_FRAG, 1, 30.0f, GetPosition(), radian3(0.0f,r.frand(R_0,R_360),0.0f), Velocity, GetZone1(), GetZone2() );
     }
@@ -7758,7 +7758,7 @@ void character::DropInventory( void )
         if( m_Inventory2.HasItem( Item ) &&
             x_irand(1,100) <= inventoryDropPercent )
         {
-            random r( x_rand() );
+    xrandom r( x_rand() );
             vector3 Velocity = r.v3( -50.0f, 50.0f, 20.0f, 50.0f, -50.0f, 50.0f );
             pickup::CreatePickup( GetGuid(), net_GetSlot(), Item, m_Inventory2.GetAmount( Item ), 30.0f, GetPosition(), radian3(0.0f,r.frand(R_0,R_360),0.0f), Velocity, GetZone1(), GetZone2() );
 

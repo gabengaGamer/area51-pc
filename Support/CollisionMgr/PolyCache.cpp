@@ -468,7 +468,7 @@ void poly_cache::SanityCheck( void )
 void poly_cache::AddClusterGeometry( render::PrimitiveBatch& Batch, cluster* pCL, f32* Intensity )
 {
 
-    random R;
+    xrandom R;
     R.srand( ((u32)(uaddr)(pCL)) & 0x0000FFFF );
     xcolor CC = xcolor( R.irand( 128, 255 ), R.irand( 128, 255 ), R.irand( 128, 255 ), 255 );
     s32 iC=0;
@@ -579,7 +579,7 @@ void poly_cache::Render( void )
     // Setup some random intensities
     f32 Intensity[128];
     {
-        random R;
+        xrandom R;
         for( s32 i=0; i<128; i++ )
             Intensity[i] = R.frand(0.5f,1.0f);
     }
@@ -725,7 +725,7 @@ void poly_cache::Render( void )
     cell* pCell = m_pMRU;
     while( pCell )
     {
-        random R;
+        xrandom R;
         R.srand( ((u32)(uaddr)(pCell)) & 0x0000FFFF );
 
         if( pCell->iHash!=-1 )

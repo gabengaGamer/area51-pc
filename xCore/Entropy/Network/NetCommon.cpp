@@ -8,7 +8,7 @@
 #include "e_Network.hpp"
 #include "Network/NetStream.hpp"
 
-static random  Random;
+static xrandom Random;
 
 s32             g_SendHistory[NET_HISTORY_SIZE];
 s32             g_ReceiveHistory[NET_HISTORY_SIZE];

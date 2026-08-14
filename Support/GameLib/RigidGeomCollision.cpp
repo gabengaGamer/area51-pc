@@ -742,7 +742,7 @@ void RigidGeom_RenderCollision( const matrix4*  pBone,
         return;
 
     s32         i, j;
-    random      R;
+    xrandom     R;
     R.srand( ((u32)(uaddr)(pRigidGeom)) & 0x0000FFFF );
 
     if( bRenderHigh )
@@ -774,7 +774,7 @@ void RigidGeom_RenderCollision( const matrix4*  pBone,
         {
             const collision_data& Coll = pRigidGeom->m_collision;
 
-            random R;
+            xrandom R;
             R.srand( ((u32)(uaddr)(pRigidGeom)) & 0x0000FFFF );
             
             for( i=0; i<Coll.nLowClusters; i++ )
