@@ -1,4 +1,3 @@
-
 set( CMAKE_SYSTEM_NAME Linux )
 set( A51_BUILD_WINDOWS_TARGETS OFF CACHE BOOL "Disable Windows-only Area 51 targets" FORCE )
 

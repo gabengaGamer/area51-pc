@@ -1,4 +1,3 @@
-
 add_subdirectory( EDRscDesc )
 
 set( _a51_portable_app_targets )

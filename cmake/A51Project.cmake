@@ -98,9 +98,7 @@ function( a51_add_project TargetName ProjectType )
     #   TARGET_DESKTOP Common desktop code for both platforms.
     target_compile_definitions( ${TargetName} PRIVATE
         "$<$<PLATFORM_ID:Windows>:TARGET_PC>"
-        "$<$<PLATFORM_ID:Windows>:TARGET_DESKTOP>"
         "$<$<PLATFORM_ID:Linux>:TARGET_LINUX>"
-        "$<$<PLATFORM_ID:Linux>:TARGET_DESKTOP>"
         "$<$<STREQUAL:$<CONFIG>,Debug>:CONFIG_DEBUG>"
         "$<$<STREQUAL:$<CONFIG>,OptDebug>:CONFIG_OPTDEBUG>"
         "$<$<STREQUAL:$<CONFIG>,QA>:CONFIG_QA>"
