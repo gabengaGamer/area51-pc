@@ -597,7 +597,7 @@ xbool audio_backend::AcquireChannel( channel* pChannel )
     pChannel->Backend.InUse = TRUE;
 
     // Tell the world!
-    return( pChannel->Backend.hChannel != NULL );
+    return( pChannel->Backend.hChannel != 0 );
 }
 
 //==============================================================================
