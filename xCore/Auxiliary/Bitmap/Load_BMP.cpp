@@ -602,12 +602,12 @@ xbool bmp_Load( xbitmap& Bitmap, const char* pFileName )
 
         switch( Header.BitCount )
         {
-            #ifdef LITTLE_ENDIAN
+            #ifdef X_LITTLE_ENDIAN
                 case  4:    Format = xbitmap::FMT_P4_URGB_8888; break;
                 case  8:    Format = xbitmap::FMT_P8_URGB_8888; break;
                 case 24:    Format = xbitmap::FMT_24_BGR_888;   break;
                 case 32:    Format = xbitmap::FMT_32_URGB_8888; break;
-            #else // BIG_ENDIAN
+            #else // X_BIG_ENDIAN
                 case  4:    Format = xbitmap::FMT_P4_BGRU_8888; break;      // UNTESTED
                 case  8:    Format = xbitmap::FMT_P8_BGRU_8888; break;
                 case 24:    Format = xbitmap::FMT_24_BGR_888;   break;      // UNTESTED
@@ -664,12 +664,12 @@ xbool bmp_Info( const char* pFileName, xbitmap::info& Info )
             Info.nMips = 0;
             switch( Header.BitCount )
             {
-                #ifdef LITTLE_ENDIAN
+                #ifdef X_LITTLE_ENDIAN
                     case  4:    Info.Format = xbitmap::FMT_P4_URGB_8888; break;
                     case  8:    Info.Format = xbitmap::FMT_P8_URGB_8888; break;
                     case 24:    Info.Format = xbitmap::FMT_24_BGR_888;   break;
                     case 32:    Info.Format = xbitmap::FMT_32_URGB_8888; break;
-                #else // BIG_ENDIAN
+                #else // X_BIG_ENDIAN
                     case  4:    Info.Format = xbitmap::FMT_P4_BGRU_8888; break;      // UNTESTED
                     case  8:    Info.Format = xbitmap::FMT_P8_BGRU_8888; break;
                     case 24:    Info.Format = xbitmap::FMT_24_BGR_888;   break;      // UNTESTED
@@ -687,4 +687,3 @@ xbool bmp_Info( const char* pFileName, xbitmap::info& Info )
 }
 
 //==============================================================================
-

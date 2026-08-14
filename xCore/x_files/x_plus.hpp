@@ -111,14 +111,14 @@
                                       ((((u64)(A)) & 0x000000FF00000000) >> 8)    | \
                                       ((((u64)(A)) & 0x00000000FF000000) << 8) ) 
 
-#ifdef LITTLE_ENDIAN
+#ifdef X_LITTLE_ENDIAN
     #define LITTLE_ENDIAN_16(A)     A 
     #define LITTLE_ENDIAN_32(A)     A
     #define BIG_ENDIAN_16(A)        ENDIAN_SWAP_16(A)
     #define BIG_ENDIAN_32(A)        ENDIAN_SWAP_32(A)
 #endif
 
-#ifdef BIG_ENDIAN
+#ifdef X_BIG_ENDIAN
     #define LITTLE_ENDIAN_16(A)     ENDIAN_SWAP_16(A) 
     #define LITTLE_ENDIAN_32(A)     ENDIAN_SWAP_32(A)
     #define BIG_ENDIAN_16(A)        A

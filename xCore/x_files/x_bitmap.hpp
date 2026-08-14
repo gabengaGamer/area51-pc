@@ -109,11 +109,11 @@ public:
 
         // SPECIAL NAMES
         
-        #ifdef LITTLE_ENDIAN
+        #ifdef X_LITTLE_ENDIAN
             FMT_XCOLOR = FMT_32_ARGB_8888,
         #endif
         
-        #ifdef BIG_ENDIAN
+        #ifdef X_BIG_ENDIAN
             FMT_XCOLOR = FMT_32_BGRA_8888,
         #endif
     };

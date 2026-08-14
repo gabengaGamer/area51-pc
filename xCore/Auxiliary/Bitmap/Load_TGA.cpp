@@ -242,11 +242,11 @@ xbool tga_Load( xbitmap& Bitmap, const char* pFileName )
     //      - BGRA in Big Endian.
     if( BytesPerPixel == 4 )
     {
-        #ifdef LITTLE_ENDIAN
+        #ifdef X_LITTLE_ENDIAN
         Format = xbitmap::FMT_32_ARGB_8888;
         #endif
 
-        #ifdef BIG_ENDIAN
+        #ifdef X_BIG_ENDIAN
         Format = xbitmap::FMT_32_BGRA_8888;
         #endif
     }
@@ -266,7 +266,7 @@ xbool tga_Load( xbitmap& Bitmap, const char* pFileName )
     //      - URGB_1555 in this platform's Endian.
     if( BytesPerPixel == 2 )
     {
-        #ifdef BIG_ENDIAN
+        #ifdef X_BIG_ENDIAN
         s32  i;
         u16* p = (u16*)pData;
         for( i = 0; i < NPixels; i++ )
@@ -354,11 +354,11 @@ xbool tga_Info( const char* pFileName, xbitmap::info& BitmapInfo )
     //      - BGRA in Big Endian.
     if( BytesPerPixel == 4 )
     {
-        #ifdef LITTLE_ENDIAN
+        #ifdef X_LITTLE_ENDIAN
         Format = xbitmap::FMT_32_ARGB_8888;
         #endif
 
-        #ifdef BIG_ENDIAN
+        #ifdef X_BIG_ENDIAN
         Format = xbitmap::FMT_32_BGRA_8888;
         #endif
     }

@@ -27,16 +27,6 @@ enum platform
 // The valid desktop targets are PC (Windows) and Linux.
 //==============================================================================
 
-// NOTE: GS: This fixes a conflict with the generic endian macros with project-specific names.
-
-#ifdef LITTLE_ENDIAN
-    #undef LITTLE_ENDIAN
-#endif
-
-#ifdef BIG_ENDIAN
-    #undef BIG_ENDIAN
-#endif
-
 // TARGET_PC is Windows desktop only. TARGET_LINUX is Linux desktop only.
 // TARGET_DESKTOP is the shared desktop implementation selector.
 
@@ -46,7 +36,7 @@ enum platform
     #else
         #define TARGET_DESKTOP
         #define TARGET_PLATFORM PLATFORM_PC
-        #define LITTLE_ENDIAN
+        #define X_LITTLE_ENDIAN
         #define X_EXCEPTIONS
         #define VALID_TARGET
     #endif
@@ -184,8 +174,6 @@ enum platform
 
 //------------------------------------------------------------------------------
 
-// TODO: This fixes a conflict with the definition of 'new' member operators in the DX9 headers,
-// need to find a better solution to the whole who's managing memory problem
 #if defined( TARGET_DESKTOP )
     #define USE_SYSTEM_NEW_DELETE
 #endif
@@ -229,13 +217,13 @@ enum platform
 //
 //==============================================================================
 
-#if( !defined( BIG_ENDIAN ) && !defined( LITTLE_ENDIAN ) )
+#if( !defined( X_BIG_ENDIAN ) && !defined( X_LITTLE_ENDIAN ) )
     #error Endian is not defined.
 #endif
 
 //------------------------------------------------------------------------------
 
-#if(  defined( BIG_ENDIAN ) &&  defined( LITTLE_ENDIAN ) )
+#if(  defined( X_BIG_ENDIAN ) &&  defined( X_LITTLE_ENDIAN ) )
     #error Both Endian specifications are defined!
 #endif
 

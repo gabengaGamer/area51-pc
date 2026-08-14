@@ -15,7 +15,7 @@
 #include "x_color.hpp"
 #include "x_string.hpp"
 
-#ifndef LITTLE_ENDIAN
+#ifndef X_LITTLE_ENDIAN
 #error netstream.cpp currently relies on little endian
 #endif
 
@@ -122,4 +122,3 @@ void netstream::Close( void )
     SetCursor (Cursor);
     // Is this where we would do the diffie hellman encryption?
 }
-

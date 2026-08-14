@@ -61,7 +61,7 @@ xbool xbmp_Save( const xbitmap& Bitmap, X_FILE* pFile )
     Buffer.Format   = Bitmap.GetFormat();
 
     // Make sure we have Little Endian data.
-    #ifdef BIG_ENDIAN
+    #ifdef X_BIG_ENDIAN
     Buffer.DataSize = ENDIAN_SWAP_32( Buffer.DataSize );
     Buffer.ClutSize = ENDIAN_SWAP_32( Buffer.ClutSize );
     Buffer.Width    = ENDIAN_SWAP_32( Buffer.Width    );
@@ -109,7 +109,7 @@ xbool xbitmap::Save( X_FILE* pFile ) const
     ASSERT( pFile );
     ASSERT( m_flags & FLAG_VALID );
 
-    #ifdef BIG_ENDIAN
+    #ifdef X_BIG_ENDIAN
     {
         // Ugh!  This is a pain.
         xbitmap EndianMangledCopy( *this );
@@ -118,7 +118,7 @@ xbool xbitmap::Save( X_FILE* pFile ) const
     }
     #endif
 
-    #ifdef LITTLE_ENDIAN
+    #ifdef X_LITTLE_ENDIAN
     {
         // Ahh!  This is easy!
         return( xbmp_Save( *this, pFile ) );
@@ -161,7 +161,7 @@ xbool xbitmap::Info( const char* pFileName, info& BitmapInfo )
         if( BytesRead == sizeof(io_buffer) )
         {
             // Make sure we have correctly read Little Endian data.
-            #ifdef BIG_ENDIAN
+            #ifdef X_BIG_ENDIAN
             Buffer.DataSize = ENDIAN_SWAP_32( Buffer.DataSize );
             Buffer.ClutSize = ENDIAN_SWAP_32( Buffer.ClutSize );
             Buffer.Width    = ENDIAN_SWAP_32( Buffer.Width    );
@@ -208,7 +208,7 @@ xbool xbitmap::Load( X_FILE* pFile )
         goto EXIT;
 
     // Make sure we have correctly read Little Endian data.
-    #ifdef BIG_ENDIAN
+    #ifdef X_BIG_ENDIAN
     Buffer.DataSize = ENDIAN_SWAP_32( Buffer.DataSize );
     Buffer.ClutSize = ENDIAN_SWAP_32( Buffer.ClutSize );
     Buffer.Width    = ENDIAN_SWAP_32( Buffer.Width    );
@@ -251,7 +251,7 @@ xbool xbitmap::Load( X_FILE* pFile )
     }
 
     // Make sure we have correctly read Little Endian data.
-    #ifdef BIG_ENDIAN
+    #ifdef X_BIG_ENDIAN
     ToggleEndian();
     #endif
 
@@ -578,11 +578,11 @@ xbool xbitmap::SaveTGA( const char* pFileName ) const
     ASSERT( m_flags & FLAG_VALID );
     ASSERT( pFileName );
 
-#ifdef LITTLE_ENDIAN
+#ifdef X_LITTLE_ENDIAN
     Format = FMT_32_ARGB_8888;
 #endif
 
-#ifdef BIG_ENDIAN
+#ifdef X_BIG_ENDIAN
     Format = FMT_32_BGRA_8888;
 #endif
 

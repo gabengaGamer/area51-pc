@@ -22,11 +22,20 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#if defined(TARGET_LINUX)
+#include <time.h>
+#endif
+
 //==============================================================================
 //  DEFINES
 //==============================================================================
 
 #define SCRACH_MEM_SIZE     (2*1024*1024)
+
+#if defined(TARGET_LINUX)
+static const u64 FILETIME_UNIX_EPOCH       = 116444736000000000ULL;
+static const u64 FILETIME_TICKS_PER_SECOND = 10000000ULL;
+#endif
 
 //==============================================================================
 //  LOCAL STORAGE
@@ -1199,6 +1208,16 @@ void eng_Reboot( reboot_reason Reason )
 
 datestamp eng_GetDate( void )
 {
+#if defined(TARGET_LINUX)
+    struct timespec Time;
+
+    if( clock_gettime( CLOCK_REALTIME, &Time ) != 0 )
+        return 0;
+
+    return FILETIME_UNIX_EPOCH
+         + ((datestamp)Time.tv_sec * FILETIME_TICKS_PER_SECOND)
+         + ((datestamp)Time.tv_nsec / 100);
+#else
     SYSTEMTIME  Time;
     datestamp   DateStamp;
 
@@ -1207,12 +1226,37 @@ datestamp eng_GetDate( void )
     GetLocalTime( &Time );
     SystemTimeToFileTime( &Time, (FILETIME*)&DateStamp );
     return DateStamp;
+#endif
 }
 
 //==============================================================================
 
 split_date eng_SplitDate( datestamp DateStamp )
 {
+#if defined(TARGET_LINUX)
+    split_date SplitDate;
+    struct tm Time;
+    datestamp Ticks;
+    time_t Seconds;
+
+    x_memset( &SplitDate, 0, sizeof(SplitDate) );
+    if( DateStamp < FILETIME_UNIX_EPOCH )
+        return SplitDate;
+
+    Ticks   = DateStamp - FILETIME_UNIX_EPOCH;
+    Seconds = (time_t)(Ticks / FILETIME_TICKS_PER_SECOND);
+    if( localtime_r( &Seconds, &Time ) == NULL )
+        return SplitDate;
+
+    SplitDate.Year        = (u16)(Time.tm_year + 1900);
+    SplitDate.Month       = (u8)(Time.tm_mon + 1);
+    SplitDate.Day         = (u8)Time.tm_mday;
+    SplitDate.Hour        = (u8)Time.tm_hour;
+    SplitDate.Minute      = (u8)Time.tm_min;
+    SplitDate.Second      = (u8)Time.tm_sec;
+    SplitDate.CentiSecond = (u8)((Ticks % FILETIME_TICKS_PER_SECOND) / 100000);
+    return SplitDate;
+#else
     SYSTEMTIME Time;
     split_date SplitDate;
 
@@ -1225,12 +1269,34 @@ split_date eng_SplitDate( datestamp DateStamp )
     SplitDate.Second        = (u8)Time.wSecond;
     SplitDate.CentiSecond   = (u8)(Time.wMilliseconds / 100);
     return SplitDate;
+#endif
 }
 
 //==============================================================================
 
 datestamp eng_JoinDate( const split_date& SplitDate )
 {
+#if defined(TARGET_LINUX)
+    struct tm Time;
+    time_t Seconds;
+
+    x_memset( &Time, 0, sizeof(Time) );
+    Time.tm_year  = SplitDate.Year - 1900;
+    Time.tm_mon   = SplitDate.Month - 1;
+    Time.tm_mday  = SplitDate.Day;
+    Time.tm_hour  = SplitDate.Hour;
+    Time.tm_min   = SplitDate.Minute;
+    Time.tm_sec   = SplitDate.Second;
+    Time.tm_isdst = -1;
+
+    Seconds = mktime( &Time );
+    if( Seconds == (time_t)-1 )
+        return 0;
+
+    return FILETIME_UNIX_EPOCH
+         + ((datestamp)Seconds * FILETIME_TICKS_PER_SECOND)
+         + ((datestamp)SplitDate.CentiSecond * 100000);
+#else
     SYSTEMTIME  Time;
     datestamp   DateStamp;
 
@@ -1246,6 +1312,7 @@ datestamp eng_JoinDate( const split_date& SplitDate )
 
     SystemTimeToFileTime( &Time, (FILETIME*)&DateStamp );
     return DateStamp;
+#endif
 }
 
 //==============================================================================
