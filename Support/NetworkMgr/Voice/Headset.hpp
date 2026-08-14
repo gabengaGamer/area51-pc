@@ -8,7 +8,7 @@
 #define HEADSET_HPP
 
 #include "x_types.hpp"
-#include "Network/fifo.hpp"
+#include "Network/FiFo.hpp"
 
 const s32 VOICE_SAMPLE_RATE = 8000;
 const s32 VOICE_MAX_UPDATE_BYTES = 256;
