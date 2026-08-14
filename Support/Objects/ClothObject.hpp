@@ -59,7 +59,7 @@ public:
 protected:
 
     virtual void            OnImport            ( text_in& TIn );
-    virtual void            OnAdvanceSimulation	    ( f32 DeltaTime );
+    virtual void            OnAdvanceSimulation        ( f32 DeltaTime );
     virtual void            OnRender            ( void );
 
     virtual void            OnColCheck          ( void );

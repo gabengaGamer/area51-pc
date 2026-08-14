@@ -50,13 +50,13 @@ public:
 
     virtual void        OnAccept         ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
-	virtual void		OnHelp			( ui_win* pWin );
+    virtual void        OnHelp            ( ui_win* pWin );
 
     void                DisableStartButton  ( void );
     void                EnableStartButton   ( void );
 
 protected:
-	ui_text*			m_pButtonPressStart;
+    ui_text*            m_pButtonPressStart;
     ui_bitmap*          m_pLogoBitmap;
     ui_bitmap*          m_pFrameBitmap;
 

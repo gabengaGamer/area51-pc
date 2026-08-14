@@ -34,7 +34,7 @@ enum controls
 {
     IDC_ONLINE_HOST_SERVER_NAME,
     IDC_ONLINE_HOST_PASSWORD,
-	IDC_ONLINE_HOST_GAME_TYPE,
+    IDC_ONLINE_HOST_GAME_TYPE,
     IDC_ONLINE_HOST_MUTATION,
     IDC_ONLINE_HOST_VOICE,
     IDC_ONLINE_HOST_PRIVATE,
@@ -142,7 +142,7 @@ xbool dlg_online_host::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pServerNameText   = (ui_text*)FindChildByID( IDC_ONLINE_HOST_SERVER_NAME );
     m_pPasswordText     = (ui_text*)FindChildByID( IDC_ONLINE_HOST_PASSWORD    );
@@ -309,7 +309,7 @@ void dlg_online_host::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     if( m_bRenderBlackout )
     {

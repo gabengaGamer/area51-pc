@@ -180,7 +180,7 @@ private:
     f32                 m_BlendLength;      // Stores total time we are blending
     f32                 m_BlendFrame;       // Stores point in blending we are at
     xbool               m_bManualYaw;
-	xbool				m_bPreviousManualYaw; 
+    xbool                m_bPreviousManualYaw; 
     xbool               m_bOverrideRootBlend;
     xbool               m_bRemoveTurnYaw ;      // Removes yaw from turn animations
     s32                 m_iRefFrame;        // Reference frame used for additive blending

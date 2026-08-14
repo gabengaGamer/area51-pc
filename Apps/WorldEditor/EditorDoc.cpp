@@ -571,7 +571,7 @@ xbool CEditorHandler::HandleExternal( xstring &xstrType, xstring &xstrValue )
     {
         //browse for a blueprint
         CString strInitialPath = g_Project.GetBlueprintPath();
-	    CFileDialog	FileOpen( TRUE, _T("*.bpx"), "", OFN_FILEMUSTEXIST, "Blueprints|*.bpx||");
+        CFileDialog    FileOpen( TRUE, _T("*.bpx"), "", OFN_FILEMUSTEXIST, "Blueprints|*.bpx||");
         FileOpen.m_ofn.lpstrInitialDir = strInitialPath;
 
         if( FileOpen.DoModal() == IDOK )
@@ -593,7 +593,7 @@ xbool CEditorHandler::HandleExternal( xstring &xstrType, xstring &xstrValue )
     {
         //browse for a fxd files..
         CString strInitialPath = g_Project.GetParticlePath();
-	    CFileDialog	FileOpen( TRUE, _T("*.fxo"), "", OFN_FILEMUSTEXIST, "Particles|*.fxo||");
+        CFileDialog    FileOpen( TRUE, _T("*.fxo"), "", OFN_FILEMUSTEXIST, "Particles|*.fxo||");
         FileOpen.m_ofn.lpstrInitialDir = strInitialPath;
 
         if( FileOpen.DoModal() == IDOK )
@@ -612,7 +612,7 @@ xbool CEditorHandler::HandleExternal( xstring &xstrType, xstring &xstrValue )
     {
         //browse for a blueprint
         CString strInitialPath = g_Project.GetBlueprintPath();
-	    CFileDialog	FileOpen( TRUE, _T("*.bpx"), "", OFN_FILEMUSTEXIST, "Blueprints|*.bpx||");
+        CFileDialog    FileOpen( TRUE, _T("*.bpx"), "", OFN_FILEMUSTEXIST, "Blueprints|*.bpx||");
         FileOpen.m_ofn.lpstrInitialDir = strInitialPath;
  
         if( FileOpen.DoModal() == IDOK )
@@ -684,7 +684,7 @@ xbool CEditorHandler::HandleExternal( xstring &xstrType, xstring &xstrValue )
     {
         //browse for a bin files..
         CString strInitialPath = g_Project.GetParticlePath();
-	    CFileDialog	FileOpen( TRUE, _T("*.bin"), "", OFN_FILEMUSTEXIST, "Binary Text|*.bin||");
+        CFileDialog    FileOpen( TRUE, _T("*.bin"), "", OFN_FILEMUSTEXIST, "Binary Text|*.bin||");
         FileOpen.m_ofn.lpstrInitialDir = strInitialPath;
 
         if( FileOpen.DoModal() == IDOK )
@@ -899,8 +899,8 @@ xbool theme_importer::OnProperty( prop_query& I    )
 IMPLEMENT_DYNCREATE(CEditorDoc, CBaseDocument)
 
 BEGIN_MESSAGE_MAP(CEditorDoc, CBaseDocument)
-	//{{AFX_MSG_MAP(CEditorDoc)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CEditorDoc)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 //=========================================================================
@@ -955,14 +955,14 @@ CEditorDoc::~CEditorDoc()
 
 void CEditorDoc::Serialize(CArchive& ar)
 {
-	if (ar.IsStoring())
-	{
-		// TODO: add storing code here
-	}
-	else
-	{
-		// TODO: add loading code here
-	}
+    if (ar.IsStoring())
+    {
+        // TODO: add storing code here
+    }
+    else
+    {
+        // TODO: add loading code here
+    }
 }
 
 //=========================================================================
@@ -972,12 +972,12 @@ void CEditorDoc::Serialize(CArchive& ar)
 #ifdef _DEBUG
 void CEditorDoc::AssertValid() const
 {
-	CBaseDocument::AssertValid();
+    CBaseDocument::AssertValid();
 }
 
 void CEditorDoc::Dump(CDumpContext& dc) const
 {
-	CBaseDocument::Dump(dc);
+    CBaseDocument::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -987,9 +987,9 @@ void CEditorDoc::Dump(CDumpContext& dc) const
 
 BOOL CEditorDoc::OnSaveDocument(LPCTSTR lpszPathName) 
 {
-	// TODO: Add your specialized code here and/or call the base class
-	
-	return FALSE;
+    // TODO: Add your specialized code here and/or call the base class
+    
+    return FALSE;
 }
 
 //=========================================================================
@@ -1059,7 +1059,7 @@ void CEditorDoc::OnProjectSave()
 
     ai_editor::GetAIEditor()->CleanNavMap();
 
-	if (!g_WorldEditor.SaveLayers(strSave))
+    if (!g_WorldEditor.SaveLayers(strSave))
     {
         ::AfxMessageBox("There are dirty layers that could not be saved. It is possible these may be marked readonly. (If there are dirty layers that you have not checked out, it is possible these had errors and were fixed by the editor)");
         LOG_WARNING("Editor", "Not all layers could be saved probably since some are marked readonly!");
@@ -1132,7 +1132,7 @@ void CEditorDoc::OnProjectSave()
         BOOL bValid = FALSE;
 
         for (int i = 0; i < List.GetCount(); i++)
-	    {
+        {
             if (strLayerName.CompareNoCase(List.GetAt(i)) == 0)
             {
                 bValid = TRUE;
@@ -1269,7 +1269,7 @@ void CEditorDoc::OnProjectNew()
     g_WorldEditor.MarkLayerDirty(g_WorldEditor.GetDefaultLayer());
     g_WorldEditor.MarkLayerDirty(g_WorldEditor.GetGlobalLayer());
     CString strSave = CString(g_Project.GetWorkingPath());
-	g_WorldEditor.SaveLayers(strSave);
+    g_WorldEditor.SaveLayers(strSave);
 
     GetView()->GetFrame()->RefreshAll();
 }
@@ -1616,7 +1616,7 @@ void CEditorDoc::ReloadLevel(CString strLevel)
     GetView()->CleanView();
 
     m_xaBlueprintPathUpdates.Clear();
-	g_WorldEditor.PreInitialize();
+    g_WorldEditor.PreInitialize();
     RefreshPropertyView();
     GetView()->GetFrame()->GetSettingsEditorDoc()->Refresh();
 
@@ -1734,7 +1734,7 @@ void CEditorDoc::ReloadLevel(CString strLevel)
     CheckForDuplicateGuidsInAllLayers();
 #endif
 
-	g_WorldEditor.PostInitialize();
+    g_WorldEditor.PostInitialize();
 
     //make sure zones are right
     g_WorldEditor.ZoneSanityCheck();
@@ -1979,11 +1979,11 @@ BOOL CEditorDoc::LoadLayerFile(CString strLayer, CString strFullPath)
                             //file did not exist
                             ::AfxMessageBox(xfs("Could not find blueprint file %s for Layer %s\n\nPlease browse for a replacement file.", (const char*)strFileName, (const char*)strLayer));
 
-	                        CFileDialog		FileOpen(	TRUE, 
-								                        _T("*.bpx"), 
-								                        strBluePrintDir, 
-								                        OFN_FILEMUSTEXIST, 
-								                        "Blueprints|*.bpx||");
+                            CFileDialog        FileOpen(    TRUE, 
+                                                        _T("*.bpx"), 
+                                                        strBluePrintDir, 
+                                                        OFN_FILEMUSTEXIST, 
+                                                        "Blueprints|*.bpx||");
 
                             FileOpen.m_ofn.lpstrInitialDir = g_Project.GetBlueprintPath();
 

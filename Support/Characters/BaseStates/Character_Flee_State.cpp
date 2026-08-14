@@ -112,7 +112,7 @@ void character_flee_state::ChangePhase( s32 newPhase )
         break;
     case PHASE_FLEE_TURN_TO_TARGET_RUNNING:
         m_CharacterBase.SetTurnToLocationGoal( m_CharacterBase.GetLastKnownLocationOfTarget(), 5.0f, TRUE );
-    	break;
+        break;
     case PHASE_FLEE_RUNING_COWER:
         m_CharacterBase.SetIdleGoal();
         break;
@@ -184,13 +184,13 @@ const char*character_flee_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_FLEE_FLEE_FROM_TARGET:
         return "PHASE_FLEE_FLEE_FROM_TARGET";
-    	break;
+        break;
     case PHASE_FLEE_RUNING_COWER:
         return "PHASE_FLEE_RUNING_COWER";
-    	break;
+        break;
     case PHASE_FLEE_TURN_TO_TARGET_RUNNING:
         return "PHASE_FLEE_TURN_TO_TARGET_RUNNING";
-    	break;
+        break;
     }
     return character_state::GetPhaseName(thePhase);
 }

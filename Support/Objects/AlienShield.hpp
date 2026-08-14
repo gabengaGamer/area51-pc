@@ -37,7 +37,7 @@ public:
     virtual bbox        GetLocalBBox        ( void ) const;
 
     virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
-    virtual void        OnMove				( const vector3& rNewPos );
+    virtual void        OnMove                ( const vector3& rNewPos );
     virtual void        OnRender            ( void );
     virtual void        OnRenderTransparent ( void );
     virtual void        OnPain              ( const pain& Pain );

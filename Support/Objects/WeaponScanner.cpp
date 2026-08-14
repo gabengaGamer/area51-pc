@@ -124,17 +124,17 @@ const object_desc&  weapon_scanner::GetObjectType( void )
 
 weapon_scanner::weapon_scanner( void )
 {
-	//initialize the ammo structures.
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_PISTOL;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 0;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 0;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
-	
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
+    //initialize the ammo structures.
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_PISTOL;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 0;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 0;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
+    
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
 
     m_NPCMuzzleSoundFx  = "Shotgun_Primary_Fire";
     m_ZoomFOV           = R_48;
@@ -245,15 +245,15 @@ xbool weapon_scanner::FireNPCWeaponProtected( const vector3& BaseVelocity , cons
     (void)fDegradeMultiplier;
     (void)isHit;
     
-	//if there weapon is not ready, do nothing.
-	if ( ! IsWeaponReady( AMMO_PRIMARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.
+    if ( ! IsWeaponReady( AMMO_PRIMARY ) )
+    {
+        return FALSE;
+    }
 
-	//otherwise, create a new bullet projectile, init it's position, and send it on it's way.
-	else
-	{   
+    //otherwise, create a new bullet projectile, init it's position, and send it on it's way.
+    else
+    {   
         vector3 InitPos;
     
         if (!GetFiringBonePosition(InitPos))
@@ -283,8 +283,8 @@ xbool weapon_scanner::FireNPCWeaponProtected( const vector3& BaseVelocity , cons
                                           GetGuid() );
         }
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 }
 
 //=========================================================================
@@ -298,10 +298,10 @@ xbool weapon_scanner::FireWeaponProtected( const vector3& InitPos , const vector
     ( void )InitRot;
 
     m_ScannedGuid = NULL_GUID;
-	
+    
     // start scan but, don't pick up any lore objects if this isn't the first sample.
     if( m_ScanStartGuid == NULL_GUID && m_bInitialScan && CanScan() )
-	{
+    {
         // initial scan
         m_bInitialScan = FALSE;
         
@@ -395,14 +395,14 @@ xbool weapon_scanner::FireWeaponProtected( const vector3& InitPos , const vector
                 m_ScanBoxHandle.SetScale( BoxScale );
             }
         }
-		
+        
         //add a muzzle light where the bullet was fired from (will fade out really quickly)
         (void)InitPos;
 
         //g_LightMgr.AddFadingLight( InitPos, xcolor( 76, 76, 38 ), 200.0f, 3.0f, 0.1f );
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 
     return TRUE;
 }
@@ -715,21 +715,21 @@ guid weapon_scanner::CheckHitObject( void )
 
 xbool weapon_scanner::FireSecondaryProtected( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint )
 {
-	ASSERT( m_FiringPointBoneIndex[ iFirePoint ] != -1 );
-	ASSERT( m_AltFiringPointBoneIndex[ iFirePoint ] != -1 );
+    ASSERT( m_FiringPointBoneIndex[ iFirePoint ] != -1 );
+    ASSERT( m_AltFiringPointBoneIndex[ iFirePoint ] != -1 );
 
     (void)Power;
     (void)iFirePoint;
     
-	//if there weapon is not ready, do nothing.  Shotgun uses primary ammo for both primary and secondary fire
-	if ( ! IsWeaponReady( AMMO_PRIMARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.  Shotgun uses primary ammo for both primary and secondary fire
+    if ( ! IsWeaponReady( AMMO_PRIMARY ) )
+    {
+        return FALSE;
+    }
 
-	// otherwise, create a new bullet projectile, init it's position, and send it on it's way.
-	else
-	{
+    // otherwise, create a new bullet projectile, init it's position, and send it on it's way.
+    else
+    {
         FireBullet( InitPos, InitRot, BaseVelocity, Owner, TRUE );
  
         // add a muzzle light where the bullet was fired from (will fade out really quickly)
@@ -738,10 +738,10 @@ xbool weapon_scanner::FireSecondaryProtected( const vector3& InitPos , const vec
         // decrement count of bullets in current clip
         DecrementAmmo();
 
-		return TRUE;
-	}
-	
-	return FALSE;
+        return TRUE;
+    }
+    
+    return FALSE;
 }
 
 //===========================================================================

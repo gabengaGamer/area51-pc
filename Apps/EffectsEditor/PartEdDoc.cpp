@@ -33,10 +33,10 @@ extern CProperties*     g_pProperties;
 IMPLEMENT_DYNCREATE(CPartEdDoc, CDocument)
 
 BEGIN_MESSAGE_MAP(CPartEdDoc, CDocument)
-	//{{AFX_MSG_MAP(CPartEdDoc)
-	ON_COMMAND(ID_FILE_EXPORT, OnFileExport)
-	ON_COMMAND(ID_FILE_EXPORTVIDEOAVI, OnFileExportvideoavi)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CPartEdDoc)
+    ON_COMMAND(ID_FILE_EXPORT, OnFileExport)
+    ON_COMMAND(ID_FILE_EXPORTVIDEOAVI, OnFileExportvideoavi)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -53,8 +53,8 @@ CPartEdDoc::~CPartEdDoc()
 
 BOOL CPartEdDoc::OnNewDocument()
 {
-	if (!CDocument::OnNewDocument())
-		return FALSE;
+    if (!CDocument::OnNewDocument())
+        return FALSE;
 
     m_Effect.Destroy();
     m_SelSet.RemoveAll();
@@ -63,7 +63,7 @@ BOOL CPartEdDoc::OnNewDocument()
     PopulatePropertyControl();
     UpdateKeyBar();
 
-	return TRUE;
+    return TRUE;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -499,12 +499,12 @@ void CPartEdDoc::UpdateKeyBar( void )
 
 void CPartEdDoc::Serialize(CArchive& ar)
 {
-	if (ar.IsStoring())
-	{
-	}
-	else
-	{
-	}
+    if (ar.IsStoring())
+    {
+    }
+    else
+    {
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -513,12 +513,12 @@ void CPartEdDoc::Serialize(CArchive& ar)
 #ifdef _DEBUG
 void CPartEdDoc::AssertValid() const
 {
-	CDocument::AssertValid();
+    CDocument::AssertValid();
 }
 
 void CPartEdDoc::Dump(CDumpContext& dc) const
 {
-	CDocument::Dump(dc);
+    CDocument::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -527,7 +527,7 @@ void CPartEdDoc::Dump(CDumpContext& dc) const
 
 void CPartEdDoc::OnCloseDocument() 
 {
-	CDocument::OnCloseDocument();
+    CDocument::OnCloseDocument();
 }
 
 void CPartEdDoc::OnFileExport() 
@@ -535,7 +535,7 @@ void CPartEdDoc::OnFileExport()
 /*
     char Ext[] = "FX Object Files (*.fxo)|*.fxo|All Files (*.*)|*.*||";
 
-	CFileDialog Dlg( FALSE, ".FXO", NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, Ext );    
+    CFileDialog Dlg( FALSE, ".FXO", NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, Ext );    
 
     if ( Dlg.DoModal() == IDOK )
     {
@@ -644,7 +644,7 @@ void CPartEdDoc::DeleteContents()
 {
     m_Effect.Destroy();
     
-	CDocument::DeleteContents();
+    CDocument::DeleteContents();
 }
 
 //---------------------------------------------------------------------------
@@ -662,7 +662,7 @@ void CPartEdDoc::OnFileExportvideoavi()
     // If we don't cancel
     if ( Options.DoModal() == IDOK )
     {
-	    // TODO: Add your command handler code here
+        // TODO: Add your command handler code here
         POSITION Pos = GetFirstViewPosition();
 
         CView*  pView;

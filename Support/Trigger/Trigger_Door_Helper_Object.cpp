@@ -31,7 +31,7 @@ static struct trigger_door_helper_object_desc : public object_desc
         object::TYPE_SPATIAL_TRIGGER, 
         "Door Helper Trigger", 
         "SCRIPT",
-        object::ATTR_SPACIAL_ENTRY		|
+        object::ATTR_SPACIAL_ENTRY        |
         object::ATTR_COLLISION_PERMEABLE,
         0) {}
     

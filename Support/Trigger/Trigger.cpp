@@ -85,7 +85,7 @@ void trigger::SetTriggerZone  ( bbox  TriggerBBox )
 //==============================================================================
 xbool trigger::OnActivate( slot_ID ID )
 {
-	(void)ID;    
+    (void)ID;    
 
 //    if(m_ScriptName[0])
 //    {
@@ -153,7 +153,7 @@ void trigger::OnAdvanceSimulation  ( f32 DeltaTime )
 
 //=============================================================================
 //
-//		SetTriggerScript
+//        SetTriggerScript
 //
 //
 //=============================================================================
@@ -235,7 +235,7 @@ void    trigger::OnInside( void )
 
 //=============================================================================
 //
-//		SetTimeBetweenActivations
+//        SetTimeBetweenActivations
 //
 //
 //=============================================================================

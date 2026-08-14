@@ -18,7 +18,7 @@ class CResourcePreview : public CWnd
 {
 // Construction
 public:
-	CResourcePreview();
+    CResourcePreview();
 
 public:
     void ClearGeom();   
@@ -28,22 +28,22 @@ public:
     void SetMultiplier(const vector3& v3Mult) { m_v3Mult = v3Mult; }
 
     // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CResourcePreview)
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CResourcePreview)
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CResourcePreview();
+    virtual ~CResourcePreview();
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CResourcePreview)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnPaint();
-	afx_msg void OnTimer(UINT nIDEvent);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CResourcePreview)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnPaint();
+    afx_msg void OnTimer(UINT nIDEvent);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
     view            m_View;
     grid3d          m_Grid;

@@ -36,7 +36,7 @@ class ng_connection2;
               ---         |   |          
                            --- 
 
- *	
+ *    
  */
 
 class connection_zone_mgr

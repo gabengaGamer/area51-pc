@@ -1,7 +1,7 @@
 /*
- *	Layer 3 side include file
+ *    Layer 3 side include file
  *
- *	Copyright (c) 1999 Mark Taylor
+ *    Copyright (c) 1999 Mark Taylor
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -10,7 +10,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -35,8 +35,8 @@ typedef struct
 
 
 typedef struct {
-	FLOAT8	l[SBMAX_l];
-	FLOAT8	s[SBMAX_s][3];
+    FLOAT8    l[SBMAX_l];
+    FLOAT8    s[SBMAX_s][3];
 } III_psy_xmin;
 
 typedef struct {
@@ -50,8 +50,8 @@ typedef struct {
  * (it will be the same calculation of III_psy_ratio, etc */
 
 typedef struct {
-	int l[SBMAX_l];            /* [cb] */
-	int s[SBMAX_s][3];         /* [window][cb] */
+    int l[SBMAX_l];            /* [cb] */
+    int s[SBMAX_s][3];         /* [window][cb] */
 } III_scalefac_t;  /* [gr][ch] */
 
 typedef struct {
@@ -86,12 +86,12 @@ typedef struct {
 } gr_info;
 
 typedef struct {
-	int main_data_begin; 
-	int private_bits;
-	int resvDrain_pre;
-	int resvDrain_post;
-	int scfsi[2][4];
-	gr_info tt[2][2];
+    int main_data_begin; 
+    int private_bits;
+    int resvDrain_pre;
+    int resvDrain_post;
+    int scfsi[2][4];
+    gr_info tt[2][2];
 } III_side_info_t;
 
 #endif

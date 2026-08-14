@@ -19,17 +19,17 @@ class CAudioPkgDialog : public CDialog
 {
 // Construction
 public:
-	CAudioPkgDialog(CWnd* pParent = NULL);   // standard constructor
+    CAudioPkgDialog(CWnd* pParent = NULL);   // standard constructor
 
     void OnLoadPackage ( void );
 
-	enum { IDD = IDD_RESOURCE_BROWSER_DLG };
-    CListBox	        m_DescListBox;
+    enum { IDD = IDD_RESOURCE_BROWSER_DLG };
+    CListBox            m_DescListBox;
     CString             m_DescName;
     xbool               m_DescLoaded;
     xarray<xstring>     m_PackageLoaded;
-    CTreeCtrl	        m_rscTree;
-  	CImageList	        m_imageList;
+    CTreeCtrl            m_rscTree;
+      CImageList            m_imageList;
     xharray<CString>    m_xaPaths;
 
 // Implementation
@@ -38,17 +38,17 @@ protected:
     void        AddPathToTree   (CString strPath, CString strName);
     HTREEITEM   DoesChildExist  (CString strCurrent, HTREEITEM hParent);
 
-	// Generated message map functions
-	//{{AFX_MSG(CAudioPkgDialog)
-	virtual BOOL OnInitDialog();
+    // Generated message map functions
+    //{{AFX_MSG(CAudioPkgDialog)
+    virtual BOOL OnInitDialog();
     virtual void OnOK( );
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 public:
 
     virtual BOOL DestroyWindow();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedClear();
 };
 

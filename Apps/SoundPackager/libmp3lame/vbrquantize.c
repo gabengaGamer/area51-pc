@@ -1,7 +1,7 @@
 /*
- *	MP3 quantization
+ *    MP3 quantization
  *
- *	Copyright (c) 1999 Mark Taylor
+ *    Copyright (c) 1999 Mark Taylor
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -10,7 +10,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -542,11 +542,11 @@ compute_scalefacs_short(int sf[][3], const gr_info * cod_info, int scalefac[][3]
 
 
 /*
-	  ifqstep = ( cod_info->scalefac_scale == 0 ) ? 2 : 4;
-	  ol_sf =  (cod_info->global_gain-210.0);
-	  ol_sf -= ifqstep*scalefac[gr][ch].l[sfb];
-	  if (cod_info->preflag && sfb>=11) 
-	  ol_sf -= ifqstep*pretab[sfb];
+      ifqstep = ( cod_info->scalefac_scale == 0 ) ? 2 : 4;
+      ol_sf =  (cod_info->global_gain-210.0);
+      ol_sf -= ifqstep*scalefac[gr][ch].l[sfb];
+      if (cod_info->preflag && sfb>=11) 
+      ol_sf -= ifqstep*pretab[sfb];
 */
 INLINE int
 compute_scalefacs_long_lsf(int *sf, const gr_info * cod_info, int *scalefac)
@@ -587,11 +587,11 @@ compute_scalefacs_long_lsf(int *sf, const gr_info * cod_info, int *scalefac)
 
 
 /*
-	  ifqstep = ( cod_info->scalefac_scale == 0 ) ? 2 : 4;
-	  ol_sf =  (cod_info->global_gain-210.0);
-	  ol_sf -= ifqstep*scalefac[gr][ch].l[sfb];
-	  if (cod_info->preflag && sfb>=11) 
-	  ol_sf -= ifqstep*pretab[sfb];
+      ifqstep = ( cod_info->scalefac_scale == 0 ) ? 2 : 4;
+      ol_sf =  (cod_info->global_gain-210.0);
+      ol_sf -= ifqstep*scalefac[gr][ch].l[sfb];
+      if (cod_info->preflag && sfb>=11) 
+      ol_sf -= ifqstep*pretab[sfb];
 */
 INLINE int
 compute_scalefacs_long(int *sf, const gr_info * cod_info, int *scalefac)

@@ -140,7 +140,7 @@ class linked_list
 //==========================================================================
 public:
 
-	// Constructor/destructor
+    // Constructor/destructor
     linked_list();
     ~linked_list();
 
@@ -172,22 +172,22 @@ public:
     void                    SetNext         ( T* pItem, T* pNext ) const;
 
     // Add an item to the end of the linked_list
-	s32                     Append          ( T* pItem );
+    s32                     Append          ( T* pItem );
     
     // Add an item to the front of the linked_list
     s32                     Prepend         ( T* pItem );
 
     // Removed item from linked_list
-	s32                     Remove          ( T* pItem );
+    s32                     Remove          ( T* pItem );
 
     // Returns number of items
     s32                     GetCount        ( void ) const;
 
-	// Searches for given item - returns -1 if not found, else the index
-	s32                     Find            ( T* pItem ) const;
+    // Searches for given item - returns -1 if not found, else the index
+    s32                     Find            ( T* pItem ) const;
     
-	// Assignment operator
-	const linked_list< T, N >& operator= ( const linked_list< T, N >& SourceList );
+    // Assignment operator
+    const linked_list< T, N >& operator= ( const linked_list< T, N >& SourceList );
     
     //==========================================================================
     // Data

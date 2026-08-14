@@ -464,7 +464,7 @@ public:
     xbool               GetBlueprintPath                ( const char* pTheme, const char* pRelPath, xstring &xstrFullPath );
     xbool               GetThemeInfoFromPath            ( const char* pPath, xstring &xstrTheme, xstring &xstrRelativePath );
     xbool               HasSingleBlueprintChanged       ( const editor_blueprint_ref& BPRef, xarray<prop_container>& DifferentProperties );
-    void				SelectAllMatchingBlueprints		( const editor_blueprint_ref& BPRef );
+    void                SelectAllMatchingBlueprints        ( const editor_blueprint_ref& BPRef );
 
     //Render the world
     void                RenderSelectedObjectCollision   ( void );
@@ -575,7 +575,7 @@ private:
     editor_blueprint_ref        m_bpRefTemp;            //temp reference used for blueprint placement;
     editor_layer                m_NullLayer;            //for non-associated objects
 
-    xarray<editor_state_ref> 	m_ObjectsState;         //used for initial state
+    xarray<editor_state_ref>     m_ObjectsState;         //used for initial state
     u8                          m_SelectedZone;
     xbool                       m_bObjectGroupChanges;
     

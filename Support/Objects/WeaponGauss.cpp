@@ -24,13 +24,13 @@ static struct weapon_gauss_desc : public object_desc
                                         "Gauss Rifle",
                                         "WEAPON",
                                         object::ATTR_SPACIAL_ENTRY          |
-										object::ATTR_NEEDS_LOGIC_TIME		|
-                                        object::ATTR_SOUND_SOURCE			|
-                                        object::ATTR_RENDERABLE				|
- 										object::ATTR_COLLISION_PERMEABLE,
+                                        object::ATTR_NEEDS_LOGIC_TIME        |
+                                        object::ATTR_SOUND_SOURCE            |
+                                        object::ATTR_RENDERABLE                |
+                                         object::ATTR_COLLISION_PERMEABLE,
                                         FLAGS_GENERIC_EDITOR_CREATE |
                                         FLAGS_IS_DYNAMIC    
-										)
+                                        )
     {
 
     }
@@ -62,22 +62,22 @@ const object_desc&  weapon_gauss::GetObjectType( void )
 
 weapon_gauss::weapon_gauss(void)
 {
-	//initialize the ammo structures.
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_GAUSS_RIFLE;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 1000;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 250;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
+    //initialize the ammo structures.
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_GAUSS_RIFLE;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 1000;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 250;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
 
-	//initialize the ammo structures.
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_ProjectileType = GRENADE_FRAG;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 16;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 4;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
+    //initialize the ammo structures.
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_ProjectileType = GRENADE_FRAG;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 16;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 4;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
 
     m_HasSecondaryAmmo      = TRUE;
-    m_fFiringDelay          = .05f;		//short firing delay for the Gauss rifle
+    m_fFiringDelay          = .05f;        //short firing delay for the Gauss rifle
 
     //set aim degradation
     m_AimDegradePrimary     = 0.2f;
@@ -99,7 +99,7 @@ weapon_gauss::~weapon_gauss()
 
 //=========================================================================
 
-void weapon_gauss::InitWeapon			(   
+void weapon_gauss::InitWeapon            (   
                                                  const char* pSkinFileName , 
                                                  const char* pAnimFileName , 
                                                  const vector3& rInitPos , 
@@ -140,21 +140,21 @@ void weapon_gauss::InitWeapon( const vector3& rInitPos, render_state rRenderStat
 
 xbool weapon_gauss::FireWeaponProtected( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint )
 {
-	( void ) InitPos;
+    ( void ) InitPos;
     ( void ) Power;
     ( void )iBonePoint;
 
     ASSERT( m_FiringPointBoneIndex[ iBonePoint ] != -1 );
 
-	//if there weapon is not ready, do nothing.
-	if ( ! IsWeaponReady( AMMO_PRIMARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.
+    if ( ! IsWeaponReady( AMMO_PRIMARY ) )
+    {
+        return FALSE;
+    }
 
-	//otherwise, create a new bullet projectile, init it's position, and send it on it's way.
-	else
-	{
+    //otherwise, create a new bullet projectile, init it's position, and send it on it's way.
+    else
+    {
         // If we have a registered template, use it.
         if ( m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileTemplateID >= 0 )
         {
@@ -180,8 +180,8 @@ xbool weapon_gauss::FireWeaponProtected( const vector3& InitPos , const vector3&
         g_LightMgr.AddFadingLight( InitPos, xcolor(0,124,120), 400.0f, 1.0f, 0.1f );
         
         SynchGunToCount() ;
-		return TRUE;
-	}
+        return TRUE;
+    }
 }
 
 //=========================================================================
@@ -231,20 +231,20 @@ void weapon_gauss::SynchGunToCount( void )
 
 xbool weapon_gauss::FireSecondaryProtected( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint )
 {
-	( void ) InitPos;
+    ( void ) InitPos;
     ( void ) BaseVelocity;
     ( void ) Power;
 
     //Grenade projectile is not ready yet.  Just return False here.
 
-	//if there weapon is not ready, do nothing.
-	if ( ! IsWeaponReady( AMMO_SECONDARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.
+    if ( ! IsWeaponReady( AMMO_SECONDARY ) )
+    {
+        return FALSE;
+    }
 
-	//otherwise, create a grenade projectile, init it's position, and send it on it's way.
-	else
+    //otherwise, create a grenade projectile, init it's position, and send it on it's way.
+    else
     {
         //create grenade
         guid GrenadeID = g_ObjMgr.CreateObject( grenade_projectile::GetObjectType() );
@@ -274,7 +274,7 @@ xbool weapon_gauss::FireSecondaryProtected( const vector3& InitPos , const vecto
         g_LightMgr.AddFadingLight( InitPos, xcolor( 76, 76, 38 ), 200.0f, 3.0f, 0.1f );
 
         return TRUE;
-	}
+    }
 }
 
 //==============================================================================
@@ -322,7 +322,7 @@ void weapon_gauss::ProcessSfx( void )
                     case ANIM_EVENT_WPN_SECONDARY_FIRE_LL:
                     case ANIM_EVENT_WPN_SECONDARY_FIRE_UR:
                     case ANIM_EVENT_WPN_SECONDARY_FIRE_UL:
-	                case ANIM_EVENT_SECONDARY_FIRE:
+                    case ANIM_EVENT_SECONDARY_FIRE:
                         g_AudioManager.Play( "Railgun_Secondary_Fire", audio_manager::GUN_SHOT, GetPosition(), 
                             GetZone1(), GetGuid() );
                     break;

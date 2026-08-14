@@ -105,8 +105,8 @@ xbool PrimitiveRenderer::BlendPresetFromMode( render::primitive_blend_mode blend
             preset = RSTATE_BLEND_PRESET_ADD;
             return TRUE;
         }
-		break;
-		
+        break;
+        
         case render::PRIMITIVE_BLEND_SUBTRACTIVE:
         {
             preset = RSTATE_BLEND_PRESET_SUB;

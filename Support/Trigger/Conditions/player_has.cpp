@@ -731,7 +731,7 @@ void check_state_vars::OnEnumProp ( prop_enum& rPropList )
     //object info
     rPropList.AddInt ( "Code" , "",  PROP_TYPE_DONT_SHOW  );
     
-    rPropList.AddString	( "Variable Name",
+    rPropList.AddString    ( "Variable Name",
         "Name of the Global Variable.", PROP_TYPE_MUST_ENUM );
     
     rPropList.AddEnum( "Type",
@@ -1094,7 +1094,7 @@ xbool check_trigger_state::Execute         ( trigger_object* pParent )
 
 //=============================================================================
 
-void check_trigger_state::OnEnumProp	( prop_enum& rPropList )
+void check_trigger_state::OnEnumProp    ( prop_enum& rPropList )
 {
     //object info 
     rPropList.AddInt ( "Code" , "",  PROP_TYPE_DONT_SHOW  );
@@ -1111,7 +1111,7 @@ void check_trigger_state::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool check_trigger_state::OnProperty	( prop_query& rPropQuery )
+xbool check_trigger_state::OnProperty    ( prop_query& rPropQuery )
 {
   
     if ( rPropQuery.VarInt ( "Code" , m_Code ) )
@@ -1215,7 +1215,7 @@ void random_chance::OnEnumProp ( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool random_chance::OnProperty	( prop_query& rPropQuery )
+xbool random_chance::OnProperty    ( prop_query& rPropQuery )
 {
     if ( rPropQuery.VarInt ( "Code" , m_Code ) )
         return TRUE;
@@ -1524,7 +1524,7 @@ xbool count_things::Execute ( trigger_object* pParent )
             
             g_ObjMgr.SelectBBox ( object::ATTR_LIVING, BBox , object::TYPE_HAZMAT );
             
-            slot_id	SlotID = SLOT_NULL;
+            slot_id    SlotID = SLOT_NULL;
             
             // Check all objects inside of the BBox for the trigger.
             for( SlotID = g_ObjMgr.StartLoop(); SlotID != SLOT_NULL; SlotID = g_ObjMgr.GetNextResult( SlotID ) )
@@ -1574,7 +1574,7 @@ void count_things::OnEnumProp ( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool count_things::OnProperty	( prop_query& rPropQuery )
+xbool count_things::OnProperty    ( prop_query& rPropQuery )
 {
     if ( rPropQuery.VarInt ( "Code" , m_Code ) )
         return TRUE;
@@ -1877,7 +1877,7 @@ void check_counter::OnEnumProp ( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool check_counter::OnProperty	( prop_query& rPropQuery )
+xbool check_counter::OnProperty    ( prop_query& rPropQuery )
 {
     if ( rPropQuery.VarInt ( "Code" , m_Code ) )
         return TRUE;

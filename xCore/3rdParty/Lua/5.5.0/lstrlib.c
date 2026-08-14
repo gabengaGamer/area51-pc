@@ -33,7 +33,7 @@
 ** an unsigned char.
 */
 #if !defined(LUA_MAXCAPTURES)
-#define LUA_MAXCAPTURES		32
+#define LUA_MAXCAPTURES        32
 #endif
 
 
@@ -245,7 +245,7 @@ static int str_dump (lua_State *L) {
 ** =======================================================
 */
 
-#if defined(LUA_NOCVTS2N)	/* { */
+#if defined(LUA_NOCVTS2N)    /* { */
 
 /* no coercion from strings to numbers */
 
@@ -254,7 +254,7 @@ static const luaL_Reg stringmetamethods[] = {
   {NULL, NULL}
 };
 
-#else		/* }{ */
+#else        /* }{ */
 
 static int tonum (lua_State *L, int arg) {
   if (lua_type(L, arg) == LUA_TNUMBER) {  /* already a number? */
@@ -342,7 +342,7 @@ static const luaL_Reg stringmetamethods[] = {
   {NULL, NULL}
 };
 
-#endif		/* } */
+#endif        /* } */
 
 /* }====================================================== */
 
@@ -353,8 +353,8 @@ static const luaL_Reg stringmetamethods[] = {
 */
 
 
-#define CAP_UNFINISHED	(-1)
-#define CAP_POSITION	(-2)
+#define CAP_UNFINISHED    (-1)
+#define CAP_POSITION    (-2)
 
 
 typedef struct MatchState {
@@ -377,12 +377,12 @@ static const char *match (MatchState *ms, const char *s, const char *p);
 
 /* maximum recursion depth for 'match' */
 #if !defined(MAXCCALLS)
-#define MAXCCALLS	200
+#define MAXCCALLS    200
 #endif
 
 
-#define L_ESC		'%'
-#define SPECIALS	"^$*+?.([%-"
+#define L_ESC        '%'
+#define SPECIALS    "^$*+?.([%-"
 
 
 static int check_capture (MatchState *ms, int l) {
@@ -996,13 +996,13 @@ static int str_gsub (lua_State *L) {
 ** =======================================================
 */
 
-#if !defined(lua_number2strx)	/* { */
+#if !defined(lua_number2strx)    /* { */
 
 /*
 ** Hexadecimal floating-point formatter
 */
 
-#define SIZELENMOD	(sizeof(LUA_NUMBER_FRMLEN)/sizeof(char))
+#define SIZELENMOD    (sizeof(LUA_NUMBER_FRMLEN)/sizeof(char))
 
 
 /*
@@ -1011,7 +1011,7 @@ static int str_gsub (lua_State *L) {
 ** to nibble boundaries by making what is left after that first digit a
 ** multiple of 4.
 */
-#define L_NBFD		((l_floatatt(MANT_DIG) - 1)%4 + 1)
+#define L_NBFD        ((l_floatatt(MANT_DIG) - 1)%4 + 1)
 
 
 /*
@@ -1070,7 +1070,7 @@ static int lua_number2strx (lua_State *L, char *buff, unsigned sz,
   return n;
 }
 
-#endif				/* } */
+#endif                /* } */
 
 
 /*
@@ -1079,7 +1079,7 @@ static int lua_number2strx (lua_State *L, char *buff, unsigned sz,
 ** and '\0') + number of decimal digits to represent maxfloat (which
 ** is maximum exponent + 1). (99+3+1, adding some extra, 110)
 */
-#define MAX_ITEMF	(110 + l_floatatt(MAX_10_EXP))
+#define MAX_ITEMF    (110 + l_floatatt(MAX_10_EXP))
 
 
 /*
@@ -1090,26 +1090,26 @@ static int lua_number2strx (lua_State *L, char *buff, unsigned sz,
 ** worst case are floats: they may need 99 significant digits, plus
 ** '0x', '-', '.', 'e+XXXX', and '\0'. Adding some extra, 120.
 */
-#define MAX_ITEM	120
+#define MAX_ITEM    120
 
 
 /* valid flags in a format specification */
 #if !defined(L_FMTFLAGSF)
 
 /* valid flags for a, A, e, E, f, F, g, and G conversions */
-#define L_FMTFLAGSF	"-+#0 "
+#define L_FMTFLAGSF    "-+#0 "
 
 /* valid flags for o, x, and X conversions */
-#define L_FMTFLAGSX	"-#0"
+#define L_FMTFLAGSX    "-#0"
 
 /* valid flags for d and i conversions */
-#define L_FMTFLAGSI	"-+0 "
+#define L_FMTFLAGSI    "-+0 "
 
 /* valid flags for u conversions */
-#define L_FMTFLAGSU	"-0"
+#define L_FMTFLAGSU    "-0"
 
 /* valid flags for c, p, and s conversions */
-#define L_FMTFLAGSC	"-"
+#define L_FMTFLAGSC    "-"
 
 #endif
 
@@ -1120,7 +1120,7 @@ static int lua_number2strx (lua_State *L, char *buff, unsigned sz,
 ** length modifier (8), conversion specifier, and final '\0', plus some
 ** extra.
 */
-#define MAX_FORMAT	32
+#define MAX_FORMAT    32
 
 
 static void addquoted (luaL_Buffer *b, const char *s, size_t len) {
@@ -1393,20 +1393,20 @@ static int str_format (lua_State *L) {
 
 /* value used for padding */
 #if !defined(LUAL_PACKPADBYTE)
-#define LUAL_PACKPADBYTE		0x00
+#define LUAL_PACKPADBYTE        0x00
 #endif
 
 /* maximum size for the binary representation of an integer */
-#define MAXINTSIZE	16
+#define MAXINTSIZE    16
 
 /* number of bits in a character */
-#define NB	CHAR_BIT
+#define NB    CHAR_BIT
 
 /* mask for one character (NB 1's) */
-#define MC	((1 << NB) - 1)
+#define MC    ((1 << NB) - 1)
 
 /* size of a lua_Integer */
-#define SZINT	((int)sizeof(lua_Integer))
+#define SZINT    ((int)sizeof(lua_Integer))
 
 
 /* dummy union to get native endianness */
@@ -1430,17 +1430,17 @@ typedef struct Header {
 ** options for pack/unpack
 */
 typedef enum KOption {
-  Kint,		/* signed integers */
-  Kuint,	/* unsigned integers */
-  Kfloat,	/* single-precision floating-point numbers */
-  Knumber,	/* Lua "native" floating-point numbers */
-  Kdouble,	/* double-precision floating-point numbers */
-  Kchar,	/* fixed-length strings */
-  Kstring,	/* strings with prefixed length */
-  Kzstr,	/* zero-terminated strings */
-  Kpadding,	/* padding */
-  Kpaddalign,	/* padding for alignment */
-  Knop		/* no-op (configuration or spaces) */
+  Kint,        /* signed integers */
+  Kuint,    /* unsigned integers */
+  Kfloat,    /* single-precision floating-point numbers */
+  Knumber,    /* Lua "native" floating-point numbers */
+  Kdouble,    /* double-precision floating-point numbers */
+  Kchar,    /* fixed-length strings */
+  Kstring,    /* strings with prefixed length */
+  Kzstr,    /* zero-terminated strings */
+  Kpadding,    /* padding */
+  Kpaddalign,    /* padding for alignment */
+  Knop        /* no-op (configuration or spaces) */
 } KOption;
 
 

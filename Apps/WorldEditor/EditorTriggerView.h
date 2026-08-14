@@ -16,12 +16,12 @@
 class CEditorTriggerView : public CPaletteView
 {
 protected:
-	CEditorTriggerView();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CEditorTriggerView)
+    CEditorTriggerView();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CEditorTriggerView)
 
 // Attributes
 public:
-	CEditorPaletteDoc* GetDocument();
+    CEditorPaletteDoc* GetDocument();
 
     CListCtrl       m_TriggerLst;
 
@@ -32,32 +32,32 @@ public:
 public:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorTriggerView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	afx_msg void OnClickTriggerItem(NMHDR* pNMHDR, LRESULT* pResult);
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorTriggerView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    afx_msg void OnClickTriggerItem(NMHDR* pNMHDR, LRESULT* pResult);
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~CEditorTriggerView();
+    virtual ~CEditorTriggerView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CEditorTriggerView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
+    //{{AFX_MSG(CEditorTriggerView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnTrtbRefresh(); 
     afx_msg void OnUpdateTrtbRefresh(CCmdUI* pCmdUI); 
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
     
 };
 

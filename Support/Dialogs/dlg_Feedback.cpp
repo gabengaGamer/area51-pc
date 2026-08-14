@@ -145,7 +145,7 @@ xbool dlg_feedback::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
     
     // set up nav text
     
@@ -254,7 +254,7 @@ xbool dlg_feedback::Create( s32                        UserID,
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -308,7 +308,7 @@ void dlg_feedback::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     if( m_bRenderBlackout )
     {
@@ -427,7 +427,7 @@ void dlg_feedback::OnAccept( ui_win* pWin )
         xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_YES" ));
         navText += g_StringTableMgr( "ui", "IDS_NAV_NO" );
         SetNavTextVisible( FALSE );
-		
+        
         irect Position( 0, 0, 280, 240 );
         m_PopUp->Configure( 
             Position,

@@ -59,19 +59,19 @@ CEditorView3D::~CEditorView3D()
 //===========================================================================
 
 BEGIN_MESSAGE_MAP(CEditorView3D, CView)
-	//{{AFX_MSG_MAP(CEditorView3D)
-	ON_WM_CREATE()
-	ON_WM_LBUTTONDOWN()
-	ON_WM_LBUTTONUP()
-	ON_WM_MBUTTONDOWN()
-	ON_WM_MBUTTONUP()
-	ON_WM_RBUTTONDOWN()
-	ON_WM_RBUTTONUP()
-	ON_WM_MOUSEWHEEL()
-	ON_WM_MOUSEMOVE()
-	ON_WM_ERASEBKGND()
-	ON_WM_SIZE()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CEditorView3D)
+    ON_WM_CREATE()
+    ON_WM_LBUTTONDOWN()
+    ON_WM_LBUTTONUP()
+    ON_WM_MBUTTONDOWN()
+    ON_WM_MBUTTONUP()
+    ON_WM_RBUTTONDOWN()
+    ON_WM_RBUTTONUP()
+    ON_WM_MOUSEWHEEL()
+    ON_WM_MOUSEMOVE()
+    ON_WM_ERASEBKGND()
+    ON_WM_SIZE()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -80,12 +80,12 @@ END_MESSAGE_MAP()
 #ifdef _DEBUG
 void CEditorView3D::AssertValid() const
 {
-	CView::AssertValid();
+    CView::AssertValid();
 }
 
 void CEditorView3D::Dump(CDumpContext& dc) const
 {
-	CView::Dump(dc);
+    CView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -94,23 +94,23 @@ void CEditorView3D::Dump(CDumpContext& dc) const
 
 int CEditorView3D::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	if (CView::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
+    if (CView::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
     // Set the window style
     ModifyStyleEx( WS_EX_CLIENTEDGE, 0 );
 
     // Attach our MouseMgr to our window
     m_MouseMgr.AttachToWindow( this );
 
-	return 0;
+    return 0;
 }
 
 //===========================================================================
 
 BOOL CEditorView3D::PreCreateWindow(CREATESTRUCT& cs) 
 {
-	cs.style |= WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+    cs.style |= WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
     return CView::PreCreateWindow(cs);
 }
 
@@ -175,23 +175,23 @@ void CEditorView3D::OnMouseMove(UINT nFlags, CPoint point)      { m_MouseMgr.OnM
 BOOL CEditorView3D::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
     m_MouseMgr.OnWheel( nFlags, pt, zDelta );
-	return CView::OnMouseWheel(nFlags, zDelta, pt);
+    return CView::OnMouseWheel(nFlags, zDelta, pt);
 }
 
 //===========================================================================
 
 BOOL CEditorView3D::OnEraseBkgnd(CDC* pDC) 
 {
-	// Just return...otherwise it'll "erase" it to white which causes flicker
-	return FALSE;  //return CView::OnEraseBkgnd(pDC);
+    // Just return...otherwise it'll "erase" it to white which causes flicker
+    return FALSE;  //return CView::OnEraseBkgnd(pDC);
 }
 
 //===========================================================================
 
 void CEditorView3D::OnSize(UINT nType, int cx, int cy) 
 {
-	CView::OnSize(nType, cx, cy);
-	
+    CView::OnSize(nType, cx, cy);
+    
     CRect           rcClient;
     GetClientRect   ( &rcClient );
 

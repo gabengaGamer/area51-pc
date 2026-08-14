@@ -35,8 +35,8 @@
 */
 
 
-#define LEVELS1	10	/* size of the first part of the stack */
-#define LEVELS2	11	/* size of the second part of the stack */
+#define LEVELS1    10    /* size of the first part of the stack */
+#define LEVELS2    11    /* size of the second part of the stack */
 
 
 
@@ -266,7 +266,7 @@ LUALIB_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
 }
 
 
-#if !defined(l_inspectstat)	/* { */
+#if !defined(l_inspectstat)    /* { */
 
 #if defined(LUA_USE_POSIX)
 
@@ -285,7 +285,7 @@ LUALIB_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
 
 #endif
 
-#endif				/* } */
+#endif                /* } */
 
 
 LUALIB_API int luaL_execresult (lua_State *L, int stat) {
@@ -527,7 +527,7 @@ static void newbox (lua_State *L) {
 ** check whether buffer is using a userdata on the stack as a temporary
 ** buffer
 */
-#define buffonstack(B)	((B)->b != (B)->init.b)
+#define buffonstack(B)    ((B)->b != (B)->init.b)
 
 
 /*
@@ -1140,16 +1140,16 @@ static void warnfon (void *ud, const char *message, int tocont) {
 
 
 /* Size for the buffer, in bytes */
-#define BUFSEEDB	(sizeof(void*) + sizeof(time_t))
+#define BUFSEEDB    (sizeof(void*) + sizeof(time_t))
 
 /* Size for the buffer in int's, rounded up */
-#define BUFSEED		((BUFSEEDB + sizeof(int) - 1) / sizeof(int))
+#define BUFSEED        ((BUFSEEDB + sizeof(int) - 1) / sizeof(int))
 
 /*
 ** Copy the contents of variable 'v' into the buffer pointed by 'b'.
 ** (The '&b[0]' disguises 'b' to fix an absurd warning from clang.)
 */
-#define addbuff(b,v)	(memcpy(&b[0], &(v), sizeof(v)), b += sizeof(v))
+#define addbuff(b,v)    (memcpy(&b[0], &(v), sizeof(v)), b += sizeof(v))
 
 
 static unsigned int luai_makeseed (void) {

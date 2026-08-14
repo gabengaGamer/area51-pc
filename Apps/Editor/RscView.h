@@ -13,8 +13,8 @@
 class RscView : public CListView
 {
 protected:
-	RscView();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(RscView)
+    RscView();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(RscView)
     bool SortList( int nCol, bool bAscending );
 
 // Attributes
@@ -24,29 +24,29 @@ public:
 public:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(RscView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(RscView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~RscView();
+    virtual ~RscView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(RscView)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(RscView)
+        // NOTE - the ClassWizard will add and remove member functions here.
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

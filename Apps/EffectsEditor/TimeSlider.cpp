@@ -120,17 +120,17 @@ CTimeSlider::~CTimeSlider()
 
 
 BEGIN_MESSAGE_MAP(CTimeSlider, CWnd)
-	//{{AFX_MSG_MAP(CTimeSlider)
-	ON_WM_PAINT()
-	ON_WM_LBUTTONDOWN()
-	ON_WM_LBUTTONUP()
-	ON_WM_MOUSEMOVE()
-	ON_WM_MBUTTONDOWN()
-	ON_WM_MBUTTONUP()
-	ON_WM_RBUTTONDOWN()
-	ON_WM_RBUTTONUP()
-	ON_WM_KEYUP()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CTimeSlider)
+    ON_WM_PAINT()
+    ON_WM_LBUTTONDOWN()
+    ON_WM_LBUTTONUP()
+    ON_WM_MOUSEMOVE()
+    ON_WM_MBUTTONDOWN()
+    ON_WM_MBUTTONUP()
+    ON_WM_RBUTTONDOWN()
+    ON_WM_RBUTTONUP()
+    ON_WM_KEYUP()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -533,7 +533,7 @@ BOOL CTimeSlider::Create(CWnd* pParentWnd, int posX, int posY, int nWidth, int n
     CString         winClassName;
     CRect           winRect;
 
-	winClassName    = AfxRegisterWndClass   ( CS_DBLCLKS,                       // Class Style
+    winClassName    = AfxRegisterWndClass   ( CS_DBLCLKS,                       // Class Style
                                               ::LoadCursor(NULL, IDC_ARROW),    // Cursor
                                               NULL,                             // Background
                                               0 );                              // Icon
@@ -542,7 +542,7 @@ BOOL CTimeSlider::Create(CWnd* pParentWnd, int posX, int posY, int nWidth, int n
     winRect.top     = posY;
     winRect.bottom  = posY + m_Height;
 
-	return CWnd::Create(winClassName, "", WS_CHILD | WS_VISIBLE, winRect, pParentWnd, nID, NULL);
+    return CWnd::Create(winClassName, "", WS_CHILD | WS_VISIBLE, winRect, pParentWnd, nID, NULL);
 }
 
 void CTimeSlider::MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint )
@@ -559,7 +559,7 @@ void CTimeSlider::MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepain
 
 void CTimeSlider::OnPaint() 
 {
-	CPaintDC* pDC = new CPaintDC(this);     // device context for painting
+    CPaintDC* pDC = new CPaintDC(this);     // device context for painting
 
     // Set clipping region so the double buffered blit will not blit unrendered areas
     CRgn r;
@@ -1025,7 +1025,7 @@ void CTimeSlider::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
         }
     }
     
-	CWnd::OnKeyUp(nChar, nRepCnt, nFlags);
+    CWnd::OnKeyUp(nChar, nRepCnt, nFlags);
 }
 
 /////////////////////////////////////////////////////////////////////////////

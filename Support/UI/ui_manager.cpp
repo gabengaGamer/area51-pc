@@ -716,7 +716,7 @@ void ui_manager::Kill( void )
 
     ASSERT( m_CallbackDepth == 0 );
     DestroyDeferredDialogs();
-	
+    
     //-- Destroy Strings
     g_StringTableMgr.UnloadTable( "ui" );
 
@@ -2251,7 +2251,7 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
                     First           = pUser->First[i].nPresses + pUser->First[i].nRepeats;
                     Last            = pUser->Last[i].nPresses + pUser->Last[i].nRepeats;
                     Help            = pUser->Help[i].nPresses;
-					
+                    
                     xbool const HasSemanticInput =
                            UpCount || DownCount || LeftCount || RightCount
                         || Accept || Cancel || Delete || Alternate || Help
@@ -2985,7 +2985,7 @@ void ui_manager::WordWrapString( s32 iFont, const irect& r, const xwstring& Stri
 
             // Advance cursor before checking wrap
             w = pFont->GetCharacter(c).W;
-			
+            
             x += w+1;
 
             // Check for NewLine

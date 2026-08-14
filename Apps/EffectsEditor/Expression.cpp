@@ -79,81 +79,81 @@ bool Expression::Initialize(const char* expression, const char* variableName[], 
 
 bool Expression::Parse(const char* infix, std::vector<Token>& postfixTokens, const char* variableName[], int numVariables, UserFunction function[], const char* functionName[], int numFunctions)
 {
-	try 
-	{
-		typedef std::map<std::string, int> VariableIndexMap;   
-		typedef std::map<std::string, int> FunctionIndexMap;   
+    try 
+    {
+        typedef std::map<std::string, int> VariableIndexMap;   
+        typedef std::map<std::string, int> FunctionIndexMap;   
 
-		VariableIndexMap variableIndexMap;
-		FunctionIndexMap functionIndexMap;
+        VariableIndexMap variableIndexMap;
+        FunctionIndexMap functionIndexMap;
 
-		int i;
+        int i;
     
-		for (i = 0; i < numVariables; ++i)
-		{
-			variableIndexMap.insert(VariableIndexMap::value_type(variableName[i], i));    
-		}
+        for (i = 0; i < numVariables; ++i)
+        {
+            variableIndexMap.insert(VariableIndexMap::value_type(variableName[i], i));    
+        }
     
-		for (i = 0; i < numFunctions; ++i)
-		{
-			functionIndexMap.insert(FunctionIndexMap::value_type(functionName[i], i));    
-		}
+        for (i = 0; i < numFunctions; ++i)
+        {
+            functionIndexMap.insert(FunctionIndexMap::value_type(functionName[i], i));    
+        }
 
-		// Modified from source code by Rex Jaeshke available at
-		// http://www.programmersheaven.com/zone3/cat414/16136.htm
+        // Modified from source code by Rex Jaeshke available at
+        // http://www.programmersheaven.com/zone3/cat414/16136.htm
 
-		std::stack<Token> stack;
+        std::stack<Token> stack;
 
-		// Flag to keep track of whether or not the parser is ready for a unary
-		// operator to occur in the token stream. This happens after a number
-		// or a '(' or on the first token.
+        // Flag to keep track of whether or not the parser is ready for a unary
+        // operator to occur in the token stream. This happens after a number
+        // or a '(' or on the first token.
 
-		bool readyForUnaryOperator = true;
+        bool readyForUnaryOperator = true;
 
-		// Push a '(' on the stack. This sentinel allows us to detect when we
-		// flush out the stack on completion.
+        // Push a '(' on the stack. This sentinel allows us to detect when we
+        // flush out the stack on completion.
     
-		stack.push(Token::functionLParen);
+        stack.push(Token::functionLParen);
 
-		while (*infix != '\0')
-		{
+        while (*infix != '\0')
+        {
 
-			if (isspace(*infix))
-			{
+            if (isspace(*infix))
+            {
 
-				// Ignore white space.
+                // Ignore white space.
 
-    			++infix;
+                ++infix;
 
-			}
-			else if (*infix == '.' || isdigit(*infix))
-			{
+            }
+            else if (*infix == '.' || isdigit(*infix))
+            {
 
-				// Parse a real number.
+                // Parse a real number.
 
-				float result = 0;
+                float result = 0;
 
-				while (isdigit(*infix))
-				{
-					result = result * 10 + (*infix) - '0';
-					++infix;
-				}
+                while (isdigit(*infix))
+                {
+                    result = result * 10 + (*infix) - '0';
+                    ++infix;
+                }
 
-				if (*infix == '.')
-				{
+                if (*infix == '.')
+                {
 
-					++infix;
+                    ++infix;
 
-					float multiplier = 0.1f;
+                    float multiplier = 0.1f;
 
-					do
-					{
-						result += ((*infix) - '0') * multiplier;
-						multiplier *= 0.1f; 
-						++infix;
-					}
-					while (isdigit(*infix));                
-				}
+                    do
+                    {
+                        result += ((*infix) - '0') * multiplier;
+                        multiplier *= 0.1f; 
+                        ++infix;
+                    }
+                    while (isdigit(*infix));                
+                }
 
                 if( (*infix == 'e') || (*infix == 'E') )
                 {
@@ -185,214 +185,214 @@ bool Expression::Parse(const char* infix, std::vector<Token>& postfixTokens, con
                     result *= pow( 10, exponent );
                 }
 
-				postfixTokens.push_back(Token(result));
-				readyForUnaryOperator = false;
+                postfixTokens.push_back(Token(result));
+                readyForUnaryOperator = false;
 
-			}
-			else if (isalpha(*infix))
-			{
+            }
+            else if (isalpha(*infix))
+            {
 
-				int length = 0;
+                int length = 0;
 
-				// Parse an identifier.
+                // Parse an identifier.
 
-				while (isalpha(infix[length]) || isdigit(infix[length]) || infix[length] == '_')
-				{
-					++length;
-				}
+                while (isalpha(infix[length]) || isdigit(infix[length]) || infix[length] == '_')
+                {
+                    ++length;
+                }
 
-				// Pop the operators of higher precedence (this is the special
-				// case where there aren't any)
+                // Pop the operators of higher precedence (this is the special
+                // case where there aren't any)
 
-				readyForUnaryOperator = true;
+                readyForUnaryOperator = true;
             
-				if (length == 3 && strncmp(infix, "abs", length) == 0)
-				{
-					stack.push(Token::functionAbs);
-				}
-				else if (length == 3 && strncmp(infix, "sin", length) == 0)
-				{
-					stack.push(Token::functionSin);
-				}
-				else if (length == 3 && strncmp(infix, "cos", length) == 0)
-				{
-					stack.push(Token::functionCos);
-				}
-				else if (length == 4 && strncmp(infix, "sqrt", length) == 0)
-				{
-					stack.push(Token::functionSqrt);
-				}
-				else if (length == 2 && strncmp(infix, "pi", length) == 0)
-				{
-					stack.push(Token::functionPi);
-					readyForUnaryOperator = false;
-				}
-				else
-				{
+                if (length == 3 && strncmp(infix, "abs", length) == 0)
+                {
+                    stack.push(Token::functionAbs);
+                }
+                else if (length == 3 && strncmp(infix, "sin", length) == 0)
+                {
+                    stack.push(Token::functionSin);
+                }
+                else if (length == 3 && strncmp(infix, "cos", length) == 0)
+                {
+                    stack.push(Token::functionCos);
+                }
+                else if (length == 4 && strncmp(infix, "sqrt", length) == 0)
+                {
+                    stack.push(Token::functionSqrt);
+                }
+                else if (length == 2 && strncmp(infix, "pi", length) == 0)
+                {
+                    stack.push(Token::functionPi);
+                    readyForUnaryOperator = false;
+                }
+                else
+                {
 
-					std::string name(infix, infix + length);
+                    std::string name(infix, infix + length);
 
-					// Check if the token is a variable.
+                    // Check if the token is a variable.
 
-					VariableIndexMap::const_iterator iterator
-						= variableIndexMap.find(name);
+                    VariableIndexMap::const_iterator iterator
+                        = variableIndexMap.find(name);
 
-					if (iterator == variableIndexMap.end())
-					{
+                    if (iterator == variableIndexMap.end())
+                    {
 
-						// Check if the token is a function.
+                        // Check if the token is a function.
 
-						FunctionIndexMap::const_iterator iterator
-							= functionIndexMap.find(name);
+                        FunctionIndexMap::const_iterator iterator
+                            = functionIndexMap.find(name);
 
-						if (iterator == functionIndexMap.end())
-						{
-							return false;
-						}
+                        if (iterator == functionIndexMap.end())
+                        {
+                            return false;
+                        }
 
-						stack.push(Token(function[iterator->second]));
-						readyForUnaryOperator = false;
+                        stack.push(Token(function[iterator->second]));
+                        readyForUnaryOperator = false;
 
-					}
-					else
-					{
-						postfixTokens.push_back(Token(iterator->second));
-						readyForUnaryOperator = false;
-					}
+                    }
+                    else
+                    {
+                        postfixTokens.push_back(Token(iterator->second));
+                        readyForUnaryOperator = false;
+                    }
             
-				}
+                }
 
-				infix += length;
+                infix += length;
 
-			}
-			else if (*infix == '(')
-			{
+            }
+            else if (*infix == '(')
+            {
 
-				// Push any '(' on the stack. These sentinels allows us to detect
-				// when have flushed out the stack when handling ')' and operators.
-			
-				stack.push(Token::functionLParen);
+                // Push any '(' on the stack. These sentinels allows us to detect
+                // when have flushed out the stack when handling ')' and operators.
+            
+                stack.push(Token::functionLParen);
 
-				readyForUnaryOperator = true;
-    			++infix;
+                readyForUnaryOperator = true;
+                ++infix;
         
-			}
-			else if (*infix == ')')
-			{
+            }
+            else if (*infix == ')')
+            {
 
-				// Have a ')' so pop off the stack and put into postfix list until a
-				// '(' is popped. Discard the '('.
-				
-				while (stack.top().type != Token::typeFunction ||
-					   stack.top().function != Token::functionLParen)
-				{
-					postfixTokens.push_back(stack.top());
-					stack.pop();
-				}
-
-				stack.pop();
-            
-				readyForUnaryOperator = false;
-    			++infix;
-
-			}
-			else if (*infix == '*' || *infix == '/')
-			{
-            
-				// Have a '*' or '/'. Pop off any operators of equal or higher
-				// precedence and put them into postfix list. If a '(' or lower
-				// precedence operator (such as '+' or '-') is popped, put it back and
-				// stop looking. Push new '*' or '/'.
-				
-				while (stack.top().type != Token::typeFunction ||
-					  (stack.top().function != Token::functionLParen &&
-					   stack.top().function != Token::functionAdd    &&
-					   stack.top().function != Token::functionSub))            
-				{
-					postfixTokens.push_back(Token(stack.top()));
-					stack.pop();
-				}
-    
-				if (*infix == '*')
-				{
-					stack.push(Token::functionMul);
-				}
-				else
-				{
-					stack.push(Token::functionDiv);
-				}
-            
-				readyForUnaryOperator = true;
-
-    			++infix;
-
-			}
-			else if (*infix == '+' || *infix == '-')
-			{
-
-				if (readyForUnaryOperator)
-				{
-
-					// Pop the operators of higher precedence (this is the special
-					// case where there aren't any)
-
-					if (*infix == '-')
-					{
-						stack.push(Token::functionUnarySub);
-					}
+                // Have a ')' so pop off the stack and put into postfix list until a
+                // '(' is popped. Discard the '('.
                 
-				}
-				else
-				{
+                while (stack.top().type != Token::typeFunction ||
+                       stack.top().function != Token::functionLParen)
+                {
+                    postfixTokens.push_back(stack.top());
+                    stack.pop();
+                }
 
-					// Have a '+' or '-'. Pop off any operators of equal or higher
-					// precedence (that includes all of them) and put them into
-					// postfix list. If a '(' is popped, put it back and stop looking.
-					// Push new '+' or '-'.
-
-					while (stack.top().type != Token::typeFunction ||
-						   stack.top().function != Token::functionLParen)
-					{
-						postfixTokens.push_back(stack.top());
-						stack.pop();
-					}
-
-					if (*infix == '+')
-					{
-						stack.push(Token::functionAdd);
-					}
-					else
-					{
-						stack.push(Token::functionSub);
-					}
+                stack.pop();
             
-				}
+                readyForUnaryOperator = false;
+                ++infix;
+
+            }
+            else if (*infix == '*' || *infix == '/')
+            {
             
-				readyForUnaryOperator = true;
-    			++infix;
-
-			}
-			else
-			{
-				return false;
-			}
-		
-		}
-
-		// Have processed all input characters. New flush stack until we find
-		// the '(' originally pushed onto the stack.
+                // Have a '*' or '/'. Pop off any operators of equal or higher
+                // precedence and put them into postfix list. If a '(' or lower
+                // precedence operator (such as '+' or '-') is popped, put it back and
+                // stop looking. Push new '*' or '/'.
+                
+                while (stack.top().type != Token::typeFunction ||
+                      (stack.top().function != Token::functionLParen &&
+                       stack.top().function != Token::functionAdd    &&
+                       stack.top().function != Token::functionSub))            
+                {
+                    postfixTokens.push_back(Token(stack.top()));
+                    stack.pop();
+                }
     
-		while (stack.top().type != Token::typeFunction ||
-			   stack.top().function != Token::functionLParen)
-		{
-			postfixTokens.push_back(Token(stack.top()));
-			stack.pop();
-		}
-	} catch(...)
-	{
-		TRACE("EXPRESSION PARSING ERROR!!!!\n");
-		return false;
-	}
+                if (*infix == '*')
+                {
+                    stack.push(Token::functionMul);
+                }
+                else
+                {
+                    stack.push(Token::functionDiv);
+                }
+            
+                readyForUnaryOperator = true;
+
+                ++infix;
+
+            }
+            else if (*infix == '+' || *infix == '-')
+            {
+
+                if (readyForUnaryOperator)
+                {
+
+                    // Pop the operators of higher precedence (this is the special
+                    // case where there aren't any)
+
+                    if (*infix == '-')
+                    {
+                        stack.push(Token::functionUnarySub);
+                    }
+                
+                }
+                else
+                {
+
+                    // Have a '+' or '-'. Pop off any operators of equal or higher
+                    // precedence (that includes all of them) and put them into
+                    // postfix list. If a '(' is popped, put it back and stop looking.
+                    // Push new '+' or '-'.
+
+                    while (stack.top().type != Token::typeFunction ||
+                           stack.top().function != Token::functionLParen)
+                    {
+                        postfixTokens.push_back(stack.top());
+                        stack.pop();
+                    }
+
+                    if (*infix == '+')
+                    {
+                        stack.push(Token::functionAdd);
+                    }
+                    else
+                    {
+                        stack.push(Token::functionSub);
+                    }
+            
+                }
+            
+                readyForUnaryOperator = true;
+                ++infix;
+
+            }
+            else
+            {
+                return false;
+            }
+        
+        }
+
+        // Have processed all input characters. New flush stack until we find
+        // the '(' originally pushed onto the stack.
+    
+        while (stack.top().type != Token::typeFunction ||
+               stack.top().function != Token::functionLParen)
+        {
+            postfixTokens.push_back(Token(stack.top()));
+            stack.pop();
+        }
+    } catch(...)
+    {
+        TRACE("EXPRESSION PARSING ERROR!!!!\n");
+        return false;
+    }
 
     return true;
 
@@ -433,7 +433,7 @@ bool Expression::Compile(const std::vector<Token>& postfixTokens)
     
     buffer.put(0x83);
     buffer.put(0xec);
-    buffer.put(0x04);	 
+    buffer.put(0x04);     
 
     // Tracks the amount of the floating point stack which is currently used.
 
@@ -502,7 +502,7 @@ bool Expression::Compile(const std::vector<Token>& postfixTokens)
 
             buffer.put(0x51);
 
-            // fstp	DWORD PTR [esp]
+            // fstp    DWORD PTR [esp]
 
             buffer.put(0xd9);
             buffer.put(0x1c);
@@ -580,12 +580,12 @@ bool Expression::Compile(const std::vector<Token>& postfixTokens)
 
     // Output the return code.
 
-    // mov	 esp, ebp
+    // mov     esp, ebp
     
     buffer.put(0x8b);
     buffer.put(0xe5);
 
-    // pop	 ebp
+    // pop     ebp
 
     buffer.put(0x5d);
     

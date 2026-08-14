@@ -27,13 +27,13 @@ static const s32 IcY = FrY + 3; // Friends Invite Icons Y
 ui_manager::control_tem PauseOnlineControls[] = 
 {
     // Frames.
-    { IDC_PAUSE_ONLINE_SUICIDE,	    "IDS_ONLINE_PAUSE_SUICIDE",         "button",  110,  40, 120, 30, 0, 0, 1, 1, ui_win::WF_VISIBLE },
-    { IDC_PAUSE_ONLINE_SWITCH_TEAM,	"IDS_ONLINE_PAUSE_SWITCH_TEAM",     "button",  110,  70, 120, 30, 0, 1, 1, 1, ui_win::WF_VISIBLE },
-    { IDC_PAUSE_ONLINE_VOTE_MAP,	"IDS_ONLINE_PAUSE_VOTE_MAP",        "button",  110, 100, 120, 30, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_SUICIDE,        "IDS_ONLINE_PAUSE_SUICIDE",         "button",  110,  40, 120, 30, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_SWITCH_TEAM,    "IDS_ONLINE_PAUSE_SWITCH_TEAM",     "button",  110,  70, 120, 30, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_VOTE_MAP,    "IDS_ONLINE_PAUSE_VOTE_MAP",        "button",  110, 100, 120, 30, 0, 2, 1, 1, ui_win::WF_VISIBLE },
     { IDC_PAUSE_ONLINE_VOTE_KICK,   "IDS_ONLINE_PAUSE_VOTE_KICK",       "button",  110, 130, 120, 30, 0, 3, 1, 1, ui_win::WF_VISIBLE },
     { IDC_PAUSE_ONLINE_FRIENDS,     "IDS_ONLINE_PAUSE_FRIENDS",         "button",  110, FrY, 120, 30, 0, 4, 1, 1, ui_win::WF_VISIBLE },
     { IDC_PAUSE_ONLINE_PLAYERS,     "IDS_ONLINE_PAUSE_PLAYERS",         "button",  110, 190, 120, 30, 0, 5, 1, 1, ui_win::WF_VISIBLE },
-    { IDC_PAUSE_ONLINE_OPTIONS,	    "IDS_ONLINE_PAUSE_OPTIONS",         "button",  110, 220, 120, 30, 0, 6, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_ONLINE_OPTIONS,        "IDS_ONLINE_PAUSE_OPTIONS",         "button",  110, 220, 120, 30, 0, 6, 1, 1, ui_win::WF_VISIBLE },
     { IDC_PAUSE_ONLINE_SETTINGS,    "IDS_ONLINE_PAUSE_SETTINGS",        "button",  110, 250, 120, 30, 0, 7, 1, 1, ui_win::WF_VISIBLE },
     { IDC_PAUSE_ONLINE_CONFIG,      "IDS_ONLINE_PAUSE_SERVER_CONFIG",   "button",  110, 280, 120, 30, 0, 8, 1, 1, ui_win::WF_VISIBLE },
 #if defined( TARGET_XBOX )
@@ -125,18 +125,18 @@ xbool dlg_pause_online::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // get button handles
-	m_pButtonSuicide    = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_SUICIDE     );
-	m_pButtonSwitchTeam = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_SWITCH_TEAM ); 	
-	m_pButtonVoteMap    = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_VOTE_MAP    ); 	
-    m_pButtonVoteKick   = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_VOTE_KICK   ); 	
-    m_pButtonFriends    = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_FRIENDS     ); 	
-    m_pButtonPlayers    = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_PLAYERS     ); 	
-	m_pButtonOptions    = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_OPTIONS     ); 	
+    m_pButtonSuicide    = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_SUICIDE     );
+    m_pButtonSwitchTeam = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_SWITCH_TEAM );     
+    m_pButtonVoteMap    = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_VOTE_MAP    );     
+    m_pButtonVoteKick   = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_VOTE_KICK   );     
+    m_pButtonFriends    = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_FRIENDS     );     
+    m_pButtonPlayers    = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_PLAYERS     );     
+    m_pButtonOptions    = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_OPTIONS     );     
     m_pButtonSettings   = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_SETTINGS    );
-	m_pButtonConfig     = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_CONFIG      ); 	
+    m_pButtonConfig     = (ui_button*)  FindChildByID( IDC_PAUSE_ONLINE_CONFIG      );     
 #if defined( TARGET_XBOX )
     m_pFriendInvite     = (ui_bitmap*)  FindChildByID( IDC_PAUSE_ONLINE_FRIEND_INV  );
     m_pGameInvite       = (ui_bitmap*)  FindChildByID( IDC_PAUSE_ONLINE_GAME_INV    );
@@ -217,7 +217,7 @@ xbool dlg_pause_online::Create( s32                        UserID,
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -239,11 +239,11 @@ void dlg_pause_online::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
 
 
     // render background filter
-	rb = g_UiMgr->GetUserBounds( m_UserID );
+    rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
@@ -306,7 +306,7 @@ void dlg_pause_online::OnAccept( ui_win* pWin )
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
         if( pWin == (ui_win*)m_pButtonSwitchTeam )
-	    {
+        {
             // switch team?
             m_CurrentControl = IDC_PAUSE_ONLINE_SWITCH_TEAM;
 
@@ -350,19 +350,19 @@ void dlg_pause_online::OnAccept( ui_win* pWin )
                                 g_StringTableMgr( "ui", "IDS_ONLINE_SUICIDE_MSG" ),
                                 navText,
                                 &m_PopUpResult );
-	    }
+        }
         else if( pWin == (ui_win*)m_pButtonVoteMap )
-	    {
+        {
             g_AudioMgr.Play("Select_Norm");
             m_CurrentControl = IDC_PAUSE_ONLINE_VOTE_MAP;
             m_State = DIALOG_STATE_SELECT;
-	    }
+        }
         else if( pWin == (ui_win*)m_pButtonVoteKick )
-	    {
+        {
             g_AudioMgr.Play("Select_Norm");
             m_CurrentControl = IDC_PAUSE_ONLINE_VOTE_KICK;
             m_State = DIALOG_STATE_SELECT;
-	    }
+        }
         else if( pWin == (ui_win*)m_pButtonFriends )
         {
             g_AudioMgr.Play("Select_Norm");
@@ -376,12 +376,12 @@ void dlg_pause_online::OnAccept( ui_win* pWin )
             m_State = DIALOG_STATE_SELECT;
         }
         else if( pWin == (ui_win*)m_pButtonOptions )
-	    {
+        {
             g_AudioMgr.Play("Select_Norm");
             g_StateMgr.InitPendingProfile( 0 );
             m_CurrentControl = IDC_PAUSE_ONLINE_OPTIONS;
             m_State = DIALOG_STATE_SELECT;
-	    }
+        }
         else if( pWin == (ui_win*)m_pButtonSettings )
         {            
             g_AudioMgr.Play("Select_Norm");
@@ -389,11 +389,11 @@ void dlg_pause_online::OnAccept( ui_win* pWin )
             m_State = DIALOG_STATE_SELECT;
         }
         else if( pWin == (ui_win*)m_pButtonConfig )
-	    {
+        {
             g_AudioMgr.Play("Select_Norm");
             m_CurrentControl = IDC_PAUSE_ONLINE_CONFIG;
             m_State = DIALOG_STATE_SELECT;
-	    }
+        }
     }
 }
 

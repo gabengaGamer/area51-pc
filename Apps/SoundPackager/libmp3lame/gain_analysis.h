@@ -25,7 +25,7 @@
    coding by Glen Sawyer ( glensawyer@hotmail.com )
    442 N 700 E, Provo, UT  84606  USA
        --blame him if you think this runs too slowly, or the coding is
-	     otherwise flawed
+         otherwise flawed
 
    For an explanation of the concepts and the basic algorithms involved, go to
    http://www.replaygain.org

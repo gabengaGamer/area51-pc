@@ -54,8 +54,8 @@ public:
 
     virtual         xbool                   Execute         ( f32 DeltaTime );    
 
-    virtual			void	                OnEnumProp	    ( prop_enum& rList );
-    virtual			xbool	                OnProperty	    ( prop_query& rPropQuery );
+    virtual            void                    OnEnumProp        ( prop_enum& rList );
+    virtual            xbool                    OnProperty        ( prop_query& rPropQuery );
     virtual         void                    OnActivate      ( xbool Flag );
 
 #ifdef X_EDITOR

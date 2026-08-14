@@ -33,40 +33,40 @@ private:
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	DECLARE_DYNCREATE(CBaseView)
-	virtual ~CBaseView();
-          	 CBaseView();           
+    DECLARE_DYNCREATE(CBaseView)
+    virtual ~CBaseView();
+               CBaseView();           
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CBaseView)
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	virtual void OnActivateView(BOOL bActivate, CView* pActivateView, CView* pDeactiveView);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CBaseView)
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    virtual void OnActivateView(BOOL bActivate, CView* pActivateView, CView* pDeactiveView);
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
 
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump       (CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump       (CDumpContext& dc) const;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	//{{AFX_MSG(CBaseView)
-	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
-    afx_msg void OnSysKeyDown( UINT nChar, UINT nRepCnt, UINT nFlags );		
-	afx_msg void OnSysKeyUp( UINT nChar, UINT nRepCnt, UINT nFlags );		
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CBaseView)
+    afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+    afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+    afx_msg void OnSysKeyDown( UINT nChar, UINT nRepCnt, UINT nFlags );        
+    afx_msg void OnSysKeyUp( UINT nChar, UINT nRepCnt, UINT nFlags );        
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 private:

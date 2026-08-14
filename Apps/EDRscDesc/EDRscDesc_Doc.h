@@ -17,7 +17,7 @@ class EDRscDesc_Frame;
 
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
-#define		WM_USER_MSG_LBUTTON_DBLCLK  WM_USER+853
+#define        WM_USER_MSG_LBUTTON_DBLCLK  WM_USER+853
 
 class EDRscDesc_Doc : public CBaseDocument
 {
@@ -106,33 +106,33 @@ protected:
 /////////////////////////////////////////////////////////////////////////////
 public:
 // Implementation
-	virtual ~EDRscDesc_Doc();
-	DECLARE_DYNCREATE(EDRscDesc_Doc)
-	EDRscDesc_Doc();           // protected constructor used by dynamic creation
+    virtual ~EDRscDesc_Doc();
+    DECLARE_DYNCREATE(EDRscDesc_Doc)
+    EDRscDesc_Doc();           // protected constructor used by dynamic creation
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(EDRscDesc_Doc)
-	public:
-	virtual void Serialize(CArchive& ar);   // overridden for document i/o
-	protected:
-	virtual BOOL OnNewDocument();
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(EDRscDesc_Doc)
+    public:
+    virtual void Serialize(CArchive& ar);   // overridden for document i/o
+    protected:
+    virtual BOOL OnNewDocument();
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 public:
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	//{{AFX_MSG(EDRscDesc_Doc)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(EDRscDesc_Doc)
+        // NOTE - the ClassWizard will add and remove member functions here.
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 //{{AFX_INSERT_LOCATION}}

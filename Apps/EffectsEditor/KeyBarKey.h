@@ -2,7 +2,7 @@
 //
 //  KeyBarKey.h
 //
-//	A keyframe structure that holds the data that the KeyBar needs to edit it
+//    A keyframe structure that holds the data that the KeyBar needs to edit it
 //
 //==============================================================================
 
@@ -10,7 +10,7 @@
 #define __KEYBARKEY_H__
 
 //----------------------+
-//	Includes			|
+//    Includes            |
 //----------------------+
 
 

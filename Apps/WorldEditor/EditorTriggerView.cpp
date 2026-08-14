@@ -40,12 +40,12 @@ CEditorTriggerView::~CEditorTriggerView()
 //=========================================================================
 
 BEGIN_MESSAGE_MAP(CEditorTriggerView, CPaletteView)
-	//{{AFX_MSG_MAP(CEditorTriggerView)
-	ON_WM_CREATE()
-	ON_WM_SIZE()
-	ON_NOTIFY(NM_CLICK, IDR_TRIGGER_VIEW_LIST, OnClickTriggerItem)
-	ON_COMMAND(ID_TRTB_REFRESH, OnTrtbRefresh)
-	ON_UPDATE_COMMAND_UI(ID_TRTB_REFRESH, OnUpdateTrtbRefresh)
+    //{{AFX_MSG_MAP(CEditorTriggerView)
+    ON_WM_CREATE()
+    ON_WM_SIZE()
+    ON_NOTIFY(NM_CLICK, IDR_TRIGGER_VIEW_LIST, OnClickTriggerItem)
+    ON_COMMAND(ID_TRTB_REFRESH, OnTrtbRefresh)
+    ON_UPDATE_COMMAND_UI(ID_TRTB_REFRESH, OnUpdateTrtbRefresh)
     //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -56,8 +56,8 @@ END_MESSAGE_MAP()
 
 void CEditorTriggerView::OnDraw(CDC* pDC)
 {
-//	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+//    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
 }
 
 //=========================================================================
@@ -67,12 +67,12 @@ void CEditorTriggerView::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CEditorTriggerView::AssertValid() const
 {
-	CPaletteView::AssertValid();
+    CPaletteView::AssertValid();
 }
 
 void CEditorTriggerView::Dump(CDumpContext& dc) const
 {
-	CPaletteView::Dump(dc);
+    CPaletteView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -85,8 +85,8 @@ int CEditorTriggerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
     m_ToolbarResourceId = IDR_TRIGGER_VIEW_BAR;   
 
-	if (CPaletteView::OnCreate(lpCreateStruct) == -1)
-		return -1;
+    if (CPaletteView::OnCreate(lpCreateStruct) == -1)
+        return -1;
 
     if (!m_TriggerLst.Create(WS_VISIBLE | WS_CHILD | LVS_REPORT, CRect(0,0,0,0), this, IDR_TRIGGER_VIEW_LIST))
     {
@@ -94,33 +94,33 @@ int CEditorTriggerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
         return -1;
     }
 
-	m_TriggerLst.InsertColumn(0, "Name",        LVCFMT_LEFT, 120);
-	m_TriggerLst.InsertColumn(1, "Type",        LVCFMT_LEFT, 60);
-	m_TriggerLst.InsertColumn(2, "Active",      LVCFMT_LEFT, 40);
+    m_TriggerLst.InsertColumn(0, "Name",        LVCFMT_LEFT, 120);
+    m_TriggerLst.InsertColumn(1, "Type",        LVCFMT_LEFT, 60);
+    m_TriggerLst.InsertColumn(2, "Active",      LVCFMT_LEFT, 40);
     m_TriggerLst.InsertColumn(3, "Status",      LVCFMT_LEFT, 40);
-	m_TriggerLst.InsertColumn(4, "Description", LVCFMT_LEFT, 130);
-	m_TriggerLst.InsertColumn(5, "Zone1",       LVCFMT_LEFT, 120);
-	m_TriggerLst.InsertColumn(6, "Zone2",       LVCFMT_LEFT, 120);
-	m_TriggerLst.InsertColumn(7, "Guid",        LVCFMT_LEFT, 120);
-	m_TriggerLst.InsertColumn(8, "State",       LVCFMT_LEFT, 80);
-	m_TriggerLst.InsertColumn(9, "Dialog",      LVCFMT_LEFT, 40);
+    m_TriggerLst.InsertColumn(4, "Description", LVCFMT_LEFT, 130);
+    m_TriggerLst.InsertColumn(5, "Zone1",       LVCFMT_LEFT, 120);
+    m_TriggerLst.InsertColumn(6, "Zone2",       LVCFMT_LEFT, 120);
+    m_TriggerLst.InsertColumn(7, "Guid",        LVCFMT_LEFT, 120);
+    m_TriggerLst.InsertColumn(8, "State",       LVCFMT_LEFT, 80);
+    m_TriggerLst.InsertColumn(9, "Dialog",      LVCFMT_LEFT, 40);
     m_TriggerLst.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
 
 void CEditorTriggerView::OnInitialUpdate() 
 {
-	CPaletteView::OnInitialUpdate();
-}	
+    CPaletteView::OnInitialUpdate();
+}    
 
 //=========================================================================
 
 void CEditorTriggerView::OnSize(UINT nType, int cx, int cy) 
 {
-	CPaletteView::OnSize(nType, cx, cy);
+    CPaletteView::OnSize(nType, cx, cy);
 
     CSize size = SizeToolBar(cx, cy);
     m_TriggerLst.MoveWindow(0,size.cy,cx,cy - size.cy);
@@ -185,7 +185,7 @@ void CEditorTriggerView::RefreshView( void )
 
 void CEditorTriggerView::OnClickTriggerItem(NMHDR* pNMHDR, LRESULT* pResult) 
 {
-	NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
+    NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
 
     if (lphdi->iItem != -1)
     {
@@ -204,15 +204,15 @@ void CEditorTriggerView::OnClickTriggerItem(NMHDR* pNMHDR, LRESULT* pResult)
         GetDocument()->GetFramePointer()->GetEditorView()->SetViewDirty();
     }
 
-	*pResult = 0;
+    *pResult = 0;
 }
 
 //=========================================================================
 
 void CEditorTriggerView::OnUpdateTrtbRefresh(CCmdUI* pCmdUI)
 {
-    pCmdUI->SetCheck(FALSE);	
-    pCmdUI->Enable(g_Project.IsProjectOpen());	
+    pCmdUI->SetCheck(FALSE);    
+    pCmdUI->Enable(g_Project.IsProjectOpen());    
 }
 
 //=========================================================================

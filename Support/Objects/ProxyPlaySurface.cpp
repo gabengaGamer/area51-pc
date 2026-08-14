@@ -54,9 +54,9 @@ bbox proxy_playsurface::GetLocalBBox( void ) const
 {
     playsurface_mgr::surface* pSurface = g_PlaySurfaceMgr.m_SpatialDBase.GetSurfaceByGuid(m_CurrentGuid);
     if ( !pSurface )
-	{
+    {
         return bbox( vector3(0.0f,0.0f,0.0f), 10.0f );
-	}
+    }
 
     vector3 Translation = pSurface->L2W.GetTranslation();
     return ( bbox( pSurface->WorldBBox.Min-Translation, pSurface->WorldBBox.Max-Translation ) );

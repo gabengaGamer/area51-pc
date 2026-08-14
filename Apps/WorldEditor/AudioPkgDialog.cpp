@@ -22,32 +22,32 @@ static char THIS_FILE[] = __FILE__;
 //=========================================================================
 
 CAudioPkgDialog::CAudioPkgDialog(CWnd* pParent /*=NULL*/)
-	: CDialog(CAudioPkgDialog::IDD, pParent)
+    : CDialog(CAudioPkgDialog::IDD, pParent)
 {
     m_DescLoaded = FALSE;
     m_PackageLoaded.SetGrowAmount( 10 );
-	//{{AFX_DATA_INIT(CAudioPkgDialog)
-		// NOTE: the ClassWizard will add member initialization here
-	//}}AFX_DATA_INIT
+    //{{AFX_DATA_INIT(CAudioPkgDialog)
+        // NOTE: the ClassWizard will add member initialization here
+    //}}AFX_DATA_INIT
 }
 
 //=========================================================================
 
 void CAudioPkgDialog::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
+    CDialog::DoDataExchange(pDX);
 
-	//{{AFX_DATA_MAP(CAudioPkgDialog)
+    //{{AFX_DATA_MAP(CAudioPkgDialog)
 
     DDX_Control(pDX, IDC_TREE_RESOURCE_SELECTOR, m_rscTree);
-	//}}AFX_DATA_MAP
+    //}}AFX_DATA_MAP
 }
 
 //=========================================================================
 
 BEGIN_MESSAGE_MAP(CAudioPkgDialog, CDialog)
-	//{{AFX_MSG_MAP(CAudioPkgDialog)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CAudioPkgDialog)
+    //}}AFX_MSG_MAP
     ON_BN_CLICKED(IDCLEAR, OnBnClickedClear)
 END_MESSAGE_MAP()
 
@@ -57,9 +57,9 @@ BOOL CAudioPkgDialog::OnInitDialog()
 {
     x_try;
 
-	CDialog::OnInitDialog();
+    CDialog::OnInitDialog();
 /*        
-	for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
+    for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
     {
         rsc_desc_mgr::node &Node = g_RescDescMGR.GetRscDescIndex(i);
         CString strType(Node.pDesc->GetType());
@@ -75,15 +75,15 @@ BOOL CAudioPkgDialog::OnInitDialog()
     m_DescLoaded = TRUE;
 */
 
-	// Create the image list used by the tree control.
-	if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
-		return -1;
-	
-	// Set the image list for the tree control.
-	m_rscTree.SetImageList(&m_imageList, TVSIL_NORMAL);
+    // Create the image list used by the tree control.
+    if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
+        return -1;
+    
+    // Set the image list for the tree control.
+    m_rscTree.SetImageList(&m_imageList, TVSIL_NORMAL);
 
     //iterate through the resources
-	for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
+    for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
     {
         rsc_desc_mgr::node &Node = g_RescDescMGR.GetRscDescIndex(i);
         CString strType(Node.pDesc->GetType());
@@ -94,15 +94,15 @@ BOOL CAudioPkgDialog::OnInitDialog()
             m_PackageLoaded.Append( (LPCTSTR)strName );
         }
     }
-	
+    
     //m_btnOk.EnableWindow( FALSE );
 
     OnLoadPackage();
 
     x_catch_display;
 
-	return TRUE;  // return TRUE unless you set the focus to a control
-	              // EXCEPTION: OCX Property Pages should return FALSE
+    return TRUE;  // return TRUE unless you set the focus to a control
+                  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 //=========================================================================
@@ -243,7 +243,7 @@ void CAudioPkgDialog::OnOK( )
     m_DescName = String;
 */
 
-	// TODO: Add extra validation here
+    // TODO: Add extra validation here
     HTREEITEM hItem = m_rscTree.GetSelectedItem();
     if (hItem)
     {
@@ -396,9 +396,9 @@ HTREEITEM CAudioPkgDialog::DoesChildExist(CString strCurrent, HTREEITEM hParent)
 
 BOOL CAudioPkgDialog::DestroyWindow() 
 {
-	m_imageList.DeleteImageList();
-	
-	return CDialog::DestroyWindow();
+    m_imageList.DeleteImageList();
+    
+    return CDialog::DestroyWindow();
 }
 
 //=========================================================================

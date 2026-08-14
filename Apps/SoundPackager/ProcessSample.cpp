@@ -1269,8 +1269,8 @@ xbool InterleaveStreamedAudio( file_info& File, s32 Target )
                             bIsMP3               = TRUE;
                             break;
 
-						case PC_MP3_MONO:
-						case PC_MP3_INTERLEAVED_STEREO:
+                        case PC_MP3_MONO:
+                        case PC_MP3_INTERLEAVED_STEREO:
                             nChannels            = 1; // cheat for "interleaved" stereo mp3 files.
                             BufferSize           = MP3_BUFFER_SIZE;
                             NewCompressionMethod = Data.CompressionMethod;

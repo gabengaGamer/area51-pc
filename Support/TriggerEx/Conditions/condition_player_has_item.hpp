@@ -32,8 +32,8 @@ public:
     virtual         const char*             GetDescription  ( void );
 
     virtual         xbool                   Execute         ( guid TriggerGuid );    
-    virtual			void	                OnEnumProp	    ( prop_enum& rList );
-    virtual			xbool	                OnProperty	    ( prop_query& rPropQuery );
+    virtual            void                    OnEnumProp        ( prop_enum& rList );
+    virtual            xbool                    OnProperty        ( prop_query& rPropQuery );
 
 protected:
     

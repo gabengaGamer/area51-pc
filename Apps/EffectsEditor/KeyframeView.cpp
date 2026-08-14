@@ -37,10 +37,10 @@ CSize CKeyframeView::CalcFixedLayout( BOOL bStretch, BOOL bHorz )
 
 
 BEGIN_MESSAGE_MAP(CKeyframeView, CControlBar)
-	//{{AFX_MSG_MAP(CKeyframeView)
-	ON_WM_PAINT()
-	ON_WM_ERASEBKGND()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CKeyframeView)
+    ON_WM_PAINT()
+    ON_WM_ERASEBKGND()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -49,19 +49,19 @@ END_MESSAGE_MAP()
 
 void CKeyframeView::OnPaint() 
 {
-	CPaintDC dc(this); // device context for painting
-	
+    CPaintDC dc(this); // device context for painting
+    
     dc.Rectangle( 10, 10, 50, 30 );
-	
-	// Do not call CControlBar::OnPaint() for painting messages
+    
+    // Do not call CControlBar::OnPaint() for painting messages
 }
 
 BOOL CKeyframeView::OnEraseBkgnd(CDC* pDC) 
 {
-	pDC->SelectStockObject( LTGRAY_BRUSH );
+    pDC->SelectStockObject( LTGRAY_BRUSH );
     RECT Rect;
     GetClientRect( &Rect );
     pDC->Rectangle( &Rect );
 
-	return TRUE;//CControlBar::OnEraseBkgnd(pDC);
+    return TRUE;//CControlBar::OnEraseBkgnd(pDC);
 }

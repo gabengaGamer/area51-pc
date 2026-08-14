@@ -77,8 +77,8 @@ public:
     virtual         const char*         GetTypeName         ( void )   { return "Condtion Base"; } 
     virtual         const char*         GetTypeInfo         ( void )   { return "Base condition class, null funtionality"; } 
     virtual         xbool               Execute             ( trigger_object* pParent ) = 0;    
-    virtual			void	            OnEnumProp	        ( prop_enum& rList );
-    virtual			xbool	            OnProperty	        ( prop_query& rPropQuery );
+    virtual            void                OnEnumProp            ( prop_enum& rList );
+    virtual            xbool                OnProperty            ( prop_query& rPropQuery );
                     conditional_flags   GetFlag             ( void ) { return m_Flag; }
                     xbool               GetElse             ( void ) { return m_ElseFlag; }
                     void                SetElse             ( xbool ElseFalg ) { m_ElseFlag = ElseFalg; }
@@ -139,8 +139,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Player Health"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks the player health against a value."; } 
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
 
 protected:
@@ -190,8 +190,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Object Health"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks the objects health against a value."; } 
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
 
 protected:
@@ -241,8 +241,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Player Has"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks if the player has an item."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
     
 protected:
@@ -281,8 +281,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Player Strain"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks if player is or is not a certain strain."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
     
 protected:
@@ -322,8 +322,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Object Exist"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks the existance state of an object."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
 
 protected:
@@ -363,8 +363,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Check a Global Variable"; }
     virtual         const char*         GetTypeInfo ( void )   { return "Checks a global variable state."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
         
 protected:
@@ -419,8 +419,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Check a Script"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks the return value of an executed script."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
     
    
@@ -459,8 +459,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Check a Trigger"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks the return value of an executed trigger."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
   
 protected:
@@ -498,8 +498,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Random Chance"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Rolls a dice to see if this comes out TRUE."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
   
 protected:
@@ -537,8 +537,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "On This Npc"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks if the triggering object is this NPC."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
   
 protected:
@@ -576,8 +576,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "On This Item"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks if the triggering actor has a particular item."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
   
 protected:
@@ -615,8 +615,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Count Things"; }
     virtual         const char*         GetTypeInfo ( void )   { return "Count various things in the world, NPC, or Player."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
   
 protected:
@@ -684,8 +684,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Check Timer"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks the current time of a global timer."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
   
 protected:
@@ -737,8 +737,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "Counter"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks a internal counter of the number of times this condition has been executed."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
   
 protected:
@@ -789,8 +789,8 @@ public:
     virtual         const char*         GetTypeName ( void )   { return "On This Button"; } 
     virtual         const char*         GetTypeInfo ( void )   { return "Checks if a certain button has been pressed."; }
     virtual         xbool               Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
     virtual         const char*         GetInfo     ( void );
   
 protected:

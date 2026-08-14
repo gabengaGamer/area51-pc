@@ -2,7 +2,7 @@
 //
 //  MouseMgr.h
 //
-//	A class for keeping track of the mouse
+//    A class for keeping track of the mouse
 //
 //==============================================================================
 
@@ -10,7 +10,7 @@
 #define __MOUSEMGR_H__
 
 //----------------------+
-//	Includes			|
+//    Includes            |
 //----------------------+
 
 

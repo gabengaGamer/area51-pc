@@ -80,7 +80,7 @@ void map_list::LoadDefault( void )
 
     Clear();
     //VERIFY( Manifest.LoadFile( xfs("%s\\%s_DiskMaps.txt", g_RscMgr.GetRootDirectory(), x_GetLocaleString()) ) );
-	VERIFY( Manifest.LoadFile( xfs( "%s_DiskMaps.txt",
+    VERIFY( Manifest.LoadFile( xfs( "%s_DiskMaps.txt",
                                    x_GetLocaleString() ) ) );
     Parse( (const char*)Manifest, MF_NOT_PRESENT, -1 );
     // Note: We do NOT add the HDD maps at the moment as the likelihood of the hard drive
@@ -96,7 +96,7 @@ void map_list::LoadDefault( void )
 
 
     //if( TextIn.OpenFile( xfs("%s\\%s", g_RscMgr.GetRootDirectory(), "MapList.txt") ) == FALSE )
-    if( TextIn.OpenFile("MapList.txt") == FALSE )		
+    if( TextIn.OpenFile("MapList.txt") == FALSE )        
     {
         ASSERTS( FALSE, "Could not open MapList.txt file\n" );
         return;

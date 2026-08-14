@@ -940,20 +940,20 @@ xbool zone_mgr::IsBBoxVisible( const bbox& BBox, zone_id Zone1, zone_id Zone2 ) 
         return (Zone1 == 0) && (Zone2 == 0);
     }
 
-	// Must be in the global zone
+    // Must be in the global zone
     if( Zone1 == 0 && Zone2 == 0  )
         return TRUE;
 
-	// Must be insize a portal
+    // Must be insize a portal
     if( Zone1 && Zone2 )
-	{
-		// if neither zone is visible then you can't really see it
-		if( m_ZoneToFrustum[Zone1] == -1 && m_ZoneToFrustum[Zone2] == -1 )
-			return FALSE;
+    {
+        // if neither zone is visible then you can't really see it
+        if( m_ZoneToFrustum[Zone1] == -1 && m_ZoneToFrustum[Zone2] == -1 )
+            return FALSE;
 
-		// other wise you should always be able to see it
-		return TRUE;
-	}
+        // other wise you should always be able to see it
+        return TRUE;
+    }
 
     // Check the bbox with the first zone
     if( Zone1 )

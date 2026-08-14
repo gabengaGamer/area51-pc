@@ -37,8 +37,8 @@ static struct pickup_desc : public object_desc
         "PICKUPS",
         object::ATTR_SPACIAL_ENTRY      |
         object::ATTR_NEEDS_LOGIC_TIME   |
-        object::ATTR_SOUND_SOURCE		|
-        object::ATTR_RENDERABLE			|
+        object::ATTR_SOUND_SOURCE        |
+        object::ATTR_RENDERABLE            |
         object::ATTR_COLLIDABLE         |
         object::ATTR_COLLISION_PERMEABLE|
         object::ATTR_BLOCKS_PLAYER,
@@ -178,14 +178,14 @@ pickup::pickup( void ) :
     m_Amount            ( 0 ),
     m_State             ( pickup::STATE_WAIT_RESPAWN ),
     m_IsDynamic         ( FALSE ),
-	m_RespawnTime       ( -1.0f ),
+    m_RespawnTime       ( -1.0f ),
     m_DecayTime         ( -1.0f ),
     m_Timer             ( 0.1f  ),
     m_PlayerIndex       ( -1    ),
-	m_bIsActive         ( TRUE  ),
+    m_bIsActive         ( TRUE  ),
     m_bHideWhileInactive( FALSE ),
     m_bHasBeenPickedup  ( FALSE ),
-	m_bTakeable         ( TRUE  ),
+    m_bTakeable         ( TRUE  ),
     m_MinPlayers        ( 0     ),
     m_MaxPlayers        ( 32    ),
     m_bSpins            ( TRUE  ),
@@ -219,15 +219,15 @@ void pickup::OnEnumProp( prop_enum&  rPropList )
 
     rPropList.PopPath( iHeader );
 
-	//object info
-	rPropList.PropEnumString( "Pickup", "General pickup information", PROP_TYPE_HEADER );
-	rPropList.PropEnumBool	( "Pickup\\DoesItemRespawn" , "Does this item respawn?", 0 );
-	rPropList.PropEnumFloat	( "Pickup\\RespawnTime", "How long after collection does it take for this item to respawn?", 0 );
+    //object info
+    rPropList.PropEnumString( "Pickup", "General pickup information", PROP_TYPE_HEADER );
+    rPropList.PropEnumBool    ( "Pickup\\DoesItemRespawn" , "Does this item respawn?", 0 );
+    rPropList.PropEnumFloat    ( "Pickup\\RespawnTime", "How long after collection does it take for this item to respawn?", 0 );
     
-    rPropList.PropEnumBool	( "Pickup\\IsActive" , "Is this item active (defaults to TRUE)?", PROP_TYPE_EXPOSE );
-    rPropList.PropEnumBool	( "Pickup\\HideWhileInactive" , "If this item is inactive, hide it (defaults to FALSE)", PROP_TYPE_EXPOSE );
+    rPropList.PropEnumBool    ( "Pickup\\IsActive" , "Is this item active (defaults to TRUE)?", PROP_TYPE_EXPOSE );
+    rPropList.PropEnumBool    ( "Pickup\\HideWhileInactive" , "If this item is inactive, hide it (defaults to FALSE)", PROP_TYPE_EXPOSE );
 
-    rPropList.PropEnumBool	( "Pickup\\HasBeenPickedup" , "Has this item been picked up? (resets to FALSE after respawn)", PROP_TYPE_EXPOSE | PROP_TYPE_READ_ONLY | PROP_TYPE_DONT_SHOW );
+    rPropList.PropEnumBool    ( "Pickup\\HasBeenPickedup" , "Has this item been picked up? (resets to FALSE after respawn)", PROP_TYPE_EXPOSE | PROP_TYPE_READ_ONLY | PROP_TYPE_DONT_SHOW );
 
     rPropList.PropEnumEnum  ( "Pickup\\Item"  , inventory2::GetEnumString(), "The type of this pickup.", 0 );
     rPropList.PropEnumFloat ( "Pickup\\Amount", "The amount in this pickup.", 0 );
@@ -246,20 +246,20 @@ void pickup::OnEnumProp( prop_enum&  rPropList )
 xbool pickup::OnProperty( prop_query& rPropQuery )
 {
     if( net_proj::OnProperty( rPropQuery ) )
-	{
+    {
         return TRUE;
-	}
+    }
 
     else if( m_Inst.OnProperty( rPropQuery ) )
-	{
+    {
         SetupRigidGeom();
         return TRUE;
-	}
+    }
 
     else if( rPropQuery.VarFloat( "Pickup\\RespawnTime", m_RespawnTime ) )
-	{
+    {
         return TRUE;
-	}
+    }
 
     else if( rPropQuery.VarBool( "Pickup\\Spins", m_bSpins ) )
     {
@@ -278,10 +278,10 @@ xbool pickup::OnProperty( prop_query& rPropQuery )
 
         return TRUE;
     }
-	else if( rPropQuery.VarBool( "Pickup\\HideWhileInactive", m_bHideWhileInactive ) )
-	{
-		return TRUE;
-	}
+    else if( rPropQuery.VarBool( "Pickup\\HideWhileInactive", m_bHideWhileInactive ) )
+    {
+        return TRUE;
+    }
     else if( rPropQuery.IsVar( "Pickup\\Item" ) )
     {
         if( rPropQuery.IsRead() )
@@ -364,12 +364,12 @@ xbool pickup::OnProperty( prop_query& rPropQuery )
         }
         return( TRUE );
     }
-	else 
-	{
-	    return FALSE;
-	}
-	
-	return TRUE;
+    else 
+    {
+        return FALSE;
+    }
+    
+    return TRUE;
 }
 
 //==============================================================================
@@ -654,8 +654,8 @@ void pickup::OnAdvanceSimulation  ( f32 DeltaTime )
             m_Inst.StartFade( 1, 1.0f );
 /*
             SetAttrBits( object::ATTR_SPACIAL_ENTRY         |
-                         object::ATTR_SOUND_SOURCE		    |
-                         object::ATTR_RENDERABLE			|
+                         object::ATTR_SOUND_SOURCE            |
+                         object::ATTR_RENDERABLE            |
                          object::ATTR_TRANSPARENT           |
                          object::ATTR_COLLIDABLE            |
                          object::ATTR_COLLISION_PERMEABLE   |

@@ -32,11 +32,11 @@ CResourcePreview::~CResourcePreview()
 //=========================================================================
 
 BEGIN_MESSAGE_MAP(CResourcePreview, CWnd)
-	//{{AFX_MSG_MAP(CResourcePreview)
-	ON_WM_CREATE()
-	ON_WM_PAINT()
-	ON_WM_TIMER()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CResourcePreview)
+    ON_WM_CREATE()
+    ON_WM_PAINT()
+    ON_WM_TIMER()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -46,29 +46,29 @@ END_MESSAGE_MAP()
 
 int CResourcePreview::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CWnd::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
+    if (CWnd::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
     // Initialize the view to something resanable
     m_View.SetXFOV( R_60 );
     m_View.SetPosition( vector3(100,100,200) );
     m_View.LookAtPoint( vector3(  0,  0,  0) );
     m_View.SetZLimits ( 1, 50000 );
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
 
 void CResourcePreview::OnPaint() 
 {
-	//CPaintDC dc(this); // device context for painting
-	//
+    //CPaintDC dc(this); // device context for painting
+    //
     //d3deng_UpdateDisplayWindow( GetSafeHwnd() );
-	//
+    //
     //eng_MaximizeViewport( m_View );
     //eng_SetView         ( m_View );
-	//
+    //
     //if( eng_Begin("Preview") )
     //{
     //    m_Grid.Render();
@@ -77,7 +77,7 @@ void CResourcePreview::OnPaint()
     //    m_Viewer.Render();
     //    eng_End();
     //}
-	//
+    //
 
 //    g_pd3dDevice->Clear( 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
 //                         0x00000000, 1.0f, 0L ); 
@@ -88,13 +88,13 @@ void CResourcePreview::OnPaint()
 BOOL CResourcePreview::LoadGeom(CString strType, CString strPath, BOOL bAdditional, const vector3& Pos, const radian3& Rot ) 
 {
     //BOOL bReturn = FALSE;
-	//
+    //
     //text_in GeomFile;
     //GeomFile.OpenFile(strPath);
     //prop_query propQuery;
     //char cMatxString[MAX_PATH];
     //propQuery.RQueryFileName( "ResDesc\\FileName", &cMatxString[0]);
-	//
+    //
     //if (strType.CompareNoCase("RigidGeom")==0)
     //{
     //    rigidgeom_rsc_desc RscDesc;
@@ -107,7 +107,7 @@ BOOL CResourcePreview::LoadGeom(CString strType, CString strPath, BOOL bAddition
     //    RscDesc.OnLoad(GeomFile);
     //    if (RscDesc.OnProperty(propQuery)) bReturn = TRUE;
     //}
-	//
+    //
     //if (bReturn)
     //{
     //    if(bAdditional)
@@ -121,7 +121,7 @@ BOOL CResourcePreview::LoadGeom(CString strType, CString strPath, BOOL bAddition
     //    bbox Bounds = m_Viewer.GetBBox();
     //    f32 fMax = Bounds.GetRadius();
     //    m_View.SetPosition( fMax*m_v3Mult );
-	//
+    //
     //    f32 fMaxY = Bounds.Max.GetY() * 0.6f;
     //    if (bAdditional)
     //    {
@@ -132,11 +132,11 @@ BOOL CResourcePreview::LoadGeom(CString strType, CString strPath, BOOL bAddition
     //        m_LastMaxY = fMaxY;
     //    }
     //}
-	//
+    //
     //GeomFile.CloseFile();
-	//
+    //
     //return bReturn;
-	return true;
+    return true;
 }
 
 //=========================================================================
@@ -172,9 +172,9 @@ void CResourcePreview::OnTimer(UINT nIDEvent)
         m_View.LookAtPoint( vector3(  0,  m_LastMaxY,  0) );
     }
 
-	RedrawWindow();
-	
-	CWnd::OnTimer(nIDEvent);
+    RedrawWindow();
+    
+    CWnd::OnTimer(nIDEvent);
 }
 
 //=========================================================================

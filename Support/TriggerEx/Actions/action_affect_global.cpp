@@ -156,7 +156,7 @@ s32 action_affect_global::GetVariableType( void )
 
 //=============================================================================
 
-void action_affect_global::OnEnumProp	( prop_enum& rPropList )
+void action_affect_global::OnEnumProp    ( prop_enum& rPropList )
 {
     actions_ex_base::OnEnumProp( rPropList );
 
@@ -191,7 +191,7 @@ void action_affect_global::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool action_affect_global::OnProperty	( prop_query& rPropQuery )
+xbool action_affect_global::OnProperty    ( prop_query& rPropQuery )
 {
     if( actions_ex_base::OnProperty( rPropQuery ) )
         return TRUE;

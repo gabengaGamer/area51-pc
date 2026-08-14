@@ -309,7 +309,7 @@ void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,platform
                     Size = sizeof(u32)*ZoneInfo.NColors;
                     break;
                 case PLATFORM_PS2:
-				    Size = sizeof(u16)*ZoneInfo.NColors;
+                    Size = sizeof(u16)*ZoneInfo.NColors;
                     break;
                 case PLATFORM_PC:
                     Size = sizeof(u32)*ZoneInfo.NColors;
@@ -341,7 +341,7 @@ void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,platform
                     Size = sizeof(u32)*ZoneInfo.NColors;
                     break;
                 case PLATFORM_PS2:
-				    Size = sizeof(u16)*ZoneInfo.NColors;
+                    Size = sizeof(u16)*ZoneInfo.NColors;
                     break;
                 case PLATFORM_PC:
                     Size = sizeof(u32)*ZoneInfo.NColors;
@@ -413,7 +413,7 @@ void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,platform
                 pSurface->ColorOffset   = pZoneInfo->NColors*sizeof(u32);
                 break;
             case PLATFORM_PS2:
-			    pSurface->ColorOffset   = pZoneInfo->NColors*sizeof(u16);
+                pSurface->ColorOffset   = pZoneInfo->NColors*sizeof(u16);
                 break;
             case PLATFORM_PC:
                 pSurface->ColorOffset   = pZoneInfo->NColors*sizeof(u32);
@@ -444,7 +444,7 @@ void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,platform
                     Size = RigidInst.GetNumColors()*sizeof(u32);
                     break;
                 case PLATFORM_PS2:
-				    Size = RigidInst.GetNumColors()*sizeof(u16);
+                    Size = RigidInst.GetNumColors()*sizeof(u16);
                     break;
                 case PLATFORM_PC:
                     Size = RigidInst.GetNumColors()*sizeof(u32);
@@ -683,7 +683,7 @@ void playsurface_mgr::SaveFile( platform PlatformType )
                 StartOffset   += m_Zones[i].NColors*sizeof(u32);
                 break;
             case PLATFORM_PS2:
-			    StartOffset   += m_Zones[i].NColors*sizeof(u16);
+                StartOffset   += m_Zones[i].NColors*sizeof(u16);
                 break;
             case PLATFORM_PC:
                 StartOffset   += m_Zones[i].NColors*sizeof(u32);
@@ -712,7 +712,7 @@ void playsurface_mgr::SaveFile( platform PlatformType )
                 StartOffset   += m_Portals[i].NColors*sizeof(u32);
                 break;
             case PLATFORM_PS2:
-			    StartOffset   += m_Portals[i].NColors*sizeof(u16);
+                StartOffset   += m_Portals[i].NColors*sizeof(u16);
                 break;
             case PLATFORM_PC:
                 StartOffset   += m_Portals[i].NColors*sizeof(u32);
@@ -739,7 +739,7 @@ void playsurface_mgr::SaveFile( platform PlatformType )
                     x_fwrite( ZoneToSave.pColorData, sizeof(u32), ZoneToSave.NColors, m_File );
                     break;
                 case PLATFORM_PS2:
-				    x_fwrite( ZoneToSave.pColorData, sizeof(u16), ZoneToSave.NColors, m_File );
+                    x_fwrite( ZoneToSave.pColorData, sizeof(u16), ZoneToSave.NColors, m_File );
                     break;
                 case PLATFORM_PC:
                     x_fwrite( ZoneToSave.pColorData, sizeof(u32), ZoneToSave.NColors, m_File );
@@ -765,7 +765,7 @@ void playsurface_mgr::SaveFile( platform PlatformType )
                     x_fwrite( ZoneToSave.pColorData, sizeof(u32), ZoneToSave.NColors, m_File );
                     break;
                 case PLATFORM_PS2:
-				    x_fwrite( ZoneToSave.pColorData, sizeof(u16), ZoneToSave.NColors, m_File );
+                    x_fwrite( ZoneToSave.pColorData, sizeof(u16), ZoneToSave.NColors, m_File );
                     break;
                 case PLATFORM_PC:
                     x_fwrite( ZoneToSave.pColorData, sizeof(u32), ZoneToSave.NColors, m_File );

@@ -29,7 +29,7 @@ m_NextAiState(character_state::STATE_IDLE)
 
 //=============================================================================
 
-void action_ai_play_anim::OnEnumProp	( prop_enum& rPropList )
+void action_ai_play_anim::OnEnumProp    ( prop_enum& rPropList )
 {
     action_ai_base::OnEnumProp( rPropList );
 
@@ -59,7 +59,7 @@ void action_ai_play_anim::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool action_ai_play_anim::OnProperty	( prop_query& rPropQuery )
+xbool action_ai_play_anim::OnProperty    ( prop_query& rPropQuery )
 {
     if( action_ai_base::OnProperty( rPropQuery ) )
         return TRUE;

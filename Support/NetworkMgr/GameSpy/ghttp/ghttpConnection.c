@@ -32,328 +32,328 @@ static int ghiNextUniqueID;
 ////////////////////////////////////////////////////////////////
 static int ghiFindFreeSlot
 (
-	void
+    void
 )
 {
-	int i;
-	GHIConnection ** tempPtr;
-	int oldLen;
-	int newLen;
+    int i;
+    GHIConnection ** tempPtr;
+    int oldLen;
+    int newLen;
 
-	// Look for an open slot.
-	/////////////////////////
-	for(i = 0 ; i < ghiConnectionsLen ; i++)
-	{
-		if(!ghiConnections[i]->inUse)
-			return i;
-	}
+    // Look for an open slot.
+    /////////////////////////
+    for(i = 0 ; i < ghiConnectionsLen ; i++)
+    {
+        if(!ghiConnections[i]->inUse)
+            return i;
+    }
 
-	assert(ghiNumConnections == ghiConnectionsLen);
+    assert(ghiNumConnections == ghiConnectionsLen);
 
-	// Nothing found, resize the array.
-	///////////////////////////////////
-	oldLen = ghiConnectionsLen;
-	newLen = (ghiConnectionsLen + CONNECTIONS_CHUNK_LEN);
-	tempPtr = (GHIConnection **)gsirealloc(ghiConnections, sizeof(GHIConnection *) * newLen);
-	if(!tempPtr)
-		return -1;
-	ghiConnections = tempPtr;
+    // Nothing found, resize the array.
+    ///////////////////////////////////
+    oldLen = ghiConnectionsLen;
+    newLen = (ghiConnectionsLen + CONNECTIONS_CHUNK_LEN);
+    tempPtr = (GHIConnection **)gsirealloc(ghiConnections, sizeof(GHIConnection *) * newLen);
+    if(!tempPtr)
+        return -1;
+    ghiConnections = tempPtr;
 
-	// Create the new connection objects.
-	/////////////////////////////////////
-	for(i = oldLen ; i < newLen ; i++)
-	{
-		ghiConnections[i] = (GHIConnection *)gsimalloc(sizeof(GHIConnection));
-		if(!ghiConnections[i])
-		{
-			for(i-- ; i >= oldLen ; i--)
-				gsifree(ghiConnections[i]);
-			return -1;
-		}
-		ghiConnections[i]->inUse = GHTTPFalse;
-	}
+    // Create the new connection objects.
+    /////////////////////////////////////
+    for(i = oldLen ; i < newLen ; i++)
+    {
+        ghiConnections[i] = (GHIConnection *)gsimalloc(sizeof(GHIConnection));
+        if(!ghiConnections[i])
+        {
+            for(i-- ; i >= oldLen ; i--)
+                gsifree(ghiConnections[i]);
+            return -1;
+        }
+        ghiConnections[i]->inUse = GHTTPFalse;
+    }
 
-	// Update the length.
-	/////////////////////
-	ghiConnectionsLen = newLen;
+    // Update the length.
+    /////////////////////
+    ghiConnectionsLen = newLen;
 
-	return oldLen;
+    return oldLen;
 }
 
 GHIConnection * ghiNewConnection
 (
-	void
+    void
 )
 {
-	int slot;
-	GHIConnection * connection;
-	GHTTPBool bResult;
+    int slot;
+    GHIConnection * connection;
+    GHTTPBool bResult;
 
-	ghiLock();
+    ghiLock();
 
-	// Find a gsifree slot.
-	////////////////////
-	slot = ghiFindFreeSlot();
-	if(slot == -1)
-	{
-		ghiUnlock();
-		return NULL;
-	}
+    // Find a gsifree slot.
+    ////////////////////
+    slot = ghiFindFreeSlot();
+    if(slot == -1)
+    {
+        ghiUnlock();
+        return NULL;
+    }
 
-	// Get a pointer to the object.
-	///////////////////////////////
-	connection = ghiConnections[slot];
+    // Get a pointer to the object.
+    ///////////////////////////////
+    connection = ghiConnections[slot];
 
-	// Init the object.
-	///////////////////
-	memset(connection, 0, sizeof(GHIConnection));
-	connection->inUse = GHTTPTrue;
-	connection->request = (GHTTPRequest)slot;
-	connection->uniqueID = ghiNextUniqueID++;
-	connection->type = GHIGET;
-	connection->state = GHTTPHostLookup;
-	connection->URL = NULL;
-	connection->serverAddress = NULL;
-	connection->serverIP = INADDR_ANY;
-	connection->serverPort = (unsigned short)0;
-	connection->requestPath = NULL;
-	connection->sendHeaders = NULL;
-	connection->saveFile = NULL;
-	connection->blocking = GHTTPFalse;
-	connection->result = GHTTPSuccess;
-	connection->progressCallback = NULL;
-	connection->completedCallback = NULL;
-	connection->callbackParam = NULL;
-	connection->socket = INVALID_SOCKET;
-	connection->socketError = 0;
-	connection->userBufferSupplied = GHTTPFalse;
-	connection->statusMajorVersion = 0;
-	connection->statusMinorVersion = 0;
-	connection->statusCode = 0;
-	connection->statusStringIndex = 0;
-	connection->completed = GHTTPFalse;
-	connection->fileBytesReceived = 0;
-	connection->totalSize = -1;
-	connection->redirectURL = NULL;
-	connection->redirectCount = 0;
-	connection->chunkedTransfer = GHTTPFalse;
-	connection->processing = GHTTPFalse;
-	connection->throttle = GHTTPFalse;
-	connection->lastThrottleRecv = 0;
-	connection->post = NULL;
-	connection->maxRecvTime = 500; // Prevent blocking in async mode with systems that never generate WSAEWOULDBLOCK
+    // Init the object.
+    ///////////////////
+    memset(connection, 0, sizeof(GHIConnection));
+    connection->inUse = GHTTPTrue;
+    connection->request = (GHTTPRequest)slot;
+    connection->uniqueID = ghiNextUniqueID++;
+    connection->type = GHIGET;
+    connection->state = GHTTPHostLookup;
+    connection->URL = NULL;
+    connection->serverAddress = NULL;
+    connection->serverIP = INADDR_ANY;
+    connection->serverPort = (unsigned short)0;
+    connection->requestPath = NULL;
+    connection->sendHeaders = NULL;
+    connection->saveFile = NULL;
+    connection->blocking = GHTTPFalse;
+    connection->result = GHTTPSuccess;
+    connection->progressCallback = NULL;
+    connection->completedCallback = NULL;
+    connection->callbackParam = NULL;
+    connection->socket = INVALID_SOCKET;
+    connection->socketError = 0;
+    connection->userBufferSupplied = GHTTPFalse;
+    connection->statusMajorVersion = 0;
+    connection->statusMinorVersion = 0;
+    connection->statusCode = 0;
+    connection->statusStringIndex = 0;
+    connection->completed = GHTTPFalse;
+    connection->fileBytesReceived = 0;
+    connection->totalSize = -1;
+    connection->redirectURL = NULL;
+    connection->redirectCount = 0;
+    connection->chunkedTransfer = GHTTPFalse;
+    connection->processing = GHTTPFalse;
+    connection->throttle = GHTTPFalse;
+    connection->lastThrottleRecv = 0;
+    connection->post = NULL;
+    connection->maxRecvTime = 500; // Prevent blocking in async mode with systems that never generate WSAEWOULDBLOCK
 
-	bResult = ghiInitBuffer(connection, &connection->sendBuffer, SEND_BUFFER_INITIAL_SIZE, SEND_BUFFER_INCREMENT_SIZE);
-	if(bResult)
-		bResult = ghiInitBuffer(connection, &connection->recvBuffer, RECV_BUFFER_INITIAL_SIZE, RECV_BUFFER_INCREMENT_SIZE);
+    bResult = ghiInitBuffer(connection, &connection->sendBuffer, SEND_BUFFER_INITIAL_SIZE, SEND_BUFFER_INCREMENT_SIZE);
+    if(bResult)
+        bResult = ghiInitBuffer(connection, &connection->recvBuffer, RECV_BUFFER_INITIAL_SIZE, RECV_BUFFER_INCREMENT_SIZE);
 
-	if(!bResult)
-	{
-		ghiFreeConnection(connection);
-		ghiUnlock();
-		return NULL;
-	}
+    if(!bResult)
+    {
+        ghiFreeConnection(connection);
+        ghiUnlock();
+        return NULL;
+    }
 
-	// One more connection.
-	///////////////////////
-	ghiNumConnections++;
+    // One more connection.
+    ///////////////////////
+    ghiNumConnections++;
 
-	ghiUnlock();
+    ghiUnlock();
 
-	return connection;
+    return connection;
 }
 
 GHTTPBool ghiFreeConnection
 (
-	GHIConnection * connection
+    GHIConnection * connection
 )
 {
-	assert(connection);
-	assert(connection->request >= 0);
-	assert(connection->request < ghiConnectionsLen);
-	assert(connection->inUse);
+    assert(connection);
+    assert(connection->request >= 0);
+    assert(connection->request < ghiConnectionsLen);
+    assert(connection->inUse);
 
-	// Check args.
-	//////////////
-	if(!connection)
-		return GHTTPFalse;
-	if(!connection->inUse)
-		return GHTTPFalse;
-	if(connection->request < 0)
-		return GHTTPFalse;
-	if(connection->request >= ghiConnectionsLen)
-		return GHTTPFalse;
+    // Check args.
+    //////////////
+    if(!connection)
+        return GHTTPFalse;
+    if(!connection->inUse)
+        return GHTTPFalse;
+    if(connection->request < 0)
+        return GHTTPFalse;
+    if(connection->request >= ghiConnectionsLen)
+        return GHTTPFalse;
 
-	ghiLock();
+    ghiLock();
 
-	// Free data.
-	/////////////
-	gsifree(connection->URL);
-	gsifree(connection->serverAddress);
-	gsifree(connection->requestPath);
-	gsifree(connection->sendHeaders);
-	gsifree(connection->redirectURL);
+    // Free data.
+    /////////////
+    gsifree(connection->URL);
+    gsifree(connection->serverAddress);
+    gsifree(connection->requestPath);
+    gsifree(connection->sendHeaders);
+    gsifree(connection->redirectURL);
 #ifndef NOFILE
-	if(connection->saveFile)
-		fclose(connection->saveFile);
+    if(connection->saveFile)
+        fclose(connection->saveFile);
 #endif
-	if(connection->socket != INVALID_SOCKET)
-	{
-		shutdown(connection->socket, 2);
-		closesocket(connection->socket);
-	}
-	ghiFreeBuffer(&connection->sendBuffer);
-	ghiFreeBuffer(&connection->recvBuffer);
-	ghiFreeBuffer(&connection->getFileBuffer);
-	if(connection->postingState.states)
-		ghiPostCleanupState(connection);
+    if(connection->socket != INVALID_SOCKET)
+    {
+        shutdown(connection->socket, 2);
+        closesocket(connection->socket);
+    }
+    ghiFreeBuffer(&connection->sendBuffer);
+    ghiFreeBuffer(&connection->recvBuffer);
+    ghiFreeBuffer(&connection->getFileBuffer);
+    if(connection->postingState.states)
+        ghiPostCleanupState(connection);
 
-	// Check for an auto-free post.
-	///////////////////////////////
-	if(connection->post && ghiIsPostAutoFree(connection->post))
-	{
-		ghiFreePost(connection->post);
-		connection->post = NULL;
-	}
+    // Check for an auto-free post.
+    ///////////////////////////////
+    if(connection->post && ghiIsPostAutoFree(connection->post))
+    {
+        ghiFreePost(connection->post);
+        connection->post = NULL;
+    }
 
-	// Free the slot.
-	/////////////////
-	connection->inUse = GHTTPFalse;
+    // Free the slot.
+    /////////////////
+    connection->inUse = GHTTPFalse;
 
-	// One less connection.
-	///////////////////////
-	ghiNumConnections--;
+    // One less connection.
+    ///////////////////////
+    ghiNumConnections--;
 
-	ghiUnlock();
+    ghiUnlock();
 
-	return GHTTPTrue;
+    return GHTTPTrue;
 }
 
 GHIConnection * ghiRequestToConnection
 (
-	GHTTPRequest request
+    GHTTPRequest request
 )
 {
-	GHIConnection * connection;
+    GHIConnection * connection;
 
-	assert(request >= 0);
-	assert(request < ghiConnectionsLen);
+    assert(request >= 0);
+    assert(request < ghiConnectionsLen);
 
-	ghiLock();
+    ghiLock();
 
-	// Check args.
-	//////////////
-	if((request < 0) || (request >= ghiConnectionsLen))
-	{
-		ghiUnlock();
-		return NULL;
-	}
+    // Check args.
+    //////////////
+    if((request < 0) || (request >= ghiConnectionsLen))
+    {
+        ghiUnlock();
+        return NULL;
+    }
 
-	connection = ghiConnections[request];
+    connection = ghiConnections[request];
 
-	// Check for not in use.
-	////////////////////////
-	if(!connection->inUse)
-		connection = NULL;
+    // Check for not in use.
+    ////////////////////////
+    if(!connection->inUse)
+        connection = NULL;
 
-	ghiUnlock();
+    ghiUnlock();
 
-	return connection;
+    return connection;
 }
 
 void ghiEnumConnections
 (
-	GHTTPBool (* callback)(GHIConnection *)
+    GHTTPBool (* callback)(GHIConnection *)
 )
 {
-	int i;
+    int i;
 
-	// Check for no connections.
-	////////////////////////////
-	if(ghiNumConnections <= 0)
-		return;
+    // Check for no connections.
+    ////////////////////////////
+    if(ghiNumConnections <= 0)
+        return;
 
-	ghiLock();
-	for(i = 0 ; i < ghiConnectionsLen ; i++)
-		if(ghiConnections[i]->inUse)
-			callback(ghiConnections[i]);
-	ghiUnlock();
+    ghiLock();
+    for(i = 0 ; i < ghiConnectionsLen ; i++)
+        if(ghiConnections[i]->inUse)
+            callback(ghiConnections[i]);
+    ghiUnlock();
 }
 
 void ghiRedirectConnection
 (
-	GHIConnection * connection
+    GHIConnection * connection
 )
 {
-	assert(connection);
-	assert(connection->redirectURL);
+    assert(connection);
+    assert(connection->redirectURL);
 
-	// Reset state.
-	///////////////
-	connection->state = GHTTPHostLookup;
+    // Reset state.
+    ///////////////
+    connection->state = GHTTPHostLookup;
 
-	// New URL.
-	///////////
-	gsifree(connection->URL);
-	connection->URL = connection->redirectURL;
-	connection->redirectURL = NULL;
+    // New URL.
+    ///////////
+    gsifree(connection->URL);
+    connection->URL = connection->redirectURL;
+    connection->redirectURL = NULL;
 
-	// Reset stuff parsed from the URL.
-	///////////////////////////////////
-	gsifree(connection->serverAddress);
-	connection->serverAddress = NULL;
-	connection->serverIP = 0;
-	connection->serverPort = 0;
-	gsifree(connection->requestPath);
-	connection->requestPath = NULL;
+    // Reset stuff parsed from the URL.
+    ///////////////////////////////////
+    gsifree(connection->serverAddress);
+    connection->serverAddress = NULL;
+    connection->serverIP = 0;
+    connection->serverPort = 0;
+    gsifree(connection->requestPath);
+    connection->requestPath = NULL;
 
-	// Close the socket.
-	////////////////////
-	shutdown(connection->socket, 2);
-	closesocket(connection->socket);
-	connection->socket = INVALID_SOCKET;
+    // Close the socket.
+    ////////////////////
+    shutdown(connection->socket, 2);
+    closesocket(connection->socket);
+    connection->socket = INVALID_SOCKET;
 
-	// Reset buffers.
-	/////////////////
-	ghiResetBuffer(&connection->sendBuffer);
-	ghiResetBuffer(&connection->recvBuffer);
+    // Reset buffers.
+    /////////////////
+    ghiResetBuffer(&connection->sendBuffer);
+    ghiResetBuffer(&connection->recvBuffer);
 
-	// Reset status.
-	////////////////
-	connection->statusMajorVersion = 0;
-	connection->statusMinorVersion = 0;
-	connection->statusCode = 0;
-	connection->statusStringIndex = 0;
+    // Reset status.
+    ////////////////
+    connection->statusMajorVersion = 0;
+    connection->statusMinorVersion = 0;
+    connection->statusCode = 0;
+    connection->statusStringIndex = 0;
 
-	// The connection isn't closed.
-	///////////////////////////////
-	connection->connectionClosed = GHTTPFalse;
+    // The connection isn't closed.
+    ///////////////////////////////
+    connection->connectionClosed = GHTTPFalse;
 
-	// One more redirect.
-	/////////////////////
-	connection->redirectCount++;
+    // One more redirect.
+    /////////////////////
+    connection->redirectCount++;
 }
 
 void ghiCleanupConnections
 (
-	void
+    void
 )
 {
-	int i;
+    int i;
 
-	if(!ghiConnections)
-		return;
+    if(!ghiConnections)
+        return;
 
-	// Cleanup all running connections.
-	///////////////////////////////////
-	ghiEnumConnections(ghiFreeConnection);
+    // Cleanup all running connections.
+    ///////////////////////////////////
+    ghiEnumConnections(ghiFreeConnection);
 
-	// Cleanup the connection states.
-	/////////////////////////////////
-	for(i = 0 ; i < ghiConnectionsLen ; i++)
-		gsifree(ghiConnections[i]);
-	gsifree(ghiConnections);
-	ghiConnections = NULL;
-	ghiConnectionsLen = 0;
-	ghiNumConnections = 0;
+    // Cleanup the connection states.
+    /////////////////////////////////
+    for(i = 0 ; i < ghiConnectionsLen ; i++)
+        gsifree(ghiConnections[i]);
+    gsifree(ghiConnections);
+    ghiConnections = NULL;
+    ghiConnectionsLen = 0;
+    ghiNumConnections = 0;
 }

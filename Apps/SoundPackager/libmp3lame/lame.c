@@ -1,8 +1,8 @@
 /* -*- mode: C; mode: fold -*- */
 /*
- *	LAME MP3 encoding engine
+ *    LAME MP3 encoding engine
  *
- *	Copyright (c) 1999 Mark Taylor
+ *    Copyright (c) 1999 Mark Taylor
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -11,7 +11,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -299,12 +299,12 @@ I'm also extending this to CBR as tests showed that a
 limited bandwidth is increasing quality
 */
     if (f_low>18400)
-	    f_low = 18400+(f_low-18400)/4;
+        f_low = 18400+(f_low-18400)/4;
 
 /*
  *  What we get now?
  *
- *    Bitrate       limit  bits/line	difference
+ *    Bitrate       limit  bits/line    difference
  *     8 kbps (8)  1.89 kHz  0.86          +1.6 kHz
  *    16 kbps (8)  3.16 kHz  1.24          +1.2 kHz
  *    32 kbps(16)  5.08 kHz  1.54          +1.2 kHz
@@ -813,9 +813,9 @@ lame_init_params(lame_global_flags * const gfp)
                           &highpass,
                           gfp->out_samplerate * 16 * gfc->channels_out /
                           gfp->compression_ratio, gfp->out_samplerate, channels);
-			
+            
 /*  roel - is this still needed?
-		if (lowpass > 0.5 * gfp->out_samplerate) {
+        if (lowpass > 0.5 * gfp->out_samplerate) {
             //MSGF(gfc,"Lowpass @ %7.1f Hz\n", lowpass);
             gfc->lowpass1 = gfc->lowpass2 =
                 lowpass / (0.5 * gfp->out_samplerate);
@@ -1212,9 +1212,9 @@ lame_init_params(lame_global_flags * const gfp)
 
     if ( gfp->preset_expopts && gfc->presetTune.use < 1 )
         MSGF(gfc,"\n*** WARNING ***\n\n"
-		         "Specialized tunings for the preset you are using have been deactivated.\n"
+                 "Specialized tunings for the preset you are using have been deactivated.\n"
                  "This is *NOT* recommended and will lead to a decrease in quality!\n"
-	             "\n*** WARNING ***\n\n");
+                 "\n*** WARNING ***\n\n");
 
     return 0;
 }
@@ -1518,35 +1518,35 @@ lame_encode_buffer_sample_t(lame_global_flags * gfp,
 
     /* user selected scaling of the samples */
     if (gfp->scale != 0 && gfp->scale != 1.0) {
-	for (i=0 ; i<nsamples; ++i) {
-	    in_buffer[0][i] *= gfp->scale;
-	    if (gfc->channels_out == 2)
-		in_buffer[1][i] *= gfp->scale;
-	    }
+    for (i=0 ; i<nsamples; ++i) {
+        in_buffer[0][i] *= gfp->scale;
+        if (gfc->channels_out == 2)
+        in_buffer[1][i] *= gfp->scale;
+        }
     }
 
     /* user selected scaling of the channel 0 (left) samples */
     if (gfp->scale_left != 0 && gfp->scale_left != 1.0) {
-	for (i=0 ; i<nsamples; ++i) {
-	    in_buffer[0][i] *= gfp->scale_left;
-	    }
+    for (i=0 ; i<nsamples; ++i) {
+        in_buffer[0][i] *= gfp->scale_left;
+        }
     }
 
     /* user selected scaling of the channel 1 (right) samples */
-	if (gfp->scale_right != 0 && gfp->scale_right != 1.0) {
-	    for (i=0 ; i<nsamples; ++i) {
-		in_buffer[1][i] *= gfp->scale_right;
-	    }
-	}
+    if (gfp->scale_right != 0 && gfp->scale_right != 1.0) {
+        for (i=0 ; i<nsamples; ++i) {
+        in_buffer[1][i] *= gfp->scale_right;
+        }
+    }
 
     /* Downsample to Mono if 2 channels in and 1 channel out */
-	if (gfp->num_channels == 2 && gfc->channels_out == 1) {
-		for (i=0; i<nsamples; ++i) {
-			in_buffer[0][i] =
-				0.5 * ((FLOAT8) in_buffer[0][i] + in_buffer[1][i]);
-			in_buffer[1][i] = 0.0;
-		}
-	}
+    if (gfp->num_channels == 2 && gfc->channels_out == 1) {
+        for (i=0; i<nsamples; ++i) {
+            in_buffer[0][i] =
+                0.5 * ((FLOAT8) in_buffer[0][i] + in_buffer[1][i]);
+            in_buffer[1][i] = 0.0;
+        }
+    }
 
 
 
@@ -1652,7 +1652,7 @@ lame_encode_buffer(lame_global_flags * gfp,
     }
 
     ret = lame_encode_buffer_sample_t(gfp,in_buffer[0],in_buffer[1],
-				      nsamples, mp3buf, mp3buf_size);
+                      nsamples, mp3buf, mp3buf_size);
     
     free(in_buffer[0]);
     free(in_buffer[1]);
@@ -1691,7 +1691,7 @@ lame_encode_buffer_float(lame_global_flags * gfp,
     }
 
     ret = lame_encode_buffer_sample_t(gfp,in_buffer[0],in_buffer[1],
-				      nsamples, mp3buf, mp3buf_size);
+                      nsamples, mp3buf, mp3buf_size);
     
     free(in_buffer[0]);
     free(in_buffer[1]);
@@ -1733,7 +1733,7 @@ lame_encode_buffer_int(lame_global_flags * gfp,
     }
 
     ret = lame_encode_buffer_sample_t(gfp,in_buffer[0],in_buffer[1],
-				      nsamples, mp3buf, mp3buf_size);
+                      nsamples, mp3buf, mp3buf_size);
     
     free(in_buffer[0]);
     free(in_buffer[1]);
@@ -1777,7 +1777,7 @@ lame_encode_buffer_long2(lame_global_flags * gfp,
     }
 
     ret = lame_encode_buffer_sample_t(gfp,in_buffer[0],in_buffer[1],
-				      nsamples, mp3buf, mp3buf_size);
+                      nsamples, mp3buf, mp3buf_size);
     
     free(in_buffer[0]);
     free(in_buffer[1]);
@@ -1819,7 +1819,7 @@ lame_encode_buffer_long(lame_global_flags * gfp,
     }
 
     ret = lame_encode_buffer_sample_t(gfp,in_buffer[0],in_buffer[1],
-				      nsamples, mp3buf, mp3buf_size);
+                      nsamples, mp3buf, mp3buf_size);
     
     free(in_buffer[0]);
     free(in_buffer[1]);
@@ -1919,15 +1919,15 @@ lame_init_bitstream(lame_global_flags * gfp)
     gfp->frameNum=0;
 
     if (!gfp->ogg)
-	id3tag_write_v2(gfp);
+    id3tag_write_v2(gfp);
 
     /* initialize histogram data optionally used by frontend */
     for ( i = 0; i < 16; i++ ) {
-	gfc->bitrate_stereoMode_Hist [i] [0] =
-	    gfc->bitrate_stereoMode_Hist [i] [1] =
-	    gfc->bitrate_stereoMode_Hist [i] [2] =
-	    gfc->bitrate_stereoMode_Hist [i] [3] =
-	    gfc->bitrate_stereoMode_Hist [i] [4] = 0;
+    gfc->bitrate_stereoMode_Hist [i] [0] =
+        gfc->bitrate_stereoMode_Hist [i] [1] =
+        gfc->bitrate_stereoMode_Hist [i] [2] =
+        gfc->bitrate_stereoMode_Hist [i] [3] =
+        gfc->bitrate_stereoMode_Hist [i] [4] = 0;
         gfc->bitrate_blockType_Hist [i] [0] =
             gfc->bitrate_blockType_Hist [i] [1] =
             gfc->bitrate_blockType_Hist [i] [2] =
@@ -2203,7 +2203,7 @@ lame_init_old(lame_global_flags * gfp)
 
     gfp->athaa_type = -1;
     gfp->ATHtype = -1;  /* default = -1 = set in lame_init_params */
-    gfp->athaa_loudapprox = -1;	/* 1 = flat loudness approx. (total energy) */
+    gfp->athaa_loudapprox = -1;    /* 1 = flat loudness approx. (total energy) */
                                 /* 2 = equal loudness curve */
     gfp->athaa_sensitivity = 0.0; /* no offset */
     gfp->useTemporal = -1;

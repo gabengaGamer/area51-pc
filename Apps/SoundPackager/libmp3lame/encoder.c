@@ -1,7 +1,7 @@
 /*
- *	LAME MP3 encoding engine
+ *    LAME MP3 encoding engine
  *
- *	Copyright (c) 1999 Mark Taylor
+ *    Copyright (c) 1999 Mark Taylor
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -10,7 +10,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -60,7 +60,7 @@ adjust_ATH( lame_global_flags* const  gfp,
     FLOAT8 max_val;
 
     if (gfc->ATH->use_adjust == 0) {
-        gfc->ATH->adjust = 1.0;	/* no adjustment */
+        gfc->ATH->adjust = 1.0;    /* no adjustment */
         return;
     }
     
@@ -75,27 +75,27 @@ adjust_ATH( lame_global_flags* const  gfp,
         break;
     
     case 2:                     /* jd - 2001 mar 12, 27, jun 30 */
-    {				            /* loudness based on equal loudness curve; */
+    {                            /* loudness based on equal loudness curve; */
                                 /* use granule with maximum combined loudness*/
-	    FLOAT gr2_max;
+        FLOAT gr2_max;
         max_pow = gfc->loudness_sq[0][0];
-	    gr2_max = gfc->loudness_sq[1][0];
+        gr2_max = gfc->loudness_sq[1][0];
         if( gfc->channels_out == 2 ) {
             max_pow += gfc->loudness_sq[0][1];
-	        gr2_max += gfc->loudness_sq[1][1];
-	    } else {
-	        max_pow += max_pow;
-	        gr2_max += gr2_max;
-	    }
-	    if( gfc->mode_gr == 2 ) {
-	        max_pow = Max( max_pow, gr2_max );
-	    }
-	    max_pow *= 0.5;		    /* max_pow approaches 1.0 for full band noise*/
+            gr2_max += gfc->loudness_sq[1][1];
+        } else {
+            max_pow += max_pow;
+            gr2_max += gr2_max;
+        }
+        if( gfc->mode_gr == 2 ) {
+            max_pow = Max( max_pow, gr2_max );
+        }
+        max_pow *= 0.5;            /* max_pow approaches 1.0 for full band noise*/
         break;
     }
 
     default:
-        gfc->ATH->adjust = 1.0;	/* no adjustment */
+        gfc->ATH->adjust = 1.0;    /* no adjustment */
         return;
     }
 
@@ -169,10 +169,10 @@ adjust_ATH( lame_global_flags* const  gfp,
                 }
             }
             if (gfc->presetTune.use) {
-		        if (max_pow_alt > gfc->presetTune.athadjust_safe_noiseshaping_thre)
-			      gfc->presetTune.athadjust_safe_noiseshaping = 1;
-		        else
-			      gfc->presetTune.athadjust_safe_noiseshaping = 0;
+                if (max_pow_alt > gfc->presetTune.athadjust_safe_noiseshaping_thre)
+                  gfc->presetTune.athadjust_safe_noiseshaping = 1;
+                else
+                  gfc->presetTune.athadjust_safe_noiseshaping = 0;
             }
             gfc->ATH->adjust_limit = 1.0;
         } else {                /* adjustment curve */
@@ -199,7 +199,7 @@ adjust_ATH( lame_global_flags* const  gfp,
         break;
         
     default:
-        gfc->ATH->adjust = 1.0;	/* no adjustment */
+        gfc->ATH->adjust = 1.0;    /* no adjustment */
         break;
     }   /* switch */
 }
@@ -241,12 +241,12 @@ FFT's                    <---------1024---------->
 
 typedef FLOAT8 chgrdata[2][2];
 
-int  lame_encode_mp3_frame (				// Output
-	lame_global_flags* const  gfp,			// Context
-	sample_t*                 inbuf_l,              // Input
-	sample_t*                 inbuf_r,              // Input
-	unsigned char*            mp3buf, 		// Output
-	int                    mp3buf_size )		// Output
+int  lame_encode_mp3_frame (                // Output
+    lame_global_flags* const  gfp,            // Context
+    sample_t*                 inbuf_l,              // Input
+    sample_t*                 inbuf_r,              // Input
+    unsigned char*            mp3buf,         // Output
+    int                    mp3buf_size )        // Output
 {
   int mp3count;
   III_psy_ratio masking_LR[2][2];    /*LR masking & energy */
@@ -318,22 +318,22 @@ int  lame_encode_mp3_frame (				// Output
       sample_t primebuff0[286+1152+576];
       sample_t primebuff1[286+1152+576];
       for (i=0, j=0; i<286+576*(1+gfc->mode_gr); ++i) {
-	if (i<576*gfc->mode_gr) {
-	  primebuff0[i]=0;
-	  if (gfc->channels_out==2) 
-	    primebuff1[i]=0;
-	}else{
-	  primebuff0[i]=inbuf[0][j];
-	  if (gfc->channels_out==2) 
-	    primebuff1[i]=inbuf[1][j];
-	  ++j;
-	}
+    if (i<576*gfc->mode_gr) {
+      primebuff0[i]=0;
+      if (gfc->channels_out==2) 
+        primebuff1[i]=0;
+    }else{
+      primebuff0[i]=inbuf[0][j];
+      if (gfc->channels_out==2) 
+        primebuff1[i]=inbuf[1][j];
+      ++j;
+    }
       }
       /* polyphase filtering / mdct */
       for ( gr = 0; gr < gfc->mode_gr; gr++ ) {
-	for ( ch = 0; ch < gfc->channels_out; ch++ ) {
-	  gfc->l3_side.tt[gr][ch].block_type=SHORT_TYPE;
-	}
+    for ( ch = 0; ch < gfc->channels_out; ch++ ) {
+      gfc->l3_side.tt[gr][ch].block_type=SHORT_TYPE;
+    }
       }
       mdct_sub48(gfc, primebuff0, primebuff1);
     }
@@ -386,36 +386,36 @@ int  lame_encode_mp3_frame (				// Output
     for (gr=0; gr < gfc->mode_gr ; gr++) {
 
       for ( ch = 0; ch < gfc->channels_out; ch++ )
-	bufp[ch] = &inbuf[ch][576 + gr*576-FFTOFFSET];
+    bufp[ch] = &inbuf[ch][576 + gr*576-FFTOFFSET];
 
       if (gfc->nsPsy.use) {
-	ret=L3psycho_anal_ns( gfp, bufp, gr, 
-			      &gfc->ms_ratio[gr],&ms_ratio_next,
-			      masking_LR, masking_MS,
-			      pe[gr],pe_MS[gr],tot_ener[gr],blocktype);
+    ret=L3psycho_anal_ns( gfp, bufp, gr, 
+                  &gfc->ms_ratio[gr],&ms_ratio_next,
+                  masking_LR, masking_MS,
+                  pe[gr],pe_MS[gr],tot_ener[gr],blocktype);
       } else {
-	ret=L3psycho_anal( gfp, bufp, gr, 
-			   &gfc->ms_ratio[gr],&ms_ratio_next,
-			   masking_LR, masking_MS,
-			   pe[gr],pe_MS[gr],tot_ener[gr],blocktype);
+    ret=L3psycho_anal( gfp, bufp, gr, 
+               &gfc->ms_ratio[gr],&ms_ratio_next,
+               masking_LR, masking_MS,
+               pe[gr],pe_MS[gr],tot_ener[gr],blocktype);
       }
       if (ret!=0) return -4;
 
       for ( ch = 0; ch < gfc->channels_out; ch++ )
-	gfc->l3_side.tt[gr][ch].block_type=blocktype[ch];
+    gfc->l3_side.tt[gr][ch].block_type=blocktype[ch];
 
       if (check_ms_stereo) {
-	  ms_ener_ratio[gr] = tot_ener[gr][2]+tot_ener[gr][3];
-	  if (ms_ener_ratio[gr]>0)
-	      ms_ener_ratio[gr] = tot_ener[gr][3]/ms_ener_ratio[gr];
+      ms_ener_ratio[gr] = tot_ener[gr][2]+tot_ener[gr][3];
+      if (ms_ener_ratio[gr]>0)
+          ms_ener_ratio[gr] = tot_ener[gr][3]/ms_ener_ratio[gr];
       }
 
     }
   }else{
     for (gr=0; gr < gfc->mode_gr ; gr++)
       for ( ch = 0; ch < gfc->channels_out; ch++ ) {
-	gfc->l3_side.tt[gr][ch].block_type=NORM_TYPE;
-	pe_MS[gr][ch]=pe[gr][ch]=700;
+    gfc->l3_side.tt[gr][ch].block_type=NORM_TYPE;
+    pe_MS[gr][ch]=pe[gr][ch]=700;
       }
   }
 
@@ -456,7 +456,7 @@ int  lame_encode_mp3_frame (				// Output
     gfc->mode_ext = MPG_MD_MS_LR;
   } else if (check_ms_stereo) {
       /* ms_ratio = is scaled, for historical reasons, to look like
-	 a ratio of side_channel / total.  
+     a ratio of side_channel / total.  
          0 = signal is 100% mono
          .5 = L & R uncorrelated
       */
@@ -473,38 +473,38 @@ int  lame_encode_mp3_frame (				// Output
 
       /* take an average */
       if (gfc->mode_gr==1) {
-	  /* MPEG2 - no second granule */
-	  ms_ratio_ave1 = 0.33 * ( gfc->ms_ratio[0] + ms_ratio_prev + ms_ratio_next );
-	  ms_ratio_ave2 = gfc->ms_ratio[0];
+      /* MPEG2 - no second granule */
+      ms_ratio_ave1 = 0.33 * ( gfc->ms_ratio[0] + ms_ratio_prev + ms_ratio_next );
+      ms_ratio_ave2 = gfc->ms_ratio[0];
       }else{
-	  ms_ratio_ave1 = 0.25 * ( gfc->ms_ratio[0] + gfc->ms_ratio[1] + ms_ratio_prev + ms_ratio_next );
-	  ms_ratio_ave2 = 0.50 * ( gfc->ms_ratio[0] + gfc->ms_ratio[1] );
+      ms_ratio_ave1 = 0.25 * ( gfc->ms_ratio[0] + gfc->ms_ratio[1] + ms_ratio_prev + ms_ratio_next );
+      ms_ratio_ave2 = 0.50 * ( gfc->ms_ratio[0] + gfc->ms_ratio[1] );
       }
       
       if (gfp->mode_automs) {
-	  if ( gfp->compression_ratio < 11.025 ) {
-	      /* 11.025 => 1, 6.3 => 0 */
-	      double thr = (gfp->compression_ratio - 6.3) / (11.025 - 6.3);
-	      if (thr<0) thr=0;
-	      threshold1   *= thr;
-	      threshold2   *= thr;
-	  }
+      if ( gfp->compression_ratio < 11.025 ) {
+          /* 11.025 => 1, 6.3 => 0 */
+          double thr = (gfp->compression_ratio - 6.3) / (11.025 - 6.3);
+          if (thr<0) thr=0;
+          threshold1   *= thr;
+          threshold2   *= thr;
+      }
       }
       
       if ((ms_ratio_ave1 < threshold1  &&  ms_ratio_ave2 < threshold2) || gfc->nsPsy.use) {
-	  int  sum_pe_MS = 0;
-	  int  sum_pe_LR = 0;
-	  for ( gr = 0; gr < gfc->mode_gr; gr++ ) {
-	      for ( ch = 0; ch < gfc->channels_out; ch++ ) {
-		  sum_pe_MS += pe_MS[gr][ch];
-		  sum_pe_LR += pe[gr][ch];
-	      }
-	  }
-	  
-	  /* based on PE: M/S coding would not use much more bits than L/R coding */
-	  
-	  if (sum_pe_MS <= 1.07 * sum_pe_LR && !gfc->nsPsy.use) gfc->mode_ext = MPG_MD_MS_LR;
-	  if (sum_pe_MS <= 1.00 * sum_pe_LR &&  gfc->nsPsy.use) gfc->mode_ext = MPG_MD_MS_LR;
+      int  sum_pe_MS = 0;
+      int  sum_pe_LR = 0;
+      for ( gr = 0; gr < gfc->mode_gr; gr++ ) {
+          for ( ch = 0; ch < gfc->channels_out; ch++ ) {
+          sum_pe_MS += pe_MS[gr][ch];
+          sum_pe_LR += pe[gr][ch];
+          }
+      }
+      
+      /* based on PE: M/S coding would not use much more bits than L/R coding */
+      
+      if (sum_pe_MS <= 1.07 * sum_pe_LR && !gfc->nsPsy.use) gfc->mode_ext = MPG_MD_MS_LR;
+      if (sum_pe_MS <= 1.00 * sum_pe_LR &&  gfc->nsPsy.use) gfc->mode_ext = MPG_MD_MS_LR;
       }
   }
 
@@ -514,19 +514,19 @@ int  lame_encode_mp3_frame (				// Output
   if (gfp->analysis && gfc->pinfo != NULL) {
     for ( gr = 0; gr < gfc->mode_gr; gr++ ) {
       for ( ch = 0; ch < gfc->channels_out; ch++ ) {
-	gfc->pinfo->ms_ratio[gr]=gfc->ms_ratio[gr];
-	gfc->pinfo->ms_ener_ratio[gr]=ms_ener_ratio[gr];
-	gfc->pinfo->blocktype[gr][ch]=gfc->l3_side.tt[gr][ch].block_type;
-	memcpy(gfc->pinfo->xr[gr][ch], &gfc->l3_side.tt[gr][ch].xr,
-	       sizeof(FLOAT8)*576);
-	/* in psymodel, LR and MS data was stored in pinfo.  
-	   switch to MS data: */
-	if (gfc->mode_ext==MPG_MD_MS_LR) {
-	  gfc->pinfo->pe[gr][ch]=gfc->pinfo->pe[gr][ch+2];
-	  gfc->pinfo->ers[gr][ch]=gfc->pinfo->ers[gr][ch+2];
-	  memcpy(gfc->pinfo->energy[gr][ch],gfc->pinfo->energy[gr][ch+2],
-		 sizeof(gfc->pinfo->energy[gr][ch]));
-	}
+    gfc->pinfo->ms_ratio[gr]=gfc->ms_ratio[gr];
+    gfc->pinfo->ms_ener_ratio[gr]=ms_ener_ratio[gr];
+    gfc->pinfo->blocktype[gr][ch]=gfc->l3_side.tt[gr][ch].block_type;
+    memcpy(gfc->pinfo->xr[gr][ch], &gfc->l3_side.tt[gr][ch].xr,
+           sizeof(FLOAT8)*576);
+    /* in psymodel, LR and MS data was stored in pinfo.  
+       switch to MS data: */
+    if (gfc->mode_ext==MPG_MD_MS_LR) {
+      gfc->pinfo->pe[gr][ch]=gfc->pinfo->pe[gr][ch+2];
+      gfc->pinfo->ers[gr][ch]=gfc->pinfo->ers[gr][ch+2];
+      memcpy(gfc->pinfo->energy[gr][ch],gfc->pinfo->energy[gr][ch+2],
+         sizeof(gfc->pinfo->energy[gr][ch]));
+    }
       }
     }
   }
@@ -562,8 +562,8 @@ int  lame_encode_mp3_frame (				// Output
     gfc->nsPsy.pefirbuf[18] = 0;
     for ( gr = 0; gr < gfc->mode_gr; gr++ ) {
       for ( ch = 0; ch < gfc->channels_out; ch++ ) {
-	gfc->nsPsy.pefirbuf[18] += (*pe_use)[gr][ch];
-	i++;
+    gfc->nsPsy.pefirbuf[18] += (*pe_use)[gr][ch];
+    i++;
       }
     }
 
@@ -573,7 +573,7 @@ int  lame_encode_mp3_frame (				// Output
 
     for ( gr = 0; gr < gfc->mode_gr; gr++ ) {
       for ( ch = 0; ch < gfc->channels_out; ch++ ) {
-	(*pe_use)[gr][ch] *= 670 / f;
+    (*pe_use)[gr][ch] *= 670 / f;
       }
     }
   }
@@ -613,9 +613,9 @@ int  lame_encode_mp3_frame (				// Output
     int j;
     for ( ch = 0; ch < gfc->channels_out; ch++ ) {
       for ( j = 0; j < FFTOFFSET; j++ )
-	gfc->pinfo->pcmdata[ch][j] = gfc->pinfo->pcmdata[ch][j+gfp->framesize];
+    gfc->pinfo->pcmdata[ch][j] = gfc->pinfo->pcmdata[ch][j+gfp->framesize];
       for ( j = FFTOFFSET; j < 1600; j++ ) {
-	gfc->pinfo->pcmdata[ch][j] = inbuf[ch][j-FFTOFFSET];
+    gfc->pinfo->pcmdata[ch][j] = inbuf[ch][j-FFTOFFSET];
       }
     }
     set_frame_pinfo (gfp, *masking);

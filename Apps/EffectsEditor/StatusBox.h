@@ -14,7 +14,7 @@ class CStatusBox : public CWnd
 {
     // Construction
     public:
-	    CStatusBox();
+        CStatusBox();
 
     // Attributes
     public:
@@ -23,16 +23,16 @@ class CStatusBox : public CWnd
     public:
 
     // Overrides
-	    // ClassWizard generated virtual function overrides
-	    //{{AFX_VIRTUAL(CStatusBox)
-	public:
-	virtual BOOL Create(CWnd* pParentWnd, const char* Text, int posX, int posY, int nWidth, int nHeight, UINT nID, COLORREF bkColor = RGB(96,96,96), COLORREF txtColor = RGB(192,192,192) );
-	virtual void MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint = TRUE );
-	//}}AFX_VIRTUAL
+        // ClassWizard generated virtual function overrides
+        //{{AFX_VIRTUAL(CStatusBox)
+    public:
+    virtual BOOL Create(CWnd* pParentWnd, const char* Text, int posX, int posY, int nWidth, int nHeight, UINT nID, COLORREF bkColor = RGB(96,96,96), COLORREF txtColor = RGB(192,192,192) );
+    virtual void MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint = TRUE );
+    //}}AFX_VIRTUAL
 
     // Implementation
     public:
-	    virtual ~CStatusBox();
+        virtual ~CStatusBox();
 
         void        SetStatusText       ( const char* Text );
         void        SetBackgroundColor  ( COLORREF bkColor  = RGB( 96, 96, 96) );
@@ -49,12 +49,12 @@ class CStatusBox : public CWnd
         CFont       m_Font;
 
 
-	    // Generated message map functions
+        // Generated message map functions
     protected:
-	    //{{AFX_MSG(CStatusBox)
-	afx_msg void OnPaint();
-	//}}AFX_MSG
-	    DECLARE_MESSAGE_MAP()
+        //{{AFX_MSG(CStatusBox)
+    afx_msg void OnPaint();
+    //}}AFX_MSG
+        DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

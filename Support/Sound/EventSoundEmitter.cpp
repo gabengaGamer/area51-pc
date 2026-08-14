@@ -97,7 +97,7 @@ event_sound_emitter::event_sound_emitter( void )
 void event_sound_emitter::OnAdvanceSimulation ( f32 DeltaTime )
 {
     LOG_STAT(k_stats_Sound);
-	
+    
     X_PROFILE_SCOPE_CATEGORY( "Context", "event_sound_emitter::OnAdvanceSimulation" );
     (void)DeltaTime;
     
@@ -228,7 +228,7 @@ void event_sound_emitter::PlayEmitter( const char* pDescriptor, vector3& Positio
         //{
         //    x_sprintf( m_DescriptorName, "2EG_%s", pDescriptor );
         //    x_sprintf( m_ObjectName, "2EG" );
-        //}		
+        //}        
 // KSS -- TO ADD NEW WEAPON
         else if( pObject->GetType() == object::TYPE_WEAPON_SHOTGUN )
         {

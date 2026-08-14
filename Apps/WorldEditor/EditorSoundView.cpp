@@ -21,12 +21,12 @@ static char THIS_FILE[] = __FILE__;
 IMPLEMENT_DYNCREATE(CEditorSoundView, CPaletteView)
 
 BEGIN_MESSAGE_MAP(CEditorSoundView, CPaletteView)
-	//{{AFX_MSG_MAP(CEditorSoundView)
-	ON_WM_CREATE()
-	ON_WM_SIZE()
-	ON_COMMAND(ID_CREATE_SOUNDNAV_NODE, OnButtonCreateSoundNode)
-	ON_COMMAND(ID_CREATE_SOUNDNAV_CONNECTION, OnButtonCreateSoundConnection)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CEditorSoundView)
+    ON_WM_CREATE()
+    ON_WM_SIZE()
+    ON_COMMAND(ID_CREATE_SOUNDNAV_NODE, OnButtonCreateSoundNode)
+    ON_COMMAND(ID_CREATE_SOUNDNAV_CONNECTION, OnButtonCreateSoundConnection)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -35,12 +35,12 @@ END_MESSAGE_MAP()
 #ifdef _DEBUG
 void CEditorSoundView::AssertValid() const
 {
-	CPaletteView::AssertValid();
+    CPaletteView::AssertValid();
 }
 
 void CEditorSoundView::Dump(CDumpContext& dc) const
 {
-	CPaletteView::Dump(dc);
+    CPaletteView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -63,31 +63,31 @@ CEditorSoundView::~CEditorSoundView()
 int CEditorSoundView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
     m_ToolbarResourceId = IDR_SOUNDVIEW_FILTER;   
-	if (CPaletteView::OnCreate(lpCreateStruct) == -1)
-		return -1;
+    if (CPaletteView::OnCreate(lpCreateStruct) == -1)
+        return -1;
 
     if (!m_SoundTree.Create(WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | 
                            TVS_EDITLABELS | TVS_SHOWSELALWAYS, CRect(0,0,0,0), this, IDC_SOUND_TREE_LIST))
     {
-		TRACE0("Failed to create tree\n");
-        return -1;	      
+        TRACE0("Failed to create tree\n");
+        return -1;          
     }
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
 
 void CEditorSoundView::OnInitialUpdate() 
 {
-	CPaletteView::OnInitialUpdate();
-}	
+    CPaletteView::OnInitialUpdate();
+}    
 
 //=========================================================================
 
 void CEditorSoundView::OnSize(UINT nType, int cx, int cy) 
 {
-	CPaletteView::OnSize(nType, cx, cy);
+    CPaletteView::OnSize(nType, cx, cy);
 
     CSize size = SizeToolBar(cx, cy);
     m_SoundTree.MoveWindow(0,size.cy,cx,cy - size.cy);
@@ -97,8 +97,8 @@ void CEditorSoundView::OnSize(UINT nType, int cx, int cy)
 
 void CEditorSoundView::OnDraw(CDC* pDC)
 {
-//	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+//    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
 }
 
 //=========================================================================
@@ -115,7 +115,7 @@ void CEditorSoundView::OnButtonCreateSoundNode()
 
 void CEditorSoundView::OnButtonCreateSoundConnection() 
 {
-	m_CreateSoundConnectionMode = !m_CreateSoundConnectionMode;
+    m_CreateSoundConnectionMode = !m_CreateSoundConnectionMode;
 }
 
 //=========================================================================

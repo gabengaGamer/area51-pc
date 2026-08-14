@@ -588,7 +588,7 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                         if( Result==DLG_POPUP_YES )
                         {
                             SetConnectState( CONNECT_DISCONNECT );
-                            ASSERT( FALSE );						
+                            ASSERT( FALSE );                        
                         }
                         else
                         {
@@ -599,7 +599,7 @@ void dlg_online_connect::OnUpdate ( ui_win* pWin, f32 DeltaTime )
                         if( Result==DLG_POPUP_YES )
                         {
                             SetConnectState( CONNECT_DISCONNECT );
-                            ASSERT( FALSE );	
+                            ASSERT( FALSE );    
                         }
                         else if( Result==DLG_POPUP_NO )
                         {

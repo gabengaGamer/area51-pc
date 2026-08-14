@@ -36,18 +36,18 @@ public:
                                     trigger_ex_object           ( void );
     virtual                        ~trigger_ex_object           ( void );
                             
-    virtual         bbox            GetLocalBBox			    ( void ) const ;
-    virtual         s32             GetMaterial				    ( void ) const { return MAT_TYPE_NULL; }
+    virtual         bbox            GetLocalBBox                ( void ) const ;
+    virtual         s32             GetMaterial                    ( void ) const { return MAT_TYPE_NULL; }
            
-	virtual			void	        OnEnumProp				    ( prop_enum& rList );
-	virtual			xbool	        OnProperty				    ( prop_query& rPropQuery );
+    virtual            void            OnEnumProp                    ( prop_enum& rList );
+    virtual            xbool            OnProperty                    ( prop_query& rPropQuery );
 
 #ifdef X_EDITOR
     virtual         s32             OnValidateActions           ( xstring& ActionType, s32 nActions, actions_ex_base* Actions[], xstring& ErrorMsg );
     virtual         s32             OnValidateProperties        ( xstring& ErrorMsg );
 #endif
 
-	virtual			void	        OnColCheck				    ( void );
+    virtual            void            OnColCheck                    ( void );
     virtual         void            OnColNotify                 ( object& Object );
     virtual         void            OnActivate                  ( xbool Flag );
 
@@ -221,8 +221,8 @@ protected:
     public:
                                 trigger_ex_selector( void );
                         void    Init                                 ( trigger_ex_object* pParent );
-        virtual			void	OnEnumProp				             ( prop_enum& rList );
-        virtual			xbool	OnProperty				             ( prop_query& rPropQuery );
+        virtual            void    OnEnumProp                             ( prop_enum& rList );
+        virtual            xbool    OnProperty                             ( prop_query& rPropQuery );
         
         actions_ex_base::action_ex_types            m_ActionType;        // Action type currently selected
         xbool                                       m_Active;            // State Flag to determine if the selector is active..
@@ -252,9 +252,9 @@ public:
 
 protected:
     
-    virtual         void        OnInit					( void );
+    virtual         void        OnInit                    ( void );
     virtual         void        OnKill                  ( void );
-    virtual         void        OnRender        		( void );
+    virtual         void        OnRender                ( void );
     virtual         void        OnAdvanceSimulation          ( f32 DeltaTime );      
 
 //=========================================================================

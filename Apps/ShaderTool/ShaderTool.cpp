@@ -861,9 +861,9 @@ const char* BindingModelName( shader_binding_model Model )
 {
     if( Model == SHADER_BINDING_SDL )
         return "sdl";
-	
+    
     if( Model == SHADER_BINDING_NATIVE )
-        return "native";	
+        return "native";    
 
     // Should never get here! How?
     x_printf( "Error: Unknown model '%d' in BindingModelName\n", Model );
@@ -921,15 +921,15 @@ xbool CompileShader( const shader_script&  Script,
         RemoveFile( MetaPath( Script, Shader ) );
         RemoveFile( BlobPath( Script, Shader, "vulkan" ) );
         RemoveFile( BlobPath( Script, Shader, "d3d12" ) );
-        RemoveFile( BlobPath( Script, Shader, "metal" ) );		
+        RemoveFile( BlobPath( Script, Shader, "metal" ) );        
         RemoveFile( PdbPath( Script, Shader ) );
     }
 
     // TODO: GS: Implement this.
     if( Script.TargetMask & SHADER_TARGET_METAL )
     {
-		x_printf( "Error: Metal target is not implemented yet\n" );
-		return FALSE;
+        x_printf( "Error: Metal target is not implemented yet\n" );
+        return FALSE;
     }
 
     shader_resource_counts       Resources;

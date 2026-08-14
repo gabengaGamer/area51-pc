@@ -417,7 +417,7 @@ void gray_attack_state::ChangePhase( s32 newPhase )
     case PHASE_GRAY_ATTACK_SURPRISE:
         DEBUG_LOG_MSG( "gray_attack_state::ChangePhase", "Setting action goal to logo::ANIM_SPOT_TARGET" );
         m_CharacterBase. SetPlayAnimationGoal(loco::ANIM_SPOT_TARGET);
-    	break;
+        break;
     case PHASE_GRAY_ENGAGE:
         {           
             m_CharacterBase.SetWantsToAim(TRUE);            
@@ -440,7 +440,7 @@ void gray_attack_state::ChangePhase( s32 newPhase )
                 m_CharacterBase.SetGotoLocationGoal( Pos );
             }
         }                
-    	break;
+        break;
     case PHASE_GRAY_FIGHT_STRAFE:        
         {
             m_CharacterBase.SetWantsToAim( TRUE );
@@ -485,7 +485,7 @@ void gray_attack_state::ChangePhase( s32 newPhase )
             DEBUG_LOG_MSG( "gray_attack_state::ChangePhase", "Setting a target goal for fallback.");
             m_CharacterBase.SetRetreatFromTargetGoal( m_CharacterBase.GetTargetGuid(), vector3(0.0f,0.0f,0.0f), loco::MOVE_STYLE_RUN, fComfortDist );                            
         }
-    	break;
+        break;
     case PHASE_GRAY_FALLBACK_FACE_AWAY:
         {
             m_CharacterBase.SetOverrideLookatMode( character::LOOKAT_NAVIGATION );
@@ -494,7 +494,7 @@ void gray_attack_state::ChangePhase( s32 newPhase )
             DEBUG_LOG_MSG( "gray_attack_state::ChangePhase", "Setting a target goal for fallback.");
             m_CharacterBase.SetRetreatFromTargetGoal( m_CharacterBase.GetTargetGuid(), vector3(0.0f,0.0f,0.0f), loco::MOVE_STYLE_RUN, fComfortDist );                            
         }
-    	break;
+        break;
     case PHASE_GRAY_FALLBACK_STOP_AND_LOOKAT_TARGET:
         m_CharacterBase.SetWantsToAim( TRUE );
         m_CharacterBase.SetIdleGoal();        
@@ -548,7 +548,7 @@ void gray_attack_state::ChangePhase( s32 newPhase )
             locationToTarget.RotateY(R_270);
         }
         m_CharacterBase.SetGotoLocationGoal( g_NavMap.GetNearestPointInNavMap( m_CharacterBase.GetPosition() + locationToTarget ));
-    	break;
+        break;
     case PHASE_GRAY_HOLD_NO_TARGET:
         m_CharacterBase.SetWantsToAim( TRUE );
         m_CharacterBase.SetIdleGoal();
@@ -646,10 +646,10 @@ const char* gray_attack_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_GRAY_ATTACK_SURPRISE:
         return "PHASE_GRAY_ATTACK_SURPRISE";
-    	break;
+        break;
     case PHASE_GRAY_ENGAGE:
         return "PHASE_GRAY_ENGAGE";
-    	break;
+        break;
     case PHASE_GRAY_FIGHT_CROUCHED:
         return "PHASE_GRAY_FIGHT_CROUCHED";
         break;
@@ -664,10 +664,10 @@ const char* gray_attack_state::GetPhaseName ( s32 thePhase )
         break;
     case PHASE_GRAY_FALLBACK_FACE_TARGET:
         return "PHASE_GRAY_FALLBACK_FACE_TARGET";
-    	break;
+        break;
     case PHASE_GRAY_FALLBACK_FACE_AWAY:
         return "PHASE_GRAY_FALLBACK_FACE_AWAY";
-    	break;
+        break;
     case PHASE_GRAY_FALLBACK_STOP_AND_LOOKAT_TARGET:
         return "PHASE_GRAY_FALLBACK_STOP_AND_LOOKAT_TARGET";
         break;
@@ -682,7 +682,7 @@ const char* gray_attack_state::GetPhaseName ( s32 thePhase )
         break;
     case PHASE_GRAY_ATTACK_PACE:
         return "PHASE_GRAY_ATTACK_PACE";
-    	break;
+        break;
     case PHASE_GRAY_HOLD_NO_TARGET:
         return "PHASE_GRAY_HOLD_NO_TARGET";
         break;

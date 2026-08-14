@@ -47,7 +47,7 @@ ui_manager::control_tem ProfileAVControls[] =
     { IDC_AV_VOLUME_SFX,            "IDS_NULL",                     "slider",   320,  40, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
     { IDC_AV_VOLUME_MUSIC,          "IDS_NULL",                     "slider",   320,  75, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
     { IDC_AV_VOLUME_SPEECH,         "IDS_NULL",                     "slider",   320, 110, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
-	
+    
     { IDC_AV_HEADSET_TEST,          "IDS_OPTIONS_HEADSET_TEST",     "button",    40, 180, 220, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE },
     { IDC_AV_RESTORE_DEFAULTS,      "IDS_OPTIONS_RESTORE_DEFAULTS", "button",    40, 285, 220, 40, 0, 6, 1, 1, ui_win::WF_VISIBLE },
 
@@ -129,17 +129,17 @@ xbool dlg_profile_av::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pVolumeSFX                = (ui_slider*)  FindChildByID( IDC_AV_VOLUME_SFX           );    
-    m_pVolumeMusic	            = (ui_slider*)  FindChildByID( IDC_AV_VOLUME_MUSIC         );
-    m_pVolumeSpeech	            = (ui_slider*)  FindChildByID( IDC_AV_VOLUME_SPEECH        );
+    m_pVolumeMusic                = (ui_slider*)  FindChildByID( IDC_AV_VOLUME_MUSIC         );
+    m_pVolumeSpeech                = (ui_slider*)  FindChildByID( IDC_AV_VOLUME_SPEECH        );
     m_pHeadsetTest              = (ui_button*)  FindChildByID( IDC_AV_HEADSET_TEST         );
     m_pRestoreDefaults          = (ui_button*)  FindChildByID( IDC_AV_RESTORE_DEFAULTS     );
 
-    m_pVolumeSFXText	        = (ui_text*)    FindChildByID( IDC_AV_VOLUME_SFX_TEXT      );
-    m_pVolumeMusicText	        = (ui_text*)    FindChildByID( IDC_AV_VOLUME_MUSIC_TEXT    );
-    m_pVolumeSpeechText	        = (ui_text*)    FindChildByID( IDC_AV_VOLUME_SPEECH_TEXT   );
+    m_pVolumeSFXText            = (ui_text*)    FindChildByID( IDC_AV_VOLUME_SFX_TEXT      );
+    m_pVolumeMusicText            = (ui_text*)    FindChildByID( IDC_AV_VOLUME_MUSIC_TEXT    );
+    m_pVolumeSpeechText            = (ui_text*)    FindChildByID( IDC_AV_VOLUME_SPEECH_TEXT   );
 
     GotoControl( (ui_control*)m_pVolumeSFX );
     m_CurrentControl = IDC_AV_VOLUME_SFX;
@@ -227,11 +227,11 @@ void dlg_profile_av::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     if( m_bRenderBlackout )
     {
-	    rb = g_UiMgr->GetUserBounds( m_UserID );
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),

@@ -22,7 +22,7 @@
 #define _WIN32_WINNT 0x0501
 #endif
 
-#define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
+#define VC_EXTRALEAN        // Exclude rarely-used stuff from Windows headers
 
 //=========================================================================
 // X_FILES
@@ -38,13 +38,13 @@
 #include <afxcview.h>       // MFC common views
 
 #if _MSC_VER >= 1200
-#include <afxdtctl.h>		// MFC support for Internet Explorer 4 Common Controls
+#include <afxdtctl.h>        // MFC support for Internet Explorer 4 Common Controls
 #endif
 #ifndef _AFX_NO_AFXCMN_SUPPORT
-#include <afxcmn.h>			// MFC support for Windows Common Controls
+#include <afxcmn.h>            // MFC support for Windows Common Controls
 #endif // _AFX_NO_AFXCMN_SUPPORT
 
-#include <afxsock.h>		// MFC socket extensions
+#include <afxsock.h>        // MFC socket extensions
 
 //=========================================================================
 // X_FILES
@@ -135,9 +135,9 @@ struct EDITOR_ID_NAME##my_editor : public reg_editor                            
     {                                                                                              \
         m_pWinApp   = pWinApp;                                                                     \
         m_pTemplate = new CMultiDocTemplate( EDITOR_ID_NAME,                                       \
-		                                     RUNTIME_CLASS(EDITOR_DOC),                            \
-		                                     RUNTIME_CLASS(EDITOR_FRAME),                          \
-		                                     RUNTIME_CLASS(EDITOR_VIEW));                          \
+                                             RUNTIME_CLASS(EDITOR_DOC),                            \
+                                             RUNTIME_CLASS(EDITOR_FRAME),                          \
+                                             RUNTIME_CLASS(EDITOR_VIEW));                          \
         ASSERT( m_pTemplate );                                                                     \
         return m_pTemplate;                                                                        \
     }                                                                                              \

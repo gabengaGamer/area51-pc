@@ -106,8 +106,8 @@ public:
     virtual         const char*         GetTypeInfo         ( void ) { return "Base action class, null funtionality"; } 
     virtual         const char*         GetDescription      ( void ) { return "\0"; }
     virtual         xbool               Execute             ( f32 DeltaTime ) = 0;    
-    virtual			void	            OnEnumProp	        ( prop_enum& rList );
-    virtual			xbool	            OnProperty	        ( prop_query& rPropQuery );
+    virtual            void                OnEnumProp            ( prop_enum& rList );
+    virtual            xbool                OnProperty            ( prop_query& rPropQuery );
     virtual         void                OnActivate          ( xbool Flag ) { (void)Flag; }
 
 #ifdef X_EDITOR

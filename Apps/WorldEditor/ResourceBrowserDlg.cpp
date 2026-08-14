@@ -18,28 +18,28 @@ static char THIS_FILE[] = __FILE__;
 
 
 CResourceBrowserDlg::CResourceBrowserDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CResourceBrowserDlg::IDD, pParent)
+    : CDialog(CResourceBrowserDlg::IDD, pParent)
 {
-	//{{AFX_DATA_INIT(CResourceBrowserDlg)
-		// NOTE: the ClassWizard will add member initialization here
-	//}}AFX_DATA_INIT
+    //{{AFX_DATA_INIT(CResourceBrowserDlg)
+        // NOTE: the ClassWizard will add member initialization here
+    //}}AFX_DATA_INIT
 }
 
 
 void CResourceBrowserDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CResourceBrowserDlg)
-	DDX_Control(pDX, IDOK, m_btnOk);
-	DDX_Control(pDX, IDC_TREE_RESOURCE_SELECTOR, m_rscTree);
-	//}}AFX_DATA_MAP
+    CDialog::DoDataExchange(pDX);
+    //{{AFX_DATA_MAP(CResourceBrowserDlg)
+    DDX_Control(pDX, IDOK, m_btnOk);
+    DDX_Control(pDX, IDC_TREE_RESOURCE_SELECTOR, m_rscTree);
+    //}}AFX_DATA_MAP
 }
 
 
 BEGIN_MESSAGE_MAP(CResourceBrowserDlg, CDialog)
-	//{{AFX_MSG_MAP(CResourceBrowserDlg)
-	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE_RESOURCE_SELECTOR, OnSelchangedTreeResourceSelector)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CResourceBrowserDlg)
+    ON_NOTIFY(TVN_SELCHANGED, IDC_TREE_RESOURCE_SELECTOR, OnSelchangedTreeResourceSelector)
+    //}}AFX_MSG_MAP
     ON_BN_CLICKED(IDCLEAR, OnBnClickedClear)
 END_MESSAGE_MAP()
 
@@ -48,7 +48,7 @@ END_MESSAGE_MAP()
 
 void CResourceBrowserDlg::OnOK() 
 {
-	// TODO: Add extra validation here
+    // TODO: Add extra validation here
     HTREEITEM hItem = m_rscTree.GetSelectedItem();
     if (hItem)
     {
@@ -60,14 +60,14 @@ void CResourceBrowserDlg::OnOK()
             m_strName = m_rscTree.GetItemText(hItem);
         }
     }
-	
-	CDialog::OnOK();
+    
+    CDialog::OnOK();
 }
 
 BOOL CResourceBrowserDlg::OnInitDialog() 
 {
-	CDialog::OnInitDialog();
-	
+    CDialog::OnInitDialog();
+    
     CRect rc;
     GetDlgItem(IDC_PREVIEW_FRAME)->GetWindowRect(&rc);
     ScreenToClient(&rc);
@@ -77,15 +77,15 @@ BOOL CResourceBrowserDlg::OnInitDialog()
         ASSERT(FALSE);
     }
 
-	// Create the image list used by the tree control.
-	if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
-		return -1;
-	
-	// Set the image list for the tree control.
-	m_rscTree.SetImageList(&m_imageList, TVSIL_NORMAL);
+    // Create the image list used by the tree control.
+    if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
+        return -1;
+    
+    // Set the image list for the tree control.
+    m_rscTree.SetImageList(&m_imageList, TVSIL_NORMAL);
 
     //iterate through the resources
-	for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
+    for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
     {
         rsc_desc_mgr::node &Node = g_RescDescMGR.GetRscDescIndex(i);
         CString strType(Node.pDesc->GetType());
@@ -98,11 +98,11 @@ BOOL CResourceBrowserDlg::OnInitDialog()
             AddPathToTree(strPath, strName);
         }
     }
-	
+    
     m_btnOk.EnableWindow( FALSE );
 
-	return TRUE;  // return TRUE unless you set the focus to a control
-	              // EXCEPTION: OCX Property Pages should return FALSE
+    return TRUE;  // return TRUE unless you set the focus to a control
+                  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 void CResourceBrowserDlg::AddPathToTree(CString strPath, CString strName)
@@ -211,16 +211,16 @@ HTREEITEM CResourceBrowserDlg::DoesChildExist(CString strCurrent, HTREEITEM hPar
 
 BOOL CResourceBrowserDlg::DestroyWindow() 
 {
-	m_imageList.DeleteImageList();
-	
-	return CDialog::DestroyWindow();
+    m_imageList.DeleteImageList();
+    
+    return CDialog::DestroyWindow();
 }
 
 void CResourceBrowserDlg::OnSelchangedTreeResourceSelector(NMHDR* pNMHDR, LRESULT* pResult) 
 {
-	NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
-	// TODO: Add your control notification handler code here
-	
+    NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
+    // TODO: Add your control notification handler code here
+    
     xhandle hHandle = m_rscTree.GetItemData(pNMTreeView->itemNew.hItem);
 
     if (hHandle  != HNULL)
@@ -252,7 +252,7 @@ void CResourceBrowserDlg::OnSelchangedTreeResourceSelector(NMHDR* pNMHDR, LRESUL
         m_wndPreview.OnStopTimer();
     }
 
-	*pResult = 0;
+    *pResult = 0;
 }
 
 //=========================================================================

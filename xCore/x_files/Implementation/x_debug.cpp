@@ -230,7 +230,7 @@ s32 RTFDialog( const char* pTitle, const char* pMessage )
     //    // Align to DWORD boundry
     //    while( (b.GetLength() & 3) != 0 )
     //        b.Append( (byte)0 );
-	//
+    //
     //    // Get name of button
     //    switch( i )
     //    {

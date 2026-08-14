@@ -656,7 +656,7 @@ void eng_Init( void )
 
     if( !sdleng_WindowInit( WindowDesc ) )
     {
-        x_DebugMsg( "SDLEngine: window initialization failed\n" );		
+        x_DebugMsg( "SDLEngine: window initialization failed\n" );        
         return;
     }
 
@@ -781,7 +781,7 @@ void eng_Kill( void )
     s.bInitialized = FALSE;
 
     //x_DebugMsg( "=== SDL ENGINE SHUTDOWN COMPLETE ===\n" );
-    x_DebugMsg( "=== НУ БЫЛО И БЫЛО ===\n" );	
+    x_DebugMsg( "=== НУ БЫЛО И БЫЛО ===\n" );    
 }
 
 //==============================================================================

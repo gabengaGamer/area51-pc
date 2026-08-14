@@ -783,7 +783,7 @@ protected:
         inventory2              m_Inventory2;           // Inventory
 //      inventory               m_Inventory;            // Inventory items
 //      inventory               m_WeaponInventory;      // Inventory weapons
-//      guid                    m_WeaponGuid;	        // Guid to current weapon
+//      guid                    m_WeaponGuid;            // Guid to current weapon
         guid                    m_WeaponGuids[INVEN_NUM_WEAPONS];
         xbool                   m_WeaponsCreated;               // TRUE when weapon objects have been created
         inven_item              m_CurrentWeaponItem;            // Current weapon item, see inventory2.hpp for mapping

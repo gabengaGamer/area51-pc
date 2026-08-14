@@ -86,7 +86,7 @@ static struct trigger_spatial_object_desc : public object_desc
         "Spatial Trigger", 
         "SCRIPT",
 
-        object::ATTR_SPACIAL_ENTRY		 |
+        object::ATTR_SPACIAL_ENTRY         |
         object::ATTR_COLLISION_PERMEABLE,
 
         FLAGS_IS_DYNAMIC            ) {}
@@ -347,7 +347,7 @@ void trigger_spatial_object::OnKill ( void )
 
 //=============================================================================
 
-void trigger_spatial_object::OnColCheck	( void )
+void trigger_spatial_object::OnColCheck    ( void )
 {  
     switch ( m_SpatialType )
     {

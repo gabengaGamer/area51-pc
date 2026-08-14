@@ -16,8 +16,8 @@ class CWorkspaceTabCtrl : public CToolBar
 {
 // Construction
 public:
-	CWorkspaceTabCtrl();
-	virtual ~CWorkspaceTabCtrl();
+    CWorkspaceTabCtrl();
+    virtual ~CWorkspaceTabCtrl();
 
     BOOL Create(CWnd* pParentWnd, UINT nID, LPCTSTR pWindowName, CSize SizeDefault, DWORD dwAlignStyle, DWORD dwStyle);
     CFrameWnd* CreateFrameDocView(CRuntimeClass* pFrameClass, CRuntimeClass* pViewClass, CDocument* pDocument);
@@ -33,9 +33,9 @@ public:
     CWnd* GetWorkspaceView( CRuntimeClass *pViewClass );
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CWorkspaceTabCtrl)
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CWorkspaceTabCtrl)
+    //}}AFX_VIRTUAL
 
 protected:
     virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);

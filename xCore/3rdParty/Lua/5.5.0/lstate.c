@@ -29,7 +29,7 @@
 
 
 
-#define fromstate(L)	(cast(LX *, cast(lu_byte *, (L)) - offsetof(LX, l)))
+#define fromstate(L)    (cast(LX *, cast(lu_byte *, (L)) - offsetof(LX, l)))
 
 
 /*
@@ -37,19 +37,19 @@
 ** created/deleted
 */
 #if !defined(luai_userstateopen)
-#define luai_userstateopen(L)		((void)L)
+#define luai_userstateopen(L)        ((void)L)
 #endif
 
 #if !defined(luai_userstateclose)
-#define luai_userstateclose(L)		((void)L)
+#define luai_userstateclose(L)        ((void)L)
 #endif
 
 #if !defined(luai_userstatethread)
-#define luai_userstatethread(L,L1)	((void)L)
+#define luai_userstatethread(L,L1)    ((void)L)
 #endif
 
 #if !defined(luai_userstatefree)
-#define luai_userstatefree(L,L1)	((void)L)
+#define luai_userstatefree(L,L1)    ((void)L)
 #endif
 
 

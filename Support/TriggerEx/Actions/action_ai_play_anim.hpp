@@ -29,8 +29,8 @@ public:
     virtual         const char*         GetTypeInfo     ( void )    { return "Play a cinematic anim."; } 
     virtual         const char*         GetDescription  ( void );
 
-    virtual			void	            OnEnumProp	    ( prop_enum& rList );
-    virtual			xbool	            OnProperty	    ( prop_query& rPropQuery );
+    virtual            void                OnEnumProp        ( prop_enum& rList );
+    virtual            xbool                OnProperty        ( prop_query& rPropQuery );
 
 #ifdef X_EDITOR
     virtual         s32*                GetAnimRef      ( xstring& Desc, s32& AnimName ) { Desc = "Animation error: "; AnimName  = m_AnimName; return &m_AnimGroupName; }

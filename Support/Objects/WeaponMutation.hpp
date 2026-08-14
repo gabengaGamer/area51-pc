@@ -18,22 +18,22 @@ class weapon_mutation : public new_weapon
 {
 public:
 
-	CREATE_RTTI( weapon_mutation , new_weapon , object )
+    CREATE_RTTI( weapon_mutation , new_weapon , object )
     
     //---------------------------------------------------------------------
 public:
-    							weapon_mutation			();
-	virtual						~weapon_mutation		();
+                                weapon_mutation            ();
+    virtual                        ~weapon_mutation        ();
 
     virtual void                InitWeapon          ( const vector3& rInitPos, render_state rRenderState, guid OwnerGuid );
 
-    virtual	       void	        OnEnumProp		        ( prop_enum& list );
-	virtual	       xbool	    OnProperty		        ( prop_query& rPropQuery );
+    virtual           void            OnEnumProp                ( prop_enum& list );
+    virtual           xbool        OnProperty                ( prop_query& rPropQuery );
     virtual s32                 GetTotalSecondaryAmmo   ( void );
 
-			void				OnExitMutation		    ( void );
-    virtual const object_desc&  GetTypeDesc			    ( void ) const;
-    static  const object_desc&  GetObjectType		    ( void );
+            void                OnExitMutation            ( void );
+    virtual const object_desc&  GetTypeDesc                ( void ) const;
+    static  const object_desc&  GetObjectType            ( void );
 
     virtual xbool               GetFiringStartPosition      ( vector3 &Pos );
             xbool               GetAltFiringStartPosition   ( vector3 &Pos );
@@ -72,8 +72,8 @@ public:
 
 protected:
     
-    virtual	xbool				FireWeaponProtected		( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint);
-    virtual	xbool				FireSecondaryProtected  ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint);
+    virtual    xbool                FireWeaponProtected        ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint);
+    virtual    xbool                FireSecondaryProtected  ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint);
 
     virtual ammo_priority       GetPrimaryAmmoPriority  ( void ){ return AMMO_PRIMARY; }
     virtual ammo_priority       GetSecondaryAmmoPriority( void ){ return AMMO_PRIMARY; }
@@ -96,7 +96,7 @@ protected:
     //---------------------------------------------------------------------
     // Zoom stuff
     f32             m_ViewChangeRate;       // how fast we change the FOV
-    radian		    m_CurrentViewX;         // Current x-view
+    radian            m_CurrentViewX;         // Current x-view
     
     xbool           m_bMeleeComplete;        // this may be obsolete    
     guid            m_HostPlayerGuid;       // what player guid are we tied to?
@@ -106,7 +106,7 @@ protected:
     rhandle<char>   m_hMeleeParticle_Hit;
     s32             m_nPrimaryParasitesPerShot;
     s32             m_nSecondaryParasitesPerShot;
-	f32             m_PrimaryFireDelay;
+    f32             m_PrimaryFireDelay;
     f32             m_TimeSinceLastPrimaryFire;
     s32             m_MutationZoomSound;
 

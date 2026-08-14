@@ -43,44 +43,44 @@ extern const char* g_pBuildDate;
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWnd)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
-	//{{AFX_MSG_MAP(CMainFrame)
-	ON_WM_CREATE()
-	ON_WM_CLOSE()
+    //{{AFX_MSG_MAP(CMainFrame)
+    ON_WM_CREATE()
+    ON_WM_CLOSE()
     ON_MESSAGE(WM_USER_MSG_UPDATE_STATUS_BAR, UpdateStatusBar)
     ON_MESSAGE(WM_USER_MSG_MODIFY_MENU_BAR, ModifyMenuBar)
     ON_UPDATE_COMMAND_UI(ID_ADD_RES_DESC_01, OnUpdateAdditionalViews)
     ON_COMMAND_RANGE(ID_ADD_RES_DESC_01, ID_ADD_RES_DESC_10, OnAdditionalView)
-	ON_COMMAND(ID_MENU_FILE_CLOSE, OnMenuFileClose)
-	ON_UPDATE_COMMAND_UI(ID_MENU_FILE_CLOSE, OnUpdateMenuFileClose)
-	ON_COMMAND(ID_MENU_FILE_NEW, OnMenuFileNew)
-	ON_UPDATE_COMMAND_UI(ID_MENU_FILE_NEW, OnUpdateMenuFileNew)
-	ON_COMMAND(ID_MENU_FILE_OPEN, OnMenuFileOpen)
-	ON_UPDATE_COMMAND_UI(ID_MENU_FILE_OPEN, OnUpdateMenuFileOpen)
-	ON_COMMAND(ID_MENU_FILE_SAVE, OnMenuFileSave)
-	ON_UPDATE_COMMAND_UI(ID_MENU_FILE_SAVE, OnUpdateMenuFileSave)
-	ON_COMMAND(ID_EDITOR_SAVE_SETTINGS, OnEditorSaveSettings)
-	ON_COMMAND(ID_MENU_FILE_EXPORT, OnMenuFileExport)
-	ON_COMMAND(ID_MENU_FILE_EXPORT_MAX, OnMenuFileExportTo3DMax)
-	ON_COMMAND(ID_MENU_BUILD_DFS, OnMenuFileBuildDFS)
-	ON_UPDATE_COMMAND_UI(ID_MENU_FILE_EXPORT, OnUpdateMenuFileExport)
-	ON_COMMAND(ID_MENU_FILE_IMPORT, OnMenuFileImport)
-	ON_UPDATE_COMMAND_UI(ID_MENU_FILE_IMPORT, OnUpdateMenuFileImport)
-	ON_UPDATE_COMMAND_UI(ID_MRU_LIST, OnUpdateMruList)
-	ON_COMMAND_EX_RANGE(ID_MRU_LIST, ID_MRU_LIST_10, OnMenuFileMru)
+    ON_COMMAND(ID_MENU_FILE_CLOSE, OnMenuFileClose)
+    ON_UPDATE_COMMAND_UI(ID_MENU_FILE_CLOSE, OnUpdateMenuFileClose)
+    ON_COMMAND(ID_MENU_FILE_NEW, OnMenuFileNew)
+    ON_UPDATE_COMMAND_UI(ID_MENU_FILE_NEW, OnUpdateMenuFileNew)
+    ON_COMMAND(ID_MENU_FILE_OPEN, OnMenuFileOpen)
+    ON_UPDATE_COMMAND_UI(ID_MENU_FILE_OPEN, OnUpdateMenuFileOpen)
+    ON_COMMAND(ID_MENU_FILE_SAVE, OnMenuFileSave)
+    ON_UPDATE_COMMAND_UI(ID_MENU_FILE_SAVE, OnUpdateMenuFileSave)
+    ON_COMMAND(ID_EDITOR_SAVE_SETTINGS, OnEditorSaveSettings)
+    ON_COMMAND(ID_MENU_FILE_EXPORT, OnMenuFileExport)
+    ON_COMMAND(ID_MENU_FILE_EXPORT_MAX, OnMenuFileExportTo3DMax)
+    ON_COMMAND(ID_MENU_BUILD_DFS, OnMenuFileBuildDFS)
+    ON_UPDATE_COMMAND_UI(ID_MENU_FILE_EXPORT, OnUpdateMenuFileExport)
+    ON_COMMAND(ID_MENU_FILE_IMPORT, OnMenuFileImport)
+    ON_UPDATE_COMMAND_UI(ID_MENU_FILE_IMPORT, OnUpdateMenuFileImport)
+    ON_UPDATE_COMMAND_UI(ID_MRU_LIST, OnUpdateMruList)
+    ON_COMMAND_EX_RANGE(ID_MRU_LIST, ID_MRU_LIST_10, OnMenuFileMru)
     ON_COMMAND(ID_VIEW_RESETWINDOWS, OnViewResetWindows)
     ON_UPDATE_COMMAND_UI(ID_MAINTENANCE_ZONECLEANUP, OnUpdateCleanupZones)
     ON_COMMAND(ID_MAINTENANCE_ZONECLEANUP, OnCleanupZones)
-	//}}AFX_MSG_MAP
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
 {
-	ID_SEPARATOR,           // status line indicator
-	ID_INDICATOR_MODE,
-	ID_INDICATOR_DATA,
-	ID_INDICATOR_CAPS,
-	ID_INDICATOR_NUM,
-	ID_INDICATOR_SCRL,
+    ID_SEPARATOR,           // status line indicator
+    ID_INDICATOR_MODE,
+    ID_INDICATOR_DATA,
+    ID_INDICATOR_CAPS,
+    ID_INDICATOR_NUM,
+    ID_INDICATOR_SCRL,
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -115,10 +115,10 @@ CMainFrame::~CMainFrame()
 
 static UINT arHiddenCmds[] =
 {
-	ID_EDIT_CUT,
-	ID_EDIT_COPY,
-	ID_EDIT_PASTE,
-	ID_VIEW_STATUS_BAR
+    ID_EDIT_CUT,
+    ID_EDIT_COPY,
+    ID_EDIT_PASTE,
+    ID_VIEW_STATUS_BAR
 };
 
 //=========================================================================
@@ -205,78 +205,78 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     // Set the output bar as soon as possible
     //
     {
-	    // Create the output bar.
-	    if (!m_wndOutputBar.Create(this, IDW_OUTPUTBAR, _T("Output"),
-		    CSize(150, 150), CBRS_BOTTOM, 0)) //(AFX_IDW_TOOLBAR + 10) ))
-	    {
-		    TRACE0("Failed to create output dock window\n");
-		    return -1;		// fail to create
-	    }
+        // Create the output bar.
+        if (!m_wndOutputBar.Create(this, IDW_OUTPUTBAR, _T("Output"),
+            CSize(150, 150), CBRS_BOTTOM, 0)) //(AFX_IDW_TOOLBAR + 10) ))
+        {
+            TRACE0("Failed to create output dock window\n");
+            return -1;        // fail to create
+        }
 
         // Set the MSGDebug handler
         s_pMainFrame = this;
         x_DebugMsgSetFunction( HandleDebugMsg );
     }
 /*
-	if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
-		| CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, CRect(0, 0, 0, 0), (AFX_IDW_TOOLBAR + 2) ) ||
-		!m_wndToolBar.LoadToolBar(IDR_MAINFRAME))
-	{
-		TRACE0("Failed to create toolbar\n");
-		return -1;      // fail to create
-	}
+    if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
+        | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, CRect(0, 0, 0, 0), (AFX_IDW_TOOLBAR + 2) ) ||
+        !m_wndToolBar.LoadToolBar(IDR_MAINFRAME))
+    {
+        TRACE0("Failed to create toolbar\n");
+        return -1;      // fail to create
+    }
 */
 
-	if (!m_wndStatusBar.Create(this) ||
-		!m_wndStatusBar.SetIndicators(indicators,
-		  sizeof(indicators)/sizeof(UINT)))
-	{
-		TRACE0("Failed to create status bar\n");
-		return -1;      // fail to create
-	}
+    if (!m_wndStatusBar.Create(this) ||
+        !m_wndStatusBar.SetIndicators(indicators,
+          sizeof(indicators)/sizeof(UINT)))
+    {
+        TRACE0("Failed to create status bar\n");
+        return -1;      // fail to create
+    }
 
     /*
-	// Create the tray icon control.
-	if (!m_trayIcon.Create(_T("Tray Icon Tool Tip"), NIF_MESSAGE|NIF_ICON|NIF_TIP,
-		this, IDR_MAINFRAME))
-	{
-		TRACE0("Failed to create tray icon\n");
-		return -1;
-	}
+    // Create the tray icon control.
+    if (!m_trayIcon.Create(_T("Tray Icon Tool Tip"), NIF_MESSAGE|NIF_ICON|NIF_TIP,
+        this, IDR_MAINFRAME))
+    {
+        TRACE0("Failed to create tray icon\n");
+        return -1;
+    }
     */
 
 
-	// TODO: Delete these three lines if you don't want the toolbar to
-	//  be dockable
-	m_wndOutputBar.EnableDocking(CBRS_ALIGN_ANY);
-	EnableDocking(CBRS_ALIGN_ANY);
-//	DockControlBar(&m_wndToolBar);
-	DockControlBar(&m_wndOutputBar,AFX_IDW_DOCKBAR_BOTTOM);
+    // TODO: Delete these three lines if you don't want the toolbar to
+    //  be dockable
+    m_wndOutputBar.EnableDocking(CBRS_ALIGN_ANY);
+    EnableDocking(CBRS_ALIGN_ANY);
+//    DockControlBar(&m_wndToolBar);
+    DockControlBar(&m_wndOutputBar,AFX_IDW_DOCKBAR_BOTTOM);
 
-	// add the indicator to the status bar.
-	int nIndex = m_wndStatusBar.CommandToIndex(ID_INDICATOR_MODE);
-	ASSERT (nIndex != -1);
+    // add the indicator to the status bar.
+    int nIndex = m_wndStatusBar.CommandToIndex(ID_INDICATOR_MODE);
+    ASSERT (nIndex != -1);
     {
         UINT nID = 0;
         UINT nStyle = 0;
         int  cxWidth = 0;
         m_wndStatusBar.GetPaneInfo(nIndex, nID, nStyle, cxWidth);
-	    m_wndStatusBar.SetPaneInfo(nIndex, nID, nStyle | SBPS_POPOUT, 150);
+        m_wndStatusBar.SetPaneInfo(nIndex, nID, nStyle | SBPS_POPOUT, 150);
     }
-	nIndex = m_wndStatusBar.CommandToIndex(ID_INDICATOR_DATA);
-	ASSERT (nIndex != -1);
+    nIndex = m_wndStatusBar.CommandToIndex(ID_INDICATOR_DATA);
+    ASSERT (nIndex != -1);
     {
         UINT nID = 0;
         UINT nStyle = 0;
         int  cxWidth = 0;
         m_wndStatusBar.GetPaneInfo(nIndex, nID, nStyle, cxWidth);
-	    m_wndStatusBar.SetPaneInfo(nIndex, nID, nStyle | SBPS_POPOUT, 300);
+        m_wndStatusBar.SetPaneInfo(nIndex, nID, nStyle | SBPS_POPOUT, 300);
     }
 
     // Restore control bar postion.
     LoadBarState(_T("BarState - Main"));
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
@@ -363,18 +363,18 @@ void CMainFrame::OnAdditionalView(UINT nID)
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {    
-	if( !CMDIFrameWnd::PreCreateWindow(cs) )
-		return FALSE;
-	// TODO: Modify the Window class or styles here by modifying
-	//  the CREATESTRUCT cs
+    if( !CMDIFrameWnd::PreCreateWindow(cs) )
+        return FALSE;
+    // TODO: Modify the Window class or styles here by modifying
+    //  the CREATESTRUCT cs
 
     cs.style |= WS_MAXIMIZE;
 
-	// Helps to reduce screen flicker.
-	cs.lpszClass = AfxRegisterWndClass(0, NULL, NULL,
-		AfxGetApp()->LoadIcon(IDR_MAINFRAME));
+    // Helps to reduce screen flicker.
+    cs.lpszClass = AfxRegisterWndClass(0, NULL, NULL,
+        AfxGetApp()->LoadIcon(IDR_MAINFRAME));
 
-	return TRUE;
+    return TRUE;
 }
 
 //=========================================================================
@@ -384,12 +384,12 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 #ifdef _DEBUG
 void CMainFrame::AssertValid() const
 {
-	CMDIFrameWnd::AssertValid();
+    CMDIFrameWnd::AssertValid();
 }
 
 void CMainFrame::Dump(CDumpContext& dc) const
 {
-	CMDIFrameWnd::Dump(dc);
+    CMDIFrameWnd::Dump(dc);
 }
 
 #endif //_DEBUG
@@ -400,8 +400,8 @@ void CMainFrame::Dump(CDumpContext& dc) const
 
 LRESULT CMainFrame::UpdateStatusBar(WPARAM wParam, LPARAM lParam)
 {
-	int nIndex = m_wndStatusBar.CommandToIndex(wParam);
-	ASSERT (nIndex != -1);
+    int nIndex = m_wndStatusBar.CommandToIndex(wParam);
+    ASSERT (nIndex != -1);
     if (nIndex != -1)
     {
         CString strText((char*)lParam);
@@ -428,17 +428,17 @@ LRESULT CMainFrame::ModifyMenuBar(WPARAM wParam, LPARAM lParam)
     {
         if (LOWORD(lParam))
         {
-	        // get the menu to add
-		    CMenu objectMenu;
-		    objectMenu.LoadMenu(wParam);
-		    CMenu* pPopupMenu = objectMenu.GetSubMenu(0);
-		    if (pPopupMenu)
+            // get the menu to add
+            CMenu objectMenu;
+            objectMenu.LoadMenu(wParam);
+            CMenu* pPopupMenu = objectMenu.GetSubMenu(0);
+            if (pPopupMenu)
             {
-		        // get its string - codejock seems to ignore this anyways, so doesn't matter too much
-		        CString strMenuItem;
-		        objectMenu.GetMenuString(0, strMenuItem, MF_BYPOSITION);
-		        
-		        // Add it
+                // get its string - codejock seems to ignore this anyways, so doesn't matter too much
+                CString strMenuItem;
+                objectMenu.GetMenuString(0, strMenuItem, MF_BYPOSITION);
+                
+                // Add it
                 int nPos = HIWORD(lParam);
                 int nCount = pMenu->GetMenuItemCount();
                 if (nPos >= nCount)
@@ -446,8 +446,8 @@ LRESULT CMainFrame::ModifyMenuBar(WPARAM wParam, LPARAM lParam)
                     nPos = -1;
                 }
 
-		        if ((pMenu->InsertMenu(nPos, MF_BYPOSITION | MF_POPUP, 
-			        (UINT)pPopupMenu->GetSafeHmenu(), strMenuItem)))
+                if ((pMenu->InsertMenu(nPos, MF_BYPOSITION | MF_POPUP, 
+                    (UINT)pPopupMenu->GetSafeHmenu(), strMenuItem)))
                 {
                     if (nPos>=0)
                         iInsertLocation = nPos;
@@ -455,9 +455,9 @@ LRESULT CMainFrame::ModifyMenuBar(WPARAM wParam, LPARAM lParam)
                         iInsertLocation = nCount;
                     
                 }
-		        
-		        // remove from the other menu!
-		        objectMenu.RemoveMenu(0, MF_BYPOSITION);   
+                
+                // remove from the other menu!
+                objectMenu.RemoveMenu(0, MF_BYPOSITION);   
         
                 DrawMenuBar();
             }
@@ -486,35 +486,35 @@ LRESULT CMainFrame::ModifyMenuBar(WPARAM wParam, LPARAM lParam)
 // item which unhides the application.
 LRESULT CMainFrame::OnTrayIconNotify(WPARAM wParam, LPARAM lParam) 
 {
-	switch (lParam)
-	{
-		case WM_RBUTTONUP:
-		{
-			CMenu menu;
-			VERIFY(menu.LoadMenu(IDR_MAINFRAME));
-			
-			CMenu* pPopup = menu.GetSubMenu(0);
-			ASSERT(pPopup != NULL);
-			
-			// Make ID_FILE_OPEN menu item the default (bold font)
-			::SetMenuDefaultItem(pPopup->m_hMenu, ID_FILE_OPEN, FALSE);
+    switch (lParam)
+    {
+        case WM_RBUTTONUP:
+        {
+            CMenu menu;
+            VERIFY(menu.LoadMenu(IDR_MAINFRAME));
+            
+            CMenu* pPopup = menu.GetSubMenu(0);
+            ASSERT(pPopup != NULL);
+            
+            // Make ID_FILE_OPEN menu item the default (bold font)
+            ::SetMenuDefaultItem(pPopup->m_hMenu, ID_FILE_OPEN, FALSE);
 
-			::SetForegroundWindow(m_hWnd);
+            ::SetForegroundWindow(m_hWnd);
 
-			CPoint point;
-			GetCursorPos( &point );
-			pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON,
-				point.x, point.y, this);
+            CPoint point;
+            GetCursorPos( &point );
+            pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON,
+                point.x, point.y, this);
 
-			break;
-		}
+            break;
+        }
 
-		case WM_LBUTTONDBLCLK:
-			// TODO: Add your double click handler.
-			break;
-	}
+        case WM_LBUTTONDBLCLK:
+            // TODO: Add your double click handler.
+            break;
+    }
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
@@ -554,8 +554,8 @@ void CMainFrame::OnClose()
         if( m_pRecentFiles )
             m_pRecentFiles->WriteList();
 
-	    // Save control bar postion.
-	    SaveBarState(_T("BarState - Main"));
+        // Save control bar postion.
+        SaveBarState(_T("BarState - Main"));
 
         RemoveProgress();
         CMDIFrameWnd::OnClose();
@@ -572,9 +572,9 @@ void CMainFrame::OnClose()
 
 BOOL CMainFrame::ShowWindowEx(int nCmdShow)
 {
-	ASSERT_VALID(this);
+    ASSERT_VALID(this);
 
-	return ShowWindow(nCmdShow);
+    return ShowWindow(nCmdShow);
 }
 
 //=========================================================================
@@ -674,8 +674,8 @@ void CMainFrame::OnMenuFileClose()
 
 void CMainFrame::OnUpdateMenuFileClose(CCmdUI* pCmdUI) 
 {
-    pCmdUI->Enable(g_Project.IsProjectOpen() );	
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(g_Project.IsProjectOpen() );    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -730,9 +730,9 @@ void CMainFrame::OnMenuFileNew()
 
 void CMainFrame::OnUpdateMenuFileNew(CCmdUI* pCmdUI) 
 {
-//    pCmdUI->Enable( !g_Project.IsProjectOpen() );	
-    pCmdUI->Enable(TRUE);	
-    pCmdUI->SetCheck(FALSE);	
+//    pCmdUI->Enable( !g_Project.IsProjectOpen() );    
+    pCmdUI->Enable(TRUE);    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -818,9 +818,9 @@ void CMainFrame::OnMenuFileOpen()
 
 void CMainFrame::OnUpdateMenuFileOpen(CCmdUI* pCmdUI) 
 {
-//    pCmdUI->Enable( !g_Project.IsProjectOpen() );	
-    pCmdUI->Enable(TRUE);	
-    pCmdUI->SetCheck(FALSE);	
+//    pCmdUI->Enable( !g_Project.IsProjectOpen() );    
+    pCmdUI->Enable(TRUE);    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -865,8 +865,8 @@ void CMainFrame::OnMenuFileSave()
 
 void CMainFrame::OnUpdateMenuFileSave(CCmdUI* pCmdUI) 
 {
-    pCmdUI->Enable(g_Project.IsProjectOpen() );	
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(g_Project.IsProjectOpen() );    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -892,7 +892,7 @@ void CMainFrame::OnMenuFileExportTo3DMax()
         {
             CWaitCursor wc;
 
-    	    g_WorldEditor.ExportToLevelTo3dMax(strName);
+            g_WorldEditor.ExportToLevelTo3dMax(strName);
         }
     }
 }
@@ -912,7 +912,7 @@ void CMainFrame::OnMenuFileExport()
         if (!strName.IsEmpty())
         {
             CWaitCursor wc;
-    	    if (!g_WorldEditor.ExportToLevel(strName))
+            if (!g_WorldEditor.ExportToLevel(strName))
             {
                 if (!g_bAutoBuild)
                 {
@@ -931,8 +931,8 @@ void CMainFrame::OnMenuFileExport()
 
 void CMainFrame::OnUpdateMenuFileExport(CCmdUI* pCmdUI) 
 {
-    pCmdUI->Enable(g_Project.IsProjectOpen() );	
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(g_Project.IsProjectOpen() );    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -978,8 +978,8 @@ void CMainFrame::OnMenuFileImport()
 
 void CMainFrame::OnUpdateMenuFileImport(CCmdUI* pCmdUI) 
 {
-    pCmdUI->Enable(g_Project.IsProjectOpen() );	
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(g_Project.IsProjectOpen() );    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -1323,21 +1323,21 @@ void CMainFrame::OnUpdateMruList(CCmdUI* pCmdUI)
 
 BOOL CMainFrame::OnMenuFileMru( UINT nID ) 
 {
-	ASSERT_VALID(this);
-	ASSERT(m_pRecentFiles != NULL);
+    ASSERT_VALID(this);
+    ASSERT(m_pRecentFiles != NULL);
 
-	ASSERT(nID >= ID_MRU_LIST);
-	ASSERT(nID < ID_MRU_LIST + (UINT)m_pRecentFiles->GetSize());
-	int nIndex = nID - ID_MRU_LIST;
-	ASSERT((*m_pRecentFiles)[nIndex].GetLength() != 0);
+    ASSERT(nID >= ID_MRU_LIST);
+    ASSERT(nID < ID_MRU_LIST + (UINT)m_pRecentFiles->GetSize());
+    int nIndex = nID - ID_MRU_LIST;
+    ASSERT((*m_pRecentFiles)[nIndex].GetLength() != 0);
 
-	TRACE2("MRU: open file (%d) '%s'.\n", (nIndex) + 1,
-			(LPCTSTR)(*m_pRecentFiles)[nIndex]);
+    TRACE2("MRU: open file (%d) '%s'.\n", (nIndex) + 1,
+            (LPCTSTR)(*m_pRecentFiles)[nIndex]);
 
-	if( !DoFileOpen( (*m_pRecentFiles)[nIndex] ) )
-		m_pRecentFiles->Remove(nIndex);
+    if( !DoFileOpen( (*m_pRecentFiles)[nIndex] ) )
+        m_pRecentFiles->Remove(nIndex);
 
-	return TRUE;
+    return TRUE;
 }
 
 //=========================================================================
@@ -1364,8 +1364,8 @@ void CMainFrame::OnViewResetWindows( void )
 
 void CMainFrame::OnUpdateCleanupZones(CCmdUI* pCmdUI) 
 {
-    pCmdUI->Enable(g_Project.IsProjectOpen()&& g_WorldEditor.IsZoneFileEditable());	
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(g_Project.IsProjectOpen()&& g_WorldEditor.IsZoneFileEditable());    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================

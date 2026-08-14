@@ -66,7 +66,7 @@ movie_player::movie_player(void)
 
 movie_player::~movie_player(void)
 {
-	Kill();
+    Kill();
 }
 
 //==============================================================================

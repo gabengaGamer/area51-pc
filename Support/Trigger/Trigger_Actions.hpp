@@ -93,8 +93,8 @@ public:
     virtual         const char*         GetTypeName     ( void ) { return "Action Base"; } 
     virtual         const char*         GetTypeInfo     ( void ) { return "Base action class, null funtionality"; } 
     virtual         void                Execute         ( trigger_object* pParent ) = 0;    
-    virtual			void	            OnEnumProp	    ( prop_enum& rList );
-    virtual			xbool	            OnProperty	    ( prop_query& rPropQuery );
+    virtual            void                OnEnumProp        ( prop_enum& rList );
+    virtual            xbool                OnProperty        ( prop_query& rPropQuery );
     virtual         void                OnRender        ( void ) { /*no-op*/ }
     
                     xbool               GetElse         ( void ) { return m_ElseFlag; }
@@ -190,14 +190,14 @@ void                example_class::OnRender ( void )
 
 //=========================================================================
 
-void	            example_class::OnEnumProp ( prop_enum& rPropList )
+void                example_class::OnEnumProp ( prop_enum& rPropList )
 {
     actions_base::OnEnumProp( rPropList );
 }
 
 //=========================================================================
 
-xbool	            example_class::OnProperty ( prop_query& rPropQuery )
+xbool                example_class::OnProperty ( prop_query& rPropQuery )
 {
     if( actions_base::OnProperty( rPropQuery ) )
         return TRUE;

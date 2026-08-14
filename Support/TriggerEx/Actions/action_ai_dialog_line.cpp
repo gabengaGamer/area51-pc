@@ -37,7 +37,7 @@ action_ai_dialog_line::action_ai_dialog_line ( guid ParentGuid )
 }
 //=============================================================================
 
-void action_ai_dialog_line::OnEnumProp	( prop_enum& rPropList )
+void action_ai_dialog_line::OnEnumProp    ( prop_enum& rPropList )
 {
     action_ai_base::OnEnumProp( rPropList );
     
@@ -60,8 +60,8 @@ void action_ai_dialog_line::OnEnumProp	( prop_enum& rPropList )
     }
 
     rPropList.PropEnumBool    ( "Play2D",        "Play 2D sound, such as over a headset.", 0 ) ;
-    rPropList.PropEnumFloat    ( "PreDelay",		"Delay before playing dialog in seconds", 0 ) ;
-    rPropList.PropEnumFloat    ( "PostDelay",	"Delay after playing dialog in seconds", 0 ) ;
+    rPropList.PropEnumFloat    ( "PreDelay",        "Delay before playing dialog in seconds", 0 ) ;
+    rPropList.PropEnumFloat    ( "PostDelay",    "Delay after playing dialog in seconds", 0 ) ;
 
     // Add loco animation properties
     LocoUtil_OnEnumPropAnimFlags(   rPropList,
@@ -81,7 +81,7 @@ void action_ai_dialog_line::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool action_ai_dialog_line::OnProperty	( prop_query& rPropQuery )
+xbool action_ai_dialog_line::OnProperty    ( prop_query& rPropQuery )
 {
     if( action_ai_base::OnProperty( rPropQuery ) )
         return TRUE;

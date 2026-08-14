@@ -87,7 +87,7 @@ const object_desc&  energy_projectile::GetObjectType   ( void )
 
 energy_projectile::energy_projectile()
 {
-	m_MaxAliveTime      = 3.0f;
+    m_MaxAliveTime      = 3.0f;
     m_FxGuid            = NULL_GUID;
     m_ExplodeTimer      = EXPLODE_TIME;
     m_ExplosionRadius   = 100.0f;
@@ -375,7 +375,7 @@ bbox energy_projectile::GetLocalBBox( void ) const
 xbool energy_projectile::LoadInstance( const char* pFileName )
 {
     m_RigidInst.SetUpRigidGeom( pFileName );
-	return TRUE;
+    return TRUE;
 }
 
 //=============================================================================
@@ -476,7 +476,7 @@ void energy_projectile::OnExplode( void )
         decal_definition* pDef = pPackage->GetDecalDef( "CharMarks", 0 );
         if( pDef )
         {
-	        //only paste a decal if the object is at the last collision
+            //only paste a decal if the object is at the last collision
             // point (within radius + 20 centimeters)
             f32 Size        = x_frand( 150.0f, 200.0f );
             f32 fDistToTest = GetBBox().GetRadiusSquared() + (20.0f * 20.0f);

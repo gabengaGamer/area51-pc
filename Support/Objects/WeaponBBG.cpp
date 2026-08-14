@@ -50,9 +50,9 @@ static struct weapon_bbg_desc : public object_desc
         "BBG",
         "WEAPON",
         object::ATTR_SPACIAL_ENTRY          |
-        object::ATTR_NEEDS_LOGIC_TIME		|
-        object::ATTR_SOUND_SOURCE			|
-        object::ATTR_RENDERABLE				|
+        object::ATTR_NEEDS_LOGIC_TIME        |
+        object::ATTR_SOUND_SOURCE            |
+        object::ATTR_RENDERABLE                |
         object::ATTR_TRANSPARENT            |
         object::ATTR_COLLISION_PERMEABLE    ,
         FLAGS_IS_DYNAMIC
@@ -635,7 +635,7 @@ xbool weapon_bbg::OnProperty( prop_query& PropQuery )
 
 //==============================================================================
 
-void weapon_bbg::InitWeapon			(   
+void weapon_bbg::InitWeapon            (   
                                      const char* pSkinFileName , 
                                      const char* pAnimFileName , 
                                      const vector3& rInitPos , 

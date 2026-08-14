@@ -92,13 +92,13 @@ u32 ParseTargetMask( const xstring& Text )
     if( Target == "all" )
         return SHADER_TARGET_ALL;
 
-    if( (Target == "vulkan") )		
+    if( (Target == "vulkan") )        
         return SHADER_TARGET_VULKAN;
 
     if( (Target == "d3d12") || (Target == "dx12") )
         return SHADER_TARGET_D3D12;
 
-    if( (Target == "metal") || (Target == "govno") )	
+    if( (Target == "metal") || (Target == "govno") )    
         return SHADER_TARGET_METAL;
 
     return 0;
@@ -218,7 +218,7 @@ xbool ParseShaderProperties( token_stream& Tokenizer, shader_entry& Shader )
         {
             if( !ReadValue( Tokenizer, Shader.MetalArgs ) )
                 return FALSE;
-        }		
+        }        
         else
         {
             x_printf( "Error: Unknown shader property '%s' in %s line %d\n",

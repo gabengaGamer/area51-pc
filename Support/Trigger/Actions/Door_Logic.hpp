@@ -26,8 +26,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Door Logic"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "Tells door what state to go to and if it needs to run its logic"; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
 
     virtual         void                OnRender    ( void );
    

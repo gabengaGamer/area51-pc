@@ -123,7 +123,7 @@ void character_idle_state::ChangePhase( s32 newPhase )
 
     case PHASE_IDLE_DEFAULT:
         m_CharacterBase.SetIdleGoal();
-    	break;
+        break;
     case PHASE_IDLE_WANDER:        
         // chose a random location within our wander radius.        
         offsetLength = x_frand(0,m_WanderLeashRadius);
@@ -248,10 +248,10 @@ const char*character_idle_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_IDLE_DEFAULT:
         return "PHASE_IDLE_DEFAULT";
-    	break;
+        break;
     case PHASE_IDLE_WANDER:
         return "PHASE_IDLE_DEFAULT";
-    	break;
+        break;
     }
     return character_state::GetPhaseName(thePhase);
 }

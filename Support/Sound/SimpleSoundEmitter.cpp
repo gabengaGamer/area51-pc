@@ -221,7 +221,7 @@ void simple_sound_emitter::OnDebugRender( void )
 void simple_sound_emitter::OnAdvanceSimulation ( f32 DeltaTime )
 {
     LOG_STAT(k_stats_Sound);
-	
+    
     X_PROFILE_SCOPE_CATEGORY( "Context", "sound_emitter::OnAdvanceSimulation" );
     (void)DeltaTime;
     

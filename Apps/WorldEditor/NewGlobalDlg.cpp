@@ -16,29 +16,29 @@ static char THIS_FILE[] = __FILE__;
 
 
 CNewGlobalDlg::CNewGlobalDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CNewGlobalDlg::IDD, pParent)
+    : CDialog(CNewGlobalDlg::IDD, pParent)
 {
-	//{{AFX_DATA_INIT(CNewGlobalDlg)
-	m_RadioButtonData = -1;
-	//}}AFX_DATA_INIT
+    //{{AFX_DATA_INIT(CNewGlobalDlg)
+    m_RadioButtonData = -1;
+    //}}AFX_DATA_INIT
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 void CNewGlobalDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CNewGlobalDlg)
-	DDX_Control(pDX, IDC_GLOBAL_NAME, m_EditGlobalName);
-	DDX_Radio(pDX, IDC_GLOBAL_INT, m_RadioButtonData);
-	//}}AFX_DATA_MAP
+    CDialog::DoDataExchange(pDX);
+    //{{AFX_DATA_MAP(CNewGlobalDlg)
+    DDX_Control(pDX, IDC_GLOBAL_NAME, m_EditGlobalName);
+    DDX_Radio(pDX, IDC_GLOBAL_INT, m_RadioButtonData);
+    //}}AFX_DATA_MAP
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 BEGIN_MESSAGE_MAP(CNewGlobalDlg, CDialog)
-	//{{AFX_MSG_MAP(CNewGlobalDlg)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CNewGlobalDlg)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -46,8 +46,8 @@ END_MESSAGE_MAP()
 
 BOOL CNewGlobalDlg::OnInitDialog() 
 {
-	CDialog::OnInitDialog();
-	
+    CDialog::OnInitDialog();
+    
     m_EditGlobalName.SetWindowText("<TYPE GLOBAL NAME>");
     m_EditGlobalName.SetSel( 0, -1 );
     m_EditGlobalName.SetFocus();
@@ -55,9 +55,9 @@ BOOL CNewGlobalDlg::OnInitDialog()
 
     m_RadioButtonData = 0;
     UpdateData(FALSE);
-	
-	return FALSE;  // return TRUE unless you set the focus to a control
-	               // EXCEPTION: OCX Property Pages should return FALSE
+    
+    return FALSE;  // return TRUE unless you set the focus to a control
+                   // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -72,14 +72,14 @@ void CNewGlobalDlg::OnOK()
     }
     UpdateData(TRUE);
 
-	CDialog::OnOK();
+    CDialog::OnOK();
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 void CNewGlobalDlg::OnCancel() 
 {
-	CDialog::OnCancel();
+    CDialog::OnCancel();
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -787,7 +787,7 @@ lame_get_exp_nspsytune( const lame_global_flags*  gfp )
 
 int
 lame_set_exp_nspsytune2_int( lame_global_flags*  gfp,
-			     int adr,int val)
+                 int adr,int val)
 {
   int ret = gfp->exp_nspsytune2.integer[adr];
 
@@ -799,7 +799,7 @@ lame_set_exp_nspsytune2_int( lame_global_flags*  gfp,
 
 float
 lame_set_exp_nspsytune2_real( lame_global_flags*  gfp,
-			      int adr,float val)
+                  int adr,float val)
 {
   float ret = gfp->exp_nspsytune2.real[adr];
 
@@ -811,7 +811,7 @@ lame_set_exp_nspsytune2_real( lame_global_flags*  gfp,
 
 void *
 lame_set_exp_nspsytune2_pointer( lame_global_flags*  gfp,
-				 int adr,void *val)
+                 int adr,void *val)
 {
   void *ret = gfp->exp_nspsytune2.pointer[adr];
 
@@ -1263,7 +1263,7 @@ lame_get_useTemporal( const lame_global_flags*  gfp )
 /* Use temporal masking effect */
 int
 lame_set_interChRatio( lame_global_flags*  gfp,
-			float               ratio )
+            float               ratio )
 {
     /* default = 0.0 (no inter-cahnnel maskin) */
     if (! (0 <= ratio && ratio <= 1.0))
@@ -1286,7 +1286,7 @@ lame_get_interChRatio( const lame_global_flags*  gfp )
 /* Use pseudo substep shaping method */
 int
 lame_set_substep( lame_global_flags*  gfp,
-		  int                 method )
+          int                 method )
 {
     lame_internal_flags *gfc = gfp->internal_flags;
     /* default = 0.0 (no inter-cahnnel maskin) */
@@ -1534,7 +1534,7 @@ lame_set_preset_expopts( lame_global_flags*  gfp, int preset_expopts )
           gfc->presetTune.attackthre   = 35;
           gfc->presetTune.attackthre_s = 150;
           gfc->presetTune.ms_maskadjust = .5;
-		  gfc->presetTune.quantcomp_type_s = 3;
+          gfc->presetTune.quantcomp_type_s = 3;
           gfc->presetTune.quantcomp_alt_type = 3;
           gfc->presetTune.athadjust_switch_level = 2; // Always switch
 
@@ -1548,12 +1548,12 @@ lame_set_preset_expopts( lame_global_flags*  gfp, int preset_expopts )
              gfc->presetTune.quantcomp_type_s = 4;
              gfc->presetTune.quantcomp_alt_type = 0;
              gfc->presetTune.athadjust_safe_noiseshaping_thre = 0.0;
-			 gfc->presetTune.athadjust_safe_athaasensitivity = 8.0;
+             gfc->presetTune.athadjust_safe_athaasensitivity = 8.0;
           }
           else {
              lame_set_experimentalX(gfp, 3);
              gfc->presetTune.quantcomp_adjust_rh_tot = 600;
-			 gfc->presetTune.quantcomp_adjust_rh_max = 60;
+             gfc->presetTune.quantcomp_adjust_rh_max = 60;
              gfc->presetTune.quantcomp_type_s = 3;
              gfc->presetTune.quantcomp_alt_type = 1;
           }
@@ -1562,7 +1562,7 @@ lame_set_preset_expopts( lame_global_flags*  gfp, int preset_expopts )
           lame_set_experimentalZ(gfp, 1);
           lame_set_VBR_q(gfp, 2);
           lame_set_exp_nspsytune(gfp, lame_get_exp_nspsytune(gfp) | 2); // safejoint
-          lame_set_ATHtype(gfp, 2);				
+          lame_set_ATHtype(gfp, 2);                
           // modify sfb21 by 3 dB plus ns-treble=0                 
           lame_set_exp_nspsytune(gfp, lame_get_exp_nspsytune(gfp) | (12 << 20));
 
@@ -1579,15 +1579,15 @@ lame_set_preset_expopts( lame_global_flags*  gfp, int preset_expopts )
           if (gfp->VBR == vbr_mtrh) {
              gfc->presetTune.quantcomp_type_s = 4;
              gfc->presetTune.quantcomp_adjust_mtrh = 9;
-			 gfc->presetTune.quantcomp_alt_type = 0;
+             gfc->presetTune.quantcomp_alt_type = 0;
              (void) lame_set_ATHlower( gfp, -2 );
              gfc->presetTune.athadjust_safe_noiseshaping_thre = 0.0;
-			 gfc->presetTune.athadjust_safe_athaasensitivity = 8.0;
+             gfc->presetTune.athadjust_safe_athaasensitivity = 8.0;
           }
           else {
              gfc->presetTune.quantcomp_type_s = 3;
              gfc->presetTune.quantcomp_adjust_rh_tot = 600;
-			 gfc->presetTune.quantcomp_adjust_rh_max = 60;
+             gfc->presetTune.quantcomp_adjust_rh_max = 60;
              (void) lame_set_ATHlower( gfp, -1 );
           }
 

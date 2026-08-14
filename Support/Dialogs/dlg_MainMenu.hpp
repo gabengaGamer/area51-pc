@@ -28,7 +28,7 @@ enum menu_menu_controls
     IDC_MAIN_MENU_SETTINGS,
     IDC_MAIN_MENU_PROFILES,
     IDC_MAIN_MENU_CREDITS,
-#if defined(TARGET_DESKTOP)		
+#if defined(TARGET_DESKTOP)        
     IDC_MAIN_MENU_EXIT,
 #endif
     IDC_MAIN_MENU_SIGN_IN,
@@ -73,9 +73,9 @@ protected:
     ui_button*          m_pButtonSettings;
     ui_button*          m_pButtonProfiles;
     ui_button*          m_pButtonCredits;
-#if defined(TARGET_DESKTOP)		
+#if defined(TARGET_DESKTOP)        
     ui_button*          m_pButtonExit;
-#endif	
+#endif    
     ui_text*            m_pSilentLoginText;
 
     dlg_popup*          m_PopUp;

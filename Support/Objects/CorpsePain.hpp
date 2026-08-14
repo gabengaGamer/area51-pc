@@ -1,4 +1,4 @@
-#ifndef	__CORPSE_PAIN_HPP__
+#ifndef    __CORPSE_PAIN_HPP__
 #define __CORPSE_PAIN_HPP__
 
 //=========================================================================

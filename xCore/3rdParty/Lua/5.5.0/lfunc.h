@@ -12,39 +12,39 @@
 
 
 #define sizeCclosure(n)  \
-	(offsetof(CClosure, upvalue) + sizeof(TValue) * cast_uint(n))
+    (offsetof(CClosure, upvalue) + sizeof(TValue) * cast_uint(n))
 
 #define sizeLclosure(n)  \
-	(offsetof(LClosure, upvals) + sizeof(UpVal *) * cast_uint(n))
+    (offsetof(LClosure, upvals) + sizeof(UpVal *) * cast_uint(n))
 
 
 /* test whether thread is in 'twups' list */
-#define isintwups(L)	(L->twups != L)
+#define isintwups(L)    (L->twups != L)
 
 
 /*
 ** maximum number of upvalues in a closure (both C and Lua). (Value
 ** must fit in a VM register.)
 */
-#define MAXUPVAL	255
+#define MAXUPVAL    255
 
 
-#define upisopen(up)	((up)->v.p != &(up)->u.value)
+#define upisopen(up)    ((up)->v.p != &(up)->u.value)
 
 
-#define uplevel(up)	check_exp(upisopen(up), cast(StkId, (up)->v.p))
+#define uplevel(up)    check_exp(upisopen(up), cast(StkId, (up)->v.p))
 
 
 /*
 ** maximum number of misses before giving up the cache of closures
 ** in prototypes
 */
-#define MAXMISS		10
+#define MAXMISS        10
 
 
 
 /* special status to close upvalues preserving the top of the stack */
-#define CLOSEKTOP	(LUA_ERRERR + 1)
+#define CLOSEKTOP    (LUA_ERRERR + 1)
 
 
 LUAI_FUNC Proto *luaF_newproto (lua_State *L);

@@ -32,12 +32,12 @@ CProperties::~CProperties()
 }
 
 BEGIN_MESSAGE_MAP(CProperties, CXTDockWindow)
-	//{{AFX_MSG_MAP(CProperties)
-	ON_WM_ERASEBKGND()
-	ON_WM_CREATE()
+    //{{AFX_MSG_MAP(CProperties)
+    ON_WM_ERASEBKGND()
+    ON_WM_CREATE()
     ON_MESSAGE( WM_USER_MSG_GRID_ITEM_CHANGE, OnItemChange )
-	ON_WM_WINDOWPOSCHANGED()
-	//}}AFX_MSG_MAP
+    ON_WM_WINDOWPOSCHANGED()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -51,7 +51,7 @@ BOOL CProperties::OnEraseBkgnd(CDC* pDC)
 //    GetClientRect( &Rect );
 //    pDC->Rectangle( &Rect );
 
-	return TRUE;//CControlBar::OnEraseBkgnd(pDC);
+    return TRUE;//CControlBar::OnEraseBkgnd(pDC);
 }
 
 CGridItemInfo* CProperties::AddGridDataElement( CString strName,
@@ -60,16 +60,16 @@ CGridItemInfo* CProperties::AddGridDataElement( CString strName,
                                                 CGridItemInfo::CONTROLTYPE type,
                                                 COLORREF fieldColor,
                                                 int iXaIndex,
-									            BOOL bReadOnly,
+                                                BOOL bReadOnly,
                                                 BOOL bMustEnum,
                                                 BOOL bHeader )
 {
-	CGridItemInfo* lp = new CGridItemInfo();
-	lp->SetItemText(strName);
-	lp->AddSubItemText(strValue);// 1
-	lp->SetReadOnly(bReadOnly);
-	lp->SetControlType(type,0); //first sub column
-	lp->SetListData(0, &m_PropList);
+    CGridItemInfo* lp = new CGridItemInfo();
+    lp->SetItemText(strName);
+    lp->AddSubItemText(strValue);// 1
+    lp->SetReadOnly(bReadOnly);
+    lp->SetControlType(type,0); //first sub column
+    lp->SetListData(0, &m_PropList);
     lp->SetIsHeader(bHeader);
     lp->SetDataIndex(iXaIndex);
 
@@ -78,7 +78,7 @@ CGridItemInfo* CProperties::AddGridDataElement( CString strName,
     if (strName.Find('\\') == -1)
     {
         //Must be a header
-		pTreeItemInserted = m_PropertyGrid.InsertRootItem(lp);
+        pTreeItemInserted = m_PropertyGrid.InsertRootItem(lp);
     }
     else
     {
@@ -99,15 +99,15 @@ CGridItemInfo* CProperties::AddGridDataElement( CString strName,
             
             if (pParentTreeItem)
             {
-		        if (pParentTreeItem->m_lpNodeInfo && 
+                if (pParentTreeItem->m_lpNodeInfo && 
                     pParentTreeItem->m_lpNodeInfo->IsReadOnly())
-		        {
-			        //roll down the read only flag
-			        lp->SetReadOnly(TRUE);
-		        }
-       	        lp->SetItemText(strShortName);
+                {
+                    //roll down the read only flag
+                    lp->SetReadOnly(TRUE);
+                }
+                   lp->SetItemText(strShortName);
 
-		        pTreeItemInserted = m_PropertyGrid.InsertItem(pParentTreeItem, lp, FALSE /*expand*/);
+                pTreeItemInserted = m_PropertyGrid.InsertItem(pParentTreeItem, lp, FALSE /*expand*/);
             }
             else
             {
@@ -132,7 +132,7 @@ CGridItemInfo* CProperties::AddGridDataElement( CString strName,
         pTreeItemInserted->m_BackgroundColor    = fieldColor;
     }
 
-	return lp;
+    return lp;
 }
 
 void CProperties::ExpandAll( void )
@@ -145,32 +145,32 @@ void CProperties::ExpandAll( void )
 
 int CProperties::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CXTDockWindow::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
+    if (CXTDockWindow::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
     CRect r;
     GetInsideRect( r );
 //    GetClientRect( &r );
-	m_PropertyGrid.Create( WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_CLIPSIBLINGS|WS_CLIPCHILDREN, r, this, IDC_PROP_GRID_ITEM );
-	m_PropertyGrid.InitializeGrid();
-//	m_PropertyGrid.ModifyStyleEx(0,WS_EX_CLIENTEDGE);
-	m_PropertyGrid.RecalcSize();
+    m_PropertyGrid.Create( WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_CLIPSIBLINGS|WS_CLIPCHILDREN, r, this, IDC_PROP_GRID_ITEM );
+    m_PropertyGrid.InitializeGrid();
+//    m_PropertyGrid.ModifyStyleEx(0,WS_EX_CLIENTEDGE);
+    m_PropertyGrid.RecalcSize();
 
     AddGridDataElement( "EFFECT", "", "The Effect", CGridItemInfo::GCT_STRING_EDIT, RGB(192,192,192), 0, FALSE, FALSE, TRUE );
 
-	m_PropertyGrid.SetFirstColWidth( 128 );
+    m_PropertyGrid.SetFirstColWidth( 128 );
 
-	SetXTBarStyle(CBRS_XT_DEFAULT|CBRS_XT_CLIENT_OUTLINE);
+    SetXTBarStyle(CBRS_XT_DEFAULT|CBRS_XT_CLIENT_OUTLINE);
 
-	return 0;
+    return 0;
 }
 
 void CProperties::EraseAll( void )
 {
-//	m_PropertyGrid.InitializeGrid();
+//    m_PropertyGrid.InitializeGrid();
     m_PropertyGrid.DeleteAll();
-//	m_PropertyGrid.ModifyStyleEx(0,WS_EX_CLIENTEDGE);
-//	m_PropertyGrid.RecalcSize();
+//    m_PropertyGrid.ModifyStyleEx(0,WS_EX_CLIENTEDGE);
+//    m_PropertyGrid.RecalcSize();
 }
 
 afx_msg LRESULT CProperties::OnItemChange(WPARAM WParam, LPARAM)
@@ -282,15 +282,15 @@ afx_msg LRESULT CProperties::OnItemChange(WPARAM WParam, LPARAM)
 
 void CProperties::OnWindowPosChanged(WINDOWPOS FAR* lpWP) 
 {
-	CXTDockWindow::OnWindowPosChanged(lpWP);
-	
-	CRect rc;
-	GetInsideRect(rc);
-	rc.DeflateRect(1,1);
+    CXTDockWindow::OnWindowPosChanged(lpWP);
+    
+    CRect rc;
+    GetInsideRect(rc);
+    rc.DeflateRect(1,1);
 
-	// Resize controls
-	if( m_PropertyGrid.GetSafeHwnd() )
+    // Resize controls
+    if( m_PropertyGrid.GetSafeHwnd() )
     {
-		m_PropertyGrid.MoveWindow( rc.left, rc.top, rc.Width(), rc.Height() );
-	}
+        m_PropertyGrid.MoveWindow( rc.left, rc.top, rc.Width(), rc.Height() );
+    }
 }

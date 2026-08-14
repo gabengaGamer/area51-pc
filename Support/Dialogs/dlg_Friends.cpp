@@ -32,7 +32,7 @@ enum
 
 enum controls
 {
-	IDC_FRIEND_LIST,
+    IDC_FRIEND_LIST,
     IDC_FRIEND_DETAILS,
     IDC_FRIEND_NAME_TEXT,
     IDC_FRIEND_GAME_TEXT,
@@ -140,7 +140,7 @@ xbool dlg_friends::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
     
     m_pFriendList = (ui_friendlist*)FindChildByID( IDC_FRIEND_LIST );
     m_pFriendList->SetLineHeight( 32 );
@@ -226,7 +226,7 @@ xbool dlg_friends::Create( s32                        UserID,
     // Default Popup
     m_DefaultPopUp = NULL;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -248,7 +248,7 @@ void dlg_friends::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     if( m_bRenderBlackout )
     {
@@ -1130,10 +1130,10 @@ void dlg_friends::OnUpdate ( ui_win* pWin, f32 DeltaTime )
 
 void dlg_friends::SetupInsertDiscPopup( xbool IsInvite )
 {
-	//insert new game disk pop up message
+    //insert new game disk pop up message
     irect r;
     r.Set(0,0,400,200);
-	m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog( g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER);
+    m_PopUp = (dlg_popup*)g_UiMgr->OpenDialog( g_UiUserID, "popup", r, NULL, ui_win::WF_VISIBLE|ui_win::WF_BORDER|ui_win::WF_DLG_CENTER);
 
     xwstring Format( g_StringTableMgr( "ui", "IDS_MAIN_MENU_INSERT_GAME_DISC_FOR_XBOX" ) );
 
@@ -1148,14 +1148,14 @@ void dlg_friends::SetupInsertDiscPopup( xbool IsInvite )
 
     const char* pTitle = (IsInvite == TRUE) ? "IDS_ACCEPT" : "IDS_JOIN_FRIEND";
 
-	m_PopUp->Configure( r,
-	                    g_StringTableMgr( "ui", pTitle ), 
-	                    FALSE, 
-	                    TRUE, 
-	                    FALSE, 
-	                    Message,
-	                    g_StringTableMgr( "ui", "IDS_NAV_CANCEL" ),
-	                    &m_PopUpResult );
+    m_PopUp->Configure( r,
+                        g_StringTableMgr( "ui", pTitle ), 
+                        FALSE, 
+                        TRUE, 
+                        FALSE, 
+                        Message,
+                        g_StringTableMgr( "ui", "IDS_NAV_CANCEL" ),
+                        &m_PopUpResult );
 }
 
 //=========================================================================

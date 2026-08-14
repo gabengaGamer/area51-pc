@@ -110,7 +110,7 @@ void character_follow_state::ChangePhase( s32 newPhase )
         break;
     case PHASE_FOLLOW_IDLE:
         m_CharacterBase.SetIdleGoal();
-    	break;
+        break;
     default:        
         if( newPhase >= PHASE_BASE_COUNT )
         {        
@@ -195,13 +195,13 @@ const char*character_follow_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_FOLLOW_IDLE:
         return "PHASE_FOLLOW_IDLE";
-    	break;
+        break;
     case PHASE_FOLLOW_RUN_TO_TARGET:
         return "PHASE_FOLLOW_RUN_TO_TARGET";
         break;
     case PHASE_FOLLOW_WALK_TO_TARGET:
         return "PHASE_FOLLOW_WALK_TO_TARGET";
-    	break;
+        break;
     }
     return character_state::GetPhaseName(thePhase);
 }

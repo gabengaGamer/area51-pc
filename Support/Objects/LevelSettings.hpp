@@ -49,7 +49,7 @@ public:
                         level_settings          ( void );
                         ~level_settings         ( void );
                                                                 
-    virtual void        OnInit			        ( void );
+    virtual void        OnInit                    ( void );
 
     virtual s32         GetMaterial             ( void ) const;
     virtual bbox        GetLocalBBox            ( void ) const;

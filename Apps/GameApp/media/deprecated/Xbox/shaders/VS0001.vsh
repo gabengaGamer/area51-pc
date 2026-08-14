@@ -17,8 +17,8 @@
                                     ;
     sge oD1.xyz,v0,v0               ;   oD1.xyz = 1.0   (no fog)
     slt oD1.w  ,v0,v0               ;   oD1.w   = 0.0
-    mov  r5    ,c83                 ;	r5      = ambient
-    add  r5,r5,c-50                 ;	c-4	= brightness
+    mov  r5    ,c83                 ;    r5      = ambient
+    add  r5,r5,c-50                 ;    c-4    = brightness
                                     ;
 ;==----------------------------------------------------------------------------
 ;

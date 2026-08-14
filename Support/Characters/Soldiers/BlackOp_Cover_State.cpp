@@ -1146,19 +1146,19 @@ const char*blackOp_cover_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_BO_COVER_GOTO_COVER:
         return "PHASE_BO_COVER_GOTO_COVER";
-    	break;
+        break;
     case PHASE_BO_COVER_FACE_EXACT:
         return "PHASE_BO_COVER_FACE_EXACT";
-    	break;
+        break;
     case PHASE_BO_COVER_ENTER_COVER:
         return "PHASE_BO_COVER_ENTER_COVER";
         break;
     case PHASE_BO_COVER_IDLE:
         return "PHASE_BO_COVER_IDLE";
-    	break;
+        break;
     case PHASE_BO_COVER_ROLL_OUT:
         return "PHASE_BO_COVER_ROLL_OUT";
-    	break;
+        break;
     case PHASE_BO_COVER_OUT_IDLE:
         return "PHASE_BO_COVER_OUT_IDLE";
         break;
@@ -1176,7 +1176,7 @@ const char*blackOp_cover_state::GetPhaseName ( s32 thePhase )
         break;
     case PHASE_BO_COVER_EXIT_COVER:
         return "PHASE_BO_COVER_EXIT_COVER";
-    	break;
+        break;
     case PHASE_BO_COVER_ALIGN_FOR_MELEE:
         return "PHASE_BO_COVER_ALIGN_FOR_MELEE";
         break;

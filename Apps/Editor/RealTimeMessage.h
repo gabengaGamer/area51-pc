@@ -17,8 +17,8 @@ class CRealTimeMessage : public CWinThread
 public:
 
     CRealTimeMessage( HWND hWnd, s32 SleepMiliseconds, u32 Message );           
-	CRealTimeMessage();           // protected constructor used by dynamic creation
-	virtual ~CRealTimeMessage();
+    CRealTimeMessage();           // protected constructor used by dynamic creation
+    virtual ~CRealTimeMessage();
 
 protected:
     HWND        m_hWnd  ;
@@ -27,27 +27,27 @@ protected:
 
 protected:
 
-	DECLARE_DYNCREATE(CRealTimeMessage)
+    DECLARE_DYNCREATE(CRealTimeMessage)
 
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CRealTimeMessage)
-	public:
-	virtual BOOL InitInstance();
-	virtual int ExitInstance();
-	virtual int Run();
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CRealTimeMessage)
+    public:
+    virtual BOOL InitInstance();
+    virtual int ExitInstance();
+    virtual int Run();
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	// Generated message map functions
-	//{{AFX_MSG(CRealTimeMessage)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
+    // Generated message map functions
+    //{{AFX_MSG(CRealTimeMessage)
+        // NOTE - the ClassWizard will add and remove member functions here.
+    //}}AFX_MSG
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

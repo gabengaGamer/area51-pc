@@ -157,7 +157,7 @@ xbool dlg_stats::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // find controls
     m_pLabelTime    = (ui_text*)  FindChildByID( IDC_STATS_TIME    );
@@ -326,7 +326,7 @@ xbool dlg_stats::Create( s32                        UserID,
     // Disable "dark" background :)
     m_bRenderBlackout = FALSE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -348,7 +348,7 @@ void dlg_stats::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
 
     // render background filter
     if( m_bRenderBlackout )
@@ -360,8 +360,8 @@ void dlg_stats::Render( s32 ox, s32 oy )
                                     xcolor( 0, 0, 0, 180 ),
                                     xcolor( 0, 0, 0, 180 ),
                                     FALSE );
-    }	
-	
+    }    
+    
     // render transparent screen
     rb.l = m_CurrPos.l + 22;
     rb.t = m_CurrPos.t;

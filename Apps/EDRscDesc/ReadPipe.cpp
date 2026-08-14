@@ -25,9 +25,9 @@ IMPLEMENT_DYNCREATE(CReadPipe, CWinThread)
 
 
 BEGIN_MESSAGE_MAP(CReadPipe, CWinThread)
-	//{{AFX_MSG_MAP(CReadPipe)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CReadPipe)
+        // NOTE - the ClassWizard will add and remove mapping macros here.
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -97,16 +97,16 @@ CReadPipe::~CReadPipe()
 
 BOOL CReadPipe::InitInstance()
 {
-	// TODO:  perform and per-thread initialization here
-	return TRUE;
+    // TODO:  perform and per-thread initialization here
+    return TRUE;
 }
 
 //===========================================================================
 
 int CReadPipe::ExitInstance()
 {
-	// TODO:  perform any per-thread cleanup here
-	return CWinThread::ExitInstance();
+    // TODO:  perform any per-thread cleanup here
+    return CWinThread::ExitInstance();
 }
 
 //===========================================================================
@@ -156,7 +156,7 @@ int CReadPipe::Run()
     memset(&si, 0, sizeof(si));
     si.cb              = sizeof(STARTUPINFO);
     si.dwFlags         = STARTF_USESTDHANDLES|STARTF_USESHOWWINDOW;
-    si.hStdInput	   = INVALID_HANDLE_VALUE;
+    si.hStdInput       = INVALID_HANDLE_VALUE;
     si.hStdOutput      = hWritePipe;
     si.hStdError       = hWritePipe;
     si.wShowWindow     = SW_HIDE;
@@ -322,7 +322,7 @@ int CReadPipe::RunDirectly( void )
     memset(&si, 0, sizeof(si));
     si.cb              = sizeof(STARTUPINFO);
     si.dwFlags         = STARTF_USESTDHANDLES|STARTF_USESHOWWINDOW;
-    si.hStdInput	   = INVALID_HANDLE_VALUE;
+    si.hStdInput       = INVALID_HANDLE_VALUE;
     si.hStdOutput      = hWritePipe;
     si.hStdError       = hWritePipe;
     si.wShowWindow     = SW_HIDE;

@@ -27,17 +27,17 @@ static char THIS_FILE[] = __FILE__;
 IMPLEMENT_DYNCREATE(CEditorDebuggerView, CPaletteView)
 
 BEGIN_MESSAGE_MAP(CEditorDebuggerView, CPaletteView)
-	//{{AFX_MSG_MAP(CEditorDebuggerView)
-	ON_WM_CREATE()
-	ON_WM_SIZE()
-	ON_COMMAND(ID_GDTB_GUID_LOOKUP, OnGdtbGuidLookup)
-	ON_UPDATE_COMMAND_UI(ID_GDTB_GUID_LOOKUP, OnUpdateGdtbGuidLookup)
-	ON_COMMAND(ID_GDTB_GLOBAL_GUID_LOOKUP, OnGdtbGlobalGuidLookup)
-	ON_UPDATE_COMMAND_UI(ID_GDTB_GLOBAL_GUID_LOOKUP, OnUpdateGdtbGlobalGuidLookup)
-	ON_COMMAND(ID_GDTB_CLEAR_INFO, OnGdtbClearInfo)
-	ON_UPDATE_COMMAND_UI(ID_GDTB_CLEAR_INFO, OnUpdateGdtbClearInfo)
-	ON_NOTIFY (TVN_SELCHANGED, IDR_DEBUGGER_VIEW, OnSelchangedTree)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CEditorDebuggerView)
+    ON_WM_CREATE()
+    ON_WM_SIZE()
+    ON_COMMAND(ID_GDTB_GUID_LOOKUP, OnGdtbGuidLookup)
+    ON_UPDATE_COMMAND_UI(ID_GDTB_GUID_LOOKUP, OnUpdateGdtbGuidLookup)
+    ON_COMMAND(ID_GDTB_GLOBAL_GUID_LOOKUP, OnGdtbGlobalGuidLookup)
+    ON_UPDATE_COMMAND_UI(ID_GDTB_GLOBAL_GUID_LOOKUP, OnUpdateGdtbGlobalGuidLookup)
+    ON_COMMAND(ID_GDTB_CLEAR_INFO, OnGdtbClearInfo)
+    ON_UPDATE_COMMAND_UI(ID_GDTB_CLEAR_INFO, OnUpdateGdtbClearInfo)
+    ON_NOTIFY (TVN_SELCHANGED, IDR_DEBUGGER_VIEW, OnSelchangedTree)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -46,12 +46,12 @@ END_MESSAGE_MAP()
 #ifdef _DEBUG
 void CEditorDebuggerView::AssertValid() const
 {
-	CPaletteView::AssertValid();
+    CPaletteView::AssertValid();
 }
 
 void CEditorDebuggerView::Dump(CDumpContext& dc) const
 {
-	CPaletteView::Dump(dc);
+    CPaletteView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -79,37 +79,37 @@ void CEditorDebuggerView::OnDraw(CDC* pDC)
 int CEditorDebuggerView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
     m_ToolbarResourceId = IDR_GUID_DEBUGGER;
-	if (CPaletteView::OnCreate(lpCreateStruct) == -1)
-		return -1;
+    if (CPaletteView::OnCreate(lpCreateStruct) == -1)
+        return -1;
 
     if (!m_tcDebugger.Create(WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | 
                           TVS_EDITLABELS | TVS_SHOWSELALWAYS, CRect(0,0,0,0), this, IDR_DEBUGGER_VIEW))
     {
-        return -1;	      
+        return -1;          
     }
 
-	// Create the image list used by the tree control.
-	if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
-		return -1;
-	
-	// Set the image list for the tree control.
-	m_tcDebugger.SetImageList(&m_imageList, TVSIL_NORMAL);
+    // Create the image list used by the tree control.
+    if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
+        return -1;
+    
+    // Set the image list for the tree control.
+    m_tcDebugger.SetImageList(&m_imageList, TVSIL_NORMAL);
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
 
 void CEditorDebuggerView::OnInitialUpdate() 
 {
-	CPaletteView::OnInitialUpdate();
-}	
+    CPaletteView::OnInitialUpdate();
+}    
 
 //=========================================================================
 
 void CEditorDebuggerView::OnSize(UINT nType, int cx, int cy) 
 {
-	CPaletteView::OnSize(nType, cx, cy);
+    CPaletteView::OnSize(nType, cx, cy);
 
     CSize size = SizeToolBar(cx, cy);
     m_tcDebugger.MoveWindow(0,size.cy,cx,cy-size.cy);
@@ -371,7 +371,7 @@ xhandle CEditorDebuggerView::FindHandleForObjectGuid( guid Guid )
 
 void CEditorDebuggerView::OnSelchangedTree(NMHDR* pNMHDR, LRESULT* pResult) 
 {
-	NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
+    NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
 
     xhandle hHandle = m_tcDebugger.GetItemData(pNMTreeView->itemNew.hItem);
 

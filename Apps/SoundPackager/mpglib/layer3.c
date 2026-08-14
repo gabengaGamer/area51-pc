@@ -349,12 +349,12 @@ static void III_get_side_info_1(struct III_sideinfo *si,int stereo,
           gr_infos->big_values = 288;
        }
        {
-	 unsigned int qss = getbits_fast(8);
-	 gr_infos->pow2gain = gainpow2+256 - qss + powdiff;
+     unsigned int qss = getbits_fast(8);
+     gr_infos->pow2gain = gainpow2+256 - qss + powdiff;
 #ifndef NOANALYSIS
-	 if (mpg123_pinfo != NULL) {
-	   mpg123_pinfo->qss[gr][ch]=qss;
-	 }
+     if (mpg123_pinfo != NULL) {
+       mpg123_pinfo->qss[gr][ch]=qss;
+     }
 #endif
        }
        if(ms_stereo)
@@ -376,17 +376,17 @@ static void III_get_side_info_1(struct III_sideinfo *si,int stereo,
           */
          gr_infos->table_select[2] = 0;
          for(i=0;i<3;i++) {
-	   unsigned int sbg = (getbits_fast(3)<<3);
+       unsigned int sbg = (getbits_fast(3)<<3);
            gr_infos->full_gain[i] = gr_infos->pow2gain + sbg;
 #ifndef NOANALYSIS
-	   if (mpg123_pinfo != NULL)
-	     mpg123_pinfo->sub_gain[gr][ch][i]=sbg/8;
+       if (mpg123_pinfo != NULL)
+         mpg123_pinfo->sub_gain[gr][ch][i]=sbg/8;
 #endif
-	 }
+     }
 
          if(gr_infos->block_type == 0) {
            fprintf(stderr,"Blocktype == 0 and window-switching == 1 not allowed.\n");
-		   /* error seems to be very good recoverable, so don't exit */
+           /* error seems to be very good recoverable, so don't exit */
            /* exit(1); */
          }
          /* region_count/start parameters are implicit in this case. */       
@@ -444,7 +444,7 @@ static void III_get_side_info_2(struct III_sideinfo *si,int stereo,
        gr_infos->pow2gain = gainpow2+256 - qss + powdiff;
 #ifndef NOANALYSIS
        if (mpg123_pinfo!=NULL) {
-	   mpg123_pinfo->qss[0][ch]=qss;
+       mpg123_pinfo->qss[0][ch]=qss;
        }
 #endif
 
@@ -466,18 +466,18 @@ static void III_get_side_info_2(struct III_sideinfo *si,int stereo,
           */
          gr_infos->table_select[2] = 0;
          for(i=0;i<3;i++) {
-	   unsigned int sbg = (getbits_fast(3)<<3);
+       unsigned int sbg = (getbits_fast(3)<<3);
            gr_infos->full_gain[i] = gr_infos->pow2gain + sbg;
 #ifndef NOANALYSIS
-	   if (mpg123_pinfo!=NULL)
-	     mpg123_pinfo->sub_gain[0][ch][i]=sbg/8;
+       if (mpg123_pinfo!=NULL)
+         mpg123_pinfo->sub_gain[0][ch][i]=sbg/8;
 #endif
 
-	 }
+     }
 
          if(gr_infos->block_type == 0) {
            fprintf(stderr,"Blocktype == 0 and window-switching == 1 not allowed.\n");
-		   /* error seems to be very good recoverable, so don't exit */
+           /* error seems to be very good recoverable, so don't exit */
            /* exit(1); */
          }
          /* region_count/start parameters are implicit in this case. */       
@@ -879,7 +879,7 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
 
   }
   else {
-	/*
+    /*
      * decoding with 'long' BandIndex table (block_type != 2)
      */
     int *pretab = (int *)(gr_infos->preflag ? pretab1 : pretab2);
@@ -892,7 +892,7 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
     me = mapend[sfreq][2];
 #endif
 
-	/*
+    /*
      * long hash table values
      */
     for(i=0;i<3;i++) {
@@ -959,7 +959,7 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
       }
     }
 
-	/*
+    /*
      * short (count1table) values
      */
     for(;l3 && (part2remain > 0);l3--) {
@@ -1002,7 +1002,7 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
       }
     }
 
-	/* 
+    /* 
      * zero part
      */
     for(i=(&xr[SBLIMIT][0]-xrpnt)>>1;i;i--) {
@@ -1040,7 +1040,7 @@ static void III_i_stereo(real xr_buf[2][SBLIMIT][SSLIMIT],int *scalefac,
 
       if(lsf) {
         int p = gr_infos->scalefac_compress & 0x1;
-	    if(ms_stereo) {
+        if(ms_stereo) {
           tabl1 = pow1_2[p]; tabl2 = pow2_2[p];
         }
         else {
@@ -1248,21 +1248,21 @@ static void dct36(real *inbuf,real *o1,real *o2,real *wintab,real *tsbuf)
     ts[SBLIMIT*(8-(v))] = out1[8-(v)] + sum0 * w[8-(v)]; \
     ts[SBLIMIT*(9+(v))] = out1[9+(v)] + sum0 * w[9+(v)]; 
 #define MACRO1(v) { \
-	real sum0,sum1; \
+    real sum0,sum1; \
     sum0 = tmp1a + tmp2a; \
-	sum1 = (tmp1b + tmp2b) * tfcos36[(v)]; \
-	MACRO0(v); }
+    sum1 = (tmp1b + tmp2b) * tfcos36[(v)]; \
+    MACRO0(v); }
 #define MACRO2(v) { \
     real sum0,sum1; \
     sum0 = tmp2a - tmp1a; \
     sum1 = (tmp2b - tmp1b) * tfcos36[(v)]; \
-	MACRO0(v); }
+    MACRO0(v); }
 
     register const real *c = COS9;
     register real *out2 = o2;
-	register real *w = wintab;
-	register real *out1 = o1;
-	register real *ts = tsbuf;
+    register real *w = wintab;
+    register real *out1 = o1;
+    register real *ts = tsbuf;
 
     real ta33,ta66,tb33,tb66;
 
@@ -1315,12 +1315,12 @@ static void dct36(real *inbuf,real *o1,real *o2,real *wintab,real *tsbuf)
       MACRO2(5);
     }
 
-	{
-		real sum0,sum1;
-    	sum0 =  in[2*0+0] - in[2*2+0] + in[2*4+0] - in[2*6+0] + in[2*8+0];
-    	sum1 = (in[2*0+1] - in[2*2+1] + in[2*4+1] - in[2*6+1] + in[2*8+1] ) * tfcos36[4];
-		MACRO0(4);
-	}
+    {
+        real sum0,sum1;
+        sum0 =  in[2*0+0] - in[2*2+0] + in[2*4+0] - in[2*6+0] + in[2*8+0];
+        sum1 = (in[2*0+1] - in[2*2+1] + in[2*4+1] - in[2*6+1] + in[2*8+1] ) * tfcos36[4];
+        MACRO0(4);
+    }
   }
 
   }
@@ -1623,16 +1623,16 @@ int do_layer3( PMPSTR mp,unsigned char *pcm_sample,int *pcm_point)
 #ifdef MPEG1
         part2bits = III_get_scale_factors_1(scalefacs[0],gr_infos);
 #else
-	fprintf(stderr,"Not supported\n");
+    fprintf(stderr,"Not supported\n");
 #endif
       }
 
 #ifndef NOANALYSIS
       if (mpg123_pinfo!=NULL) {
-	int i;
-	mpg123_pinfo->sfbits[gr][0] = part2bits;
-	for (i=0; i<39; i++) 
-	  mpg123_pinfo->sfb_s[gr][0][i]=scalefacs[0][i];
+    int i;
+    mpg123_pinfo->sfbits[gr][0] = part2bits;
+    for (i=0; i<39; i++) 
+      mpg123_pinfo->sfb_s[gr][0][i]=scalefacs[0][i];
       }
 #endif
 
@@ -1648,15 +1648,15 @@ int do_layer3( PMPSTR mp,unsigned char *pcm_sample,int *pcm_point)
 #ifdef MPEG1
         part2bits = III_get_scale_factors_1(scalefacs[1],gr_infos);
 #else
-	fprintf(stderr,"Not supported\n");
+    fprintf(stderr,"Not supported\n");
 #endif
       }
 #ifndef NOANALYSIS
       if (mpg123_pinfo!=NULL) {
-	int i;
-	mpg123_pinfo->sfbits[gr][1] = part2bits;
-	for (i=0; i<39; i++) 
-	  mpg123_pinfo->sfb_s[gr][1][i]=scalefacs[1][i];
+    int i;
+    mpg123_pinfo->sfbits[gr][1] = part2bits;
+    for (i=0; i<39; i++) 
+      mpg123_pinfo->sfb_s[gr][1][i]=scalefacs[1][i];
       }
 #endif
 
@@ -1737,26 +1737,26 @@ int do_layer3( PMPSTR mp,unsigned char *pcm_sample,int *pcm_point)
       struct gr_info_s *gr_infos = &(sideinfo.ch[ch].gr[gr]);
       ifqstep = ( mpg123_pinfo->scalefac_scale[gr][ch] == 0 ) ? .5 : 1.0;
       if (2==gr_infos->block_type) {
-	for (i=0; i<3; i++) {
-	  for (sb=0; sb<12; sb++) {
-	    int j = 3*sb+i;
-	    /*
+    for (i=0; i<3; i++) {
+      for (sb=0; sb<12; sb++) {
+        int j = 3*sb+i;
+        /*
            is_p = scalefac[sfb*3+lwin-gr_infos->mixed_block_flag]; 
-	    */
-	    /* scalefac was copied into mpg123_pinfo->sfb_s[] above */
-	    mpg123_pinfo->sfb_s[gr][ch][j] = -ifqstep*mpg123_pinfo->sfb_s[gr][ch][j-gr_infos->mixed_block_flag];
-	    mpg123_pinfo->sfb_s[gr][ch][j] -= 2*(mpg123_pinfo->sub_gain[gr][ch][i]);
-	  }
-	  mpg123_pinfo->sfb_s[gr][ch][3*sb+i] = - 2*(mpg123_pinfo->sub_gain[gr][ch][i]);
-	}
+        */
+        /* scalefac was copied into mpg123_pinfo->sfb_s[] above */
+        mpg123_pinfo->sfb_s[gr][ch][j] = -ifqstep*mpg123_pinfo->sfb_s[gr][ch][j-gr_infos->mixed_block_flag];
+        mpg123_pinfo->sfb_s[gr][ch][j] -= 2*(mpg123_pinfo->sub_gain[gr][ch][i]);
+      }
+      mpg123_pinfo->sfb_s[gr][ch][3*sb+i] = - 2*(mpg123_pinfo->sub_gain[gr][ch][i]);
+    }
       }else{
-	for (sb=0; sb<21; sb++) {
-	  /* scalefac was copied into mpg123_pinfo->sfb[] above */
-	  mpg123_pinfo->sfb[gr][ch][sb] = mpg123_pinfo->sfb_s[gr][ch][sb];
-	  if (gr_infos->preflag) mpg123_pinfo->sfb[gr][ch][sb] += pretab1[sb];
-	  mpg123_pinfo->sfb[gr][ch][sb] *= -ifqstep;
-	}
-	mpg123_pinfo->sfb[gr][ch][21]=0;
+    for (sb=0; sb<21; sb++) {
+      /* scalefac was copied into mpg123_pinfo->sfb[] above */
+      mpg123_pinfo->sfb[gr][ch][sb] = mpg123_pinfo->sfb_s[gr][ch][sb];
+      if (gr_infos->preflag) mpg123_pinfo->sfb[gr][ch][sb] += pretab1[sb];
+      mpg123_pinfo->sfb[gr][ch][sb] *= -ifqstep;
+    }
+    mpg123_pinfo->sfb[gr][ch][21]=0;
       }
     }
 
@@ -1765,8 +1765,8 @@ int do_layer3( PMPSTR mp,unsigned char *pcm_sample,int *pcm_point)
     for(ch=0;ch<stereo1;ch++) { 
       int j=0;
       for (sb=0;sb<SBLIMIT;sb++)
-	for(ss=0;ss<SSLIMIT;ss++,j++) 
-	  mpg123_pinfo->mpg123xr[gr][ch][j]=hybridIn[ch][sb][ss];
+    for(ss=0;ss<SSLIMIT;ss++,j++) 
+      mpg123_pinfo->mpg123xr[gr][ch][j]=hybridIn[ch][sb][ss];
     }
   }
 #endif

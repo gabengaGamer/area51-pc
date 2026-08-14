@@ -27,8 +27,8 @@ public:
     virtual         const char*         GetTypeInfo     ( void )    { return "Attack a particular guid."; } 
     virtual         const char*         GetDescription  ( void );
 
-    virtual			void	            OnEnumProp	    ( prop_enum& rList );
-    virtual			xbool	            OnProperty	    ( prop_query& rPropQuery );
+    virtual            void                OnEnumProp        ( prop_enum& rList );
+    virtual            xbool                OnProperty        ( prop_query& rPropQuery );
 
 #ifdef X_EDITOR
     virtual         object_affecter*    GetObjectRef1   ( xstring& Desc )  { Desc = "Target object error: "; return &m_TargetAffecter; }

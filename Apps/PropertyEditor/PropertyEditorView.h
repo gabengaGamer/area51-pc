@@ -16,19 +16,19 @@ class CPropertyEditorDoc;
 class CPropertyEditorView : public CView
 {
 protected:
-	CPropertyEditorView();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CPropertyEditorView)
+    CPropertyEditorView();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CPropertyEditorView)
 
 // Attributes
 public:
-	CPropertyEditorDoc* GetDocument();
+    CPropertyEditorDoc* GetDocument();
 
     void EnableRedraw( void );
     void DisableRedraw( void );
-	void ClearGrid();
-	void AddComment(CString strTitle, CString strText);
-	BOOL AddGridDataElement(CString strName, CString strValue, CString strComment,
-		CGridItemInfo::CONTROLTYPE type, CStringList &list, int iXaIndex,
+    void ClearGrid();
+    void AddComment(CString strTitle, CString strText);
+    BOOL AddGridDataElement(CString strName, CString strValue, CString strComment,
+        CGridItemInfo::CONTROLTYPE type, CStringList &list, int iXaIndex,
         BOOL bReadOnly, BOOL bMustEnum, BOOL bHeader,
         CGridTreeItem* &pParentTreeItem) ;
     void ExpandRoots();
@@ -47,41 +47,41 @@ public:
 public:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CPropertyEditorView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CPropertyEditorView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~CPropertyEditorView();
+    virtual ~CPropertyEditorView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CPropertyEditorView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg LRESULT OnSliderMove(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnGridItemChange(WPARAM wParam, LPARAM lParam);
+    //{{AFX_MSG(CPropertyEditorView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg LRESULT OnSliderMove(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnGridItemChange(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnSelectionChange(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnGuidSelect(WPARAM wParam, LPARAM lParam);
     afx_msg void OnRefreshClick();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
 protected:
-	CPropertyGrid			m_lcPropertyGrid;
-	CStatic					m_stHelpTitle;
-	CStatic					m_stHelp;
-	CFont					m_fntTitle;
-	CFont					m_fntText;
+    CPropertyGrid            m_lcPropertyGrid;
+    CStatic                    m_stHelpTitle;
+    CStatic                    m_stHelp;
+    CFont                    m_fntTitle;
+    CFont                    m_fntText;
     CButton               m_btnRefresh;
 
     int                     m_RedrawDisableCount;

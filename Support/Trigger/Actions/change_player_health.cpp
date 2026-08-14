@@ -67,15 +67,15 @@ void change_player_health::Execute ( trigger_object* pParent )
     PainEvent.RadiusR1  = 100.0f ;
 
     if (m_ShakeView)
-	{
-		PainEvent.ForceR0 = PainEvent.ForceR1 = m_ShakeForce;
-		PlayerObj.m_pObject->OnPain( PainEvent );
-		PlayerObj.m_pObject->ShakeView( m_ShakeTime );		
-	}
-	else
-	{
-		PlayerObj.m_pObject->OnPain( PainEvent );
-	}
+    {
+        PainEvent.ForceR0 = PainEvent.ForceR1 = m_ShakeForce;
+        PlayerObj.m_pObject->OnPain( PainEvent );
+        PlayerObj.m_pObject->ShakeView( m_ShakeTime );        
+    }
+    else
+    {
+        PlayerObj.m_pObject->OnPain( PainEvent );
+    }
 }
 
 //=============================================================================
@@ -87,9 +87,9 @@ void change_player_health::OnEnumProp ( prop_enum& rPropList )
      
     rPropList.AddBool ( "Shake View" ,  "Flag to determine whether to shake the players view." );
 
-	rPropList.AddFloat( "Shake Time", "How long to shake the view" );
+    rPropList.AddFloat( "Shake Time", "How long to shake the view" );
 
-	rPropList.AddFloat( "Shake Force", "How much force to shake the view with" );
+    rPropList.AddFloat( "Shake Force", "How much force to shake the view with" );
 
     actions_base::OnEnumProp( rPropList );
     
@@ -105,15 +105,15 @@ xbool change_player_health::OnProperty ( prop_query& rPropQuery )
     if ( rPropQuery.VarBool ( "Shake View"   , m_ShakeView ) )
         return TRUE;
 
-	if ( rPropQuery.VarFloat( "Shake Time" , m_ShakeTime) )
-	{
-		return TRUE;
-	}
+    if ( rPropQuery.VarFloat( "Shake Time" , m_ShakeTime) )
+    {
+        return TRUE;
+    }
     
-	if ( rPropQuery.VarFloat( "Shake Force", m_ShakeForce ) )
-	{
-		return TRUE;
-	}
+    if ( rPropQuery.VarFloat( "Shake Force", m_ShakeForce ) )
+    {
+        return TRUE;
+    }
 
     if( actions_base::OnProperty( rPropQuery ) )
         return TRUE;

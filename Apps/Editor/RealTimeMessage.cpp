@@ -34,20 +34,20 @@ CRealTimeMessage::~CRealTimeMessage()
 
 BOOL CRealTimeMessage::InitInstance()
 {
-	// TODO:  perform and per-thread initialization here
-	return TRUE;
+    // TODO:  perform and per-thread initialization here
+    return TRUE;
 }
 
 int CRealTimeMessage::ExitInstance()
 {
-	// TODO:  perform any per-thread cleanup here
-	return CWinThread::ExitInstance();
+    // TODO:  perform any per-thread cleanup here
+    return CWinThread::ExitInstance();
 }
 
 BEGIN_MESSAGE_MAP(CRealTimeMessage, CWinThread)
-	//{{AFX_MSG_MAP(CRealTimeMessage)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CRealTimeMessage)
+        // NOTE - the ClassWizard will add and remove mapping macros here.
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -55,13 +55,13 @@ END_MESSAGE_MAP()
 
 int CRealTimeMessage::Run() 
 {
-	// TODO: Add your specialized code here and/or call the base class
+    // TODO: Add your specialized code here and/or call the base class
     while( GetWindowLong(m_hWnd, GWL_STYLE) )
     {
         // 
         Sleep( m_WakeUp );
         SendMessage( m_hWnd, m_Message, 0, 0 );
     }
-	
-	return ExitInstance();
+    
+    return ExitInstance();
 }

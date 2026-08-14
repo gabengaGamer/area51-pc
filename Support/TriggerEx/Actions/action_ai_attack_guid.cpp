@@ -21,7 +21,7 @@ action_ai_attack_guid::action_ai_attack_guid ( guid ParentGuid ) : action_ai_bas
 
 //=============================================================================
 
-void action_ai_attack_guid::OnEnumProp	( prop_enum& rPropList )
+void action_ai_attack_guid::OnEnumProp    ( prop_enum& rPropList )
 {
     action_ai_base::OnEnumProp( rPropList );
 
@@ -31,7 +31,7 @@ void action_ai_attack_guid::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool action_ai_attack_guid::OnProperty	( prop_query& rPropQuery )
+xbool action_ai_attack_guid::OnProperty    ( prop_query& rPropQuery )
 {
     if( action_ai_base::OnProperty( rPropQuery ) )
         return TRUE;

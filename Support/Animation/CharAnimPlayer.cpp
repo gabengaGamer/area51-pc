@@ -487,9 +487,9 @@ vector3 char_anim_player::GetEventPosition( s32 iEvent )
 {
     const anim_event& EV = m_AnimTrack.GetEvent(iEvent);
     
-	//event_data eventData = EV.GetData();  // For debugging!
+    //event_data eventData = EV.GetData();  // For debugging!
 
-	const matrix4& BoneM = GetCachedL2W( EV.GetInt( anim_event::INT_IDX_BONE ) );
+    const matrix4& BoneM = GetCachedL2W( EV.GetInt( anim_event::INT_IDX_BONE ) );
     vector3 P = BoneM * EV.GetPoint( anim_event::POINT_IDX_OFFSET );
     return P;
 }
@@ -500,9 +500,9 @@ radian3 char_anim_player::GetEventRotation( s32 iEvent )
 {
     const anim_event& EV = m_AnimTrack.GetEvent(iEvent);
     
-	//event_data eventData = EV.GetData();
+    //event_data eventData = EV.GetData();
 
-	const matrix4& BoneM = GetCachedL2W( EV.GetInt( anim_event::INT_IDX_BONE ) );
+    const matrix4& BoneM = GetCachedL2W( EV.GetInt( anim_event::INT_IDX_BONE ) );
 
     vector3 ERot( EV.GetPoint( anim_event::POINT_IDX_ROTATION ) );
     radian3 Rot( ERot.GetX(), ERot.GetY(), ERot.GetZ() );
@@ -518,7 +518,7 @@ radian3 char_anim_player::GetEventRotation( s32 iEvent )
 
 vector3 char_anim_player::GetEventPosition( const anim_event& Event )
 {
-	// Get the world position.
+    // Get the world position.
     const matrix4& BoneM = GetCachedL2W( Event.GetInt( anim_event::INT_IDX_BONE ) );
     vector3 P = BoneM * Event.GetPoint( anim_event::POINT_IDX_OFFSET );
     return P;
@@ -528,7 +528,7 @@ vector3 char_anim_player::GetEventPosition( const anim_event& Event )
 
 radian3 char_anim_player::GetEventRotation( const anim_event& Event )
 {
-	// Get Rotation.
+    // Get Rotation.
     const matrix4& BoneM = GetCachedL2W( Event.GetInt( anim_event::INT_IDX_BONE ) );
 
     vector3 ERot( Event.GetPoint( anim_event::POINT_IDX_ROTATION ) );

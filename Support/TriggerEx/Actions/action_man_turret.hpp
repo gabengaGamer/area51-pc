@@ -28,8 +28,8 @@ public:
     virtual         const char*             GetTypeInfo     ( void )   { return "Tel the player man a turret."; }
 
     virtual         xbool                   Execute         ( f32 DeltaTime );    
-    virtual			void	                OnEnumProp	    ( prop_enum& rList );
-    virtual			xbool	                OnProperty	    ( prop_query& rPropQuery );
+    virtual            void                    OnEnumProp        ( prop_enum& rList );
+    virtual            xbool                    OnProperty        ( prop_query& rPropQuery );
     virtual         const char*             GetDescription  ( void );
 
 protected:

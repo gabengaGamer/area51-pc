@@ -43,7 +43,7 @@ static struct cloth_object_desc : public object_desc
             object::ATTR_DAMAGEABLE             |
             object::ATTR_RENDERABLE             | 
             object::ATTR_CAST_SHADOWS           |
-            object::ATTR_RECEIVE_SHADOWS        |			
+            object::ATTR_RECEIVE_SHADOWS        |            
             object::ATTR_SPACIAL_ENTRY,
 
             FLAGS_GENERIC_EDITOR_CREATE | 

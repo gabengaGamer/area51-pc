@@ -125,7 +125,7 @@ xbool editor_layer::AddObject( editor_object_ref Object )
     if (Objects.GetCount()>0)
     {
         for (s32 iXaIndex = 0; iXaIndex < Objects.GetCount(); iXaIndex++)
-		{
+        {
             editor_object_ref& ObjRef = Objects.GetAt(iXaIndex);
             if (ObjRef.Guid == Object.Guid)
             {
@@ -133,7 +133,7 @@ xbool editor_layer::AddObject( editor_object_ref Object )
                 return FALSE;
             }
         }
-	}
+    }
     
     Objects.Append(Object);
     return TRUE;
@@ -146,7 +146,7 @@ xbool editor_layer::RemoveObject( guid ObjectGuid )
     if (Objects.GetCount()>0)
     {
         for (s32 iXaIndex = 0; iXaIndex < Objects.GetCount(); iXaIndex++)
-		{
+        {
             editor_object_ref& ObjRef = Objects.GetAt(iXaIndex);
             if (ObjRef.Guid == ObjectGuid)
             {
@@ -154,7 +154,7 @@ xbool editor_layer::RemoveObject( guid ObjectGuid )
                 return TRUE;
             }
         }
-	}
+    }
     return FALSE;
 }
 
@@ -165,7 +165,7 @@ xbool editor_layer::AddResource( xstring ResourceName )
     if (Resources.GetCount()>0)
     {
         for (s32 iXaIndex = 0; iXaIndex < Resources.GetCount(); iXaIndex++)
-		{
+        {
             xstring& xstrRes = Resources.GetAt(iXaIndex);
             if (x_stricmp(xstrRes, ResourceName) == 0)
             {
@@ -173,7 +173,7 @@ xbool editor_layer::AddResource( xstring ResourceName )
                 return FALSE;
             }
         }
-	}
+    }
 
     Resources.Append(ResourceName);
     return TRUE;
@@ -186,7 +186,7 @@ xbool editor_layer::RemoveResource( xstring ResourceName )
     if (Resources.GetCount()>0)
     {
         for (s32 iXaIndex = 0; iXaIndex < Resources.GetCount(); iXaIndex++)
-		{
+        {
             xstring& xstrRes = Resources.GetAt(iXaIndex);
             if (x_stricmp(xstrRes, ResourceName) == 0)
             {
@@ -195,7 +195,7 @@ xbool editor_layer::RemoveResource( xstring ResourceName )
                 return TRUE;
             }
         }
-	}
+    }
     return FALSE;
 }
 
@@ -206,7 +206,7 @@ xbool editor_layer::AddBlueprint( const editor_blueprint_ref& Blueprint )
     if (Blueprints.GetCount()>0)
     {
         for (s32 iXaIndex = 0; iXaIndex < Blueprints.GetCount(); iXaIndex++)
-		{
+        {
             editor_blueprint_ref& BlueprintCheck = Blueprints.GetAt(iXaIndex);
             if (Blueprint.Guid == BlueprintCheck.Guid)
             {
@@ -214,7 +214,7 @@ xbool editor_layer::AddBlueprint( const editor_blueprint_ref& Blueprint )
                 return FALSE;
             }
         }
-	}
+    }
 
     Blueprints.Append(Blueprint);
     return TRUE;
@@ -227,7 +227,7 @@ xbool editor_layer::RemoveBlueprint( guid BlueprintGuid )
     if (Blueprints.GetCount()>0)
     {
         for (s32 iXaIndex = 0; iXaIndex < Blueprints.GetCount(); iXaIndex++)
-		{
+        {
             editor_blueprint_ref& Blueprint = Blueprints.GetAt(iXaIndex);
             if (Blueprint.Guid == BlueprintGuid)
             {
@@ -235,7 +235,7 @@ xbool editor_layer::RemoveBlueprint( guid BlueprintGuid )
                 return TRUE;
             }
         }
-	}
+    }
     return FALSE;
 }
 
@@ -886,10 +886,10 @@ void world_editor::GetDisplayNameForBlueprint( const editor_blueprint_ref& Bluep
 void world_editor::GetDisplayNameForBlueprint( guid BlueprintGuid, xstring& xstrName )
 {
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
         for (s32 j = 0; j < eLayer.Blueprints.GetCount(); j++)
-		{
+        {
             editor_blueprint_ref& Blueprint = eLayer.Blueprints.GetAt(j);
             if (Blueprint.Guid == BlueprintGuid)
             {
@@ -1095,7 +1095,7 @@ xbool world_editor::ExternalProperties( prop_query& I, prop_interface& PropInter
                     prop_query pq;
                     pq.WQueryExternal( xstrEnumName, xstrValue );
 
-		            xbool bSuccess = PropInterface.OnProperty(pq);
+                    xbool bSuccess = PropInterface.OnProperty(pq);
 
                     return bSuccess;
                 }
@@ -1519,7 +1519,7 @@ xbool world_editor::OnProperty( prop_query& I )
                                 }
                             }
 
-		                    xbool bSuccess = (pObject->OnProperty(pq));
+                            xbool bSuccess = (pObject->OnProperty(pq));
 
                             if (bSuccess)
                             {
@@ -1813,7 +1813,7 @@ s32 world_editor::GetTotalObjectCount( void )
     s32 nCount = 0;
     //loop through all layers
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
 
         nCount += eLayer.Objects.GetCount();
@@ -1858,7 +1858,7 @@ void world_editor::AdvanceLogic( f32 DeltaTime )
 
     g_MusicMgr.Update( DeltaTime );
 
-	g_AudioMgr.Update( DeltaTime );
+    g_AudioMgr.Update( DeltaTime );
 
     g_GameTextMgr.Update( DeltaTime );
 
@@ -1953,10 +1953,10 @@ bbox world_editor::GetBlueprintsBoundingBox( guid BPGuid )
     x_try;
 
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
         for (s32 j = 0; j < eLayer.Blueprints.GetCount(); j++)
-		{
+        {
             editor_blueprint_ref& Blueprint = eLayer.Blueprints.GetAt(j);
             if (Blueprint.Guid == BPGuid)
             {
@@ -2513,7 +2513,7 @@ xbool world_editor::UnLoadLayer(const char* pName)
 
         //layer found, delete all objects in layer
         for (s32 j = 0; j < Layer.Objects.GetCount(); j++)
-		{
+        {
             editor_object_ref& ObjRef = Layer.Objects.GetAt(j);
             object* pObjDel = g_ObjMgr.GetObjectByGuid(ObjRef.Guid);
             if (pObjDel)
@@ -2527,11 +2527,11 @@ xbool world_editor::UnLoadLayer(const char* pName)
 
         //delete all blueprints in layer, with associated objects
         for (s32 k = 0; k < Layer.Blueprints.GetCount(); k++)
-		{
+        {
             editor_blueprint_ref& BlueprintRef = Layer.Blueprints.GetAt(k);
             //now delete all objects in blueprint
             for (s32 m = 0; m < BlueprintRef.ObjectsInBlueprint.GetCount(); m++)
-	    	{
+            {
                 guid& ObjectGuid = BlueprintRef.ObjectsInBlueprint.GetAt(m);
                 object* pObjDel = g_ObjMgr.GetObjectByGuid(ObjectGuid);
 
@@ -2621,7 +2621,7 @@ xbool world_editor::SaveLayers(const char* pPath)
 
     //loop through all layers
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
 
         //Only save if layer is Dirty!!!!
@@ -2656,7 +2656,7 @@ xbool world_editor::SaveLayers(const char* pPath)
                 s32 j;
                 s32 ObjCount=0;
                 for( j = 0; j < eLayer.Objects.GetCount(); j++)
-		        {
+                {
                     editor_object_ref& ObjRef = eLayer.Objects.GetAt(j);
                     object *pObject = g_ObjMgr.GetObjectByGuid(ObjRef.Guid);
                     ASSERT( pObject );
@@ -2678,7 +2678,7 @@ xbool world_editor::SaveLayers(const char* pPath)
                 // get objects
                 //
                 for ( j = 0; j < eLayer.Objects.GetCount(); j++)
-		        {
+                {
                     editor_object_ref& ObjRef = eLayer.Objects.GetAt(j);
                     object *pObject = g_ObjMgr.GetObjectByGuid(ObjRef.Guid);
                     if (pObject)
@@ -2726,7 +2726,7 @@ xbool world_editor::SaveLayers(const char* pPath)
 
                 //get blueprints
                 for (j = 0; j < eLayer.Blueprints.GetCount(); j++)
-		        {
+                {
                     const editor_blueprint_ref& Blueprint = eLayer.Blueprints.GetAt(j);
                     LayerFile.AddString("ThemeName", Blueprint.ThemeName);
                     LayerFile.AddString("RelativePath", Blueprint.RelativePath);
@@ -2767,7 +2767,7 @@ xbool world_editor::SaveLayers(const char* pPath)
 
                 //get blueprints
                 for (j = 0; j < BPOverrideList.GetCount(); j++)
-		        {
+                {
                     editor_dif_prop_list& DiffPropList = BPOverrideList.GetAt(j);
                     DiffPropList.OnSave(LayerFile);
                 }
@@ -2777,7 +2777,7 @@ xbool world_editor::SaveLayers(const char* pPath)
 
                 //get resource
                 for (j = 0; j < eLayer.Resources.GetCount(); j++)
-		        {
+                {
                     const xstring& xstrData = eLayer.Resources.GetAt(j);
                     LayerFile.AddString("Resource", xstrData);
                     LayerFile.AddEndLine();
@@ -2820,7 +2820,7 @@ void world_editor::CollectGuidsToExport( xarray<guid>& lstGuidsToExport )
 {
     //loop through all layers
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
 
         // Skip collecting guids from this layer if it's not loaded
@@ -2831,13 +2831,13 @@ void world_editor::CollectGuidsToExport( xarray<guid>& lstGuidsToExport )
         GetObjectsInLayer( eLayer.Name, lstGuidsInLayer );
         //add to export list
         for (s32 j = 0; j < lstGuidsInLayer.GetCount(); j++)
-	    {
+        {
             object *pObject = g_ObjMgr.GetObjectByGuid(lstGuidsInLayer.GetAt(j));
             if (pObject)
             {
                 if (!(pObject->GetAttrBits() & object::ATTR_EDITOR_TEMP_OBJECT) &&
                     !(pObject->GetType()    == object::TYPE_ZONE_PORTAL ) &&
-					!(pObject->GetType()	== object::TYPE_PLAYER ) ) // mreed: player info now stored in .info
+                    !(pObject->GetType()    == object::TYPE_PLAYER ) ) // mreed: player info now stored in .info
                 {
                     lstGuidsToExport.Append(lstGuidsInLayer.GetAt(j));
                 }
@@ -2858,7 +2858,7 @@ void world_editor::CollectGuidsToExport( xarray<guid>& lstGuidsToExport )
                     {
                         if (!(pObject->GetAttrBits() & object::ATTR_EDITOR_TEMP_OBJECT)&&
                             !(pObject->GetType()    == object::TYPE_ZONE_PORTAL ) &&
-							!(pObject->GetType()	== object::TYPE_PLAYER ) ) // mreed: player info now stored in .info
+                            !(pObject->GetType()    == object::TYPE_PLAYER ) ) // mreed: player info now stored in .info
                         {
                             lstGuidsToExport.Append(ObjGuid);
                         }
@@ -2875,7 +2875,7 @@ void world_editor::CollectPlaySurfacesToExport( xarray<guid>& lstPlaySurfaces )
 {
     //loop through all layers
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
         if( eLayer.IsLoaded == FALSE )
             continue;
@@ -2885,7 +2885,7 @@ void world_editor::CollectPlaySurfacesToExport( xarray<guid>& lstPlaySurfaces )
         
         //add to playsurface list
         for (s32 j = 0; j < lstGuidsInLayer.GetCount(); j++)
-	    {
+        {
             object *pObject = g_ObjMgr.GetObjectByGuid(lstGuidsInLayer.GetAt(j));
             if (pObject)
             {
@@ -2925,7 +2925,7 @@ void world_editor::CollectDecalsToExport( xarray<guid>& lstDecals )
 {
     // loop through all layers
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
         if( eLayer.IsLoaded == FALSE )
             continue;
@@ -2935,7 +2935,7 @@ void world_editor::CollectDecalsToExport( xarray<guid>& lstDecals )
         
         //add to decal list
         for (s32 j = 0; j < lstGuidsInLayer.GetCount(); j++)
-	    {
+        {
             object *pObject = g_ObjMgr.GetObjectByGuid(lstGuidsInLayer.GetAt(j));
             if (pObject)
             {
@@ -4836,10 +4836,10 @@ void world_editor::UpdatePointerGuids( xarray<guid_map>& GuidMapList )
             prop_enum listProps;
             pObject->OnEnumProp(listProps);
 
-		    for (s32 j = 0; j < listProps.GetCount(); j++)
-		    {
+            for (s32 j = 0; j < listProps.GetCount(); j++)
+            {
                 prop_enum::node enData = listProps[j];
-			    prop_type type = (prop_type)enData.GetType();
+                prop_type type = (prop_type)enData.GetType();
                 if (((type & PROP_TYPE_BASIC_MASK) == PROP_TYPE_GUID) && (x_stricmp(enData.GetName(),"Base\\GUID")!=0))
                 {
                     prop_query pqRead;
@@ -5101,7 +5101,7 @@ void world_editor::DeleteBlueprintsWithFile( const char* pTheme, const char* pRe
                                              xarray<editor_blueprint_placement>& lstPlacement )
 {
     for (s32 iXaIndex = 0; iXaIndex < m_listLayers.GetCount(); iXaIndex++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(iXaIndex);
         for (s32 i = 0 ; i < eLayer.Blueprints.GetCount() ; i++)
         {
@@ -5225,21 +5225,21 @@ void world_editor::DeleteBlueprintsWithFile( const char* pTheme, const char* pRe
 
 void world_editor::SelectAllMatchingBlueprints( const editor_blueprint_ref& SourceBPRef )
 {
-	for (s32 iXaIndex = 0; iXaIndex < m_listLayers.GetCount(); iXaIndex++)
-	{
+    for (s32 iXaIndex = 0; iXaIndex < m_listLayers.GetCount(); iXaIndex++)
+    {
         editor_layer& eLayer = m_listLayers.GetAt(iXaIndex);
         for (s32 i = 0 ; i < eLayer.Blueprints.GetCount() ; i++)
         {
             editor_blueprint_ref BPRef = eLayer.Blueprints.GetAt(i);
-			if (x_stricmp(BPRef.ThemeName, SourceBPRef.ThemeName) == 0)
+            if (x_stricmp(BPRef.ThemeName, SourceBPRef.ThemeName) == 0)
             {
-				if (x_stricmp(BPRef.RelativePath, SourceBPRef.RelativePath) == 0)
+                if (x_stricmp(BPRef.RelativePath, SourceBPRef.RelativePath) == 0)
                 {
-					SelectBlueprintObjects( BPRef, TRUE );
-				}
-			}
-		}
-	}
+                    SelectBlueprintObjects( BPRef, TRUE );
+                }
+            }
+        }
+    }
 }
 
 //=========================================================================
@@ -5249,7 +5249,7 @@ void world_editor::UpdateBlueprintsWithFile( const char* pTheme, const char* pRe
                                              xarray<editor_item_descript>& lstItems )
 {
     for (s32 iXaIndex = 0; iXaIndex < m_listLayers.GetCount(); iXaIndex++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(iXaIndex);
         for (s32 i = 0 ; i < eLayer.Blueprints.GetCount() ; i++)
         {
@@ -5304,10 +5304,10 @@ guid world_editor::GetBlueprintGuidContainingObject( guid ObjectGuid )
     if (m_listLayers.GetCount() > 0 )
     {
         for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-		{
+        {
             editor_layer& eLayer = m_listLayers.GetAt(i);
             for (s32 j = 0; j < eLayer.Blueprints.GetCount(); j++)
-		    {
+            {
                 editor_blueprint_ref& Blueprint = eLayer.Blueprints.GetAt(j);
                 //check anchor
                 if (Blueprint.Anchor == ObjectGuid)
@@ -5317,7 +5317,7 @@ guid world_editor::GetBlueprintGuidContainingObject( guid ObjectGuid )
 
                 //check remaining objects
                 for (s32 k = 0; k < Blueprint.ObjectsInBlueprint.GetCount(); k++)
-		        {
+                {
                     if (Blueprint.ObjectsInBlueprint.GetAt(k) == ObjectGuid)
                     {
                         return Blueprint.Guid;
@@ -5325,7 +5325,7 @@ guid world_editor::GetBlueprintGuidContainingObject( guid ObjectGuid )
                 }
             }
         }
-	}
+    }
     return guid(0);
 }
 
@@ -5590,10 +5590,10 @@ xbool world_editor::CanMakeBlueprintFromSelected()
 xbool world_editor::GetBlueprintByGuid ( guid BPGuid, editor_blueprint_ref& BlueprintReference )
 {
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
         for (s32 j = 0; j < eLayer.Blueprints.GetCount(); j++)
-		{
+        {
             BlueprintReference = eLayer.Blueprints.GetAt(j);
             if (BlueprintReference.Guid == BPGuid)
             {
@@ -5609,10 +5609,10 @@ xbool world_editor::GetBlueprintByGuid ( guid BPGuid, editor_blueprint_ref& Blue
 xbool world_editor::GetBlueprintRefContainingObject ( guid ObjectGuid, editor_blueprint_ref& BlueprintReference )
 {
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
         for (s32 j = 0; j < eLayer.Blueprints.GetCount(); j++)
-		{
+        {
             BlueprintReference = eLayer.Blueprints.GetAt(j);
 
             //check the Anchor
@@ -5622,7 +5622,7 @@ xbool world_editor::GetBlueprintRefContainingObject ( guid ObjectGuid, editor_bl
             }            
             
             for (s32 k = 0; k < BlueprintReference.ObjectsInBlueprint.GetCount(); k++)
-		    {
+            {
                 if (BlueprintReference.ObjectsInBlueprint.GetAt(k) == ObjectGuid)
                 {
                     return TRUE;
@@ -5669,10 +5669,10 @@ xbool world_editor::GetBlueprintRefContainingObject2( guid ObjectGuid, editor_bl
 xbool world_editor::GetBlueprintRefContainingAnchor ( guid AnchorGuid, editor_blueprint_ref& BlueprintReference )
 {
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
         for (s32 j = 0; j < eLayer.Blueprints.GetCount(); j++)
-		{
+        {
             BlueprintReference = eLayer.Blueprints.GetAt(j);
             if (BlueprintReference.Anchor == AnchorGuid)
             {
@@ -6227,7 +6227,7 @@ xbool world_editor::SaveZoneFile( void )
         ZoneFile.AddHeader("ZoneData",m_listZones.GetCount());
 
         for (s32 i = 0; i < m_listZones.GetCount(); i++)
-	    {
+        {
             editor_zone_ref &Zone = m_listZones.GetAt(i);
 
             ZoneFile.AddS32     ("Id",              Zone.Id             );
@@ -6383,7 +6383,7 @@ void world_editor::ZoneSanityCheck( void )
     x_DebugMsg("\n====Start Zone Sanity Check====\n");
 
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& Layer = m_listLayers.GetAt(i);
 
         xbool bGlobalsLayer = FALSE;
@@ -6394,7 +6394,7 @@ void world_editor::ZoneSanityCheck( void )
 
         //check all objects
         for (s32 j = 0; j < Layer.Objects.GetCount(); j++)
-		{
+        {
             editor_object_ref& ObjRef = Layer.Objects.GetAt(j);
             xstring xstrPath(ObjRef.LayerPath);
             xstring xstrSubPath = xstrPath.Right(xstrPath.GetLength()-1);
@@ -6434,7 +6434,7 @@ void world_editor::ZoneSanityCheck( void )
 
         //check all Blueprints
         for (s32 j = 0; j < Layer.Blueprints.GetCount(); j++)
-		{
+        {
             editor_blueprint_ref& BPRef = Layer.Blueprints.GetAt(j);
             xstring xstrPath(BPRef.LayerPath);
             xstring xstrSubPath = xstrPath.Right(xstrPath.GetLength()-1);
@@ -6520,10 +6520,10 @@ xbool world_editor::SetObjectsZone( guid ObjGuid, u8 Zone1, u8 Zone2 )
 xbool world_editor::SetBlueprintObjectsZone( guid BPGuid, u8 Zone1, u8 Zone2 )
 {
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
         for (s32 j = 0; j < eLayer.Blueprints.GetCount(); j++)
-		{
+        {
             editor_blueprint_ref& Blueprint = eLayer.Blueprints.GetAt(j);
             if (Blueprint.Guid == BPGuid)
             {
@@ -6824,7 +6824,7 @@ xbool world_editor::SavePortals( xarray<editor_object_ref>& PortalList )
 
     PortalFile.AddHeader("Portals",  PortalList.GetCount());
     for (s32 i = 0; i < PortalList.GetCount(); i++)
-	{
+    {
         editor_object_ref& PortalRef = PortalList.GetAt(i);
         PortalFile.AddGuid  ("Guid",      PortalRef.Guid);
         PortalFile.AddString("LayerPath", PortalRef.LayerPath);
@@ -9436,7 +9436,7 @@ void world_editor::GetLayerNames( xarray<xstring>& List )
     if (m_listLayers.GetCount()>0)
     {
         for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-		{
+        {
             editor_layer& Layer = m_listLayers.GetAt(i);
             List.Append(Layer.Name);
         }
@@ -9451,7 +9451,7 @@ xbool world_editor::RenameLayer( const char* pOldName, const char* pNewName )
     if (m_listLayers.GetCount()>0)
     {
         for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-		{
+        {
             editor_layer& Layer = m_listLayers.GetAt(i);
             if (x_stricmp(pOldName, Layer.Name) == 0)
             {
@@ -9488,7 +9488,7 @@ xbool world_editor::AddLayer( const char* pLayer, xbool bIsDirty )
     if (m_listLayers.GetCount()>0)
     {
         for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-		{
+        {
             editor_layer& Layer = m_listLayers.GetAt(i);
             if (x_stricmp(pLayer, Layer.Name) == 0)
             {
@@ -9522,13 +9522,13 @@ xbool world_editor::RemoveLayer( const char* pLayer )
     ClearSelectedObjectList();
 
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& Layer = m_listLayers.GetAt(i);
         if (x_stricmp(pLayer, Layer.Name) == 0)
         {
             //layer found, delete all objects in layer
             for (s32 j = 0; j < Layer.Objects.GetCount(); j++)
-		    {
+            {
                 editor_object_ref& ObjRef = Layer.Objects.GetAt(j);
                 object* pObjDel = g_ObjMgr.GetObjectByGuid(ObjRef.Guid);
                 if (pObjDel)
@@ -9554,11 +9554,11 @@ xbool world_editor::RemoveLayer( const char* pLayer )
 
             //delete all blueprints in layer, with associated objects
             for (s32 k = 0; k < Layer.Blueprints.GetCount(); k++)
-		    {
+            {
                 editor_blueprint_ref& BlueprintRef = Layer.Blueprints.GetAt(k);
                 //now delete all objects in blueprint
                 for (s32 m = 0; m < BlueprintRef.ObjectsInBlueprint.GetCount(); m++)
-	    	    {
+                {
                     guid& ObjectGuid = BlueprintRef.ObjectsInBlueprint.GetAt(m);
                     object* pObjDel = g_ObjMgr.GetObjectByGuid(ObjectGuid);
 
@@ -9655,7 +9655,7 @@ xbool world_editor::SetActiveLayer( const char* pLayer, const char* pLayerPath )
         m_xstrActiveLayer = pLayer;
         m_xstrActiveLayerPath = pLayerPath;
         return TRUE;
-	}
+    }
     return FALSE;
 }
 
@@ -9691,7 +9691,7 @@ xbool world_editor::SetCurrentObjectsLayerAsActive( void )
 xbool world_editor::DoesLayerExist( const char* pLayer )
 {
     for (s32 iXaIndex = 0; iXaIndex < m_listLayers.GetCount(); iXaIndex++)
-	{
+    {
         editor_layer& Layer = m_listLayers.GetAt(iXaIndex);
         if (x_stricmp(pLayer, Layer.Name) == 0)
         {
@@ -9739,7 +9739,7 @@ editor_layer& world_editor::GetLayerInfo( const char* pLayer )
 {
     //make sure layer exists
     for (s32 iXaIndex = 0; iXaIndex < m_listLayers.GetCount(); iXaIndex++)
-	{
+    {
         editor_layer& Layer = m_listLayers.GetAt(iXaIndex);
         if (x_stricmp(pLayer, Layer.Name) == 0)
         {
@@ -9756,7 +9756,7 @@ editor_layer& world_editor::GetLayerInfo( const char* pLayer )
 const char* world_editor::GetLayerContainingBlueprint( guid BlueprintGuid )
 {
     for (s32 iXaIndex = 0; iXaIndex < m_listLayers.GetCount(); iXaIndex++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(iXaIndex);
         for (s32 i=0; i < eLayer.Blueprints.GetCount() ; i++)
         {
@@ -9775,7 +9775,7 @@ const char* world_editor::GetLayerContainingBlueprint( guid BlueprintGuid )
 const char* world_editor::GetLayerContainingObject( guid ObjectGuid )
 {
     for (s32 iXaIndex = 0; iXaIndex < m_listLayers.GetCount(); iXaIndex++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(iXaIndex);
         for (s32 i=0; i < eLayer.Objects.GetCount() ; i++)
         {
@@ -9796,13 +9796,13 @@ void world_editor::SelectAllItemsInLayer( const char* pLayer )
     ClearSelectedObjectList();
 
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& Layer = m_listLayers.GetAt(i);
         if (x_stricmp(pLayer, Layer.Name) == 0)
         {
             //layer found, select all objects in layer
             for (s32 j = 0; j < Layer.Objects.GetCount(); j++)
-		    {
+            {
                 editor_object_ref& ObjRef = Layer.Objects.GetAt(j);
                 if (g_ObjMgr.GetObjectByGuid(ObjRef.Guid))
                 { 
@@ -9812,7 +9812,7 @@ void world_editor::SelectAllItemsInLayer( const char* pLayer )
 
             //select all blueprints in layer
             for (s32 k = 0; k < Layer.Blueprints.GetCount(); k++)
-		    {
+            {
                 editor_blueprint_ref& BlueprintRef = Layer.Blueprints.GetAt(k);
                 g_WorldEditor.SelectBlueprintObjects(BlueprintRef,TRUE);
             }                
@@ -10365,28 +10365,28 @@ editor_layer& world_editor::FindObjectsLayer( guid ObjectGuid, xbool bIncludeBlu
     if (m_listLayers.GetCount() > 0 )
     {
         for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-		{
+        {
             editor_layer& eLayer = m_listLayers.GetAt(i);
             //loop through objects
             if ( eLayer.Objects.GetCount() > 0 )
             {
                 for (s32 j = 0; j < eLayer.Objects.GetCount(); j++)
-		        {
+                {
                     editor_object_ref& ObjRef = eLayer.Objects.GetAt(j);
                     if (ObjRef.Guid == ObjectGuid)
                     {
                         return eLayer;
                     }
                 }
-	        }   
+            }   
             //loop through blueprints
             if (bIncludeBlueprints && eLayer.Blueprints.GetCount() > 0 )
             {
                 for (s32 j = 0; j < eLayer.Blueprints.GetCount(); j++)
-		        {
+                {
                     editor_blueprint_ref& Blueprint = eLayer.Blueprints.GetAt(j);
                     for (s32 k = 0; k < Blueprint.ObjectsInBlueprint.GetCount(); k++)
-		            {
+                    {
                         guid& ListGuid = Blueprint.ObjectsInBlueprint.GetAt(k);
                         if (ListGuid == ObjectGuid)
                         {
@@ -10401,7 +10401,7 @@ editor_layer& world_editor::FindObjectsLayer( guid ObjectGuid, xbool bIncludeBlu
                 }
             }
         }
-	}
+    }
     return m_NullLayer;
 }
 
@@ -10410,10 +10410,10 @@ editor_layer& world_editor::FindObjectsLayer( guid ObjectGuid, xbool bIncludeBlu
 editor_layer& world_editor::FindBlueprintsLayer( guid BlueprintGuid )
 {
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
         for (s32 j = 0; j < eLayer.Blueprints.GetCount(); j++)
-		{
+        {
             editor_blueprint_ref& Blueprint = eLayer.Blueprints.GetAt(j);
             if (Blueprint.Guid == BlueprintGuid)
             {
@@ -10429,7 +10429,7 @@ editor_layer& world_editor::FindBlueprintsLayer( guid BlueprintGuid )
 const char* world_editor::FindLayerPathForObject( guid ObjectGuid, editor_layer& Layer )
 {
     for (s32 j = 0; j < Layer.Objects.GetCount(); j++)
-	{
+    {
         editor_object_ref& ObjRef = Layer.Objects.GetAt(j);
         if (ObjRef.Guid == ObjectGuid)
         {
@@ -10444,7 +10444,7 @@ const char* world_editor::FindLayerPathForObject( guid ObjectGuid, editor_layer&
 const char* world_editor::FindLayerPathForBlueprint( guid BlueprintGuid, editor_layer& Layer )
 {
     for (s32 j = 0; j < Layer.Blueprints.GetCount(); j++)
-	{
+    {
         editor_blueprint_ref& BPRef = Layer.Blueprints.GetAt(j);
         if (BPRef.Guid == BlueprintGuid)
         {
@@ -10553,12 +10553,12 @@ s32 world_editor::GetDirtyLayerCount( void )
 {
     s32 nCount = 0;
     for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	{
+    {
         editor_layer& eLayer = m_listLayers.GetAt(i);
         if ( eLayer.IsDirty )
         {
             nCount++;
-	    }
+        }
     }
     return nCount;
 }
@@ -10696,12 +10696,12 @@ guid world_editor::InternalObjectCopy( guid ObjectGuid )
                     xarray<prop_container> containers;
                     pObjOriginal->OnEnumProp(listOriginal);
 
-		            for (int iXarryIndex = 0; iXarryIndex < listOriginal.GetCount(); iXarryIndex++)
-		            {
+                    for (int iXarryIndex = 0; iXarryIndex < listOriginal.GetCount(); iXarryIndex++)
+                    {
                         prop_enum::node enData = listOriginal[iXarryIndex];
-			            prop_type type = (prop_type)enData.GetType();
-			            BOOL bReadOnly = type & PROP_TYPE_READ_ONLY;
-			            if (!bReadOnly && (type & PROP_TYPE_BASIC_MASK))
+                        prop_type type = (prop_type)enData.GetType();
+                        BOOL bReadOnly = type & PROP_TYPE_READ_ONLY;
+                        if (!bReadOnly && (type & PROP_TYPE_BASIC_MASK))
                         {
                             prop_query pq;
                             prop_container pc;
@@ -10712,9 +10712,9 @@ guid world_editor::InternalObjectCopy( guid ObjectGuid )
                         }
                     }
 
-		            for (int iContainerIndex = 0; iContainerIndex < containers.GetCount(); iContainerIndex++)
-		            {
-			            prop_container& pc = containers.GetAt(iContainerIndex);
+                    for (int iContainerIndex = 0; iContainerIndex < containers.GetCount(); iContainerIndex++)
+                    {
+                        prop_container& pc = containers.GetAt(iContainerIndex);
                         prop_query pq;
                         pq.WQuery(pc);
                         pObjNew->OnProperty(pq);
@@ -10829,14 +10829,14 @@ void world_editor::ComputeLightLayer( const char* pLayer, s32 iType )
     {
         //light all layers
         for (s32 i = 0; i < m_listLayers.GetCount(); i++)
-	    {
+        {
             editor_layer& eLayer = m_listLayers.GetAt(i);
 
             xarray<guid> lstGuidsInLayer;
             GetObjectsInLayer( eLayer.Name, lstGuidsInLayer );
             //add to export list
             for (s32 j = 0; j < lstGuidsInLayer.GetCount(); j++)
-	        {
+            {
                 lstGuids.Append(lstGuidsInLayer.GetAt(j));
             }
 
@@ -11976,7 +11976,7 @@ void world_editor::CreateResourceLoadList(
 
     // handle resources required by the zone manager
     for (i = 0; i < m_listZones.GetCount(); i++)
-	{
+    {
         editor_zone_ref &Zone = m_listZones.GetAt(i);
         if ( Zone.FogMap[0] == '\0' )
             continue;
@@ -12462,7 +12462,7 @@ xbool world_editor::UpdateAutomatedBuild( void )
     if( !m_ExportName.IsEmpty() )
     {
         m_ExportName += ".Level";
-    	if( g_WorldEditor.ExportToLevel(m_ExportName) )
+        if( g_WorldEditor.ExportToLevel(m_ExportName) )
         {
             LOG_MESSAGE("AutoBuild","AUTOBUILD_EXPORT_FINISHED");
         }

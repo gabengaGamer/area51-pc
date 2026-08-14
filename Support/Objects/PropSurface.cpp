@@ -362,7 +362,7 @@ xbool prop_surface::OnProperty( prop_query&   I    )
                 {
                     I.SetVarEnum("Flesh");
                 }
-            	break;
+                break;
             case debris_mgr::DEBRIS_SET_MECHANICAL :
                 {
                     I.SetVarEnum("Mechanical");

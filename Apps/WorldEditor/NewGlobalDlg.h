@@ -16,22 +16,22 @@ class CNewGlobalDlg : public CDialog
 {
 // Construction
 public:
-	CNewGlobalDlg(CWnd* pParent = NULL);   // standard constructor
+    CNewGlobalDlg(CWnd* pParent = NULL);   // standard constructor
 
 // Dialog Data
-	//{{AFX_DATA(CNewGlobalDlg)
-	enum { IDD = IDD_NEW_GLOBAL_DLG };
-	CEdit	m_EditGlobalName;
-	int		m_RadioButtonData;
-	//}}AFX_DATA
+    //{{AFX_DATA(CNewGlobalDlg)
+    enum { IDD = IDD_NEW_GLOBAL_DLG };
+    CEdit    m_EditGlobalName;
+    int        m_RadioButtonData;
+    //}}AFX_DATA
 
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CNewGlobalDlg)
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CNewGlobalDlg)
+    protected:
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    //}}AFX_VIRTUAL
 
 public:
 
@@ -41,13 +41,13 @@ public:
 // Implementation
 protected:
 
-	// Generated message map functions
-	//{{AFX_MSG(CNewGlobalDlg)
-	virtual BOOL OnInitDialog();
-	virtual void OnOK();
-	virtual void OnCancel();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(CNewGlobalDlg)
+    virtual BOOL OnInitDialog();
+    virtual void OnOK();
+    virtual void OnCancel();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
     CString m_strName;
 };

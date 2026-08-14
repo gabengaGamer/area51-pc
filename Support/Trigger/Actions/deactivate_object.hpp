@@ -26,8 +26,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Deactivate Object"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "Deactivates an object."; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
 
     virtual         void                OnRender    ( void );
    

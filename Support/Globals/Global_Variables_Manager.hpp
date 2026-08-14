@@ -73,7 +73,7 @@ public:
 protected:
 
     enum type
-	{
+    {
         TYPE_NULL = 0,
 
         TYPE_FLOAT,
@@ -316,8 +316,8 @@ class var_mngr : public prop_interface
 {
 public:
 
-	enum global_types
-	{
+    enum global_types
+    {
         GLOBAL_NULL = 0,
 
         GLOBAL_FLOAT,
@@ -329,8 +329,8 @@ public:
         GLOBAL_END
     };
 
-	enum variable_types
-	{
+    enum variable_types
+    {
         TYPE_NULL  = 0 ,
 
         TYPE_FLOAT  ,
@@ -338,7 +338,7 @@ public:
         TYPE_BOOL   ,
 
         VARIABLE_TYPES_END
-	};
+    };
 
     xhandle                     RegisterFloat       ( const char* pName );
     xhandle                     RegisterInt         ( const char* pName );
@@ -412,14 +412,14 @@ public:
     
     //Property system implementation for saving and loading ...
     
-    virtual			void	    OnEnumProp			( prop_enum&   rList );
-    virtual			xbool	    OnProperty			( prop_query&  rPropQuery );
+    virtual            void        OnEnumProp            ( prop_enum&   rList );
+    virtual            xbool        OnProperty            ( prop_query&  rPropQuery );
           
-    virtual			void	    OnEnumPropInternal	( prop_enum&   rList );
-    virtual			xbool	    OnPropertyInternal  ( prop_query&  rPropQuery );
+    virtual            void        OnEnumPropInternal    ( prop_enum&   rList );
+    virtual            xbool        OnPropertyInternal  ( prop_query&  rPropQuery );
 
-    virtual			void	    OnEnumPropVariables ( prop_enum&   rList, u32 Flags = 0 );
-    virtual			xbool	    OnPropertyVariables	( prop_query&  rPropQuery );
+    virtual            void        OnEnumPropVariables ( prop_enum&   rList, u32 Flags = 0 );
+    virtual            xbool        OnPropertyVariables    ( prop_query&  rPropQuery );
 
 protected:
         

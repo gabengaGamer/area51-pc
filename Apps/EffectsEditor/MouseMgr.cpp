@@ -2,12 +2,12 @@
 //
 //  KeyBarKey.h
 //
-//	A keyframe structure that holds the data that the KeyBar needs to edit it
+//    A keyframe structure that holds the data that the KeyBar needs to edit it
 //
 //==============================================================================
 
 //----------------------+
-//	Includes			|
+//    Includes            |
 //----------------------+
 
 #include <stdafx.h>

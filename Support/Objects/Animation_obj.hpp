@@ -65,7 +65,7 @@ protected:
 
 protected:
 
-    virtual void            OnAdvanceSimulation	    ( f32 DelaTime );
+    virtual void            OnAdvanceSimulation        ( f32 DelaTime );
     virtual void            OnInit              ( void );     
 
 #ifndef X_RETAIL

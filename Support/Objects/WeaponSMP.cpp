@@ -40,13 +40,13 @@ static struct weapon_smp_desc : public object_desc
                                         "SMP Rifle",
                                         "WEAPON",
                                         object::ATTR_SPACIAL_ENTRY          |
-										object::ATTR_NEEDS_LOGIC_TIME		|
-                                        object::ATTR_SOUND_SOURCE			|
-                                        object::ATTR_RENDERABLE				|
- 										object::ATTR_COLLISION_PERMEABLE    ,
+                                        object::ATTR_NEEDS_LOGIC_TIME        |
+                                        object::ATTR_SOUND_SOURCE            |
+                                        object::ATTR_RENDERABLE                |
+                                         object::ATTR_COLLISION_PERMEABLE    ,
                                         FLAGS_IS_DYNAMIC
                                         //| FLAGS_GENERIC_EDITOR_CREATE                                                                       
-										)
+                                        )
     {
 
     }
@@ -78,20 +78,20 @@ const object_desc&  weapon_smp::GetObjectType   ( void )
 
 weapon_smp::weapon_smp( void )
 {
-	//initialize the ammo structures.
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_MACHINE_GUN;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 0;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 0;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
-	
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
+    //initialize the ammo structures.
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_MACHINE_GUN;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 0;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 0;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
+    
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
 
-	//Both primary and secondary fires use same ammo, so secondary ammo is only initialized
-	//in the constructor of new_weapon and set to undefined.
+    //Both primary and secondary fires use same ammo, so secondary ammo is only initialized
+    //in the constructor of new_weapon and set to undefined.
     
     //set aim degradation
     m_AimDegradePrimary     = 0.15f;
@@ -127,16 +127,16 @@ weapon_smp::~weapon_smp()
 
 //===========================================================================
 
-void weapon_smp::InitWeapon			(   
+void weapon_smp::InitWeapon            (   
                                                  const char* pSkinFileName , 
                                                  const char* pAnimFileName , 
                                                  const vector3& rInitPos , 
                                                  const render_state& rRenderState,
                                                  const guid& rParentGuid )
 {
-	new_weapon::InitWeapon( pSkinFileName , pAnimFileName , rInitPos ,rRenderState, rParentGuid);
-	
-	m_AltFiringPointBoneIndex[ FIRE_POINT_DEFAULT ] = m_FiringPointBoneIndex[ FIRE_POINT_DEFAULT ];
+    new_weapon::InitWeapon( pSkinFileName , pAnimFileName , rInitPos ,rRenderState, rParentGuid);
+    
+    m_AltFiringPointBoneIndex[ FIRE_POINT_DEFAULT ] = m_FiringPointBoneIndex[ FIRE_POINT_DEFAULT ];
 }
 
 //===========================================================================
@@ -145,7 +145,7 @@ void weapon_smp::InitWeapon( const vector3& rInitPos, render_state rRenderState,
 {
     new_weapon::InitWeapon( rInitPos, rRenderState, OwnerGuid );
 
-	m_AltFiringPointBoneIndex[ FIRE_POINT_DEFAULT ] = m_FiringPointBoneIndex[ FIRE_POINT_DEFAULT ];
+    m_AltFiringPointBoneIndex[ FIRE_POINT_DEFAULT ] = m_FiringPointBoneIndex[ FIRE_POINT_DEFAULT ];
 }
 
 //=========================================================================
@@ -155,17 +155,17 @@ xbool weapon_smp::FireWeaponProtected( const vector3& InitPos , const vector3& B
     ( void )Power;
     ( void )iFirePoint;
 
- 	ASSERT( m_FiringPointBoneIndex[ iFirePoint ] != -1 );
+     ASSERT( m_FiringPointBoneIndex[ iFirePoint ] != -1 );
 
-	//if there weapon is not ready, do nothing.
-	if ( ! IsWeaponReady( AMMO_PRIMARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.
+    if ( ! IsWeaponReady( AMMO_PRIMARY ) )
+    {
+        return FALSE;
+    }
 
-	//otherwise, create a new bullet projectile, init it's position, and send it on it's way.
-	else
-	{
+    //otherwise, create a new bullet projectile, init it's position, and send it on it's way.
+    else
+    {
         #ifdef FIRE_FROM_GUN
         vector3 InitPos = m_AnimPlayer[ m_CurrentRenderState ].GetBonePosition( m_FiringPointBoneIndex[ iFirePoint ] );
         #endif
@@ -189,8 +189,8 @@ xbool weapon_smp::FireWeaponProtected( const vector3& InitPos , const vector3& B
         // Decrement count of bullets in current clip
         DecrementAmmo();
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 }
 
 //=========================================================================

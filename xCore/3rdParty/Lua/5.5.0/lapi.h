@@ -14,9 +14,9 @@
 
 #if defined(LUA_USE_APICHECK)
 #include <assert.h>
-#define api_check(l,e,msg)	assert(e)
-#else	/* for testing */
-#define api_check(l,e,msg)	((void)(l), lua_assert((e) && msg))
+#define api_check(l,e,msg)    assert(e)
+#else    /* for testing */
+#define api_check(l,e,msg)    ((void)(l), lua_assert((e) && msg))
 #endif
 
 
@@ -31,8 +31,8 @@
 ** ('lua_lock') and leaves the core ('lua_unlock')
 */
 #if !defined(lua_lock)
-#define lua_lock(L)	((void) 0)
-#define lua_unlock(L)	((void) 0)
+#define lua_lock(L)    ((void) 0)
+#define lua_unlock(L)    ((void) 0)
 #endif
 
 
@@ -44,7 +44,7 @@
 */
 #define adjustresults(L,nres) \
     { if ((nres) <= LUA_MULTRET && L->ci->top.p < L->top.p) \
-	L->ci->top.p = L->top.p; }
+    L->ci->top.p = L->top.p; }
 
 
 /* Ensure the stack has at least 'n' elements */
@@ -58,8 +58,8 @@
 ** is only an optimization for a pop followed by a push.)
 */
 #define api_checkpop(L,n) \
-	api_check(L, (n) < L->top.p - L->ci->func.p &&  \
+    api_check(L, (n) < L->top.p - L->ci->func.p &&  \
                      L->tbclist.p < L->top.p - (n), \
-			  "not enough free elements in the stack")
+              "not enough free elements in the stack")
 
 #endif

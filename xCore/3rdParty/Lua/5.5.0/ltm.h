@@ -41,7 +41,7 @@ typedef enum {
   TM_CONCAT,
   TM_CALL,
   TM_CLOSE,
-  TM_N		/* number of elements in the enum */
+  TM_N        /* number of elements in the enum */
 } TMS;
 
 
@@ -51,23 +51,23 @@ typedef enum {
 ** corresponding metamethod field. (Bit 6 of the flag indicates that
 ** the table is using the dummy node; bit 7 is used for 'isrealasize'.)
 */
-#define maskflags	cast_byte(~(~0u << (TM_EQ + 1)))
+#define maskflags    cast_byte(~(~0u << (TM_EQ + 1)))
 
 
 /*
 ** Test whether there is no tagmethod.
 ** (Because tagmethods use raw accesses, the result may be an "empty" nil.)
 */
-#define notm(tm)	ttisnil(tm)
+#define notm(tm)    ttisnil(tm)
 
-#define checknoTM(mt,e)	((mt) == NULL || (mt)->flags & (1u<<(e)))
+#define checknoTM(mt,e)    ((mt) == NULL || (mt)->flags & (1u<<(e)))
 
 #define gfasttm(g,mt,e)  \
   (checknoTM(mt, e) ? NULL : luaT_gettm(mt, e, (g)->tmname[e]))
 
-#define fasttm(l,mt,e)	gfasttm(G(l), mt, e)
+#define fasttm(l,mt,e)    gfasttm(G(l), mt, e)
 
-#define ttypename(x)	luaT_typenames_[(x) + 1]
+#define ttypename(x)    luaT_typenames_[(x) + 1]
 
 LUAI_DDEC(const char *const luaT_typenames_[LUA_TOTALTYPES];)
 

@@ -149,7 +149,7 @@ xbool dlg_online_host_options::Create( s32                        UserID,
     host_settings& Settings = g_StateMgr.GetPendingSettings().GetHostSettings();
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pNumPlayerText    = (ui_text*)FindChildByID( IDC_ONLINE_HOST_NUM_PLAYERS );
     m_pScoreText        = (ui_text*)FindChildByID( IDC_ONLINE_HOST_SCORE       );
@@ -485,7 +485,7 @@ void dlg_online_host_options::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     if( m_bRenderBlackout )
     {

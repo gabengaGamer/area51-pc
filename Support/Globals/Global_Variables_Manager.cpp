@@ -830,7 +830,7 @@ void var_mngr::OnEnumPropVariables ( prop_enum&   rPropList, u32 Flags )
 
 //=========================================================================
 
-void var_mngr::OnEnumPropInternal	( prop_enum&   rPropList )
+void var_mngr::OnEnumPropInternal    ( prop_enum&   rPropList )
 {
     rPropList.PropEnumInt( "Array\\Size", "", 0 );    
 
@@ -869,7 +869,7 @@ xbool var_mngr::OnPropertyInternal  ( prop_query&  rPropQuery )
             {
                 xhandle new_handle;
                 var_key &EmptyKey  = m_VarKeys.Add( new_handle );
-				(void)EmptyKey;
+                (void)EmptyKey;
             }
         }
         
@@ -953,7 +953,7 @@ xbool var_mngr::OnPropertyInternal  ( prop_query&  rPropQuery )
 
 //=========================================================================
 
-xbool var_mngr::OnPropertyVariables	( prop_query&  rPropQuery )
+xbool var_mngr::OnPropertyVariables    ( prop_query&  rPropQuery )
 { 
     s32 iIndex = rPropQuery.GetIndex(0);
     

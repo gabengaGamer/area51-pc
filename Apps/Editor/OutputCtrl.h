@@ -14,7 +14,7 @@ class COutputCtrl : public CRichEditCtrl
 {
 // Construction
 public:
-	COutputCtrl();
+    COutputCtrl();
 
 // Attributes
 public:
@@ -23,24 +23,24 @@ public:
 public:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(COutputCtrl)
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(COutputCtrl)
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~COutputCtrl();
+    virtual ~COutputCtrl();
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(COutputCtrl)
-	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnCopy();
-	afx_msg void OnUpdateCopy(CCmdUI* pCmdUI);
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	//}}AFX_MSG
+    //{{AFX_MSG(COutputCtrl)
+    afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnCopy();
+    afx_msg void OnUpdateCopy(CCmdUI* pCmdUI);
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    //}}AFX_MSG
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

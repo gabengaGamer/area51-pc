@@ -709,7 +709,7 @@ xbool dlg_popup::Create( s32                        UserID,
                  Position.t + (Position.GetHeight()-r.GetHeight())/2 );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, r, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, r, pParent, Flags );
    
     // Initialize nav text
     m_pNavText = (ui_text*)FindChildByID( IDC_QUICK_MATCH_NAV_TEXT );
@@ -753,7 +753,7 @@ xbool dlg_popup::Create( s32                        UserID,
     // play create sound
     g_AudioMgr.Play( "Dialog" );
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -1181,7 +1181,7 @@ void dlg_popup::Render( s32 ox, s32 oy )
     // dim the background dialog
     if( m_bDoBlackout )
     {
-	    irect rb = g_UiMgr->GetUserBounds( m_UserID );
+        irect rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                        xcolor(0,0,0,180),
                                        xcolor(0,0,0,180),

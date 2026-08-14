@@ -1,6 +1,6 @@
 enum pain_hit_type
 {
-    PLAYER_FALL_DAMAGE	= 0,
+    PLAYER_FALL_DAMAGE    = 0,
     PLAYER_SMP,
     PLAYER_DEAGLE,
     PLAYER_SNIPER,

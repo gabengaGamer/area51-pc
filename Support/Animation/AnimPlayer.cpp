@@ -672,7 +672,7 @@ vector3 simple_anim_player::GetEventPosition( const anim_event& Event )
         return vector3(0,0,0) ;
 
     // Compute world pos
-	const matrix4& BoneL2W = pL2Ws[ Event.GetInt( anim_event::INT_IDX_BONE ) ];
+    const matrix4& BoneL2W = pL2Ws[ Event.GetInt( anim_event::INT_IDX_BONE ) ];
     vector3 P = BoneL2W * Event.GetPoint( anim_event::POINT_IDX_OFFSET );
     return P;
 }
@@ -686,7 +686,7 @@ radian3 simple_anim_player::GetEventRotation( const anim_event& Event )
     if (!pL2Ws)
         return radian3(0,0,0) ;
 
-	const matrix4& BoneM = pL2Ws[ Event.GetInt( anim_event::INT_IDX_BONE ) ];
+    const matrix4& BoneM = pL2Ws[ Event.GetInt( anim_event::INT_IDX_BONE ) ];
 
     vector3 ERot( Event.GetPoint( anim_event::POINT_IDX_ROTATION ) );
     radian3 Rot( ERot.GetX(), ERot.GetY(), ERot.GetZ() );
@@ -716,7 +716,7 @@ vector3 simple_anim_player::GetEventPosition( s32 iEvent )
     const anim_event& Event   = AnimInfo.GetEvent(iEvent);
 
     // Compute world pos
-	const matrix4& BoneL2W = pL2Ws[ Event.GetInt( anim_event::INT_IDX_BONE ) ];
+    const matrix4& BoneL2W = pL2Ws[ Event.GetInt( anim_event::INT_IDX_BONE ) ];
     vector3 P = BoneL2W * Event.GetPoint( anim_event::POINT_IDX_OFFSET );
     return P;
 }
@@ -739,7 +739,7 @@ radian3 simple_anim_player::GetEventRotation( s32 iEvent )
     const anim_event& EV   = AnimInfo.GetEvent(iEvent);
 
 
-	const matrix4& BoneM = pL2Ws[ EV.GetInt( anim_event::INT_IDX_BONE ) ];
+    const matrix4& BoneM = pL2Ws[ EV.GetInt( anim_event::INT_IDX_BONE ) ];
 
     vector3 ERot( EV.GetPoint( anim_event::POINT_IDX_ROTATION ) );
     radian3 Rot( ERot.GetX(), ERot.GetY(), ERot.GetZ() );
@@ -763,9 +763,9 @@ radian3 simple_anim_player::GetEventRotation( s32 iEvent )
     //f32                 Radius  = EV.m_Radius;
 
     radian3 Rot = pGroup->GetEventRot( 
-		EV.GetInt( anim_event::INT_IDX_BONE ), 
-		EV.GetPoint( anim_event::POINT_IDX_ROTATION ), 
-		Key );
+        EV.GetInt( anim_event::INT_IDX_BONE ), 
+        EV.GetPoint( anim_event::POINT_IDX_ROTATION ), 
+        Key );
 
     matrix4 RotM;
     RotM.Identity();

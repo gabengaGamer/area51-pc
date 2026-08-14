@@ -46,7 +46,7 @@ ms_convert(III_side_info_t *l3_side, int gr)
 {
     int i;
     for (i = 0; i < 576; ++i) {
-	FLOAT8 l, r;
+    FLOAT8 l, r;
         l = l3_side->tt[gr][0].xr[i];
         r = l3_side->tt[gr][1].xr[i];
         l3_side->tt[gr][0].xr[i] = (l+r) * (FLOAT8)(SQRT2*0.5);
@@ -83,7 +83,7 @@ init_xrpow(
      */
     for (i = 0; i < 576; ++i) {
         tmp = fabs (cod_info->xr[i]);
-	sum += tmp;
+    sum += tmp;
         xrpow[i] = sqrt (tmp * sqrt(tmp));
     }
     /*  return 1 if we have something to quantize, else 0
@@ -126,42 +126,42 @@ init_outer_loop(
     cod_info->psy_lmax        = gfc->sfb21_extra ? SBMAX_l : SBPSY_l;
     cod_info->psy_smax        = 0;
     if (cod_info->block_type == SHORT_TYPE) {
-	int sfb;
-	FLOAT8 ixwork[576];
-	FLOAT8 *ix;
+    int sfb;
+    FLOAT8 ixwork[576];
+    FLOAT8 *ix;
 
         cod_info->sfb_smin        = 0;
         cod_info->psy_smax        = gfc->sfb21_extra ? SBMAX_s : SBPSY_s;
         cod_info->sfb_lmax        = 0;
-	if (cod_info->mixed_block_flag) {
+    if (cod_info->mixed_block_flag) {
             /*
              *  MPEG-1:      sfbs 0-7 long block, 3-12 short blocks 
              *  MPEG-2(.5):  sfbs 0-5 long block, 3-12 short blocks
              */ 
-	    cod_info->sfb_smin    = 3;
+        cod_info->sfb_smin    = 3;
             cod_info->sfb_lmax    = gfc->is_mpeg1 ? 8 : 6;
-	}
-	cod_info->psy_lmax    = cod_info->sfb_lmax;
-	/* re-order the short blocks, for more efficient encoding below */
-	/* By Takehiro TOMINAGA */
-	/*
-	  Within each scalefactor band, data is given for successive
-	  time windows, beginning with window 0 and ending with window 2.
-	  Within each window, the quantized values are then arranged in
-	  order of increasing frequency...
-	*/
-	ix = &cod_info->xr[gfc->scalefac_band.l[cod_info->sfb_lmax]];
-	memcpy(ixwork, cod_info->xr, 576*sizeof(FLOAT8));
-	for (sfb = cod_info->sfb_smin; sfb < SBMAX_s; sfb++) {
-	    int start = gfc->scalefac_band.s[sfb];
-	    int end   = gfc->scalefac_band.s[sfb + 1];
-	    int window, l;
-	    for (window = 0; window < 3; window++) {
-		for (l = start; l < end; l++) {
-		    *ix++ = ixwork[3*l+window];
-		}
-	    }
-	}
+    }
+    cod_info->psy_lmax    = cod_info->sfb_lmax;
+    /* re-order the short blocks, for more efficient encoding below */
+    /* By Takehiro TOMINAGA */
+    /*
+      Within each scalefactor band, data is given for successive
+      time windows, beginning with window 0 and ending with window 2.
+      Within each window, the quantized values are then arranged in
+      order of increasing frequency...
+    */
+    ix = &cod_info->xr[gfc->scalefac_band.l[cod_info->sfb_lmax]];
+    memcpy(ixwork, cod_info->xr, 576*sizeof(FLOAT8));
+    for (sfb = cod_info->sfb_smin; sfb < SBMAX_s; sfb++) {
+        int start = gfc->scalefac_band.s[sfb];
+        int end   = gfc->scalefac_band.s[sfb + 1];
+        int window, l;
+        for (window = 0; window < 3; window++) {
+        for (l = start; l < end; l++) {
+            *ix++ = ixwork[3*l+window];
+        }
+        }
+    }
     }
     cod_info->count1bits          = 0;  
     cod_info->sfb_partition_table = nr_of_sfb_block[0][0];
@@ -344,7 +344,7 @@ quant_compare(
           lame_internal_flags * const gfc,
     const calc_noise_result * const best,
     const calc_noise_result   * const calc,
-	const int                         block_type )
+    const int                         block_type )
 {
     /*
        noise is given in decibels (dB) relative to masking thesholds.
@@ -359,19 +359,19 @@ quant_compare(
     switch (experimentalX) {
         default:
         case 0: 
-	    better = calc->over_count  < best->over_count
+        better = calc->over_count  < best->over_count
                ||  ( calc->over_count == best->over_count  &&
                      calc->over_noise  < best->over_noise )
                ||  ( calc->over_count == best->over_count  &&
                      calc->over_noise == best->over_noise  &&
                      calc->tot_noise   < best->tot_noise  ); 
-	    break;
+        break;
         case 1: 
-	    better = calc->max_noise < best->max_noise; 
-	    break;
+        better = calc->max_noise < best->max_noise; 
+        break;
         case 2: 
-	    better = calc->tot_noise < best->tot_noise; 
-	    break;
+        better = calc->tot_noise < best->tot_noise; 
+        break;
         case 3: {
             better = (calc->tot_noise < best->tot_noise) &&
                      (calc->max_noise < best->max_noise );
@@ -386,7 +386,7 @@ quant_compare(
             break;
         }
         case 4: 
-	    better = ( calc->max_noise <= 0  &&
+        better = ( calc->max_noise <= 0  &&
                        best->max_noise >  2 )
                  ||  ( calc->max_noise <= 0  &&
                        best->max_noise <  0  &&
@@ -406,25 +406,25 @@ quant_compare(
                        calc->tot_noise+calc->over_noise+calc->over_noise < best->tot_noise+best->over_noise+best->over_noise );
             break;
         case 5: 
-	    better =   calc->over_noise  < best->over_noise
+        better =   calc->over_noise  < best->over_noise
                  ||  ( calc->over_noise == best->over_noise  &&
                        calc->tot_noise   < best->tot_noise ); 
-	    break;
+        break;
         case 6: 
-	    better =   calc->over_noise  < best->over_noise
+        better =   calc->over_noise  < best->over_noise
                  ||  ( calc->over_noise == best->over_noise  &&
                      ( calc->max_noise   < best->max_noise  
-		     ||  ( calc->max_noise  == best->max_noise  &&
+             ||  ( calc->max_noise  == best->max_noise  &&
                            calc->tot_noise  <= best->tot_noise )
-		      )); 
-	    break;
+              )); 
+        break;
         case 7: 
-	    better =   calc->over_count < best->over_count
+        better =   calc->over_count < best->over_count
                    ||  calc->over_noise < best->over_noise; 
-	    break;
+        break;
         case 8: 
-	    better =   Max(1e-20, calc->klemm_noise)
-	      < Max(1e-20, best->klemm_noise);
+        better =   Max(1e-20, calc->klemm_noise)
+          < Max(1e-20, best->klemm_noise);
             break;
     }   
 
@@ -490,8 +490,8 @@ amp_scalefac_bands(
   for (sfb = cod_info->sfb_smin; sfb < SBPSY_s; sfb++) {
       int b;
       for (b = 0; b < 3; b++ ) {
-	  if (trigger < distort->s[sfb][b])
-	      trigger = distort->s[sfb][b];
+      if (trigger < distort->s[sfb][b])
+          trigger = distort->s[sfb][b];
       }
   }
 
@@ -525,39 +525,39 @@ amp_scalefac_bands(
       int l;
       j += width;
       if (distort->l[sfb] < trigger)
-	  continue;
+      continue;
 
       if (gfc->substep_shaping == 2) {
-	  gfc->pseudohalf.l[sfb] = !gfc->pseudohalf.l[sfb];
-	  if (!gfc->pseudohalf.l[sfb] && gfc->noise_shaping_amp==2)
-	      return;
+      gfc->pseudohalf.l[sfb] = !gfc->pseudohalf.l[sfb];
+      if (!gfc->pseudohalf.l[sfb] && gfc->noise_shaping_amp==2)
+          return;
       }
       scalefac->l[sfb]++;
       for (l = -width; l < 0; l++)
-	  xrpow[j+l] *= ifqstep34;
+      xrpow[j+l] *= ifqstep34;
       if (gfc->noise_shaping_amp==2)
-	  return;
+      return;
   }
 
   for (sfb = cod_info->sfb_smin; sfb < SBPSY_s; sfb++ ) {
       int width = gfc->scalefac_band.s[sfb+1] - gfc->scalefac_band.s[sfb];
       int b;
       for (b = 0; b < 3; b++) {
-	  int l;
-	  j += width;
-	  if (distort->s[sfb][b] < trigger)
-	      continue;
+      int l;
+      j += width;
+      if (distort->s[sfb][b] < trigger)
+          continue;
 
-	  if (gfc->substep_shaping == 2) {
-	      gfc->pseudohalf.s[sfb][b] = !gfc->pseudohalf.s[sfb][b];
-	      if (!gfc->pseudohalf.s[sfb][b] && gfc->noise_shaping_amp==2)
-		  return;
-	  }
-	  scalefac->s[sfb][b]++;
-	  for (l = -width; l < 0; l++) 
-	      xrpow[j+l] *= ifqstep34;
-	  if (gfc->noise_shaping_amp==2)
-	      return;
+      if (gfc->substep_shaping == 2) {
+          gfc->pseudohalf.s[sfb][b] = !gfc->pseudohalf.s[sfb][b];
+          if (!gfc->pseudohalf.s[sfb][b] && gfc->noise_shaping_amp==2)
+          return;
+      }
+      scalefac->s[sfb][b]++;
+      for (l = -width; l < 0; l++) 
+          xrpow[j+l] *= ifqstep34;
+      if (gfc->noise_shaping_amp==2)
+          return;
       }
   }
 }
@@ -584,9 +584,9 @@ inc_scalefac_scale (
 
     j = 0;
     for (sfb = 0; sfb < cod_info->sfb_lmax; sfb++) {
-	int width = gfc->scalefac_band.l[sfb+1] - gfc->scalefac_band.l[sfb];
+    int width = gfc->scalefac_band.l[sfb+1] - gfc->scalefac_band.l[sfb];
         int s = scalefac->l[sfb] + (cod_info->preflag ? pretab[sfb] : 0);
-	j += width;
+    j += width;
         if (s & 1) {
             s++;
             for (l = -width; l < 0; l++) 
@@ -597,18 +597,18 @@ inc_scalefac_scale (
     cod_info->preflag = 0;
 
     for (sfb = cod_info->sfb_smin; sfb < SBPSY_s; sfb++) {
-	int width = gfc->scalefac_band.s[sfb+1] - gfc->scalefac_band.s[sfb];
-	int b;
-	for (b = 0; b < 3; b++) {
-	    int s = scalefac->s[sfb][b];
-	    j += width;
-	    if (s & 1) {
-		s++;
-		for (l = -width; l < 0; l++) 
-		    xrpow[j+l] *= ifqstep34;
-	    }
-	    scalefac->s[sfb][b] = s >> 1;
-	}
+    int width = gfc->scalefac_band.s[sfb+1] - gfc->scalefac_band.s[sfb];
+    int b;
+    for (b = 0; b < 3; b++) {
+        int s = scalefac->s[sfb][b];
+        j += width;
+        if (s & 1) {
+        s++;
+        for (l = -width; l < 0; l++) 
+            xrpow[j+l] *= ifqstep34;
+        }
+        scalefac->s[sfb][b] = s >> 1;
+    }
     }
     cod_info->scalefac_scale = 1;
 }
@@ -741,16 +741,16 @@ balance_noise (
      */
     if ((gfc->noise_shaping > 1) && (!(gfc->presetTune.use &&
                                       gfc->ATH->adjust < gfc->presetTune.athadjust_switch_level))) {
-	memset(&gfc->pseudohalf, 0, sizeof(gfc->pseudohalf));
-	if (!cod_info->scalefac_scale) {
-	    inc_scalefac_scale (gfc, cod_info, scalefac, xrpow);
-	    status = 0;
-	} else {
-	    if (cod_info->block_type == SHORT_TYPE ) {
-		status = inc_subblock_gain (gfc, cod_info, scalefac, xrpow)
-		    || loop_break (cod_info, scalefac);
-	    }
-	}
+    memset(&gfc->pseudohalf, 0, sizeof(gfc->pseudohalf));
+    if (!cod_info->scalefac_scale) {
+        inc_scalefac_scale (gfc, cod_info, scalefac, xrpow);
+        status = 0;
+    } else {
+        if (cod_info->block_type == SHORT_TYPE ) {
+        status = inc_subblock_gain (gfc, cod_info, scalefac, xrpow)
+            || loop_break (cod_info, scalefac);
+        }
+    }
     }
 
     if (!status) {
@@ -819,7 +819,7 @@ outer_loop (
 
     real_bits = bits_found =
       bin_search_StepSize (gfc, cod_info, targ_bits, 
-			   gfc->OldValue[ch], xrpow, l3_enc_w);
+               gfc->OldValue[ch], xrpow, l3_enc_w);
     gfc->OldValue[ch] = cod_info->global_gain;
 
     /* BEGIN MAIN LOOP */
@@ -894,7 +894,7 @@ outer_loop (
         /* if no bands with distortion and -X0, we are done */
         if (0==gfc->noise_shaping_stop && 
             0==gfp->experimentalX &&
-	    (over == 0 || best_noise_info.over_count == 0) )
+        (over == 0 || best_noise_info.over_count == 0) )
             break;
         /* Otherwise, allow up to 3 unsuccesful tries in serial, then stop 
          * if our best quantization so far had no distorted bands. This
@@ -995,7 +995,7 @@ iteration_finish (
             /*  update reservoir status after FINAL quantization/bitrate
              */
             ResvAdjust (gfc, cod_info, l3_side, mean_bits);
-	} /* for ch */
+    } /* for ch */
     }    /* for gr */
     
     ResvFrameEnd (gfc, l3_side, mean_bits);
@@ -1285,7 +1285,7 @@ VBR_prepare (
             gfc->masking_lower = pow (10.0, masking_lower_db * 0.1);
       
             init_outer_loop(gfc, cod_info);
-	    bands[gr][ch] = calc_xmin (gfp, &ratio[gr][ch], 
+        bands[gr][ch] = calc_xmin (gfp, &ratio[gr][ch], 
                                        cod_info, l3_xmin[gr]+ch);
             if (bands[gr][ch]) 
                 analog_silence = 0;
@@ -1409,13 +1409,13 @@ VBR_iteration_loop (
       
             if (gfp->VBR == vbr_mtrh) {
                 ret = VBR_noise_shaping (gfc, xrpow,
-					 min_bits[gr][ch], max_bits[gr][ch], 
-					 &l3_xmin[gr][ch], gr, ch );
+                     min_bits[gr][ch], max_bits[gr][ch], 
+                     &l3_xmin[gr][ch], gr, ch );
                 if (ret < 0)
                     cod_info->part2_3_length = 100000;
             } 
             else
-	        VBR_encode_granule (gfp, cod_info, &l3_xmin[gr][ch], xrpow,
+            VBR_encode_granule (gfp, cod_info, &l3_xmin[gr][ch], xrpow,
                                     ch, min_bits[gr][ch], max_bits[gr][ch] );
 
             used_bits += cod_info->part2_3_length;
@@ -1547,7 +1547,7 @@ calc_target_bits (
     if (gfc->mode_ext == MPG_MD_MS_LR) 
         for (gr = 0; gr < gfc->mode_gr; gr++) {
             reduce_side (targ_bits[gr], ms_ener_ratio[gr], mean_bits*gfc->channels_out,
-			 MAX_BITS);
+             MAX_BITS);
         }
 
     /*  sum target bits

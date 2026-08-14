@@ -28,7 +28,7 @@ class CTimeSlider : public CWnd
 {
 // Construction
 public:
-	CTimeSlider();
+    CTimeSlider();
 
 // Attributes
 public:
@@ -37,25 +37,25 @@ public:
 public:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CTimeSlider)
-	public:
-	virtual BOOL Create(CWnd* pParentWnd, int posX, int posY, int nWidth, int nHeight, UINT nID);
-	virtual void MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint = TRUE );
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CTimeSlider)
+    public:
+    virtual BOOL Create(CWnd* pParentWnd, int posX, int posY, int nWidth, int nHeight, UINT nID);
+    virtual void MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint = TRUE );
+    //}}AFX_VIRTUAL
 
 
     //***************************************************
     // SAFE COPY:  ClassWizard may delete these above!!!
     //***************************************************
     /*
-	    virtual BOOL Create(CWnd* pParentWnd, int posX, int posY, int nWidth, int nHeight, UINT nID);
+        virtual BOOL Create(CWnd* pParentWnd, int posX, int posY, int nWidth, int nHeight, UINT nID);
         virtual void MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint = TRUE );
     */
 
 // Implementation
 public:
-	virtual ~CTimeSlider();
+    virtual ~CTimeSlider();
         void            SetFrameStart       ( int frameStart );
         void            SetFrameEnd         ( int frameEnd );
         void            SetFrameCurrent     ( int frameCurrent );
@@ -172,20 +172,20 @@ public:
 
 
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CTimeSlider)
-	afx_msg void OnPaint();
-	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnMButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CTimeSlider)
+    afx_msg void OnPaint();
+    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+    afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+    afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnMButtonUp(UINT nFlags, CPoint point);
+    afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+    afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

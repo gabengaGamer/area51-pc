@@ -79,17 +79,17 @@ const object_desc&  weapon_desert_eagle::GetObjectType( void )
 
 weapon_desert_eagle::weapon_desert_eagle( void )
 {
-	//initialize the ammo structures.
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_PISTOL;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 64;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 8;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
-	
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
+    //initialize the ammo structures.
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_PISTOL;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 64;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 8;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
+    
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
 
     m_NPCMuzzleSoundFx  = "Shotgun_Primary_Fire";
     m_ZoomFOV           = R_48;
@@ -118,15 +118,15 @@ weapon_desert_eagle::~weapon_desert_eagle()
 
 xbool weapon_desert_eagle::FireNPCWeaponProtected( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit  )
 {
-	//if there weapon is not ready, do nothing.
-	if ( ! IsWeaponReady( AMMO_PRIMARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.
+    if ( ! IsWeaponReady( AMMO_PRIMARY ) )
+    {
+        return FALSE;
+    }
 
-	//otherwise, create a new bullet projectile, init it's position, and send it on it's way.
-	else
-	{   
+    //otherwise, create a new bullet projectile, init it's position, and send it on it's way.
+    else
+    {   
         vector3 InitPos;
     
         if (!GetFiringBonePosition(InitPos))
@@ -170,8 +170,8 @@ xbool weapon_desert_eagle::FireNPCWeaponProtected( const vector3& BaseVelocity ,
                                           GetGuid() );
         }
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 }
 
 //=========================================================================
@@ -181,16 +181,16 @@ xbool weapon_desert_eagle::FireWeaponProtected( const vector3& InitPos , const v
     ( void )Power;
     ( void )iFirePoint;
 
-	//if there weapon is not ready, do nothing.
-	if ( ! IsWeaponReady( AMMO_PRIMARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.
+    if ( ! IsWeaponReady( AMMO_PRIMARY ) )
+    {
+        return FALSE;
+    }
 
-	//otherwise, create a new bullet projectile, init it's position, and send it on it's way.
-	else
-	{   
-		//create Bullet
+    //otherwise, create a new bullet projectile, init it's position, and send it on it's way.
+    else
+    {   
+        //create Bullet
         FireBullet(  InitPos, InitRot, BaseVelocity, Owner, TRUE );
 
         //add a muzzle light where the bullet was fired from (will fade out really quickly)
@@ -199,29 +199,29 @@ xbool weapon_desert_eagle::FireWeaponProtected( const vector3& InitPos , const v
         // decrement count of bullets in current clip
         DecrementAmmo();
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 }
 
 //=========================================================================
 
 xbool weapon_desert_eagle::FireSecondaryProtected( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint )
 {
-	ASSERT( m_FiringPointBoneIndex[ iFirePoint ] != -1 );
-	ASSERT( m_AltFiringPointBoneIndex[ iFirePoint ] != -1 );
+    ASSERT( m_FiringPointBoneIndex[ iFirePoint ] != -1 );
+    ASSERT( m_AltFiringPointBoneIndex[ iFirePoint ] != -1 );
 
     (void)Power;
     (void)iFirePoint;
     
-	//if there weapon is not ready, do nothing.  Shotgun uses primary ammo for both primary and secondary fire
-	if ( ! IsWeaponReady( AMMO_PRIMARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.  Shotgun uses primary ammo for both primary and secondary fire
+    if ( ! IsWeaponReady( AMMO_PRIMARY ) )
+    {
+        return FALSE;
+    }
 
-	// otherwise, create a new bullet projectile, init it's position, and send it on it's way.
-	else
-	{
+    // otherwise, create a new bullet projectile, init it's position, and send it on it's way.
+    else
+    {
         FireBullet( InitPos, InitRot, BaseVelocity, Owner, TRUE );
  
         // add a muzzle light where the bullet was fired from (will fade out really quickly)
@@ -230,10 +230,10 @@ xbool weapon_desert_eagle::FireSecondaryProtected( const vector3& InitPos , cons
         // decrement count of bullets in current clip
         DecrementAmmo();
 
-		return TRUE;
-	}
-	
-	return FALSE;
+        return TRUE;
+    }
+    
+    return FALSE;
 }
 
 //===========================================================================
@@ -318,7 +318,7 @@ void weapon_desert_eagle::ProcessSfx( void )
                     case ANIM_EVENT_WPN_SECONDARY_FIRE_LL:
                     case ANIM_EVENT_WPN_SECONDARY_FIRE_UR:
                     case ANIM_EVENT_WPN_SECONDARY_FIRE_UL:
-	                case ANIM_EVENT_SECONDARY_FIRE:
+                    case ANIM_EVENT_SECONDARY_FIRE:
                         //g_AudioManager.Play( "Shotgun_Secondary_Fire", Pos );
                         g_AudioManager.Play( "Shotgun_Secondary_Fire", audio_manager::GUN_SHOT, GetPosition(), 
                                         GetZone1(), GetGuid() );

@@ -85,8 +85,8 @@ public:
 
 
 protected: // create from serialization only
-	CEditorView();
-	DECLARE_DYNCREATE(CEditorView)
+    CEditorView();
+    DECLARE_DYNCREATE(CEditorView)
     void Initialize();
     xbool SetupView( const view* pPlayerView, view& PortalView, xbool FPV );
     void GetViewRatio( xbool bFirstPerson, s32& XRes, s32& YRes, f32& PixelScale );
@@ -94,7 +94,7 @@ protected: // create from serialization only
     void RenderNormal();
     void Render( );
     CEditorFrame* GetFrame() { return m_pFrameEdit; }
-	CEditorDoc* GetDocument();
+    CEditorDoc* GetDocument();
     view& GetCameraView() { return m_View; }
 
     void CleanView();
@@ -205,52 +205,52 @@ protected:
 
 
     // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorView)
-	public:
-	virtual void OnDraw(CDC* pDC);  // overridden to draw this view
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	protected:
-	virtual BOOL OnPreparePrinting(CPrintInfo* pInfo);
-	virtual void OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo);
-	virtual void OnEndPrinting(CDC* pDC, CPrintInfo* pInfo);
-	virtual void OnActivateFrame( UINT nState, CFrameWnd* pFrameWnd );
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorView)
+    public:
+    virtual void OnDraw(CDC* pDC);  // overridden to draw this view
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    protected:
+    virtual BOOL OnPreparePrinting(CPrintInfo* pInfo);
+    virtual void OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo);
+    virtual void OnEndPrinting(CDC* pDC, CPrintInfo* pInfo);
+    virtual void OnActivateFrame( UINT nState, CFrameWnd* pFrameWnd );
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CEditorView();
+    virtual ~CEditorView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
     
 // Generated message map functions
 protected:
-	//{{AFX_MSG(CEditorView)
-	afx_msg void OnPaint();
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	afx_msg void OnKillFocus(CWnd* pNewWnd);
-	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnTimer(UINT nIDEvent);
-	afx_msg void OnUndo();
-	afx_msg void OnRedo();
-	afx_msg void OnCutObjects();
-	afx_msg void OnCopyObjects();
-	afx_msg void OnPasteObjects();
-	afx_msg void OnShowReport();
-	afx_msg void OnUpdateUndo(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateRedo(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateCopyObjects(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateCutObjects(CCmdUI* pCmdUI);
-	afx_msg void OnUpdatePasteObjects(CCmdUI* pCmdUI);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CEditorView)
+    afx_msg void OnPaint();
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+    afx_msg void OnKillFocus(CWnd* pNewWnd);
+    afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+    afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+    afx_msg void OnTimer(UINT nIDEvent);
+    afx_msg void OnUndo();
+    afx_msg void OnRedo();
+    afx_msg void OnCutObjects();
+    afx_msg void OnCopyObjects();
+    afx_msg void OnPasteObjects();
+    afx_msg void OnShowReport();
+    afx_msg void OnUpdateUndo(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateRedo(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateCopyObjects(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateCutObjects(CCmdUI* pCmdUI);
+    afx_msg void OnUpdatePasteObjects(CCmdUI* pCmdUI);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 #ifndef _DEBUG  // debug version in EditorView.cpp

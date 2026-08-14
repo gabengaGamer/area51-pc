@@ -1345,7 +1345,7 @@ xbool nav_map::IsPointInGrid( const vector3& testPoint, u8 testGrid )
 //===========================================================================
 
 xbool nav_map::IsPointInMap( const vector3& testPoint )
-{	
+{    
     nav_connection_slot_id ConnID;
     return GetConnectionContainingPoint( ConnID, testPoint );
 }

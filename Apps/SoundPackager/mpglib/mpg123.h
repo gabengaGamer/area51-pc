@@ -21,9 +21,9 @@ char *strchr (), *strrchr ();
 
 
 #if defined(__riscos__) && defined(FPA10)
-#include	"ymath.h"
+#include    "ymath.h"
 #else
-#include	<math.h>
+#include    <math.h>
 #endif
 
 #ifndef M_PI
@@ -89,12 +89,12 @@ struct frame {
     int emphasis;
     int framesize; /* computed framesize */
 
-	/* AF: ADDED FOR LAYER1/LAYER2 */
+    /* AF: ADDED FOR LAYER1/LAYER2 */
 #if defined(USE_LAYER_2) || defined(USE_LAYER_1)
     int II_sblimit;
     struct al_table2 *alloc;
-	int down_sample_sblimit;
-	int	down_sample;
+    int down_sample_sblimit;
+    int    down_sample;
 
 #endif
 

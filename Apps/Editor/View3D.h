@@ -56,41 +56,41 @@ protected:
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	DECLARE_DYNCREATE(CView3D)
-          	 CView3D();           // protected constructor used by dynamic creation
-	virtual ~CView3D();
+    DECLARE_DYNCREATE(CView3D)
+               CView3D();           // protected constructor used by dynamic creation
+    virtual ~CView3D();
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CView3D)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CView3D)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
 
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	// Generated message map functions
-	//{{AFX_MSG(CView3D)
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	afx_msg void OnPaint();
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-	afx_msg void OnTimer(UINT nIDEvent);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(CView3D)
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg void OnPaint();
+    afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+    afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+    afx_msg void OnTimer(UINT nIDEvent);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

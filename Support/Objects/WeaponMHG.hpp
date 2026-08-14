@@ -13,10 +13,10 @@
 class weapon_mhg : public new_weapon
 {
 public:
-	CREATE_RTTI( weapon_mhg , new_weapon , object )
+    CREATE_RTTI( weapon_mhg , new_weapon , object )
 
-								weapon_mhg		        ( void );
-	virtual						~weapon_mhg		        ( void );
+                                weapon_mhg                ( void );
+    virtual                        ~weapon_mhg                ( void );
 
     virtual s32                 GetTotalSecondaryAmmo   ( void );
             void                FireBullet              ( const vector3& Pos, const radian3& Rot, 
@@ -29,7 +29,7 @@ public:
     virtual void                InitWeapon              ( const vector3& rInitPos, render_state rRenderState, 
                                                           guid OwnerGuid );
 
-    virtual	void				InitWeapon			    ( const char* pSkinFileName , 
+    virtual    void                InitWeapon                ( const char* pSkinFileName , 
                                                           const char* pAnimFileName , 
                                                           const vector3& rInitPos , 
                                                           const render_state& rRenderState = RENDER_STATE_PLAYER,
@@ -43,21 +43,21 @@ public:
     virtual ammo_priority       GetSecondaryAmmoPriority( void )    { return AMMO_PRIMARY; }
     
     //virtual xbool               CanIntereptPrimaryFire  ( s32 nFireAnimIndex );
-    virtual xbool				CanReload			    ( const ammo_priority& Priority );
+    virtual xbool                CanReload                ( const ammo_priority& Priority );
     
 
-    virtual	void	            OnEnumProp		        ( prop_enum& List );
-	virtual	xbool	            OnProperty		        ( prop_query& PropQuery );
+    virtual    void                OnEnumProp                ( prop_enum& List );
+    virtual    xbool                OnProperty                ( prop_query& PropQuery );
     virtual void                OnMove                  ( const vector3& NewPos   );      
     virtual void                OnTransform             ( const matrix4& L2W      ); 
 
     //----------------------------------------------------------------------
 protected:
     
-    virtual	xbool				FireWeaponProtected         ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint );
-    virtual	xbool				FireSecondaryProtected	    ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint );
-    virtual	xbool				FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
-    virtual	xbool				FireNPCSecondaryProtected	( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
+    virtual    xbool                FireWeaponProtected         ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint );
+    virtual    xbool                FireSecondaryProtected        ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint );
+    virtual    xbool                FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
+    virtual    xbool                FireNPCSecondaryProtected    ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
             void                InitReloadFx                ( void );
             void                UpdateReloadFx              ( void );
             void                DestoryReloadFx             ( void );

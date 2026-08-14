@@ -42,9 +42,9 @@ CStatusBox::~CStatusBox()
 
 
 BEGIN_MESSAGE_MAP(CStatusBox, CWnd)
-	//{{AFX_MSG_MAP(CStatusBox)
-	ON_WM_PAINT()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CStatusBox)
+    ON_WM_PAINT()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -86,7 +86,7 @@ BOOL CStatusBox::Create(CWnd* pParentWnd, const char* Text, int posX, int posY, 
     CString         winClassName;
     RECT            winRect;
 
-	winClassName    = AfxRegisterWndClass   ( CS_DBLCLKS,                       // Class Style
+    winClassName    = AfxRegisterWndClass   ( CS_DBLCLKS,                       // Class Style
                                               ::LoadCursor(NULL, IDC_ARROW),    // Cursor
                                               NULL,                             // Background
                                               0 );                              // Icon
@@ -96,7 +96,7 @@ BOOL CStatusBox::Create(CWnd* pParentWnd, const char* Text, int posX, int posY, 
     winRect.top     = posY;
     winRect.bottom  = posY + m_Height;
 
-	return CWnd::Create(winClassName, "", WS_VISIBLE, winRect, pParentWnd, nID, NULL);
+    return CWnd::Create(winClassName, "", WS_VISIBLE, winRect, pParentWnd, nID, NULL);
 }
 
 void CStatusBox::MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint )
@@ -111,13 +111,13 @@ void CStatusBox::MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint
 
 void CStatusBox::OnPaint() 
 {
-	CPaintDC dc(this); // device context for painting
-	
-	// Get the Client Rectangle
+    CPaintDC dc(this); // device context for painting
+    
+    // Get the Client Rectangle
     CRect             rcClient;
     GetClientRect     ( rcClient );
 
-	// Fill the background
+    // Fill the background
     CRgn        rgn;
     CBrush      brFill;
     CBrush      brBorder;
@@ -133,6 +133,6 @@ void CStatusBox::OnPaint()
     dc.SelectObject             ( m_Font );
     dc.SetBkMode                ( TRANSPARENT );
     dc.ExtTextOut               ( 6, 2, ETO_CLIPPED, rcClient, m_StatusText, NULL );
-	
-	// Do not call CWnd::OnPaint() for painting messages
+    
+    // Do not call CWnd::OnPaint() for painting messages
 }

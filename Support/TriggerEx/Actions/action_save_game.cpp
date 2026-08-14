@@ -46,14 +46,14 @@ void action_save_game::OnDebugRender ( s32 Index )
 
 //=============================================================================
 
-void action_save_game::OnEnumProp	( prop_enum& rPropList )
+void action_save_game::OnEnumProp    ( prop_enum& rPropList )
 {
     actions_ex_base::OnEnumProp( rPropList );
 }
 
 //=============================================================================
 
-xbool action_save_game::OnProperty	( prop_query& rPropQuery )
+xbool action_save_game::OnProperty    ( prop_query& rPropQuery )
 {    
     if( actions_ex_base::OnProperty( rPropQuery ) )
         return TRUE;

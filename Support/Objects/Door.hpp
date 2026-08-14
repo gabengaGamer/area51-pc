@@ -40,8 +40,8 @@ public:
 
                                 door            ( void );
    
-	virtual			void	    OnEnumProp		( prop_enum& rList );
-	virtual			xbool	    OnProperty		( prop_query& rPropQuery );
+    virtual            void        OnEnumProp        ( prop_enum& rList );
+    virtual            xbool        OnProperty        ( prop_query& rPropQuery );
     
     virtual         bbox        GetLocalBBox    ( void ) const;
                     bbox        GetDoorBBox     ( void ) const;
@@ -63,9 +63,9 @@ protected:
 //=========================================================================
        
  
-    virtual void                OnRender		( void );
-    virtual void                OnColNotify		( object& Object );
-    virtual void                OnAdvanceSimulation	( f32 DelaTime );
+    virtual void                OnRender        ( void );
+    virtual void                OnColNotify        ( object& Object );
+    virtual void                OnAdvanceSimulation    ( f32 DelaTime );
     virtual void                OnInit          ( void );     
     virtual void                OnColCheck      ( void );
 
@@ -83,7 +83,7 @@ protected:
 
     state                       m_InitialState;         // Initial state of the door.      
     state                       m_RestingState;         // Resting state of the door.      
-    state                       m_CurrentState; 		// Current state that the door is in.
+    state                       m_CurrentState;         // Current state that the door is in.
     state                       m_TargetState;          // The state that we want to get to.
 
     guid                        m_PortalGuid;           // Portal GUID

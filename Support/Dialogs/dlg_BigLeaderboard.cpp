@@ -114,8 +114,8 @@ xbool dlg_big_leaderboard::Create( s32                        UserID,
     // Do dialog creation
     Success = dlg_mp_score::Create( UserID, pManager, pDialogTem, Position, pParent, Flags, pUserData );
 
-    m_pPlayerOneBox	= (ui_blankbox*)    FindChildByID( IDC_BIG_LEADERBOARD_ONE_DETAILS  );
-    m_pPlayerTwoBox	= (ui_blankbox*)    FindChildByID( IDC_BIG_LEADERBOARD_TWO_DETAILS  );
+    m_pPlayerOneBox    = (ui_blankbox*)    FindChildByID( IDC_BIG_LEADERBOARD_ONE_DETAILS  );
+    m_pPlayerTwoBox    = (ui_blankbox*)    FindChildByID( IDC_BIG_LEADERBOARD_TWO_DETAILS  );
     m_pLoadingText  = (ui_text*)        FindChildByID( IDC_BIG_LEADERBOARD_LOADING_TEXT );
     m_pLoadingPips  = (ui_text*)        FindChildByID( IDC_BIG_LEADERBOARD_LOADING_PIPS );
     m_pFrameOne     = (ui_frame*)       FindChildByID( IDC_BIG_LEADERBOARD_FRAME_ONE    );
@@ -259,7 +259,7 @@ void dlg_big_leaderboard::Destroy( void )
 
 void dlg_big_leaderboard::Render( s32 ox, s32 oy )
 {
-	irect rb;
+    irect rb;
 
     if( (GetFlags() & ui_win::WF_VISIBLE)==0 )
     {

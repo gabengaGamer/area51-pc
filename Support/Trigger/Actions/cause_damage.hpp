@@ -27,8 +27,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Cause Damage"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "Causes Damage within an area."; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& List );
-    virtual			xbool	            OnProperty	( prop_query& I );
+    virtual            void                OnEnumProp    ( prop_enum& List );
+    virtual            xbool                OnProperty    ( prop_query& I );
 
     virtual         void                OnRender    ( void );
  

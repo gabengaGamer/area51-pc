@@ -2099,15 +2099,15 @@ xbool turret::CheckLOS( const vector3& Pt, u32 Attr )
     g_CollisionMgr.AddToIgnoreList( m_TargetGuid );
     g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, Attr, (object::object_attr)(IgnoreFlags) );
 
-	xbool bCollided = FALSE;
-	if( g_CollisionMgr.m_nCollisions != 0 )
-	{
-		if ((g_CollisionMgr.m_Collisions[0].T > 0.01f) &&
-			(g_CollisionMgr.m_Collisions[0].T < 0.99f))
-		{
-			bCollided = TRUE;
-		}
-	}
+    xbool bCollided = FALSE;
+    if( g_CollisionMgr.m_nCollisions != 0 )
+    {
+        if ((g_CollisionMgr.m_Collisions[0].T > 0.01f) &&
+            (g_CollisionMgr.m_Collisions[0].T < 0.99f))
+        {
+            bCollided = TRUE;
+        }
+    }
 
     //no collisions, move the object.
     if( !bCollided )
@@ -2415,7 +2415,7 @@ xbool turret::LookForTarget( void )
             if( DistSquared < (GetEffectiveRadiusSense())*(GetEffectiveRadiusSense()) )
             {
                 GuidList[ GuidCount ]= pActor->GetGuid();
-			    GuidCount++;                        
+                GuidCount++;                        
             }
         }
 
@@ -2472,7 +2472,7 @@ xbool turret::LookForTarget( void )
         }
 
         return TRUE;
-    }	      
+    }          
 
     // We found no target
     // If we have a tracking guid, use that.

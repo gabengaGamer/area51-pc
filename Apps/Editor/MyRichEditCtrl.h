@@ -12,9 +12,9 @@ class CMyRichEditCtrl : public CRichEditCtrl
 // Construction
 // @access Public Member Functions and Variables
 public:
-	// @cmember
-	// constructor
-	CMyRichEditCtrl();
+    // @cmember
+    // constructor
+    CMyRichEditCtrl();
 
 // Operations
 public:
@@ -37,37 +37,37 @@ public:
     void ClearAll               ( void );
 
     void SetRtf                 ( CFile* pInputFile );
-	void SetSelectionBold       ( void );
-	void SetSelectionItalic     ( void );
-	void SetSelectionUnderline  ( void );
-	void SetColor               ( void );
-	void SetColor               ( COLORREF clr );
-	void SetParagraphLeft       ( void );
-	void SetParagraphRight      ( void );
-	void SetParagraphCenter     ( void );
-	void SetParagraphBulleted   ( void );
-	void SetFontName            ( CString sFontName );
-	void SetFontSize            ( int nFontSize );
+    void SetSelectionBold       ( void );
+    void SetSelectionItalic     ( void );
+    void SetSelectionUnderline  ( void );
+    void SetColor               ( void );
+    void SetColor               ( COLORREF clr );
+    void SetParagraphLeft       ( void );
+    void SetParagraphRight      ( void );
+    void SetParagraphCenter     ( void );
+    void SetParagraphBulleted   ( void );
+    void SetFontName            ( CString sFontName );
+    void SetFontSize            ( int nFontSize );
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CMyRichEditCtrl)
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CMyRichEditCtrl)
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	// @cmember,mfunc
-	// destructor
-	virtual ~CMyRichEditCtrl();
+    // @cmember,mfunc
+    // destructor
+    virtual ~CMyRichEditCtrl();
 // @access Private Member Variables
 private:
-	
-	// Generated message map functions
+    
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CMyRichEditCtrl)
-	//}}AFX_MSG
+    //{{AFX_MSG(CMyRichEditCtrl)
+    //}}AFX_MSG
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

@@ -39,14 +39,14 @@ public:
     bbox                GetBBox             ( void ) const;
     xbool               SetCrouchParametric ( f32 NormalizePercent );
     void                Jump                ( f32 YVel );
-	void				SetGravityAccel		( const f32& GravityAccel ); 
-	f32					GetGravityAccel		( void );
-	xbool				GetFallMode			( void );
-	xbool				GetJumpMode			( void );
-	void				SetAirControl		( const f32& AirControl ) { m_AirControl = AirControl; }
+    void                SetGravityAccel        ( const f32& GravityAccel ); 
+    f32                    GetGravityAccel        ( void );
+    xbool                GetFallMode            ( void );
+    xbool                GetJumpMode            ( void );
+    void                SetAirControl        ( const f32& AirControl ) { m_AirControl = AirControl; }
     f32                 GetActorCollisionRadius( void )                 { return m_ActorCollisionRadius; }
     f32                 GetActorCollisionHeight( void )                 { return m_CollisionHeight; }
-	xbool				GetNavCollided		( void ) { return m_bNavCollided; }
+    xbool                GetNavCollided        ( void ) { return m_bNavCollided; }
     guid                GetGuid             ( void ) { return m_Guid ; }
 
     void                SetDeltaPos         ( vector3 &DeltaPos );
@@ -178,26 +178,26 @@ inline bbox loco_physics::GetBBox( void ) const
 
 inline void loco_physics::SetGravityAccel( const f32& fGravityAccel )
 {
-	m_GravityAcceleration = fGravityAccel;
+    m_GravityAcceleration = fGravityAccel;
 }
 
 //=========================================================================
 
-inline f32	loco_physics::GetGravityAccel( void )
+inline f32    loco_physics::GetGravityAccel( void )
 {
-	return m_GravityAcceleration;
+    return m_GravityAcceleration;
 }
 
 //=========================================================================
 inline xbool loco_physics::GetFallMode( void )
 {
-	return m_bFallMode;
+    return m_bFallMode;
 }
 
 //=========================================================================
 inline xbool loco_physics::GetJumpMode( void )
 {
-	return m_bJumpMode;
+    return m_bJumpMode;
 }
 
 //=========================================================================

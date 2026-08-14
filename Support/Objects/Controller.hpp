@@ -58,7 +58,7 @@ protected:
 
 protected:
     virtual void            OnInit              ( void );     
-    virtual void            OnAdvanceSimulation	    ( f32 DeltaTime );
+    virtual void            OnAdvanceSimulation        ( f32 DeltaTime );
             void            MoveObject          ( s32 Index, const matrix4& L2W ) const;
 
 //=====================================================================

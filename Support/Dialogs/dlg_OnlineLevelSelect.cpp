@@ -25,7 +25,7 @@
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
 #else
-#include "../../Apps/GameApp/Config.hpp"	
+#include "../../Apps/GameApp/Config.hpp"    
 #endif
 #include "SaveData/SaveDataMgr.hpp"
 
@@ -35,7 +35,7 @@
 
 enum controls
 {
-	IDC_ONLINE_LEVEL_SELECT_LISTBOX,
+    IDC_ONLINE_LEVEL_SELECT_LISTBOX,
     IDC_ONLINE_LEVEL_SELECT_CYCLE,
     IDC_ONLINE_LEVEL_SELECT_LAUNCH,
 };
@@ -56,9 +56,9 @@ ui_manager::control_tem OnlineLevelSelectControls[] =
     // Frames.
     { IDC_ONLINE_LEVEL_SELECT_LISTBOX,   "IDS_MAP_NAME",    "listbox",   40,  40, 180, 222,  0, 0, 1, 1, ui_win::WF_VISIBLE },
     { IDC_ONLINE_LEVEL_SELECT_CYCLE,     "IDS_MAP_CYCLE",   "listbox",  240,  40, 180, 222,  1, 0, 1, 1, ui_win::WF_VISIBLE },
-	
+    
     { IDC_ONLINE_LEVEL_SELECT_LAUNCH,    "IDS_LAUNCH",      "button",    40, 285, 220,  40,  0, 1, 2, 1, ui_win::WF_VISIBLE },
-	
+    
 };
 
 //-------------------------------------------------------------------------
@@ -136,7 +136,7 @@ xbool dlg_online_level_select::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // find controls
     m_pLevelList     = (ui_listbox*)    FindChildByID( IDC_ONLINE_LEVEL_SELECT_LISTBOX  );
@@ -272,7 +272,7 @@ xbool dlg_online_level_select::Create( s32                        UserID,
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -367,7 +367,7 @@ void dlg_online_level_select::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
 
     if( m_bRenderBlackout )
     {

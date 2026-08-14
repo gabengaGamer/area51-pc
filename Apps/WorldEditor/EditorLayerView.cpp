@@ -110,16 +110,16 @@ CEditorLayerView::CEditorLayerView()
 
 CEditorLayerView::~CEditorLayerView()
 {
-	m_imageList.DeleteImageList();
+    m_imageList.DeleteImageList();
 }
 
 
 //=========================================================================
 
 BEGIN_MESSAGE_MAP(CEditorLayerView, CPaletteView)
-	//{{AFX_MSG_MAP(CEditorLayerView)
-	ON_WM_CREATE()
-	ON_WM_SIZE()
+    //{{AFX_MSG_MAP(CEditorLayerView)
+    ON_WM_CREATE()
+    ON_WM_SIZE()
     ON_NOTIFY (TVN_ENDLABELEDIT, IDR_LAYER_LIST, OnEndLabelEdit   )
     ON_COMMAND(ID_LVTB_NEW_LAYER, OnLvtbAddLayer)
     ON_COMMAND(ID_LVTB_NEW_FOLDER, OnLvtbAddFolder)
@@ -134,7 +134,7 @@ BEGIN_MESSAGE_MAP(CEditorLayerView, CPaletteView)
     ON_COMMAND(ID_LVTB_LOAD_LAYER, OnLvtbLoadLayer)
     ON_COMMAND(ID_LVTB_LOAD_ALL_LAYERS, OnLvtbLoadAllLayers)
     ON_COMMAND(ID_LVTB_CHECKOUT_LAYER, OnLvtbCheckOutLayer)
-	ON_NOTIFY (TVN_SELCHANGED, IDR_LAYER_LIST, OnSelchangedTree)
+    ON_NOTIFY (TVN_SELCHANGED, IDR_LAYER_LIST, OnSelchangedTree)
     ON_NOTIFY (NM_RCLICK, IDR_LAYER_LIST, OnNMRclick )
     ON_NOTIFY (NM_DBLCLK, IDR_LAYER_LIST, OnNMDblClick )
     ON_COMMAND(ID_LVRM_HIDE_THIS, OnLvrmHideThis)
@@ -175,7 +175,7 @@ BEGIN_MESSAGE_MAP(CEditorLayerView, CPaletteView)
     ON_UPDATE_COMMAND_UI(ID_LVTB_LOAD_LAYER, OnUpdateLvtbLoadLayer)
     ON_UPDATE_COMMAND_UI(ID_LVTB_LOAD_ALL_LAYERS, OnUpdateLvtbLoadAllLayers)
     ON_UPDATE_COMMAND_UI(ID_LVTB_CHECKOUT_LAYER, OnUpdateLvtbCheckOutLayer)
-	//}}AFX_MSG_MAP
+    //}}AFX_MSG_MAP
     ON_COMMAND_RANGE(IDR_LEVEL_LIGHT_DIR, IDR_LEVEL_LIGHT_RAYCAST, OnLvtbLightLayerType)
 END_MESSAGE_MAP()
 
@@ -194,14 +194,14 @@ void CEditorLayerView::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CEditorLayerView::AssertValid() const
 {
-	CPaletteView::AssertValid();
+    CPaletteView::AssertValid();
 }
 
 //=========================================================================
 
 void CEditorLayerView::Dump(CDumpContext& dc) const
 {
-	CPaletteView::Dump(dc);
+    CPaletteView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -212,23 +212,23 @@ void CEditorLayerView::Dump(CDumpContext& dc) const
 int CEditorLayerView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
     m_ToolbarResourceId = IDR_LAYER_VIEW_BAR;
-	if (CPaletteView::OnCreate(lpCreateStruct) == -1)
-		return -1;
+    if (CPaletteView::OnCreate(lpCreateStruct) == -1)
+        return -1;
 
     if (!m_tcLayer.Create(WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | 
                           TVS_EDITLABELS | TVS_SHOWSELALWAYS, CRect(0,0,0,0), this, IDR_LAYER_LIST))
     {
-        return -1;	      
+        return -1;          
     }
 
-	// Create the image list used by the tree control.
-	if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
-		return -1;
-	
-	// Set the image list for the tree control.
-	m_tcLayer.SetImageList(&m_imageList, TVSIL_NORMAL);
+    // Create the image list used by the tree control.
+    if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
+        return -1;
+    
+    // Set the image list for the tree control.
+    m_tcLayer.SetImageList(&m_imageList, TVSIL_NORMAL);
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
@@ -246,7 +246,7 @@ void CEditorLayerView::LoadLayers()
     x_qsort( &ListLayers[0], ListLayers.GetCount(), CompareNamesForSort() );
 
     for (int i = 0; i < ListLayers.GetCount(); i++)
-	{
+    {
         CString strItem = ListLayers.GetAt(i);
         HTREEITEM hRoot = NULL;
         BOOL bLoaded   = g_WorldEditor.IsLayerLoaded(strItem);
@@ -284,7 +284,7 @@ void CEditorLayerView::LoadLayers()
 
             //now add all sorted objects as fast as we can
             for (int j = 0; j < ListObjects.GetCount(); j++)
-	        {
+            {
                 editor_object_ref ObjectRef = ListObjects.GetAt(j);
                 CString strLayerPath(ObjectRef.LayerPath);
                 if (hParent && (strLastLayerPath == strLayerPath))
@@ -312,7 +312,7 @@ void CEditorLayerView::LoadLayers()
 
             //now add all sorted blueprints as fast as we can
             for (int j = 0; j < ListBlueprints.GetCount(); j++)
-	        {
+            {
                 editor_blueprint_ref BPRef = ListBlueprints.GetAt(j);
                 CString strLayerPath(BPRef.LayerPath);
                 if (hParent && (strLastLayerPath == strLayerPath))
@@ -337,7 +337,7 @@ void CEditorLayerView::LoadLayers()
         if (g_WorldEditor.GetResourcesInLayer(strItem,ListResources))
         {
             for (int j = 0; j < ListResources.GetCount(); j++)
-	        {
+            {
                 xstring xstrData = ListResources.GetAt(j);
                 VERIFY(AddResourceToLayer(strItem, "\\.Res\\", CString((const char*)xstrData)) != NULL);
             }
@@ -426,14 +426,14 @@ xhandle CEditorLayerView::FindHandleForBlueprintGuid( guid Guid )
 
 void CEditorLayerView::OnInitialUpdate() 
 {
-	CPaletteView::OnInitialUpdate();
-}	
+    CPaletteView::OnInitialUpdate();
+}    
 
 //=========================================================================
 
 void CEditorLayerView::OnSize(UINT nType, int cx, int cy) 
 {
-	CPaletteView::OnSize(nType, cx, cy);
+    CPaletteView::OnSize(nType, cx, cy);
 
     CSize size = SizeToolBar(cx, cy);
     m_tcLayer.MoveWindow(0,size.cy,cx,cy-size.cy);
@@ -589,14 +589,14 @@ void CEditorLayerView::OnLvtbAddResource()
 
     if (hItem)
     {
-	    CFileDialog dlgBrowse(	TRUE, "", "", 0, (_T("All Files (*.*)|*.*||")));
+        CFileDialog dlgBrowse(    TRUE, "", "", 0, (_T("All Files (*.*)|*.*||")));
 
         CString strPath = g_Settings.GetReleasePath();
         dlgBrowse.m_ofn.lpstrInitialDir = strPath;
         
-	    if (dlgBrowse.DoModal() == IDOK)
-	    {
-		    CString strItemName = dlgBrowse.GetFileName( );
+        if (dlgBrowse.DoModal() == IDOK)
+        {
+            CString strItemName = dlgBrowse.GetFileName( );
 
             if (g_WorldEditor.AddResourceToLayer(strItemName, strLayer, TRUE))
             {
@@ -610,9 +610,9 @@ void CEditorLayerView::OnLvtbAddResource()
 
 void CEditorLayerView::SelectChildren(HTREEITEM hParent)
 {
-	HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
-	while (hItem)
-	{
+    HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
+    while (hItem)
+    {
         int nImage = -1;
         int nSelectedImage = -1;
         if (m_tcLayer.GetItemImage( hItem, nImage, nSelectedImage ))
@@ -635,9 +635,9 @@ void CEditorLayerView::SelectChildren(HTREEITEM hParent)
             }
         }
 
-		SelectChildren(hItem);
-		hItem = m_tcLayer.GetNextSiblingItem(hItem);
-	}
+        SelectChildren(hItem);
+        hItem = m_tcLayer.GetNextSiblingItem(hItem);
+    }
 }
 
 //=========================================================================
@@ -646,9 +646,9 @@ BOOL CEditorLayerView::GetChildBounds( HTREEITEM hParent, bbox& Bounds )
 {
     Bounds.Clear();
     BOOL bInit = FALSE;
-	HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
-	while (hItem)
-	{
+    HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
+    while (hItem)
+    {
         int nImage = -1;
         int nSelectedImage = -1;
         if (m_tcLayer.GetItemImage( hItem, nImage, nSelectedImage ))
@@ -706,8 +706,8 @@ BOOL CEditorLayerView::GetChildBounds( HTREEITEM hParent, bbox& Bounds )
             }
         }
 
-		hItem = m_tcLayer.GetNextSiblingItem(hItem);
-	}
+        hItem = m_tcLayer.GetNextSiblingItem(hItem);
+    }
     return bInit;
 }
 
@@ -799,9 +799,9 @@ BOOL CEditorLayerView::IsItemChainExpanded(HTREEITEM hItem)
 
 HTREEITEM CEditorLayerView::FindLayer(CString strLayer)
 {
-	HTREEITEM hItem = m_tcLayer.GetNextItem(TVI_ROOT, TVGN_CHILD);
-	while (hItem)
-	{
+    HTREEITEM hItem = m_tcLayer.GetNextItem(TVI_ROOT, TVGN_CHILD);
+    while (hItem)
+    {
         int nImage = -1;
         int nSelectedImage = -1;
         if (m_tcLayer.GetItemImage( hItem, nImage, nSelectedImage ))
@@ -814,8 +814,8 @@ HTREEITEM CEditorLayerView::FindLayer(CString strLayer)
                 }
             }
         }
-		hItem = m_tcLayer.GetNextSiblingItem(hItem);
-	}
+        hItem = m_tcLayer.GetNextSiblingItem(hItem);
+    }
     return NULL;
 }
 
@@ -823,9 +823,9 @@ HTREEITEM CEditorLayerView::FindLayer(CString strLayer)
 
 HTREEITEM CEditorLayerView::FindObject(HTREEITEM hParent, guid ItemGuid)
 {
-	HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
-	while (hItem)
-	{
+    HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
+    while (hItem)
+    {
         int nImage = -1;
         int nSelectedImage = -1;
         if (m_tcLayer.GetItemImage( hItem, nImage, nSelectedImage ))
@@ -841,11 +841,11 @@ HTREEITEM CEditorLayerView::FindObject(HTREEITEM hParent, guid ItemGuid)
             }
         }
 
-		HTREEITEM hFound = FindObject(hItem, ItemGuid);
+        HTREEITEM hFound = FindObject(hItem, ItemGuid);
         if (hFound) return hFound;
 
-		hItem = m_tcLayer.GetNextSiblingItem(hItem);
-	}
+        hItem = m_tcLayer.GetNextSiblingItem(hItem);
+    }
     return NULL;
 }
 
@@ -853,9 +853,9 @@ HTREEITEM CEditorLayerView::FindObject(HTREEITEM hParent, guid ItemGuid)
 
 HTREEITEM CEditorLayerView::FindResource(HTREEITEM hParent, CString strRes)
 {
-	HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
-	while (hItem)
-	{
+    HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
+    while (hItem)
+    {
         int nImage = -1;
         int nSelectedImage = -1;
         if (m_tcLayer.GetItemImage( hItem, nImage, nSelectedImage ))
@@ -870,11 +870,11 @@ HTREEITEM CEditorLayerView::FindResource(HTREEITEM hParent, CString strRes)
             }
         }
 
-		HTREEITEM hFound = FindResource(hItem, strRes);
+        HTREEITEM hFound = FindResource(hItem, strRes);
         if (hFound) return hFound;
 
-		hItem = m_tcLayer.GetNextSiblingItem(hItem);
-	}
+        hItem = m_tcLayer.GetNextSiblingItem(hItem);
+    }
     return NULL;
 }
 
@@ -882,9 +882,9 @@ HTREEITEM CEditorLayerView::FindResource(HTREEITEM hParent, CString strRes)
 
 HTREEITEM CEditorLayerView::FindBlueprint(HTREEITEM hParent, guid ItemGuid)
 {
-	HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
-	while (hItem)
-	{
+    HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
+    while (hItem)
+    {
         int nImage = -1;
         int nSelectedImage = -1;
         if (m_tcLayer.GetItemImage( hItem, nImage, nSelectedImage ))
@@ -900,11 +900,11 @@ HTREEITEM CEditorLayerView::FindBlueprint(HTREEITEM hParent, guid ItemGuid)
             }
         }
 
-		HTREEITEM hFound = FindBlueprint(hItem, ItemGuid);
+        HTREEITEM hFound = FindBlueprint(hItem, ItemGuid);
         if (hFound) return hFound;
 
-		hItem = m_tcLayer.GetNextSiblingItem(hItem);
-	}
+        hItem = m_tcLayer.GetNextSiblingItem(hItem);
+    }
     return NULL;
 }
 
@@ -957,9 +957,9 @@ BOOL CEditorLayerView::GetItemPath(HTREEITEM hItem, CString& strPath, CString& s
 
 void CEditorLayerView::SaveChildPaths(HTREEITEM hParent)
 {
-	HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
-	while (hItem)
-	{
+    HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
+    while (hItem)
+    {
         int nImage = -1;
         int nSelectedImage = -1;
         if (m_tcLayer.GetItemImage( hItem, nImage, nSelectedImage ))
@@ -986,9 +986,9 @@ void CEditorLayerView::SaveChildPaths(HTREEITEM hParent)
             }
         }
 
-		SaveChildPaths(hItem);
-		hItem = m_tcLayer.GetNextSiblingItem(hItem);
-	}
+        SaveChildPaths(hItem);
+        hItem = m_tcLayer.GetNextSiblingItem(hItem);
+    }
 }
 
 //=========================================================================
@@ -1022,17 +1022,17 @@ BOOL CEditorLayerView::DoesSiblingExist(HTREEITEM hItem, CString strName)
 
 BOOL CEditorLayerView::DoesChildExist(HTREEITEM hParent, CString strName)
 {
-	HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
-	while (hItem)
-	{
+    HTREEITEM hItem = m_tcLayer.GetNextItem(hParent, TVGN_CHILD);
+    while (hItem)
+    {
         if (strName.CompareNoCase(m_tcLayer.GetItemText(hItem))==0)
         {
             //found one
             return TRUE;
         }
         
-		hItem = m_tcLayer.GetNextSiblingItem(hItem);
-	}
+        hItem = m_tcLayer.GetNextSiblingItem(hItem);
+    }
     return FALSE;
 }
 
@@ -1077,7 +1077,7 @@ void CEditorLayerView::DeleteSelected()
             SelectChildren(hItem);
             //now delete those selected objects
             xarray<editor_item_descript> lstItems;
-	        g_WorldEditor.DeleteSelectedObjects(lstItems);
+            g_WorldEditor.DeleteSelectedObjects(lstItems);
             g_WorldEditor.CommitCurrentUndoEntry();
             LoadLayers();
             GetDocument()->GetFramePointer()->GetEditorView()->SetViewDirty();
@@ -1107,7 +1107,7 @@ void CEditorLayerView::DeleteSelected()
             SelectChildren(hItem);
             //now delete those selected objects
             xarray<editor_item_descript> lstItems;
-	        g_WorldEditor.DeleteSelectedObjects(lstItems);
+            g_WorldEditor.DeleteSelectedObjects(lstItems);
             g_WorldEditor.CommitCurrentUndoEntry();
 
             HTREEITEM hParent = m_tcLayer.GetParentItem( hItem );
@@ -1134,7 +1134,7 @@ void CEditorLayerView::DeleteSelected()
             SelectChildren(hItem);
             //now delete those selected objects
             xarray<editor_item_descript> lstItems;
-	        g_WorldEditor.DeleteSelectedObjects(lstItems);
+            g_WorldEditor.DeleteSelectedObjects(lstItems);
 
             xhandle xh = m_tcLayer.GetItemData(hItem);
             guid& PortalGuidFound = GetObjectGuidFromHandle(xh);
@@ -1172,7 +1172,7 @@ void CEditorLayerView::OnLvtbLightLayer()
 //    CXTCoolMenu CoolMenu;
 //    CoolMenu.HookWindow( this );
 
-	CMenu menu;
+    CMenu menu;
     menu.CreatePopupMenu();
 
     menu.AppendMenu(MF_STRING|MF_ENABLED, IDR_LEVEL_LIGHT_NORMAL,   "Light::Distance");
@@ -1182,9 +1182,9 @@ void CEditorLayerView::OnLvtbLightLayer()
     menu.AppendMenu(MF_STRING|MF_ENABLED, IDR_LEVEL_LIGHT_WHITE,    "Light::FullBright");
     menu.AppendMenu(MF_STRING|MF_ENABLED, IDR_LEVEL_LIGHT_RAYCAST,  "Light::Raycast");
 
-	CPoint point;
-	GetCursorPos( &point );
-	menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON,point.x, point.y, this);
+    CPoint point;
+    GetCursorPos( &point );
+    menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON,point.x, point.y, this);
 }
 
 //=========================================================================
@@ -1264,8 +1264,8 @@ void CEditorLayerView::OnLvtbRenameLayer()
 
 void CEditorLayerView::OnEndLabelEdit(NMHDR* pNMHDR, LRESULT* pResult) 
 {
-	TV_DISPINFO* pTVDispInfo = (TV_DISPINFO*)pNMHDR;
-	*pResult = 0;
+    TV_DISPINFO* pTVDispInfo = (TV_DISPINFO*)pNMHDR;
+    *pResult = 0;
 
     if(!IsLayerEditable())
     {
@@ -1273,9 +1273,9 @@ void CEditorLayerView::OnEndLabelEdit(NMHDR* pNMHDR, LRESULT* pResult)
         return;
     }
 
-	if (pTVDispInfo->item.pszText)
-	{
-		CString strNewName(pTVDispInfo->item.pszText);
+    if (pTVDispInfo->item.pszText)
+    {
+        CString strNewName(pTVDispInfo->item.pszText);
 
         if (strNewName.FindOneOf("*:?\\/.<>|\"()") != -1)
         {
@@ -1422,13 +1422,13 @@ void CEditorLayerView::OnEndLabelEdit(NMHDR* pNMHDR, LRESULT* pResult)
                 }
             }
         }
-	    
+        
         //now reload the frame
         if (GetDocument()->GetFramePointer())
         {
             GetDocument()->GetFramePointer()->OnLoadLayers();
         }
-	}
+    }
 }
 
 //=========================================================================
@@ -2068,13 +2068,13 @@ void CEditorLayerView::OnTabActivate(BOOL bActivate)
 
 void CEditorLayerView::OnSelchangedTree(NMHDR* pNMHDR, LRESULT* pResult) 
 {
-	NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
-	
+    NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
+    
     //cancel out for internal selection change
     if (m_bInternalSelect)
     {
         m_bInternalSelect = FALSE;
-    	*pResult = 0;
+        *pResult = 0;
         return;
     }
 
@@ -2201,7 +2201,7 @@ void CEditorLayerView::OnSelchangedTree(NMHDR* pNMHDR, LRESULT* pResult)
     GetDocument()->GetFramePointer()->GetEditorView()->SetHighlightVolume(Zone, Color);
     GetDocument()->GetFramePointer()->GetEditorView()->SetViewDirty();
 
-	*pResult = 0;
+    *pResult = 0;
 }
 
 //=========================================================================
@@ -2390,7 +2390,7 @@ void CEditorLayerView::OnLvtbLoadAllLayers()
         g_WorldEditor.GetLayerNames(ListLayers);
 
         for (int i = 0; i < ListLayers.GetCount(); i++)
-	    {
+        {
             CString strItem = ListLayers.GetAt(i);
             if (!g_WorldEditor.IsLayerLoaded(strItem))
             {
@@ -2418,8 +2418,8 @@ void CEditorLayerView::OnUpdateLvtbAddLayer(CCmdUI* pCmdUI)
 
     pCmdUI->Enable( g_Project.IsProjectOpen() && 
                     pEditorView && pEditorView->IsStandardMode() && 
-                    pEditorDoc && !pEditorDoc->IsGameRunning());	
-    pCmdUI->SetCheck(FALSE);	
+                    pEditorDoc && !pEditorDoc->IsGameRunning());    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2433,13 +2433,13 @@ void CEditorLayerView::OnUpdateLvtbAddFolder(CCmdUI* pCmdUI)
         pEditorView && pEditorView->IsStandardMode() && 
         pEditorDoc && !pEditorDoc->IsGameRunning())
     {
-        pCmdUI->Enable(CanModify() && !IsPortalSelected() && IsLayerEditable());	
+        pCmdUI->Enable(CanModify() && !IsPortalSelected() && IsLayerEditable());    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2451,13 +2451,13 @@ void CEditorLayerView::OnUpdateLvtbAddResource(CCmdUI* pCmdUI)
     if (g_Project.IsProjectOpen() && 
         pEditorDoc && !pEditorDoc->IsGameRunning())
     {
-        pCmdUI->Enable(IsLayerSelected() && IsLayerLoaded() && IsLayerEditable());	
+        pCmdUI->Enable(IsLayerSelected() && IsLayerLoaded() && IsLayerEditable());    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2471,13 +2471,13 @@ void CEditorLayerView::OnUpdateLvtbAddZone(CCmdUI* pCmdUI)
     {
         pCmdUI->Enable(IsLayerSelected(FALSE/*do not include default*/,FALSE/*do not include global*/) && 
             IsLayerLoaded() &&
-            IsLayerEditable());	
+            IsLayerEditable());    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2491,8 +2491,8 @@ void CEditorLayerView::OnUpdateLvtbAddPortal(CCmdUI* pCmdUI)
                    pEditorView && pEditorView->IsStandardMode() && 
                    pEditorDoc && !pEditorDoc->IsGameRunning() &&
                    !g_WorldEditor.IsLayerReadonly(g_WorldEditor.GetGlobalLayer()) &&
-                   g_WorldEditor.CanAddRemovePortals());	
-    pCmdUI->SetCheck(FALSE);		
+                   g_WorldEditor.CanAddRemovePortals());    
+    pCmdUI->SetCheck(FALSE);        
 }
 
 //=========================================================================
@@ -2507,13 +2507,13 @@ void CEditorLayerView::OnUpdateLvtbDeleteLayer(CCmdUI* pCmdUI)
         pEditorDoc && !pEditorDoc->IsGameRunning())
     {
         pCmdUI->Enable((CanModify(TRUE) || IsResourceSelected()) && 
-            IsLayerEditable());	
+            IsLayerEditable());    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2527,13 +2527,13 @@ void CEditorLayerView::OnUpdateLvtbRenameLayer(CCmdUI* pCmdUI)
         pEditorView && pEditorView->IsStandardMode() &&
         pEditorDoc && !pEditorDoc->IsGameRunning())
     {
-        pCmdUI->Enable(CanModify(TRUE) && IsLayerEditable());	
+        pCmdUI->Enable(CanModify(TRUE) && IsLayerEditable());    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2547,13 +2547,13 @@ void CEditorLayerView::OnUpdateLvtbSetAsActiveLayer(CCmdUI* pCmdUI)
                               IsPortalSelected() ||
                             ( IsZoneSelected() && IsLayerLoaded() )) &&
                               IsLayerEditable() 
-                       );	
+                       );    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2565,13 +2565,13 @@ void CEditorLayerView::OnUpdateLvtbLightLayer(CCmdUI* pCmdUI)
     if (g_Project.IsProjectOpen() &&
         pEditorDoc && !pEditorDoc->IsGameRunning())
     {
-        pCmdUI->Enable(IsLayerSelected() && IsLayerLoaded());	
+        pCmdUI->Enable(IsLayerSelected() && IsLayerLoaded());    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2587,13 +2587,13 @@ void CEditorLayerView::OnUpdateLvtbSelectLayer(CCmdUI* pCmdUI)
                               IsPortalSelected() ||
                             ( IsZoneSelected() && IsLayerLoaded() )) &&
                               IsLayerEditable() 
-                       );	
+                       );    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2607,13 +2607,13 @@ void CEditorLayerView::OnUpdateLvtbLoadLayer(CCmdUI* pCmdUI)
         pEditorView && pEditorView->IsStandardMode() &&
         pEditorDoc && !pEditorDoc->IsGameRunning())
     {
-        pCmdUI->Enable(IsLayerSelected(FALSE,FALSE));	
+        pCmdUI->Enable(IsLayerSelected(FALSE,FALSE));    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2627,13 +2627,13 @@ void CEditorLayerView::OnUpdateLvtbLoadAllLayers(CCmdUI* pCmdUI)
         pEditorView && pEditorView->IsStandardMode() &&
         pEditorDoc && !pEditorDoc->IsGameRunning())
     {
-        pCmdUI->Enable(TRUE);	
+        pCmdUI->Enable(TRUE);    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2647,13 +2647,13 @@ void CEditorLayerView::OnUpdateLvtbCheckOutLayer(CCmdUI* pCmdUI)
         pEditorView && pEditorView->IsStandardMode() &&
         pEditorDoc && !pEditorDoc->IsGameRunning())
     {
-        pCmdUI->Enable(IsLayerSelected(TRUE,FALSE) && IsLayerLoaded() && !IsLayerEditable());	
+        pCmdUI->Enable(IsLayerSelected(TRUE,FALSE) && IsLayerLoaded() && !IsLayerEditable());    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2661,7 +2661,7 @@ void CEditorLayerView::OnUpdateLvtbCheckOutLayer(CCmdUI* pCmdUI)
 void CEditorLayerView::OnNMRclick(NMHDR *pNMHDR, LRESULT *pResult)
 {
     // We need cool menus
-//    CXTCoolMenu	CoolMenu;
+//    CXTCoolMenu    CoolMenu;
 //    CoolMenu.HookWindow( this );
 
     // Get the selected item & find the object from that

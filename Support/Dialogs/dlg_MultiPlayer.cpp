@@ -113,10 +113,10 @@ xbool dlg_multi_player::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
-    m_pPlayerOneBox	= (ui_blankbox*)  FindChildByID( IDC_MULTI_PLAYER_ONE_DETAILS );
-    m_pPlayerTwoBox	= (ui_blankbox*)  FindChildByID( IDC_MULTI_PLAYER_TWO_DETAILS );
+    m_pPlayerOneBox    = (ui_blankbox*)  FindChildByID( IDC_MULTI_PLAYER_ONE_DETAILS );
+    m_pPlayerTwoBox    = (ui_blankbox*)  FindChildByID( IDC_MULTI_PLAYER_TWO_DETAILS );
 
     m_pPlayerOneCombo = (ui_combo*)  FindChildByID( IDC_MULTI_PLAYER_ONE_COMBO );
     m_pPlayerTwoCombo = (ui_combo*)  FindChildByID( IDC_MULTI_PLAYER_TWO_COMBO );
@@ -202,7 +202,7 @@ void dlg_multi_player::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     // render transparent screen
     rb.l = m_CurrPos.l + 22;

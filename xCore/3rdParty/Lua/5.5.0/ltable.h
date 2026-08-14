@@ -10,9 +10,9 @@
 #include "lobject.h"
 
 
-#define gnode(t,i)	(&(t)->node[i])
-#define gval(n)		(&(n)->i_val)
-#define gnext(n)	((n)->u.next)
+#define gnode(t,i)    (&(t)->node[i])
+#define gval(n)        (&(n)->i_val)
+#define gnext(n)    ((n)->u.next)
 
 
 /*
@@ -20,7 +20,7 @@
 ** may have any of these metamethods. (First access that fails after the
 ** clearing will set the bit again.)
 */
-#define invalidateTMcache(t)	((t)->flags &= cast_byte(~maskflags))
+#define invalidateTMcache(t)    ((t)->flags &= cast_byte(~maskflags))
 
 
 /*
@@ -28,21 +28,21 @@
 ** for its hash part.
 */
 
-#define BITDUMMY		(1 << 6)
-#define NOTBITDUMMY		cast_byte(~BITDUMMY)
-#define isdummy(t)		((t)->flags & BITDUMMY)
+#define BITDUMMY        (1 << 6)
+#define NOTBITDUMMY        cast_byte(~BITDUMMY)
+#define isdummy(t)        ((t)->flags & BITDUMMY)
 
-#define setnodummy(t)		((t)->flags &= NOTBITDUMMY)
-#define setdummy(t)		((t)->flags |= BITDUMMY)
+#define setnodummy(t)        ((t)->flags &= NOTBITDUMMY)
+#define setdummy(t)        ((t)->flags |= BITDUMMY)
 
 
 
 /* allocated size for hash nodes */
-#define allocsizenode(t)	(isdummy(t) ? 0 : sizenode(t))
+#define allocsizenode(t)    (isdummy(t) ? 0 : sizenode(t))
 
 
 /* returns the Node, given the value of a table entry */
-#define nodefromval(v)	cast(Node *, (v))
+#define nodefromval(v)    cast(Node *, (v))
 
 
 
@@ -65,10 +65,10 @@
 
 
 /* results from pset */
-#define HOK		0
-#define HNOTFOUND	1
-#define HNOTATABLE	2
-#define HFIRSTNODE	3
+#define HOK        0
+#define HNOTFOUND    1
+#define HNOTATABLE    2
+#define HFIRSTNODE    3
 
 /*
 ** 'luaH_get*' operations set 'res', unless the value is absent, and
@@ -110,10 +110,10 @@
 */
 
 /* Computes the address of the tag for the abstract C-index 'k' */
-#define getArrTag(t,k)	(cast(lu_byte*, (t)->array) + sizeof(unsigned) + (k))
+#define getArrTag(t,k)    (cast(lu_byte*, (t)->array) + sizeof(unsigned) + (k))
 
 /* Computes the address of the value for the abstract C-index 'k' */
-#define getArrVal(t,k)	((t)->array - 1 - (k))
+#define getArrVal(t,k)    ((t)->array - 1 - (k))
 
 
 /*
@@ -121,7 +121,7 @@
 ** see luaH_getn. It is stored there to avoid wasting space in
 ** the structure Table for tables with no array part.
 */
-#define lenhint(t)	cast(unsigned*, (t)->array)
+#define lenhint(t)    cast(unsigned*, (t)->array)
 
 
 /*

@@ -35,7 +35,7 @@ public:
     CREATE_RTTI( ladder_field, object, object );
 
     // Construction / Destruction
-	                ladder_field();
+                    ladder_field();
     virtual         ~ladder_field();
 
     // object description.
@@ -44,8 +44,8 @@ public:
     
     // Object overloads
     virtual         s32             GetMaterial             ( void ) const { return MAT_TYPE_CONCRETE;}
-	virtual         void	        OnEnumProp			    ( prop_enum& rList );
-	virtual			xbool	        OnProperty			    ( prop_query& rPropQuery );
+    virtual         void            OnEnumProp                ( prop_enum& rList );
+    virtual            xbool            OnProperty                ( prop_query& rPropQuery );
 
 #ifndef X_RETAIL
     virtual         void            OnDebugRender           ( void );

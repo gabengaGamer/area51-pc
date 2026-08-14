@@ -203,7 +203,7 @@ int apply_preset(lame_global_flags*  gfp, int preset)
                 lame_set_quality(gfp, 2);
                 lame_set_lowpassfreq(gfp, 19500);
                 lame_set_mode(gfp, JOINT_STEREO);
-                lame_set_VBR_min_bitrate_kbps(gfp, 128);					
+                lame_set_VBR_min_bitrate_kbps(gfp, 128);                    
                 return preset;
            }
     case EXTREME_FAST: {
@@ -213,7 +213,7 @@ int apply_preset(lame_global_flags*  gfp, int preset)
                 lame_set_quality(gfp, 2);
                 lame_set_lowpassfreq(gfp, 19500);
                 lame_set_mode(gfp, JOINT_STEREO);
-                lame_set_VBR_min_bitrate_kbps(gfp, 128);					
+                lame_set_VBR_min_bitrate_kbps(gfp, 128);                    
                 return preset;
            }
     case INSANE: {

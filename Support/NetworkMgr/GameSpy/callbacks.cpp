@@ -797,9 +797,9 @@ void    gamespy_nat_complete ( NegotiateResult result, SOCKET gamesocket, struct
     }
     else
     {
-#if defined(X_LOGGING)		
+#if defined(X_LOGGING)        
         LOG_WARNING("gamespy_nat_complete","Result: %s", GetName(result) );
-#endif		
+#endif        
         if( MatchMgr.m_LocalIsServer == FALSE )
         {
             ASSERT( MatchMgr.GetState() == MATCH_NAT_NEGOTIATE );

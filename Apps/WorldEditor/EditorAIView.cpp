@@ -43,27 +43,27 @@ CEditorAIView::~CEditorAIView()
 
 
 BEGIN_MESSAGE_MAP(CEditorAIView, CPaletteView)
-	//{{AFX_MSG_MAP(CEditorAIView)
-	ON_WM_CREATE()
-	ON_WM_SIZE()
+    //{{AFX_MSG_MAP(CEditorAIView)
+    ON_WM_CREATE()
+    ON_WM_SIZE()
     /*
-	ON_COMMAND(ID_BUTTON_CREATE_NAV_NODE, OnButtonCreateNavNode)
-	ON_COMMAND(ID_BUTTON_CREATE_PLAYER, OnButtonCreatePlayer)
-	ON_COMMAND(ID_BUTTON_CHAIN_NODES, OnButtonChainNodes)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CHAIN_NODES, OnUpdateButtonChainNodes)
-	ON_COMMAND(ID_BUTTON_CHECK_ALL_NODES, OnButtonCheckAllNodes)
-	ON_COMMAND(ID_BUTTON_CONNECT_VISIBLE, OnButtonConnectVisible)
-	ON_COMMAND(ID_BUTTON_CONNECT_MODE, OnButtonConnectMode)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_MODE, OnUpdateButtonConnectMode)
-	ON_COMMAND(ID_BUTTON_CONNECT_SELECTED, OnButtonConnectSelected)
-	ON_COMMAND(ID_BUTTON_BATCH_FLAG, OnButtonBatchFlag)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CREATE_PLAYER, OnUpdateAIButtonCreatePlayer)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CREATE_NAV_NODE, OnUpdateAIButtonCreateNavNode)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_VISIBLE, OnUpdateButtonConnectVisible)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_SELECTED, OnUpdateButtonConnectSelected)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_MODE, OnUpdateButtonConnectMode)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CHECK_ALL_NODES, OnUpdateButtonCheckAllNodes)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CHAIN_NODES, OnUpdateButtonChainNodes)
+    ON_COMMAND(ID_BUTTON_CREATE_NAV_NODE, OnButtonCreateNavNode)
+    ON_COMMAND(ID_BUTTON_CREATE_PLAYER, OnButtonCreatePlayer)
+    ON_COMMAND(ID_BUTTON_CHAIN_NODES, OnButtonChainNodes)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CHAIN_NODES, OnUpdateButtonChainNodes)
+    ON_COMMAND(ID_BUTTON_CHECK_ALL_NODES, OnButtonCheckAllNodes)
+    ON_COMMAND(ID_BUTTON_CONNECT_VISIBLE, OnButtonConnectVisible)
+    ON_COMMAND(ID_BUTTON_CONNECT_MODE, OnButtonConnectMode)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_MODE, OnUpdateButtonConnectMode)
+    ON_COMMAND(ID_BUTTON_CONNECT_SELECTED, OnButtonConnectSelected)
+    ON_COMMAND(ID_BUTTON_BATCH_FLAG, OnButtonBatchFlag)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CREATE_PLAYER, OnUpdateAIButtonCreatePlayer)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CREATE_NAV_NODE, OnUpdateAIButtonCreateNavNode)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_VISIBLE, OnUpdateButtonConnectVisible)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_SELECTED, OnUpdateButtonConnectSelected)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_MODE, OnUpdateButtonConnectMode)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CHECK_ALL_NODES, OnUpdateButtonCheckAllNodes)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CHAIN_NODES, OnUpdateButtonChainNodes)
     */
     //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
@@ -74,8 +74,8 @@ END_MESSAGE_MAP()
 
 void CEditorAIView::OnDraw(CDC* pDC)
 {
-//	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+//    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -84,12 +84,12 @@ void CEditorAIView::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CEditorAIView::AssertValid() const
 {
-	CPaletteView::AssertValid();
+    CPaletteView::AssertValid();
 }
 
 void CEditorAIView::Dump(CDumpContext& dc) const
 {
-	CPaletteView::Dump(dc);
+    CPaletteView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -99,27 +99,27 @@ void CEditorAIView::Dump(CDumpContext& dc) const
 int CEditorAIView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
     m_ToolbarResourceId = IDR_AIVIEW_FILTER;   
-	if (CPaletteView::OnCreate(lpCreateStruct) == -1)
-		return -1;
+    if (CPaletteView::OnCreate(lpCreateStruct) == -1)
+        return -1;
 
     if (!m_aiTree.Create(WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | 
                            TVS_EDITLABELS | TVS_SHOWSELALWAYS, CRect(0,0,0,0), this, IDC_AI_TREE_LIST))
     {
-		TRACE0("Failed to create tree\n");
-        return -1;	      
+        TRACE0("Failed to create tree\n");
+        return -1;          
     }
 
-	return 0;
+    return 0;
 }
 
 void CEditorAIView::OnInitialUpdate() 
 {
-	CPaletteView::OnInitialUpdate();
-}	
+    CPaletteView::OnInitialUpdate();
+}    
 
 void CEditorAIView::OnSize(UINT nType, int cx, int cy) 
 {
-	CPaletteView::OnSize(nType, cx, cy);
+    CPaletteView::OnSize(nType, cx, cy);
 
     CSize size = SizeToolBar(cx, cy);
     m_aiTree.MoveWindow(0,size.cy,cx,cy - size.cy);
@@ -157,7 +157,7 @@ void CEditorAIView::OnButtonCreateNavNode()
 
 void CEditorAIView::OnButtonCreateNavConnection() 
 {
-	m_CreateNavConnectionMode = !m_CreateNavConnectionMode;
+    m_CreateNavConnectionMode = !m_CreateNavConnectionMode;
 }
 
 void CEditorAIView::OnButtonCreateForcedNavZone() 
@@ -167,14 +167,14 @@ void CEditorAIView::OnButtonCreateForcedNavZone()
 
 void CEditorAIView::OnButtonGo() 
 {
-	// TODO: Add your command handler code here
+    // TODO: Add your command handler code here
     ai_editor::GetAIEditor()->CalcPath();
-	
+    
 }
 
 void CEditorAIView::OnButtonSet1() 
 {
-	// TODO: Add your command handler code here
+    // TODO: Add your command handler code here
     
     if(g_WorldEditor.GetSelectedCount() )
     {
@@ -183,12 +183,12 @@ void CEditorAIView::OnButtonSet1()
         ai_editor::GetAIEditor()->SetNavTestStart(aGuid);
     }
 
-	
+    
 }
 
 void CEditorAIView::OnButtonSet2() 
 {
-	// TODO: Add your command handler code here
+    // TODO: Add your command handler code here
     if(g_WorldEditor.GetSelectedCount() )
     {
         guid aGuid;
@@ -233,17 +233,17 @@ void CEditorAIView::OnButtonCreatePlayer()
 
 void CEditorAIView::OnButtonChainNodes() 
 {
-	// TODO: Add your command handler code here
+    // TODO: Add your command handler code here
 
     //nav_node_editor::m_AutoChain = !(nav_node_editor::m_AutoChain);
     
-	
+    
 }
 
 void CEditorAIView::OnUpdateButtonChainNodes(CCmdUI* pCmdUI) 
 {
     /*
-	// TODO: Add your command update UI handler code here
+    // TODO: Add your command update UI handler code here
     if( nav_node_editor::m_AutoChain )
     {
         pCmdUI->SetCheck( 1 );
@@ -253,14 +253,14 @@ void CEditorAIView::OnUpdateButtonChainNodes(CCmdUI* pCmdUI)
     {
         pCmdUI->SetCheck( 0 );
     }
-	*/
+    */
 }
 
 void CEditorAIView::OnButtonCheckAllNodes() 
 {
     /*
-	// TODO: Add your command handler code here
-	ai_editor::GetAIEditor()->CheckAllNavConnections();
+    // TODO: Add your command handler code here
+    ai_editor::GetAIEditor()->CheckAllNavConnections();
     GetDocument()->GetFramePointer()->GetEditorView()->SetViewDirty();
     */
 }
@@ -268,16 +268,16 @@ void CEditorAIView::OnButtonCheckAllNodes()
 void CEditorAIView::OnButtonConnectVisible() 
 {
     /*
-	// TODO: Add your command handler code here
+    // TODO: Add your command handler code here
     ai_editor::GetAIEditor()->ConnectAllNavNodes();
     GetDocument()->GetFramePointer()->GetEditorView()->SetViewDirty();
-	*/
+    */
 }
 
 void CEditorAIView::OnButtonConnectMode() 
 {
     /*
-	// TODO: Add your command handler code here
+    // TODO: Add your command handler code here
     ai_editor::GetAIEditor()->SetInConnectionMode( !ai_editor::GetAIEditor()->IsInConnectionMode() );
     ai_editor::GetAIEditor()->SetObjectSelected( 0 );
     */
@@ -286,7 +286,7 @@ void CEditorAIView::OnButtonConnectMode()
 void CEditorAIView::OnUpdateButtonConnectMode(CCmdUI* pCmdUI) 
 {
     /*
-	// TODO: Add your command update UI handler code here
+    // TODO: Add your command update UI handler code here
     if ( ai_editor::GetAIEditor()->IsInConnectionMode() )
     {
         pCmdUI->SetCheck( 1 );
@@ -296,22 +296,22 @@ void CEditorAIView::OnUpdateButtonConnectMode(CCmdUI* pCmdUI)
         pCmdUI->SetCheck( 0 );
     }
 
-	*/
+    */
 }
 
 void CEditorAIView::OnButtonConnectSelected() 
 {
     /*
-	// TODO: Add your command handler code here
+    // TODO: Add your command handler code here
     ai_editor::GetAIEditor()->ConnectAllSelectedNavNodes();
     GetDocument()->GetFramePointer()->GetEditorView()->SetViewDirty();
-	*/
+    */
 }
 
 void CEditorAIView::OnButtonBatchFlag() 
 {
-	// TODO: Add your command handler code here
-	ConnectionAttributeDialog aDialog;
+    // TODO: Add your command handler code here
+    ConnectionAttributeDialog aDialog;
     aDialog.DoModal();
 }
 

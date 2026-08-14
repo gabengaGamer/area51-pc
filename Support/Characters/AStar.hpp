@@ -17,7 +17,7 @@ public:
 //
 // GeneratePath     -   Generates a path between two nodes.
 // AddToOpen        -   Adds a node to the open list.
-// CloseNode		-	Closes the specified node.
+// CloseNode        -    Closes the specified node.
 // RenderPath       -   Debug for Jim. Renders the path, open, and closed nodes.
 //
 //=========================================================================

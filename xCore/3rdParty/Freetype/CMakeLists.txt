@@ -136,7 +136,7 @@ if (APPLE)
     if (NOT "${CMAKE_GENERATOR}" STREQUAL "Xcode")
       message(AUTHOR_WARNING
         "You should use Xcode generator with IOS_PLATFORM enabled"
-	" to get Universal builds.")
+    " to get Universal builds.")
     endif ()
     if (BUILD_SHARED_LIBS)
       message(FATAL_ERROR

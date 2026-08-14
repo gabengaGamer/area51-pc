@@ -124,10 +124,10 @@ void character_search_state::ChangePhase( s32 newPhase )
     {
     case PHASE_SEARCH_GOTO_INTEREST:
         m_CharacterBase.SetGotoLocationGoal( m_CharacterBase.GetLastLocationOfInterest() );
-    	break;
+        break;
     case PHASE_SEARCH_IDLE_MOMENTARILY:
         m_CharacterBase.SetIdleGoal();
-    	break;
+        break;
     case PHASE_SEARCH_LOOK_AROUND:
         // pick a random yaw and turn towards it.
         randomYaw = x_frand(-180,180);
@@ -135,13 +135,13 @@ void character_search_state::ChangePhase( s32 newPhase )
         lookahead.RotateY(DEG_TO_RAD(randomYaw));
         lookahead += m_CharacterBase.GetLocoPointer()->GetEyeOffset() ;
         m_CharacterBase.SetTurnToLocationGoal( m_CharacterBase.GetPosition() + lookahead );
-    	break;
+        break;
     case PHASE_SEARCH_WALK_AROUND:
         m_CharacterBase.SetGotoLocationGoal( m_CharacterBase.GetClosestNode().GetPosition() );
-    	break;
+        break;
     case PHASE_SEARCH_SPOTTED_SURPRISE:
         m_CharacterBase.SetPlayAnimationGoal(loco::ANIM_SPOT_TARGET);
-    	break;
+        break;
     default:        
         if( newPhase >= PHASE_BASE_COUNT )
         {        
@@ -200,19 +200,19 @@ const char*character_search_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_SEARCH_GOTO_INTEREST:
         return "PHASE_SEARCH_GOTO_INTEREST";
-    	break;
+        break;
     case PHASE_SEARCH_LOOK_AROUND:
         return "PHASE_SEARCH_LOOK_AROUND";
-    	break;
+        break;
     case PHASE_SEARCH_IDLE_MOMENTARILY:
         return "PHASE_SEARCH_IDLE_MOMENTARILY";
-    	break;
+        break;
     case PHASE_SEARCH_WALK_AROUND:
         return "PHASE_SEARCH_WALK_AROUND";
-    	break;
+        break;
     case PHASE_SEARCH_SPOTTED_SURPRISE:
         return "PHASE_SEARCH_SPOTTED_SURPRISE";
-    	break;
+        break;
     }
     return character_state::GetPhaseName(thePhase);
 }

@@ -36,7 +36,7 @@ public:
     enum states
     {
         STATE_NULL,
-	    STATE_HOLD,
+        STATE_HOLD,
 
         STATE_IDLE,
         STATE_TRIGGER,

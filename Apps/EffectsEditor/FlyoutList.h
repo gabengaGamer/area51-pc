@@ -14,8 +14,8 @@ class CFlyoutList : public CWnd
 {
     // Construction / Destruction
     public:
-	             CFlyoutList();
-	    virtual ~CFlyoutList();
+                 CFlyoutList();
+        virtual ~CFlyoutList();
 
 
     // Properties
@@ -45,18 +45,18 @@ class CFlyoutList : public CWnd
     //-----------------------------------------------------------------------
 
     // Overrides
-	    // ClassWizard generated virtual function overrides
-	    //{{AFX_VIRTUAL(CFlyoutList)
-	public:
-	virtual BOOL Create(CWnd* pParentWnd, int NumItems, CString* pItemLabels, int posX, int posY, int nWidth, int nHeight, UINT nID);
-	//}}AFX_VIRTUAL
+        // ClassWizard generated virtual function overrides
+        //{{AFX_VIRTUAL(CFlyoutList)
+    public:
+    virtual BOOL Create(CWnd* pParentWnd, int NumItems, CString* pItemLabels, int posX, int posY, int nWidth, int nHeight, UINT nID);
+    //}}AFX_VIRTUAL
 
-	    // Generated message map functions
+        // Generated message map functions
     protected:
-	    //{{AFX_MSG(CFlyoutList)
-	afx_msg void OnPaint();
-	//}}AFX_MSG
-	    DECLARE_MESSAGE_MAP()
+        //{{AFX_MSG(CFlyoutList)
+    afx_msg void OnPaint();
+    //}}AFX_MSG
+        DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

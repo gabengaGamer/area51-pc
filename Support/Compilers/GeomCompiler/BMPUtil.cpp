@@ -86,7 +86,7 @@ void bmp_util::ConvertToPS2( xbitmap& Bitmap, xbool ReduceAlpha )
         // Shift alphas down
         // (even when not present since when drawing with alpha blending eg. fading player, it will get used!!)
 
-	    // Clut based?
+        // Clut based?
         if (Bitmap.GetFormatInfo().ClutBased)
         {
             s32    NColors = 0;

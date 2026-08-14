@@ -154,18 +154,18 @@ public:
     enum eGoalTypes
     {
         GOAL_NONE,
-		GOAL_IDLE,
-		GOAL_TURNTO_TARGET,
-		GOAL_TURNTO_LOCATION,
-		GOAL_LOOKAT_TARGET,
-		GOAL_LOOKAT_LOCATION,
-		GOAL_GOTO_TARGET,
-		GOAL_GOTO_LOCATION,
-		GOAL_RETREAT_FROM_TARGET,
-		GOAL_RETREAT_FROM_LOCATION,
-		GOAL_PLAY_ANIMATION,
-		GOAL_PLAY_ANIMATION_SCALED_TO_TARGET,
-		GOAL_SAY_DIALOG,
+        GOAL_IDLE,
+        GOAL_TURNTO_TARGET,
+        GOAL_TURNTO_LOCATION,
+        GOAL_LOOKAT_TARGET,
+        GOAL_LOOKAT_LOCATION,
+        GOAL_GOTO_TARGET,
+        GOAL_GOTO_LOCATION,
+        GOAL_RETREAT_FROM_TARGET,
+        GOAL_RETREAT_FROM_LOCATION,
+        GOAL_PLAY_ANIMATION,
+        GOAL_PLAY_ANIMATION_SCALED_TO_TARGET,
+        GOAL_SAY_DIALOG,
         GOAL_COUNT
     };
 
@@ -766,8 +766,8 @@ virtual xbool       UseSplines              ( void ) { return TRUE; }
         character_state*        m_pStateList ;          // List of connected states
         character_state*        m_pActiveState ;        // Currently active state
         character_trigger_state m_TriggerState;
-        character_hold_state	m_HoldState;
-        character_follow_state	m_FollowState;    
+        character_hold_state    m_HoldState;
+        character_follow_state    m_FollowState;    
         character_trigger_state::TriggerData m_TriggerStateData;       
 
     // Navigation data and collision data

@@ -11,11 +11,11 @@
 
 IMPLEMENT_DYNAMIC(CDialogTextEntry, CDialog)
 CDialogTextEntry::CDialogTextEntry(CWnd* pParent /*=NULL*/)
-	: CDialog(CDialogTextEntry::IDD, pParent)
+    : CDialog(CDialogTextEntry::IDD, pParent)
 {
-	//{{AFX_DATA_INIT(CDialogTextEntry)
-		// NOTE: the ClassWizard will add member initialization here
-	//}}AFX_DATA_INIT
+    //{{AFX_DATA_INIT(CDialogTextEntry)
+        // NOTE: the ClassWizard will add member initialization here
+    //}}AFX_DATA_INIT
 }
 
 CDialogTextEntry::~CDialogTextEntry()
@@ -24,10 +24,10 @@ CDialogTextEntry::~CDialogTextEntry()
 
 void CDialogTextEntry::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CDialogTextEntry)
+    CDialog::DoDataExchange(pDX);
+    //{{AFX_DATA_MAP(CDialogTextEntry)
     DDX_Text(pDX, IDC_NAME, m_Name);
-	//}}AFX_DATA_MAP
+    //}}AFX_DATA_MAP
 }
 
 

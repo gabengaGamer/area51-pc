@@ -20164,7 +20164,7 @@ struct FeaturesChain {
         return (sizeof(T) - sizeof(VkBaseOutStructure)) / sizeof(VkBool32);
     }
 
-	// Chain with all Vulkan Features structures
+    // Chain with all Vulkan Features structures
     VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV physicalDeviceDeviceGeneratedCommandsFeaturesNV{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_NV, nullptr };
     VkPhysicalDevicePushConstantBankFeaturesNV physicalDevicePushConstantBankFeaturesNV{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_CONSTANT_BANK_FEATURES_NV, nullptr };
     VkPhysicalDeviceDeviceGeneratedCommandsComputeFeaturesNV physicalDeviceDeviceGeneratedCommandsComputeFeaturesNV{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_COMPUTE_FEATURES_NV, nullptr };

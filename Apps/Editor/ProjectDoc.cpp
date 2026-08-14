@@ -28,9 +28,9 @@ extern xbool     g_bAutoBuild;
 IMPLEMENT_DYNCREATE(CProjectDoc, CBaseDocument)
 
 BEGIN_MESSAGE_MAP(CProjectDoc, CBaseDocument)
-	//{{AFX_MSG_MAP(CProjectDoc)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CProjectDoc)
+        // NOTE - the ClassWizard will add and remove mapping macros here.
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -48,9 +48,9 @@ CProjectDoc::CProjectDoc()
 
 BOOL CProjectDoc::OnNewDocument()
 {
-	if (!CBaseDocument::OnNewDocument())
-		return FALSE;
-	return TRUE;
+    if (!CBaseDocument::OnNewDocument())
+        return FALSE;
+    return TRUE;
 }
 
 //=========================================================================
@@ -64,14 +64,14 @@ CProjectDoc::~CProjectDoc()
 #ifdef _DEBUG
 void CProjectDoc::AssertValid() const
 {
-	CBaseDocument::AssertValid();
+    CBaseDocument::AssertValid();
 }
 
 //=========================================================================
 
 void CProjectDoc::Dump(CDumpContext& dc) const
 {
-	CBaseDocument::Dump(dc);
+    CBaseDocument::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -79,14 +79,14 @@ void CProjectDoc::Dump(CDumpContext& dc) const
 
 void CProjectDoc::Serialize(CArchive& ar)
 {
-	if (ar.IsStoring())
-	{
-		// TODO: add storing code here
-	}
-	else
-	{
-		// TODO: add loading code here
-	}
+    if (ar.IsStoring())
+    {
+        // TODO: add storing code here
+    }
+    else
+    {
+        // TODO: add loading code here
+    }
 }
 
 //=========================================================================
@@ -227,8 +227,8 @@ xbool CProjectDoc::FileSave()
         CString strReadme(pName);
         int iSlash = strReadme.ReverseFind('\\');
 
-	    POSITION pos = GetFirstViewPosition();
-	    CProjectView* pView = (CProjectView*)GetNextView (pos); 
+        POSITION pos = GetFirstViewPosition();
+        CProjectView* pView = (CProjectView*)GetNextView (pos); 
 
         if (iSlash != -1 && pView)
         {
@@ -372,8 +372,8 @@ xbool CProjectDoc::LoadProject( const char* fullLevelName )
         {
             pFrame->SetProject(g_Project.GetName());
 
-	        POSITION pos = GetFirstViewPosition();
-	        CProjectView* pView = (CProjectView*)GetNextView (pos); 
+            POSITION pos = GetFirstViewPosition();
+            CProjectView* pView = (CProjectView*)GetNextView (pos); 
 
             //now load the readme file if it exists
             CString strReadme(fullLevelName);

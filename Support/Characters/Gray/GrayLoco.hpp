@@ -19,19 +19,19 @@
 
 struct gray_loco_play_anim : public loco_play_anim
 {
-                            gray_loco_play_anim		( loco& Loco );
-    virtual void            OnEnter					( void );
+                            gray_loco_play_anim        ( loco& Loco );
+    virtual void            OnEnter                    ( void );
 } ;
 
 struct gray_loco_idle : public loco_idle
 {
-                            gray_loco_idle	        ( loco& Loco );
+                            gray_loco_idle            ( loco& Loco );
     virtual void            OnEnter                 ( void );
 } ;
 
 struct gray_loco_move : public loco_move
 {
-                            gray_loco_move	        ( loco& Loco );
+                            gray_loco_move            ( loco& Loco );
     virtual void            OnEnter                 ( void );
 } ;
 
@@ -47,7 +47,7 @@ public:
 
 // Functions
 public:
-                        gray_loco	    ( void );
+                        gray_loco        ( void );
     virtual void        OnInit          ( const geom* pGeom, const char* pAnimFileName, guid ObjectGuid = NULL ) ;
 
 // Private data

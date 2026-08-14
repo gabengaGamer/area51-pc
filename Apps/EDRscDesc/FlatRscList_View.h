@@ -21,9 +21,9 @@ enum COLUMN_DATA_TYPE
 
 struct col_data 
 { 
-	LPCTSTR name; 
-	int width; 
-	int fmt;
+    LPCTSTR name; 
+    int width; 
+    int fmt;
     COLUMN_DATA_TYPE type;
 };
 
@@ -66,38 +66,38 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	virtual ~CFlatRscList_View();
-	CFlatRscList_View();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CFlatRscList_View)
+    virtual ~CFlatRscList_View();
+    CFlatRscList_View();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CFlatRscList_View)
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CFlatRscList_View)
-	public:
-	virtual void OnInitialUpdate();
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CFlatRscList_View)
+    public:
+    virtual void OnInitialUpdate();
     virtual void OnUpdate( CView* pSender, LPARAM lHint, CObject* pHint );
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
     virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	//}}AFX_VIRTUAL
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	//{{AFX_MSG(CFlatRscList_View)
-	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
+    //{{AFX_MSG(CFlatRscList_View)
+    afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg void OnColumnClick( NMHDR* pNMHDR, LRESULT* pResult );
     afx_msg void OnItemChanged( NMHDR* pNMHDR, LRESULT* pResult );
     afx_msg void OnDoubleClick( NMHDR* pNMHDR, LRESULT* pResult );
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 inline EDRscDesc_Doc* CFlatRscList_View::GetDocument()

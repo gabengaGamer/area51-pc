@@ -81,7 +81,7 @@ void change_object_health::OnRender ( void )
 
 //=============================================================================
 
-void change_object_health::OnEnumProp	( prop_enum& rPropList )
+void change_object_health::OnEnumProp    ( prop_enum& rPropList )
 {    
     rPropList.AddFloat ( "Health Amount" ,  "Amount of health to change by." );
    
@@ -92,7 +92,7 @@ void change_object_health::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool change_object_health::OnProperty	( prop_query& rPropQuery )
+xbool change_object_health::OnProperty    ( prop_query& rPropQuery )
 {
     if ( rPropQuery.VarGUID ( "Object Guid"  , m_ObjectGuid ) )
         return TRUE;

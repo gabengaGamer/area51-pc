@@ -188,7 +188,7 @@ void controller::MoveObject( s32 Index, const matrix4& L2W ) const
     }
 
     pObject->SetZone1( m_ZoneTracker.GetMainZone() );
-	pObject->SetZone2( m_ZoneTracker.GetZone2() );
+    pObject->SetZone2( m_ZoneTracker.GetZone2() );
 }
 
 

@@ -18,10 +18,10 @@ static char THIS_FILE[] = __FILE__;
 IMPLEMENT_DYNCREATE(CTabDoc, CDocument)
 
 BEGIN_MESSAGE_MAP(CTabDoc, CDocument)
-	//{{AFX_MSG_MAP(CTabDoc)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CTabDoc)
+        // NOTE - the ClassWizard will add and remove mapping macros here.
+        //    DO NOT EDIT what you see in these blocks of generated code !
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -29,7 +29,7 @@ END_MESSAGE_MAP()
 
 CTabDoc::CTabDoc()
 {
-	// TODO: add one-time construction code here
+    // TODO: add one-time construction code here
 
 }
 
@@ -39,13 +39,13 @@ CTabDoc::~CTabDoc()
 
 BOOL CTabDoc::OnNewDocument()
 {
-	if (!CDocument::OnNewDocument())
-		return FALSE;
+    if (!CDocument::OnNewDocument())
+        return FALSE;
 
-	// TODO: add reinitialization code here
-	// (SDI documents will reuse this document)
+    // TODO: add reinitialization code here
+    // (SDI documents will reuse this document)
 
-	return TRUE;
+    return TRUE;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -53,16 +53,16 @@ BOOL CTabDoc::OnNewDocument()
 
 void CTabDoc::Serialize(CArchive& ar)
 {
-	if (ar.IsStoring())
-	{
-		// TODO: add storing code here
+    if (ar.IsStoring())
+    {
+        // TODO: add storing code here
 
-	}
-	else
-	{
-		// TODO: add loading code here
+    }
+    else
+    {
+        // TODO: add loading code here
 
-	}
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -71,12 +71,12 @@ void CTabDoc::Serialize(CArchive& ar)
 #ifdef _DEBUG
 void CTabDoc::AssertValid() const
 {
-	CDocument::AssertValid();
+    CDocument::AssertValid();
 }
 
 void CTabDoc::Dump(CDumpContext& dc) const
 {
-	CDocument::Dump(dc);
+    CDocument::Dump(dc);
 }
 #endif //_DEBUG
 

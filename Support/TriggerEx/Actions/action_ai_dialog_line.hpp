@@ -30,8 +30,8 @@ public:
     virtual         const char*         GetTypeInfo     ( void )    { return "Say a line of dialog."; } 
     virtual         const char*         GetDescription  ( void );
 
-    virtual			void	            OnEnumProp	    ( prop_enum& rList );
-    virtual			xbool	            OnProperty	    ( prop_query& rPropQuery );
+    virtual            void                OnEnumProp        ( prop_enum& rList );
+    virtual            xbool                OnProperty        ( prop_query& rPropQuery );
 
 #ifdef X_EDITOR
     virtual         s32*                GetAnimRef      ( xstring& Desc, s32& AnimName  );
@@ -126,7 +126,7 @@ inline void action_ai_dialog_line::InitPostDelay( void )
 inline xbool action_ai_dialog_line::CheckPreDelay( f32 DeltaTime )
 {
     if(m_DelayPreCountDown <= 0.0f)
-	    return TRUE;
+        return TRUE;
 
     m_DelayPreCountDown -= DeltaTime;
     return FALSE;
@@ -136,7 +136,7 @@ inline xbool action_ai_dialog_line::CheckPreDelay( f32 DeltaTime )
 inline xbool action_ai_dialog_line::CheckPostDelay( f32 DeltaTime )
 {
     if(m_DelayPostCountDown <= 0.0f)
-	    return TRUE;
+        return TRUE;
 
     m_DelayPostCountDown -= DeltaTime;
     return FALSE;

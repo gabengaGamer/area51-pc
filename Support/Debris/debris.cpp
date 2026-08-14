@@ -161,7 +161,7 @@ void debris::UpdatePhysics       (  f32 DeltaTime )
 
 //=============================================================================================
 
-void debris::OnMove				( const vector3& rNewPos )
+void debris::OnMove                ( const vector3& rNewPos )
 {
     object::OnMove( rNewPos );
 }
@@ -200,7 +200,7 @@ vector3 debris::OnProcessCollision( f32 DeltaTime )
     //
     vector3 CurrentPos      = GetPosition();
     vector3 DeltaPos        = m_Velocity * DeltaTime;
-    vector3	DesiredPos	    = CurrentPos + DeltaPos;
+    vector3    DesiredPos        = CurrentPos + DeltaPos;
 
     //
     // If ignoring collisions just return

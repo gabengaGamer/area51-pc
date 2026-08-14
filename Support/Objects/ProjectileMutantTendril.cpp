@@ -541,7 +541,7 @@ void mutant_tendril_projectile::SetupConstraints(vector3 &CorpsePinPosition, f32
             ASSERT( iRigidBody != -1 );
 
             // Add constraint and store the index for later
-            m_iConstraint = PhysicsInst.AddBodyWorldConstraint( iRigidBody, 			    // Your rigid body
+            m_iConstraint = PhysicsInst.AddBodyWorldConstraint( iRigidBody,                 // Your rigid body
                                                 m_ConstraintPosition,                       // Where in the world you want the constraint
                                                 0.0f, g_TendrilTweaks.m_ConstraintMax );    // Set min + max dist to zero to keep it pinned exactly
 

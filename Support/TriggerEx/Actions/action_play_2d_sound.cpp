@@ -75,7 +75,7 @@ xbool action_play_2d_sound::Execute ( f32 DeltaTime )
 
 //=============================================================================
 
-void action_play_2d_sound::OnEnumProp	( prop_enum& List )
+void action_play_2d_sound::OnEnumProp    ( prop_enum& List )
 {
     List.PropEnumExternal( "Sound Name", "Sound\0soundemitter\0","Sound Descriptor (Label)", PROP_TYPE_MUST_ENUM  );
     List.PropEnumExternal( "Audio Package External Resource", "Resource\0audiopkg\0", "", PROP_TYPE_DONT_SHOW );
@@ -88,7 +88,7 @@ void action_play_2d_sound::OnEnumProp	( prop_enum& List )
 
 //=============================================================================
 
-xbool action_play_2d_sound::OnProperty	( prop_query& I )
+xbool action_play_2d_sound::OnProperty    ( prop_query& I )
 {
     if( actions_ex_base::OnProperty( I ) )
         return TRUE;

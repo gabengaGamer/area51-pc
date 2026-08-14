@@ -28,7 +28,7 @@ public:
                         input_setting         ( void );
                         ~input_setting        ( void );
                                                                 
-    virtual void        OnInit			    ( void );
+    virtual void        OnInit                ( void );
 
     virtual bbox        GetLocalBBox        ( void ) const;
     virtual s32         GetMaterial         ( void ) const;

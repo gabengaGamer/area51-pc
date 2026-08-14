@@ -98,14 +98,14 @@ void ui_frame::Render( s32 ox, s32 oy )
             rect.Deflate( 8, 0 );
             rect.Translate( 0, -2 );
             rect.Translate( 1, 1 );
-			
-			// Check what size font we want.
-			s32 TextSize;
+            
+            // Check what size font we want.
+            s32 TextSize;
 
-			if( m_BigTitle )
-				TextSize = 2;
-			else
-				TextSize = 1;
+            if( m_BigTitle )
+                TextSize = 2;
+            else
+                TextSize = 1;
 
             m_pManager->RenderText( TextSize, rect, ui_font::h_left|ui_font::v_center, xcolor(XCOLOR_BLACK), m_Title );
             rect.Translate( -1, -1 );
@@ -142,7 +142,7 @@ void ui_frame::EnableTitle ( const xwstring&   Text, xbool BigTitle )
 {
     m_Flags |= WF_TITLE;
     m_Title = Text;
-	m_BigTitle = BigTitle;
+    m_BigTitle = BigTitle;
 }
 
 //=========================================================================
@@ -151,7 +151,7 @@ void ui_frame::EnableTitle ( const xwchar*     Text, xbool BigTitle )
 {
     m_Flags |= WF_TITLE;
     m_Title = Text;
-	m_BigTitle = BigTitle;
+    m_BigTitle = BigTitle;
 }
 
 //=========================================================================

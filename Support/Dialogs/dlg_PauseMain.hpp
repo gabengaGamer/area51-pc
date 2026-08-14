@@ -29,7 +29,7 @@
 enum pause_main_controls
 {
     IDC_PAUSE_MENU_RESUME,
-	IDC_PAUSE_MENU_QUIT,
+    IDC_PAUSE_MENU_QUIT,
     IDC_PAUSE_MENU_OPTIONS,
     IDC_PAUSE_MENU_SETTINGS,
 #ifdef TARGET_XBOX
@@ -84,8 +84,8 @@ public:
 protected:
     ui_frame*           m_pFrame1;
     ui_button*          m_pButtonResume;
-	ui_button*			m_pButtonQuit;
-	ui_button*			m_pButtonOptions; 	
+    ui_button*            m_pButtonQuit;
+    ui_button*            m_pButtonOptions;     
     ui_button*          m_pButtonSettings;
 #ifdef TARGET_XBOX
     ui_button*          m_pButtonFriends;

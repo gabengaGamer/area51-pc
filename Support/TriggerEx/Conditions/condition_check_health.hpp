@@ -29,8 +29,8 @@ public:
     virtual         const char*             GetDescription  ( void );
 
     virtual         xbool                   Execute         ( guid TriggerGuid );    
-    virtual			void	                OnEnumProp	    ( prop_enum& List );
-    virtual			xbool	                OnProperty	    ( prop_query& I );
+    virtual            void                    OnEnumProp        ( prop_enum& List );
+    virtual            xbool                    OnProperty        ( prop_query& I );
 
 #ifdef X_EDITOR
     virtual         object_affecter*        GetObjectRef0   ( xstring& Desc ) { Desc = "Object error: "; return &m_Affecter; }

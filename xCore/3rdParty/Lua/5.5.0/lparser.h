@@ -71,8 +71,8 @@ typedef enum {
 } expkind;
 
 
-#define vkisvar(k)	(VLOCAL <= (k) && (k) <= VINDEXSTR)
-#define vkisindexed(k)	(VINDEXED <= (k) && (k) <= VINDEXSTR)
+#define vkisvar(k)    (VLOCAL <= (k) && (k) <= VINDEXSTR)
+#define vkisindexed(k)    (VINDEXED <= (k) && (k) <= VINDEXSTR)
 
 
 typedef struct expdesc {
@@ -99,19 +99,19 @@ typedef struct expdesc {
 
 
 /* kinds of variables */
-#define VDKREG		0   /* regular local */
-#define RDKCONST	1   /* local constant */
-#define RDKVAVAR	2   /* vararg parameter */
-#define RDKTOCLOSE	3   /* to-be-closed */
-#define RDKCTC		4   /* local compile-time constant */
-#define GDKREG		5   /* regular global */
-#define GDKCONST	6   /* global constant */
+#define VDKREG        0   /* regular local */
+#define RDKCONST    1   /* local constant */
+#define RDKVAVAR    2   /* vararg parameter */
+#define RDKTOCLOSE    3   /* to-be-closed */
+#define RDKCTC        4   /* local compile-time constant */
+#define GDKREG        5   /* regular global */
+#define GDKCONST    6   /* global constant */
 
 /* variables that live in registers */
-#define varinreg(v)	((v)->vd.kind <= RDKTOCLOSE)
+#define varinreg(v)    ((v)->vd.kind <= RDKTOCLOSE)
 
 /* test for global variables */
-#define varglobal(v)	((v)->vd.kind >= GDKREG)
+#define varglobal(v)    ((v)->vd.kind >= GDKREG)
 
 
 /* description of an active variable */

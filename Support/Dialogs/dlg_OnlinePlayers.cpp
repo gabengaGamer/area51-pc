@@ -24,7 +24,7 @@
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
 #else
-#include "../../Apps/GameApp/Config.hpp"	
+#include "../../Apps/GameApp/Config.hpp"    
 #endif
 
 
@@ -154,7 +154,7 @@ xbool dlg_online_players::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
     
     m_pPlayerList = (ui_playerlist*)FindChildByID( IDC_PLAYERLIST );
     m_pPlayerList->SetActive( TRUE );
@@ -277,7 +277,7 @@ xbool dlg_online_players::Create( s32                        UserID,
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -299,7 +299,7 @@ void dlg_online_players::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     // render transparent screen
     rb.l = m_CurrPos.l + 22;

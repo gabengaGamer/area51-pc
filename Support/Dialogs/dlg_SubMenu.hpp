@@ -65,7 +65,7 @@ public:
                                           s32*                      pResult = NULL );
 
 
-	void			Close				( void );
+    void            Close                ( void );
 
     xbool           Create              ( s32                       UserID,
                                           ui_manager*               pManager,

@@ -28,11 +28,11 @@ public:
                              trigger_door_helper_object                 ( void );
                             ~trigger_door_helper_object                 ( void );
                             
-    virtual         s32         GetMaterial				                ( void ) const { return MAT_TYPE_NULL; }
+    virtual         s32         GetMaterial                                ( void ) const { return MAT_TYPE_NULL; }
            
-	virtual			void	    OnEnumProp				                ( prop_enum& rList );
-	virtual			xbool	    OnProperty				                ( prop_query& rPropQuery );
-	
+    virtual            void        OnEnumProp                                ( prop_enum& rList );
+    virtual            xbool        OnProperty                                ( prop_query& rPropQuery );
+    
     virtual const object_desc&  GetTypeDesc                             ( void ) const;
     static  const object_desc&  GetObjectType                           ( void );
     
@@ -43,11 +43,11 @@ public:
                     void        Sync                                    ( const bbox& BBox );
 protected:
              
-    virtual         void        OnInit					                ( void );
+    virtual         void        OnInit                                    ( void );
     virtual         void        OnKill                                  ( void );
  
     virtual         void        ExecuteLogic                            ( f32 DeltaTime );
-    virtual         void        ActivateTrigger			                ( void );
+    virtual         void        ActivateTrigger                            ( void );
 
 protected:
 

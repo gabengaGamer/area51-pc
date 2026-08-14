@@ -42,13 +42,13 @@ public:
     xcolor          GetBackgroundColor  ( void ) const ;
     void            EnableTitle         ( const xwstring&   Text, xbool BigTitle = FALSE );
     void            EnableTitle         ( const xwchar*     Text, xbool BigTitle = FALSE );
-	void			ChangeElement		( const char* element );
+    void            ChangeElement        ( const char* element );
 
 protected:
     xwstring        m_Title;            // Frames Title, if the flag is enabled.
     s32             m_iElement;
     xcolor          m_BackgroundColor;
-	xbool			m_BigTitle;
+    xbool            m_BigTitle;
 };
 
 //==============================================================================

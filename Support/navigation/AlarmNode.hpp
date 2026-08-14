@@ -37,8 +37,8 @@ public:
     virtual const object_desc&  GetTypeDesc     ( void ) const ;
 
     virtual         bbox        GetLocalBBox    ( void ) const;
-    virtual	void	            OnEnumProp	    ( prop_enum& rList );
-    virtual	xbool	            OnProperty	    ( prop_query& rPropQuery );
+    virtual    void                OnEnumProp        ( prop_enum& rList );
+    virtual    xbool                OnProperty        ( prop_query& rPropQuery );
     virtual void                OnInit          ( void );     
 
     virtual s32                 GetMaterial     ( void ) const ;

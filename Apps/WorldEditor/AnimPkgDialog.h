@@ -15,14 +15,14 @@ class CAnimPkgDialog : public CDialog
 {
 // Construction
 public:
-	CAnimPkgDialog(CWnd* pParent = NULL);   // standard constructor
+    CAnimPkgDialog(CWnd* pParent = NULL);   // standard constructor
 
 
     // Handles loading the animation packages.
     void OnLoadAnimPackage      ( animation_desc* pAnimDesc );
 
 
-//    CListBox	    m_DescListBox;
+//    CListBox        m_DescListBox;
     CString         m_DescName;
     xbool           m_DescLoaded;
 //    xarray<xstring> m_AnimPackageList;
@@ -30,33 +30,33 @@ public:
 
 
 // Dialog Data
-	//{{AFX_DATA(CAnimPkgDialog)
-	enum { IDD = IDD_ANIMPACKAGE_DIALOG };
-    CTreeCtrl	m_rscTree;
-	//}}AFX_DATA
+    //{{AFX_DATA(CAnimPkgDialog)
+    enum { IDD = IDD_ANIMPACKAGE_DIALOG };
+    CTreeCtrl    m_rscTree;
+    //}}AFX_DATA
 
     
 
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CAnimPkgDialog)
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CAnimPkgDialog)
+    protected:
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
 
-	// Generated message map functions
-	//{{AFX_MSG(CAnimPkgDialog)
-	virtual BOOL OnInitDialog();
-	virtual void OnOK();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(CAnimPkgDialog)
+    virtual BOOL OnInitDialog();
+    virtual void OnOK();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
 
-  	CImageList	        m_imageList;
+      CImageList            m_imageList;
 
 public:
     afx_msg void OnBnClickedBtnClear();

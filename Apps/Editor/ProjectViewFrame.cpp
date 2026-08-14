@@ -32,11 +32,11 @@ CProjectViewFrame::~CProjectViewFrame()
 
 
 BEGIN_MESSAGE_MAP(CProjectViewFrame, CFrameWnd)
-	//{{AFX_MSG_MAP(CProjectViewFrame)
-	ON_WM_CREATE()
-	ON_WM_ERASEBKGND()
-	ON_WM_SIZE()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CProjectViewFrame)
+    ON_WM_CREATE()
+    ON_WM_ERASEBKGND()
+    ON_WM_SIZE()
+    //}}AFX_MSG_MAP
     ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
@@ -45,7 +45,7 @@ END_MESSAGE_MAP()
 
 void CProjectViewFrame::OnDraw(CDC* pDC)
 {
-	// TODO: add draw code here
+    // TODO: add draw code here
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -54,12 +54,12 @@ void CProjectViewFrame::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CProjectViewFrame::AssertValid() const
 {
-	CFrameWnd::AssertValid();
+    CFrameWnd::AssertValid();
 }
 
 void CProjectViewFrame::Dump(CDumpContext& dc) const
 {
-	CFrameWnd::Dump(dc);
+    CFrameWnd::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -68,15 +68,15 @@ void CProjectViewFrame::Dump(CDumpContext& dc) const
 
 int CProjectViewFrame::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
-	if( !m_TabCtrl.Create(this, IDW_PROJ_VIEWTAB_BAR, _T("Properties"),
-		CSize(200, 150), CBRS_TOP, 0 ))
-	{
-		TRACE0("Failed to create property dock window\n");
-		return -1;		// fail to create
-	}
+    if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
+    if( !m_TabCtrl.Create(this, IDW_PROJ_VIEWTAB_BAR, _T("Properties"),
+        CSize(200, 150), CBRS_TOP, 0 ))
+    {
+        TRACE0("Failed to create property dock window\n");
+        return -1;        // fail to create
+    }
 
     CDocument*  pDocument   = ((CProjectView*)GetParent())->GetDocument();
     CFrameWnd*  pFrameWnd   = NULL;
@@ -93,23 +93,23 @@ int CProjectViewFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         RUNTIME_CLASS(CTextEditor), RUNTIME_CLASS(TextEditorView), pDocument);
     m_TabCtrl.AddControl(_T("Documentation"), pFrameWnd);
 
-	return 0;
+    return 0;
 }
 
 BOOL CProjectViewFrame::OnEraseBkgnd(CDC* pDC) 
 {
-	// TODO: Add your message handler code here and/or call default
-	return TRUE;
-//	return CView::OnEraseBkgnd(pDC);
+    // TODO: Add your message handler code here and/or call default
+    return TRUE;
+//    return CView::OnEraseBkgnd(pDC);
 }
 
 void CProjectViewFrame::OnSize(UINT nType, int cx, int cy) 
 {
-	CFrameWnd::OnSize(nType, cx, cy);
-	
-	// TODO: Add your message handler code here
+    CFrameWnd::OnSize(nType, cx, cy);
+    
+    // TODO: Add your message handler code here
     CRect R;
-	GetClientRect( R );
+    GetClientRect( R );
 
     //m_TabCtrl.SetWindowRect( R );
     m_TabCtrl.MoveWindow( R );    

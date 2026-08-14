@@ -47,7 +47,7 @@ public:
 protected:
     virtual void            OnInit              ( void );     
     virtual void            OnRender            ( void );
-    virtual void            OnAdvanceSimulation	    ( f32 DeltaTime );
+    virtual void            OnAdvanceSimulation        ( f32 DeltaTime );
 
 #ifndef X_RETAIL
     virtual void            OnDebugRender       ( void );

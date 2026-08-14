@@ -2403,11 +2403,11 @@ typedef struct SDL_GPUVulkanOptions
 {
     Uint32 vulkan_api_version; /**< The Vulkan API version to request for the instance. Use Vulkan's VK_MAKE_VERSION or VK_MAKE_API_VERSION. */
     void *feature_list; /**< Pointer to the first element of a chain of Vulkan feature structs. (Requires API version 1.1 or higher.)*/
-	void *vulkan_10_physical_device_features; /**< Pointer to a VkPhysicalDeviceFeatures struct to enable additional Vulkan 1.0 features. */
-	Uint32 device_extension_count; /**< Number of additional device extensions to require. */
-	const char **device_extension_names; /**< Pointer to a list of additional device extensions to require. */
-	Uint32 instance_extension_count; /**< Number of additional instance extensions to require. */
-	const char **instance_extension_names; /**< Pointer to a list of additional instance extensions to require. */
+    void *vulkan_10_physical_device_features; /**< Pointer to a VkPhysicalDeviceFeatures struct to enable additional Vulkan 1.0 features. */
+    Uint32 device_extension_count; /**< Number of additional device extensions to require. */
+    const char **device_extension_names; /**< Pointer to a list of additional device extensions to require. */
+    Uint32 instance_extension_count; /**< Number of additional instance extensions to require. */
+    const char **instance_extension_names; /**< Pointer to a list of additional instance extensions to require. */
 } SDL_GPUVulkanOptions;
 
 /**

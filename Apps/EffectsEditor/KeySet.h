@@ -2,7 +2,7 @@
 //
 //  KeySet.h
 //
-//	A container for a track of keys
+//    A container for a track of keys
 //
 //==============================================================================
 
@@ -10,7 +10,7 @@
 #define __KEYSET_H__
 
 //----------------------+
-//	Includes			|
+//    Includes            |
 //----------------------+
 
 #include "KeyBarKey.h"

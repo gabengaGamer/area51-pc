@@ -83,10 +83,10 @@ public:
 class mutant_contagion_projectile : public net_proj
 {
 public:
-	CREATE_RTTI( mutant_contagion_projectile , net_proj , object )
+    CREATE_RTTI( mutant_contagion_projectile , net_proj , object )
 
-	mutant_contagion_projectile();
-	virtual ~mutant_contagion_projectile();
+    mutant_contagion_projectile();
+    virtual ~mutant_contagion_projectile();
 
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
@@ -114,17 +114,17 @@ virtual         void            SetStart            ( const vector3& Position,
                 xbool           LoadEffect          ( const char* pFileName, const vector3& InitPos, const radian3& InitRot );
                 void            DestroyParticles    ( void );
                 void            UpdateParticles     ( const vector3& Position );
-virtual	        bbox	        GetLocalBBox		( void ) const;
+virtual            bbox            GetLocalBBox        ( void ) const;
 
 virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
 virtual         void            OnImpact            ( collision_mgr::collision& Coll, object* pTarget );
 
-virtual	        void	        OnMove				( const vector3& NewPosition );
+virtual            void            OnMove                ( const vector3& NewPosition );
 virtual         void            OnRender            ( void );
 virtual         void            OnRenderTransparent ( void );
 
 virtual         void            OnExplode           ( void );
-                xbool	        LoadInstance		( const char* pFileName );
+                xbool            LoadInstance        ( const char* pFileName );
                 void            ReleaseProjectile   ( xbool bHoming, f32 scalar );
                 void            UpdateProjectile    ( const matrix4& L2W, f32 time );
 

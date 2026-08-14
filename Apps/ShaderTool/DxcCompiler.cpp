@@ -518,7 +518,7 @@ xbool ReflectResources( IDxcUtils*              pUtils,
             ResourceSpace = 2;
             UniformSpace  = 3;
         }
-		// TODO: GS: Implement this.
+        // TODO: GS: Implement this.
         else
         {
             x_printf( "Error: SDL graphics reflection is not defined for stage '%s'\n",

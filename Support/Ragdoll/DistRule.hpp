@@ -108,9 +108,9 @@ void dist_rule::Apply( particle Particles[] )
     f32 TotalInvMass = InvMass0 + InvMass1;
 
     // Compute distance squared
-    asm( "vmul.xyz	VOUT, VIN,  VIN"   : "=j VOUT" (DOT)     : "j VIN" (DELTA) );
-    asm( "vaddy.x	VOUT, VOUT, VINy"  : "=j VOUT" (DOT)     : "j VIN" (DOT) );
-    asm( "vaddz.x	VOUT, VIN,  VINz"  : "=j VOUT" (DOT)     : "j VIN" (DOT) );
+    asm( "vmul.xyz    VOUT, VIN,  VIN"   : "=j VOUT" (DOT)     : "j VIN" (DELTA) );
+    asm( "vaddy.x    VOUT, VOUT, VINy"  : "=j VOUT" (DOT)     : "j VIN" (DOT) );
+    asm( "vaddz.x    VOUT, VIN,  VINz"  : "=j VOUT" (DOT)     : "j VIN" (DOT) );
     asm( "qmfc2     FOUT, VIN"         : "=r FOUT" (DistSqr) : "j VIN" (DOT) );
 
     // If both particles are immovable, then exit

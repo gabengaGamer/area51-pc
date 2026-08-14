@@ -13,7 +13,7 @@ public:
     CREATE_RTTI( spawner_object, object, object );
 
     // Construction / Destruction
-	                spawner_object();
+                    spawner_object();
     virtual         ~spawner_object();
 
     // object description.
@@ -23,8 +23,8 @@ public:
     // Object overloads
     virtual         void            OnInit              ( void );
     virtual         s32             GetMaterial         ( void ) const { return MAT_TYPE_CONCRETE;}
-	virtual         void	        OnEnumProp			( prop_enum& rList );
-	virtual			xbool	        OnProperty			( prop_query& rPropQuery );
+    virtual         void            OnEnumProp            ( prop_enum& rList );
+    virtual            xbool            OnProperty            ( prop_query& rPropQuery );
 
 #ifndef X_RETAIL
                     void            OnDebugRender        ( void );

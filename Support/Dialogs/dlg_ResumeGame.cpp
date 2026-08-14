@@ -23,7 +23,7 @@
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
 #else
-#include "../../Apps/GameApp/Config.hpp"	
+#include "../../Apps/GameApp/Config.hpp"    
 #endif
 #include "Configuration/GameConfig.hpp"
 
@@ -34,7 +34,7 @@
 
 enum controls
 {
-	IDC_CHECKPOINT_LISTBOX,
+    IDC_CHECKPOINT_LISTBOX,
 };
 
 
@@ -119,7 +119,7 @@ xbool dlg_resume_game::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pCheckpointList    = (ui_listbox*) FindChildByID( IDC_CHECKPOINT_LISTBOX  );
     
@@ -178,7 +178,7 @@ void dlg_resume_game::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
         
     // render transparent screen
     rb.l = m_CurrPos.l + 22;

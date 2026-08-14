@@ -132,13 +132,13 @@ void projector_obj::OnRender( void )
     if ( IsActive() )
     {
         if( IsShadow() )
-		{
-	        g_ProjTextureMgr.AddProjShadow( GetL2W(), GetFOV(), GetLength(), GetTexture() );
-		}
+        {
+            g_ProjTextureMgr.AddProjShadow( GetL2W(), GetFOV(), GetLength(), GetTexture() );
+        }
         else
-		{
-	        g_ProjTextureMgr.AddProjLight( GetL2W(), GetFOV(), GetLength(), GetTexture() );
-		}
+        {
+            g_ProjTextureMgr.AddProjLight( GetL2W(), GetFOV(), GetLength(), GetTexture() );
+        }
     }
 }
 

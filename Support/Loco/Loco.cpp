@@ -1071,7 +1071,7 @@ void loco_move::OnAdvance( f32 DeltaTime )
         if( DSqr > 0.0001f )
             D = x_sqrt( DSqr );
 
-        // Now using K (magic dist) and D (distance from moveat), blend between the limited "DeltaYaw" and 		// the full "AllDeltaYaw"
+        // Now using K (magic dist) and D (distance from moveat), blend between the limited "DeltaYaw" and         // the full "AllDeltaYaw"
         f32 T = 0.0f;
         if( D < k_DistToIncreaseYaw )
         {

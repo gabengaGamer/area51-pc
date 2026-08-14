@@ -197,7 +197,7 @@ void hud_text::OnRender( player* pPlayer )
             if( m_Goals[iGoal].KeyingPos < 400 )
             {
                 // scissor region
-				// TODO: ?
+                // TODO: ?
             }
 
             xcolor TextColor = XCOLOR_WHITE;

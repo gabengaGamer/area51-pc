@@ -31,16 +31,16 @@ xbool trigger_meta_label::Execute ( f32 DeltaTime )
 
 //=============================================================================
 
-void trigger_meta_label::OnEnumProp	( prop_enum& rPropList )
+void trigger_meta_label::OnEnumProp    ( prop_enum& rPropList )
 {
-    rPropList.PropEnumString	 ( "Label", "Name of this label.", PROP_TYPE_MUST_ENUM );
+    rPropList.PropEnumString     ( "Label", "Name of this label.", PROP_TYPE_MUST_ENUM );
 
     trigger_meta_base::OnEnumProp( rPropList );
 }
 
 //=============================================================================
 
-xbool trigger_meta_label::OnProperty	( prop_query& rPropQuery )
+xbool trigger_meta_label::OnProperty    ( prop_query& rPropQuery )
 {
     if( trigger_meta_base::OnProperty( rPropQuery ) )
         return TRUE;

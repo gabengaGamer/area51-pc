@@ -14,31 +14,31 @@ class CGridEditCtrl : public CEdit
 {
 // Construction
 public:
-	CGridEditCtrl(int iItem, int iSubItem, CString sInitText);
-	virtual ~CGridEditCtrl(){};
+    CGridEditCtrl(int iItem, int iSubItem, CString sInitText);
+    virtual ~CGridEditCtrl(){};
 
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CGridEditCtrl)
-	public:
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CGridEditCtrl)
+    public:
+    virtual BOOL PreTranslateMessage(MSG* pMsg);
+    //}}AFX_VIRTUAL
 
 protected:
-	// Generated message map functions
-	//{{AFX_MSG(CGridEditCtrl)
-	afx_msg void OnKillFocus(CWnd* pNewWnd);
-	afx_msg void OnNcDestroy();
-	afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);	
-	//}}AFX_MSG
+    // Generated message map functions
+    //{{AFX_MSG(CGridEditCtrl)
+    afx_msg void OnKillFocus(CWnd* pNewWnd);
+    afx_msg void OnNcDestroy();
+    afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);    
+    //}}AFX_MSG
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 
-private:	
-	int			m_iItem;
-	int			m_iSubItem;	
-	CString		m_strInitText;
-	BOOL		m_bIsESCKeyDown;
+private:    
+    int            m_iItem;
+    int            m_iSubItem;    
+    CString        m_strInitText;
+    BOOL        m_bIsESCKeyDown;
 };
 
 /////////////////////////////////////////////////////////////////////////////

@@ -55,7 +55,7 @@ void lock_player_view::OnRender ( void )
 
 //=============================================================================
 
-void lock_player_view::OnEnumProp	( prop_enum& rPropList )
+void lock_player_view::OnEnumProp    ( prop_enum& rPropList )
 {
     //object info
 
@@ -78,7 +78,7 @@ void lock_player_view::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool lock_player_view::OnProperty	( prop_query& rPropQuery )
+xbool lock_player_view::OnProperty    ( prop_query& rPropQuery )
 {
     if( actions_base::OnProperty( rPropQuery ) )
         return TRUE;

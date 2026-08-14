@@ -101,20 +101,20 @@ typedef struct CallInfo CallInfo;
 
 
 /* true if this thread does not have non-yieldable calls in the stack */
-#define yieldable(L)		(((L)->nCcalls & 0xffff0000) == 0)
+#define yieldable(L)        (((L)->nCcalls & 0xffff0000) == 0)
 
 /* real number of C calls */
-#define getCcalls(L)	((L)->nCcalls & 0xffff)
+#define getCcalls(L)    ((L)->nCcalls & 0xffff)
 
 
 /* Increment the number of non-yieldable calls */
-#define incnny(L)	((L)->nCcalls += 0x10000)
+#define incnny(L)    ((L)->nCcalls += 0x10000)
 
 /* Decrement the number of non-yieldable calls */
-#define decnny(L)	((L)->nCcalls -= 0x10000)
+#define decnny(L)    ((L)->nCcalls -= 0x10000)
 
 /* Non-yieldable call increment */
-#define nyci	(0x10000 | 1)
+#define nyci    (0x10000 | 1)
 
 
 
@@ -128,7 +128,7 @@ struct lua_longjmp;  /* defined in ldo.c */
 */
 #if !defined(l_signalT)
 #include <signal.h>
-#define l_signalT	sig_atomic_t
+#define l_signalT    sig_atomic_t
 #endif
 
 
@@ -155,13 +155,13 @@ struct lua_longjmp;  /* defined in ldo.c */
 
 #define BASIC_STACK_SIZE        (2*LUA_MINSTACK)
 
-#define stacksize(th)	cast_int((th)->stack_last.p - (th)->stack.p)
+#define stacksize(th)    cast_int((th)->stack_last.p - (th)->stack.p)
 
 
 /* kinds of Garbage Collection */
-#define KGC_INC		0	/* incremental gc */
-#define KGC_GENMINOR	1	/* generational gc in minor (regular) mode */
-#define KGC_GENMAJOR	2	/* generational in major mode */
+#define KGC_INC        0    /* incremental gc */
+#define KGC_GENMINOR    1    /* generational gc in minor (regular) mode */
+#define KGC_GENMAJOR    2    /* generational in major mode */
 
 
 typedef struct stringtable {
@@ -213,42 +213,42 @@ struct CallInfo {
 ** Maximum expected number of results from a function
 ** (must fit in CIST_NRESULTS).
 */
-#define MAXRESULTS	250
+#define MAXRESULTS    250
 
 
 /*
 ** Bits in CallInfo status
 */
 /* bits 0-7 are the expected number of results from this function + 1 */
-#define CIST_NRESULTS	0xffu
+#define CIST_NRESULTS    0xffu
 
 /* bits 8-11 count call metamethods (and their extra arguments) */
-#define CIST_CCMT	8  /* the offset, not the mask */
-#define MAX_CCMT	(0xfu << CIST_CCMT)
+#define CIST_CCMT    8  /* the offset, not the mask */
+#define MAX_CCMT    (0xfu << CIST_CCMT)
 
 /* Bits 12-14 are used for CIST_RECST (see below) */
-#define CIST_RECST	12  /* the offset, not the mask */
+#define CIST_RECST    12  /* the offset, not the mask */
 
 /* call is running a C function (still in first 16 bits) */
-#define CIST_C		(1u << (CIST_RECST + 3))
+#define CIST_C        (1u << (CIST_RECST + 3))
 /* call is on a fresh "luaV_execute" frame */
-#define CIST_FRESH	(cast(l_uint32, CIST_C) << 1)
+#define CIST_FRESH    (cast(l_uint32, CIST_C) << 1)
 /* function is closing tbc variables */
-#define CIST_CLSRET	(CIST_FRESH << 1)
+#define CIST_CLSRET    (CIST_FRESH << 1)
 /* function has tbc variables to close */
-#define CIST_TBC	(CIST_CLSRET << 1)
+#define CIST_TBC    (CIST_CLSRET << 1)
 /* original value of 'allowhook' */
-#define CIST_OAH	(CIST_TBC << 1)
+#define CIST_OAH    (CIST_TBC << 1)
 /* call is running a debug hook */
-#define CIST_HOOKED	(CIST_OAH << 1)
+#define CIST_HOOKED    (CIST_OAH << 1)
 /* doing a yieldable protected call */
-#define CIST_YPCALL	(CIST_HOOKED << 1)
+#define CIST_YPCALL    (CIST_HOOKED << 1)
 /* call was tail called */
-#define CIST_TAIL	(CIST_YPCALL << 1)
+#define CIST_TAIL    (CIST_YPCALL << 1)
 /* last hook called yielded */
-#define CIST_HOOKYIELD	(CIST_TAIL << 1)
+#define CIST_HOOKYIELD    (CIST_TAIL << 1)
 /* function "called" a finalizer */
-#define CIST_FIN	(CIST_HOOKYIELD << 1)
+#define CIST_FIN    (CIST_HOOKYIELD << 1)
 
 
 #define get_nresults(cs)  (cast_int((cs) & CIST_NRESULTS) - 1)
@@ -267,10 +267,10 @@ struct CallInfo {
 
 
 /* active function is a Lua function */
-#define isLua(ci)	(!((ci)->callstatus & CIST_C))
+#define isLua(ci)    (!((ci)->callstatus & CIST_C))
 
 /* call is running Lua code (not a hook) */
-#define isLuacode(ci)	(!((ci)->callstatus & (CIST_C | CIST_HOOKED)))
+#define isLuacode(ci)    (!((ci)->callstatus & (CIST_C | CIST_HOOKED)))
 
 
 #define setoah(ci,v)  \
@@ -372,14 +372,14 @@ typedef struct global_State {
 } global_State;
 
 
-#define G(L)	(L->l_G)
-#define mainthread(G)	(&(G)->mainth.l)
+#define G(L)    (L->l_G)
+#define mainthread(G)    (&(G)->mainth.l)
 
 /*
 ** 'g->nilvalue' being a nil value flags that the state was completely
 ** build.
 */
-#define completestate(g)	ttisnil(&g->nilvalue)
+#define completestate(g)    ttisnil(&g->nilvalue)
 
 
 /*
@@ -408,31 +408,31 @@ union GCUnion {
 ** "A pointer to a union object, suitably converted, points to each of
 ** its members [...], and vice versa."
 */
-#define cast_u(o)	cast(union GCUnion *, (o))
+#define cast_u(o)    cast(union GCUnion *, (o))
 
 /* macros to convert a GCObject into a specific value */
 #define gco2ts(o)  \
-	check_exp(novariant((o)->tt) == LUA_TSTRING, &((cast_u(o))->ts))
+    check_exp(novariant((o)->tt) == LUA_TSTRING, &((cast_u(o))->ts))
 #define gco2u(o)  check_exp((o)->tt == LUA_VUSERDATA, &((cast_u(o))->u))
 #define gco2lcl(o)  check_exp((o)->tt == LUA_VLCL, &((cast_u(o))->cl.l))
 #define gco2ccl(o)  check_exp((o)->tt == LUA_VCCL, &((cast_u(o))->cl.c))
 #define gco2cl(o)  \
-	check_exp(novariant((o)->tt) == LUA_TFUNCTION, &((cast_u(o))->cl))
+    check_exp(novariant((o)->tt) == LUA_TFUNCTION, &((cast_u(o))->cl))
 #define gco2t(o)  check_exp((o)->tt == LUA_VTABLE, &((cast_u(o))->h))
 #define gco2p(o)  check_exp((o)->tt == LUA_VPROTO, &((cast_u(o))->p))
 #define gco2th(o)  check_exp((o)->tt == LUA_VTHREAD, &((cast_u(o))->th))
-#define gco2upv(o)	check_exp((o)->tt == LUA_VUPVAL, &((cast_u(o))->upv))
+#define gco2upv(o)    check_exp((o)->tt == LUA_VUPVAL, &((cast_u(o))->upv))
 
 
 /*
 ** macro to convert a Lua object into a GCObject
 */
 #define obj2gco(v)  \
-	check_exp(novariant((v)->tt) >= LUA_TSTRING, &(cast_u(v)->gc))
+    check_exp(novariant((v)->tt) >= LUA_TSTRING, &(cast_u(v)->gc))
 
 
 /* actual number of total memory allocated */
-#define gettotalbytes(g)	((g)->GCtotalbytes - (g)->GCdebt)
+#define gettotalbytes(g)    ((g)->GCtotalbytes - (g)->GCdebt)
 
 
 LUAI_FUNC void luaE_setdebt (global_State *g, l_mem debt);

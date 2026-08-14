@@ -4,16 +4,16 @@
 ;
 ;   This pixel shader is a normal environment map.
 ;
-;	t0 - diffuse texture
-;	t1 - env map
-;	t2 - detail
-;	t3 - proj
+;    t0 - diffuse texture
+;    t1 - env map
+;    t2 - detail
+;    t3 - proj
 ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;   tex t0
 ;   tex t1
-;	tex	t3
+;    tex    t3
 
 ;==----------------------------------------------------------------------------
 ;

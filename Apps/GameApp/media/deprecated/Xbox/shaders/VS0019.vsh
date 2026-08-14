@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-;	Vertex fragment: kVS_OD0_BLITTER
+;    Vertex fragment: kVS_OD0_BLITTER
 ;
 ;   v0.xyz    = Position    c00-c79 = matrix palette
 ;   v1.xyz    = Normal      c92-c95 = world to clip

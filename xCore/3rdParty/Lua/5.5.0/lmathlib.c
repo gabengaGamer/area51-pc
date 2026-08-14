@@ -24,7 +24,7 @@
 
 
 #undef PI
-#define PI	(l_mathop(3.141592653589793238462643383279502884))
+#define PI    (l_mathop(3.141592653589793238462643383279502884))
 
 
 static int math_abs (lua_State *L) {
@@ -287,12 +287,12 @@ static int math_type (lua_State *L) {
 
 
 /* number of binary digits in the mantissa of a float */
-#define FIGS	l_floatatt(MANT_DIG)
+#define FIGS    l_floatatt(MANT_DIG)
 
 #if FIGS > 64
 /* there are only 64 random bits; use them all */
 #undef FIGS
-#define FIGS	64
+#define FIGS    64
 #endif
 
 
@@ -307,20 +307,20 @@ static int math_type (lua_State *L) {
 #if ((ULONG_MAX >> 31) >> 31) >= 3
 
 /* 'long' has at least 64 bits */
-#define Rand64		unsigned long
-#define SRand64		long
+#define Rand64        unsigned long
+#define SRand64        long
 
 #elif !defined(LUA_USE_C89) && defined(LLONG_MAX)
 
 /* there is a 'long long' type (which must have at least 64 bits) */
-#define Rand64		unsigned long long
-#define SRand64		long long
+#define Rand64        unsigned long long
+#define SRand64        long long
 
 #elif ((LUA_MAXUNSIGNED >> 31) >> 31) >= 3
 
 /* 'lua_Unsigned' has at least 64 bits */
-#define Rand64		lua_Unsigned
-#define SRand64		lua_Integer
+#define Rand64        lua_Unsigned
+#define SRand64        lua_Integer
 
 #endif
 
@@ -337,7 +337,7 @@ static int math_type (lua_State *L) {
 */
 
 /* avoid using extra bits when needed */
-#define trim64(x)	((x) & 0xffffffffffffffffu)
+#define trim64(x)    ((x) & 0xffffffffffffffffu)
 
 
 /* rotate left 'x' by 'n' bits */
@@ -371,10 +371,10 @@ static Rand64 nextrand (Rand64 *state) {
 */
 
 /* must throw out the extra (64 - FIGS) bits */
-#define shift64_FIG	(64 - FIGS)
+#define shift64_FIG    (64 - FIGS)
 
 /* 2^(-FIGS) == 2^-1 / 2^(FIGS-1) */
-#define scaleFIG	(l_mathop(0.5) / ((Rand64)1 << (FIGS - 1)))
+#define scaleFIG    (l_mathop(0.5) / ((Rand64)1 << (FIGS - 1)))
 
 static lua_Number I2d (Rand64 x) {
   SRand64 sx = (SRand64)(trim64(x) >> shift64_FIG);
@@ -386,13 +386,13 @@ static lua_Number I2d (Rand64 x) {
 }
 
 /* convert a 'Rand64' to a 'lua_Unsigned' */
-#define I2UInt(x)	((lua_Unsigned)trim64(x))
+#define I2UInt(x)    ((lua_Unsigned)trim64(x))
 
 /* convert a 'lua_Unsigned' to a 'Rand64' */
-#define Int2I(x)	((Rand64)(x))
+#define Int2I(x)    ((Rand64)(x))
 
 
-#else	/* no 'Rand64'   }{ */
+#else    /* no 'Rand64'   }{ */
 
 /*
 ** Use two 32-bit integers to represent a 64-bit quantity.
@@ -410,7 +410,7 @@ typedef struct Rand64 {
 */
 
 /* avoid using extra bits when needed */
-#define trim32(x)	((x) & 0xffffffffu)
+#define trim32(x)    ((x) & 0xffffffffu)
 
 
 /*
@@ -491,7 +491,7 @@ static Rand64 nextrand (Rand64 *state) {
 */
 
 /* an unsigned 1 with proper type */
-#define UONE		((l_uint32)1)
+#define UONE        ((l_uint32)1)
 
 
 #if FIGS <= 32
@@ -508,7 +508,7 @@ static lua_Number I2d (Rand64 x) {
   return h * scaleFIG;
 }
 
-#else	/* 32 < FIGS <= 64 */
+#else    /* 32 < FIGS <= 64 */
 
 /* 2^(-FIGS) = 1.0 / 2^30 / 2^3 / 2^(FIGS-33) */
 #define scaleFIG  \
@@ -518,12 +518,12 @@ static lua_Number I2d (Rand64 x) {
 ** use FIGS - 32 bits from lower half, throwing out the other
 ** (32 - (FIGS - 32)) = (64 - FIGS) bits
 */
-#define shiftLOW	(64 - FIGS)
+#define shiftLOW    (64 - FIGS)
 
 /*
 ** higher 32 bits go after those (FIGS - 32) bits: shiftHI = 2^(FIGS - 32)
 */
-#define shiftHI		((lua_Number)(UONE << (FIGS - 33)) * l_mathop(2.0))
+#define shiftHI        ((lua_Number)(UONE << (FIGS - 33)) * l_mathop(2.0))
 
 
 static lua_Number I2d (Rand64 x) {

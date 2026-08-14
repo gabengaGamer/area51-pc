@@ -154,55 +154,55 @@ s32 FramePacer::GetFramesPerSecond( FrameRateLimit Limit )
         {
             return 0;
         }
-		break;
+        break;
 
         case FrameRateLimit::Fps30:
         {
             return 30;
         }
-		break;
+        break;
 
         case FrameRateLimit::Fps60:
         {
             return 60;
         }
-		break;
+        break;
 
         case FrameRateLimit::Fps90:
         {
             return 90;
         }
-		break;
+        break;
 
         case FrameRateLimit::Fps120:
         {
             return 120;
         }
-		break;
+        break;
 
         case FrameRateLimit::Fps144:
         {
             return 144;
         }
-		break;
+        break;
 
         case FrameRateLimit::Fps165:
         {
             return 165;
         }
-		break;
+        break;
 
         case FrameRateLimit::Fps240:
         {
             return 240;
         }
-		break;
+        break;
 
         default:
         {
             ASSERTS( FALSE, "Frame pacer received an invalid frame rate limit" );
             return 0;
         }
-		break;
+        break;
     }
 }

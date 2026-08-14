@@ -32,7 +32,7 @@ enum stat_fields
     k_stats_Debris             ,
     k_stats_AI_Think           ,
     k_stats_AI_Advance         ,
-	k_stats_Animation          ,
+    k_stats_Animation          ,
     k_stats_Collision          ,
     k_stats_Sound              ,
     k_stats_ParticleSystem     ,

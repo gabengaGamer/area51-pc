@@ -74,7 +74,7 @@
   \param void
   \return a pointer to a string which describes the version of LAME.
 */
-const char*  get_lame_version ( void )		/* primary to write screen reports */
+const char*  get_lame_version ( void )        /* primary to write screen reports */
 {
     /* Here we can also add informations about compile time configurations */
 

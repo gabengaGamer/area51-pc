@@ -47,25 +47,25 @@ CEditorObjectView::~CEditorObjectView()
 
 
 BEGIN_MESSAGE_MAP(CEditorObjectView, CPaletteView)
-	//{{AFX_MSG_MAP(CEditorObjectView)
-	ON_WM_CREATE()
-	ON_WM_SIZE()
-	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE_OBJECTS, OnSelchangeList)
-	ON_COMMAND(ID_OVTB_ADD_PLAYSURFACE, OnOvtbAddPlaysurface)
-	ON_COMMAND(ID_OVTB_ADD_PROPSURFACE, OnOvtbAddPropsurface)
-	ON_COMMAND(ID_OVTB_ADD_ANIMSURFACE, OnOvtbAddAnimsurface)
-	ON_COMMAND(ID_OVTB_REFRESH, OnOvtbRefresh)
-	ON_COMMAND(ID_OVTB_UPDATE_GEOMS_FROM_SEL, OnOvtbUpdateGeomsFromSel)
-	ON_COMMAND(ID_OVTB_UPDATE_RIGIDINST_FROM_SEL, OnOvtbUpdateRigidInst)
-	ON_COMMAND(ID_OVTB_SELECT_BASED_ON_RIGID, OnOvtbSelectBasedOnRigidInst)
+    //{{AFX_MSG_MAP(CEditorObjectView)
+    ON_WM_CREATE()
+    ON_WM_SIZE()
+    ON_NOTIFY(TVN_SELCHANGED, IDC_TREE_OBJECTS, OnSelchangeList)
+    ON_COMMAND(ID_OVTB_ADD_PLAYSURFACE, OnOvtbAddPlaysurface)
+    ON_COMMAND(ID_OVTB_ADD_PROPSURFACE, OnOvtbAddPropsurface)
+    ON_COMMAND(ID_OVTB_ADD_ANIMSURFACE, OnOvtbAddAnimsurface)
+    ON_COMMAND(ID_OVTB_REFRESH, OnOvtbRefresh)
+    ON_COMMAND(ID_OVTB_UPDATE_GEOMS_FROM_SEL, OnOvtbUpdateGeomsFromSel)
+    ON_COMMAND(ID_OVTB_UPDATE_RIGIDINST_FROM_SEL, OnOvtbUpdateRigidInst)
+    ON_COMMAND(ID_OVTB_SELECT_BASED_ON_RIGID, OnOvtbSelectBasedOnRigidInst)
     ON_UPDATE_COMMAND_UI(ID_OVTB_ADD_PLAYSURFACE, OnUpdateOvtbAddPlaysurface)
-	ON_UPDATE_COMMAND_UI(ID_OVTB_ADD_PROPSURFACE, OnUpdateOvtbAddPropsurface)
-	ON_UPDATE_COMMAND_UI(ID_OVTB_ADD_ANIMSURFACE, OnUpdateOvtbAddAnimsurface)
-	ON_UPDATE_COMMAND_UI(ID_OVTB_REFRESH, OnUpdateOvtbRefresh)
+    ON_UPDATE_COMMAND_UI(ID_OVTB_ADD_PROPSURFACE, OnUpdateOvtbAddPropsurface)
+    ON_UPDATE_COMMAND_UI(ID_OVTB_ADD_ANIMSURFACE, OnUpdateOvtbAddAnimsurface)
+    ON_UPDATE_COMMAND_UI(ID_OVTB_REFRESH, OnUpdateOvtbRefresh)
     ON_UPDATE_COMMAND_UI(ID_OVTB_UPDATE_GEOMS_FROM_SEL, OnUpdateOvtbUpdateGeomsFromSel)
     ON_UPDATE_COMMAND_UI(ID_OVTB_UPDATE_RIGIDINST_FROM_SEL, OnUpdateOvtbUpdateRigidInst)    
     ON_UPDATE_COMMAND_UI(ID_OVTB_SELECT_BASED_ON_RIGID, OnUpdateOvtbSelectBasedOnRigidInst)    
-	//}}AFX_MSG_MAP
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -75,8 +75,8 @@ END_MESSAGE_MAP()
 
 void CEditorObjectView::OnDraw(CDC* pDC)
 {
-//	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+//    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
 }
 
 //=========================================================================
@@ -86,14 +86,14 @@ void CEditorObjectView::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CEditorObjectView::AssertValid() const
 {
-	CPaletteView::AssertValid();
+    CPaletteView::AssertValid();
 }
 
 //=========================================================================
 
 void CEditorObjectView::Dump(CDumpContext& dc) const
 {
-	CPaletteView::Dump(dc);
+    CPaletteView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -104,8 +104,8 @@ void CEditorObjectView::Dump(CDumpContext& dc) const
 int CEditorObjectView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
     m_ToolbarResourceId = IDR_OBJECT_PALETTE;
-	if (CPaletteView::OnCreate(lpCreateStruct) == -1)
-		return -1;
+    if (CPaletteView::OnCreate(lpCreateStruct) == -1)
+        return -1;
 
     if (!m_rscTree.Create(WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | 
                          TVS_SHOWSELALWAYS, CRect(0,0,0,0), this, IDC_TREE_OBJECTS))
@@ -124,37 +124,37 @@ int CEditorObjectView::OnCreate(LPCREATESTRUCT lpCreateStruct)
                          CRect(0,0,0,0),this,IDC_STATIC))
     {
         ASSERT(FALSE);
-		return -1;      // fail to create
+        return -1;      // fail to create
     }
 
-	// Create the image list used by the tree control.
-	if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
-		return -1;
-	
-	// Set the image list for the tree control.
-	m_rscTree.SetImageList(&m_imageList, TVSIL_NORMAL);
+    // Create the image list used by the tree control.
+    if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
+        return -1;
+    
+    // Set the image list for the tree control.
+    m_rscTree.SetImageList(&m_imageList, TVSIL_NORMAL);
 
     m_strType = "RigidGeom";
     LoadList();
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
 
 void CEditorObjectView::OnInitialUpdate() 
 {
-	CPaletteView::OnInitialUpdate();
-}	
+    CPaletteView::OnInitialUpdate();
+}    
 
 //=========================================================================
 
 void CEditorObjectView::OnSize(UINT nType, int cx, int cy) 
 {
-	CPaletteView::OnSize(nType, cx, cy);
+    CPaletteView::OnSize(nType, cx, cy);
     int nHt = cx/2;
 
-	CSize size = SizeToolBar(cx, cy);
+    CSize size = SizeToolBar(cx, cy);
 
     if (nHt > (cy/2)) nHt = cy/2;
 
@@ -194,8 +194,8 @@ void CEditorObjectView::OnTabActivate(BOOL bActivate)
 
 void CEditorObjectView::OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
-	
+    NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
+    
     xhandle hHandle = m_rscTree.GetItemData(pNMTreeView->itemNew.hItem);
 
     if (hHandle  != HNULL)
@@ -215,7 +215,7 @@ void CEditorObjectView::OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult)
         m_bCanAdd = FALSE;
     }
 
-	*pResult = 0;
+    *pResult = 0;
 }
 
 //=========================================================================
@@ -226,7 +226,7 @@ void CEditorObjectView::LoadList()
     m_rscTree.DeleteAllItems();
     
     //iterate through the resources
-	for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
+    for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
     {
         rsc_desc_mgr::node &Node = g_RescDescMGR.GetRscDescIndex(i);
         CString strType(Node.pDesc->GetType());
@@ -566,10 +566,10 @@ void CEditorObjectView::OnUpdateOvtbSelectBasedOnRigidInst(CCmdUI* pCmdUI)
     {
         if (g_WorldEditor.GetSelectedCount() == 1)
         {
-            bEnable = TRUE;	
+            bEnable = TRUE;    
         }
     }
 
-    pCmdUI->Enable(bEnable);	
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(bEnable);    
+    pCmdUI->SetCheck(FALSE);    
 }

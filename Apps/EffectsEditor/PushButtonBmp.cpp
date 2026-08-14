@@ -52,14 +52,14 @@ CPushButtonBmp::~CPushButtonBmp()
 
 
 BEGIN_MESSAGE_MAP(CPushButtonBmp, CWnd)
-	//{{AFX_MSG_MAP(CPushButtonBmp)
-	ON_WM_PAINT()
-	ON_WM_LBUTTONUP()
-	ON_WM_LBUTTONDOWN()
-	ON_WM_MOUSEMOVE()
+    //{{AFX_MSG_MAP(CPushButtonBmp)
+    ON_WM_PAINT()
+    ON_WM_LBUTTONUP()
+    ON_WM_LBUTTONDOWN()
+    ON_WM_MOUSEMOVE()
 
     ON_MESSAGE( WM_MOUSELEAVE, OnMouseLeave )
-	//}}AFX_MSG_MAP
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -108,14 +108,14 @@ void CPushButtonBmp::SetToggleBitmapUp( UINT nIDResourceColor, UINT nIDResourceA
 
 void CPushButtonBmp::OnPaint() 
 {
-	CPaintDC*       pDC = new CPaintDC(this);
+    CPaintDC*       pDC = new CPaintDC(this);
     CDoubleBuffer   db( pDC );
 
-	// Get the Client Rectangle
+    // Get the Client Rectangle
     CRect             rcClient;
     GetClientRect     ( rcClient );
 
-	// Fill the background
+    // Fill the background
     CRgn        rgn;
     CBrush      brFill;
     CBrush      brBorder;
@@ -289,7 +289,7 @@ void CPushButtonBmp::OnPaint()
     dcColor.SelectObject( pOldBmp );
     dcColor.DeleteDC();
 
-	// Do not call CWnd::OnPaint() for painting messages
+    // Do not call CWnd::OnPaint() for painting messages
 }
 
 void CPushButtonBmp::OnLButtonUp(UINT nFlags, CPoint point) 
@@ -314,7 +314,7 @@ void CPushButtonBmp::OnLButtonDown(UINT nFlags, CPoint point)
     m_IsPressed = true;
 
     CWnd::RedrawWindow();
-	CWnd::OnLButtonDown(nFlags, point);
+    CWnd::OnLButtonDown(nFlags, point);
 }
 
 BOOL CPushButtonBmp::Create(CWnd* pParentWnd, const char* Label, int posX, int posY, int nWidth, int nHeight, UINT nID)
@@ -328,7 +328,7 @@ BOOL CPushButtonBmp::Create(CWnd* pParentWnd, const char* Label, int posX, int p
     CString         winClassName;
     RECT            winRect;
 
-	winClassName    = AfxRegisterWndClass   ( NULL, //CS_DBLCLKS,                       // Class Style
+    winClassName    = AfxRegisterWndClass   ( NULL, //CS_DBLCLKS,                       // Class Style
                                               ::LoadCursor(NULL, IDC_ARROW),    // Cursor
                                               NULL,                             // Background
                                               0 );                              // Icon
@@ -338,7 +338,7 @@ BOOL CPushButtonBmp::Create(CWnd* pParentWnd, const char* Label, int posX, int p
     winRect.top     = posY;
     winRect.bottom  = posY + m_Height;
 
-	return CWnd::Create(winClassName, "", WS_VISIBLE, winRect, pParentWnd, nID, NULL);
+    return CWnd::Create(winClassName, "", WS_VISIBLE, winRect, pParentWnd, nID, NULL);
 }
 
 void CPushButtonBmp::MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint )
@@ -372,6 +372,6 @@ LRESULT CPushButtonBmp::OnMouseLeave(WPARAM wParam, LPARAM lParam)
     m_IsPressed = false;
 
     CWnd::RedrawWindow();
-	
+    
     return 0;
 }

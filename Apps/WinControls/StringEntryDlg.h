@@ -15,14 +15,14 @@ class CStringEntryDlg : public CDialog
 {
 // Construction
 public:
-	CStringEntryDlg(CWnd* pParent = NULL);   // standard constructor
+    CStringEntryDlg(CWnd* pParent = NULL);   // standard constructor
 
 // Dialog Data
-	//{{AFX_DATA(CStringEntryDlg)
-	enum { IDD = IDD_GET_STRING_DLG };
-	CStatic	m_stDisplay;
-	CEdit	m_edEntry;
-	//}}AFX_DATA
+    //{{AFX_DATA(CStringEntryDlg)
+    enum { IDD = IDD_GET_STRING_DLG };
+    CStatic    m_stDisplay;
+    CEdit    m_edEntry;
+    //}}AFX_DATA
 
     void SetDisplayText(CString strText) { m_strDisplayText = strText; }
     void SetEntryText(CString strText) { m_strEntryText = strText; }
@@ -30,21 +30,21 @@ public:
     CString GetEntryText() { return m_strEntryText; }
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CStringEntryDlg)
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CStringEntryDlg)
+    protected:
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
 
-	// Generated message map functions
-	//{{AFX_MSG(CStringEntryDlg)
-	virtual void OnOK();
-	virtual BOOL OnInitDialog();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(CStringEntryDlg)
+    virtual void OnOK();
+    virtual BOOL OnInitDialog();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
     CString m_strDisplayText;
     CString m_strEntryText;

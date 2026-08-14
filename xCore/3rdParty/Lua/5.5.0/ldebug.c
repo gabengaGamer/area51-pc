@@ -31,7 +31,7 @@
 
 
 
-#define LuaClosure(f)		((f) != NULL && (f)->c.tt == LUA_VLCL)
+#define LuaClosure(f)        ((f) != NULL && (f)->c.tt == LUA_VLCL)
 
 static const char strlocal[] = "local";
 static const char strupval[] = "upvalue";

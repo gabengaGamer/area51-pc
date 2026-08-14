@@ -35,54 +35,54 @@ CProperties*    g_pProperties   = NULL;
 IMPLEMENT_DYNCREATE(CMainFrame, CXTFrameWnd)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CXTFrameWnd)
-	//{{AFX_MSG_MAP(CMainFrame)
-	ON_WM_CREATE()
-	ON_WM_DESTROY()
-	ON_WM_CLOSE()
+    //{{AFX_MSG_MAP(CMainFrame)
+    ON_WM_CREATE()
+    ON_WM_DESTROY()
+    ON_WM_CLOSE()
     ON_MESSAGE( WM_USER_MSG_KEYBAR_TIMECHANGE, OnTimeChange )
     ON_MESSAGE( WM_USER_MSG_KEYBAR_KEYS_CHANGED, OnKeysChange )
     ON_MESSAGE( WM_USER_MSG_KEYBAR_ANIMMODECHANGE, OnAnimModeChange )
     ON_MESSAGE( WM_USER_MSG_PROPERTIES_PROPERTYCHANGED, OnProperties_Property_Changed )
-	ON_COMMAND(ID_MAIN_TOOLBAR_UNDO, OnMainToolbarUndo)
-	ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_UNDO, OnUpdateMainToolbarUndo)
-	ON_COMMAND(ID_MAIN_TOOLBAR_REDO, OnMainToolbarRedo)
-	ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_REDO, OnUpdateMainToolbarRedo)
-	ON_COMMAND(ID_MAIN_TOOLBAR_SELECT, OnMainToolbarSelect)
-	ON_COMMAND(ID_MAIN_TOOLBAR_MOVE, OnMainToolbarMove)
-	ON_COMMAND(ID_MAIN_TOOLBAR_ROTATE, OnMainToolbarRotate)
-	ON_COMMAND(ID_MAIN_TOOLBAR_SCALE, OnMainToolbarScale)
-	ON_COMMAND(ID_MAIN_TOOLBAR_AXIS_X, OnMainToolbarAxisX)
-	ON_COMMAND(ID_MAIN_TOOLBAR_AXIS_Y, OnMainToolbarAxisY)
-	ON_COMMAND(ID_MAIN_TOOLBAR_AXIS_Z, OnMainToolbarAxisZ)
-	ON_COMMAND(ID_MAIN_TOOLBAR_ALIGN, OnMainToolbarAlign)
-	ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_SELECT, OnUpdateMainToolbarSelect)
-	ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_MOVE, OnUpdateMainToolbarMove)
-	ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_ROTATE, OnUpdateMainToolbarRotate)
-	ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_SCALE, OnUpdateMainToolbarScale)
-	ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_AXIS_X, OnUpdateMainToolbarAxisX)
-	ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_AXIS_Y, OnUpdateMainToolbarAxisY)
-	ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_AXIS_Z, OnUpdateMainToolbarAxisZ)
-	ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_ALIGN, OnUpdateMainToolbarAlign)
-	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
-	ON_COMMAND(ID_EDIT_SELECT_NONE, OnEditSelectNone)
-	ON_COMMAND(ID_EDIT_SELECT_INVERT, OnEditSelectInvert)
-	ON_COMMAND(ID_VIEW_VIEWPORT_MAXIMIZE, OnViewViewportMaximize)
-	ON_COMMAND(ID_TIME_GOTO_FIRST_FRAME, OnTimeGotoFirstFrame)
-	ON_COMMAND(ID_TIME_GOTO_LAST_FRAME, OnTimeGotoLastFrame)
-	ON_COMMAND(ID_TIME_GOTO_PREVIOUS_FRAME, OnTimeGotoPreviousFrame)
-	ON_COMMAND(ID_TIME_GOTO_NEXT_FRAME, OnTimeGotoNextFrame)
-	ON_COMMAND(ID_TIME_PLAY, OnTimePlay)
-	ON_COMMAND(ID_TIME_ZOOM_TIME_EXTENTS, OnTimeZoomTimeExtents)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_VIEWPORT_MAXIMIZE, OnUpdateViewViewportMaximize)
-	//}}AFX_MSG_MAP
+    ON_COMMAND(ID_MAIN_TOOLBAR_UNDO, OnMainToolbarUndo)
+    ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_UNDO, OnUpdateMainToolbarUndo)
+    ON_COMMAND(ID_MAIN_TOOLBAR_REDO, OnMainToolbarRedo)
+    ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_REDO, OnUpdateMainToolbarRedo)
+    ON_COMMAND(ID_MAIN_TOOLBAR_SELECT, OnMainToolbarSelect)
+    ON_COMMAND(ID_MAIN_TOOLBAR_MOVE, OnMainToolbarMove)
+    ON_COMMAND(ID_MAIN_TOOLBAR_ROTATE, OnMainToolbarRotate)
+    ON_COMMAND(ID_MAIN_TOOLBAR_SCALE, OnMainToolbarScale)
+    ON_COMMAND(ID_MAIN_TOOLBAR_AXIS_X, OnMainToolbarAxisX)
+    ON_COMMAND(ID_MAIN_TOOLBAR_AXIS_Y, OnMainToolbarAxisY)
+    ON_COMMAND(ID_MAIN_TOOLBAR_AXIS_Z, OnMainToolbarAxisZ)
+    ON_COMMAND(ID_MAIN_TOOLBAR_ALIGN, OnMainToolbarAlign)
+    ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_SELECT, OnUpdateMainToolbarSelect)
+    ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_MOVE, OnUpdateMainToolbarMove)
+    ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_ROTATE, OnUpdateMainToolbarRotate)
+    ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_SCALE, OnUpdateMainToolbarScale)
+    ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_AXIS_X, OnUpdateMainToolbarAxisX)
+    ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_AXIS_Y, OnUpdateMainToolbarAxisY)
+    ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_AXIS_Z, OnUpdateMainToolbarAxisZ)
+    ON_UPDATE_COMMAND_UI(ID_MAIN_TOOLBAR_ALIGN, OnUpdateMainToolbarAlign)
+    ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
+    ON_COMMAND(ID_EDIT_SELECT_NONE, OnEditSelectNone)
+    ON_COMMAND(ID_EDIT_SELECT_INVERT, OnEditSelectInvert)
+    ON_COMMAND(ID_VIEW_VIEWPORT_MAXIMIZE, OnViewViewportMaximize)
+    ON_COMMAND(ID_TIME_GOTO_FIRST_FRAME, OnTimeGotoFirstFrame)
+    ON_COMMAND(ID_TIME_GOTO_LAST_FRAME, OnTimeGotoLastFrame)
+    ON_COMMAND(ID_TIME_GOTO_PREVIOUS_FRAME, OnTimeGotoPreviousFrame)
+    ON_COMMAND(ID_TIME_GOTO_NEXT_FRAME, OnTimeGotoNextFrame)
+    ON_COMMAND(ID_TIME_PLAY, OnTimePlay)
+    ON_COMMAND(ID_TIME_ZOOM_TIME_EXTENTS, OnTimeZoomTimeExtents)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_VIEWPORT_MAXIMIZE, OnUpdateViewViewportMaximize)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
 {
-	ID_SEPARATOR,           // status line indicator
-	ID_INDICATOR_CAPS,
-	ID_INDICATOR_NUM,
-	ID_INDICATOR_SCRL,
+    ID_SEPARATOR,           // status line indicator
+    ID_INDICATOR_CAPS,
+    ID_INDICATOR_NUM,
+    ID_INDICATOR_SCRL,
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -114,7 +114,7 @@ CMainFrame::~CMainFrame()
 
     g_UIRenderer.Kill();
     eng_Kill();
-	x_Kill();
+    x_Kill();
 
     // Cleanup pointers for KeyBar keyframe info
     if( m_pKeySets )
@@ -132,7 +132,7 @@ CMainFrame::~CMainFrame()
 
 bool    CMainFrame::InitKeyBar( void )
 {
-	// Setup KeyFilters
+    // Setup KeyFilters
     int         nKeyFilters         = 5;
     m_pKeyFilters                   = new KeyFilter[ nKeyFilters ];
 
@@ -156,7 +156,7 @@ bool    CMainFrame::InitKeyBar( void )
     m_pKeyFilters[4].m_Color        = RGB( 128, 128, 128 );
     m_pKeyFilters[4].m_IsVisible    = true;
 
-	// Set Keybar stuff
+    // Set Keybar stuff
     m_KeyBar.SetTimeRange   ( 0, 60 );
     m_KeyBar.SetTime        ( 0 );
     m_KeyBar.SetKeySets     ( 0, NULL );
@@ -170,31 +170,31 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     lpCreateStruct->style |= WS_MAXIMIZE;
 
     if (CXTFrameWnd::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
+        return -1;
+    
     // Enable/Disable XP GUI Mode
     xtAfxData.bXPMode = TRUE;
 
     // Enable/Disable Menu Shadows
     xtAfxData.bMenuShadows = TRUE;
-	
-    // Create the Menu Bar
-	if (!m_wndMenuBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
-		| /*CBRS_GRIPPER |*/ CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
-		!m_wndMenuBar.LoadMenuBar(IDR_MAINFRAME))
-	{
-		TRACE0("Failed to create menubar\n");
-		return -1;      // fail to create
-	}
     
-	//  Create the toolbar
+    // Create the Menu Bar
+    if (!m_wndMenuBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
+        | /*CBRS_GRIPPER |*/ CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
+        !m_wndMenuBar.LoadMenuBar(IDR_MAINFRAME))
+    {
+        TRACE0("Failed to create menubar\n");
+        return -1;      // fail to create
+    }
+    
+    //  Create the toolbar
 /*
-	if( !m_wndToolBar.CreateEx( this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY )
+    if( !m_wndToolBar.CreateEx( this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY )
         || !m_wndToolBar.LoadToolBar(IDR_MAINFRAME) )
-	{
-		TRACE0("Failed to create toolbar\n");
-		return -1;      // fail to create
-	}
+    {
+        TRACE0("Failed to create toolbar\n");
+        return -1;      // fail to create
+    }
 
     int iButton = m_wndToolBar.CommandToIndex( ID_VIEW_4WAY );
     if( iButton != -1 )
@@ -203,12 +203,12 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         m_wndToolBar.CheckButton( ID_VIEW_4WAY, TRUE );
     }
 */
-	if( !m_wndToolBar.CreateEx( this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | /*CBRS_GRIPPER |*/ CBRS_TOOLTIPS | CBRS_FLYBY )
+    if( !m_wndToolBar.CreateEx( this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | /*CBRS_GRIPPER |*/ CBRS_TOOLTIPS | CBRS_FLYBY )
         || !m_wndToolBar.LoadToolBar(IDR_MAIN_TOOLBAR) )
-	{
-		TRACE0("Failed to create toolbar\n");
-		return -1;      // fail to create
-	}
+    {
+        TRACE0("Failed to create toolbar\n");
+        return -1;      // fail to create
+    }
 
     // Setup Toolbar Undo/Redo
 //    m_wndToolBar.InitDropDownButton( ID_MAIN_TOOLBAR_UNDO, TRUE );
@@ -241,29 +241,29 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     }
 
     // Create the Property Editor
-	if( !m_wndProperties.Create( this, IDW_PROPERTIES, _T("Properties"), CSize(256,256), CBRS_RIGHT ) )
-	{
-		TRACE0( "Failed to create properties dock window\n" );
-		return -1;		// fail to create
-	}
+    if( !m_wndProperties.Create( this, IDW_PROPERTIES, _T("Properties"), CSize(256,256), CBRS_RIGHT ) )
+    {
+        TRACE0( "Failed to create properties dock window\n" );
+        return -1;        // fail to create
+    }
 
-	//  Dock the toolbars
-//	m_wndMenuBar   .EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
-//	m_wndToolBar   .EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
-	m_wndProperties.EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT|CBRS_XT_GRIPPER_GRAD);
-	EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
+    //  Dock the toolbars
+//    m_wndMenuBar   .EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
+//    m_wndToolBar   .EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
+    m_wndProperties.EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT|CBRS_XT_GRIPPER_GRAD);
+    EnableDockingEx(CBRS_ALIGN_ANY, CBRS_XT_ALL_FLAT);
 //    DockControlBar( &m_wndMenuBar    );
 //    DockControlBar( &m_wndToolBar    );
     DockControlBar( &m_wndProperties );
 
-	// Cool Menus
-	InstallCoolMenus(IDR_MAINFRAME);
+    // Cool Menus
+    InstallCoolMenus(IDR_MAINFRAME);
 
-	return 0;
+    return 0;
 }
 
 BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/,
-	CCreateContext* pContext)
+    CCreateContext* pContext)
 {
     int     Width, Height;
     RECT    Rect;
@@ -288,18 +288,18 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/,
 /***********************************************************************************************************/
 /***********************************************************************************************************/
 
-	// Create the KeyBar
-	if ( !m_KeyBar.Create(this, CBRS_ALIGN_BOTTOM, IDW_KEYBAR) )
-	{
-		TRACE0("Failed to create KeyBar\n");
-		return -1;      // fail to create
-	}
+    // Create the KeyBar
+    if ( !m_KeyBar.Create(this, CBRS_ALIGN_BOTTOM, IDW_KEYBAR) )
+    {
+        TRACE0("Failed to create KeyBar\n");
+        return -1;      // fail to create
+    }
 
-	// Initialize the KeyBar
+    // Initialize the KeyBar
     if( !InitKeyBar() )
     {
-		TRACE0("Failed to create KeyBar\n");
-		return -1;      // KeyBar initialization failed
+        TRACE0("Failed to create KeyBar\n");
+        return -1;      // KeyBar initialization failed
     }
 
 /***********************************************************************************************************/
@@ -388,8 +388,8 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/,
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
-	if( !CXTFrameWnd::PreCreateWindow(cs) )
-		return FALSE;
+    if( !CXTFrameWnd::PreCreateWindow(cs) )
+        return FALSE;
 
     return TRUE;
 }
@@ -400,12 +400,12 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 #ifdef _DEBUG
 void CMainFrame::AssertValid() const
 {
-	CXTFrameWnd::AssertValid();
+    CXTFrameWnd::AssertValid();
 }
 
 void CMainFrame::Dump(CDumpContext& dc) const
 {
-	CXTFrameWnd::Dump(dc);
+    CXTFrameWnd::Dump(dc);
 }
 
 #endif //_DEBUG
@@ -417,7 +417,7 @@ void CMainFrame::Dump(CDumpContext& dc) const
 
 void CMainFrame::OnDestroy() 
 {
-	CXTFrameWnd::OnDestroy();
+    CXTFrameWnd::OnDestroy();
 }
 
 //---------------------------------------------------------------------------
@@ -444,8 +444,8 @@ void CMainFrame::OnClose()
         CParticleView3D* pView = (CParticleView3D*)pFrame->GetDlgItem( AFX_IDW_PANE_FIRST );
         m_pDoc->RemoveView( pView );
     }
-	
-	CXTFrameWnd::OnClose();
+    
+    CXTFrameWnd::OnClose();
 }
 
 //---------------------------------------------------------------------------
@@ -538,7 +538,7 @@ void CMainFrame::OnMainToolbarUndo()
 
 void CMainFrame::OnUpdateMainToolbarUndo(CCmdUI* pCmdUI) 
 {
-	pCmdUI->Enable( FALSE );
+    pCmdUI->Enable( FALSE );
 }
 
 //---------------------------------------------------------------------------
@@ -549,7 +549,7 @@ void CMainFrame::OnMainToolbarRedo()
 
 void CMainFrame::OnUpdateMainToolbarRedo(CCmdUI* pCmdUI) 
 {
-	pCmdUI->Enable( FALSE );
+    pCmdUI->Enable( FALSE );
 }
 
 //---------------------------------------------------------------------------
@@ -650,7 +650,7 @@ void CMainFrame::OnUpdateMainToolbarAlign(CCmdUI* pCmdUI)
 
 void CMainFrame::OnEditSelectAll() 
 {
-	m_pDoc->SelectAll();
+    m_pDoc->SelectAll();
 
     POSITION            Pos     = m_pDoc->GetFirstViewPosition();
     CParticleView3D*    pView   = (CParticleView3D*)m_pDoc->GetNextView( Pos );
@@ -662,7 +662,7 @@ void CMainFrame::OnEditSelectAll()
 
 void CMainFrame::OnEditSelectNone() 
 {
-	m_pDoc->SelectNone();
+    m_pDoc->SelectNone();
 
     POSITION            Pos     = m_pDoc->GetFirstViewPosition();
     CParticleView3D*    pView   = (CParticleView3D*)m_pDoc->GetNextView( Pos );
@@ -674,7 +674,7 @@ void CMainFrame::OnEditSelectNone()
 
 void CMainFrame::OnEditSelectInvert() 
 {
-	m_pDoc->SelectInvert();
+    m_pDoc->SelectInvert();
 
     POSITION            Pos     = m_pDoc->GetFirstViewPosition();
     CParticleView3D*    pView   = (CParticleView3D*)m_pDoc->GetNextView( Pos );

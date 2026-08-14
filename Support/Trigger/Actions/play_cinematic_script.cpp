@@ -43,7 +43,7 @@ void play_cinematic_script::OnRender ( void )
 
 //=============================================================================
 
-void play_cinematic_script::OnEnumProp	( prop_enum& rPropList )
+void play_cinematic_script::OnEnumProp    ( prop_enum& rPropList )
 {
     //object info
  
@@ -52,7 +52,7 @@ void play_cinematic_script::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool play_cinematic_script::OnProperty	( prop_query& rPropQuery )
+xbool play_cinematic_script::OnProperty    ( prop_query& rPropQuery )
 { 
     if( actions_base::OnProperty( rPropQuery ) )
         return TRUE;

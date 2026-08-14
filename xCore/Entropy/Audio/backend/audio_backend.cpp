@@ -141,8 +141,8 @@ void UpdateStreamPCM( audio_runtime& Runtime, channel* pChannel )
     }
 
     if( pChannel->StreamData.pStream && pChannel->StreamData.pStream->StreamDone )
-	{
-		// Calculate absolute position
+    {
+        // Calculate absolute position
         pChannel->Backend.CurrentPosition = pChannel->Backend.BasePosition + pChannel->CurrBufferPosition;
 
         // Need to release it?
@@ -151,7 +151,7 @@ void UpdateStreamPCM( audio_runtime& Runtime, channel* pChannel )
             // Nuke it.
             Runtime.Backend.ReleaseChannel( pChannel );
         }
-	}
+    }
 }
 
 //==============================================================================
@@ -159,31 +159,31 @@ void UpdateStreamPCM( audio_runtime& Runtime, channel* pChannel )
 static 
 void UpdateStreamDecoded( audio_runtime& Runtime, channel* pChannel )
 {
-	hot_sample* pSample = pChannel->Sample.pHotSample;
+    hot_sample* pSample = pChannel->Sample.pHotSample;
 
-	// Did a wrap occur?
-	if( (pChannel->StreamData.PreviousPosition >= pChannel->MidPoint) && 
-		(pChannel->CurrBufferPosition < pChannel->MidPoint) )
-	{
-		LOG_MESSAGE( "UpdateStreamDecoded", "Played a BUFFER!" );
-		pChannel->Backend.BasePosition += STREAM_BUFFER_SIZE;
-	}
+    // Did a wrap occur?
+    if( (pChannel->StreamData.PreviousPosition >= pChannel->MidPoint) && 
+        (pChannel->CurrBufferPosition < pChannel->MidPoint) )
+    {
+        LOG_MESSAGE( "UpdateStreamDecoded", "Played a BUFFER!" );
+        pChannel->Backend.BasePosition += STREAM_BUFFER_SIZE;
+    }
 
-	// Update previous.
-	pChannel->StreamData.PreviousPosition = pChannel->CurrBufferPosition;
+    // Update previous.
+    pChannel->StreamData.PreviousPosition = pChannel->CurrBufferPosition;
 
-	// Calculate absolute position
-	pChannel->Backend.CurrentPosition = pChannel->Backend.BasePosition + pChannel->CurrBufferPosition;
+    // Calculate absolute position
+    pChannel->Backend.CurrentPosition = pChannel->Backend.BasePosition + pChannel->CurrBufferPosition;
 
-	// Need to release it?
-	if( pChannel->Backend.CurrentPosition >= pSample->nSamples )
-	{
+    // Need to release it?
+    if( pChannel->Backend.CurrentPosition >= pSample->nSamples )
+    {
         if( pChannel->StreamData.pStream && !pChannel->StreamData.pStream->StreamDone )
             return;
 
-		// Nuke it.
-		Runtime.Backend.ReleaseChannel( pChannel );
-	}
+        // Nuke it.
+        Runtime.Backend.ReleaseChannel( pChannel );
+    }
 }
 
 //==============================================================================
@@ -606,7 +606,7 @@ xbool audio_backend::ReleaseChannel( channel* pChannel )
 {
     // If the hardware channel is active, stop it!
     //if( pChannel->Backend.hChannel )
-	if( pChannel->Backend.InUse )
+    if( pChannel->Backend.InUse )
     {
         audio_render_command Command;
         x_memset( &Command, 0, sizeof(Command) );
@@ -640,7 +640,7 @@ xbool audio_backend::ReleaseChannel( channel* pChannel )
         }
     }
 
-	if( pChannel->Backend.InUse )
+    if( pChannel->Backend.InUse )
     {
         // Does this channel have a stream?
         if( pChannel->StreamData.pStream && pChannel->StreamData.StreamControl )
@@ -865,8 +865,8 @@ void audio_backend::InitChannelStreamed( channel* pChannel )
 
     // Set the current position
     pChannel->CurrBufferPosition = 0;
-	pChannel->PrevBufferPosition = 0;
-	pChannel->StreamData.PreviousPosition = 0;
+    pChannel->PrevBufferPosition = 0;
+    pChannel->StreamData.PreviousPosition = 0;
 
     if( Runtime().Decoders.UsesRuntimeDecode( (compression_types)pHotSample->CompressionType ) )
     {

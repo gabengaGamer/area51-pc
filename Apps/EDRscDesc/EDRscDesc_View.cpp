@@ -34,11 +34,11 @@ EDRscDesc_View::~EDRscDesc_View()
 
 
 BEGIN_MESSAGE_MAP(EDRscDesc_View, CView)
-	//{{AFX_MSG_MAP(EDRscDesc_View)
-	ON_WM_CREATE()
-	ON_WM_ERASEBKGND()
-	ON_WM_SIZE()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(EDRscDesc_View)
+    ON_WM_CREATE()
+    ON_WM_ERASEBKGND()
+    ON_WM_SIZE()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -46,8 +46,8 @@ END_MESSAGE_MAP()
 
 void EDRscDesc_View::OnDraw(CDC* pDC)
 {
-	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
     UNUSED_ALWAYS( pDoc );
 }
 
@@ -57,12 +57,12 @@ void EDRscDesc_View::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void EDRscDesc_View::AssertValid() const
 {
-	CView::AssertValid();
+    CView::AssertValid();
 }
 
 void EDRscDesc_View::Dump(CDumpContext& dc) const
 {
-	CView::Dump(dc);
+    CView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -71,15 +71,15 @@ void EDRscDesc_View::Dump(CDumpContext& dc) const
 
 int EDRscDesc_View::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CView::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
-	if( !m_TabCtrl.Create(this, IDR_RSCDESC_VIEW_TAB, _T("Resources"),
-		CSize(200, 150), CBRS_TOP, 0 ) )
-	{
-		TRACE0("Failed to create resource tab window\n");
-		return -1;
-	}
+    if (CView::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
+    if( !m_TabCtrl.Create(this, IDR_RSCDESC_VIEW_TAB, _T("Resources"),
+        CSize(200, 150), CBRS_TOP, 0 ) )
+    {
+        TRACE0("Failed to create resource tab window\n");
+        return -1;
+    }
 
     CCreateContext* pContext  = (CCreateContext*)lpCreateStruct->lpCreateParams;
     CDocument*      pDocument = pContext ? pContext->m_pCurrentDoc : GetDocument();
@@ -90,20 +90,20 @@ int EDRscDesc_View::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
     pFrameWnd = m_TabCtrl.CreateFrameDocView(
         RUNTIME_CLASS(CFrameWnd), RUNTIME_CLASS(CFlatRscList_View), pDocument);
-	m_TabCtrl.AddControl(_T("Flat View"), pFrameWnd);
+    m_TabCtrl.AddControl(_T("Flat View"), pFrameWnd);
 
-	return 0;
+    return 0;
 }
 
 BOOL EDRscDesc_View::OnEraseBkgnd(CDC* pDC) 
 {
-	// TODO: Add your message handler code here and/or call default
-	return TRUE;
+    // TODO: Add your message handler code here and/or call default
+    return TRUE;
 }
 
 void EDRscDesc_View::OnSize(UINT nType, int cx, int cy)
 {
-	CView::OnSize(nType, cx, cy);
+    CView::OnSize(nType, cx, cy);
 
     if( m_TabCtrl.GetSafeHwnd() )
     {

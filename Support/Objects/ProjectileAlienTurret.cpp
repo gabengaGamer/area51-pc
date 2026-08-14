@@ -67,14 +67,14 @@ const object_desc&  alien_turret_projectile::GetObjectType   ( void )
 
 alien_turret_projectile::alien_turret_projectile()
 {
-	m_Speed                 = 800.f;
+    m_Speed                 = 800.f;
     m_AliveTime             = 0.0f;
     m_PainType              = pain::TYPE_GENERIC;
-	m_DamageAmount          = 10.f;
-	m_CollisionPoint		= vector3( 0.f , 0.f , 0.f );  
+    m_DamageAmount          = 10.f;
+    m_CollisionPoint        = vector3( 0.f , 0.f , 0.f );  
     m_NormalCollision       = vector3( 0.f , 0.f , 0.f );  
     
-	m_MaxAliveTime          = 10.0f;
+    m_MaxAliveTime          = 10.0f;
     m_ParticleExplosion     = particle_emitter::CAMERA_EXPLOSION;
     m_ExplosionRadius       = 200.0f;
     m_YawRate               = 0;
@@ -292,7 +292,7 @@ void alien_turret_projectile::OnExplode( void )
         decal_definition* pDef = pPackage->GetDecalDef( "CharMarks", 0 );
         if( pDef )
         {
-	        //only paste a decal if the object is at the last collision
+            //only paste a decal if the object is at the last collision
             // point (within radius + 20 centimeters)
             f32 Size        = x_frand( 20.0f, 80.0f );
             f32 fDistToTest = GetBBox().GetRadiusSquared() + (20.0f * 20.0f);
@@ -410,11 +410,11 @@ void alien_turret_projectile::OnExplode( void )
 
 xbool alien_turret_projectile::OnProcessCollision( const f32& DeltaTime )
 {
-    vector3	DesiredPos	= m_CurrentPosition + m_Velocity * DeltaTime;
+    vector3    DesiredPos    = m_CurrentPosition + m_Velocity * DeltaTime;
     
     // Fire up sphere collision 
     g_CollisionMgr.RaySetup( GetGuid(), 
-							 GetBBox().GetCenter(),
+                             GetBBox().GetCenter(),
                              GetBBox().GetCenter() + m_Velocity * DeltaTime );
     g_CollisionMgr.AddToIgnoreList( m_OwnerGuid );
     g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, object::ATTR_COLLIDABLE, object::ATTR_COLLISION_PERMEABLE );
@@ -594,10 +594,10 @@ void alien_turret_projectile::UpdateVelocity( f32 DeltaTime )
 xbool alien_turret_projectile::LoadInstance( const char* pFileName )
 {
     (void)pFileName;
-	// Initialize the skin
-	//m_RigidInst.OnProperty( g_PropQuery.WQueryExternal( "RenderInst\\File", pFileName ) );
+    // Initialize the skin
+    //m_RigidInst.OnProperty( g_PropQuery.WQueryExternal( "RenderInst\\File", pFileName ) );
     //m_RigidInst.SetUpRigidGeom( pFileName );
-	return TRUE;
+    return TRUE;
 
 }
 

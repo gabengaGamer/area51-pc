@@ -20,8 +20,8 @@
 class CParticleView3D : public CView3D
 {
     protected:
-	    CParticleView3D();           // protected constructor used by dynamic creation
-	    DECLARE_DYNCREATE(CParticleView3D)
+        CParticleView3D();           // protected constructor used by dynamic creation
+        DECLARE_DYNCREATE(CParticleView3D)
 
     // Attributes
     protected:
@@ -61,57 +61,57 @@ class CParticleView3D : public CView3D
 
 
     // Overrides
-	    // ClassWizard generated virtual function overrides
-	    //{{AFX_VIRTUAL(CParticleView3D)
-	protected:
-	    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	//}}AFX_VIRTUAL
+        // ClassWizard generated virtual function overrides
+        //{{AFX_VIRTUAL(CParticleView3D)
+    protected:
+        virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    //}}AFX_VIRTUAL
 
     // Implementation
     protected:
-	    virtual ~CParticleView3D();
+        virtual ~CParticleView3D();
     #ifdef _DEBUG
-	    virtual void AssertValid() const;
-	    virtual void Dump(CDumpContext& dc) const;
+        virtual void AssertValid() const;
+        virtual void Dump(CDumpContext& dc) const;
     #endif
 
-	    // Generated message map functions
+        // Generated message map functions
     protected:
-	    //{{AFX_MSG(CParticleView3D)
-	    afx_msg void    OnPaint                     ( void );
-	    afx_msg void    OnMouseMove                 (UINT nFlags, CPoint point);
-	    afx_msg int     OnCreate                    (LPCREATESTRUCT lpCreateStruct);
-	    afx_msg void    OnLButtonDown               (UINT nFlags, CPoint point);
-	    afx_msg void    OnLButtonUp                 (UINT nFlags, CPoint point);
-	    afx_msg BOOL    OnMouseWheel                (UINT nFlags, short zDelta, CPoint pt);
+        //{{AFX_MSG(CParticleView3D)
+        afx_msg void    OnPaint                     ( void );
+        afx_msg void    OnMouseMove                 (UINT nFlags, CPoint point);
+        afx_msg int     OnCreate                    (LPCREATESTRUCT lpCreateStruct);
+        afx_msg void    OnLButtonDown               (UINT nFlags, CPoint point);
+        afx_msg void    OnLButtonUp                 (UINT nFlags, CPoint point);
+        afx_msg BOOL    OnMouseWheel                (UINT nFlags, short zDelta, CPoint pt);
         afx_msg void    OnRButtonDown               (UINT nFlags, CPoint point);
-	    afx_msg void    OnMButtonDown               (UINT nFlags, CPoint point);
-	    afx_msg void    OnMButtonUp                 (UINT nFlags, CPoint point);
-	    afx_msg BOOL    OnSetCursor                 (CWnd* pWnd, UINT nHitTest, UINT message);
-	    afx_msg void    OnKeyUp                     (UINT nChar, UINT nRepCnt, UINT nFlags);
-	    afx_msg void    OnUpdateViewViewportGrids   (CCmdUI* pCmdUI);
-	    afx_msg void    OnUpdateViewBbox            (CCmdUI* pCmdUI);
-	    afx_msg void    OnCreateCylinder            ( void );
-	    afx_msg void    OnCreateMesh                ( void );
-	    afx_msg void    OnCreatePlane               ( void );
-	    afx_msg void    OnCreateRibbon              ( void );
-	    afx_msg void    OnCreateShockWave           ( void );
-	    afx_msg void    OnCreateSpemitter           ( void );
-	    afx_msg void    OnCreateSphere              ( void );
-	    afx_msg void    OnCreateSprite              ( void );
-	    afx_msg void    OnEditSelectByname          ( void );
-	    afx_msg void    OnEditClone                 ( void );
-	    afx_msg void    OnEditMoveToZero            ( void );
-	    afx_msg void    OnViewViewportGrids         ( void );
-	    afx_msg void    OnViewRedrawAll             ( void );
-	    afx_msg void    OnViewBbox                  ( void );
-	    afx_msg void    OnViewTrajectory            ( void );
-	    afx_msg void    OnViewVelocity              ( void );
-	    afx_msg void    OnViewHideSelected          ( void );
-	    afx_msg void    OnViewUnhideAll             ( void );
-	//}}AFX_MSG
-	    DECLARE_MESSAGE_MAP()
+        afx_msg void    OnMButtonDown               (UINT nFlags, CPoint point);
+        afx_msg void    OnMButtonUp                 (UINT nFlags, CPoint point);
+        afx_msg BOOL    OnSetCursor                 (CWnd* pWnd, UINT nHitTest, UINT message);
+        afx_msg void    OnKeyUp                     (UINT nChar, UINT nRepCnt, UINT nFlags);
+        afx_msg void    OnUpdateViewViewportGrids   (CCmdUI* pCmdUI);
+        afx_msg void    OnUpdateViewBbox            (CCmdUI* pCmdUI);
+        afx_msg void    OnCreateCylinder            ( void );
+        afx_msg void    OnCreateMesh                ( void );
+        afx_msg void    OnCreatePlane               ( void );
+        afx_msg void    OnCreateRibbon              ( void );
+        afx_msg void    OnCreateShockWave           ( void );
+        afx_msg void    OnCreateSpemitter           ( void );
+        afx_msg void    OnCreateSphere              ( void );
+        afx_msg void    OnCreateSprite              ( void );
+        afx_msg void    OnEditSelectByname          ( void );
+        afx_msg void    OnEditClone                 ( void );
+        afx_msg void    OnEditMoveToZero            ( void );
+        afx_msg void    OnViewViewportGrids         ( void );
+        afx_msg void    OnViewRedrawAll             ( void );
+        afx_msg void    OnViewBbox                  ( void );
+        afx_msg void    OnViewTrajectory            ( void );
+        afx_msg void    OnViewVelocity              ( void );
+        afx_msg void    OnViewHideSelected          ( void );
+        afx_msg void    OnViewUnhideAll             ( void );
+    //}}AFX_MSG
+        DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

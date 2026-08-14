@@ -22,8 +22,8 @@
 
 enum demo_main_menu_controls
 {
-	IDC_DEMO_MAIN_MENU_LEVEL_ONE,
-	IDC_DEMO_MAIN_MENU_LEVEL_TWO,
+    IDC_DEMO_MAIN_MENU_LEVEL_ONE,
+    IDC_DEMO_MAIN_MENU_LEVEL_TWO,
     IDC_DEMO_MAIN_MENU_LEVEL_THREE,
 };
 
@@ -59,9 +59,9 @@ public:
 
 protected:
     ui_frame*           m_pFrame1;
-	ui_button*			m_pButtonLevelOne;
-	ui_button*			m_pButtonLevelTwo; 		
-	ui_button*			m_pButtonLevelThree; 		
+    ui_button*            m_pButtonLevelOne;
+    ui_button*            m_pButtonLevelTwo;         
+    ui_button*            m_pButtonLevelThree;         
 
     s32                 m_CurrHL;
 };

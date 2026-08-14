@@ -1373,17 +1373,17 @@ void DoStartup( void )
     #if defined( ENABLE_DEBUG_MENU )
     g_DebugMenu.Init();
     #endif
-	
+    
     // Init scripting
     g_ScriptMgr.Init();
-    g_ScriptMgr.RunFile( "scripts/main.lua" );	
+    g_ScriptMgr.RunFile( "scripts/main.lua" );    
 }
 
 //==============================================================================
 
 void DoShutdown( void )
 {
-    g_ScriptMgr.Kill();	
+    g_ScriptMgr.Kill();    
     g_SaveDataMgr.Kill();
     g_NetworkMgr.Kill();
     g_GameTextMgr.Kill();

@@ -20,14 +20,14 @@ public:
         s8 Material;
     };
 
-	CREATE_RTTI( weapon_gauss , new_weapon , object )
+    CREATE_RTTI( weapon_gauss , new_weapon , object )
 
-					weapon_gauss		();
-	virtual			~weapon_gauss		();
+                    weapon_gauss        ();
+    virtual            ~weapon_gauss        ();
 
     virtual void                InitWeapon          ( const vector3& rInitPos, render_state rRenderState, guid OwnerGuid );
-	
-	virtual	void				InitWeapon			(   const char* pSkinFileName , 
+    
+    virtual    void                InitWeapon            (   const char* pSkinFileName , 
                                                         const char* pAnimFileName , 
                                                         const vector3& rInitPos , 
                                                         const render_state& rRenderState = RENDER_STATE_PLAYER,
@@ -52,8 +52,8 @@ public:
 
 protected:
     
-    virtual	xbool				FireWeaponProtected			( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint );
-    virtual	xbool				FireSecondaryProtected		( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint );
+    virtual    xbool                FireWeaponProtected            ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint );
+    virtual    xbool                FireSecondaryProtected        ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint );
     virtual void                InitMuzzleFx                ( void ) ;  
             void                SynchGunToCount             ( void ) ;
     

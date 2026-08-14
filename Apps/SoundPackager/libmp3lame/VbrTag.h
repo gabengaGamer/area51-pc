@@ -1,7 +1,7 @@
 /*
- *	Xing VBR tagging for LAME.
+ *    Xing VBR tagging for LAME.
  *
- *	Copyright (c) 1999 A.L. Faber
+ *    Copyright (c) 1999 A.L. Faber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -10,7 +10,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -64,13 +64,13 @@
 /* toc may be NULL*/
 typedef struct
 {
-  int		h_id;			/* from MPEG header, 0=MPEG2, 1=MPEG1 */
-  int		samprate;		/* determined from MPEG header */
-  int		flags;			/* from Vbr header data */
-  int		frames;			/* total bit stream frames from Vbr header data */
-  int		bytes;			/* total bit stream bytes from Vbr header data*/
-  int		vbr_scale;		/* encoded vbr scale from Vbr header data*/
-  unsigned char	toc[NUMTOCENTRIES];	/* may be NULL if toc not desired*/
+  int        h_id;            /* from MPEG header, 0=MPEG2, 1=MPEG1 */
+  int        samprate;        /* determined from MPEG header */
+  int        flags;            /* from Vbr header data */
+  int        frames;            /* total bit stream frames from Vbr header data */
+  int        bytes;            /* total bit stream bytes from Vbr header data*/
+  int        vbr_scale;        /* encoded vbr scale from Vbr header data*/
+  unsigned char    toc[NUMTOCENTRIES];    /* may be NULL if toc not desired*/
   int           headersize;             /* size of VBR header, in bytes */
   int           enc_delay;              /* encoder delay */
   int           enc_padding;            /* encoder paddign added at end of stream */

@@ -20,7 +20,7 @@ class CFileTreeCtrl : public CTreeCtrl
 {
 // Construction
 public:
-	CFileTreeCtrl();
+    CFileTreeCtrl();
 
 // Attributes
 public:
@@ -36,26 +36,26 @@ public:
     BOOL    IsFolder(CString strPath);
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CFileTreeCtrl)
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CFileTreeCtrl)
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CFileTreeCtrl();
+    virtual ~CFileTreeCtrl();
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CFileTreeCtrl)
+    //{{AFX_MSG(CFileTreeCtrl)
     afx_msg void OnRclick(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
-	afx_msg void OnFileRename();
-	afx_msg void OnFileDelete();
-	afx_msg void OnBeginlabeledit(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnEndlabeledit(NMHDR* pNMHDR, LRESULT* pResult);
-	//}}AFX_MSG
+    afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+    afx_msg void OnFileRename();
+    afx_msg void OnFileDelete();
+    afx_msg void OnBeginlabeledit(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnEndlabeledit(NMHDR* pNMHDR, LRESULT* pResult);
+    //}}AFX_MSG
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 
 protected:
     void        RecursePath(xhandle hData, CString strPath, CString strWildcard, HTREEITEM hRoot);
@@ -67,7 +67,7 @@ private:
 
     BOOL        m_bInit;
     BOOL        m_bUsePrev;
-  	CImageList	m_imageList;
+      CImageList    m_imageList;
 };
 
 /////////////////////////////////////////////////////////////////////////////

@@ -20,54 +20,54 @@ class CEditorGlobalView : public CPaletteView
 {
 public:
 
-	CEditorPaletteDoc* GetDocument();
+    CEditorPaletteDoc* GetDocument();
     void    RefreshView     ( void );
 
     virtual void    OnTabActivate( BOOL bActivate );
 
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorGlobalView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorGlobalView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 
 protected:
 
-	CEditorGlobalView();           // protected constructor used by dynamic creation
-	virtual ~CEditorGlobalView();
-	DECLARE_DYNCREATE(CEditorGlobalView)
+    CEditorGlobalView();           // protected constructor used by dynamic creation
+    virtual ~CEditorGlobalView();
+    DECLARE_DYNCREATE(CEditorGlobalView)
 
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	//{{AFX_MSG(CEditorGlobalView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    //{{AFX_MSG(CEditorGlobalView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg void OnDestroy();
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnGvtbDeleteGlobal();
-	afx_msg void OnUpdateGvtbDeleteGlobal(CCmdUI* pCmdUI);
-	afx_msg void OnGvtbNewFolder();
-	afx_msg void OnUpdateGvtbNewFolder(CCmdUI* pCmdUI);
-	afx_msg void OnGvtbNewGlobal();
-	afx_msg void OnUpdateGvtbNewGlobal(CCmdUI* pCmdUI);
-	afx_msg void OnGvtbRefresh();
-	afx_msg void OnUpdateGvtbRefresh(CCmdUI* pCmdUI);
-	afx_msg LRESULT OnGridItemChange(WPARAM wParam, LPARAM lParam);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnGvtbDeleteGlobal();
+    afx_msg void OnUpdateGvtbDeleteGlobal(CCmdUI* pCmdUI);
+    afx_msg void OnGvtbNewFolder();
+    afx_msg void OnUpdateGvtbNewFolder(CCmdUI* pCmdUI);
+    afx_msg void OnGvtbNewGlobal();
+    afx_msg void OnUpdateGvtbNewGlobal(CCmdUI* pCmdUI);
+    afx_msg void OnGvtbRefresh();
+    afx_msg void OnUpdateGvtbRefresh(CCmdUI* pCmdUI);
+    afx_msg LRESULT OnGridItemChange(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnGuidSelect(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
     void        AddGlobalToView     ( CString& strVar, var_mngr::global_types Type );        
 
 private:
 
     CValueGrid                      m_tcGlobals;
-	CImageList	                    m_imageList;
+    CImageList                        m_imageList;
     xharray<var_mngr::global_def>   m_hGlobalArray;
 
 protected:

@@ -50,7 +50,7 @@ public:
     virtual void        OnCancel           ( ui_win* pWin );
     virtual void        OnUpdate            ( ui_win* pWin, f32 DeltaTime );
     
-private:	
+private:    
     void                FillExtrasList      ( void );
     void                PlaySelectedMovie   ( void );
 

@@ -42,7 +42,7 @@ xbool trigger_meta_breakpoint::Execute ( f32 DeltaTime )
 
 //=============================================================================
 
-void trigger_meta_breakpoint::OnEnumProp	( prop_enum& rPropList )
+void trigger_meta_breakpoint::OnEnumProp    ( prop_enum& rPropList )
 {
 #ifdef X_EDITOR
     m_ConditionAffecter.EnumPropSelector( rPropList );
@@ -57,7 +57,7 @@ void trigger_meta_breakpoint::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool trigger_meta_breakpoint::OnProperty	( prop_query& rPropQuery )
+xbool trigger_meta_breakpoint::OnProperty    ( prop_query& rPropQuery )
 {
     if( trigger_meta_base::OnProperty( rPropQuery ) )
         return TRUE;

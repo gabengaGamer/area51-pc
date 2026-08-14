@@ -348,7 +348,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryExternal( m_pDictionary->GetString(pe.NameIndex), cData);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_BUTTON:  
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_BUTTON");
@@ -356,7 +356,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryButton( m_pDictionary->GetString(pe.NameIndex), cData);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_FILENAME:     
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_FILENAME");
@@ -364,7 +364,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryFileName( m_pDictionary->GetString(pe.NameIndex), cData);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_ENUM:  
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_ENUM");
@@ -372,7 +372,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryEnum( m_pDictionary->GetString(pe.NameIndex), cData);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_STRING:   
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_STRING");
@@ -380,7 +380,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryString( m_pDictionary->GetString(pe.NameIndex), cData);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_FLOAT:  
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_FLOAT");
@@ -389,7 +389,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryFloat( m_pDictionary->GetString(pe.NameIndex), fData);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_INT:       
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_INT");
@@ -398,7 +398,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryInt( m_pDictionary->GetString(pe.NameIndex), nData);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_BOOL:
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_BOOL");
@@ -407,7 +407,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryBool( m_pDictionary->GetString(pe.NameIndex), bData);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_VECTOR3:
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_VECTOR3");
@@ -416,7 +416,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryVector3( m_pDictionary->GetString(pe.NameIndex), v3Data);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_ANGLE:
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_ANGLE");
@@ -425,8 +425,8 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryAngle( m_pDictionary->GetString(pe.NameIndex), rData);
             pObject->OnProperty(pq);
         }
-	    break;
-    case PROP_TYPE_ROTATION:  			
+        break;
+    case PROP_TYPE_ROTATION:              
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_ROTATION");
             radian3 r3Data;
@@ -434,7 +434,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryRotation( m_pDictionary->GetString(pe.NameIndex), r3Data);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_BBOX:      
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_BBOX");
@@ -444,7 +444,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryBBox( m_pDictionary->GetString(pe.NameIndex), bbData);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_COLOR:
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_COLOR");
@@ -453,7 +453,7 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryColor( m_pDictionary->GetString(pe.NameIndex), xcData);
             pObject->OnProperty(pq);
         }
-	    break;
+        break;
     case PROP_TYPE_GUID:     
         {
             MEMORY_OWNER_DETAIL("PROP_TYPE_GUID");
@@ -462,8 +462,8 @@ void bin_level::AddPropertyToObject( prop_entry& pe, object* pObject )
             pq.WQueryGUID( m_pDictionary->GetString(pe.NameIndex), gData);
             pObject->OnProperty(pq);
         }
-	    break;
-	}
+        break;
+    }
 }
 
 //=============================================================================
@@ -696,21 +696,21 @@ void bin_level::AddDataToBitStream( prop_container& pc )
             pc.GetFileName(cData);
             m_BitStream.WriteString(cData);
         }
-	    break;
+        break;
     case PROP_TYPE_EXTERNAL:
         {
             char cData[X_MAX_PATH];
             pc.GetExternal(cData);
             m_BitStream.WriteString(cData);
         }
-	    break;
+        break;
     case PROP_TYPE_BUTTON:  
         {
             char cData[X_MAX_PATH];
             pc.GetButton(cData);
             m_BitStream.WriteString(cData);
         }
-	    break;    
+        break;    
     case PROP_TYPE_ENUM:  
         {
             
@@ -719,56 +719,56 @@ void bin_level::AddDataToBitStream( prop_container& pc )
             m_BitStream.WriteString(cData);
             
         }
-	    break;    
+        break;    
     case PROP_TYPE_STRING:   
         {
             char cData[X_MAX_PATH];
             pc.GetString(cData);
             m_BitStream.WriteString(cData);
         }
-	    break;
+        break;
     case PROP_TYPE_FLOAT:  
         {
             f32 fData;
             pc.GetFloat(fData);
             m_BitStream.WriteF32(fData);
         }
-	    break;
+        break;
     case PROP_TYPE_INT:       
         {
             s32 nData;
             pc.GetInt(nData);
             m_BitStream.WriteS32(nData);
         }
-	    break;
+        break;
     case PROP_TYPE_BOOL:
         {
             xbool bData;
             pc.GetInt(bData);
             m_BitStream.WriteFlag(bData);
         }
-	    break;
+        break;
     case PROP_TYPE_VECTOR3:
         {
             vector3 v3Data;
             pc.GetVector3(v3Data);
             m_BitStream.WriteVector(v3Data);
         }
-	    break;
+        break;
     case PROP_TYPE_ANGLE:
         {
             radian rData;
             pc.GetAngle(rData);
             m_BitStream.WriteF32(rData);
         }
-	    break;
-    case PROP_TYPE_ROTATION:  			
+        break;
+    case PROP_TYPE_ROTATION:              
         {
             radian3 r3Data;
             pc.GetRotation(r3Data);
             m_BitStream.WriteRadian3(r3Data);
         }
-	    break;
+        break;
     case PROP_TYPE_BBOX:      
         {
             bbox bbData;
@@ -776,22 +776,22 @@ void bin_level::AddDataToBitStream( prop_container& pc )
             m_BitStream.WriteVector(bbData.Min);
             m_BitStream.WriteVector(bbData.Max);
         }
-	    break;
+        break;
     case PROP_TYPE_COLOR:
         {
             xcolor xcData;
             pc.GetColor(xcData);
             m_BitStream.WriteColor(xcData);
         }
-	    break;
+        break;
     case PROP_TYPE_GUID:     
         {
             guid gData;
             pc.GetGUID(gData);
             m_BitStream.WriteU64(gData);
         }
-	    break;
-	}
+        break;
+    }
     
 }
 

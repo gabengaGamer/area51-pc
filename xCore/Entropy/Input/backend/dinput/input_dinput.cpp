@@ -262,13 +262,13 @@ BOOL CALLBACK EnumKeyboardCallback( const DIDEVICEINSTANCE* pdidInstance, VOID* 
         return DIENUM_STOP;
 
     // Is the main keyboard? If so then do some quick nothing.
-    //if( GUID_SysKeyboard == pdidInstance ) {}	
+    //if( GUID_SysKeyboard == pdidInstance ) {}    
     dxerr Error = CreateKeyboard( s_Input.Keyboard[ s_Input.nKeyboards ],
                                   pdidInstance,
                                   DIRECT_INPUT_BUFFER_CAPACITY );
-	
+    
     // If it failed, then we can't use this Keyboard. (Maybe the user unplugged
-    // it while we were in the middle of enumerating it.)	
+    // it while we were in the middle of enumerating it.)    
     if( !FAILED( Error ) )
         s_Input.nKeyboards++;
 
@@ -286,13 +286,13 @@ BOOL CALLBACK EnumMouseCallback( const DIDEVICEINSTANCE* pdidInstance, VOID* pCo
         return DIENUM_STOP;
 
     // Is the main mouse If so then do some quick nothing.
-    //if( GUID_SysMouse == pdidInstance ) {}	
+    //if( GUID_SysMouse == pdidInstance ) {}    
     dxerr Error = CreateMouse( s_Input.Mouse[ s_Input.nMouses ],
                                pdidInstance,
                                DIRECT_INPUT_BUFFER_CAPACITY );
-	
+    
     // If it failed, then we can't use this Mouse. (Maybe the user unplugged
-    // it while we were in the middle of enumerating it.)	
+    // it while we were in the middle of enumerating it.)    
     if( !FAILED( Error ) )
         s_Input.nMouses++;
 

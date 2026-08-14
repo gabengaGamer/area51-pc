@@ -18,22 +18,22 @@
 class CBugBase : public CHtmlView
 {
 protected:
-	CBugBase();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CBugBase)
+    CBugBase();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CBugBase)
 
     CToolBar            m_wndToolBar;
     BOOL                m_bFirstTimeVisible;
     BOOL                m_bInitialize;
-    CAnimateCtrl	    m_wndAnimateBar;
+    CAnimateCtrl        m_wndAnimateBar;
 
     virtual void OnNavigateComplete2(LPCTSTR strURL);
     virtual void OnBeforeNavigate2  (LPCTSTR lpszURL, DWORD nFlags, LPCTSTR lpszTargetFrameName, CByteArray& baPostedData, LPCTSTR lpszHeaders, BOOL* pbCancel);
 
 // html Data
 public:
-	//{{AFX_DATA(CBugBase)
-		// NOTE: the ClassWizard will add data members here
-	//}}AFX_DATA
+    //{{AFX_DATA(CBugBase)
+        // NOTE: the ClassWizard will add data members here
+    //}}AFX_DATA
 
 // Attributes
 public:
@@ -42,34 +42,34 @@ public:
 public:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CBugBase)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CBugBase)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~CBugBase();
+    virtual ~CBugBase();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
-	//{{AFX_MSG(CBugBase)
-	afx_msg void OnGoBack();
-	afx_msg void OnGoFoward();
-	afx_msg void OnStop();
+    // Generated message map functions
+    //{{AFX_MSG(CBugBase)
+    afx_msg void OnGoBack();
+    afx_msg void OnGoFoward();
+    afx_msg void OnStop();
     afx_msg void OnRefresh();
     afx_msg void OnGoHome();
-	afx_msg void OnEnable(CCmdUI* pCmdUI);
-	afx_msg void OnPaint();
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    afx_msg void OnEnable(CCmdUI* pCmdUI);
+    afx_msg void OnPaint();
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

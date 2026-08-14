@@ -19,10 +19,10 @@
 class mutant_parasite_projectile : public net_proj
 {
 public:
-	CREATE_RTTI( mutant_parasite_projectile , net_proj , object )
+    CREATE_RTTI( mutant_parasite_projectile , net_proj , object )
     
-	mutant_parasite_projectile();
-	virtual ~mutant_parasite_projectile();
+    mutant_parasite_projectile();
+    virtual ~mutant_parasite_projectile();
 
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
@@ -49,8 +49,8 @@ public:
 //=========================================================================
 
     virtual void    OnAdvanceSimulation      ( f32 DeltaTime );
-	virtual	void	OnRender			( void );
-    virtual	void	OnRenderTransparent ( void );
+    virtual    void    OnRender            ( void );
+    virtual    void    OnRenderTransparent ( void );
 
 //------------------------------------------------------------------------------
 #ifndef X_EDITOR

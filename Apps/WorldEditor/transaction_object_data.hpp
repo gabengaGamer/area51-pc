@@ -44,8 +44,8 @@ protected:
     const char*             m_pObjectType;
     u32                     m_ObjectAttrsOld;
     u32                     m_ObjectAttrsNew;
-    xarray<prop_container> 	m_ObjectPropsOld;
-    xarray<prop_container> 	m_ObjectPropsNew;
+    xarray<prop_container>     m_ObjectPropsOld;
+    xarray<prop_container>     m_ObjectPropsNew;
     editor_object_ref       m_ObjectRefOld;
     editor_object_ref       m_ObjectRefNew;
     xstring                 m_LayerOld;

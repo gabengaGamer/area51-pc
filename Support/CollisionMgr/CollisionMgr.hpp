@@ -469,7 +469,7 @@ private:
 //------------------------------------------------------------------------------
 
     void    ClearIgnoreList     ( void );
-	xbool   IsInIgnoreList	    ( guid  Guid );
+    xbool   IsInIgnoreList        ( guid  Guid );
 
     void    SortCollisions      ( void );
     void    CleanPermeables     ( void );
@@ -512,7 +512,7 @@ private:
     primitive           m_DynamicPrimitive;
     bbox                m_DynamicBBoxes[2];
     guid                m_MovingObjGuid;
-	
+    
     //
     // Other internals
     //
@@ -526,16 +526,16 @@ private:
     // Ignore list
     //
     xbool               m_bUseIgnoreList;
-    guid				m_IgnoreList[ MAX_IGNORED_OBJECTS ];
-	s32					m_nIgnoredObjects;
+    guid                m_IgnoreList[ MAX_IGNORED_OBJECTS ];
+    s32                    m_nIgnoredObjects;
 
     //
     // Permeable list
     //
     xbool               m_bCollectPermeable;
-    guid				m_Permeable[ MAX_PERMEABLE_OBJECTS ];
+    guid                m_Permeable[ MAX_PERMEABLE_OBJECTS ];
     f32                 m_PermeableT[ MAX_PERMEABLE_OBJECTS ];
-	s32					m_nPermeables;
+    s32                    m_nPermeables;
     xbool               m_bNotifyingPermeables;
 
     //

@@ -33,11 +33,11 @@ public:
                                     trigger_object                      ( void );
                                    ~trigger_object                      ( void );
                             
-    virtual         bbox            GetLocalBBox			            ( void ) const ;
-    virtual         s32             GetMaterial				            ( void ) const { return MAT_TYPE_NULL; }
+    virtual         bbox            GetLocalBBox                        ( void ) const ;
+    virtual         s32             GetMaterial                            ( void ) const { return MAT_TYPE_NULL; }
            
-	virtual			void	        OnEnumProp				            ( prop_enum& rList );
-	virtual			xbool	        OnProperty				            ( prop_query& rPropQuery );
+    virtual            void            OnEnumProp                            ( prop_enum& rList );
+    virtual            xbool            OnProperty                            ( prop_query& rPropQuery );
     virtual         void            OnActivate                          ( xbool Flag );    
 
     virtual const object_desc&      GetTypeDesc                         ( void ) const;
@@ -100,8 +100,8 @@ protected:
     public:
                                 trigger_selector( void );
                         void    Init                                 ( trigger_object* pParent );
-        virtual			void	OnEnumProp				             ( prop_enum& rList );
-        virtual			xbool	OnProperty				             ( prop_query& rPropQuery );
+        virtual            void    OnEnumProp                             ( prop_enum& rList );
+        virtual            xbool    OnProperty                             ( prop_query& rPropQuery );
         
         conditional_base::conditional_types     m_ConditionType;                            // Condtion type currently selected
         actions_base::action_types              m_ActionType;                               // Action type currently selected
@@ -112,11 +112,11 @@ protected:
     
 protected:
     
-    virtual         void        OnInit					( void );
+    virtual         void        OnInit                    ( void );
     virtual         void        OnKill                  ( void );
 
 #ifndef X_RETAIL
-    virtual         void        OnDebugRender			( void );
+    virtual         void        OnDebugRender            ( void );
 #endif // X_RETAIL
 
 //=========================================================================

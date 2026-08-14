@@ -18,46 +18,46 @@ class CEditorDebuggerView : public CPaletteView
 {
 public:
 
-	CEditorPaletteDoc* GetDocument();
+    CEditorPaletteDoc* GetDocument();
     void    RefreshView     ( void );
 
     virtual void    OnTabActivate( BOOL bActivate );
 
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorDebuggerView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorDebuggerView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 
 protected:
 
-	CEditorDebuggerView();           // protected constructor used by dynamic creation
-	virtual ~CEditorDebuggerView();
-	DECLARE_DYNCREATE(CEditorDebuggerView)
+    CEditorDebuggerView();           // protected constructor used by dynamic creation
+    virtual ~CEditorDebuggerView();
+    DECLARE_DYNCREATE(CEditorDebuggerView)
 
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	//{{AFX_MSG(CEditorDebuggerView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnGdtbGuidLookup();
-	afx_msg void OnUpdateGdtbGuidLookup(CCmdUI* pCmdUI);
-	afx_msg void OnGdtbGlobalGuidLookup();
-	afx_msg void OnUpdateGdtbGlobalGuidLookup(CCmdUI* pCmdUI);
-	afx_msg void OnGdtbClearInfo();
-	afx_msg void OnUpdateGdtbClearInfo(CCmdUI* pCmdUI);
-	afx_msg void OnSelchangedTree(NMHDR* pNMHDR, LRESULT* pResult);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CEditorDebuggerView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnGdtbGuidLookup();
+    afx_msg void OnUpdateGdtbGuidLookup(CCmdUI* pCmdUI);
+    afx_msg void OnGdtbGlobalGuidLookup();
+    afx_msg void OnUpdateGdtbGlobalGuidLookup(CCmdUI* pCmdUI);
+    afx_msg void OnGdtbClearInfo();
+    afx_msg void OnUpdateGdtbClearInfo(CCmdUI* pCmdUI);
+    afx_msg void OnSelchangedTree(NMHDR* pNMHDR, LRESULT* pResult);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
     CTreeCtrl       m_tcDebugger;
-	CImageList	    m_imageList;
+    CImageList        m_imageList;
     CString         m_strDebugItem;
     xharray<guid>   m_lstObjectGuidStorage;
     int             m_QueryType;

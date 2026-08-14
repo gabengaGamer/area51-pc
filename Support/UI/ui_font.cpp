@@ -44,7 +44,7 @@ xbool ui_font::Load( ui_manager* pManager, const char* pPathName )
     ASSERT( pManager );
     m_pManager = pManager;
 
-    xstring	FontName;
+    xstring    FontName;
 
     // Make file name
     FontName = pPathName;
@@ -728,7 +728,7 @@ void ui_font::RenderInputText( const irect&    Rect,
                 else
                 {
                     Width   += HELP_TEXT_SPACING;
-                }				
+                }                
                 Width += ui_GetEmbeddedButtonAdvance( buttonCode );
                 CurrWidth    = 0;
                 MaxWidth     = 0;
@@ -1156,7 +1156,7 @@ void ui_font::RenderText( const irect&  Rect,
             const f32 u1 = (f32)(x + w)        / m_BmWidth;
             const f32 v0 = (f32)y              / m_BmHeight;
             const f32 v1 = (f32)(y + m_Height) / m_BmHeight;
-		    
+            
             RenderGlyphQuad( *pFontTexture,
                              MakeGlyphQuad( (f32)tx,
                                             (f32)ty,

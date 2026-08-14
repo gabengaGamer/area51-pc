@@ -35,32 +35,32 @@ protected:
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	DECLARE_DYNCREATE(CProjectFrame)
-	CProjectFrame();           // protected constructor used by dynamic creation
-	virtual ~CProjectFrame();
+    DECLARE_DYNCREATE(CProjectFrame)
+    CProjectFrame();           // protected constructor used by dynamic creation
+    virtual ~CProjectFrame();
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CProjectFrame)
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CProjectFrame)
+    //}}AFX_VIRTUAL
 
 // Implementation
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	//{{AFX_MSG(CProjectFrame)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    //{{AFX_MSG(CProjectFrame)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg void OnDestroy();
-	afx_msg void OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd);
-	afx_msg void OnClose();
-	afx_msg void OnProjCreateNewTheme();
-	afx_msg void OnInsertTheme();
-	afx_msg void OnRemoveTheme();
-	afx_msg void OnUpdateProjCreateNewTheme(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateInsertTheme(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateRemoveTheme(CCmdUI* pCmdUI);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    afx_msg void OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd);
+    afx_msg void OnClose();
+    afx_msg void OnProjCreateNewTheme();
+    afx_msg void OnInsertTheme();
+    afx_msg void OnRemoveTheme();
+    afx_msg void OnUpdateProjCreateNewTheme(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateInsertTheme(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateRemoveTheme(CCmdUI* pCmdUI);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

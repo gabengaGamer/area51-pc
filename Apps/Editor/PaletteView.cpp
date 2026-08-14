@@ -33,9 +33,9 @@ CPaletteView::~CPaletteView()
 //=========================================================================
 
 BEGIN_MESSAGE_MAP(CPaletteView, CView)
-	//{{AFX_MSG_MAP(CPaletteView)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CPaletteView)
+        // NOTE - the ClassWizard will add and remove mapping macros here.
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 //=========================================================================
@@ -54,12 +54,12 @@ void CPaletteView::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CPaletteView::AssertValid() const
 {
-	CView::AssertValid();
+    CView::AssertValid();
 }
 
 void CPaletteView::Dump(CDumpContext& dc) const
 {
-	CView::Dump(dc);
+    CView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -69,22 +69,22 @@ void CPaletteView::Dump(CDumpContext& dc) const
 
 int CPaletteView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CView::OnCreate(lpCreateStruct) == -1)
-		return -1;
+    if (CView::OnCreate(lpCreateStruct) == -1)
+        return -1;
 
     if (m_ToolbarResourceId != 0)
     {
         // Create the ToolBar
-	    if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
-		    | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_FIXED | TBBS_WRAPPED))
-	    {
-		    TRACE0("Failed to create toolbar\n");
-		    return -1;      // fail to create
-	    }
+        if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
+            | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_FIXED | TBBS_WRAPPED))
+        {
+            TRACE0("Failed to create toolbar\n");
+            return -1;      // fail to create
+        }
         m_wndToolBar.LoadToolBar(m_ToolbarResourceId);
     }
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
@@ -92,8 +92,8 @@ int CPaletteView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 CSize CPaletteView::SizeToolBar(int cx, int cy) 
 {
     UNREFERENCED_PARAMETER(cy);
-	CSize size = m_wndToolBar.CalcDynamicLayout(cx, LM_HORZ | LM_COMMIT);
-	m_wndToolBar.MoveWindow(0,0,cx,size.cy);
+    CSize size = m_wndToolBar.CalcDynamicLayout(cx, LM_HORZ | LM_COMMIT);
+    m_wndToolBar.MoveWindow(0,0,cx,size.cy);
     return size;
 }
 

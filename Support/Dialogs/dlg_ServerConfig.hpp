@@ -64,12 +64,12 @@ public:
 
 protected:
     ui_frame*           m_pFrame1;
-	ui_button*			m_pButtonChangeMap; 	
-    ui_button*			m_pButtonKickPlayer; 	
-    ui_button*			m_pButtonChangeTeam; 	
-    ui_button*			m_pButtonRestartMap; 	
-    ui_button*			m_pButtonReconfigure; 	
-	ui_button*			m_pButtonShutdown; 	
+    ui_button*            m_pButtonChangeMap;     
+    ui_button*            m_pButtonKickPlayer;     
+    ui_button*            m_pButtonChangeTeam;     
+    ui_button*            m_pButtonRestartMap;     
+    ui_button*            m_pButtonReconfigure;     
+    ui_button*            m_pButtonShutdown;     
 
     dlg_popup*          m_PopUp;
     s32                 m_PopUpResult;

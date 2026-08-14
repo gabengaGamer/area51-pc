@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-;	Vertex fragment: kVS_OD0_DIFFUSE
+;    Vertex fragment: kVS_OD0_DIFFUSE
 ;
 ;   v0.xyz    = Position    c00-c79 = matrix palette
 ;   v1.xyz    = Normal      c92-c95 = world to clip
@@ -21,4 +21,4 @@
 ;
 ;==----------------------------------------------------------------------------
 
-	mov oD0,r5
+    mov oD0,r5

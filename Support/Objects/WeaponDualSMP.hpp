@@ -15,10 +15,10 @@
 class weapon_dual_smp : public new_weapon
 {
 public:
-	CREATE_RTTI( weapon_dual_smp , new_weapon , object )
+    CREATE_RTTI( weapon_dual_smp , new_weapon , object )
 
-								weapon_dual_smp		        ( void );
-	virtual		  			   ~weapon_dual_smp		        ( void );
+                                weapon_dual_smp                ( void );
+    virtual                         ~weapon_dual_smp                ( void );
     
     //--------------------------------------------------------------------
     // OBJECT METHODS
@@ -26,8 +26,8 @@ public:
     virtual const object_desc&  GetTypeDesc             ( void ) const;
     static  const object_desc&  GetObjectType           ( void );
 
-    virtual	void	            OnEnumProp		        ( prop_enum& list );
-	virtual	xbool	            OnProperty		        ( prop_query& rPropQuery );
+    virtual    void                OnEnumProp                ( prop_enum& list );
+    virtual    xbool                OnProperty                ( prop_query& rPropQuery );
 
     virtual void                OnAdvanceSimulation          ( f32 DeltaTime );      
 
@@ -35,11 +35,11 @@ public:
     virtual void                OnTransform             ( const matrix4& L2W      ); 
     //--------------------------------------------------------------------
 
-    virtual void                ProcessSfx				( void );    
+    virtual void                ProcessSfx                ( void );    
     virtual s32                 GetTotalSecondaryAmmo   ( void );
 
     virtual void                InitWeapon              ( const vector3& rInitPos, render_state rRenderState, guid OwnerGuid );
-    virtual	void				InitWeapon			    (   const char* pSkinFileName , 
+    virtual    void                InitWeapon                (   const char* pSkinFileName , 
                                                             const char* pAnimFileName , 
                                                             const vector3& rInitPos , 
                                                             const render_state& rRenderState = RENDER_STATE_PLAYER,
@@ -70,8 +70,8 @@ protected:
     //--------------------------------------------------------------------
     // FIRING ROUTINES
     //--------------------------------------------------------------------
-    virtual	xbool				FireWeaponProtected		    ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
-    virtual	xbool				FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool bHitLiving  );
+    virtual    xbool                FireWeaponProtected            ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
+    virtual    xbool                FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool bHitLiving  );
 
     //--------------------------------------------------------------------
     // DATA

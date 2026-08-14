@@ -15,6 +15,6 @@
 ;
 ;==----------------------------------------------------------------------------
 
-	mov r0,v0
+    mov r0,v0
 
-	xfc 1-zero, r0, zero, zero, zero, zero, zero
+    xfc 1-zero, r0, zero, zero, zero, zero, zero

@@ -33,7 +33,7 @@ static struct trigger_spatial_viewable_desc : public object_desc
         object::TYPE_VIEWABLE_SPATIAL_TRIGGER, 
         "Viewable Spatial Trigger", 
         "SCRIPT",
-        object::ATTR_SPACIAL_ENTRY		|
+        object::ATTR_SPACIAL_ENTRY        |
         object::ATTR_COLLISION_PERMEABLE,
         FLAGS_IS_DYNAMIC ) {}
 

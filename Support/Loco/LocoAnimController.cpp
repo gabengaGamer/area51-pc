@@ -187,7 +187,7 @@ void loco_anim_controller::SetAnim( const anim_group::handle& hAnimGroup, s32 iA
 
     // If we are already playing this anim type index?
     if ( (m_Weight != 0.0f) && (iAnim == m_iAnimType) && (m_iAnim != -1) && ((Flags & loco::ANIM_FLAG_RESTART_IF_SAME_ANIM) == 0) )
-	{
+    {
         // If the animation is non looping and we are pegged at the end then restart
         if( (!m_bLooping) && (IsAtEnd()) )
         {
@@ -202,7 +202,7 @@ void loco_anim_controller::SetAnim( const anim_group::handle& hAnimGroup, s32 iA
 
         // Do not reset!
         return;
-	}
+    }
 
     // Clear main track flag
     m_bStartedOnMainTrack = FALSE;
@@ -842,7 +842,7 @@ void loco_anim_controller::MaskedMixKeys( const info&               Info,
         AnimInfo.GetInterpKey(Frame, i, Key) ;
 
         // Mix key
-		pDestKey[i].Interpolate( pDestKey[i], Key, Weight ) ;
+        pDestKey[i].Interpolate( pDestKey[i], Key, Weight ) ;
     }
 }
 
@@ -907,7 +907,7 @@ void loco_anim_controller::MaskedMixKeys( const info&               Info,
         AnimInfo.GetInterpKey(Frame, i, Key) ;
 
         // Mix key
-		pDestKey[i].Interpolate( pDestKey[i], Key, Weight * m_Weight ) ;
+        pDestKey[i].Interpolate( pDestKey[i], Key, Weight * m_Weight ) ;
     }
 }
 

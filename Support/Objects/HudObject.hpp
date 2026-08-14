@@ -40,11 +40,11 @@ public:
     virtual                ~hud_object              ( void );
     virtual s32             GetMaterial             ( void ) const { return MAT_TYPE_NULL; }
     virtual void            OnRender                ( void );
-    virtual void            OnAdvanceSimulation	        ( f32 DeltaTime );
+    virtual void            OnAdvanceSimulation            ( f32 DeltaTime );
     virtual bbox            GetLocalBBox            ( void ) const;      
 
-	virtual	void	        OnEnumProp		        ( prop_enum&  list );
-	virtual	xbool	        OnProperty		        ( prop_query& rPropQuery );
+    virtual    void            OnEnumProp                ( prop_enum&  list );
+    virtual    xbool            OnProperty                ( prop_query& rPropQuery );
             
     virtual const object_desc&  GetTypeDesc         ( void ) const;
     static  const object_desc&  GetObjectType       ( void );

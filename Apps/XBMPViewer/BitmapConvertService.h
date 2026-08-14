@@ -34,7 +34,7 @@ public:
     };
 
     ContextNeeds GetContextNeeds  (const QVector<const FileRecord*>& Records) const;
-								  
+                                  
     void ConvertToTga             (const QVector<const FileRecord*>& Records,
                                    const QString& OutputDir) const;
     void ConvertToXbmp            (const QVector<const FileRecord*>& Records,

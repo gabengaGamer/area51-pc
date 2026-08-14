@@ -13,12 +13,12 @@
 class weapon_shotgun : public new_weapon
 {
 public:
-	CREATE_RTTI( weapon_shotgun , new_weapon , object )
+    CREATE_RTTI( weapon_shotgun , new_weapon , object )
 
-								weapon_shotgun		();
-	virtual						~weapon_shotgun		();
+                                weapon_shotgun        ();
+    virtual                        ~weapon_shotgun        ();
 
-    virtual	xbool	            OnProperty		        ( prop_query& rPropQuery );
+    virtual    xbool                OnProperty                ( prop_query& rPropQuery );
     virtual void                ProcessSfx              ( void );
     virtual s32                 GetTotalSecondaryAmmo   ( void );
             void                FireBullet              ( const vector3& Pos, const radian3& Rot, 
@@ -48,10 +48,10 @@ public:
 
 protected:
     
-    virtual	xbool				FireWeaponProtected         ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
-    virtual	xbool				FireSecondaryProtected	    ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
-    virtual	xbool				FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
-    virtual	xbool				FireNPCSecondaryProtected	( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
+    virtual    xbool                FireWeaponProtected         ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
+    virtual    xbool                FireSecondaryProtected        ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
+    virtual    xbool                FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
+    virtual    xbool                FireNPCSecondaryProtected    ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
             void                GetPainHandle               ( pain_handle& OutHandle, guid Owner, xbool bIsPrimary );
             xbool               HasLOS                      ( const vector3& A, const vector3& B );
 

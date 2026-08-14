@@ -48,8 +48,8 @@ public:
     static  const object_desc&  GetObjectType           ( void );
     virtual         s32         GetMaterial             ( void ) const { return MAT_TYPE_NULL; }
 
-	virtual			void	    OnEnumProp		        ( prop_enum& rList );
-	virtual			xbool	    OnProperty		        ( prop_query& rPropQuery );
+    virtual            void        OnEnumProp                ( prop_enum& rList );
+    virtual            xbool        OnProperty                ( prop_query& rPropQuery );
 
 #ifndef X_RETAIL
     virtual         void        OnDebugRender           ( void );

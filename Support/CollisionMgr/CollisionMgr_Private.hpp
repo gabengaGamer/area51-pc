@@ -26,14 +26,14 @@ void collision_mgr::fn_LOG ( const char* pFileName, s32 LineNumber )
 inline 
 xbool collision_mgr::IsInIgnoreList ( guid Guid )
 {
-	for( s32 i = 0 ; i < m_nIgnoredObjects ; i++ )
-	{
-		if( Guid == m_IgnoreList[i] )
-		{
-			return TRUE;
-		}
-	}
-	return FALSE;
+    for( s32 i = 0 ; i < m_nIgnoredObjects ; i++ )
+    {
+        if( Guid == m_IgnoreList[i] )
+        {
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 //==============================================================================
@@ -76,19 +76,19 @@ const collision_mgr::dynamic_cylinder& collision_mgr::GetDynamicCylinder( void )
 //==============================================================================
 
 inline
-void	collision_mgr::AddToIgnoreList( guid Guid )
+void    collision_mgr::AddToIgnoreList( guid Guid )
 {
-	ASSERT( m_nIgnoredObjects < MAX_IGNORED_OBJECTS );
-	m_IgnoreList[ m_nIgnoredObjects ] = Guid;
-	m_nIgnoredObjects++;
+    ASSERT( m_nIgnoredObjects < MAX_IGNORED_OBJECTS );
+    m_IgnoreList[ m_nIgnoredObjects ] = Guid;
+    m_nIgnoredObjects++;
 }
 
 //==============================================================================
 
 inline
-void	collision_mgr::ClearIgnoreList( void )
+void    collision_mgr::ClearIgnoreList( void )
 {
-	m_nIgnoredObjects = 0;
+    m_nIgnoredObjects = 0;
 }
  
 //==============================================================================

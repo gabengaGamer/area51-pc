@@ -188,7 +188,7 @@ void II_step_two(unsigned int *bit_alloc,real fraction[2][4][SBLIMIT],int *scale
     for (i=jsbound;i<sblimit;i++,alloc1+=(1<<step))
     {
       step = alloc1->bits;
-      bita++;	/* channel 1 and channel 2 bitalloc are the same */
+      bita++;    /* channel 1 and channel 2 bitalloc are the same */
       if ( (ba=*bita++) )
       {
         k=(alloc2 = alloc1+ba)->bits;

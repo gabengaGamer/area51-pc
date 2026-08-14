@@ -27,15 +27,15 @@ public:
 
 
 //=============================================================================
-						alien_glob          ();
-	                   ~alien_glob         ();
+                        alien_glob          ();
+                       ~alien_glob         ();
 
     virtual void        OnInit              ( void );
 
     virtual bbox        GetLocalBBox        ( void ) const;
 
     virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
-    virtual void        OnMove				( const vector3& rNewPos );
+    virtual void        OnMove                ( const vector3& rNewPos );
     virtual void        OnTransform         ( const matrix4& L2W );
     virtual void        OnRender            ( void );
     virtual void        OnRenderTransparent ( void );

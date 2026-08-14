@@ -87,7 +87,7 @@ homing_projectile::homing_projectile() :
     m_SpeedPercent              ( 0.0f              ),
     m_AliveTime                 ( 0.0f              ),
     m_TimeSinceLastBroadcast    ( 0.0f              ),
-	m_MaxAliveTime              ( 10.0f             ),
+    m_MaxAliveTime              ( 10.0f             ),
     m_InitialVelocity           ( 0.0f, 0.0f, 0.0f  ),
     m_InitialPosition           ( 0.0f, 0.0f, 0.0f  ),
     m_Traction                  ( 1.0f              ),

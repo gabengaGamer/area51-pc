@@ -48,7 +48,7 @@ public:
             void                OnRenderSpatial     ( void );
 #endif // !defined( CONFIG_RETAIL )
 
-	virtual			void	    OnColCheck			( void );
+    virtual            void        OnColCheck            ( void );
     virtual         void        OnColNotify         ( object& Object );
     virtual         void        OnActivate          ( xbool Flag );  
     virtual         void        OnAdvanceSimulation      ( f32 DeltaTime );      

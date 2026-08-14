@@ -317,7 +317,7 @@ void character_attack_state::ChangePhase( s32 newPhase )
     case PHASE_ATTACK_IDLE:
         m_CharacterBase.SetWantsToAim(TRUE);
         m_CharacterBase.SetIdleGoal();
-    	break;
+        break;
     case PHASE_ATTACK_CLOSE_TO_OPTIMAL:
         m_CharacterBase.SetWantsToAim(TRUE);
         if( m_CurrentPhase != PHASE_ATTACK_CLOSE_TO_OPTIMAL )
@@ -325,11 +325,11 @@ void character_attack_state::ChangePhase( s32 newPhase )
             m_CharacterBase.PlayDialog( character::DIALOG_RUSH );        
         }
         m_CharacterBase.SetGotoTargetGoal(m_CharacterBase.GetTargetGuid(),vector3(0.0f,0.0f,0.0f),loco::MOVE_STYLE_NULL,m_OptimalDistance);
-    	break;
+        break;
     case PHASE_ATTACK_RETREAT_TO_OPTIMAL:
         m_CharacterBase.SetWantsToAim(TRUE);
         m_CharacterBase.SetRetreatFromTargetGoal(m_CharacterBase.GetTargetGuid(),vector3(0.0f,0.0f,0.0f),loco::MOVE_STYLE_NULL,m_OptimalDistance);
-    	break;
+        break;
     case PHASE_ATTACK_EVADE_LEFT:
         m_SinceLastEvade = 0.0f;
         m_CharacterBase.SetPlayAnimationGoal(loco::ANIM_EVADE_LEFT);
@@ -344,7 +344,7 @@ void character_attack_state::ChangePhase( s32 newPhase )
         break;
     case PHASE_ATTACK_ALIGN_FOR_SHORT_MELEE:
         m_CharacterBase.SetTurnToTargetGoal(m_CharacterBase.GetTargetGuid());
-    	break;
+        break;
     case PHASE_ATTACK_ALIGN_FOR_LONG_MELEE:
         m_CharacterBase.SetTurnToTargetGoal(m_CharacterBase.GetTargetGuid());
         break;
@@ -356,7 +356,7 @@ void character_attack_state::ChangePhase( s32 newPhase )
             m_CharacterBase.SetPlayAnimationGoal(loco::ANIM_MELEE_SHORT);
             m_SinceLastMeleeAttack = 0.0f;
         }
-    	break;
+        break;
     case PHASE_ATTACK_LONG_MELEE:
         {
             radian toTargetYaw = m_CharacterBase.GetToTarget().GetYaw();
@@ -369,15 +369,15 @@ void character_attack_state::ChangePhase( s32 newPhase )
     case PHASE_ATTACK_CLOSE_FOR_JUMP_ATTACK:
         m_CharacterBase.SetWantsToAim(TRUE);
         m_CharacterBase.SetGotoTargetGoal( m_CharacterBase.GetTargetGuid(),vector3(0.0f,0.0f,0.0f),loco::MOVE_STYLE_NULL,m_JumpAttackMaxDistance );
-    	break;
+        break;
     case PHASE_ATTACK_ALIGN_FOR_JUMP_ATTACK:
         m_CharacterBase.SetTurnToTargetGoal(m_CharacterBase.GetTargetGuid());
-    	break;
+        break;
     case PHASE_ATTACK_JUMP_ATTACK:
         m_SinceLastMeleeAttack = 0.0f;
         m_SinceLastJumpAttack  = 0.0f;      // track this seperately
         m_CharacterBase.SetScaledPlayAnimationGoal(loco::ANIM_MELEE_LEAP);        
-    	break;
+        break;
     default:        
         if( newPhase >= PHASE_BASE_COUNT )
         {        
@@ -701,43 +701,43 @@ const char*character_attack_state::GetPhaseName ( s32 thePhase )
         break;
     case PHASE_ATTACK_CLOSE_TO_OPTIMAL:
         return "PHASE_ATTACK_CLOSE_TO_OPTIMAL";
-    	break;
+        break;
     case PHASE_ATTACK_IDLE:
         return "PHASE_ATTACK_IDLE";
-    	break;
+        break;
     case PHASE_ATTACK_CLOSE_FOR_MELEE:
         return "PHASE_ATTACK_CLOSE_FOR_MELEE";
-    	break;
+        break;
     case PHASE_ATTACK_ALIGN_FOR_SHORT_MELEE:
         return "PHASE_ATTACK_ALIGN_FOR_SHORT_MELEE";
-    	break;
+        break;
     case PHASE_ATTACK_ALIGN_FOR_LONG_MELEE:
         return "PHASE_ATTACK_ALIGN_FOR_LONG_MELEE";
         break;
     case PHASE_ATTACK_SHORT_MELEE:
         return "PHASE_ATTACK_SHORT_MELEE";
-    	break;
+        break;
     case PHASE_ATTACK_LONG_MELEE:
         return "PHASE_ATTACK_LONG_MELEE";
         break;
     case PHASE_ATTACK_CLOSE_FOR_JUMP_ATTACK:
         return "PHASE_ATTACK_CLOSE_FOR_JUMP_ATTACK";
-    	break;
+        break;
     case PHASE_ATTACK_ALIGN_FOR_JUMP_ATTACK:
         return "PHASE_ATTACK_ALIGN_FOR_JUMP_ATTACK";
-    	break;
+        break;
     case PHASE_ATTACK_JUMP_ATTACK:
         return "PHASE_ATTACK_JUMP_ATTACK";
-    	break;
+        break;
     case PHASE_ATTACK_RETREAT_TO_OPTIMAL:
         return "PHASE_ATTACK_RETREAT_TO_OPTIMAL";
-    	break;
+        break;
     case PHASE_ATTACK_EVADE_LEFT:
         return "PHASE_ATTACK_EVADE_LEFT";
-    	break;
+        break;
     case PHASE_ATTACK_EVADE_RIGHT:
         return "PHASE_ATTACK_EVADE_RIGHT";
-    	break;
+        break;
     }
     return character_state::GetPhaseName(thePhase);
 }

@@ -13,32 +13,32 @@ class CBaseDocument;
 
 class CBaseFrame : public CMDIChildWnd
 {
-	DECLARE_DYNCREATE(CBaseFrame)
+    DECLARE_DYNCREATE(CBaseFrame)
 public:
 
     CBaseFrame();           // protected constructor used by dynamic creation
-	virtual ~CBaseFrame();
+    virtual ~CBaseFrame();
     CBaseDocument*  m_pBaseDoc;
 
     CBaseDocument* GetBaseDocument() { return m_pBaseDoc; }
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CBaseFrame)
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CBaseFrame)
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
     virtual void ActivateFrame(int nCmdShow);
-	//}}AFX_VIRTUAL
+    //}}AFX_VIRTUAL
 
 // Generated message map functions
 protected:
-	// Generated message map functions
-	//{{AFX_MSG(CBaseFrame)
+    // Generated message map functions
+    //{{AFX_MSG(CBaseFrame)
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd);
-	//}}AFX_MSG
+    afx_msg void OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd);
+    //}}AFX_MSG
 
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

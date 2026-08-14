@@ -14,36 +14,36 @@ class ConnectionAttributeDialog : public CDialog
 {
 // Construction
 public:
-	ConnectionAttributeDialog(CWnd* pParent = NULL);   // standard constructor
+    ConnectionAttributeDialog(CWnd* pParent = NULL);   // standard constructor
 
 // Dialog Data
-	//{{AFX_DATA(ConnectionAttributeDialog)
-	enum { IDD = IDD_DIALOG_CONNECTION_ATTR };
-	CComboBox	m_HintSneaky;
-	CComboBox	m_HintPatrolRoute;
-	CComboBox	m_HintOneWay;
-	CComboBox	m_HintDark;
-	CComboBox	m_HintCover;
-	//}}AFX_DATA
+    //{{AFX_DATA(ConnectionAttributeDialog)
+    enum { IDD = IDD_DIALOG_CONNECTION_ATTR };
+    CComboBox    m_HintSneaky;
+    CComboBox    m_HintPatrolRoute;
+    CComboBox    m_HintOneWay;
+    CComboBox    m_HintDark;
+    CComboBox    m_HintCover;
+    //}}AFX_DATA
 
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(ConnectionAttributeDialog)
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(ConnectionAttributeDialog)
+    protected:
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
 
-	// Generated message map functions
-	//{{AFX_MSG(ConnectionAttributeDialog)
-	afx_msg void OnClose();
-	afx_msg void OnButtonBatchFlag();
-	virtual void OnOK();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(ConnectionAttributeDialog)
+    afx_msg void OnClose();
+    afx_msg void OnButtonBatchFlag();
+    virtual void OnOK();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 //{{AFX_INSERT_LOCATION}}

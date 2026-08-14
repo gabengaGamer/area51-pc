@@ -18,11 +18,11 @@ input_gadget ArgGadget( script_context& ctx, s32 Index )
 {
     input_gadget G = input_system::LookupGadget( ctx.ArgString(Index) );
     if( G == INPUT_UNDEFINED )
-	{
+    {
         x_DebugMsg( "***\n*** SCRIPT WARNING [input] unknown gadget '%s'\n***\n", // Spam simulator
                     ctx.ArgString(Index) );
         ASSERT( G != INPUT_UNDEFINED );
-	}
+    }
     return G;
 }
 

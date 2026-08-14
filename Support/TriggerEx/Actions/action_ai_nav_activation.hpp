@@ -28,8 +28,8 @@ public:
     virtual         const char*             GetDescription  ( void );
 
     virtual         xbool                   Execute         ( f32 DeltaTime );    
-    virtual			void	                OnEnumProp	    ( prop_enum& rList );
-    virtual			xbool	                OnProperty	    ( prop_query& rPropQuery );
+    virtual            void                    OnEnumProp        ( prop_enum& rList );
+    virtual            xbool                    OnProperty        ( prop_query& rPropQuery );
 
 #ifdef X_EDITOR
     virtual         guid*                   GetGuidRef0     ( xstring& Desc ) { Desc = "NavConnection object error: "; return &m_NavConnectionGuid; }

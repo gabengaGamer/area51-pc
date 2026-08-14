@@ -701,7 +701,7 @@ void grunt_attack_state::ChangePhase( s32 newPhase )
     case PHASE_GRUNT_ATTACK_CLOSE_TO_MELEE:
         m_CharacterBase.SetWantsToAim(TRUE);
         m_CharacterBase.SetGotoTargetGoal(m_CharacterBase.GetTargetGuid(),vector3(0.0f,0.0f,0.0f), loco::MOVE_STYLE_NULL, m_CharacterBase.GetShortMeleeRange() );
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_EVADE:
         //stop shooting
         m_CharacterBase.SetWantsToAim(TRUE);
@@ -719,7 +719,7 @@ void grunt_attack_state::ChangePhase( s32 newPhase )
         //stop shooting
         m_CharacterBase.GetLocoPointer()->GetAdditiveController(character::ANIM_FLAG_SHOOT_CONTROLLER).Clear();
         m_CharacterBase.SetScaledPlayAnimationGoal(loco::ANIM_MELEE_LEAP);
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_SHORT_MELEE:
         {
             m_bDoLongMelee = x_irand(0,1);
@@ -729,7 +729,7 @@ void grunt_attack_state::ChangePhase( s32 newPhase )
             m_CharacterBase.GetLocoPointer()->GetAdditiveController(character::ANIM_FLAG_SHOOT_CONTROLLER).Clear();
             m_CharacterBase.SetPlayAnimationGoal(loco::ANIM_MELEE_SHORT);
         }
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_LONG_MELEE:
         {
             m_bDoLongMelee = x_irand(0,1);
@@ -860,7 +860,7 @@ void grunt_attack_state::ChangePhase( s32 newPhase )
             nav_connection_slot_id iConn = g_NavMap.GetNearestConnectionInGrid( m_CharacterBase.GetCurrentConnection(), vDestination);
             m_CharacterBase.SetGotoLocationGoal( g_NavMap.GetNearestPointOnConnection( iConn, vDestination ) );
         }
-    	break;
+        break;
     default:        
         if( newPhase >= PHASE_BASE_COUNT )
         {        
@@ -1237,22 +1237,22 @@ const char* grunt_attack_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_GRUNT_ATTACK_CLOSE_TO_MELEE:
         return "PHASE_GRUNT_ATTACK_CLOSE_TO_MELEE";
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_RETREAT:
         return "PHASE_GRUNT_ATTACK_RETREAT";
         break;    
     case PHASE_GRUNT_ATTACK_GROWL:
         return "PHASE_GRUNT_ATTACK_GROWL";
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_EVADE:
         return "PHASE_GRUNT_ATTACK_EVADE";
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_LEAP:
         return "PHASE_GRUNT_ATTACK_LEAP";
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_SHORT_MELEE:
         return "PHASE_GRUNT_ATTACK_SHORT_MELEE";
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_LONG_MELEE:
         return "PHASE_GRUNT_ATTACK_LONG_MELEE";
         break;
@@ -1264,10 +1264,10 @@ const char* grunt_attack_state::GetPhaseName ( s32 thePhase )
         break;
     case PHASE_GRUNT_ATTACK_STAND_SHOOT:
         return "PHASE_GRUNT_ATTACK_STAND_SHOOT";
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_PACE_LEFT:
         return "PHASE_GRUNT_ATTACK_PACE_LEFT";
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_PACE_RIGHT:
         return "PHASE_GRUNT_ATTACK_PACE_RIGHT";
         break;
@@ -1282,13 +1282,13 @@ const char* grunt_attack_state::GetPhaseName ( s32 thePhase )
         break;
     case PHASE_GRUNT_ATTACK_STAND_SHOOT_PACE_LEFT:
         return "PHASE_GRUNT_ATTACK_STAND_SHOOT_PACE_LEFT";
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_STAND_SHOOT_PACE_RIGHT:
         return "PHASE_GRUNT_ATTACK_STAND_SHOOT_PACE_RIGHT";
         break;
     case PHASE_GRUNT_ATTACK_NO_TARGET:
         return "PHASE_GRUNT_ATTACK_NO_TARGET";
-    	break;
+        break;
     case PHASE_GRUNT_ATTACK_SURPRISED:
         return "PHASE_GRUNT_ATTACK_SURPRISED";
         break;

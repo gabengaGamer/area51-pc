@@ -125,16 +125,16 @@ xbool dlg_profile_headset::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
-    m_pToggleHeadsetAudio	    = (ui_combo*)   FindChildByID( IDC_HEADSET_TOGGLE_HEADSET       );  
+    m_pToggleHeadsetAudio        = (ui_combo*)   FindChildByID( IDC_HEADSET_TOGGLE_HEADSET       );  
     m_pVolumeSpeaker            = (ui_slider*)  FindChildByID( IDC_HEADSET_VOLUME_SPEAKER       );    
-    m_pVolumeMic	            = (ui_slider*)  FindChildByID( IDC_HEADSET_VOLUME_MIC           );
+    m_pVolumeMic                = (ui_slider*)  FindChildByID( IDC_HEADSET_VOLUME_MIC           );
     m_pRestoreDefaults          = (ui_button*)  FindChildByID( IDC_HEADSET_RESTORE_DEFAULTS     );
 
-    m_pToggleHeadsetAudioText	= (ui_text*)    FindChildByID( IDC_HEADSET_TOGGLE_HEADSET_TEXT  );
-    m_pVolumeSpeakerText	    = (ui_text*)    FindChildByID( IDC_HEADSET_VOLUME_SPEAKER_TEXT  );
-    m_pVolumeMicText	        = (ui_text*)    FindChildByID( IDC_HEADSET_VOLUME_MIC_TEXT      );
+    m_pToggleHeadsetAudioText    = (ui_text*)    FindChildByID( IDC_HEADSET_TOGGLE_HEADSET_TEXT  );
+    m_pVolumeSpeakerText        = (ui_text*)    FindChildByID( IDC_HEADSET_VOLUME_SPEAKER_TEXT  );
+    m_pVolumeMicText            = (ui_text*)    FindChildByID( IDC_HEADSET_VOLUME_MIC_TEXT      );
 
     GotoControl( (ui_control*)m_pToggleHeadsetAudio );
     m_CurrentControl = IDC_HEADSET_TOGGLE_HEADSET;
@@ -225,11 +225,11 @@ void dlg_profile_headset::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     if( m_bRenderBlackout )
     {
-	    rb = g_UiMgr->GetUserBounds( m_UserID );
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),
                                     xcolor(0,0,0,180),

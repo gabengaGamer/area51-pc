@@ -32,9 +32,9 @@ char *strchr (), *strrchr ();
 #endif
 
 #if defined(__riscos__) && defined(FPA10)
-#include	"ymath.h"
+#include    "ymath.h"
 #else
-#include	<math.h>
+#include    <math.h>
 #endif
 
 #include "decode_i386.h"

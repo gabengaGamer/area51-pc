@@ -14,7 +14,7 @@ class CStackListBox : public CListBox
 {
 // Construction
 public:
-	CStackListBox();
+    CStackListBox();
 
 // Attributes
 public:
@@ -24,26 +24,26 @@ public:
     void    SetStackPtrIndex(int i) { m_iStackPtrIndex = i; }
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CStackListBox)
-	public:
-	virtual void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
-	virtual void MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct);
-	protected:
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CStackListBox)
+    public:
+    virtual void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
+    virtual void MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+    protected:
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CStackListBox();
+    virtual ~CStackListBox();
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CStackListBox)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
+    //{{AFX_MSG(CStackListBox)
+        // NOTE - the ClassWizard will add and remove member functions here.
+    //}}AFX_MSG
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 
 private:
     int m_iStackPtrIndex;

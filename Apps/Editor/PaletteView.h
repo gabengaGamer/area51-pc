@@ -13,8 +13,8 @@
 class CPaletteView : public CView
 {
 protected:
-	CPaletteView();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CPaletteView)
+    CPaletteView();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CPaletteView)
 
 // Operations
 public:
@@ -24,26 +24,26 @@ public:
     BOOL            IsActive() { return m_bActive; } 
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CPaletteView)
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CPaletteView)
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~CPaletteView();
+    virtual ~CPaletteView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CPaletteView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CPaletteView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
 protected:
 

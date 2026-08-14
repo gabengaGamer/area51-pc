@@ -286,7 +286,7 @@ void character_turret_state::ChangePhase( s32 newPhase )
             turret &ourTurret = turret::GetSafeType( *turretObject );           
             m_CharacterBase.SetGotoTargetGoal(ourTurret.GetEntryMarker());
         }
-    	break;
+        break;
     case PHASE_TURRET_ALIGN_TO_MARKER:
         {
             turret &ourTurret = turret::GetSafeType( *turretObject );           
@@ -295,7 +295,7 @@ void character_turret_state::ChangePhase( s32 newPhase )
             positionFacing.Rotate( ourMarker->GetL2W().GetRotation() );
             positionFacing += ourMarker->GetPosition();
             m_CharacterBase.SetTurnToLocationGoal(positionFacing,0.1f,TRUE);
-    	    break;
+            break;
         }
     case PHASE_TURRET_ENTER_TURRET:
         {        
@@ -305,32 +305,32 @@ void character_turret_state::ChangePhase( s32 newPhase )
                                                         DEFAULT_BLEND_TIME,
                                                         loco::ANIM_FLAG_TURN_OFF_AIMER | loco::ANIM_FLAG_INTERRUPT_BLEND, 0.0f, ourTurret.GetStandBonePosition() );
         }
-    	break;
+        break;
     case PHASE_TURRET_IDLE:
         m_CharacterBase.SetPlayAnimationGoal( "TURRET_IDLE",
                                               m_TurretAnimGroupHandle.GetName(),
                                               DEFAULT_BLEND_TIME,
                                               loco::ANIM_FLAG_TURN_OFF_AIMER | loco::ANIM_FLAG_PLAY_TYPE_CYCLIC, -1.0f);
-    	break;
+        break;
     case PHASE_TURRET_FIRE:
         m_CharacterBase.SetPlayAnimationGoal( "TURRET_SHOOT",
                                               m_TurretAnimGroupHandle.GetName(),
                                               DEFAULT_BLEND_TIME,
                                               loco::ANIM_FLAG_TURN_OFF_AIMER | loco::ANIM_FLAG_END_STATE_HOLD );
-    	break;
+        break;
     case PHASE_TURRET_RELOAD:
         m_CharacterBase.SetPlayAnimationGoal( "TURRET_RELOAD",
                                               m_TurretAnimGroupHandle.GetName(),
                                               DEFAULT_BLEND_TIME,
                                               loco::ANIM_FLAG_TURN_OFF_AIMER | loco::ANIM_FLAG_END_STATE_HOLD );
-    	break;
+        break;
     case PHASE_TURRET_EXIT_TURRET:
         m_CharacterBase.SetCollisionIgnoreGuid(m_CurrentTurret);
         m_CharacterBase.SetPlayAnimationGoal( "TURRET_DISMOUNT",
                                               m_TurretAnimGroupHandle.GetName(),
                                               DEFAULT_BLEND_TIME,
                                               loco::ANIM_FLAG_TURN_OFF_AIMER | loco::ANIM_FLAG_INTERRUPT_BLEND);
-    	break;
+        break;
     default:        
         if( newPhase >= PHASE_BASE_COUNT )
         {        
@@ -388,22 +388,22 @@ const char*character_turret_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_TURRET_GOTO_TURRET:
         return "PHASE_TURRET_GOTO_TURRET";
-    	break;
+        break;
     case PHASE_TURRET_ENTER_TURRET:
         return "PHASE_TURRET_ENTER_TURRET";
-    	break;
+        break;
     case PHASE_TURRET_IDLE:
         return "PHASE_TURRET_IDLE";
-    	break;
+        break;
     case PHASE_TURRET_FIRE:
         return "PHASE_TURRET_FIRE";
-    	break;
+        break;
     case PHASE_TURRET_RELOAD:
         return "PHASE_TURRET_RELOAD";
-    	break;
+        break;
     case PHASE_TURRET_EXIT_TURRET:
         return "PHASE_TURRET_EXIT_TURRET";
-    	break;
+        break;
     }
     return character_state::GetPhaseName(thePhase);
 }

@@ -30,7 +30,7 @@ void DisplayHelp( void )
     x_printf( "StringTool (c)2001-2025 Inevitable Entertainment Inc.\n" );
     x_printf( "\n" );
     x_printf( "KSS: PS2,XBOX and GCN is not supported. Please use older version.\n" );
-    x_printf( "\n" );	
+    x_printf( "\n" );    
     x_printf( "  usage:\n" );
     x_printf( "         stringTool [-opt [param]] [txtfile|binfile]\n" );
     x_printf( "\n" );
@@ -77,8 +77,8 @@ int main( int argc, char** argv )
     xstring         Prefix;
     xbool           DoPrefix        = FALSE;
     xbool           Overwrite       = TRUE;
-	xbool			Info			= FALSE;
-	xbool			SubTitleMode    = TRUE;
+    xbool            Info            = FALSE;
+    xbool            SubTitleMode    = TRUE;
     xbool           DebugOutput     = FALSE;
     xstring         BinName[ MAX_PLATFORMS ];
     s32             i;
@@ -89,7 +89,7 @@ int main( int argc, char** argv )
     x_Init( argc, argv );
 
     // Setup recognized command line options
-	CommandLine.AddOptionDef( "DEBUG" );
+    CommandLine.AddOptionDef( "DEBUG" );
     CommandLine.AddOptionDef( "PC", command_line::STRING );
 
     // Parse command line
@@ -123,9 +123,9 @@ int main( int argc, char** argv )
         const xstring& TextName = CommandLine.GetArgument( i );
 
         //     = CommandLine.ChangeExtension( TextName, "stringbin" );
-        xstring     CodeName	= CommandLine.ChangeExtension( TextName, "cpp" );
-        xstring     OutName	    = CommandLine.ChangeExtension( TextName, "info" );
-		text_out	tOut;
+        xstring     CodeName    = CommandLine.ChangeExtension( TextName, "cpp" );
+        xstring     OutName        = CommandLine.ChangeExtension( TextName, "info" );
+        text_out    tOut;
 
         xstring     Path;
         xstring     File;
@@ -144,26 +144,26 @@ int main( int argc, char** argv )
         xbytestream Binary;
         xbytestream IndexTable;
 
-		if( Info )
-		{
-			x_try;
+        if( Info )
+        {
+            x_try;
             
                 tOut.OpenFile( OutName );
             
             x_catch_begin;
 
                 x_printf( "Error Opening Info FILE\n" );
-				return 0;
+                return 0;
 
             x_catch_end;
-		}
+        }
 
 
         // Load the string
         if( Text.LoadFile( TextName ) == FALSE )
             x_printf( "Error Loading File - \"%s\" \n", (const char*)TextName );
 
-		StringsID.Clear();
+        StringsID.Clear();
 
         // Skip blank lines at beginning
         while( (Index < Text.GetLength()) && ((Text[Index] == 0x0d) || (Text[Index] == 0x0a)) ) 
@@ -315,7 +315,7 @@ int main( int argc, char** argv )
 
 
                 //-- IDS for Info File.
-				StringsID.Append( xstring( xfs("%s", (const char*)xstring(&Text[Column[0]]))) );
+                StringsID.Append( xstring( xfs("%s", (const char*)xstring(&Text[Column[0]]))) );
 
                 nDefine++;
 
@@ -467,19 +467,19 @@ int main( int argc, char** argv )
 
         } while( Index < Text.GetLength() );
 
-		//-- Info Output does not need a header.. .info file is a loaded header file so we dont have to recompile the game to add new
-		//-- lines of text to the Excel strings file.
-		if( Info )
-		{
-	        x_printf( "Saveing  \"%s\"\n", (const char*)OutName );			
-			tOut.AddHeader( "Strings", StringsID.GetCount());
-			for( s32 index = 0 ; index < StringsID.GetCount(); index++ )
-			{
-				tOut.AddString( "StringID",	(const char *)StringsID[index] );
-				tOut.AddEndLine();
-			}
-			tOut.CloseFile();
-		}
+        //-- Info Output does not need a header.. .info file is a loaded header file so we dont have to recompile the game to add new
+        //-- lines of text to the Excel strings file.
+        if( Info )
+        {
+            x_printf( "Saveing  \"%s\"\n", (const char*)OutName );            
+            tOut.AddHeader( "Strings", StringsID.GetCount());
+            for( s32 index = 0 ; index < StringsID.GetCount(); index++ )
+            {
+                tOut.AddString( "StringID",    (const char *)StringsID[index] );
+                tOut.AddEndLine();
+            }
+            tOut.CloseFile();
+        }
 
         // Write Binary
         stringbin_header FileHeader;
@@ -495,28 +495,28 @@ int main( int argc, char** argv )
                 const s32 HeaderLength = Header.GetLength();
                 Binary.Insert( 0, Header );
 
-	    for( s32 iPlatform = PLATFORM_PC; iPlatform < MAX_PLATFORMS; iPlatform++ )
-        {	
+        for( s32 iPlatform = PLATFORM_PC; iPlatform < MAX_PLATFORMS; iPlatform++ )
+        {    
             if( BinName[iPlatform].GetLength() == 0 )
                 continue;
 
             if( Overwrite || !CommandLine.FileExists( BinName[iPlatform] ) )
-		    {
-			    // Save the file
-			    if( !Binary.SaveFile( BinName[iPlatform] ) )
-			    {
-				    x_printf( "Error - Saving Binary \"%s\"\n", (const char*)BinName[iPlatform] );
-			    }
-			    else
-			    {
-				    x_printf( "Saving Binary \"%s\"\n", (const char*)BinName[iPlatform] );
-			    }
-		    }
-		    else
-		    {
-			    // Display error
-			    x_printf( "Error - File \"%s\" already exists\n", (const char*)BinName[iPlatform] );
-		    }
+            {
+                // Save the file
+                if( !Binary.SaveFile( BinName[iPlatform] ) )
+                {
+                    x_printf( "Error - Saving Binary \"%s\"\n", (const char*)BinName[iPlatform] );
+                }
+                else
+                {
+                    x_printf( "Saving Binary \"%s\"\n", (const char*)BinName[iPlatform] );
+                }
+            }
+            else
+            {
+                // Display error
+                x_printf( "Error - File \"%s\" already exists\n", (const char*)BinName[iPlatform] );
+            }
         }
     } 
 

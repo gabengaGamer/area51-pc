@@ -2698,14 +2698,14 @@ void new_weapon::OnColNotify( object& Object )
                 g_AudioManager.PlayVolumeClipped( g_StringMgr.GetString( m_SoundDescID ), GetPosition(), GetZone1() );
             }
         }
-		else
-		{
-			// give the ammo and self destruct
+        else
+        {
+            // give the ammo and self destruct
             if( Player.TryAddAmmo2( Item ) )
             {
                 g_ObjMgr.DestroyObject( GetGuid() );
             }
-		}
+        }
     }
 
     x_DebugMsg( "new_weapon::OnColNotify %f\n", OnColNotifyTimer.StopSec() );

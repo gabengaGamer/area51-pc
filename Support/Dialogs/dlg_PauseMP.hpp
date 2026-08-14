@@ -28,7 +28,7 @@
 
 enum pause_mp_controls
 {
-	IDC_PAUSE_MP_QUIT,
+    IDC_PAUSE_MP_QUIT,
     IDC_PAUSE_MP_SCORE,
     IDC_PAUSE_MP_OPTIONS,
     IDC_PAUSE_MP_SETTINGS,
@@ -76,8 +76,8 @@ public:
 
 protected:
     ui_frame*           m_pFrame1;
-	ui_button*			m_pButtonQuit;
-	ui_button*			m_pButtonScore; 	
+    ui_button*            m_pButtonQuit;
+    ui_button*            m_pButtonScore;     
     ui_button*          m_pButtonOptions;
     ui_button*          m_pButtonSettings;
 #ifdef TARGET_XBOX

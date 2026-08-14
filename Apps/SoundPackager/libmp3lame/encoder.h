@@ -143,6 +143,6 @@ int  lame_encode_mp3_frame (
         sample_t*           inbuf_l,
         sample_t*           inbuf_r,
         unsigned char*      mp3buf, 
-	int                 mp3buf_size );
+    int                 mp3buf_size );
 
 #endif /* LAME_ENCODER_H */

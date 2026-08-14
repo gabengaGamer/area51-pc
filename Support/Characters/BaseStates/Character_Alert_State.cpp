@@ -88,13 +88,13 @@ void character_alert_state::ChangePhase( s32 newPhase )
     {
     case PHASE_ALERT_FACE_SOURCE:
         m_CharacterBase.SetTurnToLocationGoal(m_CharacterBase.GetLastLocationOfInterest() );
-    	break;
+        break;
     case PHASE_ALERT_REACT_SOUND:
         m_CharacterBase.SetPlayAnimationGoal( loco::ANIM_HEAR_TARGET );
         break;
     case PHASE_ALERT_IDLE:
         m_CharacterBase.SetIdleGoal();
-    	break;
+        break;
     default:        
         if( newPhase >= PHASE_BASE_COUNT )
         {        
@@ -180,13 +180,13 @@ const char*character_alert_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_ALERT_FACE_SOURCE:
         return "PHASE_ALERT_FACE_SOURCE";
-    	break;
+        break;
     case PHASE_ALERT_REACT_SOUND:
         return "PHASE_ALERT_REACT_SOUND";
         break;
     case PHASE_ALERT_IDLE:
         return "PHASE_ALERT_IDLE";
-    	break;
+        break;
     }
     return character_state::GetPhaseName(thePhase);
 }

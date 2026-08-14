@@ -30,14 +30,14 @@ static struct weapon_mhg_desc : public object_desc
                                         "MHG",
                                         "WEAPON",
                                         object::ATTR_SPACIAL_ENTRY          |
-										object::ATTR_NEEDS_LOGIC_TIME		|
-                                        object::ATTR_SOUND_SOURCE			|
-                                        object::ATTR_RENDERABLE				|
- 										object::ATTR_COLLISION_PERMEABLE,
+                                        object::ATTR_NEEDS_LOGIC_TIME        |
+                                        object::ATTR_SOUND_SOURCE            |
+                                        object::ATTR_RENDERABLE                |
+                                         object::ATTR_COLLISION_PERMEABLE,
                                         FLAGS_GENERIC_EDITOR_CREATE |
                                         FLAGS_IS_DYNAMIC
 
-										) {}
+                                        ) {}
 
 //=========================================================================
 
@@ -66,24 +66,24 @@ const object_desc&  weapon_mhg::GetObjectType   ( void )
 
 weapon_mhg::weapon_mhg( void )
 {
-	//initialize the ammo structures.
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_MHG;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 10;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 10;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
-	
-
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
+    //initialize the ammo structures.
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_MHG;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 10;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 10;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
     
-    m_fFiringDelay      = .35f;		//firing delay for the shotgun is .1
+
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
+    
+    m_fFiringDelay      = .35f;        //firing delay for the shotgun is .1
     m_NPCMuzzleSoundFx  = "MHG_Primary_Fire";
 
-	//Both primary and secondary fires use same ammo, so secondary ammo is only initialized
-	//in the constructor of new_weapon and set to undefined.
+    //Both primary and secondary fires use same ammo, so secondary ammo is only initialized
+    //in the constructor of new_weapon and set to undefined.
     
     //set aim degradation
     m_AimDegradePrimary     = 0.2f;
@@ -208,19 +208,19 @@ xbool weapon_mhg::FireWeaponProtected( const vector3& InitPos , const vector3& B
 {
     ( void )Power;
 
- 	ASSERT( m_FiringPointBoneIndex[ iBonePoint ] != -1 );
+     ASSERT( m_FiringPointBoneIndex[ iBonePoint ] != -1 );
 
-	//if there weapon is not ready, do nothing.
-	if ( ! IsWeaponReady( AMMO_PRIMARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.
+    if ( ! IsWeaponReady( AMMO_PRIMARY ) )
+    {
+        return FALSE;
+    }
 
-	//otherwise, create a new bullet projectile, init it's position, and send it on it's way.
-	else
-	{
+    //otherwise, create a new bullet projectile, init it's position, and send it on it's way.
+    else
+    {
         //set the firing timer.
-		m_fFiringTimer = m_fFiringDelay;
+        m_fFiringTimer = m_fFiringDelay;
  
 #ifdef FIRE_FROM_GUN
         vector3 InitPos = m_AnimPlayer[m_CurrentRenderState].GetBonePosition( m_FiringPointBoneIndex[ iBonePoint ] );
@@ -256,30 +256,30 @@ xbool weapon_mhg::FireWeaponProtected( const vector3& InitPos , const vector3& B
         // Decrement count of bullets in current clip
         DecrementAmmo();
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 }
 
 //=========================================================================
 
 xbool weapon_mhg::FireSecondaryProtected( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iBonePoint )
 {
-	
+    
     ( void )Power;
 
- 	ASSERT( m_AltFiringPointBoneIndex[ iBonePoint ] != -1 );
+     ASSERT( m_AltFiringPointBoneIndex[ iBonePoint ] != -1 );
 
-	//if there weapon is not ready, do nothing.
-	if( ! IsWeaponReady( AMMO_PRIMARY ) && (GetAmmoCount() < (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax/2.0f) ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.
+    if( ! IsWeaponReady( AMMO_PRIMARY ) && (GetAmmoCount() < (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax/2.0f) ) )
+    {
+        return FALSE;
+    }
 
-	//otherwise, create a new bullet projectile, init it's position, and send it on it's way.
-	else
-	{
+    //otherwise, create a new bullet projectile, init it's position, and send it on it's way.
+    else
+    {
         //set the firing timer.
-		m_fFiringTimer = m_fFiringDelay;
+        m_fFiringTimer = m_fFiringDelay;
  
 #ifdef FIRE_FROM_GUN
         vector3 InitPos = m_AnimPlayer[m_CurrentRenderState].GetBonePosition( m_AltFiringPointBoneIndex[ iBonePoint ] );
@@ -314,8 +314,8 @@ xbool weapon_mhg::FireSecondaryProtected( const vector3& InitPos , const vector3
         // clear all ammo
         ClearAmmo();
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 }
 
 //==============================================================================

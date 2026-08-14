@@ -12,9 +12,9 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 BEGIN_MESSAGE_MAP(CompErrorDisplayCtrl, COutputCtrl)
-	//{{AFX_MSG_MAP(CompErrorDisplayCtrl)
-	ON_WM_CREATE()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CompErrorDisplayCtrl)
+    ON_WM_CREATE()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -50,17 +50,17 @@ int CompErrorDisplayCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
     lpCreateStruct->dwExStyle |= WS_HSCROLL | WS_VSCROLL;
 
-	if (COutputCtrl::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
+    if (COutputCtrl::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
     // Create the font fix-size font
     m_Font.CreatePointFont( 10, "Courier");//"Fixedsys" );
 
-	// TODO: Add your specialized creation code here
-	SetFont( &m_Font );
+    // TODO: Add your specialized creation code here
+    SetFont( &m_Font );
 
     // Tell out selves that we are ready to do work
     SetWindowText( _T("Compile Output...\n") );
 
-	return 0;
+    return 0;
 }

@@ -54,7 +54,7 @@ const object_desc&  explosive_bullet_projectile::GetObjectType   ( void )
 
 explosive_bullet_projectile::explosive_bullet_projectile()
 {
-	m_MaxAliveTime  = 0.3f;
+    m_MaxAliveTime  = 0.3f;
     m_ExplosionSize = 25.0f;
     m_bThroughGlass = TRUE;
 }
@@ -153,17 +153,17 @@ void explosive_bullet_projectile::OnAdvanceSimulation( f32 DeltaTime )
     X_PROFILE_SCOPE_CATEGORY( "Context", "bullet_projectile::OnAdvanceSimulation" );
     LOG_STAT( k_stats_Projectiles);
     
-	//update collisions
-	if ( OnProcessCollision( DeltaTime ) )
-	{
-		OnMove( m_CurrentPosition );
-		m_MaxAliveTime -= DeltaTime;
+    //update collisions
+    if ( OnProcessCollision( DeltaTime ) )
+    {
+        OnMove( m_CurrentPosition );
+        m_MaxAliveTime -= DeltaTime;
 
-		if ( m_MaxAliveTime < F32_MIN )
-		{
-			g_ObjMgr.DestroyObject( GetGuid() );
-		}
-	}
+        if ( m_MaxAliveTime < F32_MIN )
+        {
+            g_ObjMgr.DestroyObject( GetGuid() );
+        }
+    }
 /*    
     if( m_BulletFlyBySfxID != -1 )
     {
@@ -206,7 +206,7 @@ void explosive_bullet_projectile::OnAdvanceSimulation( f32 DeltaTime )
 
 void explosive_bullet_projectile::OnMove( const vector3& rNewPos )
 {
-	//transfom the object.
+    //transfom the object.
     base_projectile::OnMove( rNewPos );    
 }
 
@@ -229,16 +229,16 @@ void explosive_bullet_projectile::Initialize( const vector3& InitPos,
 
 void explosive_bullet_projectile::Initialize( const vector3& InitPos , const radian3& InitRot , const vector3& InitVel , const guid& OwnerGuid )
 {
-	//initialize the base class
-	base_projectile::Initialize( InitPos , InitRot , InitVel , OwnerGuid );
+    //initialize the base class
+    base_projectile::Initialize( InitPos , InitRot , InitVel , OwnerGuid );
 }
 
 //=============================================================================================
 
 void explosive_bullet_projectile::Initialize( const vector3& InitPos , const matrix4& InitMat , const vector3& InitVel , const guid& OwnerGuid )
 {
-	//initialize the base class
-	base_projectile::Initialize( InitPos , InitMat , InitVel , OwnerGuid );
+    //initialize the base class
+    base_projectile::Initialize( InitPos , InitMat , InitVel , OwnerGuid );
 }
 */
 //=============================================================================

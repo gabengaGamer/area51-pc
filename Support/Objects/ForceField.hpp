@@ -41,8 +41,8 @@ public:
 
     virtual         s32             GetMaterial         ( void ) const { return MAT_TYPE_ENERGY_FIELD; }
 
-    virtual			void	        OnEnumProp		    ( prop_enum& rList );           
-    virtual			xbool	        OnProperty		    ( prop_query& rPropQuery );
+    virtual            void            OnEnumProp            ( prop_enum& rList );           
+    virtual            xbool            OnProperty            ( prop_query& rPropQuery );
 
                     void            OnColCheck          ( void );
                     void            OnPolyCacheGather   ( void );
@@ -64,10 +64,10 @@ public:
 protected:   
     //=========================================================================
 
-    virtual void                OnRender		    ( void ) {};
+    virtual void                OnRender            ( void ) {};
     virtual void                OnRenderTransparent ( void );
 
-    virtual void                OnAdvanceSimulation	    ( f32     DelaTime );           
+    virtual void                OnAdvanceSimulation        ( f32     DelaTime );           
     virtual void                OnInit              ( void );                       
 
     // These store the possible alignments.

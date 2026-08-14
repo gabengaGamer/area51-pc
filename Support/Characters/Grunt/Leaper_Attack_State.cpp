@@ -284,7 +284,7 @@ void leaper_attack_state::ChangePhase( s32 newPhase )
     case PHASE_LEAPER_ATTACK_CLOSE_TO_MELEE:
         m_CharacterBase.SetWantsToAim(TRUE);
         m_CharacterBase.SetGotoTargetGoal(m_CharacterBase.GetTargetGuid(),vector3(0.0f,0.0f,0.0f), loco::MOVE_STYLE_CHARGE, m_CharacterBase.GetShortMeleeRange() - 50.0f );
-    	break;
+        break;
     case PHASE_LEAPER_ATTACK_EVADE:
         //stop shooting
         m_CharacterBase.SetWantsToAim(TRUE);
@@ -350,7 +350,7 @@ void leaper_attack_state::ChangePhase( s32 newPhase )
                 m_CharacterBase.SetScaledPlayAnimationGoal(loco::ANIM_MELEE_LEAP);
             }
         }
-    	break;
+        break;
     case PHASE_LEAPER_ATTACK_SHORT_MELEE:
         {
             radian toTargetYaw = m_CharacterBase.GetToTarget().GetYaw();
@@ -544,22 +544,22 @@ const char* leaper_attack_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_LEAPER_ATTACK_CLOSE_TO_LEAP:
         return "PHASE_LEAPER_ATTACK_CLOSE_TO_LEAP";
-    	break;
+        break;
     case PHASE_LEAPER_ATTACK_CLOSE_TO_MELEE:
         return "PHASE_LEAPER_ATTACK_CLOSE_TO_MELEE";
         break;
     case PHASE_LEAPER_ATTACK_GROWL:
         return "PHASE_LEAPER_ATTACK_GROWL";
-    	break;
+        break;
     case PHASE_LEAPER_ATTACK_EVADE:
         return "PHASE_LEAPER_ATTACK_EVADE";
-    	break;
+        break;
     case PHASE_LEAPER_ATTACK_LEAP:
         return "PHASE_LEAPER_ATTACK_LEAP";
-    	break;
+        break;
     case PHASE_LEAPER_ATTACK_SHORT_MELEE:
         return "PHASE_LEAPER_ATTACK_SHORT_MELEE";
-    	break;
+        break;
     case PHASE_LEAPER_ATTACK_LONG_MELEE:
         return "PHASE_LEAPER_ATTACK_LONG_MELEE";
         break;

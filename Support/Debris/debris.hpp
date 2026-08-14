@@ -21,8 +21,8 @@ public:
 
 
 //=============================================================================
-						debris              ( void );
-	virtual				~debris             ( void );
+                        debris              ( void );
+    virtual                ~debris             ( void );
 
     virtual void        OnInit              ( void );
 
@@ -45,7 +45,7 @@ public:
     virtual void        UpdatePhysics       ( f32 DeltaTime );
     virtual void        OnBounce            ( void );     
 
-    virtual void        OnMove				( const vector3& rNewPos );
+    virtual void        OnMove                ( const vector3& rNewPos );
     virtual void        OnRender            ( void );
 
             vector3     OnProcessCollision  ( f32 DeltaTime );

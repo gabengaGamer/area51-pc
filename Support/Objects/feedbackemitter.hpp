@@ -50,7 +50,7 @@ public:
 
     virtual bbox        GetLocalBBox        ( void ) const;
 
-    virtual	void	    OnColCheck			( void );
+    virtual    void        OnColCheck            ( void );
     virtual void        OnColNotify         ( object& Object );
     virtual void        OnActivate          ( xbool Flag );  
     void                LogicCheckOnActivate( void );

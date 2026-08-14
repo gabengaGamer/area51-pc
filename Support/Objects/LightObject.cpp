@@ -350,7 +350,7 @@ void dynamic_light_obj::OnEnumProp( prop_enum& List )
     List.PropEnumHeader( "Light", "Dynamic Light Properties", 0 );
     List.PropEnumEnum  ( "Light\\EmitterType",
                          "OMNI\0"
-                         "SPOT\0",	
+                         "SPOT\0",    
                          "Runtime light emitter type.",
                          0 );
     List.PropEnumFloat ( "Light\\Range",
@@ -544,7 +544,7 @@ xbool dynamic_light_obj::OnProperty( prop_query& I )
             if( !x_strcmp( I.GetVarEnum(), "LOWEST" ) )
                 m_ShadowPriority = SHADOW_PRIORITY_LOWEST;
             else if( !x_strcmp( I.GetVarEnum(), "LOW" ) )
-                m_ShadowPriority = SHADOW_PRIORITY_LOW;	
+                m_ShadowPriority = SHADOW_PRIORITY_LOW;    
             else if( !x_strcmp( I.GetVarEnum(), "MEDIUM" ) )
                 m_ShadowPriority = SHADOW_PRIORITY_MEDIUM;
             else if( !x_strcmp( I.GetVarEnum(), "HIGH" ) )

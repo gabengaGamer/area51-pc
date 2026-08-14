@@ -54,8 +54,8 @@ public:
             bbox            GetFocusBBox                        ( void ) const;
             bbox            GetRenderFocusBBox                  ( void ) const;
 
-	virtual	void	        OnEnumProp		                    ( prop_enum& list );
-	virtual	xbool	        OnProperty		                    ( prop_query& rPropQuery );
+    virtual    void            OnEnumProp                            ( prop_enum& list );
+    virtual    xbool            OnProperty                            ( prop_query& rPropQuery );
             
     virtual const object_desc&  GetTypeDesc                     ( void ) const;
     static  const object_desc&  GetObjectType                   ( void );

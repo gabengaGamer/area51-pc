@@ -25,10 +25,10 @@ class actor;
 class mutant_tendril_projectile : public net_proj
 {
 public:
-	CREATE_RTTI( mutant_tendril_projectile , net_proj , object )
+    CREATE_RTTI( mutant_tendril_projectile , net_proj , object )
 
-	mutant_tendril_projectile();
-	virtual ~mutant_tendril_projectile();
+    mutant_tendril_projectile();
+    virtual ~mutant_tendril_projectile();
 
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
@@ -58,7 +58,7 @@ virtual         void            SetStart            ( const vector3& Position,
                 xbool           LoadEffect          ( const char* pFileName, const vector3& InitPos, const radian3& InitRot );
                 void            DestroyParticles    ( void );
                 void            UpdateParticles     ( const vector3& Position );
-virtual	        bbox	        GetLocalBBox		( void ) const;
+virtual            bbox            GetLocalBBox        ( void ) const;
 
 virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
 virtual         void            OnImpact            ( collision_mgr::collision& Coll, object* pTarget );
@@ -67,10 +67,10 @@ virtual         void            OnRender            ( void );
 virtual         void            OnMove              ( const vector3& NewPos );
 
 virtual         void            OnExplode           ( void );
-                xbool	        LoadInstance		( const char* pFileName ); 
+                xbool            LoadInstance        ( const char* pFileName ); 
 
-virtual	        void	        OnEnumProp		    ( prop_enum& PropEnumList );
-virtual	        xbool	        OnProperty		    ( prop_query& rPropQuery );
+virtual            void            OnEnumProp            ( prop_enum& PropEnumList );
+virtual            xbool            OnProperty            ( prop_query& rPropQuery );
 
                 void            SetTarget           ( guid TargetGuid ) { m_Target = TargetGuid; } 
                 void            SetCorpseGuid       ( guid CorpseGuid ) { m_CorpseGuid = CorpseGuid; }

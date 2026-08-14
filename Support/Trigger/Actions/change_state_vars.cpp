@@ -115,7 +115,7 @@ void change_state_vars::OnEnumProp ( prop_enum& rPropList )
     //object info
     rPropList.AddInt ( "Code" , "",  PROP_TYPE_DONT_SHOW  );
     
-    rPropList.AddString	( "Variable Name", "Name of the Global Variable.", PROP_TYPE_MUST_ENUM );
+    rPropList.AddString    ( "Variable Name", "Name of the Global Variable.", PROP_TYPE_MUST_ENUM );
     
     rPropList.AddEnum( "Type","FLOAT\0INT\0BOOL\0UNDETERMINED\0", "Variable Type." , PROP_TYPE_READ_ONLY );
  

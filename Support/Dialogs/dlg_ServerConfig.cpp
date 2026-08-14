@@ -24,13 +24,13 @@
 ui_manager::control_tem ServerConfigControls[] = 
 {
     // Frames.
-    { IDC_SERVER_CONFIG_CHANGE_MAP,	    "IDS_CONFIG_CHANGE_MAP",            "button",  110,  40, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
-    { IDC_SERVER_CONFIG_KICK_PLAYER,	"IDS_CONFIG_KICK_PLAYER",           "button",  110,  75, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
-    { IDC_SERVER_CONFIG_CHANGE_TEAM,	"IDS_CONFIG_TEAM_CHANGE",           "button",  110, 110, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
-    { IDC_SERVER_CONFIG_RESTART_MAP,	"IDS_CONFIG_RESTART_MAP",           "button",  110, 145, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
-    { IDC_SERVER_CONFIG_RECONFIGURE,	"IDS_CONFIG_RECONFIGURE_SERVER",    "button",  110, 180, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE },
-    { IDC_SERVER_CONFIG_SHUTDOWN,	    "IDS_CONFIG_SHUTDOWN_SERVER",       "button",  110, 215, 120, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE },
-	
+    { IDC_SERVER_CONFIG_CHANGE_MAP,        "IDS_CONFIG_CHANGE_MAP",            "button",  110,  40, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SERVER_CONFIG_KICK_PLAYER,    "IDS_CONFIG_KICK_PLAYER",           "button",  110,  75, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SERVER_CONFIG_CHANGE_TEAM,    "IDS_CONFIG_TEAM_CHANGE",           "button",  110, 110, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SERVER_CONFIG_RESTART_MAP,    "IDS_CONFIG_RESTART_MAP",           "button",  110, 145, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SERVER_CONFIG_RECONFIGURE,    "IDS_CONFIG_RECONFIGURE_SERVER",    "button",  110, 180, 120, 40, 0, 4, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_SERVER_CONFIG_SHUTDOWN,        "IDS_CONFIG_SHUTDOWN_SERVER",       "button",  110, 215, 120, 40, 0, 5, 1, 1, ui_win::WF_VISIBLE },
+    
 };
 
 //-------------------------------------------------------------------------
@@ -109,15 +109,15 @@ xbool dlg_server_config::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // get button handles
-	m_pButtonChangeMap      = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_CHANGE_MAP  );
-	m_pButtonKickPlayer     = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_KICK_PLAYER ); 	
-    m_pButtonChangeTeam     = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_CHANGE_TEAM ); 	
-    m_pButtonRestartMap     = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_RESTART_MAP ); 		    
-    m_pButtonReconfigure    = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_RECONFIGURE ); 		
-	m_pButtonShutdown       = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_SHUTDOWN    ); 	
+    m_pButtonChangeMap      = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_CHANGE_MAP  );
+    m_pButtonKickPlayer     = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_KICK_PLAYER );     
+    m_pButtonChangeTeam     = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_CHANGE_TEAM );     
+    m_pButtonRestartMap     = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_RESTART_MAP );             
+    m_pButtonReconfigure    = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_RECONFIGURE );         
+    m_pButtonShutdown       = (ui_button*)  FindChildByID( IDC_SERVER_CONFIG_SHUTDOWN    );     
 
     s32 iControl = g_StateMgr.GetCurrentControl();
     if( (iControl == -1) || (GotoControl(iControl)==NULL) )
@@ -167,7 +167,7 @@ xbool dlg_server_config::Create( s32                        UserID,
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -189,11 +189,11 @@ void dlg_server_config::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
 
 
     // render background filter
-	rb = g_UiMgr->GetUserBounds( m_UserID );
+    rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
@@ -256,7 +256,7 @@ void dlg_server_config::OnAccept( ui_win* pWin )
     if ( m_State == DIALOG_STATE_ACTIVE )
     {
         if( pWin == (ui_win*)m_pButtonKickPlayer )
-	    {
+        {
             // kick player
             m_CurrentControl = IDC_SERVER_CONFIG_KICK_PLAYER;
             m_State = DIALOG_STATE_SELECT;
@@ -268,7 +268,7 @@ void dlg_server_config::OnAccept( ui_win* pWin )
             m_CurrentControl = IDC_SERVER_CONFIG_CHANGE_MAP;
             m_State = DIALOG_STATE_SELECT;
             g_AudioMgr.Play( "Select_Norm" );
-	    }
+        }
         else if( pWin == (ui_win*)m_pButtonChangeTeam )
         {
             // change map
@@ -310,7 +310,7 @@ void dlg_server_config::OnAccept( ui_win* pWin )
             g_AudioMgr.Play( "Select_Norm" );
         }
         else if( pWin == (ui_win*)m_pButtonShutdown )
-	    {
+        {
 
 
             // Shutdown the server

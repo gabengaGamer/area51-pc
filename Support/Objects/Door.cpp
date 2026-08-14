@@ -606,7 +606,7 @@ void door::OnEnumProp( prop_enum&  rPropList )
     u32 PropFlags = 0;
     
     //object info
-    rPropList.PropEnumString	( "Door", "Door Properties", 0 );
+    rPropList.PropEnumString    ( "Door", "Door Properties", 0 );
     
     rPropList.PropEnumGuid   ( "Door\\Portal" ,              "The portal the door controls" , PropFlags );
 

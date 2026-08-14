@@ -72,7 +72,7 @@ void collision_mgr::InitializeCollisionCheckDefaults( void )
     m_nMaxCollisions                = 1;
 
     m_bUseIgnoreList                = FALSE;
-	m_nIgnoredObjects               = 0;
+    m_nIgnoredObjects               = 0;
 
     m_bCollectPermeable             = FALSE;
     m_nPermeables                   = 0;
@@ -100,7 +100,7 @@ void collision_mgr::InitializeCollisionCheckDefaults( void )
 void collision_mgr::EditorSelectRay( const vector3& Start, const vector3& End, xbool bIncludeIcons )
 {
     xhandle H;
-	H.Handle = -1;
+    H.Handle = -1;
 
     //
     // Initialize the collision manager
@@ -2206,15 +2206,15 @@ void collision_mgr::Render( void )
 
 //==============================================================================
 
-void	collision_mgr::AddToIgnoreList( guid* Guid, s32 nGuids )
+void    collision_mgr::AddToIgnoreList( guid* Guid, s32 nGuids )
 {
 
-	ASSERT( (m_nIgnoredObjects+nGuids) <= MAX_IGNORED_OBJECTS );
+    ASSERT( (m_nIgnoredObjects+nGuids) <= MAX_IGNORED_OBJECTS );
 
     for( s32 i=0; i<nGuids; i++ )
     {
-	    m_IgnoreList[ m_nIgnoredObjects ] = Guid[i];
-	    m_nIgnoredObjects++;
+        m_IgnoreList[ m_nIgnoredObjects ] = Guid[i];
+        m_nIgnoredObjects++;
     }
 }
 

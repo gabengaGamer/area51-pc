@@ -19,31 +19,31 @@ static char THIS_FILE[] = __FILE__;
 
 
 ConnectionAttributeDialog::ConnectionAttributeDialog(CWnd* pParent /*=NULL*/)
-	: CDialog(ConnectionAttributeDialog::IDD, pParent)
+    : CDialog(ConnectionAttributeDialog::IDD, pParent)
 {
-	//{{AFX_DATA_INIT(ConnectionAttributeDialog)
-	//}}AFX_DATA_INIT
+    //{{AFX_DATA_INIT(ConnectionAttributeDialog)
+    //}}AFX_DATA_INIT
 }
 
 
 void ConnectionAttributeDialog::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(ConnectionAttributeDialog)
-	DDX_Control(pDX, IDC_COMBO_CONNECTION_HINT_SNEAKY, m_HintSneaky);
-	DDX_Control(pDX, IDC_COMBO_CONNECTION_HINT_PATROL_ROUTE, m_HintPatrolRoute);
-	DDX_Control(pDX, IDC_COMBO_CONNECTION_HINT_ONE_WAY, m_HintOneWay);
-	DDX_Control(pDX, IDC_COMBO_CONNECTION_HINT_DARK, m_HintDark);
-	DDX_Control(pDX, IDC_COMBO_CONNECTION_HINT_COVER, m_HintCover);
-	//}}AFX_DATA_MAP
+    CDialog::DoDataExchange(pDX);
+    //{{AFX_DATA_MAP(ConnectionAttributeDialog)
+    DDX_Control(pDX, IDC_COMBO_CONNECTION_HINT_SNEAKY, m_HintSneaky);
+    DDX_Control(pDX, IDC_COMBO_CONNECTION_HINT_PATROL_ROUTE, m_HintPatrolRoute);
+    DDX_Control(pDX, IDC_COMBO_CONNECTION_HINT_ONE_WAY, m_HintOneWay);
+    DDX_Control(pDX, IDC_COMBO_CONNECTION_HINT_DARK, m_HintDark);
+    DDX_Control(pDX, IDC_COMBO_CONNECTION_HINT_COVER, m_HintCover);
+    //}}AFX_DATA_MAP
 }
 
 
 BEGIN_MESSAGE_MAP(ConnectionAttributeDialog, CDialog)
-	//{{AFX_MSG_MAP(ConnectionAttributeDialog)
-	ON_WM_CLOSE()
-	ON_COMMAND(ID_BUTTON_BATCH_FLAG, OnButtonBatchFlag)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(ConnectionAttributeDialog)
+    ON_WM_CLOSE()
+    ON_COMMAND(ID_BUTTON_BATCH_FLAG, OnButtonBatchFlag)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -51,16 +51,16 @@ END_MESSAGE_MAP()
 
 void ConnectionAttributeDialog::OnClose() 
 {
-	// TODO: Add your message handler code here and/or call default
+    // TODO: Add your message handler code here and/or call default
 
 
-	CDialog::OnClose();
+    CDialog::OnClose();
 }
 
 void ConnectionAttributeDialog::OnButtonBatchFlag() 
 {
-	// TODO: Add your command handler code here
-	ConnectionAttributeDialog aDialog;
+    // TODO: Add your command handler code here
+    ConnectionAttributeDialog aDialog;
     aDialog.DoModal();
 
 
@@ -69,8 +69,8 @@ void ConnectionAttributeDialog::OnButtonBatchFlag()
 
 void ConnectionAttributeDialog::OnOK() 
 {
-	// TODO: Add extra validation here
-		
+    // TODO: Add extra validation here
+        
     switch(m_HintSneaky.GetCurSel() )
     {
     case 1:
@@ -183,5 +183,5 @@ void ConnectionAttributeDialog::OnOK()
 
 
 
-	CDialog::OnOK();
+    CDialog::OnOK();
 }

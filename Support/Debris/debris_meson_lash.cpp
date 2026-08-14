@@ -1413,7 +1413,7 @@ void debris_meson_explosion::CollapseTargetList( void )
 
 //=============================================================================
 
-void debris_meson_explosion::OnMove				( const vector3& rNewPos )
+void debris_meson_explosion::OnMove                ( const vector3& rNewPos )
 {
     object::OnMove( rNewPos );
 }

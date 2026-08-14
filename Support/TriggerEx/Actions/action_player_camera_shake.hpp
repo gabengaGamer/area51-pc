@@ -28,16 +28,16 @@ public:
     virtual         const char*         GetDescription  ( void );
 
     virtual         xbool               Execute         ( f32 DeltaTime );    
-    virtual			void	            OnEnumProp	    ( prop_enum& rList );
-    virtual			xbool	            OnProperty	    ( prop_query& rPropQuery );
+    virtual            void                OnEnumProp        ( prop_enum& rList );
+    virtual            xbool                OnProperty        ( prop_query& rPropQuery );
 
 protected:
     
-	f32			m_ShakeTime;						    // How long to shake the view.
+    f32            m_ShakeTime;                            // How long to shake the view.
     f32         m_CameraShakeAmount;                    // How much to shake the camera.
     f32         m_CameraShakeSpeed;                     // How fast to shake the camera.
-	f32			m_FeedbackDuration; 					// Amount of force 
-	f32			m_FeedbackIntensity;					// Amount of force 
+    f32            m_FeedbackDuration;                     // Amount of force 
+    f32            m_FeedbackIntensity;                    // Amount of force 
 
 };
 

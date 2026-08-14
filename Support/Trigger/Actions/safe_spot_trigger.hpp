@@ -26,8 +26,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Safe Spot"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "When hit, marks this as the last safe spot"; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
 
     virtual         void                OnRender    ( void );
    

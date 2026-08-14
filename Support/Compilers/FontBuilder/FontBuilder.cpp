@@ -21,13 +21,13 @@
 
 #define VERSION             "v1.2b"
 
-#define WRITE_XBMP		        ( 1<<1 )
-#define WRITE_TGA		        ( 1<<2 )
+#define WRITE_XBMP                ( 1<<1 )
+#define WRITE_TGA                ( 1<<2 )
 
 #define TARGET_PLATFORM_XBOX    ( 1<<3 )
-#define TARGET_PLATFORM_PC	    ( 1<<4 )
-#define TARGET_PLATFORM_PS2	    ( 1<<5 )
-#define TARGET_PLATFORM_GCN	    ( 1<<6 )
+#define TARGET_PLATFORM_PC        ( 1<<4 )
+#define TARGET_PLATFORM_PS2        ( 1<<5 )
+#define TARGET_PLATFORM_GCN        ( 1<<6 )
 
 #define CONVERT_TO_P8           ( 1<<7 )
 #define CONVERT_TO_P4           ( 1<<8 )
@@ -65,19 +65,19 @@ RECT        s_FillRect;
 HFONT       s_Font;
 
 // parameter defaults
-xstring     s_FontName		= "";
-s32         s_FirstChar		= 32;
-s32         s_NumChars		= 96;
-s32         s_Antialias		= 1;
-s32         s_PointSize		= 12;
+xstring     s_FontName        = "";
+s32         s_FirstChar        = 32;
+s32         s_NumChars        = 96;
+s32         s_Antialias        = 1;
+s32         s_PointSize        = 12;
 s32         s_CharHeight    = s_PointSize;
-s32         s_Weight		= 400;      // 400 is the windows "normal" font. range 0 (don't care) - 1000.
-xbool       s_Italic		= FALSE;
-xbool       s_Underline		= FALSE;
-xbool		s_Debug			= FALSE;
+s32         s_Weight        = 400;      // 400 is the windows "normal" font. range 0 (don't care) - 1000.
+xbool       s_Italic        = FALSE;
+xbool       s_Underline        = FALSE;
+xbool        s_Debug            = FALSE;
 xbool       s_CopyToRGB     = FALSE;
 xbool       s_OverWrite     = FALSE;
-u16			s_OutputFormat	= 0;
+u16            s_OutputFormat    = 0;
 xbool       s_ReadFromFile  = FALSE;
 s32         s_BitmapWidth   = 256;
 xstring     BitmapInName;
@@ -430,14 +430,14 @@ xbool Writexbmp( command_line& CommandLine, xbitmap& Bitmap, const xstring& Bitm
     CommandLine.SplitPath( PathName, Path, File );
     PathName = CommandLine.JoinPath( OutputFolder, File );
 
-	// Is the bitmap a power of 2.
-	if( s_Debug )
-	{
-		if( (Bitmap.GetHeight() % 2) || (Bitmap.GetWidth() % 2) )
-		{
-			x_printf( "Warning: Bitmap[%s] is not a power of 2", (const char*)BitmapName );
-		}
-	}
+    // Is the bitmap a power of 2.
+    if( s_Debug )
+    {
+        if( (Bitmap.GetHeight() % 2) || (Bitmap.GetWidth() % 2) )
+        {
+            x_printf( "Warning: Bitmap[%s] is not a power of 2", (const char*)BitmapName );
+        }
+    }
 
     // Check if the file already exists
     //if( !CommandLine.FileExists( PathName ) || s_OverWrite )
@@ -456,7 +456,7 @@ xbool Writexbmp( command_line& CommandLine, xbitmap& Bitmap, const xstring& Bitm
     {
         // Display error
         if( s_Debug )
-			x_printf( "Error - File \"%s\" already exists\n", (const char*)PathName );
+            x_printf( "Error - File \"%s\" already exists\n", (const char*)PathName );
     }
 #endif
 
@@ -476,14 +476,14 @@ xbool Writetga( command_line& CommandLine, xbitmap& Bitmap, const xstring& Bitma
     CommandLine.SplitPath( PathName, Path, File );
     PathName = CommandLine.JoinPath( OutputFolder, File );
 
-	// Is the bitmap a power of 2.
-	if( s_Debug )
-	{
-		if( (Bitmap.GetHeight() % 2) || (Bitmap.GetWidth() % 2) )
-		{
-			x_printf( "Warning: Bitmap[%s] is not a power of 2", (const char*)BitmapName );
-		}
-	}
+    // Is the bitmap a power of 2.
+    if( s_Debug )
+    {
+        if( (Bitmap.GetHeight() % 2) || (Bitmap.GetWidth() % 2) )
+        {
+            x_printf( "Warning: Bitmap[%s] is not a power of 2", (const char*)BitmapName );
+        }
+    }
 
     // Check if the file already exists
     if( !CommandLine.FileExists( PathName ) || s_OverWrite )
@@ -538,7 +538,7 @@ xbool CompileTargetPC( command_line& CommandLine, xbitmap& Bitmap, xstring& OptS
     if( (PathStringLen > 0) && ((OutputFolder[PathStringLen-1] != '\\') && (OutputFolder[PathStringLen-1] != '/')) )
         OutputFolder += '\\';
 
-	// Check what format was specified for the output.
+    // Check what format was specified for the output.
     if( s_OutputFormat & CONVERT_TO_P8 )
     {
         Bitmap.ConvertFormat( xbitmap::FMT_P8_ARGB_8888 );
@@ -563,26 +563,26 @@ xbool CompileTargetPC( command_line& CommandLine, xbitmap& Bitmap, xstring& OptS
             return FALSE;
 
     if( s_OutputFormat & WRITE_XBMP )
-	{
+    {
         auxbmp_ConvertToD3D( Bitmap );
-		if( !Writexbmp( CommandLine, Bitmap, BitmapName, OutputFolder) )
+        if( !Writexbmp( CommandLine, Bitmap, BitmapName, OutputFolder) )
             return FALSE;
         if( !Writefont( CommandLine, BitmapName, OutputFolder) )
             return FALSE;
-	}
-	if( s_OutputFormat & WRITE_TGA )
-	{
-		if( !Writetga( CommandLine, Bitmap, BitmapName, OutputFolder) )
+    }
+    if( s_OutputFormat & WRITE_TGA )
+    {
+        if( !Writetga( CommandLine, Bitmap, BitmapName, OutputFolder) )
             return FALSE;
-	}
-	if( !(s_OutputFormat & WRITE_XBMP) && !(s_OutputFormat & WRITE_TGA) )
-	{
-		if( s_Debug )
+    }
+    if( !(s_OutputFormat & WRITE_XBMP) && !(s_OutputFormat & WRITE_TGA) )
+    {
+        if( s_Debug )
         {
             x_printf( "Error: No Output format specified." );
             return FALSE;
         }
-	}
+    }
 
     return TRUE;
 }
@@ -615,7 +615,7 @@ xbool CompileTargetPS2( command_line& CommandLine, xbitmap& Bitmap, xstring& Opt
     if( (PathStringLen > 0) && ((OutputFolder[PathStringLen-1] != '\\') && (OutputFolder[PathStringLen-1] != '/')) )
         OutputFolder += '\\';
 
-	// Check what format was specified for the output.
+    // Check what format was specified for the output.
     if( s_OutputFormat & CONVERT_TO_P8 )
     {
         Bitmap.ConvertFormat( xbitmap::FMT_P8_ARGB_8888 );
@@ -639,27 +639,27 @@ xbool CompileTargetPS2( command_line& CommandLine, xbitmap& Bitmap, xstring& Opt
         if( !Writemap( CommandLine, BitmapName, OutputFolder) )
             return FALSE;
 
-	if( s_OutputFormat & WRITE_XBMP )
-	{
+    if( s_OutputFormat & WRITE_XBMP )
+    {
         auxbmp_ConvertToPS2( Bitmap );
-		if( !Writexbmp( CommandLine, Bitmap, BitmapName, OutputFolder) )
+        if( !Writexbmp( CommandLine, Bitmap, BitmapName, OutputFolder) )
             return FALSE;
         if( !Writefont( CommandLine, BitmapName, OutputFolder) )
             return FALSE;
-	}
-	if( s_OutputFormat & WRITE_TGA )
-	{
-		if( !Writetga( CommandLine, Bitmap, BitmapName, OutputFolder ) )
+    }
+    if( s_OutputFormat & WRITE_TGA )
+    {
+        if( !Writetga( CommandLine, Bitmap, BitmapName, OutputFolder ) )
             return FALSE;
-	}
+    }
     if( !(s_OutputFormat & WRITE_XBMP) && !(s_OutputFormat & WRITE_TGA) )
-	{
-		if( s_Debug )
+    {
+        if( s_Debug )
         {
             x_printf( "Error: No Output format specified." );
             return FALSE;
         }
-	}
+    }
 
     return TRUE;
 }
@@ -724,9 +724,9 @@ int main( int argc, char** argv )
 {
     command_line    cl;
     xstring OptStringXBOX;
-	xstring OptStringPC;
-	xstring OptStringPS2;
-	xstring OptStringGCN;
+    xstring OptStringPC;
+    xstring OptStringPS2;
+    xstring OptStringGCN;
 
     // Setup the options to look for
     cl.AddOptionDef( "FONT",      command_line::STRING );   // specifies Windows font to extract from.
@@ -746,10 +746,10 @@ int main( int argc, char** argv )
 
     cl.AddOptionDef( "PC",        command_line::STRING );   // specifies PC target location - flags target output
     cl.AddOptionDef( "PS2",       command_line::STRING );   // specifies PS2 target location - flags target output
-    cl.AddOptionDef( "NGC",	      command_line::STRING );   // specifies NGC target location - flags target output
+    cl.AddOptionDef( "NGC",          command_line::STRING );   // specifies NGC target location - flags target output
     cl.AddOptionDef( "XBOX",      command_line::STRING );   // specifies XBOX target location - flags target output
 
-    cl.AddOptionDef( "WRITETGA"					       );   // output targa format (unconverted)
+    cl.AddOptionDef( "WRITETGA"                           );   // output targa format (unconverted)
     cl.AddOptionDef( "WRITEXBMP"                       );   // output xbmp format (converted for platform
 
     cl.AddOptionDef( "RGBA"                            );   // copy rgb as well as alpha.
@@ -758,7 +758,7 @@ int main( int argc, char** argv )
     cl.AddOptionDef( "P4"                              );   // sets conversion format to paletted 4 bit
     cl.AddOptionDef( "TC"                              );   // sets conversion format to 'true color' (32 bit)
 
-    cl.AddOptionDef( "LOG"		                       );   // warns if wrong bitmap size, or file overwrite.
+    cl.AddOptionDef( "LOG"                               );   // warns if wrong bitmap size, or file overwrite.
 
     //cl.AddOptionDef( "DUMPCMDLINE"                     );   // TEMP - dump command line.
 
@@ -866,27 +866,27 @@ int main( int argc, char** argv )
                 continue;
             }
             if( Option == "PC" )
-			{
+            {
                 OptStringPC = cl.GetOptionString( i );
-				s_OutputFormat |= TARGET_PLATFORM_PC;
+                s_OutputFormat |= TARGET_PLATFORM_PC;
                 continue;
-			}
+            }
         
-			if( Option == "PS2" )
-			{
+            if( Option == "PS2" )
+            {
                 OptStringPS2 = cl.GetOptionString( i );
-				s_OutputFormat |= TARGET_PLATFORM_PS2;
+                s_OutputFormat |= TARGET_PLATFORM_PS2;
                 continue;
-			}
+            }
             
-			if( Option == "NGC" )
-			{
+            if( Option == "NGC" )
+            {
                 OptStringGCN = cl.GetOptionString( i );
-				s_OutputFormat |= TARGET_PLATFORM_GCN;
+                s_OutputFormat |= TARGET_PLATFORM_GCN;
                 continue;
-      		}
+              }
             
-			if( Option == "XBOX" )
+            if( Option == "XBOX" )
             {
                 OptStringXBOX = cl.GetOptionString( i );
                 s_OutputFormat |= TARGET_PLATFORM_XBOX;
@@ -898,7 +898,7 @@ int main( int argc, char** argv )
                 s_OutputFormat |= WRITE_TGA;
                 continue;
             }            
-			if( Option == "WRITEXBMP" )
+            if( Option == "WRITEXBMP" )
             {
                 s_OutputFormat |= WRITE_XBMP;
                 continue;
@@ -923,7 +923,7 @@ int main( int argc, char** argv )
                 s_OutputFormat |= CONVERT_TO_TC;
                 continue;
             }
-			if( Option == "LOG" )
+            if( Option == "LOG" )
             {
                 s_Debug = TRUE;
                 continue;
@@ -1321,12 +1321,12 @@ int main( int argc, char** argv )
         }   // (s_OutputFormat & WRITE_XBMP) && !(s_OutputFormat & WRITE_TGA) (i.e., pass2 only)
 
         if( s_OutputFormat & TARGET_PLATFORM_XBOX )
-        {	
+        {    
             CompileTargetPC( cl, fbm, OptStringXBOX );
         }
 
         if( s_OutputFormat & TARGET_PLATFORM_PC )
-        {	
+        {    
             CompileTargetPC( cl, fbm, OptStringPC );
         }
 

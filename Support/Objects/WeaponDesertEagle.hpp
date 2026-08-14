@@ -13,10 +13,10 @@
 class weapon_desert_eagle : public new_weapon
 {
 public:
-	CREATE_RTTI( weapon_desert_eagle , new_weapon , object )
+    CREATE_RTTI( weapon_desert_eagle , new_weapon , object )
 
-								weapon_desert_eagle		();
-	virtual						~weapon_desert_eagle	();
+                                weapon_desert_eagle        ();
+    virtual                        ~weapon_desert_eagle    ();
 
     virtual void                ProcessSfx              ( void );
     virtual s32                 GetTotalSecondaryAmmo   ( void );
@@ -31,8 +31,8 @@ public:
 
     virtual void                OnAdvanceSimulation          ( f32 DeltaTime );      
 
-    virtual	void	            OnEnumProp		        ( prop_enum& list );
-	virtual	xbool	            OnProperty		        ( prop_query& rPropQuery );
+    virtual    void                OnEnumProp                ( prop_enum& list );
+    virtual    xbool                OnProperty                ( prop_query& rPropQuery );
     virtual const char*         GetLogicalName          ( void ) {return "DEAGLE";}
 
     virtual xbool               GetFlashlightTransformInfo  ( matrix4& incMatrix,  vector3 &incVect );
@@ -42,9 +42,9 @@ public:
 
 protected:
     
-    virtual	xbool				FireWeaponProtected         ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
-    virtual	xbool				FireSecondaryProtected	    ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
-    virtual	xbool				FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
+    virtual    xbool                FireWeaponProtected         ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
+    virtual    xbool                FireSecondaryProtected        ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
+    virtual    xbool                FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
     
     radian                      m_ZoomFOV;
     f32                         m_ViewChangeRate;

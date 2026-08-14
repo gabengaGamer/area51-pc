@@ -33,11 +33,11 @@ CFlatRscList_View::~CFlatRscList_View()
 
 
 BEGIN_MESSAGE_MAP(CFlatRscList_View, CListView)
-	//{{AFX_MSG_MAP(CFlatRscList_View)
+    //{{AFX_MSG_MAP(CFlatRscList_View)
     ON_NOTIFY_REFLECT(LVN_COLUMNCLICK, OnColumnClick)
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnItemChanged)
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnDoubleClick)
-	//}}AFX_MSG_MAP
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 //     ON_NOTIFY(LVN_ITEMCHANGED, 0, OnItemChanged)
@@ -47,8 +47,8 @@ END_MESSAGE_MAP()
 
 void CFlatRscList_View::OnDraw(CDC* pDC)
 {
-	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
     UNUSED_ALWAYS( pDoc );
 }
 
@@ -58,12 +58,12 @@ void CFlatRscList_View::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CFlatRscList_View::AssertValid() const
 {
-	CListView::AssertValid();
+    CListView::AssertValid();
 }
 
 void CFlatRscList_View::Dump(CDumpContext& dc) const
 {
-	CListView::Dump(dc);
+    CListView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -73,18 +73,18 @@ void CFlatRscList_View::Dump(CDumpContext& dc) const
 
 static col_data columns[] =
 {
-	{ _T("Name"),              200, LVCFMT_LEFT,  DT_STRING },
+    { _T("Name"),              200, LVCFMT_LEFT,  DT_STRING },
     { _T("Type"),              100, LVCFMT_LEFT,  DT_STRING },
-	{ _T("Attr"),               60, LVCFMT_RIGHT, DT_STRING },
-	{ _T("Modified"),          120, LVCFMT_LEFT,  DT_STRING },
+    { _T("Attr"),               60, LVCFMT_RIGHT, DT_STRING },
+    { _T("Modified"),          120, LVCFMT_LEFT,  DT_STRING },
     { _T("Theme"),             200, LVCFMT_LEFT,  DT_STRING },
 
 /*
-	{ _T("Size"),               80, LVCFMT_RIGHT, DT_INT      },
-	{ _T("Compile(T/F)"),       70, LVCFMT_RIGHT, DT_STRING   },
-	{ _T("Internal Dep."),     100, LVCFMT_RIGHT, DT_STRING   },
-	{ _T("External Dep."),      90, LVCFMT_LEFT,  DT_STRING   },
-	{ _T("Compiler commands"), 200, LVCFMT_LEFT,  DT_STRING   }
+    { _T("Size"),               80, LVCFMT_RIGHT, DT_INT      },
+    { _T("Compile(T/F)"),       70, LVCFMT_RIGHT, DT_STRING   },
+    { _T("Internal Dep."),     100, LVCFMT_RIGHT, DT_STRING   },
+    { _T("External Dep."),      90, LVCFMT_LEFT,  DT_STRING   },
+    { _T("Compiler commands"), 200, LVCFMT_LEFT,  DT_STRING   }
 */
 };
 
@@ -173,11 +173,11 @@ void CFlatRscList_View::SetDetails( s32 i, const char* pPath, const char* pTheme
 
 void CFlatRscList_View::OnInitialUpdate() 
 {
-	CListView::OnInitialUpdate();
-	
+    CListView::OnInitialUpdate();
+    
     InsertColumns( columns, 5 );
 
-	GetListCtrl().SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
+    GetListCtrl().SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
     //
     // Add all the items in the grid
@@ -189,19 +189,19 @@ void CFlatRscList_View::OnInitialUpdate()
 
 BOOL CFlatRscList_View::PreCreateWindow(CREATESTRUCT& cs) 
 {
-	// TODO: Add your specialized code here and/or call the base class
-	cs.style |= LVS_EX_GRIDLINES | LVS_REPORT;
-	return CListView::PreCreateWindow(cs);
+    // TODO: Add your specialized code here and/or call the base class
+    cs.style |= LVS_EX_GRIDLINES | LVS_REPORT;
+    return CListView::PreCreateWindow(cs);
 }
 
 //=========================================================================
 
 bool CFlatRscList_View::SortList(
-	// passed in from control, index of column clicked.
-	int nCol,
-	// passed in from control, true if sort order should 
-	// be ascending.
-	bool bAscending )
+    // passed in from control, index of column clicked.
+    int nCol,
+    // passed in from control, true if sort order should 
+    // be ascending.
+    bool bAscending )
 {
     m_nSortedCol = nCol;
     m_bAscending = bAscending;
@@ -212,7 +212,7 @@ bool CFlatRscList_View::SortList(
     SortContext.bAscending = bAscending;
 
     GetListCtrl().SortItemsEx( CompareItems, (DWORD_PTR)&SortContext );
-	return true;
+    return true;
 }
 
 //=========================================================================
@@ -268,7 +268,7 @@ void CFlatRscList_View::OnUpdate( CView* pSender, LPARAM lHint, CObject* pHint )
 
 void CFlatRscList_View::DeleteAllColumn( void )
 {
-	// TODO: Add your specialized code here and/or call the base class
+    // TODO: Add your specialized code here and/or call the base class
     CListCtrl& listCtrl = GetListCtrl();
     
     s32 ColumnCount = listCtrl.GetHeaderCtrl()->GetItemCount();
@@ -293,7 +293,7 @@ void CFlatRscList_View::DeleteAllColumn( void )
 
 void CFlatRscList_View::DeleteColumn( s32 ColNum )
 {
-	// TODO: Add your specialized code here and/or call the base class
+    // TODO: Add your specialized code here and/or call the base class
     CListCtrl& listCtrl = GetListCtrl();
     
     s32 ColCount = listCtrl.GetHeaderCtrl()->GetItemCount();
@@ -314,25 +314,25 @@ void CFlatRscList_View::DeleteColumn( s32 ColNum )
 
 void CFlatRscList_View::InsertColumns( col_data* pColumns, s32 ColCount )
 {
-	// TODO: Add your specialized code here and/or call the base class
+    // TODO: Add your specialized code here and/or call the base class
     CListCtrl& listCtrl = GetListCtrl();
 
     //
     // Add the column names
     //
-	s32 i;
-	for (i = 0; i < ColCount; ++i)
-	{
-		listCtrl.InsertColumn(i, pColumns[i].name, pColumns[i].fmt, 
-			pColumns[i].width);
-	}
+    s32 i;
+    for (i = 0; i < ColCount; ++i)
+    {
+        listCtrl.InsertColumn(i, pColumns[i].name, pColumns[i].fmt, 
+            pColumns[i].width);
+    }
 }
 
 //=========================================================================
 
 void CFlatRscList_View::OnColumnClick( NMHDR* pNMHDR, LRESULT* pResult )
 {
-	NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
+    NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
 
     if( lphdi )
     {
@@ -353,13 +353,13 @@ void CFlatRscList_View::OnColumnClick( NMHDR* pNMHDR, LRESULT* pResult )
 
 void CFlatRscList_View::OnDoubleClick( NMHDR* pNMHDR, LRESULT* pResult )
 {
-	NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
+    NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
 
     if( lphdi && lphdi->iItem >= 0 )
     {
         x_try;
 
-	    CListCtrl* pList = &GetListCtrl();
+        CListCtrl* pList = &GetListCtrl();
 
         char Name[256];
         pList->GetItemText( lphdi->iItem, 0, Name, 256 );
@@ -388,7 +388,7 @@ void CFlatRscList_View::OnDoubleClick( NMHDR* pNMHDR, LRESULT* pResult )
 
 void CFlatRscList_View::OnItemChanged( NMHDR* pNMHDR, LRESULT* pResult )
 {
-	NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
+    NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
 
     if( lphdi &&
         (lphdi->uChanged & LVIF_STATE) &&

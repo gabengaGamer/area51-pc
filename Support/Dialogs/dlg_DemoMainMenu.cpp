@@ -25,8 +25,8 @@
 ui_manager::control_tem DemoMainMenuControls[] = 
 {
     { IDC_DEMO_MAIN_MENU_LEVEL_ONE,     "IDS_NULL",     "button",   60, 100, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
-    { IDC_DEMO_MAIN_MENU_LEVEL_TWO,	    "IDS_NULL",     "button",   60, 160, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
-    { IDC_DEMO_MAIN_MENU_LEVEL_THREE,	"IDS_NULL",     "button",   60, 220, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_DEMO_MAIN_MENU_LEVEL_TWO,        "IDS_NULL",     "button",   60, 160, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_DEMO_MAIN_MENU_LEVEL_THREE,    "IDS_NULL",     "button",   60, 220, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
 };
 
 ui_manager::dialog_tem DemoMainMenuDialog =
@@ -106,11 +106,11 @@ xbool dlg_demo_main_menu::Create( s32                        UserID,
     Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pButtonLevelOne   = (ui_button*)  FindChildByID( IDC_DEMO_MAIN_MENU_LEVEL_ONE   );
-    m_pButtonLevelTwo	= (ui_button*)  FindChildByID( IDC_DEMO_MAIN_MENU_LEVEL_TWO   );
+    m_pButtonLevelTwo    = (ui_button*)  FindChildByID( IDC_DEMO_MAIN_MENU_LEVEL_TWO   );
     m_pButtonLevelThree = (ui_button*)  FindChildByID( IDC_DEMO_MAIN_MENU_LEVEL_THREE );
 
     GotoControl( (ui_control*)m_pButtonLevelOne );
-    m_CurrentControl = 	IDC_DEMO_MAIN_MENU_LEVEL_ONE;
+    m_CurrentControl =     IDC_DEMO_MAIN_MENU_LEVEL_ONE;
 
     m_CurrHL = 0;
 
@@ -142,7 +142,7 @@ xbool dlg_demo_main_menu::Create( s32                        UserID,
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -226,13 +226,13 @@ void dlg_demo_main_menu::OnAccept( ui_win* pWin )
             // Dr Cray
             g_StateMgr.SetLevelIndex( 9 );
             g_PendingConfig.SetLevelID( 1080 );
-	    }
-	    else if( pWin == (ui_win*)m_pButtonLevelTwo )
-	    {
+        }
+        else if( pWin == (ui_win*)m_pButtonLevelTwo )
+        {
             // Lies of the past
             g_StateMgr.SetLevelIndex( 12 );
             g_PendingConfig.SetLevelID( 1100 );
-	    }
+        }
         else if( pWin == (ui_win*)m_pButtonLevelThree )
         {
             // The Greys

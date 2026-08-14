@@ -34,10 +34,10 @@ enum eVOIdentifiers
 class weapon_scanner : public new_weapon
 {
 public:
-	CREATE_RTTI( weapon_scanner , new_weapon , object )
+    CREATE_RTTI( weapon_scanner , new_weapon , object )
 
-								weapon_scanner		();
-	virtual						~weapon_scanner	();
+                                weapon_scanner        ();
+    virtual                        ~weapon_scanner    ();
 
     virtual s32                 GetTotalSecondaryAmmo   ( void );
             void                FireBullet              ( const vector3& Pos, const radian3& Rot, const vector3& Speed, guid Owner, const xbool isHit );
@@ -50,8 +50,8 @@ public:
 
     virtual void                OnAdvanceSimulation          ( f32 DeltaTime );      
 
-    virtual	void	            OnEnumProp		        ( prop_enum& list );
-	virtual	xbool	            OnProperty		        ( prop_query& rPropQuery );
+    virtual    void                OnEnumProp                ( prop_enum& list );
+    virtual    xbool                OnProperty                ( prop_query& rPropQuery );
     virtual const char*         GetLogicalName          ( void ) {return "SCANNER";}
     virtual xbool               CanFire                 ( xbool bIsAltFire );
     virtual void                ClearScan               ( void );    
@@ -78,9 +78,9 @@ public:
 
 protected:
     
-    virtual	xbool				FireWeaponProtected         ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
-    virtual	xbool				FireSecondaryProtected	    ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
-    virtual	xbool				FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
+    virtual    xbool                FireWeaponProtected         ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
+    virtual    xbool                FireSecondaryProtected        ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
+    virtual    xbool                FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit );
     virtual guid                CheckHitObject              ( void );
             void                DrawScanningLaser           ( void );
             void                GetLaserHitLocation         ( player* pPlayer, vector3& EndPos, xbool bIsOnLoreObject );

@@ -16,12 +16,12 @@
 class CEditorWatchView : public CPaletteView
 {
 protected:
-	CEditorWatchView();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CEditorWatchView)
+    CEditorWatchView();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CEditorWatchView)
 
 // Attributes
 public:
-	CEditorPaletteDoc* GetDocument();
+    CEditorPaletteDoc* GetDocument();
 
     CListCtrl          m_Watch;
 
@@ -33,37 +33,37 @@ public:
 public:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorWatchView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorWatchView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~CEditorWatchView();
+    virtual ~CEditorWatchView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CEditorWatchView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnWvtbPropWatch();
-	afx_msg void OnUpdateWvtbPropWatch(CCmdUI* pCmdUI);
-	afx_msg void OnWvtbGlobalWatch();
-	afx_msg void OnUpdateWvtbGlobalWatch(CCmdUI* pCmdUI);
-	afx_msg void OnWvtbClearInfo();
-	afx_msg void OnUpdateWvtbClearInfo(CCmdUI* pCmdUI);
-	afx_msg void OnWvtbDeleteWatch();
-	afx_msg void OnUpdateWvtbDeleteWatch(CCmdUI* pCmdUI);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CEditorWatchView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnWvtbPropWatch();
+    afx_msg void OnUpdateWvtbPropWatch(CCmdUI* pCmdUI);
+    afx_msg void OnWvtbGlobalWatch();
+    afx_msg void OnUpdateWvtbGlobalWatch(CCmdUI* pCmdUI);
+    afx_msg void OnWvtbClearInfo();
+    afx_msg void OnUpdateWvtbClearInfo(CCmdUI* pCmdUI);
+    afx_msg void OnWvtbDeleteWatch();
+    afx_msg void OnUpdateWvtbDeleteWatch(CCmdUI* pCmdUI);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
     static CEditorWatchView* s_WatchView;
     

@@ -29,22 +29,22 @@ gpiSendRegisterUniqueNick(
   int operationid
 )
 {
-	GPIConnection * iconnection = (GPIConnection*)*connection;
+    GPIConnection * iconnection = (GPIConnection*)*connection;
 
-	gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, "\\registernick\\\\sesskey\\");
-	gpiAppendIntToBuffer(connection, &iconnection->outputBuffer, iconnection->sessKey);
-	gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, "\\uniquenick\\");
-	gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, uniquenick);
-	if(cdkey)
-	{
-		gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, "\\cdkey\\");
-		gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, cdkey);
-	}
-	gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, "\\id\\");
-	gpiAppendIntToBuffer(connection, &iconnection->outputBuffer, operationid);
-	gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, "\\final\\");
-	
-	return GP_NO_ERROR;
+    gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, "\\registernick\\\\sesskey\\");
+    gpiAppendIntToBuffer(connection, &iconnection->outputBuffer, iconnection->sessKey);
+    gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, "\\uniquenick\\");
+    gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, uniquenick);
+    if(cdkey)
+    {
+        gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, "\\cdkey\\");
+        gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, cdkey);
+    }
+    gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, "\\id\\");
+    gpiAppendIntToBuffer(connection, &iconnection->outputBuffer, operationid);
+    gpiAppendStringToBuffer(connection, &iconnection->outputBuffer, "\\final\\");
+    
+    return GP_NO_ERROR;
 }
 
 GPResult gpiRegisterUniqueNick(
@@ -56,27 +56,27 @@ GPResult gpiRegisterUniqueNick(
   void * param
 )
 {
-	GPIOperation * operation = NULL;
-	GPResult result;
+    GPIOperation * operation = NULL;
+    GPResult result;
 
-	// Add the operation.
-	/////////////////////
-	CHECK_RESULT(gpiAddOperation(connection, GPI_REGISTER_UNIQUENICK, NULL, &operation, blocking, callback, param));
+    // Add the operation.
+    /////////////////////
+    CHECK_RESULT(gpiAddOperation(connection, GPI_REGISTER_UNIQUENICK, NULL, &operation, blocking, callback, param));
 
-	// Send a request for info.
-	///////////////////////////
-	result = gpiSendRegisterUniqueNick(connection, uniquenick, cdkey, operation->id);
-	CHECK_RESULT(result);
+    // Send a request for info.
+    ///////////////////////////
+    result = gpiSendRegisterUniqueNick(connection, uniquenick, cdkey, operation->id);
+    CHECK_RESULT(result);
 
-	// Process it if blocking.
-	//////////////////////////
-	if(blocking)
-	{
-		result = gpiProcess(connection, operation->id);
-		CHECK_RESULT(result);
-	}
+    // Process it if blocking.
+    //////////////////////////
+    if(blocking)
+    {
+        result = gpiProcess(connection, operation->id);
+        CHECK_RESULT(result);
+    }
 
-	return GP_NO_ERROR;
+    return GP_NO_ERROR;
 }
 
 GPResult gpiProcessRegisterUniqueNick(
@@ -85,36 +85,36 @@ GPResult gpiProcessRegisterUniqueNick(
   const char * input
 )
 {
-	GPICallback callback;
+    GPICallback callback;
 
-	// Check for an error.
-	//////////////////////
-	if(gpiCheckForError(connection, input, GPITrue))
-		return GP_SERVER_ERROR;
+    // Check for an error.
+    //////////////////////
+    if(gpiCheckForError(connection, input, GPITrue))
+        return GP_SERVER_ERROR;
 
-	// This should be \rn\.
-	///////////////////////
-	if(strncmp(input, "\\rn\\", 4) != 0)
-		CallbackFatalError(connection, GP_NETWORK_ERROR, GP_PARSE, "Unexpected data was received from the server.");
+    // This should be \rn\.
+    ///////////////////////
+    if(strncmp(input, "\\rn\\", 4) != 0)
+        CallbackFatalError(connection, GP_NETWORK_ERROR, GP_PARSE, "Unexpected data was received from the server.");
 
-	// Call the callback.
-	/////////////////////
-	callback = operation->callback;
-	if(callback.callback != NULL)
-	{
-		GPRegisterUniqueNickResponseArg * arg;
-		arg = (GPRegisterUniqueNickResponseArg *)gsimalloc(sizeof(GPRegisterUniqueNickResponseArg));
-		if(arg == NULL)
-			Error(connection, GP_MEMORY_ERROR, "Out of memory.");
+    // Call the callback.
+    /////////////////////
+    callback = operation->callback;
+    if(callback.callback != NULL)
+    {
+        GPRegisterUniqueNickResponseArg * arg;
+        arg = (GPRegisterUniqueNickResponseArg *)gsimalloc(sizeof(GPRegisterUniqueNickResponseArg));
+        if(arg == NULL)
+            Error(connection, GP_MEMORY_ERROR, "Out of memory.");
 
-		arg->result = GP_NO_ERROR;
+        arg->result = GP_NO_ERROR;
 
-		CHECK_RESULT(gpiAddCallback(connection, callback, arg, operation, 0));
-	}
+        CHECK_RESULT(gpiAddCallback(connection, callback, arg, operation, 0));
+    }
 
-	// This operation is complete.
-	//////////////////////////////
-	gpiRemoveOperation(connection, operation);
+    // This operation is complete.
+    //////////////////////////////
+    gpiRemoveOperation(connection, operation);
 
-	return GP_NO_ERROR;
+    return GP_NO_ERROR;
 }

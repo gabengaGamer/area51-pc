@@ -26,7 +26,7 @@ m_RagdollForceRadius(500.0f)
 
 //=============================================================================
 
-void action_ai_death::OnEnumProp	( prop_enum& rPropList )
+void action_ai_death::OnEnumProp    ( prop_enum& rPropList )
 {
     action_ai_base::OnEnumProp( rPropList );
 
@@ -62,7 +62,7 @@ void action_ai_death::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool action_ai_death::OnProperty	( prop_query& rPropQuery )
+xbool action_ai_death::OnProperty    ( prop_query& rPropQuery )
 {
     // Check base class
     if( action_ai_base::OnProperty( rPropQuery ) )

@@ -41,14 +41,14 @@ const char lua_ident[] =
 /*
 ** Test for a valid index (one that is not the 'nilvalue').
 */
-#define isvalid(L, o)	((o) != &G(L)->nilvalue)
+#define isvalid(L, o)    ((o) != &G(L)->nilvalue)
 
 
 /* test for pseudo index */
-#define ispseudo(i)		((i) <= LUA_REGISTRYINDEX)
+#define ispseudo(i)        ((i) <= LUA_REGISTRYINDEX)
 
 /* test for upvalue */
-#define isupvalue(i)		((i) < LUA_REGISTRYINDEX)
+#define isupvalue(i)        ((i) < LUA_REGISTRYINDEX)
 
 
 /*
@@ -553,7 +553,7 @@ LUA_API const char *lua_pushlstring (lua_State *L, const char *s, size_t len) {
 
 
 LUA_API const char *lua_pushexternalstring (lua_State *L,
-	        const char *s, size_t len, lua_Alloc falloc, void *ud) {
+            const char *s, size_t len, lua_Alloc falloc, void *ud) {
   TString *ts;
   lua_lock(L);
   api_check(L, len <= MAX_SIZE, "string too large");
@@ -1029,7 +1029,7 @@ LUA_API int lua_setiuservalue (lua_State *L, int idx, int n) {
 #define checkresults(L,na,nr) \
      (api_check(L, (nr) == LUA_MULTRET \
                || (L->ci->top.p - L->top.p >= (nr) - (na)), \
-	"results from function overflow current stack size"), \
+    "results from function overflow current stack size"), \
       api_check(L, LUA_MULTRET <= (nr) && (nr) <= MAXRESULTS,  \
                    "invalid number of results"))
 

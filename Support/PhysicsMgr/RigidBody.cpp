@@ -23,7 +23,7 @@ rigid_body::rigid_body()
     PHYSICS_DEBUG_DYNAMIC_MEM_ALLOC( sizeof( rigid_body ) );
 
     // Constant properties
-    m_Mass	 = 1.0f;
+    m_Mass     = 1.0f;
     m_InvMass = 1.0f;
     m_BodyInvInertia.Set( 1.0f, 1.0f, 1.0f );
     m_Elasticity = 0.7f;

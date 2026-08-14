@@ -22,7 +22,7 @@
 ;   max r2.z,r2.z,c-47.x            ; r2.z = max(r2.z,fog start)
 ;   min r2.z,r2.z,r1.x              ; r2.z = min(r2.z,1)
                                     ;
-	mov r2.z,r9.w
+    mov r2.z,r9.w
     mov r1.y,r2.z                   ; r1.y = clip.z
     mul r1.z,r2.z,r2.z              ; r1.z = clip.z^2
     mul r1.w,r2.z,r1.z              ; r1.w = clip.z^3

@@ -67,14 +67,14 @@ typedef union {
 ** MAXABITS is the largest integer such that 2^MAXABITS fits in an
 ** unsigned int.
 */
-#define MAXABITS	(l_numbits(int) - 1)
+#define MAXABITS    (l_numbits(int) - 1)
 
 
 /*
 ** MAXASIZEB is the maximum number of elements in the array part such
 ** that the size of the array fits in 'size_t'.
 */
-#define MAXASIZEB	(MAX_SIZET/(sizeof(Value) + 1))
+#define MAXASIZEB    (MAX_SIZET/(sizeof(Value) + 1))
 
 
 /*
@@ -88,7 +88,7 @@ typedef union {
 ** MAXHBITS is the largest integer such that 2^MAXHBITS fits in a
 ** signed int.
 */
-#define MAXHBITS	(MAXABITS - 1)
+#define MAXHBITS    (MAXABITS - 1)
 
 
 /*
@@ -96,30 +96,30 @@ typedef union {
 ** between 2^MAXHBITS and the maximum size such that, measured in bytes,
 ** it fits in a 'size_t'.
 */
-#define MAXHSIZE	luaM_limitN(1 << MAXHBITS, Node)
+#define MAXHSIZE    luaM_limitN(1 << MAXHBITS, Node)
 
 
 /*
 ** When the original hash value is good, hashing by a power of 2
 ** avoids the cost of '%'.
 */
-#define hashpow2(t,n)		(gnode(t, lmod((n), sizenode(t))))
+#define hashpow2(t,n)        (gnode(t, lmod((n), sizenode(t))))
 
 /*
 ** for other types, it is better to avoid modulo by power of 2, as
 ** they can have many 2 factors.
 */
-#define hashmod(t,n)	(gnode(t, ((n) % ((sizenode(t)-1u)|1u))))
+#define hashmod(t,n)    (gnode(t, ((n) % ((sizenode(t)-1u)|1u))))
 
 
-#define hashstr(t,str)		hashpow2(t, (str)->hash)
-#define hashboolean(t,p)	hashpow2(t, p)
+#define hashstr(t,str)        hashpow2(t, (str)->hash)
+#define hashboolean(t,p)    hashpow2(t, p)
 
 
-#define hashpointer(t,p)	hashmod(t, point2uint(p))
+#define hashpointer(t,p)    hashmod(t, point2uint(p))
 
 
-#define dummynode		(&dummynode_)
+#define dummynode        (&dummynode_)
 
 /*
 ** Common hash part for tables with empty hash parts. That allows all
@@ -316,14 +316,14 @@ static unsigned checkrange (lua_Integer k, unsigned limit) {
 ** Return the index 'k' if 'k' is an appropriate key to live in the
 ** array part of a table, 0 otherwise.
 */
-#define arrayindex(k)	checkrange(k, MAXASIZE)
+#define arrayindex(k)    checkrange(k, MAXASIZE)
 
 
 /*
 ** Check whether an integer key is in the array part of a table and
 ** return its index there, or zero.
 */
-#define ikeyinarray(t,k)	checkrange(k, t->asize)
+#define ikeyinarray(t,k)    checkrange(k, t->asize)
 
 
 /*
@@ -382,7 +382,7 @@ int luaH_next (lua_State *L, Table *t, StkId key) {
 
 
 /* Extra space in Node array if it has a lastfree entry */
-#define extraLastfree(t)	(haslastfree(t) ? sizeof(Limbox) : 0)
+#define extraLastfree(t)    (haslastfree(t) ? sizeof(Limbox) : 0)
 
 /* 'node' size in bytes */
 static size_t sizehash (Table *t) {
@@ -432,7 +432,7 @@ typedef struct {
 ** entry: Two values plus 'next' versus one value.) Evaluate with size_t
 ** to avoid overflows.
 */
-#define arrayXhash(na,nh)	(cast_sizet(na) <= cast_sizet(nh) * 3)
+#define arrayXhash(na,nh)    (cast_sizet(na) <= cast_sizet(nh) * 3)
 
 /*
 ** Compute the optimal size for the array part of table 't'.

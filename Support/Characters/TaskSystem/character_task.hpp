@@ -59,8 +59,8 @@ public:
                                     character_task          ( void );
                                     ~character_task         ( void );
                             
-	virtual			void	        OnEnumProp		        ( prop_enum& rList );
-	virtual			xbool	        OnProperty		        ( prop_query& rPropQuery );  
+    virtual            void            OnEnumProp                ( prop_enum& rList );
+    virtual            xbool            OnProperty                ( prop_query& rPropQuery );  
 
                     void            AddSubtask              ( actions_ex_base::action_ex_types Type );
                     void            RemoveSubTask           ( action_ai_base* pSubTask );           
@@ -72,8 +72,8 @@ public:
                     u32             GetTaskFlags            ( void ) { return m_ResponseList.GetFlags(); }
                     guid            GetSetGuid              ( void ) { return m_SetGuid;   }
     
-	virtual		    xbool           ExecuteTask		        ( f32 DeltaTime );
-	virtual		    void            OnTaskItemCompleted     ( void );
+    virtual            xbool           ExecuteTask                ( f32 DeltaTime );
+    virtual            void            OnTaskItemCompleted     ( void );
                     void            OnTaskFailure           ( void );
                     xbool           OnTaskInterrupt         ( void ); //return true if we should continue task after interrupt
                     

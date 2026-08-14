@@ -36,36 +36,36 @@ protected:
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	virtual ~CBaseDocument();
-	CBaseDocument();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CBaseDocument)
+    virtual ~CBaseDocument();
+    CBaseDocument();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CBaseDocument)
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CBaseDocument)
-	public:
-	virtual void Serialize(CArchive& ar);   // overridden for document i/o
-	protected:
-	virtual BOOL OnNewDocument();
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CBaseDocument)
+    public:
+    virtual void Serialize(CArchive& ar);   // overridden for document i/o
+    protected:
+    virtual BOOL OnNewDocument();
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 // Implementation
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	// Generated message map functions
-	//{{AFX_MSG(CBaseDocument)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(CBaseDocument)
+        // NOTE - the ClassWizard will add and remove member functions here.
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 //{{AFX_INSERT_LOCATION}}

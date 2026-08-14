@@ -34,8 +34,8 @@ public:
 
     virtual const object_desc&  GetTypeDesc             ( void ) const;
     static  const object_desc&  GetObjectType           ( void );
-	virtual	void	            OnEnumProp		        ( prop_enum& list );
-	virtual	xbool	            OnProperty		        ( prop_query& rPropQuery );
+    virtual    void                OnEnumProp                ( prop_enum& list );
+    virtual    xbool                OnProperty                ( prop_query& rPropQuery );
 
 protected:
     xbool                   m_Active;

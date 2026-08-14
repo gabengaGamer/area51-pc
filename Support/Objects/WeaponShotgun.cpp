@@ -26,14 +26,14 @@ static struct weapon_shotgun_desc : public object_desc
                                         "Shotgun",
                                         "WEAPON",
                                         object::ATTR_SPACIAL_ENTRY          |
-										object::ATTR_NEEDS_LOGIC_TIME		|
-                                        object::ATTR_SOUND_SOURCE			|
-                                        object::ATTR_RENDERABLE				|
- 										object::ATTR_COLLISION_PERMEABLE,
+                                        object::ATTR_NEEDS_LOGIC_TIME        |
+                                        object::ATTR_SOUND_SOURCE            |
+                                        object::ATTR_RENDERABLE                |
+                                         object::ATTR_COLLISION_PERMEABLE,
                                         //FLAGS_GENERIC_EDITOR_CREATE |
                                         FLAGS_IS_DYNAMIC
 
-										) {}
+                                        ) {}
 
 //=========================================================================
 
@@ -62,22 +62,22 @@ const object_desc&  weapon_shotgun::GetObjectType   ( void )
 
 weapon_shotgun::weapon_shotgun( void )
 {
-	//initialize the ammo structures.
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_SHOTGUN;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 64;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 8;
-	m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
-	
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 0;
-	m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
+    //initialize the ammo structures.
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_ProjectileType = BULLET_SHOTGUN;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax = 64;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoAmount = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoMax;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip = 8;
+    m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoPerClip;
+    
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoMax = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoAmount = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip = 0;
+    m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoInCurrentClip = m_WeaponAmmo[ AMMO_SECONDARY ].m_AmmoPerClip;
 
     m_NPCMuzzleSoundFx  = "Shotgun_Primary_Fire";
 
-	//Both primary and secondary fires use same ammo, so secondary ammo is only initialized
-	//in the constructor of new_weapon and set to undefined.
+    //Both primary and secondary fires use same ammo, so secondary ammo is only initialized
+    //in the constructor of new_weapon and set to undefined.
     
     //set aim degradation
 /*    m_AimDegradePrimary = 0.4f;
@@ -249,41 +249,41 @@ xbool weapon_shotgun::FireWeaponProtected( const vector3& InitPos , const vector
     (void)Power;
     (void)iFirePoint;
 
-	//if there weapon is not ready, do nothing.
-	if ( ! IsWeaponReady( AMMO_PRIMARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.
+    if ( ! IsWeaponReady( AMMO_PRIMARY ) )
+    {
+        return FALSE;
+    }
 
-	//otherwise, create a new bullet projectile, init it's position, and send it on it's way.
-	else
-	{   
-		// Get the pain handle
+    //otherwise, create a new bullet projectile, init it's position, and send it on it's way.
+    else
+    {   
+        // Get the pain handle
         pain_handle PainHandle;
         GetPainHandle( PainHandle, Owner, TRUE );
 
         //calculate the direction of the shotgun's pellets.
-		vector3 vDir[ s_Num_Pellets ];
-		for ( s32 i = 0 ; i < s_Num_Pellets ; i ++ )
-		{
-			//pick a random point on a small box that is located 10 cm. away.
+        vector3 vDir[ s_Num_Pellets ];
+        for ( s32 i = 0 ; i < s_Num_Pellets ; i ++ )
+        {
+            //pick a random point on a small box that is located 10 cm. away.
             f32 Spread = ((i == 0) ? 0.1f : 0.5f );
             f32 rx = x_frand( -Spread , Spread );
             f32 ry = x_frand( -Spread , Spread );
-			vDir[i] = vector3( rx, ry , 10.f );
+            vDir[i] = vector3( rx, ry , 10.f );
 
-			//rotate that point into model space
-			vDir[i].Rotate( InitRot );
+            //rotate that point into model space
+            vDir[i].Rotate( InitRot );
 
-			//make a radian3 out of this vector
-			radian Pitch , Yaw;
-		    vDir[i].GetPitchYaw( Pitch,Yaw );
-			radian3 vRot( Pitch , Yaw , 0.f );
-		
-			//create Bullet
+            //make a radian3 out of this vector
+            radian Pitch , Yaw;
+            vDir[i].GetPitchYaw( Pitch,Yaw );
+            radian3 vRot( Pitch , Yaw , 0.f );
+        
+            //create Bullet
             FireBullet(  InitPos, vRot, BaseVelocity, Owner, TRUE, TRUE, PainHandle );
 
-		}
+        }
 
         // Sweep the area in front of the gun
         radian Angle = GetTweakRadian( "PLAYER_SHOTGUN_Primary_Sweep_Angle", R_15 );
@@ -296,30 +296,30 @@ xbool weapon_shotgun::FireWeaponProtected( const vector3& InitPos , const vector
         //decrement count of bullets in current clip
         DecrementAmmo();
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 }
 
 //=========================================================================
 
 xbool weapon_shotgun::FireSecondaryProtected( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint )
 {
-	ASSERT( m_FiringPointBoneIndex[ iFirePoint ] != -1 );
-	ASSERT( m_AltFiringPointBoneIndex[ iFirePoint ] != -1 );
+    ASSERT( m_FiringPointBoneIndex[ iFirePoint ] != -1 );
+    ASSERT( m_AltFiringPointBoneIndex[ iFirePoint ] != -1 );
 
     (void)Power;
     (void)iFirePoint;
     
-	//if there weapon is not ready, do nothing.  Shotgun uses primary ammo for both primary and secondary fire
-	if ( ! IsWeaponReady( AMMO_PRIMARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.  Shotgun uses primary ammo for both primary and secondary fire
+    if ( ! IsWeaponReady( AMMO_PRIMARY ) )
+    {
+        return FALSE;
+    }
 
-	//otherwise, create a new bullet projectile, init it's position, and send it on it's way.
-	else
-	{
-		s32 PelletMultiplier = 2;
+    //otherwise, create a new bullet projectile, init it's position, and send it on it's way.
+    else
+    {
+        s32 PelletMultiplier = 2;
 
         if( (m_WeaponAmmo[ AMMO_PRIMARY ].m_AmmoInCurrentClip - 2) < 0 )
             PelletMultiplier = 1;
@@ -331,25 +331,25 @@ xbool weapon_shotgun::FireSecondaryProtected( const vector3& InitPos , const vec
         //calculate the direction of the shotgun's pellets.
         ASSERT( PelletMultiplier <= 2 );
         vector3 pDir[ s_Num_Pellets * 2 ];
-		for ( s32 i = 0 ; i < (s_Num_Pellets*PelletMultiplier) ; i ++ )
-		{
+        for ( s32 i = 0 ; i < (s_Num_Pellets*PelletMultiplier) ; i ++ )
+        {
             //pick a random point on a small box that is located 10 cm. away.
             f32 Spread = ((i == 0) ? 0.1f : 0.5f );
             f32 rx = x_frand( -Spread , Spread );
             f32 ry = x_frand( -Spread , Spread );
             pDir[i] = vector3( rx, ry , 10.f );
 
-			//rotate that point into model space
-			pDir[i].Rotate( InitRot );
+            //rotate that point into model space
+            pDir[i].Rotate( InitRot );
 
-			//make a radian3 out of this vector
-			radian Pitch , Yaw;
-		    pDir[i].GetPitchYaw( Pitch,Yaw );
-			radian3 vRot( Pitch , Yaw , 0.f );
-		
-			//create Bullet
+            //make a radian3 out of this vector
+            radian Pitch , Yaw;
+            pDir[i].GetPitchYaw( Pitch,Yaw );
+            radian3 vRot( Pitch , Yaw , 0.f );
+        
+            //create Bullet
             FireBullet( InitPos, vRot, BaseVelocity, Owner, TRUE, FALSE, PainHandle );
- 		}
+         }
 
         // Sweep the area in front of the gun
         radian Angle = GetTweakRadian( "PLAYER_SHOTGUN_Secondary_Sweep_Angle", R_35 );
@@ -362,21 +362,21 @@ xbool weapon_shotgun::FireSecondaryProtected( const vector3& InitPos , const vec
         // decrement count of bullets in current clip
         DecrementAmmo(AMMO_PRIMARY, PelletMultiplier);
 
-		return TRUE;
-	}
-	
-	return FALSE;
+        return TRUE;
+    }
+    
+    return FALSE;
 }
 
 //==============================================================================
 
 xbool weapon_shotgun::FireNPCWeaponProtected ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit )
 {   
-	//if there weapon is not ready, do nothing.
-	if ( ! IsWeaponReady( AMMO_PRIMARY ) )
-	{
-		return FALSE;
-	}
+    //if there weapon is not ready, do nothing.
+    if ( ! IsWeaponReady( AMMO_PRIMARY ) )
+    {
+        return FALSE;
+    }
        
     vector3 InitPos;
     
@@ -393,7 +393,7 @@ xbool weapon_shotgun::FireNPCWeaponProtected ( const vector3& BaseVelocity , con
     GetPainHandle( PainHandle, Owner, TRUE );
 
     for (int i = 0; i < s_Num_Pellets; i++)
-    { 	
+    {     
         //pick a random point on a small box that is located 5 cm. away.
         f32 rx = x_frand(-.3f , .3f );
         f32 ry = x_frand(-.3f , .3f );
@@ -529,7 +529,7 @@ void weapon_shotgun::ProcessSfx( void )
                     case ANIM_EVENT_WPN_SECONDARY_FIRE_LL:
                     case ANIM_EVENT_WPN_SECONDARY_FIRE_UR:
                     case ANIM_EVENT_WPN_SECONDARY_FIRE_UL:
-	                case ANIM_EVENT_SECONDARY_FIRE:
+                    case ANIM_EVENT_SECONDARY_FIRE:
                         //g_AudioManager.Play( "Shotgun_Secondary_Fire", Pos );
                         g_AudioManager.Play( "Shotgun_Secondary_Fire", audio_manager::GUN_SHOT, GetPosition(), 
                                         GetZone1(), GetGuid() );

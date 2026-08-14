@@ -114,7 +114,7 @@ static struct weapon_mutation_desc : public object_desc
                                         "WEAPON",
                                         object::ATTR_SPACIAL_ENTRY          |
                                         object::ATTR_NEEDS_LOGIC_TIME       |
-                                        object::ATTR_RENDERABLE				|
+                                        object::ATTR_RENDERABLE                |
                                         object::ATTR_SOUND_SOURCE,
                                         //FLAGS_GENERIC_EDITOR_CREATE         |
                                         FLAGS_IS_DYNAMIC    
@@ -156,7 +156,7 @@ weapon_mutation::weapon_mutation( void ) :
     m_bMeleeComplete            ( FALSE     ),    
     m_HostPlayerGuid            ( 0         ),
     m_nPrimaryParasitesPerShot  ( 3         ),
-    m_nSecondaryParasitesPerShot( 1 		),    
+    m_nSecondaryParasitesPerShot( 1         ),    
     m_MutagenTemplateID         ( -1        ),
     m_MeleeState                ( player::ANIM_STATE_MELEE ),
     m_LiftHeight                ( 0.0f )
@@ -639,7 +639,7 @@ xbool weapon_mutation::TriggerContagion( void )
 xbool weapon_mutation::FireSecondaryProtected( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint )
 {
     X_PROFILE_SCOPE_CATEGORY( "Context", "mutation::FireSecondaryProtected" );
-	( void )Power;
+    ( void )Power;
     ( void )iFirePoint;
     ( void )InitPos;    // we don't need InitPos because this weapon fires from its FIRE_POINT
 
@@ -735,7 +735,7 @@ xbool weapon_mutation::FireSecondaryProtected( const vector3& InitPos , const ve
     s32 VoiceId = g_AudioMgr.Play( "MSN_Alt_Fire_Tap", GetPosition(), GetZone1(), TRUE );
     g_AudioManager.NewAudioAlert( VoiceId, audio_manager::GUN_SHOT, GetPosition(), GetZone1(), GetGuid() );
 
-	return TRUE;
+    return TRUE;
 }
 
 //=========================================================================
@@ -865,7 +865,7 @@ void weapon_mutation::OnEnumProp( prop_enum& PropEnumList )
 
     PropEnumList.PropEnumHeader  ( "Mutation Weapon", "Mutation Weapon-specific properties", PROP_TYPE_HEADER );
     PropEnumList.PropEnumInt     ( "Mutation Weapon\\Primary Parasites Per Shot", "Number of primary parasite projectiles fired with each shot.", 0 );
-    PropEnumList.PropEnumInt     ( "Mutation Weapon\\Secondary Parasites Per Shot", "Number of secondary parasite projectiles fired with each shot.", 0 );	
+    PropEnumList.PropEnumInt     ( "Mutation Weapon\\Secondary Parasites Per Shot", "Number of secondary parasite projectiles fired with each shot.", 0 );    
     
 
     SMP_UTIL_EnumHiddenManualResource( PropEnumList, "Mutation Weapon\\ParasiteHitInert", SMP_FXO );

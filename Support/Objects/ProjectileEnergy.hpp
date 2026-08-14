@@ -22,22 +22,22 @@
 class energy_projectile : public net_proj
 {
 public:
-	CREATE_RTTI( energy_projectile , net_proj , object )
+    CREATE_RTTI( energy_projectile , net_proj , object )
 
-    	            energy_projectile               ( void );
-	virtual         ~energy_projectile              ( void );
+                    energy_projectile               ( void );
+    virtual         ~energy_projectile              ( void );
 
     virtual const   object_desc&  GetTypeDesc       ( void ) const;
     static  const   object_desc&  GetObjectType     ( void );
 
 //=========================================================================
 //
-// GetMaterial		-   Legacy.  Needed for now.
-// OnAdvanceSimulation	-   Updates every frame
-// OnMove			-   Handles the motion of the spike
-// Initialize		-	Sets the initial position of the object.  Needs an initial
-//						velocity, an initial position, and either a radian3 or matrix4 for
-//						rotation information.
+// GetMaterial        -   Legacy.  Needed for now.
+// OnAdvanceSimulation    -   Updates every frame
+// OnMove            -   Handles the motion of the spike
+// Initialize        -    Sets the initial position of the object.  Needs an initial
+//                        velocity, an initial position, and either a radian3 or matrix4 for
+//                        rotation information.
 //
 //=========================================================================
 
@@ -61,8 +61,8 @@ virtual         void            SetStart            ( const vector3& Position,
                                                             f32      Gravity = 0.0f );
 
 
-virtual	        bbox	        GetLocalBBox		( void ) const;
-	
+virtual            bbox            GetLocalBBox        ( void ) const;
+    
                 void            DestroyParticles    ( void );
                 void            UpdateParticles     ( const vector3& NewPosition );
 virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
@@ -70,12 +70,12 @@ virtual         void            OnAdvanceSimulation      ( f32 DeltaTime );
 virtual         void            OnImpact            ( collision_mgr::collision& Coll, object* pTarget );
                 void            DoImpactPain        ( guid HitGuid, collision_mgr::collision& Coll );
 
-virtual	        void	        OnMove				( const vector3& NewPosition );
-virtual	        void	        OnRender			( void );
+virtual            void            OnMove                ( const vector3& NewPosition );
+virtual            void            OnRender            ( void );
 
-                xbool	        LoadInstance		( const char* pFileName );
+                xbool            LoadInstance        ( const char* pFileName );
                 xbool           LoadDecalPackage    ( const char* pFileName );
-                xbool	        LoadEffect		    ( const char* pFileName, const vector3& InitPos, const radian3& InitRot );
+                xbool            LoadEffect            ( const char* pFileName, const vector3& InitPos, const radian3& InitRot );
 
 virtual         void            DoImpactEffects     ( collision_mgr::collision& Coll );
 virtual         void            OnExplode           ( void );
@@ -88,11 +88,11 @@ virtual         void            net_Deactivate      ( void );
 #endif
 
 protected:
-	f32			                        m_MaxAliveTime;			// How long does this object remain in the world.
+    f32                                    m_MaxAliveTime;            // How long does this object remain in the world.
     particle_emitter::particle_type     m_ParticleExplosion;
     f32                                 m_ExplosionRadius;
 
-    rigid_inst		                    m_RigidInst;		// Instance for rendering object.
+    rigid_inst                            m_RigidInst;        // Instance for rendering object.
     rhandle<char>                       m_ProjectileFx;     // The energy projectile particle effect.
     rhandle<char>                       m_ExplosionFx;      // The energy projectile particle explosion effect.
     rhandle<char>                       m_WallBounceFx;     // The energy projectile particle wall bounce effect.

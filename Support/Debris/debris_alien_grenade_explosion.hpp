@@ -21,7 +21,7 @@ public:
 
         //=============================================================================
                          debris_alien_grenade_explosion( void );
-    virtual				~debris_alien_grenade_explosion( void );
+    virtual                ~debris_alien_grenade_explosion( void );
 
     virtual void        Create                ( const char*       pMeshName,
                                                 const vector3&    Pos,

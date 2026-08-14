@@ -60,7 +60,7 @@ xbool action_player_inventory::Execute ( f32 DeltaTime )
 
 //=============================================================================
 
-void action_player_inventory::OnEnumProp	( prop_enum& rPropList )
+void action_player_inventory::OnEnumProp    ( prop_enum& rPropList )
 {
     rPropList.PropEnumEnum( "Operation",         "Give\0Take\0", "Do we give or take the item.", PROP_TYPE_DONT_SAVE | PROP_TYPE_MUST_ENUM );
     rPropList.PropEnumInt ( "Code" ,             "",  PROP_TYPE_DONT_SHOW  );
@@ -75,7 +75,7 @@ void action_player_inventory::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool action_player_inventory::OnProperty	( prop_query& rPropQuery )
+xbool action_player_inventory::OnProperty    ( prop_query& rPropQuery )
 { 
     if( rPropQuery.IsVar( "Item" ) )
     {

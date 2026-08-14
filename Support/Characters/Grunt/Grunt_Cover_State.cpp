@@ -418,19 +418,19 @@ const char*grunt_cover_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_GRUNT_COVER_GOTO_COVER:
         return "PHASE_GRUNT_COVER_GOTO_COVER";
-    	break;
+        break;
     case PHASE_GRUNT_COVER_FACE_EXACT:
         return "PHASE_GRUNT_COVER_FACE_EXACT";
-    	break;
+        break;
     case PHASE_GRUNT_COVER_ENTER_COVER:
         return "PHASE_GRUNT_COVER_ENTER_COVER";
         break;
     case PHASE_GRUNT_COVER_IDLE:
         return "PHASE_GRUNT_COVER_IDLE";
-    	break;
+        break;
     case PHASE_GRUNT_COVER_EXIT_COVER:
         return "PHASE_GRUNT_COVER_EXIT_COVER";
-    	break;
+        break;
     }
     return character_state::GetPhaseName(thePhase);
 }

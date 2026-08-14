@@ -24,35 +24,35 @@ protected:
 // MFC
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	CTreeRsclist_View();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CTreeRsclist_View)
-	virtual ~CTreeRsclist_View();
+    CTreeRsclist_View();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CTreeRsclist_View)
+    virtual ~CTreeRsclist_View();
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CTreeRsclist_View)
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CTreeRsclist_View)
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	//{{AFX_MSG(CTreeRsclist_View)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
+    //{{AFX_MSG(CTreeRsclist_View)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnItemChanged( NMHDR* pNMHDR, LRESULT* pResult );
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

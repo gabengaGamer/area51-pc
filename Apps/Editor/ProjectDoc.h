@@ -34,7 +34,7 @@ public:
     
     xbool        LoadProject     ( const char* fullLevelName );
 
-	virtual BOOL SaveModified(); // return TRUE if ok to continue
+    virtual BOOL SaveModified(); // return TRUE if ok to continue
 
     xbool        HandleChangeSave( void );
 
@@ -47,40 +47,40 @@ protected:
 // MFC
 /////////////////////////////////////////////////////////////////////////////
 public:
-	virtual ~CProjectDoc();
-	CProjectDoc();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CProjectDoc)
+    virtual ~CProjectDoc();
+    CProjectDoc();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CProjectDoc)
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CProjectDoc)
-	public:
-	virtual void Serialize(CArchive& ar);   // overridden for document i/o
-	protected:
-	virtual BOOL OnNewDocument();
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CProjectDoc)
+    public:
+    virtual void Serialize(CArchive& ar);   // overridden for document i/o
+    protected:
+    virtual BOOL OnNewDocument();
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 public:
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	//{{AFX_MSG(CProjectDoc)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CProjectDoc)
+        // NOTE - the ClassWizard will add and remove member functions here.
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 
 inline CProjectView* CProjectDoc::GetView()
 { 
-	POSITION pos = GetFirstViewPosition();
-	return (CProjectView*)GetNextView (pos); 
+    POSITION pos = GetFirstViewPosition();
+    return (CProjectView*)GetNextView (pos); 
 }
 
 //{{AFX_INSERT_LOCATION}}

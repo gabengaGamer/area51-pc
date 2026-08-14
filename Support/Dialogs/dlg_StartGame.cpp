@@ -28,7 +28,7 @@ enum controls
 
 ui_manager::control_tem StartGameControls[] = 
 {
-    { IDC_START_GAME_TEXT,	    "IDS_LOADING_MSG",          "text",     246, 300, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_START_GAME_TEXT,        "IDS_LOADING_MSG",          "text",     246, 300, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 };
 
 
@@ -106,7 +106,7 @@ xbool dlg_start_game::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pLoadText = (ui_text*) FindChildByID( IDC_START_GAME_TEXT );
     m_pLoadText->SetFlag(ui_win::WF_VISIBLE, FALSE);
@@ -146,9 +146,9 @@ void dlg_start_game::Render( s32 ox, s32 oy )
     // render background filter
     if (!m_StartLoading)
     {
-	    irect rb;
+        irect rb;
 
-	    rb = g_UiMgr->GetUserBounds( m_UserID );
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                        xcolor(0,0,0,180),
                                        xcolor(0,0,0,180),

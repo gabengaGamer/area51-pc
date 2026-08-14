@@ -138,33 +138,33 @@ void dlg_submenu::Configure( const xwchar* Title, const xwchar* ItemOne, const x
         m_pButtonOne->SetFlags( (m_pButtonOne->GetFlags() & ~WF_VISIBLE) | WF_DISABLED );
         bOne = FALSE;
     }
-	else
-	{
+    else
+    {
         m_pButtonOne->SetFlags( (m_pButtonOne->GetFlags() & ~WF_DISABLED) | WF_VISIBLE );
-		bOne = TRUE;
-	}
+        bOne = TRUE;
+    }
 
     if( x_wstrlen(ItemTwo) == 0 )
     {
         m_pButtonTwo ->SetFlags( (m_pButtonTwo ->GetFlags() & ~WF_VISIBLE) | WF_DISABLED );
         bTwo = FALSE;
     }
-	else
-	{
+    else
+    {
         m_pButtonTwo ->SetFlags( (m_pButtonTwo ->GetFlags() & ~WF_DISABLED) | WF_VISIBLE );
-		bTwo = TRUE;
-	}
+        bTwo = TRUE;
+    }
 
     if( x_wstrlen(ItemThree) == 0 )
     {
         m_pButtonThree ->SetFlags( (m_pButtonThree ->GetFlags() & ~WF_VISIBLE) | WF_DISABLED );
         bThree = FALSE;
     }
-	else
-	{
+    else
+    {
         m_pButtonThree ->SetFlags( (m_pButtonThree ->GetFlags() & ~WF_DISABLED) | WF_VISIBLE );
-		bThree = TRUE;
-	}
+        bThree = TRUE;
+    }
     if( x_wstrlen(ItemFour) == 0 )
     {
         m_pButtonFour ->SetFlags( (m_pButtonFour ->GetFlags() & ~WF_VISIBLE) | WF_DISABLED );
@@ -266,13 +266,13 @@ void dlg_submenu::Destroy( void )
 //=========================================================================
 void dlg_submenu::Render( s32 ox, s32 oy )
 {
-	// Only render is visible
+    // Only render is visible
     if( m_Flags & WF_VISIBLE )
     {
         // dim the background dialog
         if( m_bDoBlackout )
         {
-	        irect rb = g_UiMgr->GetUserBounds( m_UserID );
+            irect rb = g_UiMgr->GetUserBounds( m_UserID );
             g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                            xcolor(0,0,0,180),
                                            xcolor(0,0,0,180),
@@ -312,8 +312,8 @@ void dlg_submenu::Render( s32 ox, s32 oy )
         //r.Deflate( 15, 100 );
         //r.t += -40;
         //r.b += 15;
-		//r.l += 8;
-		//r.r -= 8;
+        //r.l += 8;
+        //r.r -= 8;
         //r.Translate( 2, -2 );
         //g_UiMgr->RenderText_Wrap( g_UiMgr->FindFont("small"), r, ui_font::h_center|ui_font::v_center, xcolor(XCOLOR_BLACK), m_Message );
         //r.Translate( -2, -2 );

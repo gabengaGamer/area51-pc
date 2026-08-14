@@ -68,7 +68,7 @@ void anim_track_controller::Clear( void )
     m_Rate                  = 1.0f;
     m_BlendLength           = 0;
     m_BlendFrame            = 0;
-	m_bPreviousManualYaw    = FALSE;
+    m_bPreviousManualYaw    = FALSE;
     m_bRemoveTurnYaw        = FALSE ;
     m_iRefFrame             = 0;
     m_MixMode               = MIX_BLENDED;
@@ -131,20 +131,20 @@ void anim_track_controller::SetAnim( s32 iAnim, f32 BlendTime , xbool ResetFrame
 {
     ASSERT( (iAnim>=0) && (iAnim<GetAnimGroup().GetNAnims()) );
 
-	// If we are already playing this anim, don't reset
+    // If we are already playing this anim, don't reset
     if( iAnim==m_iAnim )
-	{
+    {
         // If the animation is looping and we are pegged at the end then restart
         if( !(GetAnimInfo().DoesLoop() && IsAtEnd()) )
-		{
-			if ( ResetFrameCount )
-			{
-				m_Frame = 0;
-				m_Cycle = 0;
-			}
-	        return;
-		}
-	}
+        {
+            if ( ResetFrameCount )
+            {
+                m_Frame = 0;
+                m_Cycle = 0;
+            }
+            return;
+        }
+    }
 
     // Check for using a specified blend time
     if( iAnim != -1 )
@@ -203,7 +203,7 @@ void anim_track_controller::SetAnim( s32 iAnim, f32 BlendTime , xbool ResetFrame
     m_Cycle     = 0;
     m_PrevFrame = 0;
     m_PrevCycle = 0;
-	m_bPreviousManualYaw = m_bManualYaw;
+    m_bPreviousManualYaw = m_bManualYaw;
     m_bOverrideRootBlend = FALSE;
 }
 

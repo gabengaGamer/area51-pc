@@ -17,39 +17,39 @@ class CEditorSoundView : public CPaletteView
 {
 public:
 
-	CEditorPaletteDoc* GetDocument();
+    CEditorPaletteDoc* GetDocument();
 
     xbool            m_CreateSoundConnectionMode;
     CTreeCtrl        m_SoundTree;
 
     virtual void    OnTabActivate( BOOL bActivate );
 
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorSoundView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorSoundView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 protected:
 
-	CEditorSoundView();           // protected constructor used by dynamic creation
-	virtual ~CEditorSoundView();
-	DECLARE_DYNCREATE(CEditorSoundView)
+    CEditorSoundView();           // protected constructor used by dynamic creation
+    virtual ~CEditorSoundView();
+    DECLARE_DYNCREATE(CEditorSoundView)
 
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	//{{AFX_MSG(CEditorSoundView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnButtonCreateSoundNode();
-	afx_msg void OnButtonCreateSoundConnection();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CEditorSoundView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnButtonCreateSoundNode();
+    afx_msg void OnButtonCreateSoundConnection();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
 private:
 };

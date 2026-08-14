@@ -22,7 +22,7 @@ public:
     virtual void        OnEnumProp          ( prop_enum&    List );
     virtual xbool       OnProperty          ( prop_query&   I    );
 
-			xbool		SetUpRigidGeom		( const char* pFileName );
+            xbool        SetUpRigidGeom        ( const char* pFileName );
     
     virtual geom*       GetGeom             ( void     ) const;
     virtual const char* GetGeomName         ( void     ) const;

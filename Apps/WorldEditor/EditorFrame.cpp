@@ -64,12 +64,12 @@ static char THIS_FILE[] = __FILE__;
 IMPLEMENT_DYNCREATE(CEditorFrame, CBaseFrame)
 
 BEGIN_MESSAGE_MAP(CEditorFrame, CBaseFrame)
-	//{{AFX_MSG_MAP(CEditorFrame)
-	ON_WM_CREATE()
+    //{{AFX_MSG_MAP(CEditorFrame)
+    ON_WM_CREATE()
     ON_WM_DESTROY()
-	ON_CBN_SELCHANGE(IDC_COMBOBOX_ACTIVE_LAYER, OnSelchangeActiveLayerCombo)
-	ON_MESSAGE( WM_USER_MSG_UPDATE_REQUIRED, OnUpdateRequired )
-	ON_MESSAGE( WM_USER_MSG_GUID_SELECT_FOR_PROPERTY, OnGuidSelectorRequest )
+    ON_CBN_SELCHANGE(IDC_COMBOBOX_ACTIVE_LAYER, OnSelchangeActiveLayerCombo)
+    ON_MESSAGE( WM_USER_MSG_UPDATE_REQUIRED, OnUpdateRequired )
+    ON_MESSAGE( WM_USER_MSG_GUID_SELECT_FOR_PROPERTY, OnGuidSelectorRequest )
     ON_MESSAGE( WM_USER_MSG_GUID_HIGHLIGHT_REQUEST, OnGuidHighlightRequest )
     ON_COMMAND(IDR_CREATE_OBJECT_FROM_SELECTED, OnCreateFromSelected)
     ON_COMMAND_RANGE(IDR_CREATE_OBJECT_GENERIC_FIRST, IDR_CREATE_OBJECT_GENERIC_LAST, OnCreateGenericObject)
@@ -78,15 +78,15 @@ BEGIN_MESSAGE_MAP(CEditorFrame, CBaseFrame)
     ON_COMMAND(ID_WETB_UNDO, OnWetbUndo)
     ON_COMMAND(ID_WETB_REDO, OnWetbRedo)
     ON_COMMAND(ID_WETB_TRANS_STACK, OnWetbTransStack)
-	ON_COMMAND(ID_WETB_SHOWAXIS, OnWetbShowaxis)
-	ON_COMMAND(ID_WETB_SHOWGRID, OnWetbShowgrid)
-	ON_COMMAND(ID_WETB_SHOWSPACD, OnWetbShowspacd)
-	ON_COMMAND(ID_WETB_CREATE_OBJECT, OnWetbCreateObject)
-	ON_COMMAND(ID_WETB_DELETE_SELECTED, OnWetbDeleteSelected)
-	ON_COMMAND(ID_WETB_SNAPTOGRID, OnWetbSnaptogrid)
+    ON_COMMAND(ID_WETB_SHOWAXIS, OnWetbShowaxis)
+    ON_COMMAND(ID_WETB_SHOWGRID, OnWetbShowgrid)
+    ON_COMMAND(ID_WETB_SHOWSPACD, OnWetbShowspacd)
+    ON_COMMAND(ID_WETB_CREATE_OBJECT, OnWetbCreateObject)
+    ON_COMMAND(ID_WETB_DELETE_SELECTED, OnWetbDeleteSelected)
+    ON_COMMAND(ID_WETB_SNAPTOGRID, OnWetbSnaptogrid)
     ON_COMMAND(ID_WETB_ADDWITHRAY, OnWetbSnapAddWithRay)
     ON_COMMAND(ID_WETB_GRIDTOOBJECT, OnWetbGridToObject)
-	ON_COMMAND(ID_WETB_MOVEMODE, OnWetbMoveMode)
+    ON_COMMAND(ID_WETB_MOVEMODE, OnWetbMoveMode)
     ON_COMMAND(ID_WETB_COPY_OBJECTS, OnWetbCopyObjects)
     ON_COMMAND(ID_WETB_MOVE_OBJECTS_TO_ACTIVE_LAYER, OnWetbMoveObjectsToActiveLayer)
     ON_COMMAND(ID_WETB_RUNGAME, OnWetbRunGame)
@@ -117,16 +117,16 @@ BEGIN_MESSAGE_MAP(CEditorFrame, CBaseFrame)
     ON_UPDATE_COMMAND_UI(ID_WETB_UNDO, OnUpdateWetbUndo)
     ON_UPDATE_COMMAND_UI(ID_WETB_REDO, OnUpdateWetbRedo)
     ON_UPDATE_COMMAND_UI(ID_WETB_TRANS_STACK, OnUpdateWetbTransStack)
-	ON_UPDATE_COMMAND_UI(ID_WETB_SHOWAXIS, OnUpdateWetbShowaxis)
-	ON_UPDATE_COMMAND_UI(ID_WETB_SHOWGRID, OnUpdateWetbShowgrid)
-	ON_UPDATE_COMMAND_UI(ID_WETB_SHOWSPACD, OnUpdateWetbShowspacd)
-	ON_UPDATE_COMMAND_UI(ID_WETB_CREATE_OBJECT, OnUpdateWetbCreateObject)
-	ON_UPDATE_COMMAND_UI(ID_WETB_DELETE_SELECTED, OnUpdateWetbDeleteSelected)
+    ON_UPDATE_COMMAND_UI(ID_WETB_SHOWAXIS, OnUpdateWetbShowaxis)
+    ON_UPDATE_COMMAND_UI(ID_WETB_SHOWGRID, OnUpdateWetbShowgrid)
+    ON_UPDATE_COMMAND_UI(ID_WETB_SHOWSPACD, OnUpdateWetbShowspacd)
+    ON_UPDATE_COMMAND_UI(ID_WETB_CREATE_OBJECT, OnUpdateWetbCreateObject)
+    ON_UPDATE_COMMAND_UI(ID_WETB_DELETE_SELECTED, OnUpdateWetbDeleteSelected)
     ON_UPDATE_COMMAND_UI(ID_WETB_SHOWSELECTIONBOUNDS, OnUpdateShowSelectionBounds)
-	ON_UPDATE_COMMAND_UI(ID_WETB_SNAPTOGRID, OnUpdateWetbSnaptogrid)
+    ON_UPDATE_COMMAND_UI(ID_WETB_SNAPTOGRID, OnUpdateWetbSnaptogrid)
     ON_UPDATE_COMMAND_UI(ID_WETB_ADDWITHRAY, OnUpdateWetbSnapAddWithRay)
     ON_UPDATE_COMMAND_UI(ID_WETB_GRIDTOOBJECT, OnUpdateWetbGridToObject)
-	ON_UPDATE_COMMAND_UI(ID_WETB_MOVEMODE, OnUpdateWetbMoveMode)
+    ON_UPDATE_COMMAND_UI(ID_WETB_MOVEMODE, OnUpdateWetbMoveMode)
     ON_UPDATE_COMMAND_UI(ID_WETB_COPY_OBJECTS, OnUpdateWetbCopyObjects)
     ON_UPDATE_COMMAND_UI(ID_WETB_MOVE_OBJECTS_TO_ACTIVE_LAYER, OnUpdateWetbMoveObjectsToActiveLayer)
     ON_UPDATE_COMMAND_UI(ID_WETB_RUNGAME, OnUpdateWetbRunGame) 
@@ -147,23 +147,23 @@ BEGIN_MESSAGE_MAP(CEditorFrame, CBaseFrame)
     ON_UPDATE_COMMAND_UI(ID_BPTB_SHATTER_BLUEPRINT, OnUpdateBptbShatterBlueprint)
     ON_UPDATE_COMMAND_UI(ID_BPTB_SHATTER_FOR_EDIT, OnUpdateBptbShatterBlueprintForEdit)   
     ON_UPDATE_COMMAND_UI(ID_BPTB_REFRESH, OnUpdateBptbRefresh)       
-	ON_UPDATE_COMMAND_UI(ID_OVTB_ADD_PLAYSURFACE, OnUpdateOvtbAddPlaysurface)
-	ON_UPDATE_COMMAND_UI(ID_OVTB_ADD_PROPSURFACE, OnUpdateOvtbAddPropsurface)
-	ON_UPDATE_COMMAND_UI(ID_OVTB_ADD_ANIMSURFACE, OnUpdateOvtbAddAnimsurface)
-	ON_UPDATE_COMMAND_UI(ID_OVTB_REFRESH, OnUpdateOvtbRefresh)
+    ON_UPDATE_COMMAND_UI(ID_OVTB_ADD_PLAYSURFACE, OnUpdateOvtbAddPlaysurface)
+    ON_UPDATE_COMMAND_UI(ID_OVTB_ADD_PROPSURFACE, OnUpdateOvtbAddPropsurface)
+    ON_UPDATE_COMMAND_UI(ID_OVTB_ADD_ANIMSURFACE, OnUpdateOvtbAddAnimsurface)
+    ON_UPDATE_COMMAND_UI(ID_OVTB_REFRESH, OnUpdateOvtbRefresh)
     ON_UPDATE_COMMAND_UI(ID_OVTB_UPDATE_GEOMS_FROM_SEL, OnUpdateOvtbUpdateGeomsFromSel)
     ON_UPDATE_COMMAND_UI(ID_OVTB_UPDATE_RIGIDINST_FROM_SEL, OnUpdateOvtbUpdateRigidInst)
     ON_UPDATE_COMMAND_UI(ID_DVTB_REFRESH, OnUpdateDvtbRefresh)
     ON_UPDATE_COMMAND_UI(ID_DVTB_PAINT_MODE, OnUpdateDvtbPaintMode)
-	ON_WM_CLOSE()
-	ON_WM_MDIACTIVATE()
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CREATE_PLAYER, OnUpdateAIButtonCreatePlayer)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CREATE_NAV_NODE, OnUpdateAIButtonCreateNavNode)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_VISIBLE, OnUpdateButtonConnectVisible)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_SELECTED, OnUpdateButtonConnectSelected)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_MODE, OnUpdateButtonConnectMode)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CHECK_ALL_NODES, OnUpdateButtonCheckAllNodes)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_CHAIN_NODES, OnUpdateButtonChainNodes)
+    ON_WM_CLOSE()
+    ON_WM_MDIACTIVATE()
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CREATE_PLAYER, OnUpdateAIButtonCreatePlayer)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CREATE_NAV_NODE, OnUpdateAIButtonCreateNavNode)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_VISIBLE, OnUpdateButtonConnectVisible)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_SELECTED, OnUpdateButtonConnectSelected)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CONNECT_MODE, OnUpdateButtonConnectMode)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CHECK_ALL_NODES, OnUpdateButtonCheckAllNodes)
+    ON_UPDATE_COMMAND_UI(ID_BUTTON_CHAIN_NODES, OnUpdateButtonChainNodes)
     ON_COMMAND(ID_CFM_ADD, OnCameraFavoriteAdd)
     ON_COMMAND_RANGE(ID_CFM_FAVORITE_1,ID_CFM_FAVORITE_10, OnCameraFavorite)
     ON_COMMAND(ID_CFM_MORE, OnCameraFavoriteMore)
@@ -176,7 +176,7 @@ BEGIN_MESSAGE_MAP(CEditorFrame, CBaseFrame)
     ON_COMMAND(ID_DEBUG_INVULNERABLE, OnDebugInvulnerable)
     ON_COMMAND(ID_DEBUG_INFINITEAMMO, OnDebugInfiniteAmmo)
 
-	//}}AFX_MSG_MAP
+    //}}AFX_MSG_MAP
     ON_COMMAND_RANGE(IDR_LEVEL_LIGHT_DIR, IDR_LEVEL_LIGHT_RAYCAST, OnWetbLightLevelType)
 END_MESSAGE_MAP()
 
@@ -238,7 +238,7 @@ void CEditorFrame::SetProject(CString strProject)
     m_strCurrentLevel = strProject;
     if (!m_strCurrentLevel.IsEmpty())
     {
-        SetWindowText( m_strCurrentLevel );	
+        SetWindowText( m_strCurrentLevel );    
     }
     else
     {
@@ -250,17 +250,17 @@ void CEditorFrame::SetProject(CString strProject)
 
 BOOL CEditorFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
-	// TODO: Modify the Window class or styles here by modifying
-	//  the CREATESTRUCT cs
-	if( !CBaseFrame::PreCreateWindow(cs) )
-		return FALSE;
+    // TODO: Modify the Window class or styles here by modifying
+    //  the CREATESTRUCT cs
+    if( !CBaseFrame::PreCreateWindow(cs) )
+        return FALSE;
 
-	cs.style |= WS_CLIPCHILDREN;
-	
-	cs.style = WS_CHILD | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU
-		| FWS_ADDTOTITLE | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+    cs.style |= WS_CLIPCHILDREN;
+    
+    cs.style = WS_CHILD | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU
+        | FWS_ADDTOTITLE | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 
-	return TRUE;
+    return TRUE;
 }
 
 //=========================================================================
@@ -281,7 +281,7 @@ void CEditorFrame::ActivateFrame(int nCmdShow)
         GetEditorDoc()->InitSettingsInterface();
     }
 
-	CBaseFrame::ActivateFrame(nCmdShow);
+    CBaseFrame::ActivateFrame(nCmdShow);
 }
 
 //=========================================================================
@@ -291,14 +291,14 @@ void CEditorFrame::ActivateFrame(int nCmdShow)
 #ifdef _DEBUG
 void CEditorFrame::AssertValid() const
 {
-	CBaseFrame::AssertValid();
+    CBaseFrame::AssertValid();
 }
 
 //=========================================================================
 
 void CEditorFrame::Dump(CDumpContext& dc) const
 {
-	CBaseFrame::Dump(dc);
+    CBaseFrame::Dump(dc);
 }
 
 #endif //_DEBUG
@@ -338,24 +338,24 @@ CWnd* CEditorFrame::FindViewFromTab( CWorkspaceTabCtrl& Bar, CRuntimeClass *pVie
 
 int CEditorFrame::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CBaseFrame::OnCreate(lpCreateStruct) == -1)
-		return -1;
+    if (CBaseFrame::OnCreate(lpCreateStruct) == -1)
+        return -1;
 
     // Create the ToolBar
-	if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT | TBSTYLE_LIST | TBSTYLE_TRANSPARENT, 
+    if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT | TBSTYLE_LIST | TBSTYLE_TRANSPARENT, 
         WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC))
-	{
-		TRACE0("Failed to create toolbar\n");
-		return -1;      // fail to create
-	}
-
-	if (!m_wndToolBar.LoadToolBar(IDR_WORLDEDITOR))
     {
-		TRACE0("Failed to create toolbar\n");
-		return -1;      // fail to create
+        TRACE0("Failed to create toolbar\n");
+        return -1;      // fail to create
     }
-	// Turn on toolbar customization.
-	//m_wndToolBar.SetCustomBar(TRUE);
+
+    if (!m_wndToolBar.LoadToolBar(IDR_WORLDEDITOR))
+    {
+        TRACE0("Failed to create toolbar\n");
+        return -1;      // fail to create
+    }
+    // Turn on toolbar customization.
+    //m_wndToolBar.SetCustomBar(TRUE);
 
     m_wndToolBar.GetToolBarCtrl().SetExtendedStyle(TBSTYLE_EX_DRAWDDARROWS);
     {
@@ -383,41 +383,41 @@ int CEditorFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     }
     m_wndToolBar.GetItemRect(ComboIndex, &ComboRect);
 
-	if (!m_wndComboBox.Create( WS_CHILD|WS_VISIBLE|CBS_DROPDOWNLIST|CBS_SORT|WS_CLIPCHILDREN,
-		ComboRect, &m_wndToolBar, IDC_COMBOBOX_ACTIVE_LAYER ))
-	{
-		TRACE0("Failed to create flat toolbar.\n");
-		return -1;      // fail to create
-	}
-	m_wndToolBar.GetToolBarCtrl().AutoSize();
+    if (!m_wndComboBox.Create( WS_CHILD|WS_VISIBLE|CBS_DROPDOWNLIST|CBS_SORT|WS_CLIPCHILDREN,
+        ComboRect, &m_wndToolBar, IDC_COMBOBOX_ACTIVE_LAYER ))
+    {
+        TRACE0("Failed to create flat toolbar.\n");
+        return -1;      // fail to create
+    }
+    m_wndToolBar.GetToolBarCtrl().AutoSize();
 
-	// Create the property bar.
-	if( !m_wndProperty.Create(this, IDW_PROPERTY_BAR, _T("Property"),
-		CSize(350, 150), CBRS_LEFT, 0)) //|(AFX_IDW_TOOLBAR + 6) ))
-	{
-		TRACE0("Failed to create property dock window\n");
-		return -1;		// fail to create
-	}
+    // Create the property bar.
+    if( !m_wndProperty.Create(this, IDW_PROPERTY_BAR, _T("Property"),
+        CSize(350, 150), CBRS_LEFT, 0)) //|(AFX_IDW_TOOLBAR + 6) ))
+    {
+        TRACE0("Failed to create property dock window\n");
+        return -1;        // fail to create
+    }
 
-	// Create the workspace bar.
-	if( !m_wndWrkspBar.Create(this, IDW_WORKSPBAR, _T("Workspace"),
-		CSize(350, 150), CBRS_LEFT, CBRS_TOOLTIPS | CBRS_FLYBY)) //|(AFX_IDW_TOOLBAR + 7) ))
-	{
-		TRACE0("Failed to create workspace dock window\n");
-		return -1;		// fail to create
-	}
+    // Create the workspace bar.
+    if( !m_wndWrkspBar.Create(this, IDW_WORKSPBAR, _T("Workspace"),
+        CSize(350, 150), CBRS_LEFT, CBRS_TOOLTIPS | CBRS_FLYBY)) //|(AFX_IDW_TOOLBAR + 7) ))
+    {
+        TRACE0("Failed to create workspace dock window\n");
+        return -1;        // fail to create
+    }
     m_wndWrkspBar.EnableToolTips( TRUE );
 
-	m_wndToolBar.EnableDocking(CBRS_ALIGN_TOP|CBRS_ALIGN_BOTTOM);
-	m_wndWrkspBar.EnableDocking(CBRS_ALIGN_ANY);
-	m_wndProperty.EnableDocking(CBRS_ALIGN_ANY);
-	EnableDocking(CBRS_ALIGN_ANY);
+    m_wndToolBar.EnableDocking(CBRS_ALIGN_TOP|CBRS_ALIGN_BOTTOM);
+    m_wndWrkspBar.EnableDocking(CBRS_ALIGN_ANY);
+    m_wndProperty.EnableDocking(CBRS_ALIGN_ANY);
+    EnableDocking(CBRS_ALIGN_ANY);
 
-	DockControlBar( &m_wndToolBar,AFX_IDW_DOCKBAR_TOP );
-	DockControlBar(&m_wndWrkspBar,AFX_IDW_DOCKBAR_LEFT);
-	DockControlBar(&m_wndProperty,AFX_IDW_DOCKBAR_LEFT);
+    DockControlBar( &m_wndToolBar,AFX_IDW_DOCKBAR_TOP );
+    DockControlBar(&m_wndWrkspBar,AFX_IDW_DOCKBAR_LEFT);
+    DockControlBar(&m_wndProperty,AFX_IDW_DOCKBAR_LEFT);
 
-	// TODO: Add your own view and documents to the workspace window.
+    // TODO: Add your own view and documents to the workspace window.
     m_pPaletteDoc = new CEditorPaletteDoc();
     if (m_pPaletteDoc) 
     {
@@ -429,8 +429,8 @@ int CEditorFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 //        VERIFY(m_wndWrkspBar.AddView(_T(""), RUNTIME_CLASS(CEditorGlobalView), m_pPaletteDoc ));
 
 // OLD STLYE
-//    	VERIFY(m_wndWrkspBar.AddView(_T(""), RUNTIME_CLASS(CEditorLayerView), m_pPaletteDoc));
-//    	VERIFY(m_wndWrkspBar.AddView(_T(""), RUNTIME_CLASS(CEditorObjectView), m_pPaletteDoc));
+//        VERIFY(m_wndWrkspBar.AddView(_T(""), RUNTIME_CLASS(CEditorLayerView), m_pPaletteDoc));
+//        VERIFY(m_wndWrkspBar.AddView(_T(""), RUNTIME_CLASS(CEditorObjectView), m_pPaletteDoc));
 //        VERIFY(m_wndWrkspBar.AddView(_T(""), RUNTIME_CLASS(CEditorBlueprintView), m_pPaletteDoc ));
 //        VERIFY(m_wndWrkspBar.AddView(_T(""), RUNTIME_CLASS(CEditorAIView), m_pPaletteDoc ));
 //        VERIFY(m_wndWrkspBar.AddView(_T(""), RUNTIME_CLASS(CEditorSettingsView), m_pPaletteDoc ));
@@ -495,14 +495,14 @@ int CEditorFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         m_wndWrkspBar.SetCaption("Workspace::Layers");
     }
     
-	// Create the image list used with the tab control bar.
-	if (!m_imageList.Create(IDB_IMGLIST_TAB, 16, 1, RGB(0x00,0xff,0x00)))
-	{
-		TRACE0("Failed to create image list.\n");
-		return -1;
-	}
-	
-	// Associate the image list with the tab control bar.
+    // Create the image list used with the tab control bar.
+    if (!m_imageList.Create(IDB_IMGLIST_TAB, 16, 1, RGB(0x00,0xff,0x00)))
+    {
+        TRACE0("Failed to create image list.\n");
+        return -1;
+    }
+    
+    // Associate the image list with the tab control bar.
     m_wndWrkspBar.SetTabImageList(&m_imageList);
 
     m_wndWrkspBar.GetTabCtrl().SetItemSize(CSize(16, 18));
@@ -512,8 +512,8 @@ int CEditorFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     m_pSettingsEditorDoc = new CPropertyEditorDoc();
 
 // OLD WAY
-//	m_wndProperty.AddView(_T("Settings"), RUNTIME_CLASS(CPropertyEditorView), m_pSettingsEditorDoc );
-//	m_wndProperty.AddView(_T("Objects"), RUNTIME_CLASS(CPropertyEditorView), m_pPropertyEditorDoc );
+//    m_wndProperty.AddView(_T("Settings"), RUNTIME_CLASS(CPropertyEditorView), m_pSettingsEditorDoc );
+//    m_wndProperty.AddView(_T("Objects"), RUNTIME_CLASS(CPropertyEditorView), m_pPropertyEditorDoc );
 
 
     CFrameWnd* pFrameWnd = NULL;
@@ -535,7 +535,7 @@ int CEditorFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     // Load control bar postion.
     LoadBarState(_T("BarState - World"));
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
@@ -554,7 +554,7 @@ void CEditorFrame::CreateTemporaryObject( const char* pObjectType )
 {
     if (m_pWorldEditView && GetEditorDoc())
     {
-	    g_WorldEditor.CreateTemporaryObject( pObjectType );
+        g_WorldEditor.CreateTemporaryObject( pObjectType );
         m_pWorldEditView->EnterPlacementMode();
         if (GetPropertyEditorDoc()) GetPropertyEditorDoc()->Refresh();
 
@@ -592,7 +592,7 @@ void CEditorFrame::OnLoadLayers()
     xarray<xstring> List;
     g_WorldEditor.GetLayerNames(List);
     for (int i = 0; i < List.GetCount(); i++)
-	{
+    {
         if (g_WorldEditor.IsLayerLoaded(List.GetAt(i)))
         {
             m_wndComboBox.AddString(List.GetAt(i));
@@ -624,7 +624,7 @@ LRESULT CEditorFrame::OnUpdateRequired(WPARAM wParam, LPARAM lParam)
     if (m_pWorldEditView) 
     {
         m_pWorldEditView->SetViewDirty();
- 	    return 1;
+         return 1;
     }
     return 0;
 }
@@ -762,7 +762,7 @@ void CEditorFrame::OnUpdateWetbRenderPreview(CCmdUI* pCmdUI)
 {
     if (m_pWorldEditView && g_Project.IsProjectOpen())
     {
-        pCmdUI->Enable(TRUE);	
+        pCmdUI->Enable(TRUE);    
         pCmdUI->SetCheck(m_pWorldEditView->m_bRenderPreview);
     }
     else 
@@ -776,7 +776,7 @@ void CEditorFrame::OnUpdateWetbRenderPreview(CCmdUI* pCmdUI)
 
 void CEditorFrame::OnWetbLightLevel()
 {
-	CMenu menu;
+    CMenu menu;
     menu.CreatePopupMenu();
 
     menu.AppendMenu(MF_STRING|MF_ENABLED, IDR_LEVEL_LIGHT_NORMAL,   "Light::Distance");
@@ -786,9 +786,9 @@ void CEditorFrame::OnWetbLightLevel()
     menu.AppendMenu(MF_STRING|MF_ENABLED, IDR_LEVEL_LIGHT_WHITE,    "Light::FullBright");
     menu.AppendMenu(MF_STRING|MF_ENABLED, IDR_LEVEL_LIGHT_RAYCAST,  "Light::Raycast");
 
-	CPoint point;
-	GetCursorPos( &point );
-	menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON,point.x, point.y, this);
+    CPoint point;
+    GetCursorPos( &point );
+    menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON,point.x, point.y, this);
 }
 
 //=========================================================================
@@ -829,7 +829,7 @@ void CEditorFrame::OnUpdateWetbLightLevel(CCmdUI* pCmdUI)
 {
     if (m_pWorldEditView && g_Project.IsProjectOpen() && (!GetEditorDoc()->IsGameRunning()))
     {
-        pCmdUI->Enable(TRUE);	
+        pCmdUI->Enable(TRUE);    
     }
     else 
     {
@@ -844,7 +844,7 @@ void CEditorFrame::OnUpdateWetbSoundPropagateLevel(CCmdUI* pCmdUI)
 {
     if (m_pWorldEditView && g_Project.IsProjectOpen() && (!GetEditorDoc()->IsGameRunning()))
     {
-        pCmdUI->Enable(TRUE);	
+        pCmdUI->Enable(TRUE);    
     }
     else 
     {
@@ -874,14 +874,14 @@ void CEditorFrame::OnUpdateWetbTransStack(CCmdUI* pCmdUI)
     if (GetEditorDoc() && !GetEditorDoc()->IsGameRunning())
     {
         pCmdUI->Enable((transaction_mgr::Transaction()->CanUndo() || 
-                        transaction_mgr::Transaction()->CanRedo()));	
+                        transaction_mgr::Transaction()->CanRedo()));    
     }
     else
     {
         pCmdUI->Enable(FALSE);
     }
 
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -912,7 +912,7 @@ void CEditorFrame::OnUpdateWetbUndo(CCmdUI* pCmdUI)
     {
         pCmdUI->Enable(FALSE);
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -945,15 +945,15 @@ void CEditorFrame::OnUpdateWetbRedo(CCmdUI* pCmdUI)
         pCmdUI->Enable(FALSE);
     }
 
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
 
 void CEditorFrame::OnUpdateWetbFocusCam(CCmdUI* pCmdUI) 
 {
-    pCmdUI->Enable(g_Project.IsProjectOpen());	
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(g_Project.IsProjectOpen());    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -982,8 +982,8 @@ void CEditorFrame::OnUpdateWetbShowgrid(CCmdUI* pCmdUI)
 {
     if (m_pWorldEditView && g_Project.IsProjectOpen() )
     {
-        pCmdUI->Enable(TRUE);	
-        pCmdUI->SetCheck(m_pWorldEditView->m_bShowGrid);	
+        pCmdUI->Enable(TRUE);    
+        pCmdUI->SetCheck(m_pWorldEditView->m_bShowGrid);    
     }
     else 
     {
@@ -1011,8 +1011,8 @@ void CEditorFrame::OnUpdateWetbShowspacd(CCmdUI* pCmdUI)
 {
     if (m_pWorldEditView && g_Project.IsProjectOpen() )
     {
-        pCmdUI->Enable(TRUE);	
-        pCmdUI->SetCheck(m_pWorldEditView->m_bShowSpacD);	
+        pCmdUI->Enable(TRUE);    
+        pCmdUI->SetCheck(m_pWorldEditView->m_bShowSpacD);    
     }
     else 
     {
@@ -1027,7 +1027,7 @@ void CEditorFrame::OnWetbShowaxis()
 {
     if (m_pWorldEditView)
     {
-	    m_pWorldEditView->m_bShowAxis = !m_pWorldEditView->m_bShowAxis;
+        m_pWorldEditView->m_bShowAxis = !m_pWorldEditView->m_bShowAxis;
         m_pWorldEditView->Invalidate();
         m_pWorldEditView->UpdateWindow();
     }
@@ -1040,8 +1040,8 @@ void CEditorFrame::OnUpdateWetbShowaxis(CCmdUI* pCmdUI)
 {
     if (m_pWorldEditView && g_Project.IsProjectOpen())
     {
-        pCmdUI->Enable(TRUE);	
-        pCmdUI->SetCheck(m_pWorldEditView->m_bShowAxis);	
+        pCmdUI->Enable(TRUE);    
+        pCmdUI->SetCheck(m_pWorldEditView->m_bShowAxis);    
     }
     else 
     {
@@ -1056,7 +1056,7 @@ void CEditorFrame::OnShowSelectionBounds()
 {
     if (m_pWorldEditView)
     {
-	    m_pWorldEditView->m_bShowSelectionBounds = !m_pWorldEditView->m_bShowSelectionBounds;
+        m_pWorldEditView->m_bShowSelectionBounds = !m_pWorldEditView->m_bShowSelectionBounds;
         m_pWorldEditView->Invalidate();
         m_pWorldEditView->UpdateWindow();
     }
@@ -1069,8 +1069,8 @@ void CEditorFrame::OnUpdateShowSelectionBounds(CCmdUI* pCmdUI)
 {
     if (m_pWorldEditView && g_Project.IsProjectOpen())
     {
-        pCmdUI->Enable(TRUE);	
-        pCmdUI->SetCheck(m_pWorldEditView->m_bShowSelectionBounds);	
+        pCmdUI->Enable(TRUE);    
+        pCmdUI->SetCheck(m_pWorldEditView->m_bShowSelectionBounds);    
     }
     else 
     {
@@ -1085,7 +1085,7 @@ void CEditorFrame::OnWetbSnaptogrid()
 {
     if (m_pWorldEditView)
     {
-	    m_pWorldEditView->m_bGridSnap = !m_pWorldEditView->m_bGridSnap;
+        m_pWorldEditView->m_bGridSnap = !m_pWorldEditView->m_bGridSnap;
         m_pWorldEditView->Invalidate();
         m_pWorldEditView->UpdateWindow();
     }
@@ -1098,8 +1098,8 @@ void CEditorFrame::OnUpdateWetbSnaptogrid(CCmdUI* pCmdUI)
 {
     if (m_pWorldEditView && g_Project.IsProjectOpen())
     {
-        pCmdUI->Enable(TRUE);	
-        pCmdUI->SetCheck(m_pWorldEditView->m_bGridSnap);	
+        pCmdUI->Enable(TRUE);    
+        pCmdUI->SetCheck(m_pWorldEditView->m_bGridSnap);    
     }
     else     
     {
@@ -1114,7 +1114,7 @@ void CEditorFrame::OnWetbSnapAddWithRay()
 {
     if (m_pWorldEditView)
     {
-	    m_pWorldEditView->m_bAddWithRaySnap = !m_pWorldEditView->m_bAddWithRaySnap;
+        m_pWorldEditView->m_bAddWithRaySnap = !m_pWorldEditView->m_bAddWithRaySnap;
         m_pWorldEditView->Invalidate();
         m_pWorldEditView->UpdateWindow();
     }
@@ -1127,8 +1127,8 @@ void CEditorFrame::OnUpdateWetbSnapAddWithRay(CCmdUI* pCmdUI)
 {
     if (m_pWorldEditView && g_Project.IsProjectOpen())
     {
-        pCmdUI->Enable(TRUE);	
-        pCmdUI->SetCheck(m_pWorldEditView->m_bAddWithRaySnap);	
+        pCmdUI->Enable(TRUE);    
+        pCmdUI->SetCheck(m_pWorldEditView->m_bAddWithRaySnap);    
     }
     else     
     {
@@ -1146,7 +1146,7 @@ void CEditorFrame::OnWetbMoveMode()
         if (m_pWorldEditView->IsMovementMode())
         {
             g_WorldEditor.CheckSelectedForDuplicates();
-	        m_pWorldEditView->CancelMovementMode();
+            m_pWorldEditView->CancelMovementMode();
         }
         else
         {
@@ -1154,7 +1154,7 @@ void CEditorFrame::OnWetbMoveMode()
             g_WorldEditor.SetCurrentUndoEntry(new transaction_entry(
                 xfs("Moving %d Object(s)",g_WorldEditor.GetSelectedCount())));
 
-	        m_pWorldEditView->EnterMovementMode();
+            m_pWorldEditView->EnterMovementMode();
         }
     }
     if (m_pWorldEditView) m_pWorldEditView->SetFocus(); //set focus to view
@@ -1168,8 +1168,8 @@ void CEditorFrame::OnUpdateWetbMoveMode(CCmdUI* pCmdUI)
         g_Project.IsProjectOpen() && g_WorldEditor.IsSelectedObjectsEditable() && 
         (!GetEditorDoc()->IsGameRunning()))
     {
-        pCmdUI->Enable(m_pWorldEditView->IsStandardMode() || m_pWorldEditView->IsMovementMode());	
-        pCmdUI->SetCheck(m_pWorldEditView->IsMovementMode());	
+        pCmdUI->Enable(m_pWorldEditView->IsStandardMode() || m_pWorldEditView->IsMovementMode());    
+        pCmdUI->SetCheck(m_pWorldEditView->IsMovementMode());    
     }
     else 
     {
@@ -1206,7 +1206,7 @@ void CEditorFrame::OnWetbCopyObjects()
             AddBlueprintToActiveLayerView(BPGuid);
         }
 
-	    m_pWorldEditView->EnterMovementMode();
+        m_pWorldEditView->EnterMovementMode();
         //for UNDO, must be done after entering movement mode, force UNDO commit after moving
         m_pWorldEditView->ForceMovementUndoRecording(); 
         m_pWorldEditView->SetViewDirty();
@@ -1222,7 +1222,7 @@ void CEditorFrame::OnUpdateWetbCopyObjects(CCmdUI* pCmdUI)
         g_Project.IsProjectOpen() &&
         (!GetEditorDoc()->IsGameRunning()))
     {
-        pCmdUI->Enable(m_pWorldEditView->IsStandardMode());	
+        pCmdUI->Enable(m_pWorldEditView->IsStandardMode());    
     }
     else 
     {
@@ -1296,7 +1296,7 @@ void CEditorFrame::OnUpdateWetbMoveObjectsToActiveLayer(CCmdUI* pCmdUI)
         g_Project.IsProjectOpen() && g_WorldEditor.IsSelectedObjectsEditable() &&
         (!GetEditorDoc()->IsGameRunning()))
     {
-        pCmdUI->Enable(m_pWorldEditView->IsStandardMode());	
+        pCmdUI->Enable(m_pWorldEditView->IsStandardMode());    
     }
     else 
     {
@@ -1437,8 +1437,8 @@ void CEditorFrame::OnUpdateWetbRunGame(CCmdUI* pCmdUI)
 {
     if (GetEditorDoc() && GetEditorView()->IsStandardMode())
     {
-        pCmdUI->Enable(g_Project.IsProjectOpen());	
-        pCmdUI->SetCheck(GetEditorDoc()->IsGameRunning());	
+        pCmdUI->Enable(g_Project.IsProjectOpen());    
+        pCmdUI->SetCheck(GetEditorDoc()->IsGameRunning());    
     }
     else
     {
@@ -1478,13 +1478,13 @@ void CEditorFrame::OnUpdateWetbPauseGame(CCmdUI* pCmdUI)
 {
     if (GetEditorDoc())
     {
-        pCmdUI->Enable(GetEditorDoc()->IsGameRunning());	
-        pCmdUI->SetCheck(GetEditorDoc()->IsGamePaused());	
+        pCmdUI->Enable(GetEditorDoc()->IsGameRunning());    
+        pCmdUI->SetCheck(GetEditorDoc()->IsGamePaused());    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
-        pCmdUI->SetCheck(FALSE);	
+        pCmdUI->Enable(FALSE);    
+        pCmdUI->SetCheck(FALSE);    
     }
 }
 
@@ -1502,14 +1502,14 @@ void CEditorFrame::OnWetbStepGame()
 
 void CEditorFrame::OnUpdateWetbStepGame(CCmdUI* pCmdUI) 
 {
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
     if (GetEditorDoc())
     {
         pCmdUI->Enable( (GetEditorDoc()->IsGameRunning()) && (GetEditorDoc()->IsGamePaused()) );
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
 }
 
@@ -1529,13 +1529,13 @@ void CEditorFrame::OnUpdateWetbSaveGame(CCmdUI* pCmdUI)
 {
     if (GetEditorDoc())
     {
-        pCmdUI->Enable(GetEditorDoc()->IsGameRunning());	
+        pCmdUI->Enable(GetEditorDoc()->IsGameRunning());    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -1554,13 +1554,13 @@ void CEditorFrame::OnUpdateWetbLoadGame(CCmdUI* pCmdUI)
 {
     if (GetEditorDoc())
     {
-        pCmdUI->Enable(GetEditorDoc()->IsGameRunning());	
+        pCmdUI->Enable(GetEditorDoc()->IsGameRunning());    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -1577,12 +1577,12 @@ void CEditorFrame::OnWetbPortalWalk()
 
 void CEditorFrame::OnWetbSoundDebugStats() 
 {
-	// TODO: GS: Do with this something later.
+    // TODO: GS: Do with this something later.
     //if (GetEditorDoc()->IsGameRunning())
     //{   
     //    xarray<xstring> LoadedPackages;
     //    extern xarray<xstring> g_AuditionPackages;
-	//
+    //
     //    g_AudioMgr.GetLoadedPackages( LoadedPackages );
     //    if( g_AuditionPackages.GetCount() && LoadedPackages.GetCount() )
     //    {
@@ -1595,7 +1595,7 @@ void CEditorFrame::OnWetbSoundDebugStats()
     //            }
     //        }
     //    }
-	//
+    //
     //    if( LoadedPackages.GetCount() )
     //    {
     //        x_DebugMsg( "********** Loaded Audio Packages **********\n" );
@@ -1605,35 +1605,35 @@ void CEditorFrame::OnWetbSoundDebugStats()
     //        {
     //            X_FILE* pPS2File = NULL;
     //            char PS2FilePath[256];
-	//
+    //
     //            x_try;
-	//
+    //
     //            x_sprintf( PS2FilePath, "%s\\PS2\\%s", g_Settings.GetReleasePath(), (const char*)LoadedPackages[j] );
-	//
+    //
     //            pPS2File = x_fopen( PS2FilePath, "rb" );
-	//
+    //
     //            if( pPS2File == NULL )
     //                x_throw( xfs("Unable to open file [%s]", (const char*)LoadedPackages[j]) );
-	//
+    //
     //            package_identifier  PackageID;
     //            package_header      PackageHeader;
     //            s32                 MRAM = 0;
     //            s32                 ARAM = 0;
     //            s32                 i    = 0;
-	//
+    //
     //            // Read in the package identifier.
     //            x_fread( &PackageID, sizeof(package_identifier), 1, pPS2File );
-	//
+    //
     //            // Correct version?
     //            if( !x_strncmp( PackageID.VersionID, PS2_PACKAGE_VERSION, VERSION_ID_SIZE ) )
     //            {
     //                // Correct platform?
     //                if( !x_strncmp( PackageID.TargetID, PS2_TARGET_ID, TARGET_ID_SIZE ) )
     //                {
-	//
+    //
     //                    // Now read in the header.
     //                    x_fread( &PackageHeader, sizeof(package_header), 1, pPS2File );
-	//
+    //
     //                    MRAM    += PackageHeader.StringTableFootprint;
     //                    MRAM    += PackageHeader.MusicDataFootprint;
     //                    MRAM    += PackageHeader.LipSyncTableFootprint;
@@ -1641,7 +1641,7 @@ void CEditorFrame::OnWetbSoundDebugStats()
     //                    MRAM    += PackageHeader.nIdentifiers * sizeof(descriptor_identifier);
     //                    MRAM    += PackageHeader.nDescriptors * sizeof(u32*);
     //                    MRAM    += PackageHeader.DescriptorFootprint;
-	//
+    //
     //                    // For each temperature...
     //                    for( i=0 ; i<NUM_TEMPERATURES ; i++ )
     //                    {
@@ -1651,18 +1651,18 @@ void CEditorFrame::OnWetbSoundDebugStats()
     //                            MRAM += (PackageHeader.nSampleIndices[ i ]+1) * sizeof(u16);
     //                        }
     //                    }
-	//
+    //
     //                    // Allocate memory for the hot and cold samples
     //                    if( PackageHeader.nSampleHeaders[ HOT ] )
     //                    {
     //                        MRAM +=  PackageHeader.nSampleHeaders[ HOT ] * PackageHeader.HeaderSizes[ HOT ];
     //                    }
-	//
+    //
     //                    if( PackageHeader.nSampleHeaders[ COLD ] )
     //                    {
     //                        MRAM += PackageHeader.nSampleHeaders[ COLD ] * PackageHeader.HeaderSizes[ COLD ];
     //                    }
-	//
+    //
     //                    ARAM    += PackageHeader.Aram;
     //                }
     //                else
@@ -1674,22 +1674,22 @@ void CEditorFrame::OnWetbSoundDebugStats()
     //            {
     //                x_throw( xfs("Incorrect audio package VERSION [%s]", (const char*)LoadedPackages[j]) );
     //            }
-	//
+    //
     //            TotalRamFootprint += ARAM;
-	//
+    //
     //            x_DebugMsg( "%7d %s\n", ARAM, (const char*)LoadedPackages[j] );
     //            x_fclose( pPS2File );
-	//
+    //
     //            x_catch_begin;
-	//
+    //
     //            x_display_exception_msg( xfs("Could not load audiopkg for PS2 memory scan:\n%s",PS2FilePath) );
-	//
+    //
     //            if( pPS2File )
     //                x_fclose( pPS2File );
-	//
+    //
     //            x_catch_end;
     //        }
-	//
+    //
     //        x_DebugMsg( "=======\n" );
     //        x_DebugMsg( "%7d Total [%dk]\n", TotalRamFootprint, (TotalRamFootprint + 1023) / 1024 );
     //        x_DebugMsg( "%7d FREE [%dk]\n", (5000*1024 - TotalRamFootprint), (5000*1024 - TotalRamFootprint + 1023) / 1024 );
@@ -1704,7 +1704,7 @@ void CEditorFrame::OnUpdateWetbSoundDebugStats(CCmdUI* pCmdUI)
     if (GetEditorDoc() && GetEditorDoc()->IsGameRunning())
     {
         pCmdUI->Enable(TRUE);
-        pCmdUI->SetCheck(FALSE);	
+        pCmdUI->SetCheck(FALSE);    
     }
     else
     {
@@ -1838,12 +1838,12 @@ void CEditorFrame::OnUpdateWetbRenderIcons(CCmdUI* pCmdUI)
     if (GetEditorDoc())
     {
         pCmdUI->Enable(TRUE);
-        pCmdUI->SetCheck(GetEditorView()->m_bRenderIcons);	
+        pCmdUI->SetCheck(GetEditorView()->m_bRenderIcons);    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
-        pCmdUI->SetCheck(FALSE);	
+        pCmdUI->Enable(FALSE);    
+        pCmdUI->SetCheck(FALSE);    
     }
 }
 
@@ -1863,13 +1863,13 @@ void CEditorFrame::OnUpdateWetbPortalWalk(CCmdUI* pCmdUI)
 {
     if (GetEditorDoc())
     {
-        pCmdUI->Enable(GetEditorDoc()->IsGameRunning());	
-        pCmdUI->SetCheck(GetEditorView()->m_bDoPortalWalk);	
+        pCmdUI->Enable(GetEditorDoc()->IsGameRunning());    
+        pCmdUI->SetCheck(GetEditorView()->m_bDoPortalWalk);    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
-        pCmdUI->SetCheck(FALSE);	
+        pCmdUI->Enable(FALSE);    
+        pCmdUI->SetCheck(FALSE);    
     }
 }
 
@@ -1886,8 +1886,8 @@ void CEditorFrame::OnUpdateWetbToggleFPV(CCmdUI* pCmdUI)
 {
     if (GetEditorDoc() && GetEditorDoc()->IsGameRunning())
     {
-        pCmdUI->Enable(TRUE);	
-        pCmdUI->SetCheck(GetEditorDoc()->IsFPV());	
+        pCmdUI->Enable(TRUE);    
+        pCmdUI->SetCheck(GetEditorDoc()->IsFPV());    
     }
     else
     {
@@ -1913,7 +1913,7 @@ void CEditorFrame::OnUpdateWetbGridToObject(CCmdUI* pCmdUI)
         g_Project.IsProjectOpen() &&
         (g_WorldEditor.GetSelectedCount() > 0))
     {
-        pCmdUI->Enable(TRUE);	
+        pCmdUI->Enable(TRUE);    
     }
     else 
     {
@@ -1955,7 +1955,7 @@ void CEditorFrame::OnCreateObject()
     else if (m_pWorldEditView->IsStandardMode())
     {
         s32     Count = 0;
-	    CMenu menu;
+        CMenu menu;
         CMenu SubmenuArray[64];
         s32     iSubMenu=0;
         menu.CreatePopupMenu();
@@ -2003,11 +2003,11 @@ void CEditorFrame::OnCreateObject()
         }
 
         if (g_WorldEditor.GetSelectedCount() == 1)
-	        menu.AppendMenu(MF_STRING|MF_ENABLED, IDR_CREATE_OBJECT_FROM_SELECTED, "Create From Selected");
+            menu.AppendMenu(MF_STRING|MF_ENABLED, IDR_CREATE_OBJECT_FROM_SELECTED, "Create From Selected");
 
-	    CPoint point;
-	    GetCursorPos( &point );
-	    menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON,point.x, point.y, this);
+        CPoint point;
+        GetCursorPos( &point );
+        menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON,point.x, point.y, this);
     }
 }
 
@@ -2028,12 +2028,12 @@ void CEditorFrame::OnUpdateWetbCreateObject(CCmdUI* pCmdUI)
         !g_WorldEditor.IsLayerReadonly(g_WorldEditor.GetActiveLayer()) &&
         (m_pWorldEditView->IsPlacementMode() || m_pWorldEditView->IsStandardMode()))
     {
-        pCmdUI->Enable(TRUE);	
-        pCmdUI->SetCheck(m_pWorldEditView->IsPlacementMode());	
+        pCmdUI->Enable(TRUE);    
+        pCmdUI->SetCheck(m_pWorldEditView->IsPlacementMode());    
     }
     else 
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
         pCmdUI->SetCheck(FALSE);
     }
 }
@@ -2063,7 +2063,7 @@ void CEditorFrame::OnWetbDeleteSelected()
     g_WorldEditor.SetCurrentUndoEntry(new transaction_entry(
         xfs("Deleting %d Object(s)",g_WorldEditor.GetSelectedCount())));
 
-	g_WorldEditor.DeleteSelectedObjects(lstItems);
+    g_WorldEditor.DeleteSelectedObjects(lstItems);
     for (int i=0; i<lstItems.GetCount(); i++)
     {
         editor_item_descript Description = lstItems.GetAt(i);
@@ -2112,8 +2112,8 @@ void CEditorFrame::OnUpdateWetbDeleteSelected(CCmdUI* pCmdUI)
         bEnable = (g_WorldEditor.GetSelectedCount()>0) &&
                    m_pWorldEditView->IsStandardMode();
     }
-	pCmdUI->Enable(bEnable);
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(bEnable);
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2211,7 +2211,7 @@ void CEditorFrame::OnCreateFromSelected()
 {
     if (m_pWorldEditView && GetEditorDoc())
     {
-	    g_WorldEditor.CreateTemporaryObjectFromSel();
+        g_WorldEditor.CreateTemporaryObjectFromSel();
         g_WorldEditor.MoveTemporaryObjects(m_pWorldEditView->GetFocusPos());
         m_pWorldEditView->EnterPlacementMode();
         if (GetPropertyEditorDoc()) GetPropertyEditorDoc()->Refresh();
@@ -2224,8 +2224,8 @@ void CEditorFrame::OnCreateFromSelected()
 
 void CEditorFrame::OnUpdateCreateGenericObject(CCmdUI* pCmdUI) 
 {
-	pCmdUI->Enable(TRUE);
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(TRUE);
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2302,13 +2302,13 @@ void CEditorFrame::OnUpdateBptbCreateBlueprint(CCmdUI* pCmdUI)
         BOOL bEnable = ((g_WorldEditor.GetSelectedCount() > 0) &&
                         (m_pWorldEditView->IsStandardMode()));
 
-	    pCmdUI->Enable(bEnable);
+        pCmdUI->Enable(bEnable);
     }
     else
     {
         pCmdUI->Enable(FALSE);
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2318,13 +2318,13 @@ void CEditorFrame::OnUpdateBptbCreateAnchor(CCmdUI* pCmdUI)
     if (m_pWorldEditView && g_Project.IsProjectOpen() && GetEditorView()->IsStandardMode() &&
         GetEditorDoc() && !GetEditorDoc()->IsGameRunning())
     {
-        pCmdUI->Enable(TRUE);	
+        pCmdUI->Enable(TRUE);    
     }
     else 
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2335,13 +2335,13 @@ void CEditorFrame::OnUpdateBptbAddBlueprintAsObjects(CCmdUI* pCmdUI)
     if (pView && g_Project.IsProjectOpen() && GetEditorView()->IsStandardMode() && 
         GetEditorDoc() && !GetEditorDoc()->IsGameRunning())
     {
-        pCmdUI->Enable(pView->IsBlueprintAddable(this));	
+        pCmdUI->Enable(pView->IsBlueprintAddable(this));    
     }
     else 
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2352,21 +2352,21 @@ void CEditorFrame::OnUpdateBptbShatterBlueprint(CCmdUI* pCmdUI)
         g_Project.IsProjectOpen() && GetEditorView()->IsStandardMode() && 
         !GetEditorDoc()->IsGameRunning())
     {
-        pCmdUI->Enable(TRUE);	
+        pCmdUI->Enable(TRUE);    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
 
 void CEditorFrame::OnUpdateBptbRefresh(CCmdUI* pCmdUI)
 {
-    pCmdUI->SetCheck(FALSE);	
-    pCmdUI->Enable(g_Project.IsProjectOpen());	
+    pCmdUI->SetCheck(FALSE);    
+    pCmdUI->Enable(g_Project.IsProjectOpen());    
 }
 
 //=========================================================================
@@ -2378,13 +2378,13 @@ void CEditorFrame::OnUpdateBptbShatterBlueprintForEdit(CCmdUI* pCmdUI)
         g_Project.IsProjectOpen() && GetEditorView()->IsStandardMode() &&
         !GetEditorDoc()->IsGameRunning())
     {
-        pCmdUI->Enable(TRUE);	
+        pCmdUI->Enable(TRUE);    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2396,12 +2396,12 @@ void CEditorFrame::OnUpdateBptbAddBlueprint(CCmdUI* pCmdUI)
         (GetEditorView()->IsStandardMode() || GetEditorView()->IsBlueprintMode()) &&
         GetEditorDoc() && !GetEditorDoc()->IsGameRunning())
     {
-        pCmdUI->Enable(pView->IsBlueprintAddable(this) || GetEditorView()->IsBlueprintMode());	
-        pCmdUI->SetCheck(GetEditorView()->IsBlueprintMode());	
+        pCmdUI->Enable(pView->IsBlueprintAddable(this) || GetEditorView()->IsBlueprintMode());    
+        pCmdUI->SetCheck(GetEditorView()->IsBlueprintMode());    
     }
     else 
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
 }
 
@@ -2501,21 +2501,21 @@ BOOL CEditorFrame::RemoveBlueprintFromLayerView(CString strLayer, CString strLay
 
 void CEditorFrame::OnUpdateAIButtonCreateNavNode(CCmdUI* pCmdUI) 
 {
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
     pCmdUI->Enable(
         g_Project.IsProjectOpen() && 
         !g_WorldEditor.IsLayerReadonly(g_WorldEditor.GetGlobalLayer()) &&
-        GetEditorView()->IsStandardMode());	
+        GetEditorView()->IsStandardMode());    
 }
 
 //=========================================================================
 
 void CEditorFrame::OnUpdateAIButtonCreatePlayer(CCmdUI* pCmdUI) 
 {
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
     pCmdUI->Enable(g_Project.IsProjectOpen() && 
         !g_WorldEditor.IsLayerReadonly(g_WorldEditor.GetActiveLayer()) &&
-        GetEditorView()->IsStandardMode());	
+        GetEditorView()->IsStandardMode());    
 }
 
 //=========================================================================
@@ -2532,7 +2532,7 @@ void CEditorFrame::OnUpdateOvtbAddPlaysurface(CCmdUI* pCmdUI)
                     GetEditorDoc() && 
                     !GetEditorDoc()->IsGameRunning() &&
                     m_pWorldEditView && 
-                    m_pWorldEditView->IsStandardMode());	
+                    m_pWorldEditView->IsStandardMode());    
     pCmdUI->SetCheck(FALSE);
 }
 
@@ -2548,7 +2548,7 @@ void CEditorFrame::OnUpdateOvtbAddPropsurface(CCmdUI* pCmdUI)
                     GetEditorDoc() && 
                     !GetEditorDoc()->IsGameRunning() &&
                     m_pWorldEditView && 
-                    m_pWorldEditView->IsStandardMode());	
+                    m_pWorldEditView->IsStandardMode());    
     pCmdUI->SetCheck(FALSE);
 }
 
@@ -2564,7 +2564,7 @@ void CEditorFrame::OnUpdateOvtbAddAnimsurface(CCmdUI* pCmdUI)
                     GetEditorDoc() && 
                     !GetEditorDoc()->IsGameRunning() &&
                     m_pWorldEditView && 
-                    m_pWorldEditView->IsStandardMode());	
+                    m_pWorldEditView->IsStandardMode());    
     pCmdUI->SetCheck(FALSE);
 }
 
@@ -2586,13 +2586,13 @@ void CEditorFrame::OnUpdateOvtbUpdateRigidInst(CCmdUI* pCmdUI)
                  (x_stricmp( pTypeName, prop_surface::GetObjectType().GetTypeName() ) == 0) ||
                  (x_stricmp( pTypeName, anim_surface::GetObjectType().GetTypeName() ) == 0) )
             {
-                bEnable = TRUE;	
+                bEnable = TRUE;    
             }
         }
     }
 
-    pCmdUI->Enable(bEnable);	
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(bEnable);    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2613,21 +2613,21 @@ void CEditorFrame::OnUpdateOvtbUpdateGeomsFromSel(CCmdUI* pCmdUI)
                  (x_stricmp( pTypeName, prop_surface::GetObjectType().GetTypeName() ) == 0) ||
                  (x_stricmp( pTypeName, anim_surface::GetObjectType().GetTypeName() ) == 0) )
             {
-                bEnable = TRUE;	
+                bEnable = TRUE;    
             }
         }
     }
 
-    pCmdUI->Enable(bEnable);	
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(bEnable);    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
 
 void CEditorFrame::OnUpdateOvtbRefresh(CCmdUI* pCmdUI)
 {
-    pCmdUI->SetCheck(FALSE);	
-    pCmdUI->Enable(g_Project.IsProjectOpen());	
+    pCmdUI->SetCheck(FALSE);    
+    pCmdUI->Enable(g_Project.IsProjectOpen());    
 }
 
 //=========================================================================
@@ -2652,7 +2652,7 @@ void CEditorFrame::OnUpdateDvtbPaintMode(CCmdUI* pCmdUI)
                     GetEditorDoc() && 
                     !GetEditorDoc()->IsGameRunning() &&
                     m_pWorldEditView && 
-                    m_pWorldEditView->IsStandardMode());	
+                    m_pWorldEditView->IsStandardMode());    
     pCmdUI->SetCheck(FALSE);
 }
 
@@ -2660,23 +2660,23 @@ void CEditorFrame::OnUpdateDvtbPaintMode(CCmdUI* pCmdUI)
 
 void CEditorFrame::OnClose() 
 {
-	//commenting out so user can not close this window
-	//CBaseFrame::OnClose();
+    //commenting out so user can not close this window
+    //CBaseFrame::OnClose();
 }
 
 //=========================================================================
 
 void CEditorFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd) 
 {
-	CBaseFrame::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
-	
+    CBaseFrame::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
+    
     if( GetEditorDoc() )
     {
         GetEditorDoc()->SetDocumentActive( bActivate );
     }
 
     if (!m_strCurrentLevel.IsEmpty())
-        SetWindowText(m_strCurrentLevel);	
+        SetWindowText(m_strCurrentLevel);    
     else
         SetWindowText("WorldEditor");
    
@@ -2729,7 +2729,7 @@ void CEditorFrame::OnUpdateButtonConnectVisible(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(g_Project.IsProjectOpen() && 
         !g_WorldEditor.IsLayerReadonly(g_WorldEditor.GetGlobalLayer()) &&
-        GetEditorView()->IsStandardMode());	
+        GetEditorView()->IsStandardMode());    
 }
 
 //=========================================================================
@@ -2738,7 +2738,7 @@ void CEditorFrame::OnUpdateButtonConnectSelected(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(g_Project.IsProjectOpen() && 
         !g_WorldEditor.IsLayerReadonly(g_WorldEditor.GetGlobalLayer()) &&
-        GetEditorView()->IsStandardMode());	
+        GetEditorView()->IsStandardMode());    
 }
 
 //=========================================================================
@@ -2756,7 +2756,7 @@ void CEditorFrame::OnUpdateButtonCheckAllNodes(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(g_Project.IsProjectOpen() && 
         !g_WorldEditor.IsLayerReadonly(g_WorldEditor.GetGlobalLayer()) &&
-        GetEditorView()->IsStandardMode());	
+        GetEditorView()->IsStandardMode());    
 }
 
 //=========================================================================

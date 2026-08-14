@@ -234,7 +234,7 @@ save_data_status save_data_backend::List( xarray<save_data_file_info>& Files )
             FindClose( Find );
             return save_data_status::IoError;
         }
-        save_data_file_info& Info = Files.Append();		
+        save_data_file_info& Info = Files.Append();        
 
         Info.Name         = FindData.cFileName;
         Info.Size         = static_cast<s32>( Size.QuadPart );

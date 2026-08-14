@@ -23,7 +23,7 @@
 
 enum controls
 {
-	IDC_EULA_TEXTBOX,
+    IDC_EULA_TEXTBOX,
 };
 
 
@@ -108,7 +108,7 @@ xbool dlg_online_eula::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pEULATextBox  = (ui_textbox*) FindChildByID( IDC_EULA_TEXTBOX  );
     
@@ -161,7 +161,7 @@ void dlg_online_eula::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
         
     // render transparent screen
     rb.l = m_CurrPos.l + 22;

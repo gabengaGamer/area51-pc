@@ -20,11 +20,11 @@ static char THIS_FILE[] = __FILE__;
 
 
 CElemBrowser::CElemBrowser(CWnd* pParent /*=NULL*/)
-	: CDialog(CElemBrowser::IDD, pParent)
+    : CDialog(CElemBrowser::IDD, pParent)
 {
-	//{{AFX_DATA_INIT(CElemBrowser)
-	m_ShouldHide = FALSE;
-	//}}AFX_DATA_INIT
+    //{{AFX_DATA_INIT(CElemBrowser)
+    m_ShouldHide = FALSE;
+    //}}AFX_DATA_INIT
 
     m_pDoc = NULL;
     m_pData = NULL;
@@ -38,24 +38,24 @@ CElemBrowser::~CElemBrowser()
 
 void CElemBrowser::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CElemBrowser)
-	DDX_Control(pDX, IDC_DOWN, m_Down);
-	DDX_Control(pDX, IDC_UP, m_Up);
-	DDX_Control(pDX, IDC_ELEM_LIST, m_ElemList);
-	DDX_Check(pDX, IDC_HIDE, m_ShouldHide);
-	//}}AFX_DATA_MAP
+    CDialog::DoDataExchange(pDX);
+    //{{AFX_DATA_MAP(CElemBrowser)
+    DDX_Control(pDX, IDC_DOWN, m_Down);
+    DDX_Control(pDX, IDC_UP, m_Up);
+    DDX_Control(pDX, IDC_ELEM_LIST, m_ElemList);
+    DDX_Check(pDX, IDC_HIDE, m_ShouldHide);
+    //}}AFX_DATA_MAP
 }
 
 
 BEGIN_MESSAGE_MAP(CElemBrowser, CDialog)
-	//{{AFX_MSG_MAP(CElemBrowser)
-	ON_LBN_SELCHANGE(IDC_ELEM_LIST, OnSelchangeElemList)
-	ON_WM_DESTROY()
-	ON_LBN_DBLCLK(IDC_ELEM_LIST, OnDblclkElemList)
-	ON_BN_CLICKED(IDC_UP, OnUp)
-	ON_BN_CLICKED(IDC_DOWN, OnDown)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CElemBrowser)
+    ON_LBN_SELCHANGE(IDC_ELEM_LIST, OnSelchangeElemList)
+    ON_WM_DESTROY()
+    ON_LBN_DBLCLK(IDC_ELEM_LIST, OnDblclkElemList)
+    ON_BN_CLICKED(IDC_UP, OnUp)
+    ON_BN_CLICKED(IDC_DOWN, OnDown)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -105,8 +105,8 @@ void CElemBrowser::PopulateList( void )
 
 BOOL CElemBrowser::OnInitDialog() 
 {
-	CDialog::OnInitDialog();
-	
+    CDialog::OnInitDialog();
+    
     m_Up  .SetBitmap( CSize(15,15), IDB_UP   );
     m_Down.SetBitmap( CSize(15,15), IDB_DOWN );
 
@@ -117,7 +117,7 @@ BOOL CElemBrowser::OnInitDialog()
     PopulateList();
 
     return TRUE;  // return TRUE unless you set the focus to a control
-	              // EXCEPTION: OCX Property Pages should return FALSE
+                  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 
@@ -130,8 +130,8 @@ void CElemBrowser::OnSelchangeElemList()
 
 void CElemBrowser::OnDestroy() 
 {
-	CDialog::OnDestroy();
-	
+    CDialog::OnDestroy();
+    
     if( ::IsWindow( m_ElemList.GetSafeHwnd() ) )
     {
         m_SelCount = m_ElemList.GetSelCount();           // Find out how many new items selected    
@@ -139,7 +139,7 @@ void CElemBrowser::OnDestroy()
         s32* pSel = new s32[m_SelCount];                 // allocate an array of indices
         m_pData =   new DWORD[m_SelCount];
     
-        m_ElemList.GetSelItems( m_SelCount, pSel );      // Fetch the selected items    	
+        m_ElemList.GetSelItems( m_SelCount, pSel );      // Fetch the selected items        
 
         for ( s32 i = 0; i < m_SelCount; i++ )
         {
@@ -152,7 +152,7 @@ void CElemBrowser::OnDestroy()
 
 void CElemBrowser::OnDblclkElemList() 
 {
-	EndDialog(IDOK);
+    EndDialog(IDOK);
 }
 
 void CElemBrowser::OnUp() 

@@ -33,7 +33,7 @@ class CKeyBar : public CControlBar
 {
     // Construction
     public:
-	    CKeyBar();
+        CKeyBar();
 
     // Attributes
     public:
@@ -42,17 +42,17 @@ class CKeyBar : public CControlBar
     public:
 
     // Overrides
-	    // ClassWizard generated virtual function overrides
-	    //{{AFX_VIRTUAL(CKeyBar)
-	public:
-	virtual BOOL Create(CWnd* pParentWnd, DWORD dwStyle, UINT nID);
-	protected:
-	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
-	//}}AFX_VIRTUAL
+        // ClassWizard generated virtual function overrides
+        //{{AFX_VIRTUAL(CKeyBar)
+    public:
+    virtual BOOL Create(CWnd* pParentWnd, DWORD dwStyle, UINT nID);
+    protected:
+    virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
+    //}}AFX_VIRTUAL
 
     // Implementation
     public:
-	    virtual ~CKeyBar();
+        virtual ~CKeyBar();
 
         f32     GetTime             ( void ) const;
         int     GetTimeRangeStart   ( void ) const;
@@ -110,13 +110,13 @@ class CKeyBar : public CControlBar
         bool            m_DoLoopPlayback;
         bool            m_DoKeyStep;
 
-	    // Generated message map functions
+        // Generated message map functions
     protected:
-	    //{{AFX_MSG(CKeyBar)
-	    afx_msg void    OnPaint();
-	    afx_msg void    OnTimer(UINT nIDEvent);
-	//}}AFX_MSG
-	    DECLARE_MESSAGE_MAP()
+        //{{AFX_MSG(CKeyBar)
+        afx_msg void    OnPaint();
+        afx_msg void    OnTimer(UINT nIDEvent);
+    //}}AFX_MSG
+        DECLARE_MESSAGE_MAP()
 
         afx_msg void    OnChange_FrameStart();
         afx_msg void    OnChange_FrameEnd();

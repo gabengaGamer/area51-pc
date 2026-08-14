@@ -31,7 +31,7 @@ public:
 
         //=============================================================================
                          debris_meson_explosion             ( void );
-    virtual				~debris_meson_explosion             ( void );
+    virtual                ~debris_meson_explosion             ( void );
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
 
@@ -49,7 +49,7 @@ public:
     virtual bbox        GetLocalBBox        ( void ) const;
     virtual s32         GetMaterial         ( void ) const { return MAT_TYPE_CONCRETE;}
     virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
-    virtual void        OnMove				( const vector3& rNewPos );
+    virtual void        OnMove                ( const vector3& rNewPos );
     virtual void        OnRender            ( void );
     virtual void        OnRenderTransparent ( void );
 

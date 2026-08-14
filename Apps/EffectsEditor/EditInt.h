@@ -18,7 +18,7 @@ class CEditInt : public CEdit
 {
     // Construction
     public:
-	    CEditInt();
+        CEditInt();
 
     // Attributes
     public:
@@ -27,15 +27,15 @@ class CEditInt : public CEdit
     public:
 
     // Overrides
-	    // ClassWizard generated virtual function overrides
-	    //{{AFX_VIRTUAL(CEditInt)
-	    public:
-	    virtual BOOL PreTranslateMessage(MSG* pMsg);
-	    //}}AFX_VIRTUAL
+        // ClassWizard generated virtual function overrides
+        //{{AFX_VIRTUAL(CEditInt)
+        public:
+        virtual BOOL PreTranslateMessage(MSG* pMsg);
+        //}}AFX_VIRTUAL
 
     // Implementation
     public:
-	    virtual ~CEditInt();
+        virtual ~CEditInt();
 
         int     GetValue    ( void ) const;
         int     SetValue    ( int Value );
@@ -48,18 +48,18 @@ class CEditInt : public CEdit
         CBrush      m_brBackground;
 
 
-	    // Generated message map functions
+        // Generated message map functions
     protected:
-	    //{{AFX_MSG(CEditInt)
-	    afx_msg HBRUSH CtlColor(CDC* pDC, UINT nCtlColor);
-	    afx_msg void OnPaint();
-	    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	    afx_msg void OnSetFocus(CWnd* pOldWnd);
-	    afx_msg void OnKillFocus(CWnd* pNewWnd);
-	afx_msg void OnUpdate();
-	//}}AFX_MSG
+        //{{AFX_MSG(CEditInt)
+        afx_msg HBRUSH CtlColor(CDC* pDC, UINT nCtlColor);
+        afx_msg void OnPaint();
+        afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+        afx_msg void OnSetFocus(CWnd* pOldWnd);
+        afx_msg void OnKillFocus(CWnd* pNewWnd);
+    afx_msg void OnUpdate();
+    //}}AFX_MSG
 
-	    DECLARE_MESSAGE_MAP()
+        DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

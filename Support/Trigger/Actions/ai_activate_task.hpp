@@ -27,8 +27,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Activate Task"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "Activates a character task."; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& List );
-    virtual			xbool	            OnProperty	( prop_query& I );
+    virtual            void                OnEnumProp    ( prop_enum& List );
+    virtual            xbool                OnProperty    ( prop_query& I );
 
     virtual         void                OnRender    ( void );
  

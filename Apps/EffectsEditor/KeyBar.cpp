@@ -43,8 +43,8 @@ CKeyBar::~CKeyBar()
 
 
 BEGIN_MESSAGE_MAP(CKeyBar, CControlBar)
-	//{{AFX_MSG_MAP(CKeyBar)
-	ON_WM_PAINT()
+    //{{AFX_MSG_MAP(CKeyBar)
+    ON_WM_PAINT()
     ON_MESSAGE( WM_USER_MSG_EDIT_ENTERED,                       OnEdit_Entered                      )
 
     ON_MESSAGE( WM_USER_MSG_TIMESLIDER_EDIT_BEGIN,              OnTimeSlider_Edit_Begin             )
@@ -59,8 +59,8 @@ BEGIN_MESSAGE_MAP(CKeyBar, CControlBar)
     ON_MESSAGE( WM_USER_MSG_TIMESLIDER_KEYS_CHANGED,            OnTimeSlider_Keys_Changed           )
 
     ON_MESSAGE( WM_USER_MSG_PUSHBTN_CLICKED,                    OnPushButton_Clicked                )
-	ON_WM_TIMER()
-	//}}AFX_MSG_MAP
+    ON_WM_TIMER()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -203,14 +203,14 @@ CSize CKeyBar::CalcFixedLayout( BOOL bStretch, BOOL bHorz )
 
 void CKeyBar::OnPaint() 
 {
-	CPaintDC dc(this); // device context for painting
-	
-	// Draw the background
+    CPaintDC dc(this); // device context for painting
+    
+    // Draw the background
     CRect               rcClient;
     GetClientRect       ( rcClient );
     dc.FillSolidRect    ( rcClient, RGB(160,160,160) );
 
-	// Compute Control placement values
+    // Compute Control placement values
     int VCRWidth        = 416;
     int VCRStart        = ((rcClient.right - VCRWidth) / 2) - 2;
     if( VCRStart < 0 )
@@ -239,15 +239,15 @@ void CKeyBar::OnPaint()
     int posStatusRight      = posEditCurrent     + 67;
     int widthStatusBox      = VCRStart - 5;
 
-	// Draw the Edit Controls
-	m_Edit_FrameStart.MoveWindow    ( posEditStart,    4, 64, 24, TRUE );
-	m_Edit_FrameEnd.MoveWindow      ( posEditEnd,      4, 64, 24, TRUE );
-	m_Edit_FrameCurrent.MoveWindow  ( posEditCurrent, 36, 64, 24, TRUE );
+    // Draw the Edit Controls
+    m_Edit_FrameStart.MoveWindow    ( posEditStart,    4, 64, 24, TRUE );
+    m_Edit_FrameEnd.MoveWindow      ( posEditEnd,      4, 64, 24, TRUE );
+    m_Edit_FrameCurrent.MoveWindow  ( posEditCurrent, 36, 64, 24, TRUE );
 
-	// Draw the Time Slider
+    // Draw the Time Slider
     m_TimeSlider.MoveWindow         ( posTimeSlider,   2, widthTimeSlider, 28, TRUE );
 
-	// Draw the VCR Buttons
+    // Draw the VCR Buttons
     m_VCR_Filter.MoveWindow         ( posVCR_Filter,      32, 64, 32, TRUE );
     m_VCR_Animate.MoveWindow        ( posVCR_Animate,     32, 64, 32, TRUE );
 
@@ -259,9 +259,9 @@ void CKeyBar::OnPaint()
     m_VCR_Repeat.MoveWindow         ( posVCR_Repeat,      32, 32, 32, TRUE );
     m_VCR_KeyStep.MoveWindow        ( posVCR_KeyStep,     32, 32, 32, TRUE );
 
-	// Draw the Status Boxes
-	m_StatusLeft.MoveWindow         ( posStatusLeft,      36, widthStatusBox, 24, TRUE );
-	m_StatusRight.MoveWindow        ( posStatusRight,     36, widthStatusBox, 24, TRUE );
+    // Draw the Status Boxes
+    m_StatusLeft.MoveWindow         ( posStatusLeft,      36, widthStatusBox, 24, TRUE );
+    m_StatusRight.MoveWindow        ( posStatusRight,     36, widthStatusBox, 24, TRUE );
 }
 
 BOOL CKeyBar::Create(CWnd* pParentWnd, DWORD dwStyle, UINT nID)
@@ -271,14 +271,14 @@ BOOL CKeyBar::Create(CWnd* pParentWnd, DWORD dwStyle, UINT nID)
 
     // Make the window
     CString         winClassName;
-	winClassName    = AfxRegisterWndClass   ( CS_DBLCLKS,                       // Class Style
+    winClassName    = AfxRegisterWndClass   ( CS_DBLCLKS,                       // Class Style
                                               ::LoadCursor(NULL, IDC_ARROW),    // Cursor
                                               NULL,                             // Background
                                               0 );                              // Icon
 
 
 
-	if( !CControlBar::Create(winClassName, "", m_dwStyle | WS_CHILD | WS_VISIBLE, CRect(0,0,0,0), pParentWnd, nID, NULL) )
+    if( !CControlBar::Create(winClassName, "", m_dwStyle | WS_CHILD | WS_VISIBLE, CRect(0,0,0,0), pParentWnd, nID, NULL) )
     {
         return FALSE; // Creation of KeyBar failed!
     }
@@ -725,7 +725,7 @@ BOOL CKeyBar::OnCommand(WPARAM wParam, LPARAM lParam)
                 m_TimeSlider.SetKeyFilterState  ( i, true );
             }
 
-	        return TRUE;
+            return TRUE;
         }
         else if( nID == (m_nKeyFilters + 2) )
         {
@@ -736,7 +736,7 @@ BOOL CKeyBar::OnCommand(WPARAM wParam, LPARAM lParam)
                 m_TimeSlider.SetKeyFilterState  ( i, false );
             }
 
-	        return TRUE;
+            return TRUE;
         }
         else if( m_FilterMenu.GetMenuState(nID, MF_BYCOMMAND) & MF_CHECKED )
         {
@@ -744,7 +744,7 @@ BOOL CKeyBar::OnCommand(WPARAM wParam, LPARAM lParam)
             m_FilterMenu.CheckMenuItem      ( nID, MF_UNCHECKED | MF_BYCOMMAND );
             m_TimeSlider.SetKeyFilterState  ( nID, false );
 
-	        return TRUE;
+            return TRUE;
         }
         else
         {
@@ -752,12 +752,12 @@ BOOL CKeyBar::OnCommand(WPARAM wParam, LPARAM lParam)
             m_FilterMenu.CheckMenuItem      ( nID, MF_CHECKED | MF_BYCOMMAND );
             m_TimeSlider.SetKeyFilterState  ( nID, true );
 
-	        return TRUE;
+            return TRUE;
         }
     }
 
-    // Pass on any other messages to default handler	
-	return CControlBar::OnCommand(wParam, lParam);
+    // Pass on any other messages to default handler    
+    return CControlBar::OnCommand(wParam, lParam);
 }
 
 void CKeyBar::OnTimer(UINT nIDEvent) 
@@ -820,7 +820,7 @@ void CKeyBar::OnTimer(UINT nIDEvent)
     }
     else
     {
-	    CControlBar::OnTimer(nIDEvent);
+        CControlBar::OnTimer(nIDEvent);
     }
 }
 

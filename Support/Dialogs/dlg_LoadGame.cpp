@@ -342,7 +342,7 @@ void dlg_load_game::RenderLevelName( s32 NameAlpha, f32 ShadowOffsetX, f32 Shado
     //if( ShadowAlpha > 0.0f )
     //{
     //    s32 GlowAlpha = MINMAX( 0, (s32)(255.0f * ShadowAlpha), NameAlpha );
-	//
+    //
     //    ShadowRect = TextRect;
     //    ShadowRect.Translate( (s32)(ShadowOffsetX * ScaleX), (s32)(ShadowOffsetY * ScaleY) );
     //    g_UiMgr->RenderText( FontIndex,

@@ -31,16 +31,16 @@ class ConvertSettingsDialog : public QDialog
 
 public:
     explicit ConvertSettingsDialog    (QWidget* pParent = NULL);
-								      
+                                      
     QString GetPlatform               (void) const;
     QString GetFormat                 (void) const;
     s32     GetMipLevels              (void) const;
     xbool   GetGenericCompression     (void) const;
-									  
+                                      
 private slots:                        
     void OnGenericCompressionChanged  (s32 State);
     void OnPlatformChanged            (s32 Index);
-									  
+                                      
 private:                              
     void UpdatePlatformList           (void);
     void UpdateFormatsByPlatform      (const QString& Platform, xbool GenericCompression);

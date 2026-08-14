@@ -88,7 +88,7 @@ mesonseeker_projectile::mesonseeker_projectile()
     m_Spin                  = radian3(x_frand(-R_45,R_45), 0.0f, x_frand(-R_30,R_30));
     m_TotalSpin             = radian3(1.0f, 1.0f, 1.0f);
 
-	m_MaxAliveTime          = 10.0f;
+    m_MaxAliveTime          = 10.0f;
     m_ParticleExplosion     = particle_emitter::MSN_SECONDARY_EXPLOSION;
     m_ExplosionRadius       = g_MesonSeekerTweaks.g_ExplosionRadius;
     m_YawRate               = R_60;
@@ -356,7 +356,7 @@ void mesonseeker_projectile::OnExplode( void )
         decal_definition* pDef = pPackage->GetDecalDef( "CharMarks", 0 );
         if( pDef )
         {
-	        //only paste a decal if the object is at the last collision
+            //only paste a decal if the object is at the last collision
             // point (within radius + 20 centimeters)
             f32 Size        = x_frand( 150.0f, 200.0f );
             f32 fDistToTest = GetBBox().GetRadiusSquared() + (20.0f * 20.0f);
@@ -459,10 +459,10 @@ void mesonseeker_projectile::UpdateVelocity( f32 DeltaTime )
 
 xbool mesonseeker_projectile::LoadInstance( const char* pFileName )
 {
-	// Initialize the skin
-	//m_RigidInst.OnProperty( g_PropQuery.WQueryExternal( "RenderInst\\File", pFileName ) );
+    // Initialize the skin
+    //m_RigidInst.OnProperty( g_PropQuery.WQueryExternal( "RenderInst\\File", pFileName ) );
     m_RigidInst.SetUpRigidGeom( pFileName );
-	return TRUE;
+    return TRUE;
 
 }
 

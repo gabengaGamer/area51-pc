@@ -19,19 +19,19 @@
 
 struct mutant_tank_loco_play_anim : public loco_play_anim
 {
-                            mutant_tank_loco_play_anim		( loco& Loco );
-    virtual void            OnEnter					( void );
+                            mutant_tank_loco_play_anim        ( loco& Loco );
+    virtual void            OnEnter                    ( void );
 } ;
 
 struct mutant_tank_loco_idle : public loco_idle
 {
-                            mutant_tank_loco_idle	        ( loco& Loco );
+                            mutant_tank_loco_idle            ( loco& Loco );
     virtual void            OnEnter                 ( void );
 } ;
 
 struct mutant_tank_loco_move : public loco_move
 {
-                            mutant_tank_loco_move	        ( loco& Loco );
+                            mutant_tank_loco_move            ( loco& Loco );
     virtual void            OnEnter                 ( void );
 } ;
 
@@ -47,7 +47,7 @@ public:
 
 // Functions
 public:
-                        mutant_tank_loco	( void );
+                        mutant_tank_loco    ( void );
     virtual void        OnInit              ( const geom* pGeom, const char* pAnimFileName, guid ObjectGuid = NULL ) ;
             void        ControlUpperBody    ( xbool bActive, f32 BlendTime = 0.5f );
 

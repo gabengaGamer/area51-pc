@@ -26,8 +26,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Play the Script"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "Players a script."; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
    
     virtual         action_types        GetType         ( void ) { return GetTypeStatic();}
     static          action_types        GetTypeStatic   ( void ) { return TYPE_ACTION_ACTIVATE_OBJECT;}

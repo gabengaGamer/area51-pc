@@ -98,7 +98,7 @@ int lame_decode_ogg_initfile( lame_global_flags*  gfp,
   if(vorbis_synthesis_headerin(&vi,&vc,&op)<0){ 
     /* error case; not a vorbis header */
     ERRORF( gfc, "This Ogg bitstream does not contain Vorbis "
-	    "audio data.\n");
+        "audio data.\n");
     return -1;
   }
   
@@ -118,23 +118,23 @@ int lame_decode_ogg_initfile( lame_global_flags*  gfp,
       int result=ogg_sync_pageout(&oy,&og);
       if(result==0)break; /* Need more data */
       /* Don't complain about missing or corrupt data yet.  We'll
-	 catch it at the packet output phase */
+     catch it at the packet output phase */
       if(result==1){
-	ogg_stream_pagein(&os,&og); /* we can ignore any errors here
-				       as they'll also become apparent
-				       at packetout */
-	while(i<2){
-	  result=ogg_stream_packetout(&os,&op);
-	  if(result==0)break;
-	  if(result==-1){
-	    /* Uh oh; data at some point was corrupted or missing!
-	       We can't tolerate that in a header.  Die. */
-	    ERRORF( gfc, "Corrupt secondary header.  Exiting.\n" );
-	    return -1;
-	  }
-	  vorbis_synthesis_headerin(&vi,&vc,&op);
-	  i++;
-	}
+    ogg_stream_pagein(&os,&og); /* we can ignore any errors here
+                       as they'll also become apparent
+                       at packetout */
+    while(i<2){
+      result=ogg_stream_packetout(&os,&op);
+      if(result==0)break;
+      if(result==-1){
+        /* Uh oh; data at some point was corrupted or missing!
+           We can't tolerate that in a header.  Die. */
+        ERRORF( gfc, "Corrupt secondary header.  Exiting.\n" );
+        return -1;
+      }
+      vorbis_synthesis_headerin(&vi,&vc,&op);
+      i++;
+    }
       }
     }
     /* no harm in not checking before adding more */
@@ -166,10 +166,10 @@ int lame_decode_ogg_initfile( lame_global_flags*  gfp,
      packet->PCM decoder. */
   vorbis_synthesis_init(&vd,&vi); /* central decode state */
   vorbis_block_init(&vd,&vb);     /* local state for most of the decode
-				     so multiple block decodes can
-				     proceed in parallel.  We could init
-				     multiple vorbis_block structures
-				     for vd here */
+                     so multiple block decodes can
+                     proceed in parallel.  We could init
+                     multiple vorbis_block structures
+                     for vd here */
   
   mp3data->stereo = vi.channels;
   mp3data->samplerate = vi.rate;
@@ -213,28 +213,28 @@ int lame_decode_ogg_fromfile( lame_global_flags*  gfp,
       bout=(samples<convsize?samples:convsize);
       
       /* convert doubles to 16 bit signed ints (host order) and
-	 interleave */
+     interleave */
       for(i=0;i<vi.channels;i++){
-	double  *mono=pcm[i];
-	for(j=0;j<bout;j++){
-	  int val=mono[j]*32767.;
-	  /* might as well guard against clipping */
-	  if(val>32767){
-	    val=32767;
-	    clipflag=1;
-	  }
-	  if(val<-32768){
-	    val=-32768;
-	    clipflag=1;
-	  }
-	  if (i==0) pcm_l[j]=val;
-	  if (i==1) pcm_r[j]=val;
-	}
+    double  *mono=pcm[i];
+    for(j=0;j<bout;j++){
+      int val=mono[j]*32767.;
+      /* might as well guard against clipping */
+      if(val>32767){
+        val=32767;
+        clipflag=1;
+      }
+      if(val<-32768){
+        val=-32768;
+        clipflag=1;
+      }
+      if (i==0) pcm_l[j]=val;
+      if (i==1) pcm_r[j]=val;
+    }
       }
       
       /*
       if(clipflag)
-	MSGF( gfc, "Clipping in frame %ld\n", vd.sequence );
+    MSGF( gfc, "Clipping in frame %ld\n", vd.sequence );
       */
       
       /* tell libvorbis how many samples we actually consumed */
@@ -249,22 +249,22 @@ int lame_decode_ogg_fromfile( lame_global_flags*  gfp,
       /* need more data */
     }else if (result==-1){ /* missing or corrupt data at this page position */
       ERRORF( gfc, "Corrupt or missing data in bitstream; "
-	      "continuing...\n");
+          "continuing...\n");
     }else{
       /* decode this page */
       ogg_stream_pagein(&os,&og); /* can safely ignore errors at
-				       this point */
+                       this point */
       do {
-	result=ogg_stream_packetout(&os,&op);
-	if(result==0) {
-	  /* need more data */
-	} else if(result==-1){ /* missing or corrupt data at this page position */
-	  /* no reason to complain; already complained above */
-	}else{
-	  /* we have a packet.  Decode it */
-	  vorbis_synthesis(&vb,&op);
-	  vorbis_synthesis_blockin(&vd,&vb);
-	}
+    result=ogg_stream_packetout(&os,&op);
+    if(result==0) {
+      /* need more data */
+    } else if(result==-1){ /* missing or corrupt data at this page position */
+      /* no reason to complain; already complained above */
+    }else{
+      /* we have a packet.  Decode it */
+      vorbis_synthesis(&vb,&op);
+      vorbis_synthesis_blockin(&vd,&vb);
+    }
       } while (result!=0);
     }
 
@@ -463,7 +463,7 @@ int lame_encode_ogg_init(lame_global_flags *gfp)
     
     vorbis_analysis_headerout(&vd2,&vc2,&header,&header_comm,&header_code);
     ogg_stream_packetin(&os2,&header); /* automatically placed in its own
-					 page */
+                     page */
     ogg_stream_packetin(&os2,&header_comm);
     ogg_stream_packetin(&os2,&header_code);
     
@@ -476,7 +476,7 @@ int lame_encode_ogg_init(lame_global_flags *gfp)
 
 
 int lame_encode_ogg_finish(lame_global_flags *gfp,
-			  char *mp3buf, int mp3buf_size)
+              char *mp3buf, int mp3buf_size)
 {
   int eos=0,bytes=0;
 
@@ -492,21 +492,21 @@ int lame_encode_ogg_finish(lame_global_flags *gfp,
 
       /* write out pages (if any) */
       while(!eos){
-	int result=ogg_stream_pageout(&os2,&og2);
-	if(result==0)break;
+    int result=ogg_stream_pageout(&os2,&og2);
+    if(result==0)break;
 
 
-	/* check if mp3buffer is big enough for the output */
-	bytes += og2.header_len + og2.body_len;
-	if (bytes > mp3buf_size && mp3buf_size>0)
-	  return -5;
-	
-	memcpy(mp3buf,og2.header,og2.header_len);
-	memcpy(mp3buf+og2.header_len,og2.body,og2.body_len);
+    /* check if mp3buffer is big enough for the output */
+    bytes += og2.header_len + og2.body_len;
+    if (bytes > mp3buf_size && mp3buf_size>0)
+      return -5;
+    
+    memcpy(mp3buf,og2.header,og2.header_len);
+    memcpy(mp3buf+og2.header_len,og2.body,og2.body_len);
 
-	/* this could be set above, but for illustrative purposes, I do
-	   it here (to show that vorbis does know where the stream ends) */
-	if(ogg_page_eos(&og2))eos=1;
+    /* this could be set above, but for illustrative purposes, I do
+       it here (to show that vorbis does know where the stream ends) */
+    if(ogg_page_eos(&og2))eos=1;
 
       }
     }
@@ -527,11 +527,11 @@ int lame_encode_ogg_finish(lame_global_flags *gfp,
 
 
 int  lame_encode_ogg_frame (
-	lame_global_flags*  gfp,
-	const sample_t*     inbuf_l, 
-	const sample_t*     inbuf_r,
-	unsigned char*      mp3buf, 
-	size_t              mp3buf_size )
+    lame_global_flags*  gfp,
+    const sample_t*     inbuf_l, 
+    const sample_t*     inbuf_r,
+    unsigned char*      mp3buf, 
+    size_t              mp3buf_size )
 {
     lame_internal_flags *gfc = gfp->internal_flags;
     int  i;
@@ -566,14 +566,14 @@ int  lame_encode_ogg_frame (
     do {
       result=ogg_stream_pageout(&os2,&og2);
       if (result==0) break;
-	
+    
       /* check if mp3buffer is big enough for the output */
       bytes += og2.header_len + og2.body_len;
       /*
       DEBUGF("\n\n*********\ndecoded bytes=%i  %i \n",bytes,mp3buf_size);
       */
       if (bytes > mp3buf_size && mp3buf_size>0)
-	return -6;
+    return -6;
       
       memcpy(mp3buf,og2.header,og2.header_len);
       memcpy(mp3buf+og2.header_len,og2.body,og2.body_len);

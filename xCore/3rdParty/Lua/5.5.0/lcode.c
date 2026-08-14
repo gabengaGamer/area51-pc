@@ -32,7 +32,7 @@
 
 
 /* (note that expressions VJMP also have jumps.) */
-#define hasjumps(e)	((e)->t != (e)->f)
+#define hasjumps(e)    ((e)->t != (e)->f)
 
 
 static int codesJ (FuncState *fs, OpCode o, int sj, int k);
@@ -318,7 +318,7 @@ void luaK_patchtohere (FuncState *fs, int list) {
 
 
 /* limit for difference between lines in relative line info. */
-#define LIMLINEDIFF	0x80
+#define LIMLINEDIFF    0x80
 
 
 /*

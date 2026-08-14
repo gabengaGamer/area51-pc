@@ -22,8 +22,8 @@ public:
     CREATE_RTTI( mutagen_reservoir, object, object );
 
 //=============================================================================
-						        mutagen_reservoir   ();
-	                           ~mutagen_reservoir   ();
+                                mutagen_reservoir   ();
+                               ~mutagen_reservoir   ();
 
     virtual bbox                GetLocalBBox        ( void ) const;      
     virtual s32                 GetMaterial         ( void ) const;

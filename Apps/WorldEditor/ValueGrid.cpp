@@ -10,7 +10,7 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#define EDITABLE_COL		1
+#define EDITABLE_COL        1
 
 /////////////////////////////////////////////////////////////////////////////
 // CValueGrid
@@ -25,9 +25,9 @@ CValueGrid::~CValueGrid()
 
 
 BEGIN_MESSAGE_MAP(CValueGrid, CGridListCtrl)
-	//{{AFX_MSG_MAP(CValueGrid)
+    //{{AFX_MSG_MAP(CValueGrid)
     ON_WM_MOUSEMOVE()
-	//}}AFX_MSG_MAP
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -37,23 +37,23 @@ void CValueGrid::InitializeGrid()
 {
     m_BackgroundColor = RGB( 200, 210, 200);
     
-	ModifyStyle(0,LVS_NOCOLUMNHEADER);
-	ModifyStyleEx(0,WS_EX_CLIENTEDGE);
+    ModifyStyle(0,LVS_NOCOLUMNHEADER);
+    ModifyStyleEx(0,WS_EX_CLIENTEDGE);
 
-	LV_COLUMN   lvColumn;
-	lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
-	lvColumn.fmt = LVCFMT_LEFT;
-	lvColumn.cx = 100;
-	lvColumn.pszText = _T("Name");
-	InsertColumn(0,&lvColumn);
-	lvColumn.cx = 40;
-	lvColumn.pszText = _T("Type");
-	InsertColumn(1,&lvColumn);
-	lvColumn.cx = 60;
-	lvColumn.pszText = _T("Value");
-	InsertColumn(2,&lvColumn);
+    LV_COLUMN   lvColumn;
+    lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
+    lvColumn.fmt = LVCFMT_LEFT;
+    lvColumn.cx = 100;
+    lvColumn.pszText = _T("Name");
+    InsertColumn(0,&lvColumn);
+    lvColumn.cx = 40;
+    lvColumn.pszText = _T("Type");
+    InsertColumn(1,&lvColumn);
+    lvColumn.cx = 60;
+    lvColumn.pszText = _T("Value");
+    InsertColumn(2,&lvColumn);
 
-	ModifyStyle(0,LVS_NOCOLUMNHEADER);
+    ModifyStyle(0,LVS_NOCOLUMNHEADER);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -69,13 +69,13 @@ void CValueGrid::OnGridItemChange(CGridTreeItem *pSelItem)
             OnGridItemChange (pSelItem->m_pParent);
         }
         else if (!GetParent()->SendMessage(WM_USER_MSG_GRID_ITEM_CHANGE,(WPARAM)pSelItem,0))
-	    {
-		    TRACE("CValueGrid::OnGridItemChange::ERROR SAVING VALUE\n");
-	    }
+        {
+            TRACE("CValueGrid::OnGridItemChange::ERROR SAVING VALUE\n");
+        }
     }
     else
     {
-	    TRACE("CValueGrid::OnGridItemChange::INVALID POINTER\n");
+        TRACE("CValueGrid::OnGridItemChange::INVALID POINTER\n");
     }
 }
 
@@ -92,13 +92,13 @@ void CValueGrid::OnGuidSelect(CGridTreeItem *pSelItem)
             OnGuidSelect (pSelItem->m_pParent);
         }
         else if (!GetParent()->SendMessage(WM_USER_MSG_GUID_SELECT_REQUEST,(WPARAM)pSelItem,0))
-	    {
-		    TRACE("CValueGrid::OnGuidSelect::ERROR SAVING GUID\n");
-	    }
+        {
+            TRACE("CValueGrid::OnGuidSelect::ERROR SAVING GUID\n");
+        }
     }
     else
     {
-	    TRACE("CValueGrid::OnGuidSelect::INVALID POINTER\n");
+        TRACE("CValueGrid::OnGuidSelect::INVALID POINTER\n");
     }
 }
 
@@ -106,77 +106,77 @@ void CValueGrid::OnGuidSelect(CGridTreeItem *pSelItem)
 
 BOOL CValueGrid::PreTranslateMessage(MSG* pMsg) 
 {
-	BOOL bReturn = CGridListCtrl::PreTranslateMessage(pMsg);
+    BOOL bReturn = CGridListCtrl::PreTranslateMessage(pMsg);
 
-	if(pMsg->message == WM_KEYDOWN)
-	{
-		if(GetFocus()==this)
-		{
-			switch( pMsg->wParam )
-			{
-				case VK_UP:
-				case VK_DOWN:
-					{
-						m_CurSubItem = EDITABLE_COL+1; //always have selection on 2nd column
-						int iItem = GetSelectedItem();
-						if( iItem != -1 )
-						{
-							CRect rcBounds;
-							GetItemRect(iItem, rcBounds, LVIR_BOUNDS);
-							InvalidateRect(&rcBounds);
-							UpdateWindow();
-						}
-					}
-					break;
-				case VK_LEFT:
-					{
-						m_CurSubItem = EDITABLE_COL+1; //always have selection on 2nd column
-						int iItem = GetSelectedItem();
-						if( iItem != -1 )
-						{
-							CWaitCursor wait;
-							CGridTreeItem *pSelItem = GetTreeItem(iItem);
-							if(OnVkSubTract(pSelItem, iItem))
-							{
-								Collapse(pSelItem);
-							}
-							CRect rc;
-							GetItemRect(iItem, rc, LVIR_BOUNDS);
-							InvalidateRect(rc);
-							UpdateWindow();
-						}
-						bReturn = TRUE;
-					}
-					break;
-				case VK_RIGHT:
-					{
-						m_CurSubItem = EDITABLE_COL+1; //always have selection on 2nd column
-						int iItem = GetSelectedItem();
-						if( iItem != -1 )
-						{
-							CWaitCursor wait;
-							CGridTreeItem *pSelItem = GetTreeItem(iItem);
-							int nScrollIndex = 0;
-							if(OnVKAdd(pSelItem, iItem))
-							{
-								 nScrollIndex = Expand(pSelItem, iItem);
-							}
-							CRect rc;
-							GetItemRect(iItem, rc, LVIR_BOUNDS);
-							InvalidateRect(rc);
-							UpdateWindow();
-							EnsureVisible(nScrollIndex, 1);
-						}
-						bReturn = TRUE;
-					}
-					break;
-				default:
-					break;
-			}
-		}
-	}
+    if(pMsg->message == WM_KEYDOWN)
+    {
+        if(GetFocus()==this)
+        {
+            switch( pMsg->wParam )
+            {
+                case VK_UP:
+                case VK_DOWN:
+                    {
+                        m_CurSubItem = EDITABLE_COL+1; //always have selection on 2nd column
+                        int iItem = GetSelectedItem();
+                        if( iItem != -1 )
+                        {
+                            CRect rcBounds;
+                            GetItemRect(iItem, rcBounds, LVIR_BOUNDS);
+                            InvalidateRect(&rcBounds);
+                            UpdateWindow();
+                        }
+                    }
+                    break;
+                case VK_LEFT:
+                    {
+                        m_CurSubItem = EDITABLE_COL+1; //always have selection on 2nd column
+                        int iItem = GetSelectedItem();
+                        if( iItem != -1 )
+                        {
+                            CWaitCursor wait;
+                            CGridTreeItem *pSelItem = GetTreeItem(iItem);
+                            if(OnVkSubTract(pSelItem, iItem))
+                            {
+                                Collapse(pSelItem);
+                            }
+                            CRect rc;
+                            GetItemRect(iItem, rc, LVIR_BOUNDS);
+                            InvalidateRect(rc);
+                            UpdateWindow();
+                        }
+                        bReturn = TRUE;
+                    }
+                    break;
+                case VK_RIGHT:
+                    {
+                        m_CurSubItem = EDITABLE_COL+1; //always have selection on 2nd column
+                        int iItem = GetSelectedItem();
+                        if( iItem != -1 )
+                        {
+                            CWaitCursor wait;
+                            CGridTreeItem *pSelItem = GetTreeItem(iItem);
+                            int nScrollIndex = 0;
+                            if(OnVKAdd(pSelItem, iItem))
+                            {
+                                 nScrollIndex = Expand(pSelItem, iItem);
+                            }
+                            CRect rc;
+                            GetItemRect(iItem, rc, LVIR_BOUNDS);
+                            InvalidateRect(rc);
+                            UpdateWindow();
+                            EnsureVisible(nScrollIndex, 1);
+                        }
+                        bReturn = TRUE;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
 
-	return bReturn;
+    return bReturn;
 }
 
 /////////////////////////////////////////////////////////////////////////////

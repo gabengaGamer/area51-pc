@@ -41,7 +41,7 @@ debug_menu_page_gameplay::debug_menu_page_gameplay( ) : debug_menu_page()
                                       AddItemSeperator( );
                                       AddItemBool     ( "Pause in Fly mode"             , g_FreeCamPause );
                                       AddItemSeperator( );
-#endif									  
+#endif                                      
     m_pItemResetPlayerToStart       = AddItemButton   ( "Reset player to start"                           );
     m_pItemResetPlayerToSafeSpot    = AddItemButton   ( "Reset player to safe spot"                       );
                                       AddItemSeperator( );

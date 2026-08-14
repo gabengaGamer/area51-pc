@@ -121,8 +121,8 @@ void anim_compiler::SetBindPose( const char* pBindPose )
 
     SetUserInfo( m_BindMesh );
 
-	if( m_BindMesh.m_nVertices <= 0 )
-		ThrowError(xfs("Bind pose [%s] had zero vertices. Re-export with vertices!", pBindPose ));
+    if( m_BindMesh.m_nVertices <= 0 )
+        ThrowError(xfs("Bind pose [%s] had zero vertices. Re-export with vertices!", pBindPose ));
 
     x_printf("  Number Of Bones: %d\n", m_Bind.m_nBones );
 
@@ -1240,12 +1240,12 @@ void anim_compiler::BuildEvents( anim_group& AG )
                     EventData.StoreInt( anim_event::INT_IDX_AUDIO_DATA, 0 );
                 }
                 break;
-	        
+            
             case EVENT_TYPE_PARTICLE:
                 EventData.StoreString( anim_event::STRING_IDX_PARTICLE_TYPE,                REV.Strings[0] );
                 EventData.StoreBool  ( anim_event::BOOL_IDX_PARTICLE_EVENT_ACTIVE,          REV.Bools[0] );
                 EventData.StoreBool  ( anim_event::BOOL_IDX_PARTICLE_DONOT_APPLY_TRANSFORM, REV.Bools[1] );
-            break;		
+            break;        
 
             case EVENT_TYPE_GENERIC:
                 EventData.StoreString( anim_event::STRING_IDX_GENERIC_TYPE, REV.Strings[0] );

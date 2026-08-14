@@ -17,46 +17,46 @@
 class alien_turret_projectile : public base_projectile
 {
 public:
-	CREATE_RTTI( alien_turret_projectile , base_projectile , object )
+    CREATE_RTTI( alien_turret_projectile , base_projectile , object )
 
-	alien_turret_projectile();
-	virtual ~alien_turret_projectile();
+    alien_turret_projectile();
+    virtual ~alien_turret_projectile();
 
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
 
 //=========================================================================
 //
-// GetMaterial		-   Legacy.  Needed for now.
-// OnAdvanceSimulation	-   Updates every frame
-// OnMove			-   Handles the motion of the spike
-// Initialize		-	Sets the initial position of the object.  Needs an initial
-//						velocity, an initial position, and either a radian3 or matrix4 for
-//						rotation information.
-// LoadColorTable	-	Loads the color tables for this object.
+// GetMaterial        -   Legacy.  Needed for now.
+// OnAdvanceSimulation    -   Updates every frame
+// OnMove            -   Handles the motion of the spike
+// Initialize        -    Sets the initial position of the object.  Needs an initial
+//                        velocity, an initial position, and either a radian3 or matrix4 for
+//                        rotation information.
+// LoadColorTable    -    Loads the color tables for this object.
 //
 //=========================================================================
 
     virtual void    ReportProjectileCreation( void );
-    virtual	void	OnEnumProp		    ( prop_enum& List );
-	virtual	xbool	OnProperty		    ( prop_query& PropQuery );
+    virtual    void    OnEnumProp            ( prop_enum& List );
+    virtual    xbool    OnProperty            ( prop_query& PropQuery );
 
 //=========================================================================
-	virtual s32		GetMaterial         ( void) const { return 0; }
-	virtual	bbox	GetLocalBBox		( void ) const;
+    virtual s32        GetMaterial         ( void) const { return 0; }
+    virtual    bbox    GetLocalBBox        ( void ) const;
     virtual void    OnAdvanceSimulation      ( f32 DeltaTime );
-	virtual	xbool	OnProcessCollision  ( const f32& DeltaTime );
+    virtual    xbool    OnProcessCollision  ( const f32& DeltaTime );
     virtual void    UpdatePhysics       ( const f32& DeltaTime );
-	virtual	void	OnMove				( const vector3& rNewPos );
+    virtual    void    OnMove                ( const vector3& rNewPos );
     virtual void    OnRender            ( void );
     virtual void    OnPain              ( const pain& Pain );
     virtual void    OnColCheck          ( void );
 
     virtual void    OnExplode           ( void );
     virtual void    SetTarget           ( guid target )             { m_Target = target; }
-            xbool	LoadInstance		( const char* pFileName );
+            xbool    LoadInstance        ( const char* pFileName );
 
-            void 	AvoidObstacles      ( xbool bAvoid );
+            void     AvoidObstacles      ( xbool bAvoid );
 
 public:
     static f32                          s_SeekerGrenade_Alert_Time ;
@@ -81,7 +81,7 @@ protected:
     vector3                             m_NormalCollision;
     vector3                             m_CollisionPoint;
     
-	f32			                        m_MaxAliveTime;			// How long does this object remain in the world.
+    f32                                    m_MaxAliveTime;            // How long does this object remain in the world.
     particle_emitter::particle_type     m_ParticleExplosion;
     f32                                 m_ExplosionRadius;
     guid                                m_Effect;               // Guid of the projectile effect

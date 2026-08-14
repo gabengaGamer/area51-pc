@@ -64,7 +64,7 @@ void activate_object::OnRender ( void )
 
 //=============================================================================
 
-void activate_object::OnEnumProp	( prop_enum& rPropList )
+void activate_object::OnEnumProp    ( prop_enum& rPropList )
 {
     //object info
     rPropList.AddGuid ( "Object Guid" , 
@@ -77,7 +77,7 @@ void activate_object::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool activate_object::OnProperty	( prop_query& rPropQuery )
+xbool activate_object::OnProperty    ( prop_query& rPropQuery )
 {
     if ( rPropQuery.VarGUID ( "Object Guid"  , m_ObjectGuid ) )
         return TRUE;

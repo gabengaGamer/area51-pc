@@ -318,7 +318,7 @@ const char* inventory2::ItemToBlueprintName( inven_item Item )
         break;
     //case INVEN_WEAPON_DUAL_EAGLE:
     //    pBlueprintName = "C:\\GameData\\A51\\Source\\Themes\\Weapons\\Blueprint\\WPN_Dual_EAGLE.bpx";
-    //    break;		
+    //    break;        
     case INVEN_WEAPON_MUTATION:
         pBlueprintName = "C:\\GameData\\A51\\Source\\Themes\\Weapons\\Blueprint\\WPN_Mutation.bpx";
         break;

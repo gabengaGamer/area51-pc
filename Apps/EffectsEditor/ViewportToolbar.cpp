@@ -28,10 +28,10 @@ CViewportToolbar::~CViewportToolbar()
 
 
 BEGIN_MESSAGE_MAP(CViewportToolbar, CControlBar)
-	//{{AFX_MSG_MAP(CViewportToolbar)
-	ON_WM_PAINT()
+    //{{AFX_MSG_MAP(CViewportToolbar)
+    ON_WM_PAINT()
     ON_MESSAGE( WM_USER_MSG_PUSHBTN_CLICKED, OnPushButton_Clicked )
-	//}}AFX_MSG_MAP
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -62,14 +62,14 @@ BOOL CViewportToolbar::Create(CWnd* pParentWnd, DWORD dwStyle, UINT nID)
 
     // Make the window
     CString         winClassName;
-	winClassName    = AfxRegisterWndClass   ( CS_DBLCLKS,                       // Class Style
+    winClassName    = AfxRegisterWndClass   ( CS_DBLCLKS,                       // Class Style
                                               ::LoadCursor(NULL, IDC_ARROW),    // Cursor
                                               NULL,                             // Background
                                               0 );                              // Icon
 
 
 
-	if( !CControlBar::Create(winClassName, "", m_dwStyle | WS_CHILD | WS_VISIBLE, CRect(0,0,0,0), pParentWnd, nID, NULL) )
+    if( !CControlBar::Create(winClassName, "", m_dwStyle | WS_CHILD | WS_VISIBLE, CRect(0,0,0,0), pParentWnd, nID, NULL) )
     {
         return FALSE; // Creation of KeyBar failed!
     }
@@ -97,9 +97,9 @@ BOOL CViewportToolbar::Create(CWnd* pParentWnd, DWORD dwStyle, UINT nID)
 
 void CViewportToolbar::OnPaint() 
 {
-	CPaintDC dc(this); // device context for painting
-	
-	// Draw the background
+    CPaintDC dc(this); // device context for painting
+    
+    // Draw the background
     CRect               rcClient;
     GetClientRect       ( rcClient );
     dc.FillSolidRect    ( rcClient, RGB(160,160,160) );

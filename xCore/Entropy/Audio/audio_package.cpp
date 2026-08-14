@@ -64,8 +64,8 @@ u32 audio_package::LoadHotSample( X_FILE* f, hot_sample* pHotSample, uaddr Aram 
         case MP3:
         case PCM:
         {
-			// Seek to sample offset within the file
-			x_fseek( f, pHotSample->WaveformOffset, X_SEEK_SET );
+            // Seek to sample offset within the file
+            x_fseek( f, pHotSample->WaveformOffset, X_SEEK_SET );
             // Read the sample waveform
             x_fread( (void*)Aram, pHotSample->WaveformLength, 1, f );
 
@@ -423,7 +423,7 @@ xbool audio_package::Init( audio_runtime& Runtime, const char* pFilename, const 
 Cleanup:
     if( f )
         x_fclose( f );
-	
+    
     if( Result == FALSE )
     {
         if( m_AudioRam )

@@ -15,11 +15,11 @@
 
 class CSplitFrame : public CFrameWnd
 {
-	DECLARE_DYNCREATE(CSplitFrame)
+    DECLARE_DYNCREATE(CSplitFrame)
 
 // Construction
 public:
-	CSplitFrame();
+    CSplitFrame();
 
 // Attributes
 public:
@@ -28,34 +28,34 @@ public:
 // Operations
 public:
 
-	CXTToolBar          m_wndToolBar;
+    CXTToolBar          m_wndToolBar;
     CViewportToolbar    m_ViewportToolbar;
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CSplitFrame)
-	protected:
-	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CSplitFrame)
+    protected:
+    virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CSplitFrame();
+    virtual ~CSplitFrame();
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	//{{AFX_MSG(CSplitFrame)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FAR* lpncsp);
-	afx_msg void OnNcPaint();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CSplitFrame)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS FAR* lpncsp);
+    afx_msg void OnNcPaint();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
 };
 

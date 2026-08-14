@@ -128,7 +128,7 @@ struct shader_entry
     xstring CommonArgs;
     xstring VulkanArgs;
     xstring D3D12Args;
-    xstring MetalArgs;	
+    xstring MetalArgs;    
 };
 
 //------------------------------------------------------------------------------

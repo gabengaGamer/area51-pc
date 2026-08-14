@@ -16,10 +16,10 @@
 
 class CParametricSplitter : public CSplitterWnd
 {
-//	DECLARE_DYNCREATE(CParametricSplitter)
+//    DECLARE_DYNCREATE(CParametricSplitter)
 
 public:
-	CParametricSplitter();
+    CParametricSplitter();
 
 // Attributes
 protected:
@@ -40,27 +40,27 @@ public:
     void        UnmaximizeViewport  ( void );
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CParametricSplitter)
-	protected:
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CParametricSplitter)
+    protected:
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    //}}AFX_VIRTUAL
 
-	virtual void RecalcLayout();    // call after changing sizes
+    virtual void RecalcLayout();    // call after changing sizes
 
 // Implementation
 public:
-	virtual ~CParametricSplitter();
+    virtual ~CParametricSplitter();
 
-	// Generated message map functions
-	//{{AFX_MSG(CParametricSplitter)
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnPaint();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(CParametricSplitter)
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+    afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+    afx_msg void OnPaint();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

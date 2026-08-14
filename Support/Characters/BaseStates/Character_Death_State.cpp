@@ -129,10 +129,10 @@ void character_death_state::OnAdvance( f32 DeltaTime )
     
     // Update state time
     m_TimeInState += DeltaTime;
-	
-	// Update our death based on its type
-	switch ( m_CharacterBase.m_DeathType )
-	{
+    
+    // Update our death based on its type
+    switch ( m_CharacterBase.m_DeathType )
+    {
     case character::DEATH_BY_RAGDOLL: 
         break;
         
@@ -156,7 +156,7 @@ void character_death_state::OnAdvance( f32 DeltaTime )
                                 
                 m_CharacterBase.KillMe();
                 LOG_MESSAGE("character_death_state::OnAdvance","DEATH_BY_EXPLOSION");
-		        return;
+                return;
             }
         }
         break;
@@ -195,7 +195,7 @@ void character_death_state::OnAdvance( f32 DeltaTime )
             return;
         }
         break;
-	}
+    }
 }
 
 //=========================================================================

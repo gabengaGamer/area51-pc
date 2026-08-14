@@ -887,13 +887,13 @@ void state_mgr::CheckControllers( void )
             case SM_CLIENT_DISCONNECT:
             case SM_EXIT_GAME:
             case SM_POST_GAME:
-		    {
-		    	// Not Safe! Not Safe! 
-		    }	
+            {
+                // Not Safe! Not Safe! 
+            }    
             break;
-		    
+            
             case SM_PLAYING_GAME:
-		    {
+            {
                 // check all ingame pads with valid IDs
                 for( s32 i = 0; i < MAX_LOCAL_PLAYERS; i++ )
                 {
@@ -908,10 +908,10 @@ void state_mgr::CheckControllers( void )
                     }
                 }
             }
-		    break;
-		    
+            break;
+            
             default:
-			{
+            {
                 // only check for "locked" controllers
                 if( (ControllerID = GetActiveControllerID()) != -1 )
                 {
@@ -921,8 +921,8 @@ void state_mgr::CheckControllers( void )
                         SystemError( SM_SYS_ERR_CONTROLLER, &ControllerID );
                     }
                 }
-			}
-			break;
+            }
+            break;
         }
     }
 
@@ -1381,8 +1381,8 @@ void state_mgr::EnterState( sm_states State )
 
         // No setup required
         default:
-		{
-		}		
+        {
+        }        
         break;
     }
 }
@@ -1416,8 +1416,8 @@ void state_mgr::ExitState( sm_states State )
 
         // No clean up required
         default:
-		{
-		}		
+        {
+        }        
         break;
     }
 }
@@ -1605,8 +1605,8 @@ void state_mgr::UpdateState( sm_states State, f32 DeltaTime )
 
         // no update required
         default:
-		{
-		}
+        {
+        }
         break;
     }
 #if CONFIG_IS_DEMO
@@ -4305,59 +4305,59 @@ void state_mgr::UpdateProfileControlsMenu( sm_states BackState, xbool CheckDisco
             switch( BackState )
             {
                 case SM_MANAGE_PROFILE_OPTIONS:
-				{
+                {
                     SetState( SM_MANAGE_PROFILE_SAVE_SELECT );
                 }
-				break;
+                break;
 
                 case SM_PROFILE_OPTIONS:
-				{
+                {
                     SetState( SM_PROFILE_SELECT );
                 }
-				break;
+                break;
 
                 case SM_CAMPAIGN_PROFILE_OPTIONS:
-				{
+                {
                     SetState( SM_CAMPAIGN_PROFILE_SAVE_SELECT );
                 }
-				break;
+                break;
 
                 case SM_MULTI_PLAYER_EDIT:
-				{
+                {
                     SetState( SM_PROFILE_SAVE_SELECT_MP );
                 }
-				break;
+                break;
 
                 case SM_ONLINE_PROFILE_OPTIONS:
                 case SM_ONLINE_EDIT_PROFILE:
-				{
+                {
                     SetState( SM_ONLINE_PROFILE_SAVE_SELECT );
                 }
-				break;
+                break;
 
                 case SM_PAUSE_OPTIONS:
-				{
+                {
                     SetState( SM_PAUSE_PROFILE_SAVE_SELECT );
                 }
-				break;
+                break;
 
                 case SM_PAUSE_MP_OPTIONS:
-				{
+                {
                     SetState( SM_PAUSE_MP_PROFILE_SAVE_SELECT );
                 }
-				break;
+                break;
 
                 case SM_PAUSE_ONLINE_OPTIONS:
-				{
+                {
                     SetState( SM_PAUSE_ONLINE_SAVE_SELECT );
                 }
-				break;
+                break;
 
                 default:
-				{
+                {
                     SetState( BackState );
                 }
-				break;
+                break;
             }
         }
         break;
@@ -6585,17 +6585,17 @@ void state_mgr::EnterSinglePlayerLoadMission( void )
             switch( pEntry->GetMapID() )
             {
                 case 1000:
-				{
+                {
                     // Play intro movie before starting "One of them".
                     QueueSimpleMovie( SelectBestClip("CinemaIntro"),
                                       "Intro Movie Here",
                                       FALSE );
                 }
-				break;
+                break;
 
                 case 1020:
                 {
-					// unlock a secret after deep underground
+                    // unlock a secret after deep underground
                     player_profile& ActiveProfile = GetActiveProfile(0);                    
                     ActiveProfile.AcquireSecret();
                     x_memcpy( &m_PendingProfile, &ActiveProfile, sizeof(ActiveProfile) );
@@ -6603,28 +6603,28 @@ void state_mgr::EnterSinglePlayerLoadMission( void )
                 break;
 
                 case 1060:
-				{
+                {
                     // Play infection movie before starting "One of them".
                     QueueSimpleMovie( SelectBestClip( "CinemaInfection" ),
                                       "Infection Movie Here",
                                       FALSE );
                 }
-				break;
+                break;
 
                 case 1115:
-				{
+                {
                     // Play Edgar movie before starting "The Grays".
                     QueueSimpleMovie( SelectBestClip( "CinemaEdgar" ),
                                       "Edgar Movie Here",
                                       FALSE );
                 }
-				break;
+                break;
 
                 default:
-				{
+                {
                     // nothing to do!
                 }
-				break;
+                break;
             }
         }
 #endif // USE_MOVIES

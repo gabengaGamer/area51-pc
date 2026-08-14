@@ -43,7 +43,7 @@ bool CFileSearch::GetDirs(const char * pDirPath)
 
     GetSubDirs(m_lstDirs, m_sSourceDir);
 
-    return true;	
+    return true;    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -56,8 +56,8 @@ bool CFileSearch::GetSubDirs(CStringList &dir_list, const CString &path)
     searchString = path;
     searchString+= "\\*.*";
 
-	try 
-	{
+    try 
+    {
         struct _finddata_t  c_file;
         long fhandle;
 
@@ -83,7 +83,7 @@ bool CFileSearch::GetSubDirs(CStringList &dir_list, const CString &path)
                 }
             }
 
-            // find the rest of them	
+            // find the rest of them    
             while(_findnext( fhandle, &c_file ) == 0 ) 
             {
                 if ((c_file.attrib & _A_SUBDIR)==_A_SUBDIR) 
@@ -104,31 +104,31 @@ bool CFileSearch::GetSubDirs(CStringList &dir_list, const CString &path)
             }
             _findclose(fhandle);
         }
-	} 
-	catch (...) 
-	{
-		return false;
-	}
+    } 
+    catch (...) 
+    {
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 bool CFileSearch::ClearFiles()
 {
-	m_lstFiles.RemoveAll();
+    m_lstFiles.RemoveAll();
     m_iFileIndex = 0;
-	return true;
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 bool CFileSearch::ClearDirs()
 {
-	m_lstDirs.RemoveAll();
+    m_lstDirs.RemoveAll();
     m_iDirIndex = 0;
-	return true;
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -193,50 +193,50 @@ void CFileSearch::AddDirPath(const char * pDirPath)
 
 bool CFileSearch::GetFiles(const char *pFilemask)
 {
-	// get the files in each of our directories
-	for (int i=0; i<m_lstDirs.GetCount(); i++) 
-	{
-		CString curDir = m_lstDirs.GetAt(m_lstDirs.FindIndex(i));
+    // get the files in each of our directories
+    for (int i=0; i<m_lstDirs.GetCount(); i++) 
+    {
+        CString curDir = m_lstDirs.GetAt(m_lstDirs.FindIndex(i));
 
         // sanity check
-		if (curDir.IsEmpty())
-		{
-			continue;
-		}
-		
-		if (!FindFiles(curDir, pFilemask))
-		{
-			return false;
-		}
-	}
+        if (curDir.IsEmpty())
+        {
+            continue;
+        }
+        
+        if (!FindFiles(curDir, pFilemask))
+        {
+            return false;
+        }
+    }
 
-	return true;
-}	
+    return true;
+}    
 
 //////////////////////////////////////////////////////////////////////
 
 // /* static */              chop off trailing "\"
 void CFileSearch::FormatPath(CString &path)
 {
-	CString inPath = path;
-	inPath.TrimRight();
-	CString tmp;
-	
-	int iLastSlashPos = inPath.ReverseFind('\\');
-	if (iLastSlashPos == -1)
-	{
-		iLastSlashPos = inPath.ReverseFind('/');
-	}
-	
-	if (iLastSlashPos!=-1) 
-	{
-		if (iLastSlashPos==inPath.GetLength()-1) 
-		{
-			path = inPath.Left(iLastSlashPos);
+    CString inPath = path;
+    inPath.TrimRight();
+    CString tmp;
+    
+    int iLastSlashPos = inPath.ReverseFind('\\');
+    if (iLastSlashPos == -1)
+    {
+        iLastSlashPos = inPath.ReverseFind('/');
+    }
+    
+    if (iLastSlashPos!=-1) 
+    {
+        if (iLastSlashPos==inPath.GetLength()-1) 
+        {
+            path = inPath.Left(iLastSlashPos);
 
-			FormatPath(path); // in case the incoming path is "C:\temp\\\..."
-		}
-	} 
+            FormatPath(path); // in case the incoming path is "C:\temp\\\..."
+        }
+    } 
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -270,7 +270,7 @@ UINT CFileSearch::FindFiles(const CString & dir, const CString & filter)
                 m_lstFiles.AddTail(fileName);
             }
 
-            // find the rest of them	
+            // find the rest of them    
             while(_findnext( fhandle, &c_file ) == 0 ) 
             {
                 if ((c_file.attrib & _A_SUBDIR)!=_A_SUBDIR) 

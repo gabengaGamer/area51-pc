@@ -113,14 +113,14 @@ xbool font::Load( const char* pPathName )
             // Add character
             if( x1 == 0 )
             {
-			    m_Characters[16+Row*16+Col].X = 1;		
-                m_Characters[16+Row*16+Col].Y = y+1;	
+                m_Characters[16+Row*16+Col].X = 1;        
+                m_Characters[16+Row*16+Col].Y = y+1;    
                 m_Characters[16+Row*16+Col].W = x2-1;  
             }
             else
             {
-			    m_Characters[16+Row*16+Col].X = x1;		
-                m_Characters[16+Row*16+Col].Y = y+1;	
+                m_Characters[16+Row*16+Col].X = x1;        
+                m_Characters[16+Row*16+Col].Y = y+1;    
                 m_Characters[16+Row*16+Col].W = x2-x1;  
             }
 
@@ -141,11 +141,11 @@ xbool font::Load( const char* pPathName )
             while( (y < m_BmHeight) && !(pBitmap->GetPixelColor( 0, y ).R < 32) )
                 y++;
 
-			// Skip out if not found
-			if( (y >= m_BmHeight) || ((y-yStart) == 1) )
+            // Skip out if not found
+            if( (y >= m_BmHeight) || ((y-yStart) == 1) )
             {
                 Done = TRUE;
-				break;
+                break;
             }
 
             m_RowHeight = y - yStart;
@@ -623,7 +623,7 @@ void font::RenderText( const irect&  Rect,
                     }
                     ButtonCodes[ NumButtons ] = buttonCode;
                     Button_X[ NumButtons ] = (f32)tx;
-	        	Button_Y[ NumButtons ] = (f32)ty;
+                Button_Y[ NumButtons ] = (f32)ty;
                     tx += BUTTON_SPRITE_WIDTH;
                     
                     NumButtons++;

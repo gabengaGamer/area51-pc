@@ -120,7 +120,7 @@ xbool dlg_team_leaderboard::Create( s32                        UserID,
     // Do dialog creation
     Success = dlg_mp_score::Create( UserID, pManager, pDialogTem, Position, pParent, Flags, pUserData );
 
-    m_pDetailsBox	    = (ui_blankbox*)    FindChildByID( IDC_TEAM_LEADERBOARD_DETAILS       );
+    m_pDetailsBox        = (ui_blankbox*)    FindChildByID( IDC_TEAM_LEADERBOARD_DETAILS       );
     m_pFrame            = (ui_frame*)       FindChildByID( IDC_TEAM_LEADERBOARD_FRAME         );
     m_pFrameMain        = (ui_frame*)       FindChildByID( IDC_TEAM_LEADERBOARD_FRAME_MAIN    );
     m_pFrameTeamOne     = (ui_frame*)       FindChildByID( IDC_TEAM_LEADERBOARD_FRAME_TEAM1   );
@@ -262,7 +262,7 @@ void dlg_team_leaderboard::Render( s32 ox, s32 oy )
 
     irect rb;
 
-	rb = g_UiMgr->GetUserBounds( m_UserID );
+    rb = g_UiMgr->GetUserBounds( m_UserID );
     // render background filter
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),

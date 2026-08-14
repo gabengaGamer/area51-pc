@@ -19,8 +19,8 @@ class CViewportToolbar : public CControlBar
 {
     // Construction
     public:
-	             CViewportToolbar();
-	    virtual ~CViewportToolbar();
+                 CViewportToolbar();
+        virtual ~CViewportToolbar();
 
 
     // Controls
@@ -39,18 +39,18 @@ class CViewportToolbar : public CControlBar
     //-----------------------------------------------------------------------
 
     // Overrides
-	    // ClassWizard generated virtual function overrides
-	    //{{AFX_VIRTUAL(CViewportToolbar)
-	public:
-	virtual BOOL Create(CWnd* pParentWnd, DWORD dwStyle, UINT nID);
-	//}}AFX_VIRTUAL
+        // ClassWizard generated virtual function overrides
+        //{{AFX_VIRTUAL(CViewportToolbar)
+    public:
+    virtual BOOL Create(CWnd* pParentWnd, DWORD dwStyle, UINT nID);
+    //}}AFX_VIRTUAL
 
-	    // Generated message map functions
+        // Generated message map functions
     protected:
-	    //{{AFX_MSG(CViewportToolbar)
-	afx_msg void OnPaint();
-	//}}AFX_MSG
-	    DECLARE_MESSAGE_MAP()
+        //{{AFX_MSG(CViewportToolbar)
+    afx_msg void OnPaint();
+    //}}AFX_MSG
+        DECLARE_MESSAGE_MAP()
 
         afx_msg LRESULT OnPushButton_Clicked    ( WPARAM wParam, LPARAM lParam );
 

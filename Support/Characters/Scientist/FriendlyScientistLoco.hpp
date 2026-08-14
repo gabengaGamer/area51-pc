@@ -57,11 +57,11 @@ public:
 // Construction / destruction
 public:
 
-	// Constructs a friendly_scientist_loco object.
-	friendly_scientist_loco();
+    // Constructs a friendly_scientist_loco object.
+    friendly_scientist_loco();
 
-	// Destroys a friendly_scientist_loco object, handles cleanup and de-allocation.
-	virtual ~friendly_scientist_loco();
+    // Destroys a friendly_scientist_loco object, handles cleanup and de-allocation.
+    virtual ~friendly_scientist_loco();
 
 public:
     virtual void    OnInit           ( const geom* pGeom, const char* pAnimFileName, guid ObjectGuid = NULL );

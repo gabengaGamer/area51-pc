@@ -213,13 +213,13 @@ const char*character_alarm_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_ALARM_GOTO_ALARM:
         return "PHASE_ALARM_GOTO_ALARM";
-    	break;
+        break;
     case PHASE_ALARM_FACE_EXACT:
         return "PHASE_ALARM_FACE_EXACT";
-    	break;
+        break;
     case PHASE_ALARM_USE_ALARM:
         return "PHASE_ALARM_USE_ALARM";
-    	break;
+        break;
     }
     return character_state::GetPhaseName(thePhase);
 }

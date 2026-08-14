@@ -28,20 +28,20 @@ class BitmapPreviewWidget : public QWidget
 
 public:
     explicit BitmapPreviewWidget  (QWidget* pParent = NULL);
-								  
+                                  
     void SetImage                 (const QImage& Image);
     void SetAlpha                 (xbool Alpha);
     void SetHoverCallback         (const std::function<void(s32, s32, s32, s32, s32, s32)>& Callback);
-						          
+                                  
 signals:                          
     void ImageClicked             (const QImage& Image, xbool Alpha);
-						          
+                                  
 protected:                        
     void paintEvent               (QPaintEvent* pEvent) override;
     void mouseMoveEvent           (QMouseEvent* pEvent) override;
     void mousePressEvent          (QMouseEvent* pEvent) override;
     void leaveEvent               (QEvent* pEvent) override;
-						          
+                                  
 private:                          
     QRect GetTargetRect           (void) const;
 

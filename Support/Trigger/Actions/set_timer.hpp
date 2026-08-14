@@ -39,8 +39,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Set Timer"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "Operates upon a global timer."; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
 
     virtual         void                OnRender    ( void );
 

@@ -12,44 +12,44 @@
 class CTabView : public CTreeView
 {
 protected: // create from serialization only
-	CTabView();
-	DECLARE_DYNCREATE(CTabView)
+    CTabView();
+    DECLARE_DYNCREATE(CTabView)
 
 // Attributes
 public:
-	CTabDoc* GetDocument();
-	
+    CTabDoc* GetDocument();
+    
 // Operations
 protected:
 
-	CImageList	m_imageList;
+    CImageList    m_imageList;
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CTabView)
-	public:
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CTabView)
+    public:
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CTabView();
+    virtual ~CTabView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 protected:
 
 // Generated message map functions
 protected:
-	//{{AFX_MSG(CTabView)
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	afx_msg void OnPaint();
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg LRESULT OnNcHitTest(CPoint point);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CTabView)
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg void OnPaint();
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg LRESULT OnNcHitTest(CPoint point);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 #ifndef _DEBUG  // debug version in TabView.cpp

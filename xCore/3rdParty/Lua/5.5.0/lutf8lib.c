@@ -21,16 +21,16 @@
 #include "llimits.h"
 
 
-#define MAXUNICODE	0x10FFFFu
+#define MAXUNICODE    0x10FFFFu
 
-#define MAXUTF		0x7FFFFFFFu
-
-
-#define MSGInvalid	"invalid UTF-8 code"
+#define MAXUTF        0x7FFFFFFFu
 
 
-#define iscont(c)	(((c) & 0xC0) == 0x80)
-#define iscontp(p)	iscont(*(p))
+#define MSGInvalid    "invalid UTF-8 code"
+
+
+#define iscont(c)    (((c) & 0xC0) == 0x80)
+#define iscontp(p)    iscont(*(p))
 
 
 /* from strlib */
@@ -267,7 +267,7 @@ static int iter_codes (lua_State *L) {
 
 
 /* pattern to match a single UTF-8 character */
-#define UTF8PATT	"[\0-\x7F\xC2-\xFD][\x80-\xBF]*"
+#define UTF8PATT    "[\0-\x7F\xC2-\xFD][\x80-\xBF]*"
 
 
 static const luaL_Reg funcs[] = {

@@ -33,8 +33,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Move AI To"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "Commands AI to move, with defined pre and post states"; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
 
     virtual         void                OnRender    ( void );
    

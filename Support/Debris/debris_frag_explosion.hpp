@@ -20,7 +20,7 @@ public:
 
         //=============================================================================
                          debris_frag_explosion( void );
-    virtual				~debris_frag_explosion( void );
+    virtual                ~debris_frag_explosion( void );
 
     virtual void        Create                ( const char*       pMeshName,
                                                 const vector3&    Pos,

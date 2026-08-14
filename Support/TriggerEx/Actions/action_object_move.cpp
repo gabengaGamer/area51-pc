@@ -143,7 +143,7 @@ void action_object_move::OnDebugRender ( s32 Index )
 
 //=============================================================================
 
-void action_object_move::OnEnumProp	( prop_enum& rPropList )
+void action_object_move::OnEnumProp    ( prop_enum& rPropList )
 {
     //guid specific fields
     m_ObjectAffecter.OnEnumProp( rPropList, "Object" );
@@ -156,7 +156,7 @@ void action_object_move::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool action_object_move::OnProperty	( prop_query& rPropQuery )
+xbool action_object_move::OnProperty    ( prop_query& rPropQuery )
 {
     //guid specific fields
     if( m_ObjectAffecter.OnProperty( rPropQuery, "Object" ) )

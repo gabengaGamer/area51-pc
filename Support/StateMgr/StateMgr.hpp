@@ -660,7 +660,7 @@ private:
     void                    UpdateSaveDataReselectMP         ( void );
     void                    ExitSaveDataReselectMP           ( void );
 
-    void            		EnterOnlineSilentLogin          ( void );
+    void                    EnterOnlineSilentLogin          ( void );
 
     void                    EnterOnlineConnect              ( void );
     void                    UpdateOnlineConnect             ( void );

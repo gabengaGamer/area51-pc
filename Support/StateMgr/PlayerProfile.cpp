@@ -10,7 +10,7 @@
 
 #include "PlayerProfile.hpp"
 #include "StateMgr.hpp"
-#include "../../Apps/GameApp/Config.hpp"	
+#include "../../Apps/GameApp/Config.hpp"    
 
 //=========================================================================
 //  Control Settings Packing

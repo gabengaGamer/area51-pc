@@ -36,9 +36,9 @@ ui_manager::control_tem MainMenuControls[] =
     { IDC_MAIN_MENU_SETTINGS,           "IDS_MAIN_MENU_SETTINGS",   "button",   60, 160, 120, 40, 0, 3, 1, 1,  ui_win::WF_VISIBLE },
     { IDC_MAIN_MENU_PROFILES,           "IDS_MAIN_MENU_PROFILES",   "button",   60, 200, 120, 40, 0, 4, 1, 1,  ui_win::WF_VISIBLE },
     { IDC_MAIN_MENU_CREDITS,            "IDS_EXTRAS_ITEM_CREDITS",  "button",   60, 240, 120, 40, 0, 5, 1, 1,  ui_win::WF_VISIBLE },
-#if defined(TARGET_DESKTOP)		                                                                                   
+#if defined(TARGET_DESKTOP)                                                                                           
     { IDC_MAIN_MENU_EXIT,               "IDS_MAIN_MENU_QUIT",       "button",   60, 280, 120, 40, 0, 6, 1, 1,  ui_win::WF_VISIBLE },
-#endif	                                                                                                       
+#endif                                                                                                           
 }; 
 
 ui_manager::dialog_tem MainMenuDialog =
@@ -132,9 +132,9 @@ xbool dlg_main_menu::Create( s32                        UserID,
     m_pButtonSettings       = (ui_button*)  FindChildByID( IDC_MAIN_MENU_SETTINGS           );
     m_pButtonProfiles       = (ui_button*)  FindChildByID( IDC_MAIN_MENU_PROFILES           );
     m_pButtonCredits        = (ui_button*)  FindChildByID( IDC_MAIN_MENU_CREDITS            );
-#if defined(TARGET_DESKTOP)		
+#if defined(TARGET_DESKTOP)        
     m_pButtonExit           = (ui_button*)  FindChildByID( IDC_MAIN_MENU_EXIT               );
-#endif	
+#endif    
 
     s32 iControl = g_StateMgr.GetCurrentControl();
     if( (iControl == -1) || (GotoControl(iControl)==NULL) )
@@ -158,9 +158,9 @@ xbool dlg_main_menu::Create( s32                        UserID,
     m_pButtonSettings     ->SetFlag(ui_win::WF_VISIBLE, FALSE);    
     m_pButtonProfiles     ->SetFlag(ui_win::WF_VISIBLE, FALSE);    
     m_pButtonCredits      ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-#if defined(TARGET_DESKTOP)	
+#if defined(TARGET_DESKTOP)    
     m_pButtonExit         ->SetFlag(ui_win::WF_VISIBLE, FALSE);
-#endif	
+#endif    
 #if defined(TARGET_DESKTOP) || defined(LAN_PARTY_BUILD)
     m_pButtonMultiPlayer  ->SetFlag(ui_win::WF_DISABLED, TRUE);
 #endif
@@ -318,7 +318,7 @@ void dlg_main_menu::OnAccept( ui_win* pWin )
             m_CurrentControl = IDC_MAIN_MENU_CREDITS;
             m_State = DIALOG_STATE_SELECT;
         }
-#if defined(TARGET_DESKTOP)			
+#if defined(TARGET_DESKTOP)            
         else if( pWin == (ui_win*)m_pButtonExit )
         {
             g_AudioMgr.Play("Select_Norm");
@@ -366,9 +366,9 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             m_pButtonSettings     ->SetFlag(ui_win::WF_VISIBLE, TRUE);    
             m_pButtonProfiles     ->SetFlag(ui_win::WF_VISIBLE, TRUE);    
             m_pButtonCredits      ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-#if defined(TARGET_DESKTOP)			
+#if defined(TARGET_DESKTOP)            
             m_pButtonExit         ->SetFlag(ui_win::WF_VISIBLE, TRUE);
-#endif			
+#endif            
 
             s32 iControl = g_StateMgr.GetCurrentControl();
             if( (iControl == -1) || (GotoControl(iControl)==NULL) )
@@ -417,7 +417,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
             SetNavTextVisible( TRUE );
         }
     }
-#endif	
+#endif    
 
     // update the glow bar
     g_UiMgr->UpdateGlowBar(DeltaTime);
@@ -452,7 +452,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         g_UiMgr->SetScreenHighlight( m_pButtonCredits->GetPosition() );
         highLight = 5;
     }
-#if defined(TARGET_DESKTOP)	
+#if defined(TARGET_DESKTOP)    
     else if( m_pButtonExit->IsFocused() )
     {
         g_UiMgr->SetScreenHighlight( m_pButtonExit->GetPosition() );

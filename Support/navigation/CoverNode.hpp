@@ -59,8 +59,8 @@ public:
     virtual void                OnTransform     ( const matrix4& L2W    ); 
     virtual void                OnAdvanceSimulation  ( f32 DeltaTime         ); 
 
-    virtual	void	            OnEnumProp	    ( prop_enum& rList );
-    virtual	xbool	            OnProperty	    ( prop_query& rPropQuery );
+    virtual    void                OnEnumProp        ( prop_enum& rList );
+    virtual    xbool                OnProperty        ( prop_query& rPropQuery );
 
 #ifdef X_EDITOR
     virtual s32                 OnValidateProperties( xstring& ErrorMsg );

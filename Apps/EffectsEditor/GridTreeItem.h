@@ -15,20 +15,20 @@ class CGridTreeItem : public CObject
 {
 public:
     CGridTreeItem();
-	~CGridTreeItem();
+    ~CGridTreeItem();
 
-	// handle compound objects
-	virtual void NotifyOfChildChange(CGridListCtrl *pGrid) {};
-	// handle compound objects
-	virtual void NotifyOfChange(CGridListCtrl *pGrid) {};
+    // handle compound objects
+    virtual void NotifyOfChildChange(CGridListCtrl *pGrid) {};
+    // handle compound objects
+    virtual void NotifyOfChange(CGridListCtrl *pGrid) {};
 
-	CObList			m_listChild;
-	CGridTreeItem*	m_pParent;
-	CGridItemInfo*	m_lpNodeInfo;
-	BOOL			m_bHideChildren;  
-	int				m_nIndex; //CListCtrl index
-	int				m_nIndent; 
-	int				m_bSetChildFlag;
+    CObList            m_listChild;
+    CGridTreeItem*    m_pParent;
+    CGridItemInfo*    m_lpNodeInfo;
+    BOOL            m_bHideChildren;  
+    int                m_nIndex; //CListCtrl index
+    int                m_nIndent; 
+    int                m_bSetChildFlag;
 
     CString         m_strIdentifier;
     CString         m_strComment;

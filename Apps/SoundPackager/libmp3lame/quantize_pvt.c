@@ -1,7 +1,7 @@
 /*
- *	quantize_pvt source file
+ *    quantize_pvt source file
  *
- *	Copyright (c) 1999 Takehiro TOMINAGA
+ *    Copyright (c) 1999 Takehiro TOMINAGA
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -10,7 +10,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -176,13 +176,13 @@ iteration_init( lame_global_flags *gfp)
     for (i = 1; i < PRECALC_SIZE; i++)
       adj43asm[i] = i - 0.5 - pow(0.5 * (pow43[i - 1] + pow43[i]),0.75);
     for (i = 0; i < PRECALC_SIZE-1; i++)
-	adj43[i] = (i + 1) - pow(0.5 * (pow43[i] + pow43[i + 1]), 0.75);
+    adj43[i] = (i + 1) - pow(0.5 * (pow43[i] + pow43[i + 1]), 0.75);
     adj43[i] = 0.5;
     iipow20_ = &iipow20[210];
     for (i = 0; i < Q_MAX; i++) {
         iipow20[i] = pow(2.0, (double)(i - 210) * 0.1875);
-	ipow20[i] = pow(2.0, (double)(i - 210) * -0.1875);
-	pow20[i] = pow(2.0, (double)(i - 210) * 0.25);
+    ipow20[i] = pow(2.0, (double)(i - 210) * -0.1875);
+    pow20[i] = pow(2.0, (double)(i - 210) * 0.25);
     }
     huffman_init(gfc);
   }
@@ -227,7 +227,7 @@ FLOAT8 ATHmdct( lame_global_flags *gfp, FLOAT8 f )
     FLOAT8 ath;
   
     ath = ATHformula( f , gfp );
-	  
+      
     if (gfc->nsPsy.use) {
         ath -= NSATHSCALE;
     } else {
@@ -340,7 +340,7 @@ int on_pe( lame_global_flags *gfp, FLOAT8 pe[][2], III_side_info_t *l3_side,
             add_bits[ch] = (pe[gr][ch]-750) / 1.4;
             /* short blocks us a little extra, no matter what the pe */
             if ( cod_info->block_type == SHORT_TYPE ) {
-	        if (add_bits[ch] < mean_bits/2) 
+            if (add_bits[ch] < mean_bits/2) 
                     add_bits[ch] = mean_bits/2;
             }
         }
@@ -352,7 +352,7 @@ int on_pe( lame_global_flags *gfp, FLOAT8 pe[][2], III_side_info_t *l3_side,
             add_bits[ch] = 0;
 
         if (add_bits[ch]+targ_bits[ch] > MAX_BITS) 
-	    add_bits[ch] = Max( 0, MAX_BITS-targ_bits[ch] );
+        add_bits[ch] = Max( 0, MAX_BITS-targ_bits[ch] );
 
         bits += add_bits[ch];
     }
@@ -401,14 +401,14 @@ void reduce_side(int targ_bits[2],FLOAT8 ms_ener_ratio,int mean_bits,int max_bit
       /* dont reduce side channel below 125 bits */
       if (targ_bits[1]-move_bits > 125) {
 
-	/* if mid channel already has 2x more than average, dont bother */
-	/* mean_bits = bits per granule (for both channels) */
-	if (targ_bits[0] < mean_bits)
-	  targ_bits[0] += move_bits;
-	targ_bits[1] -= move_bits;
+    /* if mid channel already has 2x more than average, dont bother */
+    /* mean_bits = bits per granule (for both channels) */
+    if (targ_bits[0] < mean_bits)
+      targ_bits[0] += move_bits;
+    targ_bits[1] -= move_bits;
       } else {
-	targ_bits[0] += targ_bits[1] - 125;
-	targ_bits[1] = 125;
+    targ_bits[0] += targ_bits[1] - 125;
+    targ_bits[1] = 125;
       }
     }
     
@@ -461,7 +461,7 @@ FLOAT8 athAdjust( FLOAT8 a, FLOAT8 x, FLOAT8 athFloor )
 int calc_xmin( 
         lame_global_flags *gfp,
         const III_psy_ratio * const ratio,
-	const gr_info       * const cod_info, 
+    const gr_info       * const cod_info, 
               III_psy_xmin  * const l3_xmin ) 
 {
     lame_internal_flags *gfc = gfp->internal_flags;
@@ -471,91 +471,91 @@ int calc_xmin(
     const FLOAT8 *xr = cod_info->xr;
 
     for (sfb = 0; sfb < cod_info->psy_lmax; sfb++) {
-	FLOAT en0 = 0.0;
-	int width, l;
-	if ( gfp->VBR == vbr_rh || gfp->VBR == vbr_mtrh )
-	    tmpATH = athAdjust( ATH->adjust, ATH->l[sfb], ATH->floor );
-	else
-	    tmpATH = ATH->adjust * ATH->l[sfb];
+    FLOAT en0 = 0.0;
+    int width, l;
+    if ( gfp->VBR == vbr_rh || gfp->VBR == vbr_mtrh )
+        tmpATH = athAdjust( ATH->adjust, ATH->l[sfb], ATH->floor );
+    else
+        tmpATH = ATH->adjust * ATH->l[sfb];
 
-	width = gfc->scalefac_band.l[sfb+1] - gfc->scalefac_band.l[sfb];
-	l = width;
-	do {
-	    en0 += xr[j] * xr[j];
-	    j++;
-	} while (--l > 0);
+    width = gfc->scalefac_band.l[sfb+1] - gfc->scalefac_band.l[sfb];
+    l = width;
+    do {
+        en0 += xr[j] * xr[j];
+        j++;
+    } while (--l > 0);
 
-	/* why is it different from short blocks <?> */
-	if ( !gfc->nsPsy.use ) en0 /= width;   
+    /* why is it different from short blocks <?> */
+    if ( !gfc->nsPsy.use ) en0 /= width;   
 
-	xmin = tmpATH;
-	if (!gfp->ATHonly) {
-	    xmin = ratio->en.l[sfb];
-	    if (xmin > 0.0)
-		xmin = en0 * ratio->thm.l[sfb] * gfc->masking_lower / xmin;
-	    if (xmin < tmpATH) 
-		xmin = tmpATH;
-	}
-	/* why is it different from short blocks <?> */
-	if ( !gfc->nsPsy.use ) {
-	    xmin *= width;
-	}
-	else {
-	    if      (sfb <=  6) xmin *= gfc->nsPsy.bass;
-	    else if (sfb <= 13) xmin *= gfc->nsPsy.alto;
-	    else if (sfb <= 20) xmin *= gfc->nsPsy.treble;
-	    else                xmin *= gfc->nsPsy.sfb21;
-	    if ((gfp->VBR == vbr_off || gfp->VBR == vbr_abr) && gfp->quality <= 1)
-		xmin *= 0.001;
-	}
-	l3_xmin->l[sfb] = xmin;
-	if (en0 > tmpATH) ath_over++;
+    xmin = tmpATH;
+    if (!gfp->ATHonly) {
+        xmin = ratio->en.l[sfb];
+        if (xmin > 0.0)
+        xmin = en0 * ratio->thm.l[sfb] * gfc->masking_lower / xmin;
+        if (xmin < tmpATH) 
+        xmin = tmpATH;
+    }
+    /* why is it different from short blocks <?> */
+    if ( !gfc->nsPsy.use ) {
+        xmin *= width;
+    }
+    else {
+        if      (sfb <=  6) xmin *= gfc->nsPsy.bass;
+        else if (sfb <= 13) xmin *= gfc->nsPsy.alto;
+        else if (sfb <= 20) xmin *= gfc->nsPsy.treble;
+        else                xmin *= gfc->nsPsy.sfb21;
+        if ((gfp->VBR == vbr_off || gfp->VBR == vbr_abr) && gfp->quality <= 1)
+        xmin *= 0.001;
+    }
+    l3_xmin->l[sfb] = xmin;
+    if (en0 > tmpATH) ath_over++;
     }   /* end of long block loop */
 
     for (sfb = cod_info->sfb_smin; sfb < cod_info->psy_smax; sfb++) {
-	int width, b;
-	if ( gfp->VBR == vbr_rh || gfp->VBR == vbr_mtrh )
-	    tmpATH = athAdjust( ATH->adjust, ATH->s[sfb], ATH->floor );
-	else
-	    tmpATH = ATH->adjust * ATH->s[sfb];
+    int width, b;
+    if ( gfp->VBR == vbr_rh || gfp->VBR == vbr_mtrh )
+        tmpATH = athAdjust( ATH->adjust, ATH->s[sfb], ATH->floor );
+    else
+        tmpATH = ATH->adjust * ATH->s[sfb];
 
-	width = gfc->scalefac_band.s[sfb+1] - gfc->scalefac_band.s[sfb];
-	for ( b = 0; b < 3; b++ ) {
-	    FLOAT en0 = 0.0;
-	    int l = width;
-	    do {
-		en0 += xr[j] * xr[j];
-		j++;
-	    } while (--l > 0);
-	    en0 /= width;
+    width = gfc->scalefac_band.s[sfb+1] - gfc->scalefac_band.s[sfb];
+    for ( b = 0; b < 3; b++ ) {
+        FLOAT en0 = 0.0;
+        int l = width;
+        do {
+        en0 += xr[j] * xr[j];
+        j++;
+        } while (--l > 0);
+        en0 /= width;
 
-	    xmin = tmpATH;
-	    if (!gfp->ATHonly && !gfp->ATHshort) {
-		xmin = ratio->en.s[sfb][b];
-		if (xmin > 0.0)
-		    xmin = en0 * ratio->thm.s[sfb][b] * gfc->masking_lower / xmin;
-		if (xmin < tmpATH) 
-		    xmin = tmpATH;
-	    }
-	    xmin *= width;
+        xmin = tmpATH;
+        if (!gfp->ATHonly && !gfp->ATHshort) {
+        xmin = ratio->en.s[sfb][b];
+        if (xmin > 0.0)
+            xmin = en0 * ratio->thm.s[sfb][b] * gfc->masking_lower / xmin;
+        if (xmin < tmpATH) 
+            xmin = tmpATH;
+        }
+        xmin *= width;
 
-	    if (gfc->nsPsy.use) {
-		if      (sfb <=  5) xmin *= gfc->nsPsy.bass;
-		else if (sfb <= 10) xmin *= gfc->nsPsy.alto;
-		else                xmin *= gfc->nsPsy.treble;
-		if ((gfp->VBR == vbr_off || gfp->VBR == vbr_abr) && gfp->quality <= 1)
-		    xmin *= 0.001;
-	    }
-	    l3_xmin->s[sfb][b] = xmin;
-	    if (en0 > tmpATH) ath_over++;
-	}   /* b */
-	if (gfp->useTemporal) {
-	    for ( b = 1; b < 3; b++ ) {
-		xmin = l3_xmin->s[sfb][b] * (1.0 - gfc->decay)
-		    + l3_xmin->s[sfb][b-1] * gfc->decay;
-		if (l3_xmin->s[sfb][b] < xmin)
-		    l3_xmin->s[sfb][b] = xmin;
-	    }
+        if (gfc->nsPsy.use) {
+        if      (sfb <=  5) xmin *= gfc->nsPsy.bass;
+        else if (sfb <= 10) xmin *= gfc->nsPsy.alto;
+        else                xmin *= gfc->nsPsy.treble;
+        if ((gfp->VBR == vbr_off || gfp->VBR == vbr_abr) && gfp->quality <= 1)
+            xmin *= 0.001;
+        }
+        l3_xmin->s[sfb][b] = xmin;
+        if (en0 > tmpATH) ath_over++;
+    }   /* b */
+    if (gfp->useTemporal) {
+        for ( b = 1; b < 3; b++ ) {
+        xmin = l3_xmin->s[sfb][b] * (1.0 - gfc->decay)
+            + l3_xmin->s[sfb][b-1] * gfc->decay;
+        if (l3_xmin->s[sfb][b] < xmin)
+            l3_xmin->s[sfb][b] = xmin;
+        }
         }   /* sfb */
     }   /* end of short block loop */
 
@@ -608,12 +608,12 @@ int  calc_noise(
     int j = 0;
 
     for (sfb = 0; sfb < cod_info->psy_lmax; sfb++) {
-	int s =
-	    cod_info->global_gain
-	    - ((scalefac->l[sfb] + (cod_info->preflag ? pretab[sfb] : 0))
-	       << (cod_info->scalefac_scale + 1));
-	FLOAT8 step;
-	FLOAT8 noise = 0.0;
+    int s =
+        cod_info->global_gain
+        - ((scalefac->l[sfb] + (cod_info->preflag ? pretab[sfb] : 0))
+           << (cod_info->scalefac_scale + 1));
+    FLOAT8 step;
+    FLOAT8 noise = 0.0;
 
         if (s<0) {
             step = pow(2.0, (double)(s - 210) * 0.25);
@@ -622,58 +622,58 @@ int  calc_noise(
             step = POW20(s);
         }
 
-	l = gfc->scalefac_band.l[sfb+1] - gfc->scalefac_band.l[sfb];
-	do {
-	    FLOAT8 temp = fabs(cod_info->xr[j]) - pow43[ix[j]] * step;
-	    noise += temp * temp;
-	    j++;
-	} while (--l > 0);
-	noise = xfsf->l[sfb] = noise / l3_xmin->l[sfb];
-	max_noise=Max(max_noise,noise);
-	klemm_noise += penalties (noise);
+    l = gfc->scalefac_band.l[sfb+1] - gfc->scalefac_band.l[sfb];
+    do {
+        FLOAT8 temp = fabs(cod_info->xr[j]) - pow43[ix[j]] * step;
+        noise += temp * temp;
+        j++;
+    } while (--l > 0);
+    noise = xfsf->l[sfb] = noise / l3_xmin->l[sfb];
+    max_noise=Max(max_noise,noise);
+    klemm_noise += penalties (noise);
 
-	noise = FAST_LOG10(Max(noise,1E-20));
-	/* multiplying here is adding in dB, but can overflow */
-	//tot_noise *= Max(noise, 1E-20);
-	tot_noise_db += noise;
+    noise = FAST_LOG10(Max(noise,1E-20));
+    /* multiplying here is adding in dB, but can overflow */
+    //tot_noise *= Max(noise, 1E-20);
+    tot_noise_db += noise;
 
-	if (noise > 0.0) {
-	    over++;
-	    /* multiplying here is adding in dB -but can overflow */
-	    //over_noise *= noise;
-	    over_noise_db += noise;
-	}
+    if (noise > 0.0) {
+        over++;
+        /* multiplying here is adding in dB -but can overflow */
+        //over_noise *= noise;
+        over_noise_db += noise;
+    }
     }
 
     for (sfb = cod_info->sfb_smin; sfb < cod_info->psy_smax; sfb++) {
-	int width = gfc->scalefac_band.s[sfb+1] - gfc->scalefac_band.s[sfb];
-	for ( i = 0; i < 3; i++ ) {
-	    int s =
-		cod_info->global_gain
-		- (scalefac->s[sfb][i] << (cod_info->scalefac_scale + 1))
-		- cod_info->subblock_gain[i] * 8;
-	    FLOAT8 step = POW20(s);
-	    FLOAT8 noise = 0.0;
-	    l = width;
-	    do {
-		FLOAT8 temp;
-		temp = pow43[ix[j]] * step - fabs(cod_info->xr[j]);
-		noise += temp * temp;
-		j++;
-	    } while (--l > 0);
-	    noise = xfsf->s[sfb][i]  = noise / l3_xmin->s[sfb][i];
+    int width = gfc->scalefac_band.s[sfb+1] - gfc->scalefac_band.s[sfb];
+    for ( i = 0; i < 3; i++ ) {
+        int s =
+        cod_info->global_gain
+        - (scalefac->s[sfb][i] << (cod_info->scalefac_scale + 1))
+        - cod_info->subblock_gain[i] * 8;
+        FLOAT8 step = POW20(s);
+        FLOAT8 noise = 0.0;
+        l = width;
+        do {
+        FLOAT8 temp;
+        temp = pow43[ix[j]] * step - fabs(cod_info->xr[j]);
+        noise += temp * temp;
+        j++;
+        } while (--l > 0);
+        noise = xfsf->s[sfb][i]  = noise / l3_xmin->s[sfb][i];
 
-	    max_noise    = Max(max_noise,noise);
-	    klemm_noise += penalties (noise);
+        max_noise    = Max(max_noise,noise);
+        klemm_noise += penalties (noise);
 
-	    noise = FAST_LOG10(Max(noise,1E-20));
-	    tot_noise_db += noise;
+        noise = FAST_LOG10(Max(noise,1E-20));
+        tot_noise_db += noise;
 
-	    if (noise > 0.0) {
-		over++;
-		over_noise_db += noise;
-	    }
-	}
+        if (noise > 0.0) {
+        over++;
+        over_noise_db += noise;
+        }
+    }
     }
 
     res->over_count = over;
@@ -732,7 +732,7 @@ void set_pinfo (
 
     calc_xmin (gfp, ratio, cod_info, &l3_xmin);
     calc_noise (gfc, cod_info->l3_enc, cod_info,
-		&l3_xmin, scalefac, &xfsf, &noise);
+        &l3_xmin, scalefac, &xfsf, &noise);
 
     if (cod_info->block_type == SHORT_TYPE) {
         for (j=0, sfb = 0; sfb < SBMAX_s; sfb++ )  {
@@ -938,10 +938,10 @@ void set_frame_pinfo(
             
             if (gr == 1 && scsfi[ch]) 
                 set_pinfo (gfp, cod_info, &ratio[gr][ch], &act_scalefac[ch],
-			   gr, ch);
+               gr, ch);
             else
                 set_pinfo (gfp, cod_info, &ratio[gr][ch], &cod_info->scalefac,
-			   gr, ch);
+               gr, ch);
         } /* for ch */
     }    /* for gr */
 }
@@ -983,27 +983,27 @@ void quantize_xrpow(const FLOAT8 *xp, int *pi, FLOAT8 istep)
 
     fi = (fi_union *)pi;
     for (j = 576 / 4 - 1; j >= 0; --j) {
-	double x0 = istep * xp[0];
-	double x1 = istep * xp[1];
-	double x2 = istep * xp[2];
-	double x3 = istep * xp[3];
+    double x0 = istep * xp[0];
+    double x1 = istep * xp[1];
+    double x2 = istep * xp[2];
+    double x3 = istep * xp[3];
 
-	x0 += MAGIC_FLOAT; fi[0].f = x0;
-	x1 += MAGIC_FLOAT; fi[1].f = x1;
-	x2 += MAGIC_FLOAT; fi[2].f = x2;
-	x3 += MAGIC_FLOAT; fi[3].f = x3;
+    x0 += MAGIC_FLOAT; fi[0].f = x0;
+    x1 += MAGIC_FLOAT; fi[1].f = x1;
+    x2 += MAGIC_FLOAT; fi[2].f = x2;
+    x3 += MAGIC_FLOAT; fi[3].f = x3;
 
-	fi[0].f = x0 + (adj43asm - MAGIC_INT)[fi[0].i];
-	fi[1].f = x1 + (adj43asm - MAGIC_INT)[fi[1].i];
-	fi[2].f = x2 + (adj43asm - MAGIC_INT)[fi[2].i];
-	fi[3].f = x3 + (adj43asm - MAGIC_INT)[fi[3].i];
+    fi[0].f = x0 + (adj43asm - MAGIC_INT)[fi[0].i];
+    fi[1].f = x1 + (adj43asm - MAGIC_INT)[fi[1].i];
+    fi[2].f = x2 + (adj43asm - MAGIC_INT)[fi[2].i];
+    fi[3].f = x3 + (adj43asm - MAGIC_INT)[fi[3].i];
 
-	fi[0].i -= MAGIC_INT;
-	fi[1].i -= MAGIC_INT;
-	fi[2].i -= MAGIC_INT;
-	fi[3].i -= MAGIC_INT;
-	fi += 4;
-	xp += 4;
+    fi[0].i -= MAGIC_INT;
+    fi[1].i -= MAGIC_INT;
+    fi[2].i -= MAGIC_INT;
+    fi[3].i -= MAGIC_INT;
+    fi += 4;
+    xp += 4;
     }
 }
 
@@ -1016,17 +1016,17 @@ void quantize_xrpow_ISO(const FLOAT8 *xp, int *pi, FLOAT8 istep)
 
     fi = (fi_union *)pi;
     for (j=576/4 - 1;j>=0;j--) {
-	fi[0].f = istep * xp[0] + (ROUNDFAC + MAGIC_FLOAT);
-	fi[1].f = istep * xp[1] + (ROUNDFAC + MAGIC_FLOAT);
-	fi[2].f = istep * xp[2] + (ROUNDFAC + MAGIC_FLOAT);
-	fi[3].f = istep * xp[3] + (ROUNDFAC + MAGIC_FLOAT);
+    fi[0].f = istep * xp[0] + (ROUNDFAC + MAGIC_FLOAT);
+    fi[1].f = istep * xp[1] + (ROUNDFAC + MAGIC_FLOAT);
+    fi[2].f = istep * xp[2] + (ROUNDFAC + MAGIC_FLOAT);
+    fi[3].f = istep * xp[3] + (ROUNDFAC + MAGIC_FLOAT);
 
-	fi[0].i -= MAGIC_INT;
-	fi[1].i -= MAGIC_INT;
-	fi[2].i -= MAGIC_INT;
-	fi[3].i -= MAGIC_INT;
-	fi+=4;
-	xp+=4;
+    fi[0].i -= MAGIC_INT;
+    fi[1].i -= MAGIC_INT;
+    fi[2].i -= MAGIC_INT;
+    fi[3].i -= MAGIC_INT;
+    fi+=4;
+    xp+=4;
     }
 }
 
@@ -1056,40 +1056,40 @@ void quantize_xrpow(const FLOAT8 *xr, int *ix, FLOAT8 istep) {
     int j;
 
     for ( j = 576/8; j > 0; --j) {
-	FLOAT8	x1, x2, x3, x4, x5, x6, x7, x8;
-	int	rx1, rx2, rx3, rx4, rx5, rx6, rx7, rx8;
-	x1 = *xr++ * istep;
-	x2 = *xr++ * istep;
-	XRPOW_FTOI(x1, rx1);
-	x3 = *xr++ * istep;
-	XRPOW_FTOI(x2, rx2);
-	x4 = *xr++ * istep;
-	XRPOW_FTOI(x3, rx3);
-	x5 = *xr++ * istep;
-	XRPOW_FTOI(x4, rx4);
-	x6 = *xr++ * istep;
-	XRPOW_FTOI(x5, rx5);
-	x7 = *xr++ * istep;
-	XRPOW_FTOI(x6, rx6);
-	x8 = *xr++ * istep;
-	XRPOW_FTOI(x7, rx7);
-	x1 += QUANTFAC(rx1);
-	XRPOW_FTOI(x8, rx8);
-	x2 += QUANTFAC(rx2);
-	XRPOW_FTOI(x1,*ix++);
-	x3 += QUANTFAC(rx3);
-	XRPOW_FTOI(x2,*ix++);
-	x4 += QUANTFAC(rx4);
-	XRPOW_FTOI(x3,*ix++);
-	x5 += QUANTFAC(rx5);
-	XRPOW_FTOI(x4,*ix++);
-	x6 += QUANTFAC(rx6);
-	XRPOW_FTOI(x5,*ix++);
-	x7 += QUANTFAC(rx7);
-	XRPOW_FTOI(x6,*ix++);
-	x8 += QUANTFAC(rx8);
-	XRPOW_FTOI(x7,*ix++);
-	XRPOW_FTOI(x8,*ix++);
+    FLOAT8    x1, x2, x3, x4, x5, x6, x7, x8;
+    int    rx1, rx2, rx3, rx4, rx5, rx6, rx7, rx8;
+    x1 = *xr++ * istep;
+    x2 = *xr++ * istep;
+    XRPOW_FTOI(x1, rx1);
+    x3 = *xr++ * istep;
+    XRPOW_FTOI(x2, rx2);
+    x4 = *xr++ * istep;
+    XRPOW_FTOI(x3, rx3);
+    x5 = *xr++ * istep;
+    XRPOW_FTOI(x4, rx4);
+    x6 = *xr++ * istep;
+    XRPOW_FTOI(x5, rx5);
+    x7 = *xr++ * istep;
+    XRPOW_FTOI(x6, rx6);
+    x8 = *xr++ * istep;
+    XRPOW_FTOI(x7, rx7);
+    x1 += QUANTFAC(rx1);
+    XRPOW_FTOI(x8, rx8);
+    x2 += QUANTFAC(rx2);
+    XRPOW_FTOI(x1,*ix++);
+    x3 += QUANTFAC(rx3);
+    XRPOW_FTOI(x2,*ix++);
+    x4 += QUANTFAC(rx4);
+    XRPOW_FTOI(x3,*ix++);
+    x5 += QUANTFAC(rx5);
+    XRPOW_FTOI(x4,*ix++);
+    x6 += QUANTFAC(rx6);
+    XRPOW_FTOI(x5,*ix++);
+    x7 += QUANTFAC(rx7);
+    XRPOW_FTOI(x6,*ix++);
+    x8 += QUANTFAC(rx8);
+    XRPOW_FTOI(x7,*ix++);
+    XRPOW_FTOI(x8,*ix++);
     }
 }
 
@@ -1120,13 +1120,13 @@ void quantize_xrpow_ISO( const FLOAT8 *xr, int *ix, FLOAT8 istep )
        4%  will give 2
     */
     for (j=576;j>0;j--) {
-	if (compareval0 > *xr) {
-	    *(ix++) = 0;
-	    xr++;
-	} else {
-	    /*    *(ix++) = (int)( istep*(*(xr++))  + 0.4054); */
-	    XRPOW_FTOI(  istep*(*(xr++))  + ROUNDFAC , *(ix++) );
-	}
+    if (compareval0 > *xr) {
+        *(ix++) = 0;
+        xr++;
+    } else {
+        /*    *(ix++) = (int)( istep*(*(xr++))  + 0.4054); */
+        XRPOW_FTOI(  istep*(*(xr++))  + ROUNDFAC , *(ix++) );
+    }
     }
 }
 

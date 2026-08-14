@@ -11,7 +11,7 @@
 
 transaction_selection_data::transaction_selection_data()
 {
-	//store selection state
+    //store selection state
     g_WorldEditor.GetSelectedList( m_Selection );
 }
 

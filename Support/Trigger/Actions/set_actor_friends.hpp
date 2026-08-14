@@ -26,8 +26,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Set Friends"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "Sets the actors friends"; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
 
     virtual         void                OnRender    ( void );
     

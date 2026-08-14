@@ -19,20 +19,20 @@ static char THIS_FILE[] = __FILE__;
 IMPLEMENT_DYNCREATE(CHelpView, CHtmlView)
 
 BEGIN_MESSAGE_MAP(CHelpView, CHtmlView)
-	//{{AFX_MSG_MAP(CHelpView)
-	ON_COMMAND(ID_BACK,    OnGoBack)
+    //{{AFX_MSG_MAP(CHelpView)
+    ON_COMMAND(ID_BACK,    OnGoBack)
     ON_COMMAND(ID_FOWARD,  OnGoFoward)
     ON_COMMAND(ID_STOP,    OnStop)
     ON_COMMAND(ID_REFRESH, OnRefresh)
     ON_COMMAND(ID_GO_HOME, OnGoHome)
-	ON_UPDATE_COMMAND_UI(ID_BACK,    OnEnable )
-	ON_WM_PAINT()
-	ON_UPDATE_COMMAND_UI(ID_FOWARD,  OnEnable )
-	ON_UPDATE_COMMAND_UI(ID_STOP,    OnEnable )
-	ON_UPDATE_COMMAND_UI(ID_REFRESH, OnEnable )
-	ON_UPDATE_COMMAND_UI(ID_GO_HOME, OnEnable )
-	ON_WM_SIZE()
-	//}}AFX_MSG_MAP
+    ON_UPDATE_COMMAND_UI(ID_BACK,    OnEnable )
+    ON_WM_PAINT()
+    ON_UPDATE_COMMAND_UI(ID_FOWARD,  OnEnable )
+    ON_UPDATE_COMMAND_UI(ID_STOP,    OnEnable )
+    ON_UPDATE_COMMAND_UI(ID_REFRESH, OnEnable )
+    ON_UPDATE_COMMAND_UI(ID_GO_HOME, OnEnable )
+    ON_WM_SIZE()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 void CHelpView::OnGoBack()  { GoBack();     }
@@ -67,9 +67,9 @@ void CHelpView::OnGoHome()
 
 CHelpView::CHelpView()
 {
-	//{{AFX_DATA_INIT(CHelpView)
-		// NOTE: the ClassWizard will add member initialization here
-	//}}AFX_DATA_INIT
+    //{{AFX_DATA_INIT(CHelpView)
+        // NOTE: the ClassWizard will add member initialization here
+    //}}AFX_DATA_INIT
 
     m_bFirstTimeVisible = TRUE;
     m_bInitialize       = FALSE;
@@ -81,10 +81,10 @@ CHelpView::~CHelpView()
 
 void CHelpView::DoDataExchange(CDataExchange* pDX)
 {
-	CHtmlView::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CHelpView)
-		// NOTE: the ClassWizard will add DDX and DDV calls here
-	//}}AFX_DATA_MAP
+    CHtmlView::DoDataExchange(pDX);
+    //{{AFX_DATA_MAP(CHelpView)
+        // NOTE: the ClassWizard will add DDX and DDV calls here
+    //}}AFX_DATA_MAP
 }
 
 
@@ -94,12 +94,12 @@ void CHelpView::DoDataExchange(CDataExchange* pDX)
 #ifdef _DEBUG
 void CHelpView::AssertValid() const
 {
-	CHtmlView::AssertValid();
+    CHtmlView::AssertValid();
 }
 
 void CHelpView::Dump(CDumpContext& dc) const
 {
-	CHtmlView::Dump(dc);
+    CHtmlView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -108,29 +108,29 @@ void CHelpView::Dump(CDumpContext& dc) const
 
 void CHelpView::OnInitialUpdate() 
 {
-	// TODO: This code navigates to a popular spot on the web.
-	//  change the code to go where you'd like.    
+    // TODO: This code navigates to a popular spot on the web.
+    //  change the code to go where you'd like.    
 
     if( !m_bInitialize )
     {
         CHtmlView::OnInitialUpdate();
 
-	    if (!m_wndToolBar.CreateEx(GetParent(),
+        if (!m_wndToolBar.CreateEx(GetParent(),
                                    TBSTYLE_FLAT | TBSTYLE_LIST,
                                    WS_CHILD | WS_VISIBLE | CBRS_TOP,
                                    CRect(0, 0, 0, 0),
                                    AFX_IDW_TOOLBAR + 51) ||
-		    !m_wndToolBar.LoadToolBar(IDR_HELP_BROSWER))
-	    {
-		    TRACE0("Failed to create toolbar\n");
-	    }
+            !m_wndToolBar.LoadToolBar(IDR_HELP_BROSWER))
+        {
+            TRACE0("Failed to create toolbar\n");
+        }
 
-	    if (!m_wndAnimateBar.Create(WS_CHILD|WS_VISIBLE|ACS_CENTER,
-		    CRect(500+0,0,500+38,22), &m_wndToolBar, 0) ||
-		    !m_wndAnimateBar.Open(IDR_WEB_THINKING))
-	    {
-		    TRACE0("Failed to create animation control.\n");
-	    }
+        if (!m_wndAnimateBar.Create(WS_CHILD|WS_VISIBLE|ACS_CENTER,
+            CRect(500+0,0,500+38,22), &m_wndToolBar, 0) ||
+            !m_wndAnimateBar.Open(IDR_WEB_THINKING))
+        {
+            TRACE0("Failed to create animation control.\n");
+        }
 
         m_bInitialize = TRUE;
     }
@@ -138,17 +138,17 @@ void CHelpView::OnInitialUpdate()
 
 void CHelpView::OnPaint() 
 {
-	CPaintDC dc(this); // device context for painting
-	
+    CPaintDC dc(this); // device context for painting
+    
     if( m_bFirstTimeVisible )
     {
         OnGoHome();
         m_bFirstTimeVisible = FALSE;
     }
 
-	// TODO: Add your message handler code here
-	
-	// Do not call CHtmlView::OnPaint() for painting messages
+    // TODO: Add your message handler code here
+    
+    // Do not call CHtmlView::OnPaint() for painting messages
 }
 
 
@@ -166,16 +166,16 @@ void CHelpView::OnNavigateComplete2(LPCTSTR strURL)
 
 void CHelpView::OnSize(UINT nType, int cx, int cy) 
 {
-	CHtmlView::OnSize(nType, cx, cy);
-	
-	// TODO: Add your message handler code here
+    CHtmlView::OnSize(nType, cx, cy);
+    
+    // TODO: Add your message handler code here
     if( m_bInitialize )
     {
         CRect rect;
 
-	    m_wndToolBar.GetWindowRect( rect );
+        m_wndToolBar.GetWindowRect( rect );
         s32 p = rect.right - rect.left-38;
         m_wndAnimateBar.MoveWindow( CRect(p,0,p+38,22));
     }
-	
+    
 }

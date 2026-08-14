@@ -30,9 +30,9 @@ static char THIS_FILE[] = __FILE__;
 IMPLEMENT_DYNCREATE(EDRscDesc_Doc, CBaseDocument)
 
 BEGIN_MESSAGE_MAP(EDRscDesc_Doc, CBaseDocument)
-	//{{AFX_MSG_MAP(EDRscDesc_Doc)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(EDRscDesc_Doc)
+        // NOTE - the ClassWizard will add and remove mapping macros here.
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -64,10 +64,10 @@ EDRscDesc_Doc::EDRscDesc_Doc()
 
 BOOL EDRscDesc_Doc::OnNewDocument()
 {
-	if (!CBaseDocument::OnNewDocument())
-		return FALSE;
+    if (!CBaseDocument::OnNewDocument())
+        return FALSE;
 
-	return TRUE;
+    return TRUE;
 }
 
 //=========================================================================
@@ -96,14 +96,14 @@ EDRscDesc_Doc::~EDRscDesc_Doc()
 #ifdef _DEBUG
 void EDRscDesc_Doc::AssertValid() const
 {
-	CBaseDocument::AssertValid();
+    CBaseDocument::AssertValid();
 }
 
 //=========================================================================
 
 void EDRscDesc_Doc::Dump(CDumpContext& dc) const
 {
-	CBaseDocument::Dump(dc);
+    CBaseDocument::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -111,14 +111,14 @@ void EDRscDesc_Doc::Dump(CDumpContext& dc) const
 
 void EDRscDesc_Doc::Serialize(CArchive& ar)
 {
-	if (ar.IsStoring())
-	{
-		// TODO: add storing code here
-	}
-	else
-	{
-		// TODO: add loading code here
-	}
+    if (ar.IsStoring())
+    {
+        // TODO: add storing code here
+    }
+    else
+    {
+        // TODO: add loading code here
+    }
 }
 
 //=========================================================================
@@ -332,11 +332,11 @@ void EDRscDesc_Doc::AddRscDesc( const char* pType )
     //
     // Okay green light to create a new rsc description
     //
-	CFileDialog		FileOpen(	TRUE, 
-								_T(""), 
-								_T(""), 
-								OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, 
-								(xfs("%s|All Files (*.*)|*.*||", Type.GetFileExtensions() )));
+    CFileDialog        FileOpen(    TRUE, 
+                                _T(""), 
+                                _T(""), 
+                                OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, 
+                                (xfs("%s|All Files (*.*)|*.*||", Type.GetFileExtensions() )));
 
     if( FileOpen.DoModal() == IDOK )
     {

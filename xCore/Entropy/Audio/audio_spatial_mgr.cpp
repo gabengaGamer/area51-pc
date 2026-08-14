@@ -286,8 +286,8 @@ void audio_spatial_mgr::Calculate3dVolumeAndPan( f32            NearClipOrig,
 
     while( pEar )
     {
-		f32 NearClip = NearClipOrig;
-		f32 FarClip  = FarClipOrig;
+        f32 NearClip = NearClipOrig;
+        f32 FarClip  = FarClipOrig;
         f32 EarVolume;
 
         // Put sound in ear-space.
@@ -442,8 +442,8 @@ void audio_spatial_mgr::Calculate3dVolumeAndPan( f32            NearClipOrig,
                 // Normalize it to maintain constant power.
                 Pan.Normalize();
 */
-				// Hack to test!
-				Pan = m_Pan[i];
+                // Hack to test!
+                Pan = m_Pan[i];
             }
         }
     }

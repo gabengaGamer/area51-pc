@@ -18,11 +18,11 @@ static char THIS_FILE[] = __FILE__;
 
 
 CTransactionStackDlg::CTransactionStackDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CTransactionStackDlg::IDD, pParent)
+    : CDialog(CTransactionStackDlg::IDD, pParent)
 {
-	//{{AFX_DATA_INIT(CTransactionStackDlg)
-		// NOTE: the ClassWizard will add member initialization here
-	//}}AFX_DATA_INIT
+    //{{AFX_DATA_INIT(CTransactionStackDlg)
+        // NOTE: the ClassWizard will add member initialization here
+    //}}AFX_DATA_INIT
 }
 
 
@@ -30,21 +30,21 @@ CTransactionStackDlg::CTransactionStackDlg(CWnd* pParent /*=NULL*/)
 
 void CTransactionStackDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CTransactionStackDlg)
-	DDX_Control(pDX, IDC_LIST_TRANSACTIONS, m_lbStack);
-	DDX_Control(pDX, IDOK, m_btnOk);
-	//}}AFX_DATA_MAP
+    CDialog::DoDataExchange(pDX);
+    //{{AFX_DATA_MAP(CTransactionStackDlg)
+    DDX_Control(pDX, IDC_LIST_TRANSACTIONS, m_lbStack);
+    DDX_Control(pDX, IDOK, m_btnOk);
+    //}}AFX_DATA_MAP
 }
 
 //=========================================================================
 
 
 BEGIN_MESSAGE_MAP(CTransactionStackDlg, CDialog)
-	//{{AFX_MSG_MAP(CTransactionStackDlg)
-	ON_LBN_SELCHANGE(IDC_LIST_TRANSACTIONS, OnSelchangeListTransactions)
-	ON_LBN_DBLCLK(IDC_LIST_TRANSACTIONS, OnDblclkListTransactions)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CTransactionStackDlg)
+    ON_LBN_SELCHANGE(IDC_LIST_TRANSACTIONS, OnSelchangeListTransactions)
+    ON_LBN_DBLCLK(IDC_LIST_TRANSACTIONS, OnDblclkListTransactions)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 //=========================================================================
@@ -53,9 +53,9 @@ END_MESSAGE_MAP()
 
 BOOL CTransactionStackDlg::OnInitDialog() 
 {
-	CDialog::OnInitDialog();
-	
-	m_btnOk.EnableWindow(FALSE);
+    CDialog::OnInitDialog();
+    
+    m_btnOk.EnableWindow(FALSE);
     int iIndex = m_lbStack.AddString("Top of Stack");
     ASSERT(iIndex != LB_ERR);
     m_lbStack.SetItemData( iIndex, 0 );
@@ -106,15 +106,15 @@ BOOL CTransactionStackDlg::OnInitDialog()
     m_lbStack.SetCurSel(m_nCurrentPos);
     OnSelchangeListTransactions();
 
-	return TRUE;  // return TRUE unless you set the focus to a control
-	              // EXCEPTION: OCX Property Pages should return FALSE
+    return TRUE;  // return TRUE unless you set the focus to a control
+                  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 //=========================================================================
 
 void CTransactionStackDlg::OnOK() 
 {
-	int nSelected = m_lbStack.GetCurSel();
+    int nSelected = m_lbStack.GetCurSel();
     int nData = m_lbStack.GetItemData(nSelected);
 
     if (nData == 1)
@@ -122,29 +122,29 @@ void CTransactionStackDlg::OnOK()
         //undo
         int nLevels = m_nCurrentPos - nSelected + 1;
         transaction_mgr::Transaction()->Undo(nLevels);
-	    CDialog::OnOK();
+        CDialog::OnOK();
     }
     else if (nData == 2)
     {
         //redo
         int nLevels = nSelected - m_nCurrentPos;
         transaction_mgr::Transaction()->Redo(nLevels);
-	    CDialog::OnOK();
-    }	
+        CDialog::OnOK();
+    }    
 }
 
 //=========================================================================
 
 void CTransactionStackDlg::OnSelchangeListTransactions() 
 {
-	int nSelected = m_lbStack.GetCurSel();
+    int nSelected = m_lbStack.GetCurSel();
     int nData = m_lbStack.GetItemData(nSelected);
 
     if (nData == 0)
     {
         //top of stack
         m_btnOk.SetWindowText("");
-    	m_btnOk.EnableWindow(FALSE);
+        m_btnOk.EnableWindow(FALSE);
     }
     else if (nData == 1)
     {
@@ -153,7 +153,7 @@ void CTransactionStackDlg::OnSelchangeListTransactions()
         CString strText;
         strText.Format("Undo(%d)",nLevels);
         m_btnOk.SetWindowText(strText);
-    	m_btnOk.EnableWindow(TRUE);
+        m_btnOk.EnableWindow(TRUE);
     }
     else if (nData == 2)
     {
@@ -170,12 +170,12 @@ void CTransactionStackDlg::OnSelchangeListTransactions()
 
 void CTransactionStackDlg::OnDblclkListTransactions() 
 {
-	int nSelected = m_lbStack.GetCurSel();
+    int nSelected = m_lbStack.GetCurSel();
     int nData = m_lbStack.GetItemData(nSelected);
 
     if (nData != 0)
     {
         //not the top of stack
-	    OnOK();
+        OnOK();
     }
 }

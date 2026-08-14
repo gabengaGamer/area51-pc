@@ -98,7 +98,7 @@ void move_object::OnRender ( void )
 
 //=============================================================================
 
-void move_object::OnEnumProp	( prop_enum& rPropList )
+void move_object::OnEnumProp    ( prop_enum& rPropList )
 {
     //object info 
     rPropList.AddGuid ( "Object Guid" , "GUID of the object to be moved." );
@@ -112,7 +112,7 @@ void move_object::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool move_object::OnProperty	( prop_query& rPropQuery )
+xbool move_object::OnProperty    ( prop_query& rPropQuery )
 {
     if ( rPropQuery.VarGUID ( "Object Guid"  , m_ObjectGuid ) )
         return TRUE;

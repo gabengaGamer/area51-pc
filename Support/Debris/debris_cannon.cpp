@@ -265,7 +265,7 @@ void debris_cannon::OnAdvanceSimulation      ( f32 DeltaTime )
 
 //=============================================================================
 
- void debris_cannon::OnMove				( const vector3& rNewPos )
+ void debris_cannon::OnMove                ( const vector3& rNewPos )
 {
     object::OnMove( rNewPos );
 }

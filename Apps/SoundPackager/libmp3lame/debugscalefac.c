@@ -80,8 +80,8 @@ MDCT bands
 
    DEBUGF("cb=%2i(%2i)(%2i,%2i)(%3.2f,%3.2f)  FFT:(%4.1f,%4.1f)(%5.0f,%5.0f)Hz   MDCT:(%5.1f,%5.1f)(%5.0f,%5.0f)Hz \n",
            b,npart_l_orig,bu_l[b],bo_l[b],w1_l[b],w2_l[b],
-	  fstart,fstop,sfreq*fstart/BLKSIZE,sfreq*fstop/BLKSIZE,
-	  mstart,mstop,mstart*.5*sfreq/576,mstop*.5*sfreq/576
+      fstart,fstop,sfreq*fstart/BLKSIZE,sfreq*fstop/BLKSIZE,
+      mstart,mstop,mstart*.5*sfreq/576,mstop*.5*sfreq/576
            );
  }
 
@@ -102,7 +102,7 @@ MDCT bands
    if(fstart>0) fstart -= .5;
    fstop += .5;
    DEBUGF("pb=%2i  FFT=(%4.1f,%4.1f)  numlines=%i norm=%f \n",
-	  b,fstart,fstop,numlines_s[b],norm_s[b]);
+      b,fstart,fstop,numlines_s[b],norm_s[b]);
 
  }
 
@@ -137,8 +137,8 @@ MDCT bands
 
    DEBUGF("cb=%2i(%2i)(%2i,%2i)(%3.2f,%3.2f)  FFT:(%4.1f,%4.1f)(%5.0f,%5.0f)Hz   MDCT:(%5.1f,%5.1f)(%5.0f,%5.0f)Hz \n",
            b,npart_s_orig,bu_s[b],bo_s[b],w1_s[b],w2_s[b],
-	  fstart,fstop,sfreq*fstart/BLKSIZE_s,sfreq*fstop/BLKSIZE_s,
-	  mstart,mstop,mstart*.5*sfreq/192,mstop*.5*sfreq/192
+      fstart,fstop,sfreq*fstart/BLKSIZE_s,sfreq*fstop/BLKSIZE_s,
+      mstart,mstop,mstart*.5*sfreq/192,mstop*.5*sfreq/192
            );
  }
 

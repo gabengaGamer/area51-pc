@@ -106,7 +106,7 @@ public:
     };
 
 // Construction / destruction
-	character_trigger_state   ( character& Character, states State );
+    character_trigger_state   ( character& Character, states State );
 
     virtual void        OnEnter                 ( void ) ;
     virtual s32         UpdatePhase             ( f32 DeltaTime );

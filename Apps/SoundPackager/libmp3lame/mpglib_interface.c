@@ -93,15 +93,15 @@ lame_decode1_headersB(unsigned char *buffer,
      *
      */
     if (mp.header_parsed || mp.fsizeold > 0 || mp.framesize > 0) {
-	mp3data->header_parsed = 1;
+    mp3data->header_parsed = 1;
         mp3data->stereo = mp.fr.stereo;
         mp3data->samplerate = freqs[mp.fr.sampling_frequency];
         mp3data->mode = mp.fr.mode;
         mp3data->mode_ext = mp.fr.mode_ext;
         mp3data->framesize = smpls[mp.fr.lsf][mp.fr.lay];
 
-	/* free format, we need the entire frame before we can determine
-	 * the bitrate.  If we haven't gotten the entire frame, bitrate=0 */
+    /* free format, we need the entire frame before we can determine
+     * the bitrate.  If we haven't gotten the entire frame, bitrate=0 */
         if (mp.fsizeold > 0) /* works for free format and fixed, no overrun, temporal results are < 400.e6 */
             mp3data->bitrate = 8 * (4 + mp.fsizeold) * mp3data->samplerate /
                 (1.e3 * mp3data->framesize) + 0.5;

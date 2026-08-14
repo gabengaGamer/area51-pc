@@ -40,8 +40,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Lock Player View"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "Takes control of the players viewpoint."; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
 
     virtual         void                OnRender        ( void );
     

@@ -72,9 +72,9 @@ CFlyoutList::~CFlyoutList()
 
 
 BEGIN_MESSAGE_MAP(CFlyoutList, CWnd)
-	//{{AFX_MSG_MAP(CFlyoutList)
-	ON_WM_PAINT()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CFlyoutList)
+    ON_WM_PAINT()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -104,7 +104,7 @@ BOOL CFlyoutList::Create(CWnd* pParentWnd, int NumItems, CString* pItemLabels, i
     CString         winClassName;
     RECT            winRect;
 
-	winClassName    = AfxRegisterWndClass   ( NULL, //CS_DBLCLKS,                       // Class Style
+    winClassName    = AfxRegisterWndClass   ( NULL, //CS_DBLCLKS,                       // Class Style
                                               ::LoadCursor(NULL, IDC_ARROW),    // Cursor
                                               NULL,                             // Background
                                               0 );                              // Icon
@@ -114,16 +114,16 @@ BOOL CFlyoutList::Create(CWnd* pParentWnd, int NumItems, CString* pItemLabels, i
     winRect.top     = posY;
     winRect.bottom  = posY + m_Height;
 
-	return CWnd::Create(winClassName, "", WS_VISIBLE, winRect, pParentWnd->GetParent(), nID, NULL);
+    return CWnd::Create(winClassName, "", WS_VISIBLE, winRect, pParentWnd->GetParent(), nID, NULL);
 }
 
 void CFlyoutList::OnPaint() 
 {
-	// Do not call CWnd::OnPaint() for painting messages
-	CPaintDC*       pDC = new CPaintDC(this);
+    // Do not call CWnd::OnPaint() for painting messages
+    CPaintDC*       pDC = new CPaintDC(this);
     CDoubleBuffer   db( pDC );
 
-	// Get the Client Rectangle
+    // Get the Client Rectangle
     CRect             rcClient;
     GetClientRect     ( rcClient );
 

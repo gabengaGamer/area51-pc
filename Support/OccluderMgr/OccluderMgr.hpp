@@ -41,9 +41,9 @@ public:
     
     void    GatherOccluders  ( void );
 
-    void    RenderAllOccluders		( void );
-    void    RenderUsableOccluders	( void );
-    void    RenderFrustums			( void );
+    void    RenderAllOccluders        ( void );
+    void    RenderUsableOccluders    ( void );
+    void    RenderFrustums            ( void );
 
     void    UseOccluders            ( xbool OnOff );
     void    SetView                 ( const view& View );
@@ -55,8 +55,8 @@ public:
 //-------------------------------------------------------------------------
 private:
 
-    void    Clear					( void );
-    void    AddOccluder				( const vector3* pPoint, s32 nPoints );
+    void    Clear                    ( void );
+    void    AddOccluder                ( const vector3* pPoint, s32 nPoints );
 
 //-------------------------------------------------------------------------
 private:
@@ -77,7 +77,7 @@ private:
         vector3 Center;
         f32     Area;
         f32     Score;
-		bbox	BBox;
+        bbox    BBox;
         xbool   bPrepared;
         xbool   bActive;
     };

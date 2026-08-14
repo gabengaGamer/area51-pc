@@ -77,39 +77,39 @@ CParticleView3D::~CParticleView3D()
 
 
 BEGIN_MESSAGE_MAP(CParticleView3D, CView3D)
-	//{{AFX_MSG_MAP(CParticleView3D)
-	ON_WM_PAINT()
-	ON_WM_MOUSEMOVE()
-	ON_WM_CREATE()
-	ON_WM_LBUTTONDOWN()
-	ON_WM_LBUTTONUP()
-	ON_WM_MOUSEWHEEL()
-	ON_WM_RBUTTONDOWN()
-	ON_WM_MBUTTONDOWN()
-	ON_WM_MBUTTONUP()
-	ON_WM_SETCURSOR()
-	ON_WM_KEYUP()
-	ON_COMMAND(ID_VIEW_VIEWPORT_GRIDS, OnViewViewportGrids)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_VIEWPORT_GRIDS, OnUpdateViewViewportGrids)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_BBOX, OnUpdateViewBbox)
-	ON_COMMAND(ID_EDIT_SELECT_BYNAME, OnEditSelectByname)
-	ON_COMMAND(ID_EDIT_CLONE, OnEditClone)
+    //{{AFX_MSG_MAP(CParticleView3D)
+    ON_WM_PAINT()
+    ON_WM_MOUSEMOVE()
+    ON_WM_CREATE()
+    ON_WM_LBUTTONDOWN()
+    ON_WM_LBUTTONUP()
+    ON_WM_MOUSEWHEEL()
+    ON_WM_RBUTTONDOWN()
+    ON_WM_MBUTTONDOWN()
+    ON_WM_MBUTTONUP()
+    ON_WM_SETCURSOR()
+    ON_WM_KEYUP()
+    ON_COMMAND(ID_VIEW_VIEWPORT_GRIDS, OnViewViewportGrids)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_VIEWPORT_GRIDS, OnUpdateViewViewportGrids)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_BBOX, OnUpdateViewBbox)
+    ON_COMMAND(ID_EDIT_SELECT_BYNAME, OnEditSelectByname)
+    ON_COMMAND(ID_EDIT_CLONE, OnEditClone)
     ON_COMMAND(ID_EDIT_MOVETO_000, OnEditMoveToZero)
-	ON_COMMAND(ID_VIEW_REDRAW_ALL, OnViewRedrawAll)
-	ON_COMMAND(ID_VIEW_BBOX, OnViewBbox)
+    ON_COMMAND(ID_VIEW_REDRAW_ALL, OnViewRedrawAll)
+    ON_COMMAND(ID_VIEW_BBOX, OnViewBbox)
     ON_COMMAND(ID_VIEW_TRAJECTORY, OnViewTrajectory)
     ON_COMMAND(ID_VIEW_VELOCITY, OnViewVelocity)
     ON_COMMAND(ID_VIEW_HIDE_SELECTED, OnViewHideSelected)
     ON_COMMAND(ID_VIEW_UNHIDE_ALL, OnViewUnhideAll)
-	ON_COMMAND(ID_CREATE_SPRITE, OnCreateSprite)
-	ON_COMMAND(ID_CREATE_SPEMITTER, OnCreateSpemitter)
-	ON_COMMAND(ID_CREATE_MESH, OnCreateMesh)
-	ON_COMMAND(ID_CREATE_PLANE, OnCreatePlane)
-	ON_COMMAND(ID_CREATE_RIBBON, OnCreateRibbon)
-	ON_COMMAND(ID_CREATE_CYLINDER, OnCreateCylinder)
-	ON_COMMAND(ID_CREATE_SPHERE, OnCreateSphere)
-	ON_COMMAND(ID_CREATE_SHOCKWAVE, OnCreateShockWave)
-	//}}AFX_MSG_MAP
+    ON_COMMAND(ID_CREATE_SPRITE, OnCreateSprite)
+    ON_COMMAND(ID_CREATE_SPEMITTER, OnCreateSpemitter)
+    ON_COMMAND(ID_CREATE_MESH, OnCreateMesh)
+    ON_COMMAND(ID_CREATE_PLANE, OnCreatePlane)
+    ON_COMMAND(ID_CREATE_RIBBON, OnCreateRibbon)
+    ON_COMMAND(ID_CREATE_CYLINDER, OnCreateCylinder)
+    ON_COMMAND(ID_CREATE_SPHERE, OnCreateSphere)
+    ON_COMMAND(ID_CREATE_SHOCKWAVE, OnCreateShockWave)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -212,7 +212,7 @@ void    CParticleView3D::SetCamera_Perspective( void )
 
 void CParticleView3D::OnDraw(CDC* pDC)
 {
-	CDocument* pDoc = GetDocument();
+    CDocument* pDoc = GetDocument();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -221,12 +221,12 @@ void CParticleView3D::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CParticleView3D::AssertValid() const
 {
-	CView3D::AssertValid();
+    CView3D::AssertValid();
 }
 
 void CParticleView3D::Dump(CDumpContext& dc) const
 {
-	CView3D::Dump(dc);
+    CView3D::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -235,9 +235,9 @@ void CParticleView3D::Dump(CDumpContext& dc) const
 
 void CParticleView3D::OnPaint() 
 {
-	CPaintDC dc(this); // device context for painting
-	
-	CView3D::OnPaint();
+    CPaintDC dc(this); // device context for painting
+    
+    CView3D::OnPaint();
 
     // Get document
     CPartEdDoc* pDoc = (CPartEdDoc*)GetDocument();
@@ -355,7 +355,7 @@ void CParticleView3D::OnPaint()
     }
 
     // UpdateKeyBar();
-	// Do not call CView3D::OnPaint() for painting messages
+    // Do not call CView3D::OnPaint() for painting messages
 }
 
 void CParticleView3D::OnMouseMove(UINT nFlags, CPoint point) 
@@ -574,16 +574,16 @@ void CParticleView3D::OnMouseMove(UINT nFlags, CPoint point)
 
 int CParticleView3D::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CView3D::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
+    if (CView3D::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
     ModifyStyleEx( WS_EX_CLIENTEDGE, 0 );
 
     // Initialize the Popup Menu
 
     m_PopupMenu.LoadMenu( IDR_MENU_VIEW3D );
 
-	return 0;
+    return 0;
 }
 
 void CParticleView3D::OnLButtonDown(UINT nFlags, CPoint point) 
@@ -602,7 +602,7 @@ void CParticleView3D::OnLButtonDown(UINT nFlags, CPoint point)
         }
         else
             g_MouseState.SetState( mousestate::BEING_DRAGGED );
-    }	
+    }    
 
     // Reset the popup menu status...since a left click should always close it down
     m_IsPopupMenuActive = false;
@@ -946,8 +946,8 @@ void CParticleView3D::OnLButtonUp(UINT nFlags, CPoint point)
         default:
             break;
     }
-	
-	CView3D::OnLButtonUp(nFlags, point);
+    
+    CView3D::OnLButtonUp(nFlags, point);
 }
 
 BOOL CParticleView3D::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt) 
@@ -968,7 +968,7 @@ BOOL CParticleView3D::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
     }
 
 
-	SetViewDirty();
+    SetViewDirty();
 
     // TODO: Fix window to get timer update messages and remove this Redraw call
     RedrawWindow();
@@ -1030,7 +1030,7 @@ void CParticleView3D::OnCreateSpemitter()
 
 void CParticleView3D::OnCreateMesh() 
 {
-	s_CreateType = CREATE_MESH;
+    s_CreateType = CREATE_MESH;
     g_MouseState.SetState( mousestate::CREATE );
 }
 
@@ -1082,15 +1082,15 @@ BOOL CParticleView3D::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
             SetCursor( ::LoadCursor(::AfxGetInstanceHandle(), MAKEINTRESOURCE(IDC_SCALE) ) );
             break;
     }
-	
+    
     return TRUE; // return CView3D::OnSetCursor(pWnd, nHitTest, message);
 }
 
 BOOL CParticleView3D::PreCreateWindow(CREATESTRUCT& cs) 
 {
-	cs.style |= WS_CLIPSIBLINGS|WS_CLIPCHILDREN;
+    cs.style |= WS_CLIPSIBLINGS|WS_CLIPCHILDREN;
 
-	return CView3D::PreCreateWindow(cs);
+    return CView3D::PreCreateWindow(cs);
 }
 
 void CParticleView3D::UpdateKeyBar( void )
@@ -1191,7 +1191,7 @@ void CParticleView3D::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
     CPartEdDoc*     pDoc    = (CPartEdDoc*)GetDocument();
     ASSERT(pDoc);
 
-	if( nChar == VK_DELETE )
+    if( nChar == VK_DELETE )
     {
         // delete the selected elements
         POSITION Pos = pDoc->m_SelSet.GetHeadPosition();
@@ -1304,18 +1304,18 @@ void CParticleView3D::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
         OnViewHideSelected();
     }
 
-	CView3D::OnKeyUp(nChar, nRepCnt, nFlags);
+    CView3D::OnKeyUp(nChar, nRepCnt, nFlags);
 }
 
 void CParticleView3D::OnViewViewportGrids() 
 {
-	g_GridEnabled = !g_GridEnabled;
+    g_GridEnabled = !g_GridEnabled;
     GetDocument()->UpdateAllViews( NULL );
 }
 
 void CParticleView3D::OnUpdateViewViewportGrids(CCmdUI* pCmdUI) 
 {
-	pCmdUI->SetCheck( g_GridEnabled );
+    pCmdUI->SetCheck( g_GridEnabled );
 }
 
 void CParticleView3D::GetCameraInfo( vector3& Pos, quaternion& Quat )
@@ -1454,7 +1454,7 @@ void CParticleView3D::OnUpdateViewBbox(CCmdUI* pCmdUI)
 {
     CPartEdDoc*     pDoc        =   (CPartEdDoc*)GetDocument();
 
-	pCmdUI->SetCheck( pDoc->m_Effect.RenderBBoxesEnabled() );
+    pCmdUI->SetCheck( pDoc->m_Effect.RenderBBoxesEnabled() );
 }
 
 void CParticleView3D::OnViewTrajectory()

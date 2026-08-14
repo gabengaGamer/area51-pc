@@ -29,7 +29,7 @@
 
 
 
-#define next(ls)	(ls->current = zgetc(ls->z))
+#define next(ls)    (ls->current = zgetc(ls->z))
 
 
 /* minimum size for string buffer */
@@ -38,7 +38,7 @@
 #endif
 
 
-#define currIsNewline(ls)	(ls->current == '\n' || ls->current == '\r')
+#define currIsNewline(ls)    (ls->current == '\n' || ls->current == '\r')
 
 
 /* ORDER RESERVED */

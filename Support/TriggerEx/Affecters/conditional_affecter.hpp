@@ -91,8 +91,8 @@ protected:
     public:
                                 condition_selector( void );
                         void    Init                                 ( conditional_affecter* pParent );
-        virtual			void	OnEnumProp				             ( prop_enum& rList );
-        virtual			xbool	OnProperty				             ( prop_query& rPropQuery );
+        virtual            void    OnEnumProp                             ( prop_enum& rList );
+        virtual            xbool    OnProperty                             ( prop_query& rPropQuery );
 
         conditional_ex_base::conditional_ex_types   m_ConditionType;     // Condtion type currently selected
         xbool                                       m_Active;            // State Flag to determine if the selector is active..

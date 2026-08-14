@@ -431,7 +431,7 @@ void character_state::ChangePhase( s32 newPhase )
 
         closestLocation += toLocation;
         m_CharacterBase.SetGotoLocationGoal( closestLocation, loco::MOVE_STYLE_NULL, 0.0f, TRUE );
-    	break;
+        break;
     case PHASE_DODGE_GRENADE_LEFT:
         m_CharacterBase.SetPlayAnimationGoal(loco::ANIM_GRENADE_EVADE_LEFT);
         m_CharacterBase.PlayDialog(character::DIALOG_GRENADE_SPOT);
@@ -548,13 +548,13 @@ const char* character_state::GetPhaseName( s32 thePhase )
     {
     case PHASE_GOTO_NEAREST_CONNECTION:
         return "PHASE_GOTO_NEAREST_CONNECTION";
-    	break;
+        break;
     case PHASE_DODGE_GRENADE_LEFT:
         return "PHASE_DODGE_GRENADE_LEFT";
-    	break;
+        break;
     case PHASE_DODGE_GRENADE_RIGHT:
         return "PHASE_DODGE_GRENADE_RIGHT";
-    	break;
+        break;
     case PHASE_DODGE_GRENADE_RUN_AWAY:
         return "PHASE_DODGE_GRENADE_RUN_AWAY";
         break;

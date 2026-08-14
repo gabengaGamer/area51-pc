@@ -25,11 +25,11 @@
     ;
     ;   Transform to projective space
     ;
-    mul r0, c-31, v0.x		;   dp4 r0.x, v0, c-31
-    mad r0, c-30, v0.y, r0	;   dp4 r0.y, v0, c-30
-    mad r0, c-29, v0.z, r0	;   dp4 r0.z, v0, c-29
-    mad r0, c-28, v0.w, r0	;   dp4 r0.w, v0, c-28
+    mul r0, c-31, v0.x        ;   dp4 r0.x, v0, c-31
+    mad r0, c-30, v0.y, r0    ;   dp4 r0.y, v0, c-30
+    mad r0, c-29, v0.z, r0    ;   dp4 r0.z, v0, c-29
+    mad r0, c-28, v0.w, r0    ;   dp4 r0.w, v0, c-28
     ;
     mov oPos, r0
     ;
-	mov oD0,c-27
+    mov oD0,c-27

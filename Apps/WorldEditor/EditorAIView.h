@@ -15,12 +15,12 @@
 class CEditorAIView : public CPaletteView
 {
 protected:
-	CEditorAIView();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CEditorAIView)
+    CEditorAIView();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CEditorAIView)
 
 // Attributes
 public:
-	CEditorPaletteDoc* GetDocument();
+    CEditorPaletteDoc* GetDocument();
 
     xbool            m_CreateNavConnectionMode; 
     CTreeCtrl        m_aiTree;
@@ -32,49 +32,49 @@ public:
 public:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorAIView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorAIView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~CEditorAIView();
+    virtual ~CEditorAIView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CEditorAIView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnButtonCreateNavNode();
-	afx_msg void OnButtonCreateNavConnection();
-	afx_msg void OnButtonCreateForcedNavZone();
-	afx_msg void OnButtonGo();
-	afx_msg void OnButtonSet1();
-	afx_msg void OnButtonSet2();
-	afx_msg void OnButtonCreatePlayer();
-	afx_msg void OnButtonChainNodes();
-	afx_msg void OnButtonCheckAllNodes();
-	afx_msg void OnButtonConnectVisible();
-	afx_msg void OnButtonConnectMode();
-	afx_msg void OnButtonConnectSelected();
-	afx_msg void OnButtonBatchFlag();
-	afx_msg void OnUpdateAIButtonCreatePlayer(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateAIButtonCreateNavNode(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateButtonConnectVisible(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateButtonConnectSelected(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateButtonConnectMode(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateButtonCheckAllNodes(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateButtonChainNodes(CCmdUI* pCmdUI);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CEditorAIView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnButtonCreateNavNode();
+    afx_msg void OnButtonCreateNavConnection();
+    afx_msg void OnButtonCreateForcedNavZone();
+    afx_msg void OnButtonGo();
+    afx_msg void OnButtonSet1();
+    afx_msg void OnButtonSet2();
+    afx_msg void OnButtonCreatePlayer();
+    afx_msg void OnButtonChainNodes();
+    afx_msg void OnButtonCheckAllNodes();
+    afx_msg void OnButtonConnectVisible();
+    afx_msg void OnButtonConnectMode();
+    afx_msg void OnButtonConnectSelected();
+    afx_msg void OnButtonBatchFlag();
+    afx_msg void OnUpdateAIButtonCreatePlayer(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateAIButtonCreateNavNode(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateButtonConnectVisible(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateButtonConnectSelected(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateButtonConnectMode(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateButtonCheckAllNodes(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateButtonChainNodes(CCmdUI* pCmdUI);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
     static CEditorAIView* s_AIView;
     

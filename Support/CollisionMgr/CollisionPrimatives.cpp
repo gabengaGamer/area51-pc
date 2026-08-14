@@ -42,45 +42,45 @@ xbool CollideSphereWithPoint( const vector3& Start,
     ray_dir /= length;
 
 
-	// get the offset vector
-	vector3 offset = sphere_pos - ray_start;
+    // get the offset vector
+    vector3 offset = sphere_pos - ray_start;
 
-	// get the distance along the ray to the center point of the sphere
-	f32 ray_dist = ray_dir.Dot(offset);
-	if( ray_dist <= 0 || (ray_dist - length) > sphere_rad) {
-		// moving away from object or too far away
-		return false;
-	}
+    // get the distance along the ray to the center point of the sphere
+    f32 ray_dist = ray_dir.Dot(offset);
+    if( ray_dist <= 0 || (ray_dist - length) > sphere_rad) {
+        // moving away from object or too far away
+        return false;
+    }
 
-	// get the squared distances
-	f32 off2 = offset.Dot(offset);
-	f32 Rad2 = sphere_rad * sphere_rad;
-	if( off2 <= Rad2 ) {
-		// we're in the sphere
-		hit_point = ray_start;
-		hit_time = 0;
-		return true;
-	}
+    // get the squared distances
+    f32 off2 = offset.Dot(offset);
+    f32 Rad2 = sphere_rad * sphere_rad;
+    if( off2 <= Rad2 ) {
+        // we're in the sphere
+        hit_point = ray_start;
+        hit_time = 0;
+        return true;
+    }
 
-	// find hit distance squared
-	f32 d = Rad2 - (off2 - ray_dist * ray_dist);
-	if( d < 0 ) {
-		// ray passes by sphere without hitting
-		return false;
-	}
+    // find hit distance squared
+    f32 d = Rad2 - (off2 - ray_dist * ray_dist);
+    if( d < 0 ) {
+        // ray passes by sphere without hitting
+        return false;
+    }
 
-	// get the distance along the ray
-	hit_time = (f32)(ray_dist - x_sqrt( d ));
-	if( hit_time > length ) {
-		// hit point beyond length
-		return false;
-	}
+    // get the distance along the ray
+    hit_time = (f32)(ray_dist - x_sqrt( d ));
+    if( hit_time > length ) {
+        // hit point beyond length
+        return false;
+    }
 
-	// sort out the details
+    // sort out the details
     vector3 sphere_point = ray_start + ray_dir * hit_time;
-	hit_time /= length;
-	hit_point = sphere_point + hit_time*Dir;
-	return true;
+    hit_time /= length;
+    hit_point = sphere_point + hit_time*Dir;
+    return true;
 }
 
 //=========================================================================
@@ -113,7 +113,7 @@ xbool ComputeSphereTriCollision( const vector3* Tri,
     }
 
     //
-	// Find the closest point on the sphere to the plane
+    // Find the closest point on the sphere to the plane
     //
     {
         f32 T;
@@ -157,14 +157,14 @@ xbool ComputeSphereTriCollision( const vector3* Tri,
         vector3 P0 = Tri[va];
         vector3 P1 = Tri[vb];
 
-	    vector3 Edge            = P1 - P0;
-	    vector3 Delta           = Start - P0;
-	    f32     DeltaDotEdge    = Delta.Dot(Edge);
-	    f32     DeltaDotDir     = Delta.Dot(Dir);
-	    f32     EdgeDotDir      = Edge.Dot(Dir);
-	    f32     DeltaSqr        = Delta.LengthSquared();
-	    f32     EdgeSqr         = Edge.LengthSquared();
-	    f32     DirSqr          = Dir.LengthSquared();
+        vector3 Edge            = P1 - P0;
+        vector3 Delta           = Start - P0;
+        f32     DeltaDotEdge    = Delta.Dot(Edge);
+        f32     DeltaDotDir     = Delta.Dot(Dir);
+        f32     EdgeDotDir      = Edge.Dot(Dir);
+        f32     DeltaSqr        = Delta.LengthSquared();
+        f32     EdgeSqr         = Edge.LengthSquared();
+        f32     DirSqr          = Dir.LengthSquared();
     
         f32     A       = EdgeDotDir * EdgeDotDir - EdgeSqr * DirSqr;
         f32     B       = 2 * (DeltaDotEdge * EdgeDotDir - DeltaDotDir * EdgeSqr);
@@ -173,59 +173,59 @@ xbool ComputeSphereTriCollision( const vector3* Tri,
 
         if( Disc < 0 ) 
         {
-		    // discriminant negative, sphere passed edge too far away
+            // discriminant negative, sphere passed edge too far away
             // don't check verts
             CullVert |= ((1<<va)|(1<<vb));
             continue;
         }
 
-	    if( A < -0.0001f || A > 0.0001f ) 
+        if( A < -0.0001f || A > 0.0001f ) 
         {
-		    f32 root  = x_sqrt(Disc);
-		    f32 root1 = (-B + root) / (2 * A);
-		    f32 root2 = (-B - root) / (2 * A);
+            f32 root  = x_sqrt(Disc);
+            f32 root1 = (-B + root) / (2 * A);
+            f32 root2 = (-B - root) / (2 * A);
 
-		    // sort root1 and root2, use the earliest intersection.  the larger root 
-		    //  corresponds to the final contact of the sphere with the edge on its 
-		    //  way out.
-		    if( root2 < root1 ) 
+            // sort root1 and root2, use the earliest intersection.  the larger root 
+            //  corresponds to the final contact of the sphere with the edge on its 
+            //  way out.
+            if( root2 < root1 ) 
             {
-			    f32 temp = root1;
-			    root1 = root2;
-			    root2 = temp;
-		    }
+                f32 temp = root1;
+                root1 = root2;
+                root2 = temp;
+            }
 
-		    // root1 is a time, check that it's in our currently valid range
-		    if( (root1 < 0) || (root1 > 1.0f) )
+            // root1 is a time, check that it's in our currently valid range
+            if( (root1 < 0) || (root1 > 1.0f) )
             {
                 // did not hit line within time range
-			    continue;
-		    }
+                continue;
+            }
 
-		    // find sphere and edge positions
-		    vector3 SphereHit = Start + Dir * root1;
+            // find sphere and edge positions
+            vector3 SphereHit = Start + Dir * root1;
 
-		    // check if hit is between P0 and P1
-		    f32 EdgeT = ((SphereHit - P0).Dot(Edge)) / EdgeSqr;
-		    if( (EdgeT >= 0) && (EdgeT <= 1) ) 
+            // check if hit is between P0 and P1
+            f32 EdgeT = ((SphereHit - P0).Dot(Edge)) / EdgeSqr;
+            if( (EdgeT >= 0) && (EdgeT <= 1) ) 
             {
-			    // bingo
+                // bingo
                 if( root1 < FinalT )
                 {
-			        FinalT = root1;
-			        FinalHitPoint = P0 + Edge * EdgeT;
+                    FinalT = root1;
+                    FinalHitPoint = P0 + Edge * EdgeT;
 
                     // hit within edge so don't check end verts
                     CullVert |= ((1<<va)|(1<<vb));
                     continue;
                 }
-		    }
+            }
 
             // sphere hit line but not within segment.  
             continue;
-	    }
+        }
 
-	    // Degenerate case, sphere is traveling parallel to edge.
+        // Degenerate case, sphere is traveling parallel to edge.
         // It might hit the verts
     }
 

@@ -18,8 +18,8 @@
 class CPartEdDoc : public CDocument
 {
 protected: // create from serialization only
-	CPartEdDoc();
-	DECLARE_DYNCREATE(CPartEdDoc)
+    CPartEdDoc();
+    DECLARE_DYNCREATE(CPartEdDoc)
 
 // Attributes
 public:
@@ -40,34 +40,34 @@ public:
     void        SelectInvert                ( void );
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CPartEdDoc)
-	public:
-	virtual BOOL OnNewDocument();
-	virtual void Serialize(CArchive& ar);
-	virtual void OnCloseDocument();
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CPartEdDoc)
+    public:
+    virtual BOOL OnNewDocument();
+    virtual void Serialize(CArchive& ar);
+    virtual void OnCloseDocument();
     virtual BOOL OnSaveDocument(LPCTSTR lpszPathName );
     virtual BOOL OnOpenDocument(LPCTSTR lpszPathName );
-	virtual void DeleteContents();
-	//}}AFX_VIRTUAL
+    virtual void DeleteContents();
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CPartEdDoc();
+    virtual ~CPartEdDoc();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 protected:
 
 // Generated message map functions
 protected:
-	//{{AFX_MSG(CPartEdDoc)
-	afx_msg void OnFileExport();
-	afx_msg void OnFileExportvideoavi();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CPartEdDoc)
+    afx_msg void OnFileExport();
+    afx_msg void OnFileExportvideoavi();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

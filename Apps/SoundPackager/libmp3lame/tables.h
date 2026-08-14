@@ -1,7 +1,7 @@
 /*
- *	MPEG layer 3 tables include file
+ *    MPEG layer 3 tables include file
  *
- *	Copyright (c) 1999 Albert L Faber
+ *    Copyright (c) 1999 Albert L Faber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -10,7 +10,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -66,20 +66,20 @@ extern const type5_t  table5 [6];
 
 
 
-#define HTN	34
+#define HTN    34
  
 struct huffcodetab {
-    const int    xlen; 	        /* max. x-index+			*/ 
-    const int    linmax;	/* max number to be stored in linbits	*/
-    const short*   table;	        /* pointer to array[xlen][ylen]		*/
-    const char*  hlen;	        /* pointer to array[xlen][ylen]		*/
+    const int    xlen;             /* max. x-index+            */ 
+    const int    linmax;    /* max number to be stored in linbits    */
+    const short*   table;            /* pointer to array[xlen][ylen]        */
+    const char*  hlen;            /* pointer to array[xlen][ylen]        */
 };
 
 extern const struct huffcodetab ht [HTN];
-    /* global memory block			*/
-    /* array of all huffcodtable headers	*/
-    /* 0..31 Huffman code table 0..31		*/
-    /* 32,33 count1-tables			*/
+    /* global memory block            */
+    /* array of all huffcodtable headers    */
+    /* 0..31 Huffman code table 0..31        */
+    /* 32,33 count1-tables            */
 
 extern const char t32l [];
 extern const char t33l [];

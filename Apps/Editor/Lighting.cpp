@@ -191,20 +191,20 @@ void LightVertexDistance( const matrix4&            L2W,
     {
         light_obj& LightObject = *lLight[i];
     
-		if( LightObject.GetBBox().Intersect( WorldPos ) == TRUE )
-		{
-			vector3 LightPos   ( LightObject.GetPosition() );
-			xcolor  LightColor ( LightObject.GetColor()    );
-			f32     LightRadius( LightObject.GetRadious()  );
+        if( LightObject.GetBBox().Intersect( WorldPos ) == TRUE )
+        {
+            vector3 LightPos   ( LightObject.GetPosition() );
+            xcolor  LightColor ( LightObject.GetColor()    );
+            f32     LightRadius( LightObject.GetRadious()  );
 
-			// Compute attenuation
-			f32 L = MIN( (LightPos - WorldPos).Length(), LightRadius );
-			f32 A = 1.0f - ( (L * L) / (LightRadius * LightRadius) );
+            // Compute attenuation
+            f32 L = MIN( (LightPos - WorldPos).Length(), LightRadius );
+            f32 A = 1.0f - ( (L * L) / (LightRadius * LightRadius) );
         
-			// Compute directional lighting
-			vector3 LightDir( W2L.Transform( LightPos - WorldPos ) );
-			LightDir.Normalize();
-			f32 I = MINMAX( 0.0f, LightDir.Dot( Vertex.Normal ), 1.0f );
+            // Compute directional lighting
+            vector3 LightDir( W2L.Transform( LightPos - WorldPos ) );
+            LightDir.Normalize();
+            f32 I = MINMAX( 0.0f, LightDir.Dot( Vertex.Normal ), 1.0f );
 
             A *= LightObject.GetLightIntensity();
 
@@ -214,13 +214,13 @@ void LightVertexDistance( const matrix4&            L2W,
                 I = (I*I)/3;
             }
 
-			// Apply attenuation
-			I *= A;
+            // Apply attenuation
+            I *= A;
         
-			// Add contribution of light
-			TotalR += (LightColor.R / 255.0f) * I;
-			TotalG += (LightColor.G / 255.0f) * I;
-			TotalB += (LightColor.B / 255.0f) * I;
+            // Add contribution of light
+            TotalR += (LightColor.R / 255.0f) * I;
+            TotalG += (LightColor.G / 255.0f) * I;
+            TotalB += (LightColor.B / 255.0f) * I;
 
             // Add ambient lighting
             xcolor Ambient = LightObject.GetAmbient();
@@ -228,7 +228,7 @@ void LightVertexDistance( const matrix4&            L2W,
             TotalR += (Ambient.R / 255.0f)*A;
             TotalG += (Ambient.G / 255.0f)*A;
             TotalB += (Ambient.B / 255.0f)*A;
-		}
+        }
     }
     
     // Clamp lighting
@@ -261,28 +261,28 @@ void LightVertexByRaycast(const matrix4&            L2W,
     {
         light_obj& LightObject = *lLight[i];
     
-		if( LightObject.GetBBox().Intersect( WorldPos ) == TRUE )
-		{
-			vector3 LightPos   ( LightObject.GetPosition() );
-			f32     LightRadius( LightObject.GetRadious()  );
+        if( LightObject.GetBBox().Intersect( WorldPos ) == TRUE )
+        {
+            vector3 LightPos   ( LightObject.GetPosition() );
+            f32     LightRadius( LightObject.GetRadious()  );
             
             g_CollisionMgr.LineOfSightSetup( LightObject.GetGuid(), WorldPos , LightPos );
             g_CollisionMgr.CheckCollisions(object::TYPE_PLAY_SURFACE);
 
-			// Compute attenuation
-			f32 L = MIN( (LightPos - WorldPos).Length(), LightRadius );
-			f32 A = 1.0f - ( (L * L) / (LightRadius * LightRadius) );
+            // Compute attenuation
+            f32 L = MIN( (LightPos - WorldPos).Length(), LightRadius );
+            f32 A = 1.0f - ( (L * L) / (LightRadius * LightRadius) );
             A *= LightObject.GetLightIntensity();
             
             //  if zero collisions then we can see this thing
             if( !(g_CollisionMgr.m_nCollisions ) )
             {
-			    xcolor  LightColor ( LightObject.GetColor()    );
+                xcolor  LightColor ( LightObject.GetColor()    );
         
-			    // Compute directional lighting
-			    vector3 LightDir( W2L.Transform( LightPos - WorldPos ) );
-			    LightDir.Normalize();
-			    f32 I = MINMAX( 0.0f, LightDir.Dot( Vertex.Normal ), 1.0f );
+                // Compute directional lighting
+                vector3 LightDir( W2L.Transform( LightPos - WorldPos ) );
+                LightDir.Normalize();
+                f32 I = MINMAX( 0.0f, LightDir.Dot( Vertex.Normal ), 1.0f );
 
                 if( LightObject.GetAngleAccent() )
                 {
@@ -290,13 +290,13 @@ void LightVertexByRaycast(const matrix4&            L2W,
                     I = (I*I)/3;
                 }
 
-			    // Apply attenuation
-			    I *= A;
+                // Apply attenuation
+                I *= A;
         
-			    // Add contribution of light
-			    TotalR += (LightColor.R / 255.0f) * I;
-			    TotalG += (LightColor.G / 255.0f) * I;
-			    TotalB += (LightColor.B / 255.0f) * I;
+                // Add contribution of light
+                TotalR += (LightColor.R / 255.0f) * I;
+                TotalG += (LightColor.G / 255.0f) * I;
+                TotalB += (LightColor.B / 255.0f) * I;
             }
 
             // Add ambient lighting
@@ -305,7 +305,7 @@ void LightVertexByRaycast(const matrix4&            L2W,
             TotalR += (Ambient.R / 255.0f)*A;
             TotalG += (Ambient.G / 255.0f)*A;
             TotalB += (Ambient.B / 255.0f)*A;
-		}
+        }
     }
     
     // Clamp lighting
@@ -624,9 +624,9 @@ void lighting_LightObjects( platform            Platform,
                 continue;
             }
              
-		    vector3 P   ( LightObject.GetPosition() );
-		    xcolor  C   ( LightObject.GetColor()    );
-		    f32     R   ( LightObject.GetRadious()  );
+            vector3 P   ( LightObject.GetPosition() );
+            xcolor  C   ( LightObject.GetColor()    );
+            f32     R   ( LightObject.GetRadious()  );
             xcolor  A   ( LightObject.GetAmbient()  );
 
             s_RayCastSystem.AddLight( P, R, C, A, LightObject.GetLightIntensity() );

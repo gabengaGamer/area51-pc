@@ -46,33 +46,33 @@ BOOL g_EditorShowNameFlag = FALSE;
 IMPLEMENT_DYNCREATE(CEditorView, CView3D)
 
 BEGIN_MESSAGE_MAP(CEditorView, CView3D)
-	//{{AFX_MSG_MAP(CEditorView)
-	ON_WM_PAINT()
-	ON_WM_ERASEBKGND()
-	ON_WM_CREATE()
-	ON_WM_LBUTTONDOWN()
-	ON_WM_KEYDOWN()
-	ON_WM_MOUSEMOVE()
-	ON_WM_KILLFOCUS()
-	ON_WM_MOUSEWHEEL()
-	ON_WM_LBUTTONUP()
-	ON_WM_TIMER()
+    //{{AFX_MSG_MAP(CEditorView)
+    ON_WM_PAINT()
+    ON_WM_ERASEBKGND()
+    ON_WM_CREATE()
+    ON_WM_LBUTTONDOWN()
+    ON_WM_KEYDOWN()
+    ON_WM_MOUSEMOVE()
+    ON_WM_KILLFOCUS()
+    ON_WM_MOUSEWHEEL()
+    ON_WM_LBUTTONUP()
+    ON_WM_TIMER()
     ON_COMMAND(ID_EDIT_UNDO, OnUndo)
     ON_COMMAND(ID_EDIT_REDO, OnRedo)
-	ON_COMMAND(ID_EDIT_CUT,  OnCutObjects)
+    ON_COMMAND(ID_EDIT_CUT,  OnCutObjects)
     ON_COMMAND(ID_EDIT_COPY, OnCopyObjects)  
     ON_COMMAND(ID_EDIT_PASTE,OnPasteObjects)       
     ON_COMMAND(ID_SHOW_REPORT, OnShowReport)
     ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO, OnUpdateUndo)
     ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, OnUpdateRedo)
     ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateCopyObjects)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT,  OnUpdateCutObjects)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE,OnUpdatePasteObjects)
-	//}}AFX_MSG_MAP
-	// Standard printing commands
-	ON_COMMAND(ID_FILE_PRINT, CView3D::OnFilePrint)
-	ON_COMMAND(ID_FILE_PRINT_DIRECT, CView3D::OnFilePrint)
-	ON_COMMAND(ID_FILE_PRINT_PREVIEW, CView3D::OnFilePrintPreview)
+    ON_UPDATE_COMMAND_UI(ID_EDIT_CUT,  OnUpdateCutObjects)
+    ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE,OnUpdatePasteObjects)
+    //}}AFX_MSG_MAP
+    // Standard printing commands
+    ON_COMMAND(ID_FILE_PRINT, CView3D::OnFilePrint)
+    ON_COMMAND(ID_FILE_PRINT_DIRECT, CView3D::OnFilePrint)
+    ON_COMMAND(ID_FILE_PRINT_PREVIEW, CView3D::OnFilePrintPreview)
 END_MESSAGE_MAP()
  
 //=========================================================================
@@ -124,13 +124,13 @@ CEditorView::~CEditorView()
 
 BOOL CEditorView::PreCreateWindow(CREATESTRUCT& cs)
 {
-	if (!CView3D::PreCreateWindow(cs))
-		return FALSE;
+    if (!CView3D::PreCreateWindow(cs))
+        return FALSE;
 
-	// TODO: Modify the Window class or styles here by modifying
-	//  the CREATESTRUCT cs
+    // TODO: Modify the Window class or styles here by modifying
+    //  the CREATESTRUCT cs
 
-	return TRUE;
+    return TRUE;
 }
 
 //=========================================================================
@@ -139,10 +139,10 @@ BOOL CEditorView::PreCreateWindow(CREATESTRUCT& cs)
 
 void CEditorView::OnDraw(CDC* pDC)
 {
-	CEditorDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
+    CEditorDoc* pDoc = GetDocument();
+    ASSERT_VALID(pDoc);
 
-	// TODO: add draw code for native data here
+    // TODO: add draw code for native data here
 }
 
 //=========================================================================
@@ -151,22 +151,22 @@ void CEditorView::OnDraw(CDC* pDC)
 
 BOOL CEditorView::OnPreparePrinting(CPrintInfo* pInfo)
 {
-	// default preparation
-	return DoPreparePrinting(pInfo);
+    // default preparation
+    return DoPreparePrinting(pInfo);
 }
 
 //=========================================================================
 
 void CEditorView::OnBeginPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
 {
-	// TODO: add extra initialization before printing
+    // TODO: add extra initialization before printing
 }
 
 //=========================================================================
 
 void CEditorView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
 {
-	// TODO: add cleanup after printing
+    // TODO: add cleanup after printing
 }
 
 //=========================================================================
@@ -176,22 +176,22 @@ void CEditorView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
 #ifdef _DEBUG
 void CEditorView::AssertValid() const
 {
-	CView3D::AssertValid();
+    CView3D::AssertValid();
 }
 
 //=========================================================================
 
 void CEditorView::Dump(CDumpContext& dc) const
 {
-	CView3D::Dump(dc);
+    CView3D::Dump(dc);
 }
 
 //=========================================================================
 
 CEditorDoc* CEditorView::GetDocument() // non-debug version is inline
 {
-	ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CEditorDoc)));
-	return (CEditorDoc*)m_pDocument;
+    ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CEditorDoc)));
+    return (CEditorDoc*)m_pDocument;
 }
 #endif //_DEBUG
 
@@ -201,13 +201,13 @@ CEditorDoc* CEditorView::GetDocument() // non-debug version is inline
 
 void CEditorView::OnPaint() 
 {
-	CPaintDC dc(this); // device context for painting
+    CPaintDC dc(this); // device context for painting
 
-	// TODO: Add your message handler code here
+    // TODO: Add your message handler code here
 
-	// Do not call CView3D::OnPaint() for painting messages
+    // Do not call CView3D::OnPaint() for painting messages
 
-	eng_UpdateDisplayWindow( GetSafeHwnd() );
+    eng_UpdateDisplayWindow( GetSafeHwnd() );
 
     if (m_MsgTimer.ReadSec() > 5.0f) //reset after 5 seconds
     {
@@ -255,21 +255,21 @@ void CEditorView::OnPaint()
 
 BOOL CEditorView::OnEraseBkgnd(CDC* pDC) 
 {
-	// TODO: Add your message handler code here and/or call default
-	
-	return TRUE;//CView3D::OnEraseBkgnd(pDC);
+    // TODO: Add your message handler code here and/or call default
+    
+    return TRUE;//CView3D::OnEraseBkgnd(pDC);
 }
 
 //=========================================================================
 
 int CEditorView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CView3D::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
-	Initialize();
+    if (CView3D::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
+    Initialize();
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
@@ -279,11 +279,11 @@ void CEditorView::Initialize()
     m_View.SetXFOV( R_60 );
     m_View.SetPosition( vector3(2000,1000,2000) );
     m_View.LookAtPoint( vector3(  0,  0,  0) );
-	m_View.SetZLimits ( 10, GetDocument()->GetFarZLimit() );
+    m_View.SetZLimits ( 10, GetDocument()->GetFarZLimit() );
 
     m_Grid.SetSeparation(float(GetDocument()->GetGridSnap()),float(GetDocument()->GetGridSnap()));
 
-	CameraFreeFlyMode();
+    CameraFreeFlyMode();
     // DX9 reference for the DX11 port:
     // d3deng_SetAmbientLight(xcolor(255,255,255,255));
 }
@@ -793,7 +793,7 @@ void CEditorView::Render( )
 
 void CEditorView::OnLButtonDown(UINT nFlags, CPoint point) 
 {
-	CView3D::OnLButtonDown(nFlags, point);
+    CView3D::OnLButtonDown(nFlags, point);
 
     m_HighlightVolume.Clear();
 
@@ -880,7 +880,7 @@ void CEditorView::OnLButtonDown(UINT nFlags, CPoint point)
             }
         }
     }
-	else if (IsMovementMode() || IsPlacementMode() || IsBlueprintMode())
+    else if (IsMovementMode() || IsPlacementMode() || IsBlueprintMode())
     {
         //go into drag mode
         m_bDraggingObject = TRUE;
@@ -896,7 +896,7 @@ void CEditorView::OnLButtonDown(UINT nFlags, CPoint point)
     }
 
 //    m_pFrameEdit->GetPropertyEditorDoc()->Refresh();
-	SetViewDirty();
+    SetViewDirty();
 }
 
 //=========================================================================
@@ -1022,10 +1022,10 @@ void CEditorView::OnLButtonUp(UINT nFlags, CPoint point)
     }
 
     SetViewDirty();
-	m_bDraggingObject = FALSE;
+    m_bDraggingObject = FALSE;
     m_pFrameEdit->GetPropertyEditorDoc()->Refresh(); 
 
-	CView3D::OnLButtonUp(nFlags, point);
+    CView3D::OnLButtonUp(nFlags, point);
 }
 
 //=========================================================================
@@ -1090,9 +1090,9 @@ bool CEditorView::BBoxInDragBand( const bbox& BBox )
 
 void CEditorView::OnActivateFrame( UINT nState, CFrameWnd* pFrameWnd )
 {
-	if (!m_pFrameEdit)
+    if (!m_pFrameEdit)
     {
-	    m_pFrameEdit = (CEditorFrame*) pFrameWnd;
+        m_pFrameEdit = (CEditorFrame*) pFrameWnd;
 
         if (m_pFrameEdit)
         {
@@ -1104,7 +1104,7 @@ void CEditorView::OnActivateFrame( UINT nState, CFrameWnd* pFrameWnd )
             }
         }
     }
-	CView3D::OnActivateFrame( nState, pFrameWnd );
+    CView3D::OnActivateFrame( nState, pFrameWnd );
 }
 
 //=========================================================================
@@ -1119,8 +1119,8 @@ void CEditorView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
     GetCursorPos(&pt);
     ScreenToClient(&pt);
 
-	switch(nChar)
-	{
+    switch(nChar)
+    {
         case '1':
         case '2':
         case '3':
@@ -1225,12 +1225,12 @@ void CEditorView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
                         {
                             ::EmptyClipboard();
                             CString strText(guid_ToString(CapGuid));
- 		                    HGLOBAL hGlobalBuff = ::GlobalAlloc(GMEM_MOVEABLE, strText.GetLength()+1);
+                             HGLOBAL hGlobalBuff = ::GlobalAlloc(GMEM_MOVEABLE, strText.GetLength()+1);
 
-		                    TCHAR* szBuffer = (TCHAR*)::GlobalLock(hGlobalBuff);
+                            TCHAR* szBuffer = (TCHAR*)::GlobalLock(hGlobalBuff);
 
-		                    _tcscpy(szBuffer, strText);
-		                    ::GlobalUnlock(hGlobalBuff);
+                            _tcscpy(szBuffer, strText);
+                            ::GlobalUnlock(hGlobalBuff);
 
                             if (::SetClipboardData(CF_TEXT, hGlobalBuff) == NULL)
                             {
@@ -1354,7 +1354,7 @@ void CEditorView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
                 SetViewDirty();
             }
             break;      
-        // TODO: GS: REPLACE THIS STUFF WITH std::regex			
+        // TODO: GS: REPLACE THIS STUFF WITH std::regex            
         //case VK_F2:
         //    {
         //        //Guid Lookup
@@ -1364,14 +1364,14 @@ void CEditorView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
         //        if (dlg.DoModal() == IDOK)
         //        {
         //            CString Str = dlg.GetEntryText();
-		//
+        //
         //            // Is this a guid?
         //            regex r1( "[0-9a-fA-F]{8}:?[0-9a-fA-F]{8}" );
         //            if( r1.Match( Str ) )
         //            {
         //                xstring GuidString = r1.GetSubstring(0);
         //                guid GuidToFind = guid_FromString( GuidString );
-		//
+        //
         //                if (g_WorldEditor.SelectObject(GuidToFind))
         //                {
         //                    // Move the camera focus
@@ -1385,10 +1385,10 @@ void CEditorView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
         //                {
         //                    ::AfxMessageBox("Guid Not Found.");
         //                }
-		//
+        //
         //                break;
         //            }
-		//
+        //
         //            // Is this a location?
         //            regex r2( "(-?\\d*\\.?\\d+)\\s*,\\s*(-?\\d*\\.?\\d+)\\s*,\\s*(-?\\d*\\.?\\d+)" );
         //            if( r2.Match( Str ) )
@@ -1396,7 +1396,7 @@ void CEditorView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
         //                xstring x = r2.GetSubstring( 1 );
         //                xstring y = r2.GetSubstring( 2 );
         //                xstring z = r2.GetSubstring( 3 );
-		//
+        //
         //                // Move the camera focus
         //                vector3 Pos = vector3( x_atof(x), x_atof(y), x_atof(z) );
         //                SetFocusPos( Pos );
@@ -1405,7 +1405,7 @@ void CEditorView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
         //                SetViewDirty();
         //                break;
         //            }
-		//
+        //
         //            // Find it by name
         //            object* pObject = g_ObjMgr.GetObjectByName( Str );
         //            if( pObject )
@@ -1470,8 +1470,8 @@ void CEditorView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
                         SetViewDirty();
                     }
                 }
-			}	
-			break;
+            }    
+            break;
 
         case VK_PRIOR:
             if (m_bGridSnap)
@@ -1846,73 +1846,73 @@ void CEditorView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
                 }
             }
             break;
-        case VK_F8:	
-			{
-				//
-				//	Select all objects matching the type of the currently selected one.
-				//	If the CTRL modifier is used, only select matching objects in the 
-				//  same zone as the current one.
-				//
-				editor_blueprint_ref	BPRef;
-				if (g_WorldEditor.IsOneBlueprintSelected(BPRef))
-				{
-					// Handle blueprints instead of single objects
-					g_WorldEditor.SelectAllMatchingBlueprints( BPRef );
-				}
-				else
-				{
-					if( g_WorldEditor.GetSelectedCount() != 1)
-						break;
+        case VK_F8:    
+            {
+                //
+                //    Select all objects matching the type of the currently selected one.
+                //    If the CTRL modifier is used, only select matching objects in the 
+                //  same zone as the current one.
+                //
+                editor_blueprint_ref    BPRef;
+                if (g_WorldEditor.IsOneBlueprintSelected(BPRef))
+                {
+                    // Handle blueprints instead of single objects
+                    g_WorldEditor.SelectAllMatchingBlueprints( BPRef );
+                }
+                else
+                {
+                    if( g_WorldEditor.GetSelectedCount() != 1)
+                        break;
 
-					xbool bSelectedGridOnly = FALSE;
+                    xbool bSelectedGridOnly = FALSE;
 
-					if (( GetKeyState( VK_CONTROL ) & ~1 ) != 0)
-						bSelectedGridOnly = TRUE;
+                    if (( GetKeyState( VK_CONTROL ) & ~1 ) != 0)
+                        bSelectedGridOnly = TRUE;
 
-					guid SelObjGuid = g_WorldEditor.GetSelectedObjectsByIndex( 0 );
-					object* pSelObj = g_ObjMgr.GetObjectByGuid( SelObjGuid );
-					if (NULL == pSelObj)
-						break;
+                    guid SelObjGuid = g_WorldEditor.GetSelectedObjectsByIndex( 0 );
+                    object* pSelObj = g_ObjMgr.GetObjectByGuid( SelObjGuid );
+                    if (NULL == pSelObj)
+                        break;
 
-					slot_id SlotID = g_ObjMgr.GetFirst( pSelObj->GetType() );
+                    slot_id SlotID = g_ObjMgr.GetFirst( pSelObj->GetType() );
 
-					u16 Zone1, Zone2;
+                    u16 Zone1, Zone2;
 
-					Zone1 = pSelObj->GetZone1();
-					Zone2 = pSelObj->GetZone2();
+                    Zone1 = pSelObj->GetZone1();
+                    Zone2 = pSelObj->GetZone2();
 
-					while ( SLOT_NULL != SlotID )
-					{
-						object* pCurObj = g_ObjMgr.GetObjectBySlot( SlotID );
-						if (NULL == pCurObj)
-							break;
+                    while ( SLOT_NULL != SlotID )
+                    {
+                        object* pCurObj = g_ObjMgr.GetObjectBySlot( SlotID );
+                        if (NULL == pCurObj)
+                            break;
 
-						xbool bAddThis = TRUE;
+                        xbool bAddThis = TRUE;
 
-						if (bSelectedGridOnly)
-						{
-							// Check for exclusion
-							if ((Zone1 != 0) && (pCurObj->GetZone1() != Zone1) && (pCurObj->GetZone2() != Zone1))
-								bAddThis = FALSE;
-							else if ((Zone2 != 0) && (pCurObj->GetZone1() != Zone2) && (pCurObj->GetZone2() != Zone2))
-								bAddThis = FALSE;
-						}
+                        if (bSelectedGridOnly)
+                        {
+                            // Check for exclusion
+                            if ((Zone1 != 0) && (pCurObj->GetZone1() != Zone1) && (pCurObj->GetZone2() != Zone1))
+                                bAddThis = FALSE;
+                            else if ((Zone2 != 0) && (pCurObj->GetZone1() != Zone2) && (pCurObj->GetZone2() != Zone2))
+                                bAddThis = FALSE;
+                        }
 
-						if (bAddThis)
-						{
-							g_WorldEditor.SelectObject( pCurObj->GetGuid(), FALSE );
-						}
+                        if (bAddThis)
+                        {
+                            g_WorldEditor.SelectObject( pCurObj->GetGuid(), FALSE );
+                        }
 
-						SlotID = g_ObjMgr.GetNext( SlotID );
-					}
-				}
+                        SlotID = g_ObjMgr.GetNext( SlotID );
+                    }
+                }
 
-				m_pFrameEdit->GetSettingsEditorDoc()->Refresh();
+                m_pFrameEdit->GetSettingsEditorDoc()->Refresh();
                 SetViewDirty();
-			}
+            }
             break;
         default:
-	        CView3D::OnKeyDown(nChar, nRepCnt, nFlags);
+            CView3D::OnKeyDown(nChar, nRepCnt, nFlags);
             break;
     }
 }
@@ -2001,21 +2001,21 @@ void CEditorView::OnMouseMove(UINT nFlags, CPoint point)
             }
         }
 
-	    CView3D::OnMouseMove(nFlags, point);
+        CView3D::OnMouseMove(nFlags, point);
     }
     else if (m_bDragSelect||m_bDragUnSelect)
     {
         m_ptDragSelectEnd = point;
-  	    SetViewDirty();
+          SetViewDirty();
     }
     else
     {
-	    if (m_bDraggingObject)
+        if (m_bDraggingObject)
         {
-    	    SetViewDirty();
+            SetViewDirty();
             OnMoveObjects(point);
         }
-	    
+        
         if  (IsActionMode())
         {
             if (( GetKeyState( 'C' ) & ~1 ) != 0)
@@ -2029,7 +2029,7 @@ void CEditorView::OnMouseMove(UINT nFlags, CPoint point)
             }
         }
 
-	    CView3D::OnMouseMove(nFlags, point);
+        CView3D::OnMouseMove(nFlags, point);
     }
 }
 
@@ -2095,9 +2095,9 @@ void CEditorView::OnMoveObjects(CPoint point)
 
 void CEditorView::OnKillFocus(CWnd* pNewWnd) 
 {
-	CView3D::OnKillFocus(pNewWnd);
-	
-	SetViewDirty();
+    CView3D::OnKillFocus(pNewWnd);
+    
+    SetViewDirty();
 }
 
 //=========================================================================
@@ -2109,7 +2109,7 @@ BOOL CEditorView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
     x_try;
     eng_D3DWndProc( m_hWnd, WM_MOUSEWHEEL, wParam, lParam );
-	x_catch_display;
+    x_catch_display;
 
     xarray<guid> selectedObjects;
     xbool WheelForNavConns = true;
@@ -2144,7 +2144,7 @@ BOOL CEditorView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
     if(!WheelForNavConns)
     {
         SetViewDirty();
-	    return CView3D::OnMouseWheel(nFlags, zDelta, pt);
+        return CView3D::OnMouseWheel(nFlags, zDelta, pt);
     }
     else
     {
@@ -2336,7 +2336,7 @@ void CEditorView::OnTimer(UINT nIDEvent)
     // If not then this should do nothing. 
     if( (!GetDocument()->IsFPV()) && IsViewActive() && (GetFocus() == this))
     {
-	    //ok do keyboard movement here
+        //ok do keyboard movement here
         float fMove;
         if (( GetKeyState( VK_LSHIFT ) & ~1 ) != 0)
             fMove = float(GetDocument()->GetMovementSpeed()*5);
@@ -2527,7 +2527,7 @@ void CEditorView::OnUndo()
 void CEditorView::OnUpdateUndo(CCmdUI* pCmdUI) 
 {
     pCmdUI->Enable(transaction_mgr::Transaction()->CanUndo());
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2552,7 +2552,7 @@ void CEditorView::OnUpdateRedo(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(transaction_mgr::Transaction()->CanRedo() && 
         (!IsMovementMode())); //not allowed while moving
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -2562,7 +2562,7 @@ void CEditorView::OnCutObjects()
     if (IsMovementMode())
     {
         g_WorldEditor.CheckSelectedForDuplicates();
-	    CancelMovementMode();
+        CancelMovementMode();
     }
     else
     {
@@ -2570,7 +2570,7 @@ void CEditorView::OnCutObjects()
         g_WorldEditor.SetCurrentUndoEntry(new transaction_entry(
             xfs("Moving %d Object(s)",g_WorldEditor.GetSelectedCount())));
 
-	    EnterMovementMode();
+        EnterMovementMode();
     }
     SetFocus(); //set focus to view
 }
@@ -2583,8 +2583,8 @@ void CEditorView::OnUpdateCutObjects(CCmdUI* pCmdUI)
         g_Project.IsProjectOpen() &&
         (!GetDocument()->IsGameRunning()))
     {
-        pCmdUI->Enable(IsStandardMode() || IsMovementMode());	
-        pCmdUI->SetCheck(IsMovementMode());	
+        pCmdUI->Enable(IsStandardMode() || IsMovementMode());    
+        pCmdUI->SetCheck(IsMovementMode());    
     }
     else 
     {
@@ -2628,7 +2628,7 @@ void CEditorView::OnCopyObjects()
 
     if ((lstItems.GetCount() + lstBPRefs.GetCount()) > 0)
     {
-	    EnterMovementMode();
+        EnterMovementMode();
         //for UNDO, must be done after entering movement mode, force UNDO commit after moving
         ForceMovementUndoRecording(); 
     }
@@ -2648,7 +2648,7 @@ void CEditorView::OnUpdateCopyObjects(CCmdUI* pCmdUI)
         g_Project.IsProjectOpen() &&
         (!GetDocument()->IsGameRunning()))
     {
-        pCmdUI->Enable(IsStandardMode());	
+        pCmdUI->Enable(IsStandardMode());    
     }
     else 
     {
@@ -2662,7 +2662,7 @@ void CEditorView::OnUpdateCopyObjects(CCmdUI* pCmdUI)
 void CEditorView::OnPasteObjects() 
 {
     g_WorldEditor.CheckSelectedForDuplicates();       
-	CancelMovementMode();
+    CancelMovementMode();
     SetViewDirty();
     SetFocus();
 }
@@ -2673,7 +2673,7 @@ void CEditorView::OnUpdatePasteObjects(CCmdUI* pCmdUI)
 {
     if (g_Project.IsProjectOpen() && IsMovementMode())
     {
-        pCmdUI->Enable(TRUE);	
+        pCmdUI->Enable(TRUE);    
     }
     else 
     {
@@ -2693,7 +2693,7 @@ void CEditorView::OnShowReport()
 
     //iterate through the resources
     xarray<xstring> lstRigidGeoms;
-	for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
+    for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
     {
         rsc_desc_mgr::node &Node = g_RescDescMGR.GetRscDescIndex(i);
         if (x_stricmp(Node.pDesc->GetType(),"RigidGeom") == 0 )

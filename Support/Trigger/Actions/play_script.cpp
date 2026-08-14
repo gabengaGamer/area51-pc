@@ -36,7 +36,7 @@ void play_script::Execute ( trigger_object* pParent )
 
 //=============================================================================
 
-void play_script::OnEnumProp	( prop_enum& rPropList )
+void play_script::OnEnumProp    ( prop_enum& rPropList )
 {
     //object info
     rPropList.AddInt ( "Script ID" , "ID of the script to play." );

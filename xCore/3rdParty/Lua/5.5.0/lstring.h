@@ -26,7 +26,7 @@
 ** #("function") = 8, #("__newindex") = 10.)
 */
 #if !defined(LUAI_MAXSHORTLEN)
-#define LUAI_MAXSHORTLEN	40
+#define LUAI_MAXSHORTLEN    40
 #endif
 
 
@@ -35,23 +35,23 @@
 ** itself (including final '\0').
 */
 #define sizestrshr(l)  \
-	(offsetof(TString, contents) + ((l) + 1) * sizeof(char))
+    (offsetof(TString, contents) + ((l) + 1) * sizeof(char))
 
 
-#define luaS_newliteral(L, s)	(luaS_newlstr(L, "" s, \
+#define luaS_newliteral(L, s)    (luaS_newlstr(L, "" s, \
                                  (sizeof(s)/sizeof(char))-1))
 
 
 /*
 ** test whether a string is a reserved word
 */
-#define isreserved(s)	(strisshr(s) && (s)->extra > 0)
+#define isreserved(s)    (strisshr(s) && (s)->extra > 0)
 
 
 /*
 ** equality for short strings, which are always internalized
 */
-#define eqshrstr(a,b)	check_exp((a)->tt == LUA_VSHRSTR, (a) == (b))
+#define eqshrstr(a,b)    check_exp((a)->tt == LUA_VSHRSTR, (a) == (b))
 
 
 LUAI_FUNC unsigned luaS_hashlongstr (TString *ts);
@@ -66,7 +66,7 @@ LUAI_FUNC TString *luaS_newlstr (lua_State *L, const char *str, size_t l);
 LUAI_FUNC TString *luaS_new (lua_State *L, const char *str);
 LUAI_FUNC TString *luaS_createlngstrobj (lua_State *L, size_t l);
 LUAI_FUNC TString *luaS_newextlstr (lua_State *L,
-		const char *s, size_t len, lua_Alloc falloc, void *ud);
+        const char *s, size_t len, lua_Alloc falloc, void *ud);
 LUAI_FUNC size_t luaS_sizelngstr (size_t len, int kind);
 LUAI_FUNC TString *luaS_normstr (lua_State *L, TString *ts);
 

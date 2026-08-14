@@ -368,7 +368,7 @@ void blackOp_attack_state::ChangePhase( s32 newPhase )
         toTarget.Scale( 100.0f );
         toTarget += m_CharacterBase.GetPosition();
         m_CharacterBase.SetGotoLocationGoal(toTarget);
-    	break;
+        break;
     case PHASE_BO_ATTACK_STRAFE_RIGHT:
         m_CharacterBase.SetWantsToAim(TRUE);
         toTarget = m_CharacterBase.GetToTarget();
@@ -378,12 +378,12 @@ void blackOp_attack_state::ChangePhase( s32 newPhase )
         toTarget.Scale( 100.0f );
         toTarget += m_CharacterBase.GetPosition();
         m_CharacterBase.SetGotoLocationGoal(toTarget);
-    	break;
+        break;
     case PHASE_BO_ATTACK_STAND_SHOOT:
         m_MinPhaseTime = x_frand(k_MinPhaseTime*1.5f, k_MaxPhaseTime*1.5f);
         m_CharacterBase.SetWantsToAim(TRUE);
         m_CharacterBase.SetIdleGoal();
-    	break;
+        break;
     case PHASE_BO_ATTACK_ENTER_CROUCH_SHOOT:
         m_CharacterBase.SetPlayAnimationGoal(loco::ANIM_CROUCH_ENTER);
         break;
@@ -395,7 +395,7 @@ void blackOp_attack_state::ChangePhase( s32 newPhase )
         m_MinPhaseTime = x_frand(k_MinPhaseTime*1.5f, k_MaxPhaseTime*1.5f);
         m_CharacterBase.GetLocoPointer()->SetMoveStyle( loco::MOVE_STYLE_CROUCHAIM );
         m_CharacterBase.SetIdleGoal();
-    	break;
+        break;
     case PHASE_BO_ATTACK_ADVANCE:
         if( m_CurrentPhase != PHASE_BO_ATTACK_ADVANCE )
         {        
@@ -403,25 +403,25 @@ void blackOp_attack_state::ChangePhase( s32 newPhase )
         }
         m_CharacterBase.SetWantsToAim(TRUE);
         m_CharacterBase.SetGotoTargetGoal(m_CharacterBase.GetTargetGuid(),vector3(0.0f,0.0f,0.0f),loco::MOVE_STYLE_NULL,m_OptimalFiringDistance);
-    	break;
+        break;
     case PHASE_BO_ATTACK_BACKUP:
         m_CharacterBase.SetWantsToAim(TRUE);
         m_CharacterBase.SetRetreatFromTargetGoal(m_CharacterBase.GetTargetGuid(),vector3(0.0f,0.0f,0.0f),loco::MOVE_STYLE_NULL,m_OptimalFiringDistance);
-    	break;
+        break;
     case PHASE_BO_ATTACK_ALIGN_FOR_GRENADE_THROW:
         m_CharacterBase.SetTurnToTargetGoal(m_CharacterBase.GetTargetGuid());
-    	break;
+        break;
     case PHASE_BO_ATTACK_THROW_GRENADE:
         m_CharacterBase.SetPlayAnimationGoal(loco::ANIM_GRENADE_THROW_LONG);
-    	break;
+        break;
     case PHASE_BO_ATTACK_CLOSE_FOR_MELEE:
         m_CharacterBase.SetWantsToAim(TRUE);
         m_CharacterBase.SetGotoTargetGoal( m_CharacterBase.GetTargetGuid(),vector3(0.0f,0.0f,0.0f),loco::MOVE_STYLE_NULL,m_CharacterBase.GetShortMeleeRange() );
-    	break;
+        break;
     case PHASE_BO_ATTACK_ALIGN_FOR_MELEE:
         m_CharacterBase.SetWantsToAim(TRUE);
         m_CharacterBase.SetTurnToTargetGoal(m_CharacterBase.GetTargetGuid());
-    	break;
+        break;
     case PHASE_BO_ATTACK_MELEE:
         {
             radian toTargetYaw = m_CharacterBase.GetToTarget().GetYaw();
@@ -431,7 +431,7 @@ void blackOp_attack_state::ChangePhase( s32 newPhase )
             m_TimeSinceLastMove = k_MinTimeBetweenMoves;
             m_CharacterBase.SetPlayAnimationGoal(loco::ANIM_MELEE_SHORT);
         }
-    	break;
+        break;
     case PHASE_BO_ATTACK_GOTO_CORPSE:
         if( m_CharacterBase.IsKindOf(soldier::GetRTTI()) )
         {
@@ -959,16 +959,16 @@ const char*blackOp_attack_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_BO_ATTACK_STRAFE_LEFT:
         return "PHASE_BO_ATTACK_STRAFE_LEFT";
-    	break;
+        break;
     case PHASE_BO_ATTACK_STRAFE_RIGHT:
         return "PHASE_BO_ATTACK_STRAFE_RIGHT";
-    	break;
+        break;
     case PHASE_BO_ATTACK_STAND_SHOOT:
         return "PHASE_BO_ATTACK_STAND_SHOOT";
-    	break;
+        break;
     case PHASE_BO_ATTACK_CROUCH_SHOOT:
         return "PHASE_BO_ATTACK_CROUCH_SHOOT";
-    	break;
+        break;
     case PHASE_BO_ATTACK_EXIT_CROUCH_SHOOT:
         return "PHASE_BO_ATTACK_EXIT_CROUCH_SHOOT";
         break;
@@ -977,25 +977,25 @@ const char*blackOp_attack_state::GetPhaseName ( s32 thePhase )
         break;
     case PHASE_BO_ATTACK_ADVANCE:
         return "PHASE_BO_ATTACK_ADVANCE";
-    	break;
+        break;
     case PHASE_BO_ATTACK_BACKUP:
         return "PHASE_BO_ATTACK_BACKUP";
-    	break;
+        break;
     case PHASE_BO_ATTACK_ALIGN_FOR_GRENADE_THROW:
         return "PHASE_BO_ATTACK_ALIGN_FOR_GRENADE_THROW";
-    	break;
+        break;
     case PHASE_BO_ATTACK_THROW_GRENADE:
         return "PHASE_BO_ATTACK_THROW_GRENADE";
-    	break;
+        break;
     case PHASE_BO_ATTACK_CLOSE_FOR_MELEE:
         return "PHASE_BO_ATTACK_CLOSE_FOR_MELEE";
-    	break;
+        break;
     case PHASE_BO_ATTACK_ALIGN_FOR_MELEE:
         return "PHASE_BO_ATTACK_ALIGN_FOR_MELEE";
-    	break;
+        break;
     case PHASE_BO_ATTACK_MELEE:
         return "PHASE_BO_ATTACK_MELEE";
-    	break;
+        break;
     case PHASE_BO_ATTACK_MELEE_BACK_LEFT:
         return "PHASE_BO_ATTACK_MELEE_BACK_LEFT";
         break;

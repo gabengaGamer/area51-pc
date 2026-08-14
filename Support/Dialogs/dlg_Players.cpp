@@ -26,7 +26,7 @@
 
 enum controls
 {
-	IDC_PLAYER_LIST,
+    IDC_PLAYER_LIST,
     IDC_PLAYER_DETAILS,
     IDC_PLAYER_NAME_TEXT,
     IDC_PLAYER_GAME_TEXT,
@@ -118,7 +118,7 @@ xbool dlg_players::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pPlayerList = (ui_friendlist*)FindChildByID( IDC_PLAYER_LIST );
     m_pPlayerList->SetLineHeight( 32 );
@@ -195,7 +195,7 @@ xbool dlg_players::Create( s32                        UserID,
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -223,7 +223,7 @@ void dlg_players::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     if( m_bRenderBlackout )
     {

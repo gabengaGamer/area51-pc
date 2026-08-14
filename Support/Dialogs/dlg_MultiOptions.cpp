@@ -151,7 +151,7 @@ xbool dlg_multi_options::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pTimeLimitText    = (ui_text*)FindChildByID( IDC_MULTI_OPTIONS_TIME_LIMIT );
     m_pScoreText        = (ui_text*)FindChildByID( IDC_MULTI_OPTIONS_SCORE      );
@@ -354,7 +354,7 @@ void dlg_multi_options::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     // render transparent screen
     rb.l = m_CurrPos.l + 22;

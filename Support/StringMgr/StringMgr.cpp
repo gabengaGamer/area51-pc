@@ -95,7 +95,7 @@ void* binstring_loader::PreLoad( X_FILE*& Fp, const char* pFileName )
             i = 0;
         
         s32 CharsToTake = FileName.GetLength() - i;
-        xstring TableNameExt = FileName.Right( CharsToTake );	
+        xstring TableNameExt = FileName.Right( CharsToTake );    
         TableNameExt = TableNameExt.Left( TableNameExt.Find( '.' ) );
 
         s32 StrLen = TableNameExt.GetLength();
@@ -103,7 +103,7 @@ void* binstring_loader::PreLoad( X_FILE*& Fp, const char* pFileName )
         x_memset( pTableName, 0, StrLen+1 );
 
         x_strncpy( pTableName, (const char*)TableNameExt, StrLen );
-        Loaded = g_StringTableMgr.LoadTable( pTableName, pFileName );	
+        Loaded = g_StringTableMgr.LoadTable( pTableName, pFileName );    
 
         if( Loaded )
         {
@@ -455,7 +455,7 @@ xwchar* Ansi2UpperWide( const char* pSrc, string_mgr::wchar_string& WideString )
     ASSERT( pSrc );
     u32 Length = x_strlen( pSrc )+1;
     ASSERTS( Length <= ( sizeof( WideString ) / 2 ), xfs( "Inc wide_string to %d chars", Length ) );
-	xwchar* pWide = WideString.m_String;
+    xwchar* pWide = WideString.m_String;
     char* pTemp = (char*)pWide;
     for( u32 i=0;i<Length;i++ )
     {
@@ -788,7 +788,7 @@ xbool string_mgr::LoadTable( const char* pTableName, const char* pFileName )
     // Keep it or heave it.
     if( Success )
     {
-		x_DebugMsg( 7, "********* %s Loaded\n", pFileName );
+        x_DebugMsg( 7, "********* %s Loaded\n", pFileName );
         LOG_MESSAGE( "string_mgr::LoadTable",
                      "Loaded: %s - %s",
                      pTableName, pFileName );
@@ -873,7 +873,7 @@ void string_mgr::UnloadTable( const char* pTableName )
     // Found?
     if( iTable != -1 )
     {
-		x_DebugMsg( 7, "********* %s UnLoaded\n", pTableName );
+        x_DebugMsg( 7, "********* %s UnLoaded\n", pTableName );
         LOG_MESSAGE( "string_mgr::UnloadTable",
                      "Unloaded: %s", pTableName );
         delete m_Tables[iTable];

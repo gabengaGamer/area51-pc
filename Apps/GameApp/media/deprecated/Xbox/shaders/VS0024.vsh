@@ -21,12 +21,12 @@
 ;
 ;==----------------------------------------------------------------------------
                                 ;
-    rcp  r1.w,r9.w              ;   R9 = pos in clip space			w=0.00181426
-    mul  r1.xy,r9.xy,r1.w       ;   r1.xy = r9.xy/r9.w				x=0.125,y=0.0625
+    rcp  r1.w,r9.w              ;   R9 = pos in clip space            w=0.00181426
+    mul  r1.xy,r9.xy,r1.w       ;   r1.xy = r9.xy/r9.w                x=0.125,y=0.0625
                                 ;
-    mul  r1.xy,r1.xy,c-26		;	r1.x *= 0.5f, r1.y *=-0.5f		x=0.0625,y=-0.03125
-    add  r1.xy,r1.xy,c-25.xy	;	r1.x += 0.5f, r1.y += 0.5f		x=0.5625,y= 0.46875
-    mul  r1.xy,r1.xy,c-24.xy	;
-								;
-    mul oT3.xy,r1.xy,r9.w       ;	de-project uvs( we'll let r9.w do it )
+    mul  r1.xy,r1.xy,c-26        ;    r1.x *= 0.5f, r1.y *=-0.5f        x=0.0625,y=-0.03125
+    add  r1.xy,r1.xy,c-25.xy    ;    r1.x += 0.5f, r1.y += 0.5f        x=0.5625,y= 0.46875
+    mul  r1.xy,r1.xy,c-24.xy    ;
+                                ;
+    mul oT3.xy,r1.xy,r9.w       ;    de-project uvs( we'll let r9.w do it )
     mov oT3.zw ,r9.zw           ;

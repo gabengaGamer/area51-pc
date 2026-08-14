@@ -34,7 +34,7 @@ class condition_line_of_sight : public conditional_ex_base
 {
 
 public:
-	condition_line_of_sight                 ( conditional_affecter* pParent );
+    condition_line_of_sight                 ( conditional_affecter* pParent );
 
     virtual         conditional_ex_types    GetType         ( void )   { return GetTypeStatic(); }
     static          conditional_ex_types    GetTypeStatic   ( void )   { return TYPE_CONDITION_LINE_OF_SIGHT;}
@@ -42,8 +42,8 @@ public:
     virtual         const char*             GetDescription  ( void );
 
     virtual         xbool                   Execute         ( guid TriggerGuid );    
-    virtual			void	                OnEnumProp	    ( prop_enum& rList );
-    virtual			xbool	                OnProperty	    ( prop_query& rPropQuery );
+    virtual            void                    OnEnumProp        ( prop_enum& rList );
+    virtual            xbool                    OnProperty        ( prop_query& rPropQuery );
 
 #ifdef X_EDITOR
     virtual         object_affecter*        GetObjectRef0   ( xstring& Desc ) { Desc = "Object1 error: "; return &m_Affecter1; }

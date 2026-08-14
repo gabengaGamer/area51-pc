@@ -796,10 +796,10 @@ void lore_object::OnEnumProp( prop_enum&  List )
 
 xbool lore_object::OnProperty( prop_query& rPropQuery )
 {                       
-	if( object::OnProperty( rPropQuery ) )
-	{
+    if( object::OnProperty( rPropQuery ) )
+    {
         return TRUE;
-	}
+    }
 
     // Rigid inst?
     if( rPropQuery.IsSimilarPath( "RenderInst" ) )

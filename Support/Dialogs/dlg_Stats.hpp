@@ -76,7 +76,7 @@ protected:
 #endif
 
     s32                 m_CurrHL;
-    xbool               m_bRenderBlackout;	
+    xbool               m_bRenderBlackout;    
 };
 
 //==============================================================================

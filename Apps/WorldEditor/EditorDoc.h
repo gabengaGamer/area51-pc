@@ -119,8 +119,8 @@ public:
     BOOL            LoadUserSettings(void);
 
 protected: // create from serialization only
-	CEditorDoc();
-	DECLARE_DYNCREATE(CEditorDoc)
+    CEditorDoc();
+    DECLARE_DYNCREATE(CEditorDoc)
     CEditorView* GetView();
 
     void            ReloadLevel(CString strLevel);
@@ -237,26 +237,26 @@ public:
     void            PrintLog            ( const char* pMessage );
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorDoc)
-	public:
-	virtual void Serialize(CArchive& ar);
-	virtual BOOL OnSaveDocument(LPCTSTR lpszPathName);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorDoc)
+    public:
+    virtual void Serialize(CArchive& ar);
+    virtual BOOL OnSaveDocument(LPCTSTR lpszPathName);
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CEditorDoc();
+    virtual ~CEditorDoc();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 // Generated message map functions
 protected:
-	//{{AFX_MSG(CEditorDoc)
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CEditorDoc)
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
     void CopyPath(CString strFromPath, CString strWildcard, CString strToPath);
 
@@ -270,8 +270,8 @@ private:
 
 inline CEditorView* CEditorDoc::GetView()
 { 
-	POSITION pos = GetFirstViewPosition();
-	return (CEditorView*)GetNextView (pos); 
+    POSITION pos = GetFirstViewPosition();
+    return (CEditorView*)GetNextView (pos); 
 }
 
 extern user_settings            g_SaveTrackUserSettings;

@@ -25,7 +25,7 @@ public:
 
         //=============================================================================
                          debris_cannon             ( void );
-    virtual				~debris_cannon             ( void );
+    virtual                ~debris_cannon             ( void );
 
     virtual void        OnInit              ( void );
 
@@ -39,7 +39,7 @@ public:
 
     virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
 
-    virtual void        OnMove				( const vector3& rNewPos );
+    virtual void        OnMove                ( const vector3& rNewPos );
     virtual void        OnRender            ( void );
     virtual void        OnRenderTransparent ( void );
 

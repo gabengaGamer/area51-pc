@@ -150,40 +150,40 @@ u32 CompressAudioFilePS2_ADPCM( X_FILE* in, X_FILE* out, s32* NumChannels, s32* 
                 }
                 else
                 {
-				    if ( Length & 2047)
-				    {
-					    EncVag(pSampBuffer,pCompBuffer,ENC_VAG_LOOP_BODY);
-				    }
-				    else
-				    {
-					    EncVag(pSampBuffer,pCompBuffer,ENC_VAG_LOOP_END);
-				    }
+                    if ( Length & 2047)
+                    {
+                        EncVag(pSampBuffer,pCompBuffer,ENC_VAG_LOOP_BODY);
+                    }
+                    else
+                    {
+                        EncVag(pSampBuffer,pCompBuffer,ENC_VAG_LOOP_END);
+                    }
                 }
-				Remain -= BLKSIZ;
-				// 28 samples on in the sample buffer
-				pSampBuffer+=BLKSIZ;
-				// 16 bytes (8 words) on in the compressed buffer
-				pCompBuffer+=16/sizeof(s16);
+                Remain -= BLKSIZ;
+                // 28 samples on in the sample buffer
+                pSampBuffer+=BLKSIZ;
+                // 16 bytes (8 words) on in the compressed buffer
+                pCompBuffer+=16/sizeof(s16);
 
-			}
+            }
 
-			// For each channel, pad it out to a 2K boundary
-			s16 TempBuffer[BLKSIZ];
-			x_memset(TempBuffer,0,sizeof(TempBuffer));
-			while (Length < CompressedSize)
-			{
-				Length+=16;
+            // For each channel, pad it out to a 2K boundary
+            s16 TempBuffer[BLKSIZ];
+            x_memset(TempBuffer,0,sizeof(TempBuffer));
+            while (Length < CompressedSize)
+            {
+                Length+=16;
 
                 if (LoopStart != LoopEnd)
                 {
-				    EncVag(TempBuffer,pCompBuffer,ENC_VAG_LOOP_END);
+                    EncVag(TempBuffer,pCompBuffer,ENC_VAG_LOOP_END);
                 }
                 else
                 {
-				    EncVag(TempBuffer,pCompBuffer,ENC_VAG_1_SHOT_END);
+                    EncVag(TempBuffer,pCompBuffer,ENC_VAG_1_SHOT_END);
                 }
-				pCompBuffer += 16/sizeof(s16);
-			}
+                pCompBuffer += 16/sizeof(s16);
+            }
 
             //
             if( AudioFile->IsLooped() )

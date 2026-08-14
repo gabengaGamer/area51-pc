@@ -52,7 +52,7 @@ static l_noret error (LoadState *S, const char *why) {
 ** All high-level loads go through loadVector; you can change it to
 ** adapt to the endianness of the input
 */
-#define loadVector(S,b,n)	loadBlock(S,b,cast_sizet(n)*sizeof((b)[0]))
+#define loadVector(S,b,n)    loadBlock(S,b,cast_sizet(n)*sizeof((b)[0]))
 
 static void loadBlock (LoadState *S, void *b, size_t size) {
   if (luaZ_read(S->Z, b, size) != 0)
@@ -71,7 +71,7 @@ static void loadAlign (LoadState *S, unsigned align) {
 }
 
 
-#define getaddr(S,n,t)	cast(t *, getaddr_(S,cast_sizet(n) * sizeof(t)))
+#define getaddr(S,n,t)    cast(t *, getaddr_(S,cast_sizet(n) * sizeof(t)))
 
 static const void *getaddr_ (LoadState *S, size_t size) {
   const void *block = luaZ_getaddr(S->Z, size);
@@ -82,7 +82,7 @@ static const void *getaddr_ (LoadState *S, size_t size) {
 }
 
 
-#define loadVar(S,x)		loadVector(S,&x,1)
+#define loadVar(S,x)        loadVector(S,&x,1)
 
 
 static lu_byte loadByte (LoadState *S) {

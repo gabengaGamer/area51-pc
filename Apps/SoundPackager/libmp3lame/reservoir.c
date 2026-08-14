@@ -1,7 +1,7 @@
 /*
- *	bit reservoir source file
+ *    bit reservoir source file
  *
- *	Copyright (c) 1999 Mark Taylor
+ *    Copyright (c) 1999 Mark Taylor
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -10,7 +10,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -144,11 +144,11 @@ ResvFrameBegin(lame_global_flags *gfp,III_side_info_t *l3_side, int mean_bits, i
 
 
     if ( frameLength > maxmp3buf ||  gfp->disable_reservoir ) {
-	gfc->ResvMax = 0;
+    gfc->ResvMax = 0;
     } else {
-	gfc->ResvMax = maxmp3buf - frameLength;
-	if ( gfc->ResvMax > resvLimit )
-	  gfc->ResvMax = resvLimit;
+    gfc->ResvMax = maxmp3buf - frameLength;
+    if ( gfc->ResvMax > resvLimit )
+      gfc->ResvMax = resvLimit;
     }
 
     fullFrameBits = mean_bits * gfc->mode_gr + Min ( gfc->ResvSize, gfc->ResvMax );
@@ -221,7 +221,7 @@ ResvAdjust(lame_internal_flags *gfc,gr_info *gi, III_side_info_t *l3_side, int m
   gfc->ResvSize += (mean_bits / gfc->channels_out) - gi->part2_3_length;
 #if 0
   printf("part2_3_length:  %i  avg=%i  incres: %i  resvsize=%i\n",gi->part2_3_length,
-	 mean_bits/gfc->channels_out,
+     mean_bits/gfc->channels_out,
 mean_bits/gfc->channels_out-gi->part2_3_length,gfc->ResvSize);
 #endif
 }
@@ -242,7 +242,7 @@ ResvFrameEnd(lame_internal_flags *gfc, III_side_info_t *l3_side, int mean_bits)
 
     /* just in case mean_bits is odd, this is necessary... */
     if ( gfc->channels_out == 2  &&  (mean_bits & 1) )
-	gfc->ResvSize += 1;
+    gfc->ResvSize += 1;
 
     stuffingBits=0;
     l3_side->resvDrain_post = 0;
@@ -250,7 +250,7 @@ ResvFrameEnd(lame_internal_flags *gfc, III_side_info_t *l3_side, int mean_bits)
 
     /* we must be byte aligned */
     if ( (over_bits = gfc->ResvSize % 8) != 0 )
-	stuffingBits += over_bits;
+    stuffingBits += over_bits;
 
 
     over_bits = (gfc->ResvSize - stuffingBits) - gfc->ResvMax;

@@ -27,7 +27,7 @@
 dfs_header* dfs_InitHeaderFromRawPtr( void* pRawHeaderData, s32 Length )
 {
     ASSERT( pRawHeaderData );
-    ASSERT( Length >= (s32)sizeof(dfs_header) );	
+    ASSERT( Length >= (s32)sizeof(dfs_header) );    
     if( !pRawHeaderData || Length < (s32)sizeof(dfs_header) )
         return NULL;
 
@@ -56,7 +56,7 @@ dfs_header* dfs_InitHeaderFromRawPtr( void* pRawHeaderData, s32 Length )
         // Validate counts.
         ASSERT( pHeader->nFiles        >= 0 );
         ASSERT( pHeader->nSubFiles     >= 0 );
-        ASSERT( pHeader->StringsLength >= 0 );	
+        ASSERT( pHeader->StringsLength >= 0 );    
         if( pHeader->nFiles < 0 || pHeader->nSubFiles < 0 || pHeader->StringsLength < 0 )
             return NULL;
 
@@ -279,7 +279,7 @@ xbool dfs_CollectFiles( const char* pRootPath, const char* pRelativePath, xarray
     ASSERT( Depth <= 64 );
     if( Depth > 64 )
         return FALSE;
-	
+    
 #if defined( TARGET_PC )
     char SearchPath[X_MAX_PATH];
     WIN32_FIND_DATA FindData;

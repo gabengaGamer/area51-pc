@@ -24,18 +24,18 @@ IMPLEMENT_DYNCREATE(CProjectFrame, CBaseFrame)
 
 
 BEGIN_MESSAGE_MAP(CProjectFrame, CBaseFrame)
-	//{{AFX_MSG_MAP(CProjectFrame)
-	ON_WM_CREATE()
+    //{{AFX_MSG_MAP(CProjectFrame)
+    ON_WM_CREATE()
     ON_WM_DESTROY()
-	ON_WM_MDIACTIVATE()
-	ON_WM_CLOSE()
-	ON_COMMAND(ID_INSERT_THEME, OnInsertTheme)
-	ON_COMMAND(ID_PROJ_CREATE_NEW_THEME, OnProjCreateNewTheme)
-	ON_COMMAND(ID_REMOVE_THEME, OnRemoveTheme)
-	ON_UPDATE_COMMAND_UI(ID_PROJ_CREATE_NEW_THEME, OnUpdateProjCreateNewTheme)
-	ON_UPDATE_COMMAND_UI(ID_INSERT_THEME, OnUpdateInsertTheme)
-	ON_UPDATE_COMMAND_UI(ID_REMOVE_THEME, OnUpdateRemoveTheme)
-	//}}AFX_MSG_MAP
+    ON_WM_MDIACTIVATE()
+    ON_WM_CLOSE()
+    ON_COMMAND(ID_INSERT_THEME, OnInsertTheme)
+    ON_COMMAND(ID_PROJ_CREATE_NEW_THEME, OnProjCreateNewTheme)
+    ON_COMMAND(ID_REMOVE_THEME, OnRemoveTheme)
+    ON_UPDATE_COMMAND_UI(ID_PROJ_CREATE_NEW_THEME, OnUpdateProjCreateNewTheme)
+    ON_UPDATE_COMMAND_UI(ID_INSERT_THEME, OnUpdateInsertTheme)
+    ON_UPDATE_COMMAND_UI(ID_REMOVE_THEME, OnUpdateRemoveTheme)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -60,34 +60,34 @@ CProjectFrame::~CProjectFrame()
 
 int CProjectFrame::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CBaseFrame::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
+    if (CBaseFrame::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
     SetWindowText("Empty Project");
 
-	EnableDocking(CBRS_ALIGN_ANY);
+    EnableDocking(CBRS_ALIGN_ANY);
 
-	// Create the property bar.
-	if( !m_TabCtrl.Create(this, IDW_PROJ_PROPERTY_BAR, _T("Properties"),
-		CSize(200, 150), CBRS_LEFT, 0)) //(AFX_IDW_TOOLBAR + 6) ))
-	{
-		TRACE0("Failed to create property dock window\n");
-		return -1;		// fail to create
-	}
-	m_TabCtrl.EnableDocking(CBRS_ALIGN_ANY);
-	DockControlBar(&m_TabCtrl,AFX_IDW_DOCKBAR_LEFT);
+    // Create the property bar.
+    if( !m_TabCtrl.Create(this, IDW_PROJ_PROPERTY_BAR, _T("Properties"),
+        CSize(200, 150), CBRS_LEFT, 0)) //(AFX_IDW_TOOLBAR + 6) ))
+    {
+        TRACE0("Failed to create property dock window\n");
+        return -1;        // fail to create
+    }
+    m_TabCtrl.EnableDocking(CBRS_ALIGN_ANY);
+    DockControlBar(&m_TabCtrl,AFX_IDW_DOCKBAR_LEFT);
 
-	if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
-		| CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
-		!m_wndToolBar.LoadToolBar(IDR_PROJ_TOOLBAR))
-	{
-		TRACE0("Failed to create toolbar\n");
-		return -1;      // fail to create
-	}
+    if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
+        | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
+        !m_wndToolBar.LoadToolBar(IDR_PROJ_TOOLBAR))
+    {
+        TRACE0("Failed to create toolbar\n");
+        return -1;      // fail to create
+    }
     m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
     DockControlBar(&m_wndToolBar );
 
-	// Associate the image list with the tab control bar.
+    // Associate the image list with the tab control bar.
     m_pProjectProp  = new CPropertyEditorDoc;
     m_pSettingsProp = new CPropertyEditorDoc;
     if( m_pProjectProp == NULL || m_pSettingsProp == NULL )
@@ -99,7 +99,7 @@ int CProjectFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
     // OLD WAY
     // m_TabCtrl.AddView(_T("Settings"), RUNTIME_CLASS(CPropertyEditorView),  m_pSettingsProp );
-	// m_TabCtrl.AddView(_T("Project"),  RUNTIME_CLASS(CPropertyEditorView),  m_pProjectProp );
+    // m_TabCtrl.AddView(_T("Project"),  RUNTIME_CLASS(CPropertyEditorView),  m_pProjectProp );
 
 
     CFrameWnd* pFrameWnd = NULL;
@@ -116,7 +116,7 @@ int CProjectFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     // Load control bar postion.
     LoadBarState(_T("BarState - Project"));
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
@@ -133,8 +133,8 @@ void CProjectFrame::OnDestroy( )
 
 void CProjectFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd) 
 {
-	CBaseFrame::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
-	
+    CBaseFrame::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
+    
     SetProject( m_strCurrentProject );
 
     if( m_pDoc == NULL )
@@ -151,7 +151,7 @@ void CProjectFrame::SetProject(CString strProject)
     m_strCurrentProject = strProject;
     if (!m_strCurrentProject.IsEmpty())
     {
-        SetWindowText( m_strCurrentProject );	
+        SetWindowText( m_strCurrentProject );    
     }
     else
     {
@@ -163,51 +163,51 @@ void CProjectFrame::SetProject(CString strProject)
 
 void CProjectFrame::OnClose() 
 {
-	// Can't close this window!!!!!!
-	
-	//CBaseFrame::OnClose();
+    // Can't close this window!!!!!!
+    
+    //CBaseFrame::OnClose();
 }
 
 //=========================================================================
 
 void CProjectFrame::OnProjCreateNewTheme() 
 {
-    m_pDoc->CreateNewTheme();	
+    m_pDoc->CreateNewTheme();    
 }
 
 //=========================================================================
 
 void CProjectFrame::OnUpdateProjCreateNewTheme(CCmdUI* pCmdUI) 
 {
-	pCmdUI->Enable(CanEdit());
+    pCmdUI->Enable(CanEdit());
 }
 
 //=========================================================================
 
 void CProjectFrame::OnInsertTheme() 
 {
-	m_pDoc->InsertTheme();
+    m_pDoc->InsertTheme();
 }
 
 //=========================================================================
 
 void CProjectFrame::OnUpdateInsertTheme(CCmdUI* pCmdUI) 
 {
-	pCmdUI->Enable(CanEdit());
+    pCmdUI->Enable(CanEdit());
 }
 
 //=========================================================================
 
 void CProjectFrame::OnRemoveTheme() 
 {
-	m_pDoc->RemoveTheme();
+    m_pDoc->RemoveTheme();
 }
 
 //=========================================================================
 
 void CProjectFrame::OnUpdateRemoveTheme(CCmdUI* pCmdUI) 
 {
-	pCmdUI->Enable(CanEdit() && g_Project.GetThemeCount());
+    pCmdUI->Enable(CanEdit() && g_Project.GetThemeCount());
 }
 
 //=========================================================================

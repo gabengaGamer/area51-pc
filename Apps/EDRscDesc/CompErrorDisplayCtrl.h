@@ -27,22 +27,22 @@ protected:
 // MFC STUFF
 /////////////////////////////////////////////////////////////////////////////
 public:
-	CompErrorDisplayCtrl();
-	virtual ~CompErrorDisplayCtrl();
+    CompErrorDisplayCtrl();
+    virtual ~CompErrorDisplayCtrl();
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CompErrorDisplayCtrl)
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CompErrorDisplayCtrl)
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	//{{AFX_MSG(CompErrorDisplayCtrl)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	//}}AFX_MSG
+    //{{AFX_MSG(CompErrorDisplayCtrl)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    //}}AFX_MSG
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

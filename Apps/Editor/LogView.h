@@ -13,9 +13,9 @@
 
 struct col_data 
 { 
-	LPCTSTR name; 
-	int width; 
-	int fmt;
+    LPCTSTR name; 
+    int width; 
+    int fmt;
     int type;
 };
 
@@ -38,34 +38,34 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	virtual ~CLogView();
-	CLogView();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CLogView)
+    virtual ~CLogView();
+    CLogView();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CLogView)
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CLogView)
-	public:
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CLogView)
+    public:
     void OnInitialUpdate();
-	protected:
+    protected:
     virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	//}}AFX_VIRTUAL
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	//{{AFX_MSG(CLogView)
+    //{{AFX_MSG(CLogView)
     afx_msg void OnItemChanged( NMHDR* pNMHDR, LRESULT* pResult );
     afx_msg void OnDoubleClick( NMHDR* pNMHDR, LRESULT* pResult );
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

@@ -687,7 +687,7 @@ void dlg_lore_menu::OnPointerDown( ui_win* pWin, s32 x, s32 y )
         SetNavText( navText );
         g_AudioMgr.Play("Backup");
         return;
-		
+        
     }
 
     if( m_bScreenIsOn && !m_bFullScreenMode && (m_scaleCount == 0) )

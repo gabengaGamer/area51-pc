@@ -11,7 +11,7 @@
 //#endif
 
 //==============================================================================
-//	DEBUG DEFINES AND MACROS
+//    DEBUG DEFINES AND MACROS
 //==============================================================================
 
 // Comment or uncomment to log update details.
@@ -30,7 +30,7 @@
 #endif    
 
 //==============================================================================
-//	INCLUDES
+//    INCLUDES
 //==============================================================================
 
 #include "NetworkMgr/NetworkMgr.hpp"
@@ -537,7 +537,7 @@ void update::Write( bitstream& BS )
 }
 
 //==============================================================================
-//	GHOST FUNCTIONS
+//    GHOST FUNCTIONS
 //==============================================================================
 
 void ghost::net_Activate( void )
@@ -735,8 +735,8 @@ void ghost::net_ProvideUpdate(       bitstream& BS,
                                      s32        Client, 
                                const delta*     pDelta )
 {
-	(void)Client;
-	(void)pDelta;
+    (void)Client;
+    (void)pDelta;
 
     update Update;
     Update.Slot = m_NetSlot;
@@ -786,14 +786,14 @@ void ghost::net_ProvideUpdate(       bitstream& BS,
     if( DirtyBits & POSITION_BIT )
     {
         Update.Position   = GetPosition();
-    	Update.DirtyBits |= POSITION_BIT;
+        Update.DirtyBits |= POSITION_BIT;
     }
 
     if( DirtyBits & ORIENTATION_BIT )
     {
         Update.Pitch      = GetPitch();
         Update.Yaw        = GetYaw();
-	    Update.DirtyBits |= ORIENTATION_BIT;
+        Update.DirtyBits |= ORIENTATION_BIT;
     }
 
     /*
@@ -887,7 +887,7 @@ void ghost::net_ProvideUpdate(       bitstream& BS,
     if( Update.DirtyBits )
     {
         Update.Write( BS );
-	    DirtyBits = Update.DirtyBits;
+        DirtyBits = Update.DirtyBits;
     }
 }
 

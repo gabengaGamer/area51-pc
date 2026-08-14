@@ -27,7 +27,7 @@ class FullscreenPreviewDialog : public QDialog
 public:
     FullscreenPreviewDialog  (QWidget* pParent = NULL);
     void SetImage            (const QImage& Image);
-						     
+                             
 protected:                   
     void resizeEvent         (QResizeEvent* pEvent) override;
     void showEvent           (QShowEvent* pEvent) override;

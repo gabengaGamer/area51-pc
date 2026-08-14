@@ -16,66 +16,66 @@ template<class BASE_CLASS>
 class CNotifyCombo : public BASE_CLASS
 {
 public:
-	
-	CNotifyCombo()
-	{
-	}
-	
-	virtual ~CNotifyCombo()
-	{
-	}
+    
+    CNotifyCombo()
+    {
+    }
+    
+    virtual ~CNotifyCombo()
+    {
+    }
 
-	void NotifyOwner(UINT nCode)
-	{
-		NMHDR nm;
-		nm.hwndFrom = m_hWnd;
-		nm.idFrom = GetDlgCtrlID();
-		nm.code = nCode;
+    void NotifyOwner(UINT nCode)
+    {
+        NMHDR nm;
+        nm.hwndFrom = m_hWnd;
+        nm.idFrom = GetDlgCtrlID();
+        nm.code = nCode;
 
-		CWnd* pWndOwner = GetOwner();
-		if ( pWndOwner )
-		{
-			pWndOwner->SendMessage( WM_NOTIFY, nm.idFrom, ( LPARAM )&nm );
-		}
-	}
+        CWnd* pWndOwner = GetOwner();
+        if ( pWndOwner )
+        {
+            pWndOwner->SendMessage( WM_NOTIFY, nm.idFrom, ( LPARAM )&nm );
+        }
+    }
 
-	virtual BOOL PreTranslateMessage(MSG* pMsg)
-	{
-		if ( pMsg->message == WM_KEYDOWN )
-		{
-			switch (pMsg->wParam)
-			{
-			case VK_ESCAPE:
-			case VK_RETURN:
-				if ( GetDroppedState( ) == TRUE )
-				{
-					ShowDropDown( false );
-				}
-				NotifyOwner( NM_RETURN );
-				return TRUE;
-				
-			case VK_UP:
-			case VK_DOWN:
-				if ( ( ::GetKeyState( VK_MENU ) >= 0 ) &&
-					( ::GetKeyState( VK_CONTROL ) >= 0 ) && 
-					( GetDroppedState( ) == FALSE ) )
-				{
-					ShowDropDown( true );
-					return TRUE;
-				}
-			}
-		}
-		
-		return BASE_CLASS::PreTranslateMessage(pMsg);
-	}
+    virtual BOOL PreTranslateMessage(MSG* pMsg)
+    {
+        if ( pMsg->message == WM_KEYDOWN )
+        {
+            switch (pMsg->wParam)
+            {
+            case VK_ESCAPE:
+            case VK_RETURN:
+                if ( GetDroppedState( ) == TRUE )
+                {
+                    ShowDropDown( false );
+                }
+                NotifyOwner( NM_RETURN );
+                return TRUE;
+                
+            case VK_UP:
+            case VK_DOWN:
+                if ( ( ::GetKeyState( VK_MENU ) >= 0 ) &&
+                    ( ::GetKeyState( VK_CONTROL ) >= 0 ) && 
+                    ( GetDroppedState( ) == FALSE ) )
+                {
+                    ShowDropDown( true );
+                    return TRUE;
+                }
+            }
+        }
+        
+        return BASE_CLASS::PreTranslateMessage(pMsg);
+    }
 };
 
 class CTextEditor : public CFrameWnd
 {
 protected:
-	CTextEditor();           // protected constructor used by dynamic creation
+    CTextEditor();           // protected constructor used by dynamic creation
 
-	DECLARE_DYNCREATE(CTextEditor)
+    DECLARE_DYNCREATE(CTextEditor)
 
     void FileOpen   ( CString filename );
     void FileSave   ( CString filename );
@@ -85,10 +85,10 @@ protected:
     CToolBar                       m_wndToolBar;
     CString                        m_strFilename;
 
-	CNotifyCombo <CComboBox>       m_wndComboFont;
-	CNotifyCombo <CComboBox>       m_wndComboSize;
-	CString                        m_strFontSize;
-	CString                        m_strFontName;
+    CNotifyCombo <CComboBox>       m_wndComboFont;
+    CNotifyCombo <CComboBox>       m_wndComboSize;
+    CString                        m_strFontSize;
+    CString                        m_strFontName;
     COLORREF                       m_CurrentTextColor;
 
     bool InitComboFont();
@@ -101,25 +101,25 @@ public:
 public:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CTextEditor)
-	protected:
-	virtual void OnDraw(CDC* pDC);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CTextEditor)
+    protected:
+    virtual void OnDraw(CDC* pDC);
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~CTextEditor();
+    virtual ~CTextEditor();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CTextEditor)
+    //{{AFX_MSG(CTextEditor)
     afx_msg int  OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnEditUndo();
     afx_msg void OnEditRedo();
     afx_msg void OnEditUndoEnable(CCmdUI* pCmdUI);
@@ -147,11 +147,11 @@ protected:
     afx_msg void OnPasteEnable(CCmdUI* pCmdUI);
     afx_msg void OnFormatFont();
     afx_msg void OnSelectAll();        
-	//}}AFX_MSG
+    //}}AFX_MSG
     afx_msg LRESULT OnSelEndOkColor( WPARAM wParam, LPARAM lParam );
-	afx_msg void OnSelEndOk();
-	afx_msg void OnReturn(NMHDR* pNMHDR, LRESULT* pResult);
-	DECLARE_MESSAGE_MAP()
+    afx_msg void OnSelEndOk();
+    afx_msg void OnReturn(NMHDR* pNMHDR, LRESULT* pResult);
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

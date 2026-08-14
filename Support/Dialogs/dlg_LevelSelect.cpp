@@ -27,7 +27,7 @@
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
 #else
-#include "../../Apps/GameApp/Config.hpp"	
+#include "../../Apps/GameApp/Config.hpp"    
 #endif
 
 
@@ -37,7 +37,7 @@
 
 enum controls
 {
-	IDC_LEVEL_SELECT_LISTBOX,
+    IDC_LEVEL_SELECT_LISTBOX,
 };
 
 
@@ -122,7 +122,7 @@ xbool dlg_level_select::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pLevelList    = (ui_listbox*) FindChildByID( IDC_LEVEL_SELECT_LISTBOX  );
     
@@ -181,7 +181,7 @@ void dlg_level_select::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
         
     // render transparent screen
     rb.l = m_CurrPos.l + 22;

@@ -16,10 +16,10 @@
 class homing_projectile : public base_projectile
 {
 public:
-	CREATE_RTTI( homing_projectile , base_projectile , object )
+    CREATE_RTTI( homing_projectile , base_projectile , object )
 
-	homing_projectile();
-	virtual ~homing_projectile();
+    homing_projectile();
+    virtual ~homing_projectile();
 
     virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
@@ -34,24 +34,24 @@ public:
 
 //=========================================================================
 //
-// GetMaterial		-   Legacy.  Needed for now.
-// OnAdvanceSimulation	-   Updates every frame
-// OnMove			-   Handles the motion of the spike
-// Initialize		-	Sets the initial position of the object.  Needs an initial
-//						velocity, an initial position, and either a radian3 or matrix4 for
-//						rotation information.
+// GetMaterial        -   Legacy.  Needed for now.
+// OnAdvanceSimulation    -   Updates every frame
+// OnMove            -   Handles the motion of the spike
+// Initialize        -    Sets the initial position of the object.  Needs an initial
+//                        velocity, an initial position, and either a radian3 or matrix4 for
+//                        rotation information.
 //
 //=========================================================================
 
-    virtual	void	OnEnumProp		    ( prop_enum& List );
-	virtual	xbool	OnProperty		    ( prop_query& PropQuery );
+    virtual    void    OnEnumProp            ( prop_enum& List );
+    virtual    xbool    OnProperty            ( prop_query& PropQuery );
 
 //=========================================================================
-	virtual s32		GetMaterial         ( void) const { return 0; }
-	virtual	bbox	GetLocalBBox		( void ) const;
+    virtual s32        GetMaterial         ( void) const { return 0; }
+    virtual    bbox    GetLocalBBox        ( void ) const;
     virtual void    OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void    UpdatePhysics       ( const f32& DeltaTime );
-	virtual	void	OnMove				( const vector3& rNewPos );
+    virtual    void    OnMove                ( const vector3& rNewPos );
     virtual void    OnRender            ( void );
 
     virtual void    SetTarget           ( guid target )                     { m_Target = target; }
@@ -80,7 +80,7 @@ protected:
     f32                                 m_SpeedPercent;         // 0-1, this is what percent of max speed we're going now
     f32                                 m_AliveTime;
     f32                                 m_TimeSinceLastBroadcast;
-	f32			                        m_MaxAliveTime;			// How long does this object remain in the world.
+    f32                                    m_MaxAliveTime;            // How long does this object remain in the world.
     vector3                             m_InitialVelocity;
     vector3                             m_InitialPosition;
     f32                                 m_Traction;             // How far along we predict pursuit (0..1)

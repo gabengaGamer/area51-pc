@@ -60,7 +60,7 @@ x_language x_MapWindowsLanguage( LANGID const LangId )
         //case LANG_CHINESE:
         //{
         //    WORD const SubLang = SUBLANGID( LangId );
-		//
+        //
         //    switch( SubLang )
         //    {
         //        case SUBLANG_CHINESE_TRADITIONAL:
@@ -73,10 +73,10 @@ x_language x_MapWindowsLanguage( LANGID const LangId )
         //    break;
         //}
         default:
-		    return XL_LANG_ENGLISH;
+            return XL_LANG_ENGLISH;
     }
-	
-	return XL_LANG_ENGLISH;
+    
+    return XL_LANG_ENGLISH;
 }
 #endif
 
@@ -141,7 +141,7 @@ const char* x_GetLocaleStringInternal( x_language const Language, x_locale_code_
         case XL_LOCALE_CODE_ISO_639_2:
             return s_pLanguageStrISO639_2[Language];
         default:
-		    ASSERT( 0 );
+            ASSERT( 0 );
             break;
     }
 }

@@ -22,7 +22,7 @@
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
 #else
-#include "../../Apps/GameApp/Config.hpp"	
+#include "../../Apps/GameApp/Config.hpp"    
 #endif
 
 //=========================================================================
@@ -118,7 +118,7 @@ xbool dlg_leaderboard::Create( s32                        UserID,
     // Do dialog creation
     Success = dlg_mp_score::Create( UserID, pManager, pDialogTem, Position, pParent, Flags, pUserData );
 
-    m_pPlayerBox	= (ui_blankbox*)    FindChildByID( IDC_LEADERBOARD_DETAILS       );
+    m_pPlayerBox    = (ui_blankbox*)    FindChildByID( IDC_LEADERBOARD_DETAILS       );
     m_pFrameOne     = (ui_frame*)       FindChildByID( IDC_LEADERBOARD_FRAME_ONE     );
     m_pFrameMain    = (ui_frame*)       FindChildByID( IDC_LEADERBOARD_FRAME_MAIN    );
     m_pFrameTimeOut = (ui_frame*)       FindChildByID( IDC_LEADERBOARD_FRAME_TIMEOUT );
@@ -215,9 +215,9 @@ void dlg_leaderboard::Render( s32 ox, s32 oy )
     {
         return;
     }
-	irect rb;
+    irect rb;
 
-	rb = g_UiMgr->GetUserBounds( m_UserID );
+    rb = g_UiMgr->GetUserBounds( m_UserID );
     // render background filter
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),

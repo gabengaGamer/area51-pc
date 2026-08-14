@@ -67,15 +67,15 @@ const object_desc&  seeker_projectile::GetObjectType   ( void )
 
 seeker_projectile::seeker_projectile()
 {
-	m_Speed                 = 1600.f;
+    m_Speed                 = 1600.f;
     m_AliveTime             = 0.0f;
     m_GravityAcceleration   = 0.0f;
-	m_CollisionPoint		= vector3( 0.f , 0.f , 0.f );  
+    m_CollisionPoint        = vector3( 0.f , 0.f , 0.f );  
     m_NormalCollision       = vector3( 0.f , 0.f , 0.f );  
     m_Spin                  = radian3(x_frand(-R_45,R_45), 0.0f, x_frand(-R_30,R_30));
     m_TotalSpin             = radian3(1.0f, 1.0f, 1.0f);
 
-	m_MaxAliveTime          = 10.0f;
+    m_MaxAliveTime          = 10.0f;
     m_ParticleExplosion     = particle_emitter::GRAV_GRENADE_EXPLOSION;
     m_ExplosionRadius       = 800.0f;
     m_YawRate               = R_60;
@@ -297,7 +297,7 @@ void seeker_projectile::OnExplode( void )
         decal_definition* pDef = pPackage->GetDecalDef( "CharMarks", 0 );
         if( pDef )
         {
-	        //only paste a decal if the object is at the last collision
+            //only paste a decal if the object is at the last collision
             // point (within radius + 20 centimeters)
             f32 Size        = x_frand( 150.0f, 200.0f );
             f32 fDistToTest = GetBBox().GetRadiusSquared() + (20.0f * 20.0f);
@@ -338,11 +338,11 @@ void seeker_projectile::OnExplode( void )
 
 xbool seeker_projectile::OnProcessCollision( const f32& DeltaTime )
 {
-    vector3	DesiredPos	= m_CurrentPosition + m_Velocity * DeltaTime;
+    vector3    DesiredPos    = m_CurrentPosition + m_Velocity * DeltaTime;
     
     // Fire up sphere collision 
     g_CollisionMgr.RaySetup( GetGuid(), 
-							 GetBBox().GetCenter(),
+                             GetBBox().GetCenter(),
                              GetBBox().GetCenter() + m_Velocity * DeltaTime );
     g_CollisionMgr.AddToIgnoreList( m_OwnerGuid );
     g_CollisionMgr.CheckCollisions( object::TYPE_ALL_TYPES, object::ATTR_COLLIDABLE, object::ATTR_COLLISION_PERMEABLE );
@@ -443,10 +443,10 @@ void seeker_projectile::UpdateVelocity( f32 DeltaTime )
 
 xbool seeker_projectile::LoadInstance( const char* pFileName )
 {
-	// Initialize the skin
-	//m_RigidInst.OnProperty( g_PropQuery.WQueryExternal( "RenderInst\\File", pFileName ) );
+    // Initialize the skin
+    //m_RigidInst.OnProperty( g_PropQuery.WQueryExternal( "RenderInst\\File", pFileName ) );
     m_RigidInst.SetUpRigidGeom( pFileName );
-	return TRUE;
+    return TRUE;
 
 }
 

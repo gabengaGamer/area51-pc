@@ -40,7 +40,7 @@ enum controls
 {
     IDC_A51_LOGO,
     IDC_START_BOX,
-	IDC_PRESS_START,
+    IDC_PRESS_START,
 };
 
 ui_manager::control_tem Press_StartControls[] =
@@ -146,11 +146,11 @@ xbool dlg_press_start::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pLogoBitmap       = (ui_bitmap*) FindChildByID( IDC_A51_LOGO    );
     m_pFrameBitmap      = (ui_bitmap*) FindChildByID( IDC_START_BOX   );
-    m_pButtonPressStart	= (ui_text*)   FindChildByID( IDC_PRESS_START );
+    m_pButtonPressStart    = (ui_text*)   FindChildByID( IDC_PRESS_START );
 
     // initialize logo bitmap
     m_pLogoBitmap->SetFlag(ui_win::WF_VISIBLE, FALSE);
@@ -166,7 +166,7 @@ xbool dlg_press_start::Create( s32                        UserID,
     // initialize start button
     m_pButtonPressStart ->SetFlag(ui_win::WF_VISIBLE, TRUE);
     m_pButtonPressStart ->SetLabelColor( xcolor(230, 230, 230, 255) );
-	GotoControl( (ui_control*)m_pButtonPressStart );
+    GotoControl( (ui_control*)m_pButtonPressStart );
 
     m_PressStartState   = 0;
     m_DemoHoldTimer     = 0.0f;
@@ -190,7 +190,7 @@ xbool dlg_press_start::Create( s32                        UserID,
 
     s_PressStartVoiceID = g_AudioMgr.Play( "MUSIC_StartScreen" );
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -210,7 +210,7 @@ void dlg_press_start::Render( s32 ox, s32 oy )
     m_pButtonPressStart->SetLabelColor( xcolor(230, 230, 230, (u8)m_FadeStartInAlpha) );
 
     // finally render all the normal dialog stuff
-	ui_dialog::Render( ox, oy );
+    ui_dialog::Render( ox, oy );
 }
 
 //=========================================================================

@@ -71,14 +71,14 @@ void action_load_level::OnDebugRender ( s32 Index )
 
 //=============================================================================
 
-void action_load_level::OnEnumProp	( prop_enum& rPropList )
+void action_load_level::OnEnumProp    ( prop_enum& rPropList )
 {
     actions_ex_base::OnEnumProp( rPropList );
 }
 
 //=============================================================================
 
-xbool action_load_level::OnProperty	( prop_query& rPropQuery )
+xbool action_load_level::OnProperty    ( prop_query& rPropQuery )
 { 
     if( actions_ex_base::OnProperty( rPropQuery ) )
         return TRUE;

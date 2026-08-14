@@ -20,7 +20,7 @@ class friendly_scientist : public character
 // Construction / destruction
 public:
 
-	// Constructs a friendly_scientist object.
+    // Constructs a friendly_scientist object.
     CREATE_RTTI( friendly_scientist, character, object )
 
     // object descriptor stuff
@@ -32,9 +32,9 @@ public:
 // Statics
 //=========================================================================
 
-	// Destroys a friendly_scientist object, handles cleanup and de-allocation.
-	friendly_scientist();
-	virtual ~friendly_scientist();
+    // Destroys a friendly_scientist object, handles cleanup and de-allocation.
+    friendly_scientist();
+    virtual ~friendly_scientist();
 
 // Member functions
 public:

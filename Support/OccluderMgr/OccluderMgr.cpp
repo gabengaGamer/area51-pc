@@ -59,7 +59,7 @@ void occluder_mgr::GatherOccluders( void )
     slot_id SlotID = g_ObjMgr.GetFirst( object::TYPE_INVISIBLE_WALL_OBJ );
     while( SlotID != SLOT_NULL )
     {
-		invisible_wall_obj* pWall = (invisible_wall_obj*)g_ObjMgr.GetObjectBySlot(SlotID);
+        invisible_wall_obj* pWall = (invisible_wall_obj*)g_ObjMgr.GetObjectBySlot(SlotID);
 
         vector3 Pt[4];
         if( pWall->GetOccluderPoints( Pt ) )

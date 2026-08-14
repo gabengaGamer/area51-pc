@@ -25,7 +25,7 @@
 
 enum controls
 {
-	IDC_CHANGE_MAP_LISTBOX,
+    IDC_CHANGE_MAP_LISTBOX,
 };
 
 
@@ -109,7 +109,7 @@ xbool dlg_change_map::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // find controls
     m_pMapList         = (ui_maplist*)    FindChildByID( IDC_CHANGE_MAP_LISTBOX  );
@@ -180,7 +180,7 @@ xbool dlg_change_map::Create( s32                        UserID,
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -202,7 +202,7 @@ void dlg_change_map::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     // render background filter
     rb = g_UiMgr->GetUserBounds( m_UserID );

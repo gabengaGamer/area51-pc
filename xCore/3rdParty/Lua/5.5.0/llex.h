@@ -17,11 +17,11 @@
 ** Single-char tokens (terminal symbols) are represented by their own
 ** numeric code. Other tokens start at the following value.
 */
-#define FIRST_RESERVED	(UCHAR_MAX + 1)
+#define FIRST_RESERVED    (UCHAR_MAX + 1)
 
 
 #if !defined(LUA_ENV)
-#define LUA_ENV		"_ENV"
+#define LUA_ENV        "_ENV"
 #endif
 
 
@@ -43,7 +43,7 @@ enum RESERVED {
 };
 
 /* number of reserved words */
-#define NUM_RESERVED	(cast_int(TK_WHILE-FIRST_RESERVED + 1))
+#define NUM_RESERVED    (cast_int(TK_WHILE-FIRST_RESERVED + 1))
 
 
 typedef union {

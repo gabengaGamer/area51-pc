@@ -16,41 +16,41 @@ class CEditorPaletteDoc;
 class CEditorSettingsView : public CPaletteView
 {
 protected:
-	CEditorSettingsView();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CEditorSettingsView)
+    CEditorSettingsView();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CEditorSettingsView)
 
-	CTreeCtrl	m_mgrTree;
+    CTreeCtrl    m_mgrTree;
 
 // Operations
 public:
-	CEditorPaletteDoc* GetDocument();
+    CEditorPaletteDoc* GetDocument();
     virtual void    OnTabActivate( BOOL bActivate );
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorSettingsView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorSettingsView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~CEditorSettingsView();
+    virtual ~CEditorSettingsView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CEditorSettingsView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CEditorSettingsView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
 protected:
     void SortAllChildren( void );

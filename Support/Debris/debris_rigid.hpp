@@ -16,8 +16,8 @@ public:
     CREATE_RTTI( debris_rigid, debris, object )
 
 //=============================================================================
-						debris_rigid(void);
-	virtual				~debris_rigid();
+                        debris_rigid(void);
+    virtual                ~debris_rigid();
 
     virtual void        OnInit          ( void );
 
@@ -40,7 +40,7 @@ public:
     virtual void        OnRender        ( void );
     virtual void        UpdatePhysics   ( f32 DeltaTime );
 
-	virtual const object_desc&  GetTypeDesc     ( void ) const;
+    virtual const object_desc&  GetTypeDesc     ( void ) const;
     static  const object_desc&  GetObjectType   ( void );
 
     virtual render_inst* GetRenderInstPtr       ( void ) { return &m_RigidInst; }

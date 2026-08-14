@@ -46,7 +46,7 @@ static struct damage_field_desc : public object_desc
             "SCRIPT",
 
             object::ATTR_NEEDS_LOGIC_TIME    |
-            object::ATTR_SPACIAL_ENTRY		 |
+            object::ATTR_SPACIAL_ENTRY         |
             object::ATTR_COLLIDABLE          |
             object::ATTR_BLOCKS_ALL_ACTORS   |
             object::ATTR_COLLISION_PERMEABLE,
@@ -417,7 +417,7 @@ void damage_field::OnRenderSpatial( void )
 
 //=========================================================================
 
-void damage_field::OnColCheck	( void )
+void damage_field::OnColCheck    ( void )
 {
     if (!m_bActive)
         return;

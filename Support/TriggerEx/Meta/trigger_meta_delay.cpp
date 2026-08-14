@@ -51,16 +51,16 @@ xbool trigger_meta_delay::Execute ( f32 DeltaTime )
 
 //=============================================================================
 
-void trigger_meta_delay::OnEnumProp	( prop_enum& rPropList )
+void trigger_meta_delay::OnEnumProp    ( prop_enum& rPropList )
 {
-    rPropList.PropEnumFloat	 ( "Delay", "In Seconds, how much time to delay.", PROP_TYPE_MUST_ENUM );
+    rPropList.PropEnumFloat     ( "Delay", "In Seconds, how much time to delay.", PROP_TYPE_MUST_ENUM );
 
     trigger_meta_base::OnEnumProp( rPropList );
 }
 
 //=============================================================================
 
-xbool trigger_meta_delay::OnProperty	( prop_query& rPropQuery )
+xbool trigger_meta_delay::OnProperty    ( prop_query& rPropQuery )
 {
     if( trigger_meta_base::OnProperty( rPropQuery ) )
         return TRUE;

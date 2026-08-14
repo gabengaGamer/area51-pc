@@ -37,8 +37,8 @@ public:
 
     //-------------------------------------------------------------------------
 
-						debris_mgr              ( void );
-	virtual				~debris_mgr             ( void );
+                        debris_mgr              ( void );
+    virtual                ~debris_mgr             ( void );
 
     static  debris_mgr* GetDebrisMgr            ( void );
     static  void        ClearData               ( void );

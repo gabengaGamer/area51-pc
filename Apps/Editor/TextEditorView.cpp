@@ -27,10 +27,10 @@ TextEditorView::~TextEditorView()
 
 
 BEGIN_MESSAGE_MAP(TextEditorView, CView)
-	//{{AFX_MSG_MAP(TextEditorView)
-	ON_WM_SIZE()
-	ON_WM_CREATE()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(TextEditorView)
+    ON_WM_SIZE()
+    ON_WM_CREATE()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -38,8 +38,8 @@ END_MESSAGE_MAP()
 
 void TextEditorView::OnDraw(CDC* pDC)
 {
-	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -48,12 +48,12 @@ void TextEditorView::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void TextEditorView::AssertValid() const
 {
-	CView::AssertValid();
+    CView::AssertValid();
 }
 
 void TextEditorView::Dump(CDumpContext& dc) const
 {
-	CView::Dump(dc);
+    CView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -62,30 +62,30 @@ void TextEditorView::Dump(CDumpContext& dc) const
 
 BOOL TextEditorView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext) 
 {
-	// TODO: Add your specialized code here and/or call the base class
+    // TODO: Add your specialized code here and/or call the base class
 
     
-	return CWnd::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext);
+    return CWnd::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext);
 }
 
 void TextEditorView::OnSize(UINT nType, int cx, int cy) 
 {
-	CView::OnSize(nType, cx, cy);
-	
-	// TODO: Add your message handler code here
+    CView::OnSize(nType, cx, cy);
+    
+    // TODO: Add your message handler code here
     CRect R;
-	GetClientRect( R );
+    GetClientRect( R );
 
     CTextEditor* pEditor = (CTextEditor*)GetParent();
-    pEditor->m_rtf.MoveWindow( R );    	
+    pEditor->m_rtf.MoveWindow( R );        
 }
 
 int TextEditorView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CView::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
-	// TODO: Add your specialized creation code here
+    if (CView::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
+    // TODO: Add your specialized creation code here
     CTextEditor* pEditor = (CTextEditor*)GetParent();
 
     if( pEditor->m_rtf.Create( WS_VSCROLL | WS_CLIPCHILDREN | WS_CHILD | 
@@ -101,5 +101,5 @@ int TextEditorView::OnCreate(LPCREATESTRUCT lpCreateStruct)
     pEditor->m_rtf.SetFontSize(atoi(pEditor->m_strFontSize)*10);
     pEditor->m_rtf.SetSelectionBold();
 
-	return 0;
+    return 0;
 }

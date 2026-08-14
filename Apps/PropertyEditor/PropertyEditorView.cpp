@@ -14,11 +14,11 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#define		IDC_PROP_GRID_ITEM		0x2130
-#define		IDC_STATIC_TITLE_ITEM	0x2131
-#define		IDC_STATIC_HELP_ITEM	0x2132
-#define		IDC_COL_SLIDER_ITEM		0x2133
-#define		IDC_DEBUG_REFRESH_BTN	0x2134
+#define        IDC_PROP_GRID_ITEM        0x2130
+#define        IDC_STATIC_TITLE_ITEM    0x2131
+#define        IDC_STATIC_HELP_ITEM    0x2132
+#define        IDC_COL_SLIDER_ITEM        0x2133
+#define        IDC_DEBUG_REFRESH_BTN    0x2134
 
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
@@ -33,58 +33,58 @@ IMPLEMENT_DYNCREATE(CPropertyEditorView, CView)
 
 CPropertyEditorView::CPropertyEditorView()
 {
-	VERIFY(m_fntTitle.CreateFont(
-	   15,                        // nHeight
-	   0,                         // nWidth
-	   0,                         // nEscapement
-	   0,                         // nOrientation
-	   FW_BOLD,					  // nWeight
-	   FALSE,                     // bItalic
-	   FALSE,                     // bUnderline
-	   0,                         // cStrikeOut
-	   ANSI_CHARSET,              // nCharSet
-	   OUT_DEFAULT_PRECIS,        // nOutPrecision
-	   CLIP_DEFAULT_PRECIS,       // nClipPrecision
-	   DEFAULT_QUALITY,           // nQuality
-	   DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
-	   "Arial"));                 // lpszFacename
+    VERIFY(m_fntTitle.CreateFont(
+       15,                        // nHeight
+       0,                         // nWidth
+       0,                         // nEscapement
+       0,                         // nOrientation
+       FW_BOLD,                      // nWeight
+       FALSE,                     // bItalic
+       FALSE,                     // bUnderline
+       0,                         // cStrikeOut
+       ANSI_CHARSET,              // nCharSet
+       OUT_DEFAULT_PRECIS,        // nOutPrecision
+       CLIP_DEFAULT_PRECIS,       // nClipPrecision
+       DEFAULT_QUALITY,           // nQuality
+       DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
+       "Arial"));                 // lpszFacename
 
-	VERIFY(m_fntText.CreateFont(
-	   12,                        // nHeight
-	   0,                         // nWidth
-	   0,                         // nEscapement
-	   0,                         // nOrientation
-	   FW_NORMAL,                 // nWeight
-	   FALSE,                     // bItalic
-	   FALSE,                     // bUnderline
-	   0,                         // cStrikeOut
-	   ANSI_CHARSET,              // nCharSet
-	   OUT_DEFAULT_PRECIS,        // nOutPrecision
-	   CLIP_DEFAULT_PRECIS,       // nClipPrecision
-	   DEFAULT_QUALITY,           // nQuality
-	   DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
-	   "Arial"));                 // lpszFacename
+    VERIFY(m_fntText.CreateFont(
+       12,                        // nHeight
+       0,                         // nWidth
+       0,                         // nEscapement
+       0,                         // nOrientation
+       FW_NORMAL,                 // nWeight
+       FALSE,                     // bItalic
+       FALSE,                     // bUnderline
+       0,                         // cStrikeOut
+       ANSI_CHARSET,              // nCharSet
+       OUT_DEFAULT_PRECIS,        // nOutPrecision
+       CLIP_DEFAULT_PRECIS,       // nClipPrecision
+       DEFAULT_QUALITY,           // nQuality
+       DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
+       "Arial"));                 // lpszFacename
 
     m_RedrawDisableCount = 0;
 }
 
 CPropertyEditorView::~CPropertyEditorView()
 {
-	m_fntTitle.DeleteObject();
-	m_fntText.DeleteObject();
+    m_fntTitle.DeleteObject();
+    m_fntText.DeleteObject();
 }
 
 
 BEGIN_MESSAGE_MAP(CPropertyEditorView, CView)
-	//{{AFX_MSG_MAP(CPropertyEditorView)
-	ON_WM_CREATE()
-	ON_WM_SIZE()
+    //{{AFX_MSG_MAP(CPropertyEditorView)
+    ON_WM_CREATE()
+    ON_WM_SIZE()
     ON_BN_CLICKED(IDC_DEBUG_REFRESH_BTN, OnRefreshClick )
-	ON_MESSAGE( WM_USER_MSG_SLIDER_MOVED, OnSliderMove )
-	ON_MESSAGE( WM_USER_MSG_GRID_ITEM_CHANGE, OnGridItemChange )
-	ON_MESSAGE( WM_USER_MSG_GUID_SELECT_REQUEST, OnGuidSelect )
+    ON_MESSAGE( WM_USER_MSG_SLIDER_MOVED, OnSliderMove )
+    ON_MESSAGE( WM_USER_MSG_GRID_ITEM_CHANGE, OnGridItemChange )
+    ON_MESSAGE( WM_USER_MSG_GUID_SELECT_REQUEST, OnGuidSelect )
     ON_MESSAGE( WM_USER_MSG_GRID_SELECTION_CHANGE, OnSelectionChange )
-	//}}AFX_MSG_MAP
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 void CPropertyEditorView::OnRefreshClick()
@@ -94,16 +94,16 @@ void CPropertyEditorView::OnRefreshClick()
 
 LRESULT CPropertyEditorView::OnSliderMove(WPARAM wParam, LPARAM lParam)
 {
-	m_lcPropertyGrid.SetFirstColWidth(wParam);
-	return 1;
+    m_lcPropertyGrid.SetFirstColWidth(wParam);
+    return 1;
 }
 
 LRESULT CPropertyEditorView::OnGridItemChange(WPARAM wParam, LPARAM lParam)
 {
-	CGridTreeItem* lpItem = (CGridTreeItem*)wParam;
+    CGridTreeItem* lpItem = (CGridTreeItem*)wParam;
     if (lpItem)
     {
-	    TRACE(xfs("CPropertyEditorView::OnGridItemChange::SAVE PROPERTY %s\n",
+        TRACE(xfs("CPropertyEditorView::OnGridItemChange::SAVE PROPERTY %s\n",
             (const char*)lpItem->m_strIdentifier));
         GetDocument()->SaveProperty(lpItem, lpItem->m_bMustReloadData);
     }
@@ -113,15 +113,15 @@ LRESULT CPropertyEditorView::OnGridItemChange(WPARAM wParam, LPARAM lParam)
         return 0;
     }
 
-	return 1;
+    return 1;
 }
 
 LRESULT CPropertyEditorView::OnGuidSelect(WPARAM wParam, LPARAM lParam)
 {
-	CGridTreeItem* lpItem = (CGridTreeItem*)wParam;
+    CGridTreeItem* lpItem = (CGridTreeItem*)wParam;
     if (lpItem)
     {
-	    TRACE(xfs("CPropertyEditorView::OnGuidSelect::PROPERTY %s\n",
+        TRACE(xfs("CPropertyEditorView::OnGuidSelect::PROPERTY %s\n",
             (const char*)lpItem->m_strIdentifier));
         GetDocument()->GuidSelect(lpItem);
     }
@@ -131,12 +131,12 @@ LRESULT CPropertyEditorView::OnGuidSelect(WPARAM wParam, LPARAM lParam)
         return 0;
     }
 
-	return 1;
+    return 1;
 }
 
 LRESULT CPropertyEditorView::OnSelectionChange(WPARAM wParam, LPARAM lParam)
 {
-	CGridTreeItem* lpItem = (CGridTreeItem*)wParam;
+    CGridTreeItem* lpItem = (CGridTreeItem*)wParam;
     if (lpItem)
     {
         CString strComment = lpItem->m_strComment;
@@ -194,8 +194,8 @@ LRESULT CPropertyEditorView::OnSelectionChange(WPARAM wParam, LPARAM lParam)
 
 void CPropertyEditorView::OnDraw(CDC* pDC)
 {
-//	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+//    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -204,12 +204,12 @@ void CPropertyEditorView::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CPropertyEditorView::AssertValid() const
 {
-	CView::AssertValid();
+    CView::AssertValid();
 }
 
 void CPropertyEditorView::Dump(CDumpContext& dc) const
 {
-	CView::Dump(dc);
+    CView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -218,10 +218,10 @@ void CPropertyEditorView::Dump(CDumpContext& dc) const
 
 int CPropertyEditorView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CView::OnCreate(lpCreateStruct) == -1)
-		return -1;
+    if (CView::OnCreate(lpCreateStruct) == -1)
+        return -1;
 
-    m_lcPropertyGrid.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP, CRect(0,0,0,0),this,IDC_PROP_GRID_ITEM);	
+    m_lcPropertyGrid.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP, CRect(0,0,0,0),this,IDC_PROP_GRID_ITEM);    
     m_lcPropertyGrid.InitializeGrid();
     m_lcPropertyGrid.ModifyStyleEx(0,WS_EX_CLIENTEDGE);
     m_lcPropertyGrid.RecalcSize();
@@ -235,31 +235,31 @@ int CPropertyEditorView::OnCreate(LPCREATESTRUCT lpCreateStruct)
         CRect(0,0,0,0),this,IDC_DEBUG_REFRESH_BTN);
     m_btnRefresh.SetFont(&m_fntText);
 
-	return 0;
+    return 0;
 }
 
 void CPropertyEditorView::OnInitialUpdate() 
 {
     CView::OnInitialUpdate();
-}	
+}    
 
 void CPropertyEditorView::OnSize(UINT nType, int cx, int cy) 
 {
-	CView::OnSize(nType, cx, cy);
+    CView::OnSize(nType, cx, cy);
 
     int nRefreshSize = 16;
 
-	if (m_lcPropertyGrid.GetSafeHwnd())	
+    if (m_lcPropertyGrid.GetSafeHwnd())    
     {
         m_lcPropertyGrid.SetRedraw(FALSE);
-		m_lcPropertyGrid.MoveWindow(0,0,cx,cy-64-nRefreshSize);
+        m_lcPropertyGrid.MoveWindow(0,0,cx,cy-64-nRefreshSize);
         m_lcPropertyGrid.SetRedraw(TRUE);
-		m_lcPropertyGrid.RecalcSize();
-	}
-	
-	if (m_btnRefresh.GetSafeHwnd())	    m_btnRefresh.MoveWindow(0,cy - 64-nRefreshSize,cx,nRefreshSize);
-	if (m_stHelpTitle.GetSafeHwnd())	m_stHelpTitle.MoveWindow(0,cy - 64,cx,16);
-	if (m_stHelp.GetSafeHwnd())			m_stHelp.MoveWindow(0,cy - 48,cx,48);
+        m_lcPropertyGrid.RecalcSize();
+    }
+    
+    if (m_btnRefresh.GetSafeHwnd())        m_btnRefresh.MoveWindow(0,cy - 64-nRefreshSize,cx,nRefreshSize);
+    if (m_stHelpTitle.GetSafeHwnd())    m_stHelpTitle.MoveWindow(0,cy - 64,cx,16);
+    if (m_stHelp.GetSafeHwnd())            m_stHelp.MoveWindow(0,cy - 48,cx,48);
 }
 
 void CPropertyEditorView::EnableRedraw( void )
@@ -280,14 +280,14 @@ void CPropertyEditorView::DisableRedraw( void )
 void CPropertyEditorView::ClearGrid()
 {
 //    if( IsWindow( m_stHelpTitle.GetSafeHwnd() ) )
-	    m_stHelpTitle.SetWindowText("INEVITABLE");
+        m_stHelpTitle.SetWindowText("INEVITABLE");
 //    if( IsWindow( m_stHelp.GetSafeHwnd() ) )
-	    m_stHelp.SetWindowText("Death. Taxes. Games.");
+        m_stHelp.SetWindowText("Death. Taxes. Games.");
 
 //    if( IsWindow( m_lcPropertyGrid.GetSafeHwnd() ) )
     {
         DisableRedraw();
-	    m_lcPropertyGrid.DeleteAll();
+        m_lcPropertyGrid.DeleteAll();
         EnableRedraw();
         m_lcPropertyGrid.Invalidate();
     }
@@ -295,16 +295,16 @@ void CPropertyEditorView::ClearGrid()
 
 void CPropertyEditorView::AddComment(CString strTitle, CString strText)
 {
-	m_stHelpTitle.SetWindowText(strTitle);
-	m_stHelp.SetWindowText(strText);
+    m_stHelpTitle.SetWindowText(strTitle);
+    m_stHelp.SetWindowText(strText);
 }
 
 void CPropertyEditorView::ExpandRoots()
 {
-	POSITION pos = m_lcPropertyGrid.GetRootHeadPosition();
-	while(pos != NULL)
-	{
-		CGridTreeItem *pItem = (CGridTreeItem*)m_lcPropertyGrid.GetNextRoot(pos); 
+    POSITION pos = m_lcPropertyGrid.GetRootHeadPosition();
+    while(pos != NULL)
+    {
+        CGridTreeItem *pItem = (CGridTreeItem*)m_lcPropertyGrid.GetNextRoot(pos); 
         if (pItem && m_lcPropertyGrid.IsCollapsed(pItem))
         {
             m_lcPropertyGrid.Expand(pItem,pItem->m_nIndex);
@@ -313,19 +313,19 @@ void CPropertyEditorView::ExpandRoots()
 }
 
 BOOL CPropertyEditorView::AddGridDataElement(CString strName, CString strValue, CString strComment,
-											 CGridItemInfo::CONTROLTYPE type, 
+                                             CGridItemInfo::CONTROLTYPE type, 
                                              CStringList &list, int iXaIndex,
-											 BOOL bReadOnly, BOOL bMustEnum, BOOL bHeader,
+                                             BOOL bReadOnly, BOOL bMustEnum, BOOL bHeader,
                                              CGridTreeItem* &pParentTreeItem)
 {
     BOOL bReturn = TRUE;
 
-	CGridItemInfo* lp = new CGridItemInfo();
-	lp->SetItemText(strName);
-	lp->AddSubItemText(strValue);// 1
-	lp->SetReadOnly(bReadOnly);
-	lp->SetControlType(type,0); //first sub column
-	lp->SetListData(0, &list);
+    CGridItemInfo* lp = new CGridItemInfo();
+    lp->SetItemText(strName);
+    lp->AddSubItemText(strValue);// 1
+    lp->SetReadOnly(bReadOnly);
+    lp->SetControlType(type,0); //first sub column
+    lp->SetListData(0, &list);
     lp->SetIsHeader(bHeader);
     lp->SetDataIndex(iXaIndex);
 
@@ -334,7 +334,7 @@ BOOL CPropertyEditorView::AddGridDataElement(CString strName, CString strValue, 
     if (strName.Find('\\') == -1)
     {
         //Must be a header
-		pTreeItemInserted = m_lcPropertyGrid.InsertRootItem(lp);
+        pTreeItemInserted = m_lcPropertyGrid.InsertRootItem(lp);
 
         if (type == PROP_TYPE_VECTOR3 ||
             type == PROP_TYPE_ROTATION ||
@@ -363,15 +363,15 @@ BOOL CPropertyEditorView::AddGridDataElement(CString strName, CString strValue, 
             
             if (pParentTreeItem)
             {
-		        if (pParentTreeItem->m_lpNodeInfo && 
+                if (pParentTreeItem->m_lpNodeInfo && 
                     pParentTreeItem->m_lpNodeInfo->IsReadOnly())
-		        {
-			        //roll down the read only flag
-			        lp->SetReadOnly(TRUE);
-		        }
-       	        lp->SetItemText(strShortName);
+                {
+                    //roll down the read only flag
+                    lp->SetReadOnly(TRUE);
+                }
+                   lp->SetItemText(strShortName);
 
-		        pTreeItemInserted = m_lcPropertyGrid.InsertItem(pParentTreeItem, lp, FALSE /*expand*/);
+                pTreeItemInserted = m_lcPropertyGrid.InsertItem(pParentTreeItem, lp, FALSE /*expand*/);
             }
             else
             {
@@ -395,7 +395,7 @@ BOOL CPropertyEditorView::AddGridDataElement(CString strName, CString strValue, 
         pTreeItemInserted->m_bMustReloadData = bMustEnum;
     }
 
-	return bReturn;
+    return bReturn;
 }
 
 bool CPropertyEditorView::IsValidItem( CGridTreeItem* pItem )

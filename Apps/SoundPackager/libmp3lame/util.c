@@ -1,7 +1,7 @@
 /*
- *	lame utility library source file
+ *    lame utility library source file
  *
- *	Copyright (c) 1999 Albert L Faber
+ *    Copyright (c) 1999 Albert L Faber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -10,7 +10,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -64,15 +64,15 @@ void  freegfc ( lame_internal_flags* const gfc )   /* bit stream structure */
     for ( i = 0 ; i <= 2*BPC; i++ )
         if ( gfc->blackfilt[i] != NULL ) {
             free ( gfc->blackfilt[i] );
-	    gfc->blackfilt[i] = NULL;
-	}
+        gfc->blackfilt[i] = NULL;
+    }
     if ( gfc->inbuf_old[0] ) { 
         free ( gfc->inbuf_old[0] );
-	gfc->inbuf_old[0] = NULL;
+    gfc->inbuf_old[0] = NULL;
     }
     if ( gfc->inbuf_old[1] ) { 
         free ( gfc->inbuf_old[1] );
-	gfc->inbuf_old[1] = NULL;
+    gfc->inbuf_old[1] = NULL;
     }
 
     if ( gfc->bs.buf != NULL ) {
@@ -238,7 +238,7 @@ int samplerate)   /* convert bitrate in kbps to index */
     for ( i = 1; i <= 14; i++ )
         if ( ABS (bitrate_table[version][i] - bRate) < ABS (bitrate - bRate) )
             bitrate = bitrate_table [version] [i];
-	    
+        
     return bitrate;
 }
 
@@ -271,7 +271,7 @@ int samplerate)   /* convert bitrate in kbps to index */
     for ( i = 0; i <= 14; i++)
         if ( bitrate_table [version] [i] == bRate )
             return i;
-	    
+        
     return -1;
 }
 
@@ -413,30 +413,30 @@ int gcd ( int i, int j )
    were used.  n_out = number of samples copied into mfbuf  */
 
 void fill_buffer(lame_global_flags *gfp,
-		 sample_t *mfbuf[2],
-		 sample_t *in_buffer[2],
-		 int nsamples, int *n_in, int *n_out)
+         sample_t *mfbuf[2],
+         sample_t *in_buffer[2],
+         int nsamples, int *n_in, int *n_out)
 {
     lame_internal_flags *gfc = gfp->internal_flags;
     int ch,i;
 
     /* copy in new samples into mfbuf, with resampling if necessary */
     if ( (gfc->resample_ratio < .9999) || (gfc->resample_ratio > 1.0001) ){
-	for (ch = 0; ch < gfc->channels_out; ch++) {
-	    *n_out =
-		fill_buffer_resample(gfp, &mfbuf[ch][gfc->mf_size],
-				     gfp->framesize, in_buffer[ch],
-				     nsamples, n_in, ch);
-	}
+    for (ch = 0; ch < gfc->channels_out; ch++) {
+        *n_out =
+        fill_buffer_resample(gfp, &mfbuf[ch][gfc->mf_size],
+                     gfp->framesize, in_buffer[ch],
+                     nsamples, n_in, ch);
+    }
     }
     else {
-	*n_out = Min(gfp->framesize, nsamples);
-	*n_in = *n_out;
-	for (i = 0; i < *n_out; ++i) {
-	    mfbuf[0][gfc->mf_size + i] = in_buffer[0][i];
-	    if (gfc->channels_out == 2)
-		mfbuf[1][gfc->mf_size + i] = in_buffer[1][i];
-	}
+    *n_out = Min(gfp->framesize, nsamples);
+    *n_in = *n_out;
+    for (i = 0; i < *n_out; ++i) {
+        mfbuf[0][gfc->mf_size + i] = in_buffer[0][i];
+        if (gfc->channels_out == 2)
+        mfbuf[1][gfc->mf_size + i] = in_buffer[1][i];
+    }
     }
 
 }
@@ -490,9 +490,9 @@ int fill_buffer_resample(
         offset = (j-bpc) / (2.*bpc);
         for ( i = 0; i <= filter_l; i++ ) 
             sum += 
-	    gfc->blackfilt[j][i]  = blackman(i-offset,fcn,filter_l);
-	for ( i = 0; i <= filter_l; i++ ) 
-	  gfc->blackfilt[j][i] /= sum;
+        gfc->blackfilt[j][i]  = blackman(i-offset,fcn,filter_l);
+    for ( i = 0; i <= filter_l; i++ ) 
+      gfc->blackfilt[j][i] /= sum;
     }
     gfc->fill_buffer_resample_init = 1;
   }
@@ -551,19 +551,19 @@ int fill_buffer_resample(
   /* save the last BLACKSIZE samples into the inbuf_old buffer */
   if (*num_used >= BLACKSIZE) {
       for (i=0;i<BLACKSIZE;i++)
-	  inbuf_old[i]=inbuf[*num_used + i -BLACKSIZE];
+      inbuf_old[i]=inbuf[*num_used + i -BLACKSIZE];
   }else{
       /* shift in *num_used samples into inbuf_old  */
        int n_shift = BLACKSIZE-*num_used;  /* number of samples to shift */
 
        /* shift n_shift samples by *num_used, to make room for the
-	* num_used new samples */
+    * num_used new samples */
        for (i=0; i<n_shift; ++i ) 
-	   inbuf_old[i] = inbuf_old[i+ *num_used];
+       inbuf_old[i] = inbuf_old[i+ *num_used];
 
        /* shift in the *num_used samples */
        for (j=0; i<BLACKSIZE; ++i, ++j ) 
-	   inbuf_old[i] = inbuf[j];
+       inbuf_old[i] = inbuf[j];
 
        assert(j==*num_used);
   }

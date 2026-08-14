@@ -108,15 +108,15 @@ int main(int argc, char **argv)
            &&
            FRAME_SIZE ==  fread(out_short, sizeof(short), FRAME_SIZE,fout) )
    {
-	float s=0, e=0;
+    float s=0, e=0;
         for (i=0;i<FRAME_SIZE;++i) {
             s += (float)in_short[i] * in_short[i];
             e += ((float)in_short[i]-out_short[i]) * ((float)in_short[i]-out_short[i]);
         }
-	seg_snr += 10*log10((s+1)/(e+1));
-	sigpow += s;
-	errpow += e;
-	snr_frames++;
+    seg_snr += 10*log10((s+1)/(e+1));
+    sigpow += s;
+    errpow += e;
+    snr_frames++;
    }
    fclose(fin);
    fclose(fout);

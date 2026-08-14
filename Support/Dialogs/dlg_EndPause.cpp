@@ -28,7 +28,7 @@ enum controls
 
 ui_manager::control_tem EndPauseControls[] = 
 {
-    { IDC_WAIT_TEXT,	    "IDS_WAIT_TEXT",          "text",     246, 300, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
+    { IDC_WAIT_TEXT,        "IDS_WAIT_TEXT",          "text",     246, 300, 120, 40, 0, 0, 0, 0, ui_win::WF_VISIBLE },
 };
 
 
@@ -109,7 +109,7 @@ xbool dlg_end_pause::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // Get controls
     m_pWaitText = (ui_text*) FindChildByID( IDC_WAIT_TEXT );
@@ -153,7 +153,7 @@ void dlg_end_pause::Render( s32 ox, s32 oy )
     {
         irect rb;
 
-	    rb = g_UiMgr->GetUserBounds( m_UserID );
+        rb = g_UiMgr->GetUserBounds( m_UserID );
         g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                        xcolor(0,0,0,180),
                                        xcolor(0,0,0,180),

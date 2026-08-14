@@ -31,28 +31,28 @@
 ** (Large enough to dissipate fixed overheads but small enough
 ** to allow small steps for the collector.)
 */
-#define GCSWEEPMAX	20
+#define GCSWEEPMAX    20
 
 
 /*
 ** Cost (in work units) of running one finalizer.
 */
-#define CWUFIN	10
+#define CWUFIN    10
 
 
 /* mask with all color bits */
-#define maskcolors	(bitmask(BLACKBIT) | WHITEBITS)
+#define maskcolors    (bitmask(BLACKBIT) | WHITEBITS)
 
 /* mask with all GC bits */
 #define maskgcbits      (maskcolors | AGEBITS)
 
 
 /* macro to erase all color bits then set only the current white bit */
-#define makewhite(g,x)	\
+#define makewhite(g,x)    \
   (x->marked = cast_byte((x->marked & ~maskcolors) | luaC_white(g)))
 
 /* make an object gray (neither white nor black) */
-#define set2gray(x)	resetbits(x->marked, maskcolors)
+#define set2gray(x)    resetbits(x->marked, maskcolors)
 
 
 /* make an object black (coming from any color) */
@@ -75,21 +75,21 @@
 ** Access to collectable objects in array part of tables
 */
 #define gcvalarr(t,i)  \
-	((*getArrTag(t,i) & BIT_ISCOLLECTABLE) ? getArrVal(t,i)->gc : NULL)
+    ((*getArrTag(t,i) & BIT_ISCOLLECTABLE) ? getArrVal(t,i)->gc : NULL)
 
 
 #define markvalue(g,o) { checkliveness(mainthread(g),o); \
   if (valiswhite(o)) reallymarkobject(g,gcvalue(o)); }
 
-#define markkey(g, n)	{ if keyiswhite(n) reallymarkobject(g,gckey(n)); }
+#define markkey(g, n)    { if keyiswhite(n) reallymarkobject(g,gckey(n)); }
 
-#define markobject(g,t)	{ if (iswhite(t)) reallymarkobject(g, obj2gco(t)); }
+#define markobject(g,t)    { if (iswhite(t)) reallymarkobject(g, obj2gco(t)); }
 
 /*
 ** mark an object that can be NULL (either because it is really optional,
 ** or it was stripped as debug info, or inside an uncompleted structure)
 */
-#define markobjectN(g,t)	{ if (t) markobject(g,t); }
+#define markobjectN(g,t)    { if (t) markobject(g,t); }
 
 
 static void reallymarkobject (global_State *g, GCObject *o);
@@ -107,7 +107,7 @@ static void entersweep (lua_State *L);
 /*
 ** one after last element in a hash array
 */
-#define gnodelast(h)	gnode(h, cast_sizet(sizenode(h)))
+#define gnodelast(h)    gnode(h, cast_sizet(sizenode(h)))
 
 
 static l_mem objsize (GCObject *o) {
@@ -181,7 +181,7 @@ static GCObject **getgclist (GCObject *o) {
 ** Link a collectable object 'o' with a known type into the list 'p'.
 ** (Must be a macro to access the 'gclist' field in different types.)
 */
-#define linkgclist(o,p)	linkgclist_(obj2gco(o), &(o)->gclist, &(p))
+#define linkgclist(o,p)    linkgclist_(obj2gco(o), &(o)->gclist, &(p))
 
 static void linkgclist_ (GCObject *o, GCObject **pnext, GCObject **list) {
   lua_assert(!isgray(o));  /* cannot be in a gray list */
@@ -1609,9 +1609,9 @@ static void sweepstep (lua_State *L, global_State *g,
 ** weak tables.
 */
 
-#define step2pause	-3  /* finished collection; entered pause state */
-#define atomicstep	-2  /* atomic step */
-#define step2minor	-1  /* moved to minor collections */
+#define step2pause    -3  /* finished collection; entered pause state */
+#define atomicstep    -2  /* atomic step */
+#define step2minor    -1  /* moved to minor collections */
 
 
 static l_mem singlestep (lua_State *L, int fast) {
@@ -1729,7 +1729,7 @@ static void incstep (lua_State *L, global_State *g) {
 
 
 #if !defined(luai_tracegc)
-#define luai_tracegc(L,f)		((void)0)
+#define luai_tracegc(L,f)        ((void)0)
 #endif
 
 /*

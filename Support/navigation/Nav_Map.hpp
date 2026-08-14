@@ -364,12 +364,12 @@ public:
             void                RenderConnectionsBright( void );
 
 #if !defined(X_RETAIL) || defined(X_QA)
-		    void                RenderNavNearView    ( void );
+            void                RenderNavNearView    ( void );
 #endif
     /*
-		   void					RenderExportedMap	( void );
-		   void					RenderAllNodes		( void );
-		   void					RenderAllConnections( void );
+           void                    RenderExportedMap    ( void );
+           void                    RenderAllNodes        ( void );
+           void                    RenderAllConnections( void );
     */
 
 public:

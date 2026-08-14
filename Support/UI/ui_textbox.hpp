@@ -58,10 +58,10 @@ public:
 
     void            SetExitOnSelect     ( xbool State ) { m_ExitOnSelect = State; }
     void            SetExitOnBack       ( xbool State ) { m_ExitOnBack = State;   }
-													    
+                                                        
     void            EnableBorders       ( void )        { m_ShowBorders = TRUE;   }
     void            DisableBorders      ( void )        { m_ShowBorders = FALSE;  }
-													    
+                                                        
     void            EnableFrame         ( void )        { m_ShowFrame = TRUE;     }
     void            DisableFrame        ( void )        { m_ShowFrame = FALSE;    }
 

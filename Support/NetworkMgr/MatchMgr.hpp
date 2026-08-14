@@ -591,7 +591,7 @@ public:
                            ~match_mgr                   ( void );
         xbool               Init                        ( net_socket& Local, const net_address Broadcast );
         void                Kill                        ( void );
-        void                Update                      ( f32 DeltaTime );		
+        void                Update                      ( f32 DeltaTime );        
         // Returns TRUE if the packet was consumed
         xbool               ReceivePacket               ( net_address& Remote, bitstream& Bitstream );
         xbool               SendLookup                  ( net_address& Remote );

@@ -98,8 +98,8 @@ typedef struct hb_feature_t {
   unsigned int  end;
 } hb_feature_t;
 
-#define HB_FEATURE_GLOBAL_START	0
-#define HB_FEATURE_GLOBAL_END	((unsigned int) -1)
+#define HB_FEATURE_GLOBAL_START    0
+#define HB_FEATURE_GLOBAL_END    ((unsigned int) -1)
 
 typedef struct hb_glyph_info_t {
   hb_codepoint_t codepoint;

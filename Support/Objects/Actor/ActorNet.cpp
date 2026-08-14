@@ -7,7 +7,7 @@
 //==============================================================================
 
 //==============================================================================
-//	DEBUG DEFINES AND MACROS
+//    DEBUG DEFINES AND MACROS
 //==============================================================================
 
 // Comment or uncomment to log update details.
@@ -28,7 +28,7 @@
 #define PAIN_FEEDBACK_FORCE 1.5f
 
 //==============================================================================
-//	INCLUDES
+//    INCLUDES
 //==============================================================================
 
 #include "Actor.hpp"
@@ -196,7 +196,7 @@ void update::Read( const bitstream& BS )
     BS.ReadRangedS32( LifeSeq, 0, 7 );
 
     // Read corpse death pain?
-    if( LifeSeq & 0x01 )	// Odd = Death
+    if( LifeSeq & 0x01 )    // Odd = Death
     {
         CorpseDeathPain.Read( BS );
     }
@@ -606,7 +606,7 @@ void update::Write( bitstream& BS )
     BS.WriteRangedS32( LifeSeq, 0, 7 );
 
     // Write corpse death pain?
-    if( LifeSeq & 0x01 )	// Odd = Death
+    if( LifeSeq & 0x01 )    // Odd = Death
     {
         CorpseDeathPain.Write( BS );
     }
@@ -888,7 +888,7 @@ actor::net::net( void )
 }
 
 //==============================================================================
-//	ACTOR FUNCTIONS
+//    ACTOR FUNCTIONS
 //==============================================================================
 
 void actor::net_Activate( void )
@@ -1132,14 +1132,14 @@ void actor::net_AcceptUpdate( const update& Update )
         if( DoDeath )
         {
             // Grab corpse pain?
-    		ASSERT( (Update.LifeSeq & 0x01) || (DoSpawn) ); // Odd = Death
+            ASSERT( (Update.LifeSeq & 0x01) || (DoSpawn) ); // Odd = Death
             
             // Is death pain present? 
             // (it might not be due to packet loss missing life sequence #'s etc)
             if( Update.LifeSeq & 0x01 )     // Odd = death
             {
                 ASSERT( *(u32*)&Update.CorpseDeathPain != 0xFEEDC0DE );
-	            m_CorpseDeathPain = Update.CorpseDeathPain;
+                m_CorpseDeathPain = Update.CorpseDeathPain;
             }
             else
             {
@@ -1490,7 +1490,7 @@ void actor::net_ProvideUpdate( bitstream& BS, u32& DirtyBits )
 
     // Finally, write the update.
     Update.Write( BS );
-	DirtyBits = Update.DirtyBits;
+    DirtyBits = Update.DirtyBits;
 }
 
 //==============================================================================
@@ -1641,7 +1641,7 @@ void actor::net_ProvideUpdate( update& Update, u32& DirtyBits )
     if( DirtyBits & POSITION_BIT )
     {
         Update.Position   = GetPosition();
-    	Update.DirtyBits |= POSITION_BIT;
+        Update.DirtyBits |= POSITION_BIT;
     }
 
     if( DirtyBits & ORIENTATION_BIT )
@@ -1654,14 +1654,14 @@ void actor::net_ProvideUpdate( update& Update, u32& DirtyBits )
 
         Update.Pitch         = GetPitch();
         Update.Yaw           = GetYaw(); 
-	    Update.DirtyBits    |= ORIENTATION_BIT;
+        Update.DirtyBits    |= ORIENTATION_BIT;
     }
 
     if( DirtyBits & AIR_CROUCH_BIT )
     {
         Update.Crouch     = m_bIsCrouching;
         Update.Airborn    = m_bIsAirborn;
-	    Update.DirtyBits |= AIR_CROUCH_BIT;
+        Update.DirtyBits |= AIR_CROUCH_BIT;
     }
 
     if( DirtyBits & CONTAGION_OFF_BIT )

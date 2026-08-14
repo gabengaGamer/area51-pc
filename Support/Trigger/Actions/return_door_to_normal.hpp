@@ -26,8 +26,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Unlocks door"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "Unlocks door that has been triggered to lock."; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
 
     virtual         void                OnRender    ( void );
    

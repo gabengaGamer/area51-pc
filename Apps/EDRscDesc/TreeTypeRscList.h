@@ -18,8 +18,8 @@ protected:
 
 protected:
 
-	CTreeCtrl*	m_pTreeCtrl;
-	CImageList	m_ImageList;
+    CTreeCtrl*    m_pTreeCtrl;
+    CImageList    m_ImageList;
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -28,37 +28,37 @@ protected:
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	virtual ~TreeTypeRscList();
-	TreeTypeRscList();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(TreeTypeRscList)
+    virtual ~TreeTypeRscList();
+    TreeTypeRscList();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(TreeTypeRscList)
 
 /////////////////////////////////////////////////////////////////////////////
 public:
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(TreeTypeRscList)
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(TreeTypeRscList)
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
 
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	//{{AFX_MSG(TreeTypeRscList)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnPaint();
+    //{{AFX_MSG(TreeTypeRscList)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnPaint();
     afx_msg LRESULT OnNcHitTest(CPoint point);
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

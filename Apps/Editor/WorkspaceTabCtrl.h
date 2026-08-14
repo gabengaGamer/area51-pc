@@ -10,8 +10,8 @@
 class CEditorWorkspaceTabCtrl : public CToolBar
 {
 public:
-	CEditorWorkspaceTabCtrl();
-	virtual ~CEditorWorkspaceTabCtrl();
+    CEditorWorkspaceTabCtrl();
+    virtual ~CEditorWorkspaceTabCtrl();
 
     BOOL Create(CWnd* pParentWnd, UINT nID, LPCTSTR pWindowName, CSize SizeDefault, DWORD dwAlignStyle, DWORD dwStyle);
     CFrameWnd* CreateFrameDocView(CRuntimeClass* pFrameClass, CRuntimeClass* pViewClass, CDocument* pDocument);

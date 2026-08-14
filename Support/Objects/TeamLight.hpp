@@ -27,8 +27,8 @@ public:
     virtual s32                 GetMaterial     ( void ) const { return MAT_TYPE_NULL; }
 
 
-    virtual			void	    OnEnumProp		( prop_enum& rList );           
-    virtual			xbool	    OnProperty		( prop_query& rPropQuery );     
+    virtual            void        OnEnumProp        ( prop_enum& rList );           
+    virtual            xbool        OnProperty        ( prop_query& rPropQuery );     
 
     virtual         bbox        GetLocalBBox    ( void ) const;                 
 
@@ -40,8 +40,8 @@ protected:
     //=========================================================================
 
     virtual void                OnCollectLight  ( void );
-    virtual void                OnRender		( void );                                  
-    virtual void                OnAdvanceSimulation	( f32     DelaTime );           
+    virtual void                OnRender        ( void );                                  
+    virtual void                OnAdvanceSimulation    ( f32     DelaTime );           
     virtual void                OnInit          ( void );                       
                    
 

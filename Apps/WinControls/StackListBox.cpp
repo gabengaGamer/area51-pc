@@ -28,9 +28,9 @@ CStackListBox::~CStackListBox()
 
 
 BEGIN_MESSAGE_MAP(CStackListBox, CListBox)
-	//{{AFX_MSG_MAP(CStackListBox)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CStackListBox)
+        // NOTE - the ClassWizard will add and remove mapping macros here.
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -122,14 +122,14 @@ void CStackListBox::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 BOOL CStackListBox::PreCreateWindow(CREATESTRUCT& cs) 
 {
-    cs.style |= LBS_OWNERDRAWFIXED | LBS_HASSTRINGS;	
-	return CListBox::PreCreateWindow(cs);
+    cs.style |= LBS_OWNERDRAWFIXED | LBS_HASSTRINGS;    
+    return CListBox::PreCreateWindow(cs);
 }
 
 //=========================================================================
 
 void CStackListBox::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct) 
 {
-	// TODO: Add your code to determine the size of specified item
-	
+    // TODO: Add your code to determine the size of specified item
+    
 }

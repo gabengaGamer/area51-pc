@@ -25,7 +25,7 @@ static const s32 IcY = FrY + 9; // Friends Invite Icons Y
 ui_manager::control_tem PauseMPControls[] = 
 {
     // Frames.
-    { IDC_PAUSE_MP_QUIT,	    "IDS_PAUSE_MENU_QUIT",      "button",   60,  60, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
+    { IDC_PAUSE_MP_QUIT,        "IDS_PAUSE_MENU_QUIT",      "button",   60,  60, 120, 40, 0, 0, 1, 1, ui_win::WF_VISIBLE },
     { IDC_PAUSE_MP_SCORE,       "IDS_PAUSE_MENU_SCORE",     "button",   60, 100, 120, 40, 0, 1, 1, 1, ui_win::WF_VISIBLE },
     { IDC_PAUSE_MP_OPTIONS,     "IDS_PAUSE_MENU_OPTIONS",   "button",   60, 140, 120, 40, 0, 2, 1, 1, ui_win::WF_VISIBLE },
     { IDC_PAUSE_MP_SETTINGS,    "IDS_PAUSE_MENU_SETTINGS",  "button",   60, 180, 120, 40, 0, 3, 1, 1, ui_win::WF_VISIBLE },
@@ -117,11 +117,11 @@ xbool dlg_pause_mp::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // get button handles
-    m_pButtonQuit	    = (ui_button*)  FindChildByID( IDC_PAUSE_MP_QUIT     );
-    m_pButtonScore 	    = (ui_button*)  FindChildByID( IDC_PAUSE_MP_SCORE    );
+    m_pButtonQuit        = (ui_button*)  FindChildByID( IDC_PAUSE_MP_QUIT     );
+    m_pButtonScore         = (ui_button*)  FindChildByID( IDC_PAUSE_MP_SCORE    );
     m_pButtonOptions    = (ui_button*)  FindChildByID( IDC_PAUSE_MP_OPTIONS  );
     m_pButtonSettings   = (ui_button*)  FindChildByID( IDC_PAUSE_MP_SETTINGS );
 #ifdef TARGET_XBOX
@@ -184,7 +184,7 @@ xbool dlg_pause_mp::Create( s32                        UserID,
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -206,11 +206,11 @@ void dlg_pause_mp::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
 
 
     // render background filter
-	rb = g_UiMgr->GetUserBounds( m_UserID );
+    rb = g_UiMgr->GetUserBounds( m_UserID );
     g_UiMgr->RenderGouraudRect(rb, xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
                                    xcolor(0,0,0,180),
@@ -292,7 +292,7 @@ void dlg_pause_mp::OnAccept( ui_win* pWin )
 
                 m_PopUp->Configure( g_StringTableMgr( "ui", "IDS_QUIT_POPUP" ), TRUE, TRUE, FALSE, Message, navText, &m_PopUpResult );
             }
-	    }
+        }
         else if( pWin == (ui_win*)m_pButtonScore )
         {
             g_AudioMgr.Play("Select_Norm");

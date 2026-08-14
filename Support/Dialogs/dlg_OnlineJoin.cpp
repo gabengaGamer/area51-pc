@@ -28,7 +28,7 @@
 #ifdef CONFIG_VIEWER
 #include "../../Apps/ArtistViewer/Config.hpp"
 #else
-#include "../../Apps/GameApp/Config.hpp"	
+#include "../../Apps/GameApp/Config.hpp"    
 #endif
 
 //=========================================================================
@@ -37,7 +37,7 @@
 
 enum controls
 {
-	IDC_MATCHLIST,
+    IDC_MATCHLIST,
     IDC_SERVER_DETAILS,
 
     IDC_HEADSET_TEXT,
@@ -220,7 +220,7 @@ xbool dlg_online_join::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pMatchList     = (ui_listbox*)FindChildByID( IDC_MATCHLIST );
     
@@ -416,7 +416,7 @@ xbool dlg_online_join::Create( s32                        UserID,
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -439,7 +439,7 @@ void dlg_online_join::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     // render transparent screen
     rb.l = m_CurrPos.l + 22;
@@ -912,7 +912,7 @@ void dlg_online_join::FillMatchList( void )
     {
         // Set Selection
         m_pMatchList->SetSelection( iSel );
-        PopulateServerInfo(	g_MatchMgr.GetServerInfo(m_pMatchList->GetSelectedItemData()) );
+        PopulateServerInfo(    g_MatchMgr.GetServerInfo(m_pMatchList->GetSelectedItemData()) );
     }
     else
     {

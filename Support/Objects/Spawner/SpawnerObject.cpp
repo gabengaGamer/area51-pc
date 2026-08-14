@@ -10,7 +10,7 @@
 
 /*
  *
-	
+    
 Spawner specs from design:
 
 Ideally, we would be able to set s trigger up so it would spawn a guy, and then immediately spawn another 

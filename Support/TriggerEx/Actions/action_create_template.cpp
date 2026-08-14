@@ -124,7 +124,7 @@ void action_create_template::OnDebugRender ( s32 Index )
 
 //=============================================================================
 
-void action_create_template::OnEnumProp	( prop_enum& rPropList )
+void action_create_template::OnEnumProp    ( prop_enum& rPropList )
 {
     rPropList.PropEnumFileName(  "TemplateBPX" ,  "template blueprints (*.bpx)|*.bpx|All Files (*.*)|*.*||", "Template Name, to determine what type of object to create.", 0 );  
     rPropList.PropEnumGuid    (  "Marker" ,       "Use a marker to place this object, gets position, rotation, and zone.", 0 );
@@ -138,7 +138,7 @@ void action_create_template::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool action_create_template::OnProperty	( prop_query& rPropQuery )
+xbool action_create_template::OnProperty    ( prop_query& rPropQuery )
 { 
     if ( rPropQuery.IsVar( "TemplateBPX" ) )
     {

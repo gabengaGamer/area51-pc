@@ -24,7 +24,7 @@
 
 enum controls
 {
-	IDC_KICK_PLAYER_LISTBOX,
+    IDC_KICK_PLAYER_LISTBOX,
 };
 
 
@@ -108,7 +108,7 @@ xbool dlg_kick_player::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     // find controls
     m_pPlayerList      = (ui_playerlist*) FindChildByID( IDC_KICK_PLAYER_LISTBOX  );
@@ -148,7 +148,7 @@ xbool dlg_kick_player::Create( s32                        UserID,
     // make the dialog active
     m_State = DIALOG_STATE_ACTIVE;
 
-	// Return success code
+    // Return success code
     return Success;
 }
 
@@ -170,7 +170,7 @@ void dlg_kick_player::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     // render background filter
     rb = g_UiMgr->GetUserBounds( m_UserID );

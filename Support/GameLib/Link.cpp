@@ -137,11 +137,11 @@ void ForceLink( void )
         pDummy = new light_obj;
         pDummy = new play_surface;
         pDummy = new anim_surface;
-		pDummy = new door;
+        pDummy = new door;
         pDummy = new sound_emitter;
         pDummy = new prop_surface;
         pDummy = new pickup;
-		pDummy = new corpse;
+        pDummy = new corpse;
         pDummy = new notepad_object;
         pDummy = new lens_filter;
 
@@ -151,18 +151,18 @@ void ForceLink( void )
 #endif
 
         pDummy = new new_weapon;
-		pDummy = new weapon_smp;
+        pDummy = new weapon_smp;
         pDummy = new weapon_dual_smp;
-		pDummy = new weapon_shotgun;
+        pDummy = new weapon_shotgun;
         pDummy = new weapon_dual_shotgun;
-		pDummy = new weapon_sniper_rifle;
+        pDummy = new weapon_sniper_rifle;
         pDummy = new weapon_desert_eagle;
         pDummy = new weapon_msn;
         pDummy = new weapon_bbg;
         pDummy = new weapon_tra;
         pDummy = new weapon_scanner;
         pDummy = new weapon_mutation;
-		pDummy = new bullet_projectile;
+        pDummy = new bullet_projectile;
         pDummy = new homing_projectile;
         pDummy = new mutant_parasite_projectile;
         pDummy = new mutant_contagion_projectile;
@@ -172,7 +172,7 @@ void ForceLink( void )
 
         pDummy = new particle_emitter;
         pDummy = new zone_portal;
- 		pDummy = new trigger_ex_object;
+         pDummy = new trigger_ex_object;
         // DECAL TODO: Replace this once the new decal manager is finished
     //  pDummy = new static_decal_object;
 
@@ -222,13 +222,13 @@ void ForceLink( void )
         pDummy = new camera;
         pDummy = new pip;
         pDummy = new controller;
-		pDummy = new turret;
+        pDummy = new turret;
         pDummy = new nav_point;
         pDummy = new explosive_bullet_projectile;
 
         pDummy = new coupler;
     //  pDummy = new alien_turret_projectile;
-	    pDummy = new alien_orb;
+        pDummy = new alien_orb;
         pDummy = new alien_spawn_tube;
         pDummy = new alien_glob;
         pDummy = new alien_shield;

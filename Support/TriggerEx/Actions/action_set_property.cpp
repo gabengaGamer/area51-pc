@@ -241,7 +241,7 @@ void action_set_property::OnDebugRender ( s32 Index )
 
 //=============================================================================
 
-void action_set_property::OnEnumProp	( prop_enum& rPropList )
+void action_set_property::OnEnumProp    ( prop_enum& rPropList )
 {
     //guid specific fields
     m_ObjectAffecter.OnEnumProp( rPropList, "Object" );
@@ -308,7 +308,7 @@ void action_set_property::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool action_set_property::OnProperty	( prop_query& rPropQuery )
+xbool action_set_property::OnProperty    ( prop_query& rPropQuery )
 {
     //guid specific fields
     if( m_ObjectAffecter.OnProperty( rPropQuery, "Object" ) )

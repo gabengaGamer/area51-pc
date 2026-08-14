@@ -31,8 +31,8 @@ public:
 
                     object_affecter                         ( void );
 
-    virtual			void	                OnEnumProp	    ( prop_enum& rList, const char* pPropName, u32 Flags = 0);
-    virtual			xbool	                OnProperty	    ( prop_query& rPropQuery, const char* pPropName );
+    virtual            void                    OnEnumProp        ( prop_enum& rList, const char* pPropName, u32 Flags = 0);
+    virtual            xbool                    OnProperty        ( prop_query& rPropQuery, const char* pPropName );
 
                     object*                 GetObjectPtr    ( void );
                     const char*             GetObjectInfo   ( void );

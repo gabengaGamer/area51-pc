@@ -215,7 +215,7 @@ xbool dlg_join_filter::Create( s32                        UserID,
     ASSERT( pManager );
 
     // Do dialog creation
-	Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
+    Success = ui_dialog::Create( UserID, pManager, pDialogTem, Position, pParent, Flags );
 
     m_pGameTypeText     = (ui_text*)  FindChildByID( IDC_JOIN_FILTER_GAME_TYPE   );
     m_pNumPlayerText    = (ui_text*)  FindChildByID( IDC_JOIN_FILTER_NUM_PLAYERS );
@@ -419,7 +419,7 @@ void dlg_join_filter::Render( s32 ox, s32 oy )
     static s32 gap      =  9;
     static s32 width    =  4;
 
-	irect rb;
+    irect rb;
     
     // render transparent screen
     rb.l = m_CurrPos.l + 22;

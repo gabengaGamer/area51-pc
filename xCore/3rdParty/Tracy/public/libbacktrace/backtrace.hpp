@@ -63,7 +63,7 @@ struct backtrace_state;
    tried.  */
 
 typedef void (*backtrace_error_callback) (void *data, const char *msg,
-					  int errnum);
+                      int errnum);
 
 /* Create state information for the backtrace routines.  This must be
    called before any of the other routines, and its return value must
@@ -97,8 +97,8 @@ extern struct backtrace_state *backtrace_create_state (
    invalid after this function returns.  */
 
 typedef int (*backtrace_full_callback) (void *data, uintptr_t pc, uintptr_t lowaddr,
-					const char *filename, int lineno,
-					const char *function);
+                    const char *filename, int lineno,
+                    const char *function);
 
 /* Get a full stack backtrace.  SKIP is the number of frames to skip;
    passing 0 will start the trace with the function calling
@@ -111,9 +111,9 @@ typedef int (*backtrace_full_callback) (void *data, uintptr_t pc, uintptr_t lowa
    function requires debug info for the executable.  */
 
 extern int backtrace_full (struct backtrace_state *state, int skip,
-			   backtrace_full_callback callback,
-			   backtrace_error_callback error_callback,
-			   void *data);
+               backtrace_full_callback callback,
+               backtrace_error_callback error_callback,
+               void *data);
 
 /* The type of the callback argument to the backtrace_simple function.
    DATA is the argument passed to simple_backtrace.  PC is the program
@@ -130,9 +130,9 @@ typedef int (*backtrace_simple_callback) (void *data, uintptr_t pc);
    function does not require any debug info for the executable.  */
 
 extern int backtrace_simple (struct backtrace_state *state, int skip,
-			     backtrace_simple_callback callback,
-			     backtrace_error_callback error_callback,
-			     void *data);
+                 backtrace_simple_callback callback,
+                 backtrace_error_callback error_callback,
+                 void *data);
 
 /* Print the current backtrace in a user readable format to a FILE.
    SKIP is the number of frames to skip, as in backtrace_full.  Any
@@ -151,9 +151,9 @@ extern void backtrace_print (struct backtrace_state *state, int skip, FILE *);
    returns the first non-zero value returned by CALLBACK, or 0.  */
 
 extern int backtrace_pcinfo (struct backtrace_state *state, uintptr_t pc,
-			     backtrace_full_callback callback,
-			     backtrace_error_callback error_callback,
-			     void *data);
+                 backtrace_full_callback callback,
+                 backtrace_error_callback error_callback,
+                 void *data);
 
 /* The type of the callback argument to backtrace_syminfo.  DATA and
    PC are the arguments passed to backtrace_syminfo.  SYMNAME is the
@@ -162,9 +162,9 @@ extern int backtrace_pcinfo (struct backtrace_state *state, uintptr_t pc,
    if no error occurred but the symbol could not be found.  */
 
 typedef void (*backtrace_syminfo_callback) (void *data, uintptr_t pc,
-					    const char *symname,
-					    uintptr_t symval,
-					    uintptr_t symsize);
+                        const char *symname,
+                        uintptr_t symval,
+                        uintptr_t symsize);
 
 /* Given ADDR, an address or program counter in the current program,
    call the callback information with the symbol name and value
@@ -177,9 +177,9 @@ typedef void (*backtrace_syminfo_callback) (void *data, uintptr_t pc,
    Returns 1 on success, 0 on error.  */
 
 extern int backtrace_syminfo (struct backtrace_state *state, uintptr_t addr,
-			      backtrace_syminfo_callback callback,
-			      backtrace_error_callback error_callback,
-			      void *data);
+                  backtrace_syminfo_callback callback,
+                  backtrace_error_callback error_callback,
+                  void *data);
 
 }
 

@@ -27,7 +27,7 @@ xbool tex_info::Load( const char* pFilename )
     }
     else
     {
-        x_printf( "WARNING: No texinfo defined for texture (defaulting to CONCRETE) [%s]\n", pFilename );	
+        x_printf( "WARNING: No texinfo defined for texture (defaulting to CONCRETE) [%s]\n", pFilename );    
         return FALSE;
     }
 
@@ -82,7 +82,7 @@ xbool tex_info::Load( const char* pFilename )
                 else if( MatType == "TILE" )                SoundMat = MAT_TYPE_TILE;
                 else
                 {
-                    x_printf( "WARNING: Unknown sound material for texture (defaulting to CONCRETE) [%s]\n", pFilename );	
+                    x_printf( "WARNING: Unknown sound material for texture (defaulting to CONCRETE) [%s]\n", pFilename );    
                     SoundMat = MAT_TYPE_CONCRETE;
                     RetValue = FALSE;
                 }

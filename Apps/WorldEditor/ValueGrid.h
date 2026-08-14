@@ -15,7 +15,7 @@ class CValueGrid : public CGridListCtrl
 {
 // Construction
 public:
-	CValueGrid();
+    CValueGrid();
 
 // Attributes
 public:
@@ -23,30 +23,30 @@ public:
 // Operations
 public:
     
-	void InitializeGrid(void);
+    void InitializeGrid(void);
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CValueGrid)
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CValueGrid)
+    virtual BOOL PreTranslateMessage(MSG* pMsg);
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CValueGrid();
+    virtual ~CValueGrid();
 
-	//handle calling out
-	virtual void OnGridItemChange(CGridTreeItem *pSelItem);
-	//handle guid message
-	virtual void OnGuidSelect(CGridTreeItem *pSelItem);
+    //handle calling out
+    virtual void OnGridItemChange(CGridTreeItem *pSelItem);
+    //handle guid message
+    virtual void OnGuidSelect(CGridTreeItem *pSelItem);
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CValueGrid)
+    //{{AFX_MSG(CValueGrid)
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	//}}AFX_MSG
+    //}}AFX_MSG
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

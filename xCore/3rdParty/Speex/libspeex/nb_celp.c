@@ -1253,7 +1253,7 @@ int nb_decoder_ctl(void *state, int request, void *ptr)
 }
 
 
-#define median3(a, b, c)	((a) < (b) ? ((b) < (c) ? (b) : ((a) < (c) ? (c) : (a))) : ((c) < (b) ? (b) : ((c) < (a) ? (c) : (a))))
+#define median3(a, b, c)    ((a) < (b) ? ((b) < (c) ? (b) : ((a) < (c) ? (c) : (a))) : ((c) < (b) ? (b) : ((c) < (a) ? (c) : (a))))
 
 #ifdef FIXED_POINT
 const spx_word16_t attenuation[10] = {32767, 31483, 27923, 22861, 17278, 12055, 7764, 4616, 2533, 1283};
@@ -1590,10 +1590,10 @@ int nb_decode(void *state, SpeexBits *bits, void *vout)
 */
                pit_min = ol_pitch-margin+1;
                if (pit_min < NB_PITCH_START)
-		  pit_min = NB_PITCH_START;
+          pit_min = NB_PITCH_START;
                pit_max = ol_pitch+margin;
                if (pit_max > NB_PITCH_END)
-		  pit_max = NB_PITCH_END;
+          pit_max = NB_PITCH_END;
             } else {
                pit_min = pit_max = ol_pitch;
             }

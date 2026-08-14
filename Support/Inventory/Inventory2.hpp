@@ -123,7 +123,7 @@ static  xstring             GetEnumStringGrenades   ( void );
 static  const char*         ItemToBlueprintName     ( inven_item Item );
 static  const char*         ItemToPickupGeomName    ( inven_item Item, f32 Amount = -1.0f );
 
-	                        inventory2();
+                            inventory2();
                            ~inventory2();
 
         void                Init            ( void );

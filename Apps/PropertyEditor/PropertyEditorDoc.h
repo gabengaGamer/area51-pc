@@ -18,8 +18,8 @@ class CPropertyEditorView;
 class CPropertyEditorDoc : public CBaseDocument
 {
 public:
-	CPropertyEditorDoc();           // protected constructor used by dynamic creation
-	CPropertyEditorView* GetView();
+    CPropertyEditorDoc();           // protected constructor used by dynamic creation
+    CPropertyEditorView* GetView();
     void SetCommandHandler(CWnd *pWnd) { m_pCommandHandler = pWnd; }
 
     // SetInterface -   Call this to set the interface, if the data is not correctly formatted, this will
@@ -28,7 +28,7 @@ public:
     // SaveProperty -   this is called whenever properties are changed
 
     void                ClearInterface  ( void );
-	void                SetInterface    ( prop_interface& pi, xbool bReadOnly = FALSE );
+    void                SetInterface    ( prop_interface& pi, xbool bReadOnly = FALSE );
     prop_interface*     GetInterface    ( void );
     void                ClearGrid       ( void );
     void                SaveProperty    ( CGridTreeItem* lpItem, BOOL bReloadObject );        
@@ -45,7 +45,7 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 
 protected: // create from serialization only
-	DECLARE_DYNCREATE(CPropertyEditorDoc)
+    DECLARE_DYNCREATE(CPropertyEditorDoc)
 
     void UpdateIndividualItem(CGridTreeItem* lpItem);
     void GetDataFromXarray(int iXaIndex, 
@@ -54,28 +54,28 @@ protected: // create from serialization only
                            CGridTreeItem* &pParentTreeItem) ;
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CPropertyEditorDoc)
-	public:
-	virtual void Serialize(CArchive& ar);   // overridden for document i/o
-	protected:
-	virtual BOOL OnNewDocument();
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CPropertyEditorDoc)
+    public:
+    virtual void Serialize(CArchive& ar);   // overridden for document i/o
+    protected:
+    virtual BOOL OnNewDocument();
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CPropertyEditorDoc();
+    virtual ~CPropertyEditorDoc();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CPropertyEditorDoc)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CPropertyEditorDoc)
+        // NOTE - the ClassWizard will add and remove member functions here.
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
 private:
     prop_interface *    m_pProperties;
@@ -85,8 +85,8 @@ private:
 
 inline CPropertyEditorView* CPropertyEditorDoc::GetView()
 { 
-	POSITION pos = GetFirstViewPosition();
-	return (CPropertyEditorView*)GetNextView (pos); 
+    POSITION pos = GetFirstViewPosition();
+    return (CPropertyEditorView*)GetNextView (pos); 
 }
 
 //{{AFX_INSERT_LOCATION}}

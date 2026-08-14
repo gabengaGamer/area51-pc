@@ -173,7 +173,7 @@ void character_trigger_state::ChangePhase( s32 newPhase )
                 m_CharacterBase.ForceTargetSeen();
             }*/
         }
-    	break;
+        break;
     case PHASE_TRIGGER_GOTO_TARGET:
         if( m_TriggerData.m_UnionData.m_PathfindData.m_Retreating )
         {
@@ -183,7 +183,7 @@ void character_trigger_state::ChangePhase( s32 newPhase )
         {        
             m_CharacterBase.SetGotoTargetGoal( m_TriggerData.m_ActionFocus, vector3(0.0f,0.0f,0.0f), m_TriggerData.m_UnionData.m_PathfindData.m_MoveStyle, m_TriggerData.m_UnionData.m_PathfindData.m_Distance, (m_TriggerData.m_UnionData.m_PathfindData.m_Distance < 0.0f) );
         }
-    	break;
+        break;
     case PHASE_TRIGGER_TURNTO_LOCATION:
         // get the facing of our previous target and face that exact same direction.
         actionObject = g_ObjMgr.GetObjectByGuid( m_TriggerData.m_ActionFocus );
@@ -196,11 +196,11 @@ void character_trigger_state::ChangePhase( s32 newPhase )
 
             m_CharacterBase.SetTurnToLocationGoal( positionFacing, m_TriggerData.m_UnionData.m_PathfindData.m_YawDifference, TRUE );
         }
-    	break;
+        break;
     case PHASE_TRIGGER_LOOKAT_TARGET:
         m_CharacterBase.SetLookAtTargetGoal( m_TriggerData.m_ActionFocus,vector3(0.0f,0.0f,0.0f), m_TriggerData.m_UnionData.m_LookatData.m_LookatDistance, m_TriggerData.m_UnionData.m_LookatData.m_LookatFOV,  m_TriggerData.m_UnionData.m_LookatData.m_LookatHead );
         m_CharacterBase.SetOverrideLookatInterest( m_TriggerData.m_ActionFocus );
-    	break;
+        break;
     case PHASE_TRIGGER_DIALOG:
         m_CharacterBase.SetSayDialogGoal( m_TriggerData.m_UnionData.m_DialogData.m_SoundName,
                                           m_TriggerData.m_UnionData.m_DialogData.m_AnimName,
@@ -211,7 +211,7 @@ void character_trigger_state::ChangePhase( s32 newPhase )
                                           m_TriggerData.m_UnionData.m_DialogData.m_BlockOnDialog, 
                                           m_TriggerData.m_UnionData.m_DialogData.m_KillAnim,
                                           m_TriggerData.m_UnionData.m_DialogData.m_AnimBlendTime );
-    	break;
+        break;
     case PHASE_TRIGGER_DO_ACTION:
         {   
             m_CharacterBase.GetLocoPointer()->SetStateAnimRate(loco::STATE_PLAY_ANIM,1.0f);
@@ -234,7 +234,7 @@ void character_trigger_state::ChangePhase( s32 newPhase )
                                                       m_TriggerData.m_UnionData.m_PlayAnimData.m_AnimPlayTime );
             }
         }
-    	break;
+        break;
     case PHASE_TRIGGER_SEARCH_FOR_TARGET:
         if ( m_CharacterBase.HasState(STATE_SEARCH) )
         {
@@ -421,19 +421,19 @@ const char*character_trigger_state::GetPhaseName ( s32 thePhase )
     {
     case PHASE_TRIGGER_ATTACK_TARGET:
         return "PHASE_TRIGGER_ATTACK_TARGET";
-    	break;
+        break;
     case PHASE_TRIGGER_GOTO_TARGET:
         return "PHASE_TRIGGER_GOTO_TARGET";
-    	break;
+        break;
     case PHASE_TRIGGER_LOOKAT_TARGET:
         return "PHASE_TRIGGER_LOOKAT_TARGET";
-    	break;
+        break;
     case PHASE_TRIGGER_TURNTO_LOCATION:
         return "PHASE_TRIGGER_TURNTO_LOCATION";
-    	break;
+        break;
     case PHASE_TRIGGER_DIALOG:
         return "PHASE_TRIGGER_DIALOG";
-    	break;
+        break;
     case PHASE_TRIGGER_DO_ACTION:
         return "PHASE_TRIGGER_DO_ACTION";
         break;

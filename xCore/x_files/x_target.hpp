@@ -34,7 +34,7 @@ enum platform
     #ifdef VALID_TARGET
         #define MULTIPLE_TARGETS
     #else
-		#define TARGET_DESKTOP
+        #define TARGET_DESKTOP
         #define TARGET_PLATFORM PLATFORM_PC
         #define LITTLE_ENDIAN
         #define X_EXCEPTIONS

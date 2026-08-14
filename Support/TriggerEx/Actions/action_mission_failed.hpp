@@ -27,8 +27,8 @@ public:
     virtual         const char*             GetTypeInfo     ( void )   { return "Set off the \"mission failed\" death sequence."; }
 
     virtual         xbool                   Execute         ( f32 DeltaTime );    
-    virtual			void	                OnEnumProp	    ( prop_enum& rList );
-    virtual			xbool	                OnProperty	    ( prop_query& rPropQuery );
+    virtual            void                    OnEnumProp        ( prop_enum& rList );
+    virtual            xbool                    OnProperty        ( prop_query& rPropQuery );
     virtual         const char*             GetDescription  ( void );
 
 protected:

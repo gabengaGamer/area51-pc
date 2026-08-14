@@ -63,7 +63,7 @@ public:
 
     CREATE_RTTI( bomb_object, object, object )
 
-	                            bomb_object         (void);
+                                bomb_object         (void);
                                ~bomb_object         (void);
 
     virtual bbox                GetLocalBBox        ( void ) const;

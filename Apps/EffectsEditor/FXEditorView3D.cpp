@@ -39,17 +39,17 @@ CFXEditorView3D::~CFXEditorView3D()
 //===========================================================================
 
 BEGIN_MESSAGE_MAP(CFXEditorView3D, CEditorView3D)
-	//{{AFX_MSG_MAP(CFXEditorView3D)
-	ON_WM_CREATE()
-	ON_WM_LBUTTONDOWN()
-	ON_WM_MBUTTONDOWN()
-	ON_WM_RBUTTONDOWN()
-	ON_WM_LBUTTONUP()
-	ON_WM_MBUTTONUP()
-	ON_WM_RBUTTONUP()
-	ON_WM_MOUSEWHEEL()
-	ON_WM_MOUSEMOVE()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CFXEditorView3D)
+    ON_WM_CREATE()
+    ON_WM_LBUTTONDOWN()
+    ON_WM_MBUTTONDOWN()
+    ON_WM_RBUTTONDOWN()
+    ON_WM_LBUTTONUP()
+    ON_WM_MBUTTONUP()
+    ON_WM_RBUTTONUP()
+    ON_WM_MOUSEWHEEL()
+    ON_WM_MOUSEMOVE()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -58,12 +58,12 @@ END_MESSAGE_MAP()
 #ifdef _DEBUG
 void CFXEditorView3D::AssertValid() const
 {
-	CEditorView3D::AssertValid();
+    CEditorView3D::AssertValid();
 }
 
 void CFXEditorView3D::Dump(CDumpContext& dc) const
 {
-	CEditorView3D::Dump(dc);
+    CEditorView3D::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -72,16 +72,16 @@ void CFXEditorView3D::Dump(CDumpContext& dc) const
 
 int CFXEditorView3D::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	if (CEditorView3D::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
+    if (CEditorView3D::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
     // Load our Rt-Click menu
     m_PopupMenu.LoadMenu( IDR_MENU_VIEW3D );
-	
+    
     // Initialize the Camera
     UpdateView();
 
-	return 0;
+    return 0;
 }
 
 //===========================================================================
@@ -197,7 +197,7 @@ void CFXEditorView3D::OnDraw(CDC* pDC)
 void CFXEditorView3D::OnLButtonDown(UINT nFlags, CPoint point)
 {
     // Call Base Class first, to update MouseMgr
-	CEditorView3D::OnLButtonDown(nFlags, point);
+    CEditorView3D::OnLButtonDown(nFlags, point);
 
     // Update Navigation
     SetNavigateMode();
@@ -208,7 +208,7 @@ void CFXEditorView3D::OnLButtonDown(UINT nFlags, CPoint point)
 void CFXEditorView3D::OnMButtonDown(UINT nFlags, CPoint point) 
 {
     // Call Base Class first, to update MouseMgr
-	CEditorView3D::OnMButtonDown(nFlags, point);
+    CEditorView3D::OnMButtonDown(nFlags, point);
 
     // Update Navigation
     SetNavigateMode();
@@ -219,7 +219,7 @@ void CFXEditorView3D::OnMButtonDown(UINT nFlags, CPoint point)
 void CFXEditorView3D::OnRButtonDown(UINT nFlags, CPoint point) 
 {
     // Call Base Class first, to update MouseMgr
-	CEditorView3D::OnRButtonDown(nFlags, point);
+    CEditorView3D::OnRButtonDown(nFlags, point);
 
     if( m_NavMode != NAV_NONE )
     {
@@ -233,7 +233,7 @@ void CFXEditorView3D::OnRButtonDown(UINT nFlags, CPoint point)
 void CFXEditorView3D::OnLButtonUp(UINT nFlags, CPoint point) 
 {
     // Call Base Class first, to update MouseMgr
-	CEditorView3D::OnLButtonUp(nFlags, point);
+    CEditorView3D::OnLButtonUp(nFlags, point);
 
     // Update Navigation
     SetNavigateMode();
@@ -244,7 +244,7 @@ void CFXEditorView3D::OnLButtonUp(UINT nFlags, CPoint point)
 void CFXEditorView3D::OnMButtonUp(UINT nFlags, CPoint point) 
 {
     // Call Base Class first, to update MouseMgr
-	CEditorView3D::OnMButtonUp(nFlags, point);
+    CEditorView3D::OnMButtonUp(nFlags, point);
 
     // Update Navigation
     SetNavigateMode();
@@ -255,7 +255,7 @@ void CFXEditorView3D::OnMButtonUp(UINT nFlags, CPoint point)
 void CFXEditorView3D::OnRButtonUp(UINT nFlags, CPoint point) 
 {
     // Call Base Class first, to update MouseMgr
-	CEditorView3D::OnRButtonUp(nFlags, point);
+    CEditorView3D::OnRButtonUp(nFlags, point);
 
     // Update Navigation
     SetNavigateMode();
@@ -278,7 +278,7 @@ BOOL CFXEditorView3D::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
     UpdateView();
 
     // Return whether mouse wheel scrolling is enabled or not
-	return CView::OnMouseWheel(nFlags, zDelta, pt);
+    return CView::OnMouseWheel(nFlags, zDelta, pt);
 }
 
 //===========================================================================
@@ -286,7 +286,7 @@ BOOL CFXEditorView3D::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 void CFXEditorView3D::OnMouseMove(UINT nFlags, CPoint point) 
 {
     // Call Base Class first, to update MouseMgr
-	CEditorView3D::OnMouseMove(nFlags, point);
+    CEditorView3D::OnMouseMove(nFlags, point);
 
     // If NavMode changes, we need to end the current operation and start a new one
     if( GetNavMode() != m_NavMode )

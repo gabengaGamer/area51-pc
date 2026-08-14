@@ -36,11 +36,11 @@ CEditorSettingsView::~CEditorSettingsView()
 
 
 BEGIN_MESSAGE_MAP(CEditorSettingsView, CPaletteView)
-	//{{AFX_MSG_MAP(CEditorSettingsView)
-	ON_WM_CREATE()
-	ON_WM_SIZE()
-	ON_NOTIFY(TVN_SELCHANGED, IDC_LB_REGISTERED_MGRS, OnSelchangeList)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CEditorSettingsView)
+    ON_WM_CREATE()
+    ON_WM_SIZE()
+    ON_NOTIFY(TVN_SELCHANGED, IDC_LB_REGISTERED_MGRS, OnSelchangeList)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -50,8 +50,8 @@ END_MESSAGE_MAP()
 
 void CEditorSettingsView::OnDraw(CDC* pDC)
 {
-//	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+//    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
 }
 
 //=========================================================================
@@ -61,14 +61,14 @@ void CEditorSettingsView::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CEditorSettingsView::AssertValid() const
 {
-	CPaletteView::AssertValid();
+    CPaletteView::AssertValid();
 }
 
 //=========================================================================
 
 void CEditorSettingsView::Dump(CDumpContext& dc) const
 {
-	CPaletteView::Dump(dc);
+    CPaletteView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -78,8 +78,8 @@ void CEditorSettingsView::Dump(CDumpContext& dc) const
 
 int CEditorSettingsView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
-	if (CPaletteView::OnCreate(lpCreateStruct) == -1)
-		return -1;
+    if (CPaletteView::OnCreate(lpCreateStruct) == -1)
+        return -1;
 
     if (!m_mgrTree.Create(WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | 
                          TVS_SHOWSELALWAYS, CRect(0,0,0,0), this, IDC_LB_REGISTERED_MGRS))
@@ -102,14 +102,14 @@ int CEditorSettingsView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CEditorSettingsView::OnInitialUpdate() 
 {
-	CPaletteView::OnInitialUpdate();
-}	
+    CPaletteView::OnInitialUpdate();
+}    
 
 //=========================================================================
 
 void CEditorSettingsView::OnSize(UINT nType, int cx, int cy) 
 {
-	CPaletteView::OnSize(nType, cx, cy);
+    CPaletteView::OnSize(nType, cx, cy);
     m_mgrTree.MoveWindow(0,0,cx,cy);
 }
 
@@ -129,8 +129,8 @@ void CEditorSettingsView::OnTabActivate(BOOL bActivate)
 
 void CEditorSettingsView::OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
-	
+    NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
+    
     if (pNMTreeView->itemNew.hItem)
     {
         CString strItem = ItemToPath(pNMTreeView->itemNew.hItem);

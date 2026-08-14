@@ -362,17 +362,17 @@ void ghost::OnAdvanceSimulation( f32 DeltaTime )
     // Must be very careful with this.
     m_pCurrentWeapon = GetCurrentWeaponPtr();
 
-	// Check to see if our current weapon is still in our inventory
-	if ( m_pCurrentWeapon
-		&& !m_Inventory2.HasItem( m_pCurrentWeapon->GetInvenItem() ) )
-	{
-		// we no longer have the weapon, drop it
+    // Check to see if our current weapon is still in our inventory
+    if ( m_pCurrentWeapon
+        && !m_Inventory2.HasItem( m_pCurrentWeapon->GetInvenItem() ) )
+    {
+        // we no longer have the weapon, drop it
 
-		player_virtual_weapon WeaponType = GetWeaponStateFromType( m_pCurrentWeapon->GetType() );
-		m_bWeaponInInventory[WeaponType] = FALSE;
-	    m_GuidWeaponArray[GetWeaponObjFromVirtual( WeaponType )]   = NULL;
-		m_pCurrentWeapon = NULL;
-	}
+        player_virtual_weapon WeaponType = GetWeaponStateFromType( m_pCurrentWeapon->GetType() );
+        m_bWeaponInInventory[WeaponType] = FALSE;
+        m_GuidWeaponArray[GetWeaponObjFromVirtual( WeaponType )]   = NULL;
+        m_pCurrentWeapon = NULL;
+    }
 
     actor::OnAdvanceSimulation( DeltaTime );    
 

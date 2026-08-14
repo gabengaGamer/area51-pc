@@ -1,7 +1,7 @@
 /*
- *	Machine dependent defines/includes for LAME.
+ *    Machine dependent defines/includes for LAME.
  *
- *	Copyright (c) 1999 A.L. Faber
+ *    Copyright (c) 1999 A.L. Faber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -10,7 +10,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -141,15 +141,15 @@ typedef double  FLOAT8;
 /* Various integer types */
 
 #if   defined _WIN32 && !defined __CYGWIN__
-typedef unsigned char	u_char;
+typedef unsigned char    u_char;
 #elif defined __DECALPHA__
 // do nothing
 #elif defined OS_AMIGAOS
 // do nothing
 #elif defined __DJGPP__
-typedef unsigned char	u_char;
+typedef unsigned char    u_char;
 #elif !defined __GNUC__  ||  defined __STRICT_ANSI__
-typedef unsigned char	u_char;
+typedef unsigned char    u_char;
 #else
 // do nothing
 #endif

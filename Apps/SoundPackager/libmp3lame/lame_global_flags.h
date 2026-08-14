@@ -34,9 +34,9 @@ struct lame_global_struct {
   float scale;                /* scale input by this amount before encoding
                                  at least not used for MP3 decoding          */
   float scale_left;           /* scale input of channel 0 (left) by this
-			         amount before encoding                      */
+                     amount before encoding                      */
   float scale_right;          /* scale input of channel 1 (right) by this
-			         amount before encoding                      */
+                     amount before encoding                      */
 
   /* general control params */
   int analysis;               /* collect data for a MP3 frame analyzer?      */
@@ -133,8 +133,8 @@ struct lame_global_struct {
                                      instance from one of the rarely
                                      emphased CDs), it is STRONGLY not
                                      recommended to use this, because
-				     psycho does not take it into account,
-				     and last but not least many decoders
+                     psycho does not take it into account,
+                     and last but not least many decoders
                                      don't care about these bits          */
   float msfix;              /* Naoki's adjustment of Mid/Side maskings */
 

@@ -80,8 +80,8 @@ public:
     virtual         const char*             GetTypeInfo         ( void )   { return "Base condition class, null funtionality"; } 
     virtual         const char*             GetDescription      ( void )   { return "\0"; }
     virtual         xbool                   Execute             ( guid TriggerGuid ) = 0;    
-    virtual			void	                OnEnumProp	        ( prop_enum& rList );
-    virtual			xbool	                OnProperty	        ( prop_query& rPropQuery );
+    virtual            void                    OnEnumProp            ( prop_enum& rList );
+    virtual            xbool                    OnProperty            ( prop_query& rPropQuery );
 
 #ifdef X_EDITOR
     // Implement any of these functions in your derived classes for property validation

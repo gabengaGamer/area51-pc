@@ -46,13 +46,13 @@
     ;
     ;   Update diffuse coords
     ;
-	mul  r2.xy,v2.xy,c-8.xy
-	add  r2.xy,r2.xy,c-9.xy ; scrolling uvs
-	mov oT0.xy,r2
+    mul  r2.xy,v2.xy,c-8.xy
+    add  r2.xy,r2.xy,c-9.xy ; scrolling uvs
+    mov oT0.xy,r2
 
     ;--------------------------------------------------------------------------
     ;
     ;   Update detail coords
     ;
-	mul  r3.xy,v2,c-9.zw ; scaling
-	mov oT2.xy,r3
+    mul  r3.xy,v2,c-9.zw ; scaling
+    mov oT2.xy,r3

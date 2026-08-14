@@ -28,7 +28,7 @@
 
 enum profile_options_controls
 {
-	IDC_PROFILE_OPTIONS_CONTROLS,
+    IDC_PROFILE_OPTIONS_CONTROLS,
     IDC_PROFILE_OPTIONS_AVATAR,
     IDC_PROFILE_OPTIONS_DIFFICULTY,
     IDC_PROFILE_ONLINE_STATUS,
@@ -97,7 +97,7 @@ private:
 protected:
     ui_frame*           m_pFrame1;
 
-    ui_button*			m_pButtonControls;
+    ui_button*            m_pButtonControls;
     ui_button*          m_pButtonAvatar;
     ui_button*          m_pButtonDifficulty;
     ui_button*          m_pButtonOnlineStatus;

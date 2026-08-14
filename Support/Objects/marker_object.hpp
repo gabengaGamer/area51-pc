@@ -40,8 +40,8 @@ public:
     virtual         s32         GetMaterial     ( void ) const { return MAT_TYPE_NULL; }
 
 #ifdef X_EDITOR
-    virtual			void	    OnEnumProp		( prop_enum& List );
-    virtual			xbool	    OnProperty		( prop_query& I );
+    virtual            void        OnEnumProp        ( prop_enum& List );
+    virtual            xbool        OnProperty        ( prop_query& I );
     virtual         void        OnMove          ( const vector3& NewPos   );      
     virtual         void        OnTransform     ( const matrix4& L2W      );
     virtual         void        OnRender        ( void );

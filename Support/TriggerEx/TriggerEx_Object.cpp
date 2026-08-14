@@ -112,7 +112,7 @@ struct trigger_ex_object_desc : public object_desc
         "SCRIPT",
 
         object::ATTR_NEEDS_LOGIC_TIME       |
-        object::ATTR_SPACIAL_ENTRY		    |
+        object::ATTR_SPACIAL_ENTRY            |
         object::ATTR_COLLIDABLE             |
         object::ATTR_COLLISION_PERMEABLE    |
         object::ATTR_BLOCKS_ALL_ACTORS      |
@@ -749,7 +749,7 @@ void  trigger_ex_object::OnRenderActions ( void )
 
 //=========================================================================
 
-void trigger_ex_object::OnColCheck	( void )
+void trigger_ex_object::OnColCheck    ( void )
 {
     if( g_game_running && m_TriggerType == TRIGGER_TYPE_SPATIAL)
     {
@@ -2521,7 +2521,7 @@ void trigger_ex_object::GetValidLabels( xbool bElseAction, char* pLabels )
     }
 
     pLabels[CurrentIndex] = 0;
-	pLabels[CurrentIndex+1] = 0;
+    pLabels[CurrentIndex+1] = 0;
 }
 
 //=============================================================================

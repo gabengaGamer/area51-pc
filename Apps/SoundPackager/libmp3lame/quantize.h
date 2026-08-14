@@ -10,7 +10,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -26,17 +26,17 @@
 
 void iteration_loop( lame_global_flags *gfp,
                      FLOAT8 pe[2][2],
-		     FLOAT8 ms_ratio[2], 
-		     III_psy_ratio ratio[2][2]);
+             FLOAT8 ms_ratio[2], 
+             III_psy_ratio ratio[2][2]);
 
 void VBR_iteration_loop( lame_global_flags *gfp,
-			 FLOAT8 pe[2][2],
-			 FLOAT8 ms_ratio[2], 
-			 III_psy_ratio ratio[2][2]);
+             FLOAT8 pe[2][2],
+             FLOAT8 ms_ratio[2], 
+             III_psy_ratio ratio[2][2]);
 
 void ABR_iteration_loop( lame_global_flags *gfp,
-			 FLOAT8 pe[2][2],
-			 FLOAT8 ms_ratio[2], 
-			 III_psy_ratio ratio[2][2]);
+             FLOAT8 pe[2][2],
+             FLOAT8 ms_ratio[2], 
+             III_psy_ratio ratio[2][2]);
 
 #endif /* LAME_QUANTIZE_H */

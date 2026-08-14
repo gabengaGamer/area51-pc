@@ -25,7 +25,7 @@
 /*
 ** Maximum size for string table.
 */
-#define MAXSTRTB	cast_int(luaM_limitN(INT_MAX, TString*))
+#define MAXSTRTB    cast_int(luaM_limitN(INT_MAX, TString*))
 
 /*
 ** Initial size for the string table (must be power of 2).
@@ -316,7 +316,7 @@ static void f_newext (lua_State *L, void *ud) {
 
 
 TString *luaS_newextlstr (lua_State *L,
-	          const char *s, size_t len, lua_Alloc falloc, void *ud) {
+              const char *s, size_t len, lua_Alloc falloc, void *ud) {
   struct NewExt ne;
   if (!falloc) {
     ne.kind = LSTRFIX;

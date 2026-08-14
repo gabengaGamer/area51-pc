@@ -96,14 +96,14 @@ void action_change_perception::OnEnumProp ( prop_enum& List )
 
     if (m_bIsBeginChange)
     {
-        List.PropEnumFloat	 ( "GameTimeDilation", "1.0 is standard, less is slower, more is greater", 0 );
-        List.PropEnumFloat	 ( "AudioTimeDilation", "1.0 is standard, less is slower, more is greater", 0 );
-        List.PropEnumFloat	 ( "ForwardSpeedFactor", "1.0 is standard, less is slower, more is greater", 0 );
-        List.PropEnumFloat	 ( "TurnRateFactor", "1.0 is standard, less is slower, more is greater", 0 );
+        List.PropEnumFloat     ( "GameTimeDilation", "1.0 is standard, less is slower, more is greater", 0 );
+        List.PropEnumFloat     ( "AudioTimeDilation", "1.0 is standard, less is slower, more is greater", 0 );
+        List.PropEnumFloat     ( "ForwardSpeedFactor", "1.0 is standard, less is slower, more is greater", 0 );
+        List.PropEnumFloat     ( "TurnRateFactor", "1.0 is standard, less is slower, more is greater", 0 );
     }
 
-    List.PropEnumFloat	 ( "TimeLength", "Over what amount of time do these changes take place (in seconds).", 0 );
-    List.PropEnumBool 	 ( "Block", "Should we block for the specified time length?", 0 );
+    List.PropEnumFloat     ( "TimeLength", "Over what amount of time do these changes take place (in seconds).", 0 );
+    List.PropEnumBool      ( "Block", "Should we block for the specified time length?", 0 );
 
     //object info
     actions_ex_base::OnEnumProp( List );

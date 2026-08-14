@@ -1212,7 +1212,7 @@ void object::OnAttachedMove(       s32      iAttachPt,
 
 void object::OnRenderShadowCast( u64 ProjMask )
 {
-    // Lookup geometry	
+    // Lookup geometry    
     render_inst* pRenderInst = GetRenderInstPtr();
     if( !pRenderInst )
         return;
@@ -1233,11 +1233,11 @@ void object::OnRenderShadowCast( u64 ProjMask )
 
     // Setup render flags
     const u32 Flags = NeedsClipping() ? render::CLIPPED : 0;
-	
-	// Render
+    
+    // Render
     pRenderInst->RenderShadowCast( pMatrices, 
-	                               Flags, 
-								   ProjMask );
+                                   Flags, 
+                                   ProjMask );
 }
 
 //=============================================================================

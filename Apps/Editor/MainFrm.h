@@ -12,20 +12,20 @@
 class CMainFrame : public CMDIFrameWnd
 {
 public:  // control bar embedded members
-	enum ALIGNMENT { left, top, right, bottom };
+    enum ALIGNMENT { left, top, right, bottom };
 
     void AddResDesc ( int ID );
-	void ShowMDITabs();
-	void AddLogo();
-	void RemoveLogo();
+    void ShowMDITabs();
+    void AddLogo();
+    void RemoveLogo();
     void AddProgress();
     void RemoveProgress();
 
 
-	CWnd             m_wndLogoPane;
-	CWnd	         m_trayIcon;
-	COutputBar       m_wndOutputBar;
-	CStatusBar       m_wndStatusBar;
+    CWnd             m_wndLogoPane;
+    CWnd             m_trayIcon;
+    COutputBar       m_wndOutputBar;
+    CStatusBar       m_wndStatusBar;
     CProgressCtrl*   m_pwndProgCtrl;
     CProgressCtrl*   m_pwndProgCtrl2;
     static CMainFrame* s_pMainFrame;
@@ -42,8 +42,8 @@ protected:
     CRecentFileList*    m_pRecentFiles;
 
 public:
-	// Overrode CWnd implementation to restore saved window position.
-	BOOL ShowWindowEx(int nCmdShow);
+    // Overrode CWnd implementation to restore saved window position.
+    BOOL ShowWindowEx(int nCmdShow);
 
 /////////////////////////////////////////////////////////////////////////////
 // MFC
@@ -51,9 +51,9 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	CMainFrame();
-	DECLARE_DYNAMIC(CMainFrame)
-	virtual ~CMainFrame();
+    CMainFrame();
+    DECLARE_DYNAMIC(CMainFrame)
+    virtual ~CMainFrame();
     
     void LoadProjectFromCommandLine( void );
     bool DoFileOpen( const char* pFileName = NULL );
@@ -64,52 +64,52 @@ protected:
 /////////////////////////////////////////////////////////////////////////////
 public:
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CMainFrame)
-	public:
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CMainFrame)
+    public:
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
     virtual void OnUpdateFrameTitle(BOOL Nada);
 //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 public:
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	//{{AFX_MSG(CMainFrame)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnClose();
+    //{{AFX_MSG(CMainFrame)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnClose();
     afx_msg LRESULT UpdateStatusBar(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT ModifyMenuBar(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnTrayIconNotify(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnTrayIconNotify(WPARAM wParam, LPARAM lParam);
     afx_msg void OnUpdateAdditionalViews(CCmdUI* pCmdUI);
     afx_msg void OnAdditionalView(UINT nID);
-	afx_msg void OnMenuFileClose();
-	afx_msg void OnUpdateMenuFileClose(CCmdUI* pCmdUI);
-	afx_msg void OnMenuFileNew();
-	afx_msg void OnUpdateMenuFileNew(CCmdUI* pCmdUI);
-	afx_msg void OnMenuFileOpen();
-	afx_msg void OnUpdateMenuFileOpen(CCmdUI* pCmdUI);
-	afx_msg void OnMenuFileSave();
-	afx_msg void OnUpdateMenuFileSave(CCmdUI* pCmdUI);
-	afx_msg void OnEditorSaveSettings();
-	afx_msg void OnMenuFileExport();
+    afx_msg void OnMenuFileClose();
+    afx_msg void OnUpdateMenuFileClose(CCmdUI* pCmdUI);
+    afx_msg void OnMenuFileNew();
+    afx_msg void OnUpdateMenuFileNew(CCmdUI* pCmdUI);
+    afx_msg void OnMenuFileOpen();
+    afx_msg void OnUpdateMenuFileOpen(CCmdUI* pCmdUI);
+    afx_msg void OnMenuFileSave();
+    afx_msg void OnUpdateMenuFileSave(CCmdUI* pCmdUI);
+    afx_msg void OnEditorSaveSettings();
+    afx_msg void OnMenuFileExport();
     afx_msg void OnMenuFileExportTo3DMax();
     afx_msg void OnMenuFileBuildDFS();
-	afx_msg void OnUpdateMenuFileExport(CCmdUI* pCmdUI);   
-	afx_msg void OnMenuFileImport();
-	afx_msg void OnUpdateMenuFileImport(CCmdUI* pCmdUI);   
-	afx_msg void OnUpdateMruList(CCmdUI* pCmdUI);
-	afx_msg BOOL OnMenuFileMru( UINT nID );
+    afx_msg void OnUpdateMenuFileExport(CCmdUI* pCmdUI);   
+    afx_msg void OnMenuFileImport();
+    afx_msg void OnUpdateMenuFileImport(CCmdUI* pCmdUI);   
+    afx_msg void OnUpdateMruList(CCmdUI* pCmdUI);
+    afx_msg BOOL OnMenuFileMru( UINT nID );
     afx_msg void OnViewResetWindows();
     afx_msg void OnUpdateCleanupZones(CCmdUI* pCmdUI);   
     afx_msg void OnCleanupZones();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 extern xbool g_bAutoLoad;

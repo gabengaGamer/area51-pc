@@ -57,18 +57,18 @@
 
 #if defined(_MSC_VER)
 #pragma warning( disable : 4305 )
-	typedef __int8  int8_t;
-	typedef __int16 int16_t;
-	typedef __int32 int32_t;
-	typedef __int64 int64_t;
+    typedef __int8  int8_t;
+    typedef __int16 int16_t;
+    typedef __int32 int32_t;
+    typedef __int64 int64_t;
 
-	typedef unsigned __int8  uint8_t;
-	typedef unsigned __int16 uint16_t;
-	typedef unsigned __int32 uint32_t;
-	typedef unsigned __int64 uint64_t;
+    typedef unsigned __int8  uint8_t;
+    typedef unsigned __int16 uint16_t;
+    typedef unsigned __int32 uint32_t;
+    typedef unsigned __int64 uint64_t;
 
-	typedef float  float32_t;
-	typedef double float64_t;
+    typedef float  float32_t;
+    typedef double float64_t;
 #elif defined (__GNUC__)
 #define uint8_t unsigned char
 #define uint16_t unsigned short

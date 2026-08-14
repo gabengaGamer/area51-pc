@@ -15,7 +15,7 @@
 #include "ViewportCamera.hpp"
 
 //------------------------------------------------------------------------------+
-//	Constructor / Destructor
+//    Constructor / Destructor
 //------------------------------------------------------------------------------+
 
 ViewportCamera::ViewportCamera( void )
@@ -48,11 +48,11 @@ ViewportCamera::~ViewportCamera( void )
 }
 
 //------------------------------------------------------------------------------+
-//	Functions - Public
+//    Functions - Public
 //------------------------------------------------------------------------------+
 
 //--------------------------------------------------------------+
-//	GetPos
+//    GetPos
 //--------------------------------------------------------------+
 
 const vector3&      ViewportCamera::GetPosition( void ) const
@@ -61,7 +61,7 @@ const vector3&      ViewportCamera::GetPosition( void ) const
 }
 
 //--------------------------------------------------------------+
-//	GetRotation
+//    GetRotation
 //--------------------------------------------------------------+
 
 const quaternion&   ViewportCamera::GetRotation( void ) const
@@ -70,7 +70,7 @@ const quaternion&   ViewportCamera::GetRotation( void ) const
 }
 
 //--------------------------------------------------------------+
-//	GetTargetPos
+//    GetTargetPos
 //--------------------------------------------------------------+
 
 const vector3   ViewportCamera::GetTargetPos( void ) const
@@ -80,7 +80,7 @@ const vector3   ViewportCamera::GetTargetPos( void ) const
 }
 
 //--------------------------------------------------------------+
-//	GetUndoCount
+//    GetUndoCount
 //--------------------------------------------------------------+
 
 const s32   ViewportCamera::GetUndoCount( void ) const
@@ -89,7 +89,7 @@ const s32   ViewportCamera::GetUndoCount( void ) const
 }
 
 //--------------------------------------------------------------+
-//	GetRedoCount
+//    GetRedoCount
 //--------------------------------------------------------------+
 
 const s32   ViewportCamera::GetRedoCount( void ) const
@@ -98,7 +98,7 @@ const s32   ViewportCamera::GetRedoCount( void ) const
 }
 
 //--------------------------------------------------------------+
-//	Navigate_Begin
+//    Navigate_Begin
 //--------------------------------------------------------------+
 
 void    ViewportCamera::Navigate_Begin( void )
@@ -109,7 +109,7 @@ void    ViewportCamera::Navigate_Begin( void )
 }
 
 //--------------------------------------------------------------+
-//	Navigate_End
+//    Navigate_End
 //--------------------------------------------------------------+
 
 void    ViewportCamera::Navigate_End( void )
@@ -142,7 +142,7 @@ void    ViewportCamera::Navigate_End( void )
 }
 
 //--------------------------------------------------------------+
-//	Navigate_Cancel
+//    Navigate_Cancel
 //--------------------------------------------------------------+
 
 void    ViewportCamera::Navigate_Cancel( void )
@@ -153,7 +153,7 @@ void    ViewportCamera::Navigate_Cancel( void )
 }
 
 //--------------------------------------------------------------+
-//	Navigate_Undo
+//    Navigate_Undo
 //--------------------------------------------------------------+
 
 void    ViewportCamera::Navigate_Undo( void )
@@ -179,7 +179,7 @@ void    ViewportCamera::Navigate_Undo( void )
 }
 
 //--------------------------------------------------------------+
-//	Navigate_Redo
+//    Navigate_Redo
 //--------------------------------------------------------------+
 
 void    ViewportCamera::Navigate_Redo( void )
@@ -205,7 +205,7 @@ void    ViewportCamera::Navigate_Redo( void )
 }
 
 //--------------------------------------------------------------+
-//	Pan - Move in Camera XY
+//    Pan - Move in Camera XY
 //--------------------------------------------------------------+
 
 void    ViewportCamera::Pan( f32 DeltaX, f32 DeltaY )
@@ -215,7 +215,7 @@ void    ViewportCamera::Pan( f32 DeltaX, f32 DeltaY )
 }
 
 //--------------------------------------------------------------+
-//	Fly - Move in Camera XZ
+//    Fly - Move in Camera XZ
 //--------------------------------------------------------------+
 
 void    ViewportCamera::Fly( f32 DeltaX, f32 DeltaY )
@@ -225,7 +225,7 @@ void    ViewportCamera::Fly( f32 DeltaX, f32 DeltaY )
 }
 
 //--------------------------------------------------------------+
-//	Look    - DeltaX rotates about World  Y
+//    Look    - DeltaX rotates about World  Y
 //          - DeltaY rotates about Camera X
 //--------------------------------------------------------------+
 
@@ -244,7 +244,7 @@ void    ViewportCamera::Look( f32 DeltaX, f32 DeltaY )
 }
 
 //--------------------------------------------------------------+
-//	Orbit   - DeltaX rotates about focus point in World  Y
+//    Orbit   - DeltaX rotates about focus point in World  Y
 //          - DeltaY rotates about focus point in Camera X
 //--------------------------------------------------------------+
 
@@ -273,7 +273,7 @@ void    ViewportCamera::Orbit( f32 DeltaX, f32 DeltaY )
 }
 
 //--------------------------------------------------------------+
-//	OrbitPoint  - DeltaX rotates about pivot point in World  Y
+//    OrbitPoint  - DeltaX rotates about pivot point in World  Y
 //              - DeltaY rotates about pivot point in Camera X
 //--------------------------------------------------------------+
 
@@ -306,7 +306,7 @@ void    ViewportCamera::OrbitPoint( f32 DeltaX, f32 DeltaY, const vector3& Pivot
 }
 
 //--------------------------------------------------------------+
-//	Zoom
+//    Zoom
 //--------------------------------------------------------------+
 
 void    ViewportCamera::Zoom( f32 DeltaY )
@@ -320,7 +320,7 @@ void    ViewportCamera::Zoom( f32 DeltaY )
 }
 
 //--------------------------------------------------------------+
-//	ZoomRegion
+//    ZoomRegion
 //--------------------------------------------------------------+
 
 void    ViewportCamera::ZoomRegion( f32 NormLeft, f32 NormTop, f32 NormRight, f32 NormBottom )
@@ -386,7 +386,7 @@ void    ViewportCamera::ZoomRegion( f32 NormLeft, f32 NormTop, f32 NormRight, f3
 }
 
 //--------------------------------------------------------------+
-//	ZoomExtents
+//    ZoomExtents
 //--------------------------------------------------------------+
 
 void    ViewportCamera::ZoomExtents( const bbox& World_Aligned_Bounds )

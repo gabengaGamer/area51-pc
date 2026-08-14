@@ -13,7 +13,7 @@
 
 #define vmcase(l)     L_##l:
 
-#define vmbreak		vmfetch(); vmdispatch(GET_OPCODE(i));
+#define vmbreak        vmfetch(); vmdispatch(GET_OPCODE(i));
 
 
 static const void *const disptab[NUM_OPCODES] = {

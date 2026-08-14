@@ -14,7 +14,7 @@ class CKeyframeView : public CControlBar
 {
 // Construction
 public:
-	CKeyframeView();
+    CKeyframeView();
 
 // Attributes
 public:
@@ -24,21 +24,21 @@ public:
     void  OnUpdateCmdUI( CFrameWnd* pTarget, BOOL bDisableIfNoHndler );
     CSize CalcFixedLayout( BOOL bStretch, BOOL bHorz );
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CKeyframeView)
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CKeyframeView)
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CKeyframeView();
+    virtual ~CKeyframeView();
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CKeyframeView)
-	afx_msg void OnPaint();
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CKeyframeView)
+    afx_msg void OnPaint();
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

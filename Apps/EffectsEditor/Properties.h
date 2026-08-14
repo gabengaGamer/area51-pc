@@ -19,7 +19,7 @@ class CProperties : public CXTDockWindow
 {
 // Construction
 public:
-	CProperties();
+    CProperties();
 
 // Attributes
 public:
@@ -31,10 +31,10 @@ public:
     CGridItemInfo*  AddGridDataElement ( CString strName,
                                          CString strValue,
                                          CString strComment,
-							             CGridItemInfo::CONTROLTYPE type,
+                                         CGridItemInfo::CONTROLTYPE type,
                                          COLORREF fieldColor,
                                          int iXaIndex,
-							             BOOL bReadOnly,
+                                         BOOL bReadOnly,
                                          BOOL bMustEnum,
                                          BOOL bHeader );
 
@@ -42,23 +42,23 @@ public:
     void EraseAll           ( void );
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CProperties)
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CProperties)
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CProperties();
+    virtual ~CProperties();
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CProperties)
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    //{{AFX_MSG(CProperties)
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg LRESULT OnItemChange(WPARAM, LPARAM);
-	afx_msg void OnWindowPosChanged(WINDOWPOS FAR* lpwndpos);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    afx_msg void OnWindowPosChanged(WINDOWPOS FAR* lpwndpos);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

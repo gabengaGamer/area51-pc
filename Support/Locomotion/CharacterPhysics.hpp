@@ -55,14 +55,14 @@ public:
                                                     xbool    ReflingOnly );
     xbool               Flung               ( void ) { return m_bFlingMode; }
     void                SetUseGravity       ( xbool bEnable )   { m_bUseGravity = bEnable ; }
-	void				SetGravityAccel		( const f32& GravityAccel ); 
-	f32					GetGravityAccel		( void );
-	xbool				GetFallMode			( void );
-	xbool				GetJumpMode			( void );
-	void				SetAirControl		( const f32& AirControl ) { m_AirControl = AirControl; }
+    void                SetGravityAccel        ( const f32& GravityAccel ); 
+    f32                    GetGravityAccel        ( void );
+    xbool                GetFallMode            ( void );
+    xbool                GetJumpMode            ( void );
+    void                SetAirControl        ( const f32& AirControl ) { m_AirControl = AirControl; }
     void                SetActorCollisionRadius( f32 newRadius)  { m_ActorCollisionRadius = newRadius; }
     f32                 GetActorCollisionRadius( void )  { return m_ActorCollisionRadius; }
-	xbool				GetNavCollided		( void ) const { return m_bNavCollided ; }
+    xbool                GetNavCollided        ( void ) const { return m_bNavCollided ; }
     guid                GetGuid             ( void ) { return m_Guid ; }
     
     void                SetDeltaPos         ( vector3 &DeltaPos );
@@ -252,26 +252,26 @@ inline bbox character_physics::GetBBox( void ) const
 
 inline void character_physics::SetGravityAccel( const f32& fGravityAccel )
 {
-	m_GravityAcceleration = fGravityAccel;
+    m_GravityAcceleration = fGravityAccel;
 }
 
 //=========================================================================
 
-inline f32	character_physics::GetGravityAccel( void )
+inline f32    character_physics::GetGravityAccel( void )
 {
-	return m_GravityAcceleration;
+    return m_GravityAcceleration;
 }
 
 //=========================================================================
 inline xbool character_physics::GetFallMode( void )
 {
-	return m_bFallMode;
+    return m_bFallMode;
 }
 
 //=========================================================================
 inline xbool character_physics::GetJumpMode( void )
 {
-	return m_bJumpMode;
+    return m_bJumpMode;
 }
 
 //=========================================================================

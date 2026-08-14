@@ -23,8 +23,8 @@ public:
     virtual         const char*         GetTypeInfo ( void )    { return "Changes the players strain."; } 
 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
 
     virtual         action_types        GetType         ( void ) { return GetTypeStatic();}
     static          action_types        GetTypeStatic   ( void ) { return TYPE_ACTION_CHANGE_PLAYER_STRAIN;}

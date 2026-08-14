@@ -219,7 +219,7 @@ static int isneg (const char **s) {
 
 /* maximum number of significant digits to read (to avoid overflows
    even with single floats) */
-#define MAXSIGDIG	30
+#define MAXSIGDIG    30
 
 /*
 ** convert a hexadecimal numeric string to a number, following
@@ -280,7 +280,7 @@ static lua_Number lua_strx2number (const char *s, char **endptr) {
 
 /* maximum length of a numeral to be converted to a number */
 #if !defined (L_MAXLENNUM)
-#define L_MAXLENNUM	200
+#define L_MAXLENNUM    200
 #endif
 
 /*
@@ -333,8 +333,8 @@ static const char *l_str2d (const char *s, lua_Number *result) {
 }
 
 
-#define MAXBY10		cast(lua_Unsigned, LUA_MAXINTEGER / 10)
-#define MAXLASTD	cast_int(LUA_MAXINTEGER % 10)
+#define MAXBY10        cast(lua_Unsigned, LUA_MAXINTEGER / 10)
+#define MAXLASTD    cast_int(LUA_MAXINTEGER % 10)
 
 static const char *l_str2int (const char *s, lua_Integer *result) {
   lua_Unsigned a = 0;
@@ -481,7 +481,7 @@ void luaO_tostring (lua_State *L, TValue *obj) {
 ** (LUA_IDSIZE + LUA_N2SBUFFSZ) + a minimal space for basic messages,
 ** so that 'luaG_addinfo' can work directly on the static buffer.
 */
-#define BUFVFS		cast_uint(LUA_IDSIZE + LUA_N2SBUFFSZ + 95)
+#define BUFVFS        cast_uint(LUA_IDSIZE + LUA_N2SBUFFSZ + 95)
 
 /*
 ** Buffer used by 'luaO_pushvfstring'. 'err' signals an error while
@@ -673,11 +673,11 @@ const char *luaO_pushfstring (lua_State *L, const char *fmt, ...) {
 /* }================================================================== */
 
 
-#define RETS	"..."
-#define PRE	"[string \""
-#define POS	"\"]"
+#define RETS    "..."
+#define PRE    "[string \""
+#define POS    "\"]"
 
-#define addstr(a,b,l)	( memcpy(a,b,(l) * sizeof(char)), a += (l) )
+#define addstr(a,b,l)    ( memcpy(a,b,(l) * sizeof(char)), a += (l) )
 
 void luaO_chunkid (char *out, const char *source, size_t srclen) {
   size_t bufflen = LUA_IDSIZE;  /* free space in buffer */

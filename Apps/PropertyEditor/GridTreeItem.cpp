@@ -24,19 +24,19 @@ m_bMustReloadData(FALSE)
 
 CGridTreeItem::~CGridTreeItem()
 {
-	// delete child nodes
-	POSITION pos = m_listChild.GetHeadPosition();
-	while (pos != NULL)
-	{
-		CGridTreeItem* pItem = (CGridTreeItem*)m_listChild.GetNext(pos);
-		if(pItem!=NULL)
-		{
-			if(pItem->m_lpNodeInfo!=NULL)
-				delete pItem->m_lpNodeInfo;
-			delete pItem;
-		}
-	}
-	m_listChild.RemoveAll();
+    // delete child nodes
+    POSITION pos = m_listChild.GetHeadPosition();
+    while (pos != NULL)
+    {
+        CGridTreeItem* pItem = (CGridTreeItem*)m_listChild.GetNext(pos);
+        if(pItem!=NULL)
+        {
+            if(pItem->m_lpNodeInfo!=NULL)
+                delete pItem->m_lpNodeInfo;
+            delete pItem;
+        }
+    }
+    m_listChild.RemoveAll();
 
     m_strIdentifier.Empty();
 }

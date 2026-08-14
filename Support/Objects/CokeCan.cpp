@@ -287,15 +287,15 @@ static struct coke_can_desc : public object_desc
                                         "PROPS",
 
                                         object::ATTR_SPACIAL_ENTRY          |
-										object::ATTR_NEEDS_LOGIC_TIME		|
-                                        object::ATTR_SOUND_SOURCE			|
+                                        object::ATTR_NEEDS_LOGIC_TIME        |
+                                        object::ATTR_SOUND_SOURCE            |
                                         object::ATTR_COLLIDABLE             | 
                                         object::ATTR_BLOCKS_ALL_PROJECTILES | 
                                         object::ATTR_BLOCKS_ALL_ACTORS      | 
                                         object::ATTR_BLOCKS_RAGDOLL         | 
                                         object::ATTR_DAMAGEABLE             |
                                         object::ATTR_NO_RUNTIME_SAVE        |
-										object::ATTR_CAST_SHADOWS           |
+                                        object::ATTR_CAST_SHADOWS           |
                                         object::ATTR_RENDERABLE,
 
                                         FLAGS_GENERIC_EDITOR_CREATE | FLAGS_NO_ICON |

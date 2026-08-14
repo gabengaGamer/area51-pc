@@ -15,8 +15,8 @@
 class CFXEditorView3D : public CEditorView3D
 {
     protected:
-	    CFXEditorView3D();           // protected constructor used by dynamic creation
-	    DECLARE_DYNCREATE(CFXEditorView3D)
+        CFXEditorView3D();           // protected constructor used by dynamic creation
+        DECLARE_DYNCREATE(CFXEditorView3D)
 
     //-------------------------------------------------------------------------
     // General Functions
@@ -58,34 +58,34 @@ class CFXEditorView3D : public CEditorView3D
     // MFC Stuff below
     //-------------------------------------------------------------------------
     // Overrides
-	    // ClassWizard generated virtual function overrides
-	    //{{AFX_VIRTUAL(CFXEditorView3D)
-	    protected:
-	    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	    //}}AFX_VIRTUAL
+        // ClassWizard generated virtual function overrides
+        //{{AFX_VIRTUAL(CFXEditorView3D)
+        protected:
+        virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+        //}}AFX_VIRTUAL
 
     // Implementation
     protected:
-	    virtual ~CFXEditorView3D();
+        virtual ~CFXEditorView3D();
     #ifdef _DEBUG
-	    virtual void AssertValid() const;
-	    virtual void Dump(CDumpContext& dc) const;
+        virtual void AssertValid() const;
+        virtual void Dump(CDumpContext& dc) const;
     #endif
 
-	    // Generated message map functions
+        // Generated message map functions
     protected:
-	    //{{AFX_MSG(CFXEditorView3D)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnMButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
-	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	//}}AFX_MSG
-	    DECLARE_MESSAGE_MAP()
+        //{{AFX_MSG(CFXEditorView3D)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+    afx_msg void OnMButtonUp(UINT nFlags, CPoint point);
+    afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+    afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+    afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+    //}}AFX_MSG
+        DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

@@ -37,7 +37,7 @@ void SwapEndian( matrix4& V );
 
 event_data_format::event_data_format( void )
 {
-	m_Flags = 0;
+    m_Flags = 0;
 }
 
 //=========================================================================
@@ -64,45 +64,45 @@ s32 event_data_format::CountSetBits( s32 NumBitsBefore, s32 NumBitsPossible ) co
 
 void event_data_format::SetInt( s32 Idx )
 {
-	u32 Mask = 1;
-	Mask <<= Idx;
-	m_Flags |= Mask;
+    u32 Mask = 1;
+    Mask <<= Idx;
+    m_Flags |= Mask;
 }
 
 //=========================================================================
 
 void event_data_format::SetFloat( s32 Idx )
 {
-	u32 Mask = 1;
-	Mask <<= EVENT_MAX_INTS + Idx;
-	m_Flags |= Mask;
+    u32 Mask = 1;
+    Mask <<= EVENT_MAX_INTS + Idx;
+    m_Flags |= Mask;
 }
 
 //=========================================================================
 
 void event_data_format::SetPoint( s32 Idx )
 {
-	u32 Mask = 1;
-	Mask <<= EVENT_MAX_INTS + EVENT_MAX_FLOATS + Idx;
-	m_Flags |= Mask;
+    u32 Mask = 1;
+    Mask <<= EVENT_MAX_INTS + EVENT_MAX_FLOATS + Idx;
+    m_Flags |= Mask;
 }
 
 //=========================================================================
 
 void event_data_format::SetBool( s32 Idx )
 {
-	u32 Mask = 1;
-	Mask <<= EVENT_MAX_INTS + EVENT_MAX_FLOATS + EVENT_MAX_POINTS + Idx;
-	m_Flags |= Mask;
+    u32 Mask = 1;
+    Mask <<= EVENT_MAX_INTS + EVENT_MAX_FLOATS + EVENT_MAX_POINTS + Idx;
+    m_Flags |= Mask;
 }
 
 //=========================================================================
 
 void event_data_format::SetString( s32 Idx )
 {
-	u32 Mask = 1;
-	Mask <<= EVENT_MAX_INTS + EVENT_MAX_FLOATS + EVENT_MAX_POINTS + EVENT_MAX_BOOLS + Idx;
-	m_Flags |= Mask;
+    u32 Mask = 1;
+    Mask <<= EVENT_MAX_INTS + EVENT_MAX_FLOATS + EVENT_MAX_POINTS + EVENT_MAX_BOOLS + Idx;
+    m_Flags |= Mask;
 }
 
 //=========================================================================
@@ -141,7 +141,7 @@ void event_data::SetName( const char* Name )
 void event_data::StoreInt( s32 Idx, s32 Value )
 {
     m_Ints[Idx] = Value;
-	m_DataFormat.SetInt( Idx );
+    m_DataFormat.SetInt( Idx );
 }
 
 //=========================================================================
@@ -149,7 +149,7 @@ void event_data::StoreInt( s32 Idx, s32 Value )
 void event_data::StoreFloat( s32 Idx, f32 Value )
 {
     m_Floats[Idx] = Value;
-	m_DataFormat.SetFloat( Idx );
+    m_DataFormat.SetFloat( Idx );
 }
 
 //=========================================================================
@@ -157,7 +157,7 @@ void event_data::StoreFloat( s32 Idx, f32 Value )
 void event_data::StorePoint( s32 Idx, const vector3& Value )
 {
     m_Points[Idx] = Value;
-	m_DataFormat.SetPoint( Idx );
+    m_DataFormat.SetPoint( Idx );
 }
 
 //=========================================================================
@@ -165,7 +165,7 @@ void event_data::StorePoint( s32 Idx, const vector3& Value )
 void event_data::StoreBool( s32 Idx, xbool Value )
 {
     m_Bools[Idx] = Value;
-	m_DataFormat.SetBool( Idx );
+    m_DataFormat.SetBool( Idx );
 }
 
 //=========================================================================
@@ -174,7 +174,7 @@ void event_data::StoreString( s32 Idx, const char* String )
 {
     if ( NULL == String ) return;
     x_strncpy( m_Strings[Idx], String, EVENT_MAX_STRING_LENGTH );
-	m_DataFormat.SetString( Idx );
+    m_DataFormat.SetString( Idx );
 }
 
 //=========================================================================
@@ -293,7 +293,7 @@ void anim_event::SetData( const event_data& Data )
     //
     // Store all the data
     //
-	m_ByteStreamDataOffset = m_pEventByteStream->GetLength();
+    m_ByteStreamDataOffset = m_pEventByteStream->GetLength();
 
     m_pEventByteStream->Append( (byte*)(Data.Ints()), sizeof( s32 ) * Data.nInts() );
     m_pEventByteStream->Append( (byte*)(Data.Floats()), sizeof( f32 ) * Data.nFloats() );
@@ -346,8 +346,8 @@ void anim_event::SetData( const event_data& Data )
 
     for ( i = 0; i < Data.nPoints(); ++i )
     {
-		const vector3 Point1 = GetPoint( i );
-		const vector3 Point2 = (Data.Points())[i];
+        const vector3 Point1 = GetPoint( i );
+        const vector3 Point2 = (Data.Points())[i];
         ASSERT( (Point1 - Point2).LengthSquared() < 0.0001f );
     }
 
@@ -367,23 +367,23 @@ void anim_event::SetData( const event_data& Data )
     ASSERT( x_strlen( Data.GetName() ) <= EVENT_MAX_STRING_LENGTH );
     ASSERT( x_strlen( NewData.GetType() ) <= EVENT_MAX_STRING_LENGTH );
     ASSERT( x_strlen( NewData.GetName() ) <= EVENT_MAX_STRING_LENGTH );
-	ASSERT( !x_strcmp( NewData.GetType(), Data.GetType() ) );
-	ASSERT( !x_strcmp( NewData.GetName(), Data.GetName() ) );
+    ASSERT( !x_strcmp( NewData.GetType(), Data.GetType() ) );
+    ASSERT( !x_strcmp( NewData.GetName(), Data.GetName() ) );
 
-	ASSERT( NewData.nInts() == Data.nInts() );
-	for ( i = 0; i < NewData.nInts(); ++i ) ASSERT( (NewData.Ints())[i] == (Data.Ints())[i] );
+    ASSERT( NewData.nInts() == Data.nInts() );
+    for ( i = 0; i < NewData.nInts(); ++i ) ASSERT( (NewData.Ints())[i] == (Data.Ints())[i] );
 
-	ASSERT( NewData.nFloats() == Data.nFloats() );
-	for ( i = 0; i < NewData.nFloats(); ++i ) ASSERT( (NewData.Floats())[i] == (Data.Floats())[i] );
+    ASSERT( NewData.nFloats() == Data.nFloats() );
+    for ( i = 0; i < NewData.nFloats(); ++i ) ASSERT( (NewData.Floats())[i] == (Data.Floats())[i] );
 
-	ASSERT( NewData.nPoints() == Data.nPoints() );
-	for ( i = 0; i < NewData.nPoints(); ++i ) ASSERT( (NewData.Points())[i] == (Data.Points())[i] );
+    ASSERT( NewData.nPoints() == Data.nPoints() );
+    for ( i = 0; i < NewData.nPoints(); ++i ) ASSERT( (NewData.Points())[i] == (Data.Points())[i] );
 
-	ASSERT( NewData.nBools() == Data.nBools() );
-	for ( i = 0; i < NewData.nBools(); ++i ) ASSERT( (NewData.Bools())[i] == (Data.Bools())[i] );
+    ASSERT( NewData.nBools() == Data.nBools() );
+    for ( i = 0; i < NewData.nBools(); ++i ) ASSERT( (NewData.Bools())[i] == (Data.Bools())[i] );
 
-	ASSERT( NewData.nStrings() == Data.nStrings() );
-	for ( i = 0; i < NewData.nStrings(); ++i ) ASSERT( !x_strcmp( NewData.String(i), Data.String(i) ) );
+    ASSERT( NewData.nStrings() == Data.nStrings() );
+    for ( i = 0; i < NewData.nStrings(); ++i ) ASSERT( !x_strcmp( NewData.String(i), Data.String(i) ) );
 #endif  // #ifdef X_ASSERT
 }
 

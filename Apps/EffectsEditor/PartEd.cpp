@@ -23,16 +23,16 @@ fx_core::error_log   g_ErrorLog;
 // CPartEdApp
 
 BEGIN_MESSAGE_MAP(CPartEdApp, CWinApp)
-	//{{AFX_MSG_MAP(CPartEdApp)
-	ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-		//    DO NOT EDIT what you see in these blocks of generated code!
-	//}}AFX_MSG_MAP
-	// Standard file based document commands
-	ON_COMMAND(ID_FILE_NEW, CWinApp::OnFileNew)
-	ON_COMMAND(ID_FILE_OPEN, CWinApp::OnFileOpen)
-	// Standard print setup command
-	ON_COMMAND(ID_FILE_PRINT_SETUP, CWinApp::OnFilePrintSetup)
+    //{{AFX_MSG_MAP(CPartEdApp)
+    ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
+        // NOTE - the ClassWizard will add and remove mapping macros here.
+        //    DO NOT EDIT what you see in these blocks of generated code!
+    //}}AFX_MSG_MAP
+    // Standard file based document commands
+    ON_COMMAND(ID_FILE_NEW, CWinApp::OnFileNew)
+    ON_COMMAND(ID_FILE_OPEN, CWinApp::OnFileOpen)
+    // Standard print setup command
+    ON_COMMAND(ID_FILE_PRINT_SETUP, CWinApp::OnFilePrintSetup)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -52,53 +52,53 @@ CPartEdApp theApp;
 
 BOOL CPartEdApp::InitInstance()
 {
-	// Standard initialization
-	// If you are not using these features and wish to reduce the size
-	//  of your final executable, you should remove from the following
-	//  the specific initialization routines you do not need.
+    // Standard initialization
+    // If you are not using these features and wish to reduce the size
+    //  of your final executable, you should remove from the following
+    //  the specific initialization routines you do not need.
 
 #ifdef _AFXDLL
-	Enable3dControls();			// Call this when using MFC in a shared DLL
+    Enable3dControls();            // Call this when using MFC in a shared DLL
 #else
-//	Enable3dControlsStatic();	// Call this when linking to MFC statically
+//    Enable3dControlsStatic();    // Call this when linking to MFC statically
 #endif
 
-	// Change the registry key under which our settings are stored.
-	SetRegistryKey(_T("Inevitable\\Fx Editor"));
+    // Change the registry key under which our settings are stored.
+    SetRegistryKey(_T("Inevitable\\Fx Editor"));
 
-	LoadStdProfileSettings();  // Load standard INI file options (including MRU)
+    LoadStdProfileSettings();  // Load standard INI file options (including MRU)
 
-	// Register the application's document templates.  Document templates
-	//  serve as the connection between documents, frame windows and views.
+    // Register the application's document templates.  Document templates
+    //  serve as the connection between documents, frame windows and views.
 
-	CSingleDocTemplate* pDocTemplate;
-	pDocTemplate = new CSingleDocTemplate(
-		IDR_MAINFRAME,
-		RUNTIME_CLASS(CPartEdDoc),
-		RUNTIME_CLASS(CMainFrame),       // main SDI frame window
-		RUNTIME_CLASS(CFXEditorView3D));
-	AddDocTemplate(pDocTemplate);
+    CSingleDocTemplate* pDocTemplate;
+    pDocTemplate = new CSingleDocTemplate(
+        IDR_MAINFRAME,
+        RUNTIME_CLASS(CPartEdDoc),
+        RUNTIME_CLASS(CMainFrame),       // main SDI frame window
+        RUNTIME_CLASS(CFXEditorView3D));
+    AddDocTemplate(pDocTemplate);
 
-	// Enable DDE Execute open
-	EnableShellOpen();
-	RegisterShellFileTypes(TRUE);
+    // Enable DDE Execute open
+    EnableShellOpen();
+    RegisterShellFileTypes(TRUE);
 
-	// Parse command line for standard shell commands, DDE, file open
-	CCommandLineInfo cmdInfo;
-	ParseCommandLine(cmdInfo);
+    // Parse command line for standard shell commands, DDE, file open
+    CCommandLineInfo cmdInfo;
+    ParseCommandLine(cmdInfo);
 
-	// Dispatch commands specified on the command line
-	if (!ProcessShellCommand(cmdInfo))
-		return FALSE;
+    // Dispatch commands specified on the command line
+    if (!ProcessShellCommand(cmdInfo))
+        return FALSE;
 
-	// The one and only window has been initialized, so show and update it.
-	m_pMainWnd->ShowWindow(SW_MAXIMIZE);
-	m_pMainWnd->UpdateWindow();
+    // The one and only window has been initialized, so show and update it.
+    m_pMainWnd->ShowWindow(SW_MAXIMIZE);
+    m_pMainWnd->UpdateWindow();
 
-	// Enable drag/drop open
-	m_pMainWnd->DragAcceptFiles();
+    // Enable drag/drop open
+    m_pMainWnd->DragAcceptFiles();
 
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -108,58 +108,58 @@ BOOL CPartEdApp::InitInstance()
 class CAboutDlg : public CDialog
 {
 public:
-	CAboutDlg();
+    CAboutDlg();
 
 // Dialog Data
-	//{{AFX_DATA(CAboutDlg)
-	enum { IDD = IDD_ABOUTBOX };
-	CString	m_FX_Ver;
-	//}}AFX_DATA
+    //{{AFX_DATA(CAboutDlg)
+    enum { IDD = IDD_ABOUTBOX };
+    CString    m_FX_Ver;
+    //}}AFX_DATA
 
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CAboutDlg)
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CAboutDlg)
+    protected:
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	//{{AFX_MSG(CAboutDlg)
-		// No message handlers
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CAboutDlg)
+        // No message handlers
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 CAboutDlg::CAboutDlg() : CDialog(CAboutDlg::IDD)
 {
-	//{{AFX_DATA_INIT(CAboutDlg)
-	m_FX_Ver = _T("");
-	//}}AFX_DATA_INIT
+    //{{AFX_DATA_INIT(CAboutDlg)
+    m_FX_Ver = _T("");
+    //}}AFX_DATA_INIT
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CAboutDlg)
-	DDX_Text(pDX, IDC_FX_VER, m_FX_Ver);
-	//}}AFX_DATA_MAP
+    CDialog::DoDataExchange(pDX);
+    //{{AFX_DATA_MAP(CAboutDlg)
+    DDX_Text(pDX, IDC_FX_VER, m_FX_Ver);
+    //}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
-	//{{AFX_MSG_MAP(CAboutDlg)
-		// No message handlers
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CAboutDlg)
+        // No message handlers
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 // App command to run the dialog
 void CPartEdApp::OnAppAbout()
 {
-	CAboutDlg aboutDlg;
+    CAboutDlg aboutDlg;
     
     const char* pVer = fx_core::GetExportVersion();
     aboutDlg.m_FX_Ver = pVer;
 
-	aboutDlg.DoModal();
+    aboutDlg.DoModal();
 }
 
 /////////////////////////////////////////////////////////////////////////////

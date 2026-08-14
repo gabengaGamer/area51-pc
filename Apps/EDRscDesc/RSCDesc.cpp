@@ -1340,7 +1340,7 @@ xbool ExecuteCMD( const xstring& InputStr, xstring& OutputStr )
     memset(&si, 0, sizeof(si));
     si.cb              = sizeof(STARTUPINFO);
     si.dwFlags         = STARTF_USESTDHANDLES|STARTF_USESHOWWINDOW;
-    si.hStdInput	   = INVALID_HANDLE_VALUE;
+    si.hStdInput       = INVALID_HANDLE_VALUE;
     si.hStdOutput      = hWritePipe;
     si.hStdError       = hWritePipe;
     si.wShowWindow     = SW_HIDE;

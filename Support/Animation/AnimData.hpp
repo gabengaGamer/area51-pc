@@ -258,20 +258,20 @@ friend anim_group;
 class event_data_format
 {
 public:
-					event_data_format( void );
+                    event_data_format( void );
     s32             GetNInts        ( void ) const;
     s32             GetNFloats      ( void ) const;
     s32             GetNPoints      ( void ) const;
     s32             GetNBools       ( void ) const;
     s32             GetNStrings     ( void ) const;
-    s32				CountSetBits    ( s32 NumBitsBefore, s32 NumBitsPossible ) const;
-	void			SetInt			( s32 Idx );
-	void			SetFloat        ( s32 Idx );
-	void			SetPoint		( s32 Idx );
-	void			SetBool			( s32 Idx );
-	void			SetString		( s32 Idx );
+    s32                CountSetBits    ( s32 NumBitsBefore, s32 NumBitsPossible ) const;
+    void            SetInt            ( s32 Idx );
+    void            SetFloat        ( s32 Idx );
+    void            SetPoint        ( s32 Idx );
+    void            SetBool            ( s32 Idx );
+    void            SetString        ( s32 Idx );
 
-	u32 m_Flags;
+    u32 m_Flags;
 };
 
 
@@ -308,8 +308,8 @@ public:
     const char*     GetType             ( void ) const  { return m_Type; }
     const char*     GetName             ( void ) const  { return m_Name; }
 
-    event_data_format	GetDataFormat	( void ) const						{ return m_DataFormat; }
-	void				SetDataFormat	( event_data_format DataFormat )	{ m_DataFormat = DataFormat; }
+    event_data_format    GetDataFormat    ( void ) const                        { return m_DataFormat; }
+    void                SetDataFormat    ( event_data_format DataFormat )    { m_DataFormat = DataFormat; }
 
     void            SwitchEndian        ( void );
 
@@ -503,10 +503,10 @@ public:
 
 //-------------------------------------------------------------------------
 public:
-	//
-	// Old event members (will be removed)
-	//
-	/*
+    //
+    // Old event members (will be removed)
+    //
+    /*
 
     s16             m_Type;
     s16             m_iBone;
@@ -514,7 +514,7 @@ public:
     s16             m_iFrame1;
     f32             m_Radius;
     vector3         m_Offset;
-	*/
+    */
 
 public:
     //
@@ -525,7 +525,7 @@ public:
         // Standard ints
         INT_IDX_START_FRAME = 0,
         INT_IDX_END_FRAME,
-		INT_IDX_BONE,
+        INT_IDX_BONE,
 
         INT_IDX_FIRST_CUSTOM,
 
@@ -669,12 +669,12 @@ public:
     void            SetString       ( s32 Idx, char* pValue );
     */
 
-	static const byte*	GetStreamBuffer     ( void ) { return m_pEventByteStream->GetBuffer(); }
-	static const byte*  GetTypeNameBuffer   ( void ) { return m_pEventTypeNameStrings->GetBuffer(); }
-	static s32          GetStreamLength     ( void ) { return m_pEventByteStream->GetLength(); }
-	static s32          GetTypeNameLength   ( void ) { return m_pEventTypeNameStrings->GetLength(); }
+    static const byte*    GetStreamBuffer     ( void ) { return m_pEventByteStream->GetBuffer(); }
+    static const byte*  GetTypeNameBuffer   ( void ) { return m_pEventTypeNameStrings->GetBuffer(); }
+    static s32          GetStreamLength     ( void ) { return m_pEventByteStream->GetLength(); }
+    static s32          GetTypeNameLength   ( void ) { return m_pEventTypeNameStrings->GetLength(); }
 
-	void			SwitchEndian            ( void );
+    void            SwitchEndian            ( void );
 
     static void ResetByteStreams( void );
 private:
@@ -682,7 +682,7 @@ private:
     s32             m_TypeOffset;
     s32             m_NameOffset;
 
-	event_data_format m_DataFormat;
+    event_data_format m_DataFormat;
 
     static const char* GetTypeNameString    ( s32 Offset );
     static s32      SaveTypeNameString      ( const char* String );
@@ -735,10 +735,10 @@ public:
     const anim_bone&    GetBone             ( s32 iBone ) const;
     s32                 GetNBones           ( void ) const;
     s32                 GetBoneIndex        ( const char* pBoneName, xbool FindAnywhere = FALSE ) const;
-    s32				    GetBoneParent		( s32 iBone ) const;
-    void			    ComputeBoneL2W		( s32 iBone, const matrix4& L2W, anim_key* pKey, matrix4& BoneL2W ) const;
-    void			    ComputeBonesL2W		( const matrix4& L2W, anim_key* pKey, s32 nBones, matrix4* BoneL2W, xbool bApplyTheBindPose = TRUE ) const;
-	const matrix4&      GetBoneBindInvMatrix( s32 iBone ) const;
+    s32                    GetBoneParent        ( s32 iBone ) const;
+    void                ComputeBoneL2W        ( s32 iBone, const matrix4& L2W, anim_key* pKey, matrix4& BoneL2W ) const;
+    void                ComputeBonesL2W        ( const matrix4& L2W, anim_key* pKey, s32 nBones, matrix4* BoneL2W, xbool bApplyTheBindPose = TRUE ) const;
+    const matrix4&      GetBoneBindInvMatrix( s32 iBone ) const;
     vector3             GetEventPos         ( s32 iBone, const vector3& Offset, anim_key* pKey ) const;
     const bbox&         GetBBox             ( void ) const;
     radian3             GetEventRot         ( s32 iBone, const vector3& Offset, anim_key* pKey ) const;

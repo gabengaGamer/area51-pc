@@ -16,34 +16,34 @@ class CTransactionStackDlg : public CDialog
 {
 // Construction
 public:
-	CTransactionStackDlg(CWnd* pParent = NULL);   // standard constructor
+    CTransactionStackDlg(CWnd* pParent = NULL);   // standard constructor
 
 // Dialog Data
-	//{{AFX_DATA(CTransactionStackDlg)
-	enum { IDD = IDD_TRANSACTION_STACK_DIALOG };
-	CStackListBox	m_lbStack;
-	CButton	m_btnOk;
-	//}}AFX_DATA
+    //{{AFX_DATA(CTransactionStackDlg)
+    enum { IDD = IDD_TRANSACTION_STACK_DIALOG };
+    CStackListBox    m_lbStack;
+    CButton    m_btnOk;
+    //}}AFX_DATA
 
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CTransactionStackDlg)
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CTransactionStackDlg)
+    protected:
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
 
-	// Generated message map functions
-	//{{AFX_MSG(CTransactionStackDlg)
-	virtual BOOL OnInitDialog();
-	virtual void OnOK();
-	afx_msg void OnSelchangeListTransactions();
-	afx_msg void OnDblclkListTransactions();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(CTransactionStackDlg)
+    virtual BOOL OnInitDialog();
+    virtual void OnOK();
+    afx_msg void OnSelchangeListTransactions();
+    afx_msg void OnDblclkListTransactions();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
 private:
     int     m_nCurrentPos;

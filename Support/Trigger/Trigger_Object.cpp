@@ -74,7 +74,7 @@ void  trigger_object::trigger_selector::OnEnumProp ( prop_enum& rPropList )
  /*
     rPropList.AddHeader  ( "Selector\\Global Variables", "Select the type of condition to add.", PROP_TYPE_HEADER );
     
-    rPropList.AddString	 ( "Selector\\Global Variables\\New Variable Name", "Name of the New Global Variable.", PROP_TYPE_MUST_ENUM );
+    rPropList.AddString     ( "Selector\\Global Variables\\New Variable Name", "Name of the New Global Variable.", PROP_TYPE_MUST_ENUM );
 
     rPropList.AddButton  ( "Selector\\Global Variables\\Add Int",     "Adds a new global interger.",    PROP_TYPE_MUST_ENUM );
     rPropList.AddButton  ( "Selector\\Global Variables\\Add Float",   "Adds a new global float.",       PROP_TYPE_MUST_ENUM );

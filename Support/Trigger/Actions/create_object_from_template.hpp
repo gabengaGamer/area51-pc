@@ -26,8 +26,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Create Template Object"; }
     virtual         const char*         GetTypeInfo ( void )    { return "Creates an object from a template (blueprint)."; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
 
     virtual         void                OnRender    ( void );
    

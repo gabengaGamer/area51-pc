@@ -36,7 +36,7 @@ protected:
 
     CProgressCtrl*              m_pSubProgress;
     CProgressCtrl*              m_pMainProgress;
-    CRichEditCtrl*	            m_pOutput;
+    CRichEditCtrl*                m_pOutput;
     xstring                     m_FmtData;
     xbool                       m_bVerbose;
     static s32                  s_nPipes;
@@ -50,28 +50,28 @@ protected:
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	DECLARE_DYNCREATE(CReadPipe)
+    DECLARE_DYNCREATE(CReadPipe)
     CReadPipe();
-	virtual ~CReadPipe();
+    virtual ~CReadPipe();
 
 /////////////////////////////////////////////////////////////////////////////
 public:
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CReadPipe)
-	public:
-	virtual BOOL InitInstance();
-	virtual int ExitInstance();
-	virtual int Run();
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CReadPipe)
+    public:
+    virtual BOOL InitInstance();
+    virtual int ExitInstance();
+    virtual int Run();
+    //}}AFX_VIRTUAL
 
 /////////////////////////////////////////////////////////////////////////////
 protected:
-	// Generated message map functions
-	//{{AFX_MSG(CReadPipe)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
+    // Generated message map functions
+    //{{AFX_MSG(CReadPipe)
+        // NOTE - the ClassWizard will add and remove member functions here.
+    //}}AFX_MSG
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

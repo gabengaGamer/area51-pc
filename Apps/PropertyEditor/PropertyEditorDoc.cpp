@@ -33,9 +33,9 @@ m_pCommandHandler(NULL)
 
 BOOL CPropertyEditorDoc::OnNewDocument()
 {
-	if (!CDocument::OnNewDocument())
-		return FALSE;
-	return TRUE;
+    if (!CDocument::OnNewDocument())
+        return FALSE;
+    return TRUE;
 }
 
 CPropertyEditorDoc::~CPropertyEditorDoc()
@@ -44,9 +44,9 @@ CPropertyEditorDoc::~CPropertyEditorDoc()
 
 
 BEGIN_MESSAGE_MAP(CPropertyEditorDoc, CDocument)
-	//{{AFX_MSG_MAP(CPropertyEditorDoc)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CPropertyEditorDoc)
+        // NOTE - the ClassWizard will add and remove mapping macros here.
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -55,12 +55,12 @@ END_MESSAGE_MAP()
 #ifdef _DEBUG
 void CPropertyEditorDoc::AssertValid() const
 {
-	CDocument::AssertValid();
+    CDocument::AssertValid();
 }
 
 void CPropertyEditorDoc::Dump(CDumpContext& dc) const
 {
-	CDocument::Dump(dc);
+    CDocument::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -69,14 +69,14 @@ void CPropertyEditorDoc::Dump(CDumpContext& dc) const
 
 void CPropertyEditorDoc::Serialize(CArchive& ar)
 {
-	if (ar.IsStoring())
-	{
-		// TODO: add storing code here
-	}
-	else
-	{
-		// TODO: add loading code here
-	}
+    if (ar.IsStoring())
+    {
+        // TODO: add storing code here
+    }
+    else
+    {
+        // TODO: add loading code here
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -111,19 +111,19 @@ void CPropertyEditorDoc::SaveProperty(CGridTreeItem* lpItem, BOOL bReloadObject)
         x_try;
 
         switch( ctrlType )
-		{
+        {
         case CGridItemInfo::GCT_DIR_BUTTON:
             {
                 pq.WQueryFileName( strName, strValue);
                 if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
-			break;
+            break;
         case CGridItemInfo::GCT_STRING_EDIT:
             {
                 pq.WQueryString( strName, strValue);
                 if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
-			break;
+            break;
         case CGridItemInfo::GCT_BOOL:
             {
                 if (strValue.CompareNoCase("true")==0)
@@ -131,23 +131,23 @@ void CPropertyEditorDoc::SaveProperty(CGridTreeItem* lpItem, BOOL bReloadObject)
                 else
                     pq.WQueryBool( strName, false );
              
-				if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
+                if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
-			break;
-		case CGridItemInfo::GCT_FLOAT_EDIT:     
+            break;
+        case CGridItemInfo::GCT_FLOAT_EDIT:     
             {
                 f32 f = (f32)atof(strValue);
                 pq.WQueryFloat( strName, f );
-				if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
+                if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
-			break;
-		case CGridItemInfo::GCT_NUMERIC_EDIT:       
+            break;
+        case CGridItemInfo::GCT_NUMERIC_EDIT:       
             {
                 s32 i = atoi(strValue);
                 pq.WQueryInt( strName, i );
-				if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
+                if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
-			break;
+            break;
         case CGridItemInfo::GCT_2D_COORDINATE:
             {
                 CPropertyTree2DPos* pSpItem = (CPropertyTree2DPos*)lpItem;
@@ -156,75 +156,75 @@ void CPropertyEditorDoc::SaveProperty(CGridTreeItem* lpItem, BOOL bReloadObject)
                 if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
             break;
-		case CGridItemInfo::GCT_3D_COORDINATE:
+        case CGridItemInfo::GCT_3D_COORDINATE:
             {
                 CPropertyTree3DPos* pSpItem = (CPropertyTree3DPos*)lpItem;
                 vector3 v3(pSpItem->m_x,pSpItem->m_y,pSpItem->m_z);
                 pq.WQueryVector3( strName, v3 );
-				if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
+                if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
-			break;
-		case CGridItemInfo::GCT_DEGREE_EDIT:     
+            break;
+        case CGridItemInfo::GCT_DEGREE_EDIT:     
             {
                 radian r = DEG_TO_RAD(atof(strValue));
                 pq.WQueryAngle( strName, r );
-				if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
+                if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
-			break;
-		case CGridItemInfo::GCT_ROTATION_EDIT:  			
+            break;
+        case CGridItemInfo::GCT_ROTATION_EDIT:              
             {
                 CPropertyTreeRotation* pSpItem = (CPropertyTreeRotation*)lpItem;
                 radian3 r3(DEG_TO_RAD(pSpItem->m_Pitch),DEG_TO_RAD(pSpItem->m_Yaw),DEG_TO_RAD(pSpItem->m_Roll));
                 pq.WQueryRotation( strName, r3 );
-				if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
+                if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
-			break;
-		case CGridItemInfo::GCT_BOUNDING_BOX:      
+            break;
+        case CGridItemInfo::GCT_BOUNDING_BOX:      
             {
                 CPropertyTreeBoundingBox* pSpItem = (CPropertyTreeBoundingBox*)lpItem;
                 vector3 vMin(pSpItem->m_pVectorMin->m_x,pSpItem->m_pVectorMin->m_y,pSpItem->m_pVectorMin->m_z);
                 vector3 vMax(pSpItem->m_pVectorMax->m_x,pSpItem->m_pVectorMax->m_y,pSpItem->m_pVectorMax->m_z);
                 bbox box(vMin,vMax);
                 pq.WQueryBBox( strName, box );
-				if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
+                if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
-			break;
-		case CGridItemInfo::GCT_COLOR_BUTTON:      
+            break;
+        case CGridItemInfo::GCT_COLOR_BUTTON:      
             {
                 CPropertyTreeColor* pSpItem = (CPropertyTreeColor*)lpItem;
                 xcolor xc(GetRValue(pSpItem->m_cr),GetGValue(pSpItem->m_cr),GetBValue(pSpItem->m_cr),pSpItem->m_alpha);
                 pq.WQueryColor( strName, xc );
-				if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
+                if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
-			break;
-		case CGridItemInfo::GCT_COMBOBOX:  
+            break;
+        case CGridItemInfo::GCT_COMBOBOX:  
             {
                 pq.WQueryEnum( strName, strValue);
                 if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
-			break;
+            break;
         case CGridItemInfo::GCT_GUID_EDIT:
             {
                 pq.WQueryGUID( strName, guid_FromString(strValue));
                 if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
             break;
-		case CGridItemInfo::GCT_EXTERNAL: 
+        case CGridItemInfo::GCT_EXTERNAL: 
             {
                 pq.WQueryExternal( strName, strValue );
-				if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
+                if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
             break;
-		case CGridItemInfo::GCT_BUTTON: 
+        case CGridItemInfo::GCT_BUTTON: 
             {
                 pq.WQueryButton( strName, strValue );
-				if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
+                if (m_pProperties->OnProperty(pq)) bReturn = TRUE;
             }
             break;
         case CGridItemInfo::GCT_NULL_ENTRY: 
         default:
-			x_throw(xfs("error: could not save property %s", (const char*)strName));
-			break;
+            x_throw(xfs("error: could not save property %s", (const char*)strName));
+            break;
         }
 
         x_catch_begin;
@@ -289,30 +289,30 @@ void CPropertyEditorDoc::GetDataFromXarray(int iXaIndex,
     if (m_xaList.GetCount()>iXaIndex)
     {
         prop_enum::node enData = m_xaList[iXaIndex];
-	    prop_type type = (prop_type)enData.GetType();
-	    CString strName = enData.GetName();
+        prop_type type = (prop_type)enData.GetType();
+        CString strName = enData.GetName();
 
         BOOL bDontShow = type & PROP_TYPE_DONT_SHOW;
         if (!bDontShow)
         {
             BOOL bHeader = type & PROP_TYPE_HEADER;
-	        BOOL bReadOnly = type & PROP_TYPE_READ_ONLY;
+            BOOL bReadOnly = type & PROP_TYPE_READ_ONLY;
             BOOL bMustEnum = type & PROP_TYPE_MUST_ENUM;
-	        CGridItemInfo::CONTROLTYPE typeGridItem;
-	        CString strValue = "";
+            CGridItemInfo::CONTROLTYPE typeGridItem;
+            CString strValue = "";
             prop_query pq;
-	        CStringList strlstData;
+            CStringList strlstData;
 
-	        switch( type & PROP_TYPE_BASIC_MASK )
-	        {
-	        case PROP_TYPE_NULL:       
+            switch( type & PROP_TYPE_BASIC_MASK )
+            {
+            case PROP_TYPE_NULL:       
                 {
-			        typeGridItem = CGridItemInfo::GCT_NULL_ENTRY;
+                    typeGridItem = CGridItemInfo::GCT_NULL_ENTRY;
                 }
-		        break;
-	        case PROP_TYPE_FILENAME:     
+                break;
+            case PROP_TYPE_FILENAME:     
                 {
-			        typeGridItem = CGridItemInfo::GCT_DIR_BUTTON;
+                    typeGridItem = CGridItemInfo::GCT_DIR_BUTTON;
                     char cString[MAX_PATH];
                     pq.RQueryFileName( strName, &cString[0]);
                     if (m_pProperties->OnProperty(pq))
@@ -323,13 +323,13 @@ void CPropertyEditorDoc::GetDataFromXarray(int iXaIndex,
                     const char* pString = enData.GetEnumType( 0 );
                     if( x_strlen( pString ) > 0 )
                     {
-        		        strlstData.AddTail( pString );
+                        strlstData.AddTail( pString );
                     }
                 }
-		        break;
-	        case PROP_TYPE_STRING:     
+                break;
+            case PROP_TYPE_STRING:     
                 {
-			        typeGridItem = CGridItemInfo::GCT_STRING_EDIT;
+                    typeGridItem = CGridItemInfo::GCT_STRING_EDIT;
                     char cString[MAX_PATH];
                     pq.RQueryString( strName, &cString[0]);
                     if (m_pProperties->OnProperty(pq))
@@ -337,35 +337,35 @@ void CPropertyEditorDoc::GetDataFromXarray(int iXaIndex,
                         strValue = CString(cString);
                     }
                 }
-		        break;
-	        case PROP_TYPE_FLOAT:     
+                break;
+            case PROP_TYPE_FLOAT:     
                 {
-			        typeGridItem = CGridItemInfo::GCT_FLOAT_EDIT;
+                    typeGridItem = CGridItemInfo::GCT_FLOAT_EDIT;
                     f32 f;
                     pq.RQueryFloat( strName, f );
-			        if (m_pProperties->OnProperty(pq))
+                    if (m_pProperties->OnProperty(pq))
                     {
                         strValue.Format("%g",f);
                     }
                 }
-		        break;
-	        case PROP_TYPE_INT:       
+                break;
+            case PROP_TYPE_INT:       
                 {
-			        typeGridItem = CGridItemInfo::GCT_NUMERIC_EDIT;
+                    typeGridItem = CGridItemInfo::GCT_NUMERIC_EDIT;
                     s32 i;
                     pq.RQueryInt( strName, i );
-			        if (m_pProperties->OnProperty(pq))
+                    if (m_pProperties->OnProperty(pq))
                     {
                         strValue.Format("%d",i);
                     }
-                }				
-		        break;
+                }                
+                break;
             case PROP_TYPE_BOOL:
                 {
-			        typeGridItem = CGridItemInfo::GCT_BOOL;
+                    typeGridItem = CGridItemInfo::GCT_BOOL;
                     xbool b;
                     pq.RQueryBool( strName, b );
-			        if (m_pProperties->OnProperty(pq)) 
+                    if (m_pProperties->OnProperty(pq)) 
                     {
                         if (b)
                             strValue = "true";
@@ -373,7 +373,7 @@ void CPropertyEditorDoc::GetDataFromXarray(int iXaIndex,
                             strValue = "false";
                     }
                 }
-		        break;
+                break;
             case PROP_TYPE_VECTOR2:
                 {
                     typeGridItem = CGridItemInfo::GCT_2D_COORDINATE;
@@ -385,81 +385,81 @@ void CPropertyEditorDoc::GetDataFromXarray(int iXaIndex,
                     }
                 }
                 break;
-	        case PROP_TYPE_VECTOR3:
+            case PROP_TYPE_VECTOR3:
                 {
-			        typeGridItem = CGridItemInfo::GCT_3D_COORDINATE;
+                    typeGridItem = CGridItemInfo::GCT_3D_COORDINATE;
                     vector3 v3;
                     pq.RQueryVector3( strName, v3 );
-			        if (m_pProperties->OnProperty(pq))
+                    if (m_pProperties->OnProperty(pq))
                     {
                         strValue.Format("%g, %g, %g",v3[0],v3[1],v3[2]);
                     }
                 }
-		        break;
-	        case PROP_TYPE_ANGLE:     
+                break;
+            case PROP_TYPE_ANGLE:     
                 {
-			        typeGridItem = CGridItemInfo::GCT_DEGREE_EDIT;
+                    typeGridItem = CGridItemInfo::GCT_DEGREE_EDIT;
                     radian r;
                     pq.RQueryAngle( strName, r );
-			        if (m_pProperties->OnProperty(pq))
+                    if (m_pProperties->OnProperty(pq))
                     {
                         strValue.Format("%g",RAD_TO_DEG(r));
                     }
                 }
-		        break;
-	        case PROP_TYPE_GUID:     
+                break;
+            case PROP_TYPE_GUID:     
                 {
-			        typeGridItem = CGridItemInfo::GCT_GUID_EDIT;
+                    typeGridItem = CGridItemInfo::GCT_GUID_EDIT;
                     guid g;
                     pq.RQueryGUID( strName, g );
-			        if (m_pProperties->OnProperty(pq))
+                    if (m_pProperties->OnProperty(pq))
                     {
                         strValue = guid_ToString(g);
                     }
                 }
-		        break;
-	        case PROP_TYPE_ROTATION:  			
+                break;
+            case PROP_TYPE_ROTATION:              
                 {
-			        typeGridItem = CGridItemInfo::GCT_ROTATION_EDIT;
+                    typeGridItem = CGridItemInfo::GCT_ROTATION_EDIT;
                     radian3 r3;
                     pq.RQueryRotation( strName, r3 );
-			        if (m_pProperties->OnProperty(pq))
+                    if (m_pProperties->OnProperty(pq))
                     {
                         strValue.Format("%g, %g, %g",RAD_TO_DEG(r3.Roll),RAD_TO_DEG(r3.Pitch),RAD_TO_DEG(r3.Yaw));
                     }
                 }
-		        break;
-	        case PROP_TYPE_BBOX:      
+                break;
+            case PROP_TYPE_BBOX:      
                 {
-			        typeGridItem = CGridItemInfo::GCT_BOUNDING_BOX;
+                    typeGridItem = CGridItemInfo::GCT_BOUNDING_BOX;
                     bbox box;
                     pq.RQueryBBox( strName, box );
-			        if (m_pProperties->OnProperty(pq))
+                    if (m_pProperties->OnProperty(pq))
                     {
                         vector3 vExtent = box.GetSize();
                         strValue.Format("Extent {%g, %g, %g}",vExtent[0], vExtent[1], vExtent[2]);
-		                strlstData.AddTail(xfs("%g,%g,%g",box.Min.GetX(),box.Min.GetY(),box.Min.GetZ()));
-		                strlstData.AddTail(xfs("%g,%g,%g",box.Max.GetX(),box.Max.GetY(),box.Max.GetZ()));
+                        strlstData.AddTail(xfs("%g,%g,%g",box.Min.GetX(),box.Min.GetY(),box.Min.GetZ()));
+                        strlstData.AddTail(xfs("%g,%g,%g",box.Max.GetX(),box.Max.GetY(),box.Max.GetZ()));
                     }
                 }
-		        break;
-	        case PROP_TYPE_COLOR:      
+                break;
+            case PROP_TYPE_COLOR:      
                 {
-			        typeGridItem = CGridItemInfo::GCT_COLOR_BUTTON;
+                    typeGridItem = CGridItemInfo::GCT_COLOR_BUTTON;
                     xcolor xc;
                     pq.RQueryColor( strName, xc );
-			        if (m_pProperties->OnProperty(pq))
+                    if (m_pProperties->OnProperty(pq))
                     {
                         strValue.Format("%d, %d, %d, %d",xc.R,xc.G,xc.B,xc.A);
                     }
                 }
-		        break;
-	        case PROP_TYPE_ENUM:  
+                break;
+            case PROP_TYPE_ENUM:  
                 {
-			        typeGridItem = CGridItemInfo::GCT_COMBOBOX;
+                    typeGridItem = CGridItemInfo::GCT_COMBOBOX;
                     for (int j=0; j < enData.GetEnumCount(); j++)
                     {
-        		        strlstData.AddTail(enData.GetEnumType(j));
+                        strlstData.AddTail(enData.GetEnumType(j));
                     }
                     char cString[MAX_PATH];
                     pq.RQueryEnum( strName, &cString[0]);
@@ -468,10 +468,10 @@ void CPropertyEditorDoc::GetDataFromXarray(int iXaIndex,
                         strValue = CString(cString);
                     }
                 }
-		        break;
+                break;
             case PROP_TYPE_EXTERNAL:
                 {
-			        typeGridItem = CGridItemInfo::GCT_EXTERNAL;
+                    typeGridItem = CGridItemInfo::GCT_EXTERNAL;
 
                     char cString[MAX_PATH];
                     pq.RQueryExternal( strName, &cString[0]);
@@ -480,10 +480,10 @@ void CPropertyEditorDoc::GetDataFromXarray(int iXaIndex,
                         strValue = CString(cString);
                     }
                 }
-		        break;
-	        case PROP_TYPE_BUTTON:     
+                break;
+            case PROP_TYPE_BUTTON:     
                 {
-			        typeGridItem = CGridItemInfo::GCT_BUTTON;
+                    typeGridItem = CGridItemInfo::GCT_BUTTON;
 
                     char cString[MAX_PATH];
                     pq.RQueryButton( strName, &cString[0]);
@@ -492,15 +492,15 @@ void CPropertyEditorDoc::GetDataFromXarray(int iXaIndex,
                         strValue = CString(cString);
                     }
                 }
-		        break;
-	        }
+                break;
+            }
 
-	        CString strComment = enData.GetComment();
+            CString strComment = enData.GetComment();
 
             if (bCreateObject)
             {
                 //add the new object
-	            if (!GetView()->AddGridDataElement(strName, strValue, strComment, 
+                if (!GetView()->AddGridDataElement(strName, strValue, strComment, 
                                                typeGridItem, strlstData, iXaIndex,
                                                bReadOnly, bMustEnum, bHeader, pParentTreeItem))
                 {
@@ -522,8 +522,8 @@ void CPropertyEditorDoc::GetDataFromXarray(int iXaIndex,
 
                     lpItem->m_strComment = strComment;
                     lpItem->m_lpNodeInfo->SetItemText(strShortName);
-	                lpItem->m_lpNodeInfo->SetSubItemText(0,strValue);
-            	    lpItem->m_lpNodeInfo->SetListData(0, &strlstData);
+                    lpItem->m_lpNodeInfo->SetSubItemText(0,strValue);
+                    lpItem->m_lpNodeInfo->SetListData(0, &strlstData);
                     lpItem->m_lpNodeInfo->SetIsHeader(bHeader);
 
                     GetView()->UpdateItem(lpItem);
@@ -582,9 +582,9 @@ void CPropertyEditorDoc::Refresh( void )
 
     CGridTreeItem* pParentTreeItem = NULL ;
 
-	CPropertyEditorView *pView = GetView();
-	if (pView && m_pProperties)
-	{
+    CPropertyEditorView *pView = GetView();
+    if (pView && m_pProperties)
+    {
         m_xaList.Clear();
         m_pProperties->OnEnumProp(m_xaList);
 
@@ -635,15 +635,15 @@ void CPropertyEditorDoc::Refresh( void )
             //x_qsort( &list[0], list.GetCount(), sizeof(prop_enum), ComparePropEnumsForSort );
 
             for( iXaIndex = 0; iXaIndex < m_xaList.GetCount(); iXaIndex++)
-		    {
+            {
                 GetDataFromXarray(iXaIndex, NULL, TRUE, pParentTreeItem);
             }
-		}
+        }
         else
         {
             TRACE("CPropertyEditorDoc::Refresh() warning: empty enum list for object\n");
         }
-	}
+    }
     else
     {
         x_throw("error: invalid prop_interface");

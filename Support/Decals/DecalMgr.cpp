@@ -497,7 +497,7 @@ void  decal_mgr::CreateBulletHole( const decal_definition& Def,
             #ifdef X_EDITOR
             u32 Color = RegInfo.m_Color;
             #else
-		    u32 Color = (RegInfo.m_Color.R<< 0) | (RegInfo.m_Color.G<< 8) |
+            u32 Color = (RegInfo.m_Color.R<< 0) | (RegInfo.m_Color.G<< 8) |
                         (RegInfo.m_Color.B<<16) | (RegInfo.m_Color.A<<24);
             #endif
 
@@ -2515,7 +2515,7 @@ void decal_mgr::AddDecal( xhandle                 RegInfoHandle,
             RegInfo.m_pUVs[DecalStart+i].U           = (s16)(DecalVerts[i].UV.X*4096.0f);
             RegInfo.m_pUVs[DecalStart+i].V           = (s16)(DecalVerts[i].UV.Y*4096.0f);
             #ifdef X_EDITOR
-			RegInfo.m_pColors[DecalStart+i]          = RegInfo.m_Color;
+            RegInfo.m_pColors[DecalStart+i]          = RegInfo.m_Color;
             #else
             RegInfo.m_pColors[DecalStart+i]          = (RegInfo.m_Color.R<<0)  +
                                                        (RegInfo.m_Color.G<<8)  +

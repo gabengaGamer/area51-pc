@@ -37,17 +37,17 @@ CEditorDecalView::~CEditorDecalView()
 
 
 BEGIN_MESSAGE_MAP(CEditorDecalView, CPaletteView)
-	//{{AFX_MSG_MAP(CEditorDecalView)
-	ON_WM_CREATE()
-	ON_WM_SIZE()
-	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE_OBJECTS, OnSelchangeList)
+    //{{AFX_MSG_MAP(CEditorDecalView)
+    ON_WM_CREATE()
+    ON_WM_SIZE()
+    ON_NOTIFY(TVN_SELCHANGED, IDC_TREE_OBJECTS, OnSelchangeList)
     ON_COMMAND(ID_DVTB_PAINT_MODE, OnDvtbPaintMode)
-	ON_COMMAND(ID_DVTB_SELECT_MODE, OnDvtbSelectMode)
-	ON_COMMAND(ID_DVTB_REFRESH, OnDvtbRefresh)
-	ON_UPDATE_COMMAND_UI(ID_DVTB_PAINT_MODE, OnUpdateDvtbPaintMode)
-	ON_UPDATE_COMMAND_UI(ID_DVTB_SELECT_MODE, OnUpdateDvtbSelectMode)
-	ON_UPDATE_COMMAND_UI(ID_DVTB_REFRESH, OnUpdateDvtbRefresh)
-	//}}AFX_MSG_MAP
+    ON_COMMAND(ID_DVTB_SELECT_MODE, OnDvtbSelectMode)
+    ON_COMMAND(ID_DVTB_REFRESH, OnDvtbRefresh)
+    ON_UPDATE_COMMAND_UI(ID_DVTB_PAINT_MODE, OnUpdateDvtbPaintMode)
+    ON_UPDATE_COMMAND_UI(ID_DVTB_SELECT_MODE, OnUpdateDvtbSelectMode)
+    ON_UPDATE_COMMAND_UI(ID_DVTB_REFRESH, OnUpdateDvtbRefresh)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -55,8 +55,8 @@ END_MESSAGE_MAP()
 
 void CEditorDecalView::OnDraw(CDC* pDC)
 {
-	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -65,12 +65,12 @@ void CEditorDecalView::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CEditorDecalView::AssertValid() const
 {
-	CPaletteView::AssertValid();
+    CPaletteView::AssertValid();
 }
 
 void CEditorDecalView::Dump(CDumpContext& dc) const
 {
-	CPaletteView::Dump(dc);
+    CPaletteView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -96,7 +96,7 @@ void CEditorDecalView::LoadList( void )
     
     //iterate through the resources
     CString StrType( "decalpkg" );
-	for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
+    for (int i =0; i < g_RescDescMGR.GetRscDescCount(); i++)
     {
         rsc_desc_mgr::node &Node = g_RescDescMGR.GetRscDescIndex(i);
         CString strType(Node.pDesc->GetType());
@@ -285,8 +285,8 @@ HTREEITEM CEditorDecalView::DoesChildExist(const CString& strCurrent, HTREEITEM 
 
 void CEditorDecalView::OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
-	
+    NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
+    
     xhandle hHandle = m_rscTree.GetItemData(pNMTreeView->itemNew.hItem);
     if ( hHandle != HNULL )
     {
@@ -305,7 +305,7 @@ void CEditorDecalView::OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult)
         m_bCanAdd = FALSE;
     }
 
-	*pResult = 0;
+    *pResult = 0;
 }
 
 //=========================================================================
@@ -313,37 +313,37 @@ void CEditorDecalView::OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult)
 int CEditorDecalView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
     m_ToolbarResourceId = IDR_DECAL_PALETTE;
-	if (CPaletteView::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
+    if (CPaletteView::OnCreate(lpCreateStruct) == -1)
+        return -1;
+    
     if (!m_rscTree.Create(WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | 
                          TVS_SHOWSELALWAYS, CRect(0,0,0,0), this, IDC_TREE_OBJECTS))
     {
         ASSERT(FALSE);
         return -1;
     }
-	
-	// Create the image list used by the tree control.
-	if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
-		return -1;
+    
+    // Create the image list used by the tree control.
+    if (!m_imageList.Create (IDB_LAYERLIST_ICONS, 16, 1, RGB(0,255,0)))
+        return -1;
 
-	// Set the image list for the tree control.
-	m_rscTree.SetImageList(&m_imageList, TVSIL_NORMAL);
+    // Set the image list for the tree control.
+    m_rscTree.SetImageList(&m_imageList, TVSIL_NORMAL);
 
     // repopulate the tree view
     LoadList();
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
 
 void CEditorDecalView::OnSize(UINT nType, int cx, int cy) 
 {
-	CPaletteView::OnSize(nType, cx, cy);
+    CPaletteView::OnSize(nType, cx, cy);
 
-	CSize size = SizeToolBar(cx, cy);//m_wndToolBar.CalcLayout(LM_HORZ| LM_COMMIT,cx);
-	m_wndToolBar.MoveWindow(0,0,cx,size.cy);
+    CSize size = SizeToolBar(cx, cy);//m_wndToolBar.CalcLayout(LM_HORZ| LM_COMMIT,cx);
+    m_wndToolBar.MoveWindow(0,0,cx,size.cy);
 
     m_rscTree.MoveWindow(0, size.cy, cx, cy-size.cy);
 }
@@ -381,8 +381,8 @@ void CEditorDecalView::OnDvtbPaintMode()
 
 void CEditorDecalView::OnDvtbSelectMode() 
 {
-	// TODO: Add your command handler code here
-	
+    // TODO: Add your command handler code here
+    
 }
 
 //=========================================================================

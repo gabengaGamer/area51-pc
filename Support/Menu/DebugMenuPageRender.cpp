@@ -39,7 +39,7 @@ debug_menu_page_render::debug_menu_page_render( ) : debug_menu_page()
     m_pTitle = "Render";
 
                             AddItemBool     ( "Display frame rate info"    , g_RenderFrameRateInfo );
-#ifndef CONFIG_VIEWER							
+#ifndef CONFIG_VIEWER                            
                             AddItemSeperator( );
                             AddItemEnum     ( "Background color"           , g_MagentaColor, ColorText, 2 );
 #endif
@@ -55,7 +55,7 @@ debug_menu_page_render::debug_menu_page_render( ) : debug_menu_page()
 #endif
 #ifndef CONFIG_VIEWER
                             AddItemBool     ( "Display PS2 render stats"   , g_Stats.RenderStats );
-#endif							
+#endif                            
 
 #if defined TARGET_XBOX && (!defined CONFIG_RETAIL)
 

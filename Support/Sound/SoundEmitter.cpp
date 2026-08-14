@@ -788,7 +788,7 @@ void sound_emitter::UpdateSound( vector3& VirtualPos, f32 EmitterClipScale, f32 
                 g_ConverseMgr.SetFalloff( m_VoiceID, 0.0f, EmitterClipScale );
             }
 
-    	    g_ConverseMgr.SetVolume( m_VoiceID, FinalVolume * m_CurrentVolume );
+            g_ConverseMgr.SetVolume( m_VoiceID, FinalVolume * m_CurrentVolume );
         }
         else
         {
@@ -804,7 +804,7 @@ void sound_emitter::UpdateSound( vector3& VirtualPos, f32 EmitterClipScale, f32 
     else
     {            
 
-	    // Check if the sound is already playing.
+        // Check if the sound is already playing.
         if( (IsSoundActive() == FALSE) && (m_IntervalTime <= 0.0f) )
         {   
             m_EnableEndingRoutineCheck = TRUE;
@@ -822,7 +822,7 @@ void sound_emitter::UpdateSound( vector3& VirtualPos, f32 EmitterClipScale, f32 
                 g_AudioMgr.SetFalloff( m_VoiceID, 0.0f, EmitterClipScale );
             }
 
-    	    g_AudioMgr.SetVolume( m_VoiceID, FinalVolume * m_CurrentVolume );
+            g_AudioMgr.SetVolume( m_VoiceID, FinalVolume * m_CurrentVolume );
             g_AudioMgr.Start( m_VoiceID );
         }
         else
@@ -858,7 +858,7 @@ void sound_emitter::Update2DSound( f32 FinalVolume )
             vector3 ZeroPos( 0.0f, 0.0f, 0.0f );
             m_VoiceID = g_ConverseMgr.PlayStream( m_Label, ZeroPos, GetGuid(), GetZone1(), IMMEDIATE_PLAY, TRUE, PLAY_2D );
 
-    	    g_ConverseMgr.SetVolume( m_VoiceID, FinalVolume * m_CurrentVolume );
+            g_ConverseMgr.SetVolume( m_VoiceID, FinalVolume * m_CurrentVolume );
         }
         else
         {
@@ -869,7 +869,7 @@ void sound_emitter::Update2DSound( f32 FinalVolume )
     else
     {            
 
-	    // Check if the sound is already playing.
+        // Check if the sound is already playing.
         if( (IsSoundActive() == FALSE) && (m_IntervalTime <= 0.0f) )
         {   
             m_EnableEndingRoutineCheck = TRUE;
@@ -882,7 +882,7 @@ void sound_emitter::Update2DSound( f32 FinalVolume )
 
             m_VoiceID = g_AudioMgr.Play( m_Label, FALSE );
 
-    	    g_AudioMgr.SetVolume( m_VoiceID, FinalVolume * m_CurrentVolume );
+            g_AudioMgr.SetVolume( m_VoiceID, FinalVolume * m_CurrentVolume );
             g_AudioMgr.Start( m_VoiceID );
         }
         else
@@ -961,7 +961,7 @@ bbox sound_emitter::GetLocalBBox ( void ) const
             Far.Min = Scale * Far.Min;
         }
 
-	    return Far;
+        return Far;
     }
     else
     {
@@ -2000,10 +2000,10 @@ f32 sound_emitter::DistanceBetweenNearandFarClipAABox ( const bbox& NearClipBox,
 
 vector3 sound_emitter::GetPointOnEmitter( const vector3& ListnerPos, f32& DistanceToPoint )
 {
-	vector3 ClosestPoint( 0.0f, 0.0f, 0.0f );
+    vector3 ClosestPoint( 0.0f, 0.0f, 0.0f );
 
     if( m_EmitterType == POINT )
-	{
+    {
 
         if( m_EmitterShape == SHAPE_SPHERE )
         {            
@@ -2023,7 +2023,7 @@ vector3 sound_emitter::GetPointOnEmitter( const vector3& ListnerPos, f32& Distan
             if( GetL2W().GetRotation() == radian3( 0.0f, 0.0f, 0.0f ) )
             {
                 // No rotation.
-			    DistanceToPoint = DistanceBetweenNearandFarClipAABox( m_NearClipBox, m_FarClipBox, ListnerPos, 
+                DistanceToPoint = DistanceBetweenNearandFarClipAABox( m_NearClipBox, m_FarClipBox, ListnerPos, 
                                     ClosestPoint );
                 DistanceToPoint = x_sqrt( DistanceToPoint );
 
@@ -2066,7 +2066,7 @@ vector3 sound_emitter::GetPointOnEmitter( const vector3& ListnerPos, f32& Distan
 f32 sound_emitter::GetEmitterClipScale( f32 Distance )
 {
     if( m_EmitterType == POINT )
-	{
+    {
         f32 FarClip = g_AudioMgr.GetFarFalloff ( m_Label );
 
         return (Distance / (m_AudioMgrFarClip*FarClip)); 

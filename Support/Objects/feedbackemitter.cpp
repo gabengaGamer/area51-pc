@@ -53,7 +53,7 @@ static struct feedback_emitter_desc : public object_desc
         "SCRIPT",
 
         object::ATTR_NEEDS_LOGIC_TIME    |
-        object::ATTR_SPACIAL_ENTRY		 |
+        object::ATTR_SPACIAL_ENTRY         |
         object::ATTR_COLLIDABLE          |
         object::ATTR_BLOCKS_ALL_ACTORS   |
         object::ATTR_COLLISION_PERMEABLE,
@@ -358,7 +358,7 @@ void feedback_emitter::OnRenderSpatial( void )
 #endif // !defined( CONFIG_RETAIL )
 //=========================================================================
 
-void feedback_emitter::OnColCheck	( void )
+void feedback_emitter::OnColCheck    ( void )
 {
     if (!m_bActive)
         return;

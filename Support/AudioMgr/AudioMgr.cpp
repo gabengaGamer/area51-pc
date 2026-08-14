@@ -254,7 +254,7 @@ void* audiopkg_loader::PreLoad( X_FILE*& Fp, const char* pFileName )
         }
         else
         {
-			x_throw( xfs("Incorrect audio package VERSION [%s]\nthis was last compile by [%s]", pFileName, PackageID.UserId) );
+            x_throw( xfs("Incorrect audio package VERSION [%s]\nthis was last compile by [%s]", pFileName, PackageID.UserId) );
         }
 
         

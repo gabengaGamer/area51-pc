@@ -15,7 +15,7 @@ class CWorkspaceTabCtrl;
 class CEditorPaletteDoc : public CDocument
 {
 public:
-	CEditorPaletteDoc();           // protected constructor used by dynamic creation
+    CEditorPaletteDoc();           // protected constructor used by dynamic creation
     void SetFramePointer(CEditorFrame* pFrame) { m_pFrameEdit = pFrame; }
     CEditorFrame* GetFramePointer() { return m_pFrameEdit; }
     void SetTabParent(CWorkspaceTabCtrl *pParent) { m_pTabParent = pParent; }
@@ -26,31 +26,31 @@ private:
     CWorkspaceTabCtrl*  m_pTabParent;
 
 protected: // create from serialization only
-	DECLARE_DYNCREATE(CEditorPaletteDoc)
+    DECLARE_DYNCREATE(CEditorPaletteDoc)
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorPaletteDoc)
-	public:
-	virtual void Serialize(CArchive& ar);   // overridden for document i/o
-	protected:
-	virtual BOOL OnNewDocument();
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorPaletteDoc)
+    public:
+    virtual void Serialize(CArchive& ar);   // overridden for document i/o
+    protected:
+    virtual BOOL OnNewDocument();
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CEditorPaletteDoc();
+    virtual ~CEditorPaletteDoc();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CEditorPaletteDoc)
-		// NOTE - the ClassWizard will add and remove member functions here.
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CEditorPaletteDoc)
+        // NOTE - the ClassWizard will add and remove member functions here.
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 //{{AFX_INSERT_LOCATION}}

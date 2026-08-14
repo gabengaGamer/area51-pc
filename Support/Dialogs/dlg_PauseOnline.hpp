@@ -78,15 +78,15 @@ public:
 
 protected:
     ui_frame*           m_pFrame1;
-	ui_button*			m_pButtonSuicide;
-    ui_button*			m_pButtonSwitchTeam; 	
-	ui_button*			m_pButtonVoteMap; 	
-    ui_button*			m_pButtonVoteKick; 	
-    ui_button*			m_pButtonFriends; 	
-    ui_button*			m_pButtonPlayers; 	
-	ui_button*			m_pButtonOptions; 	
+    ui_button*            m_pButtonSuicide;
+    ui_button*            m_pButtonSwitchTeam;     
+    ui_button*            m_pButtonVoteMap;     
+    ui_button*            m_pButtonVoteKick;     
+    ui_button*            m_pButtonFriends;     
+    ui_button*            m_pButtonPlayers;     
+    ui_button*            m_pButtonOptions;     
     ui_button*          m_pButtonSettings;
-	ui_button*			m_pButtonConfig; 	
+    ui_button*            m_pButtonConfig;     
 #ifdef TARGET_XBOX
     ui_bitmap*          m_pFriendInvite;
     ui_bitmap*          m_pGameInvite;

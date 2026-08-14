@@ -25,13 +25,13 @@
 ** Operations that an object must define to mimic a table
 ** (some functions only need some of them)
 */
-#define TAB_R	1			/* read */
-#define TAB_W	2			/* write */
-#define TAB_L	4			/* length */
-#define TAB_RW	(TAB_R | TAB_W)		/* read/write */
+#define TAB_R    1            /* read */
+#define TAB_W    2            /* write */
+#define TAB_L    4            /* length */
+#define TAB_RW    (TAB_R | TAB_W)        /* read/write */
 
 
-#define aux_getn(L,n,w)	(checktab(L, n, (w) | TAB_L), luaL_len(L, n))
+#define aux_getn(L,n,w)    (checktab(L, n, (w) | TAB_L), luaL_len(L, n))
 
 
 static int checkfield (lua_State *L, const char *key, int n) {
@@ -239,8 +239,8 @@ typedef unsigned int IdxT;
 
 
 /* Versions of lua_seti/lua_geti specialized for IdxT */
-#define geti(L,idt,idx)	lua_geti(L, idt, l_castU2S(idx))
-#define seti(L,idt,idx)	lua_seti(L, idt, l_castU2S(idx))
+#define geti(L,idt,idx)    lua_geti(L, idt, l_castU2S(idx))
+#define seti(L,idt,idx)    lua_seti(L, idt, l_castU2S(idx))
 
 
 /*
@@ -250,12 +250,12 @@ typedef unsigned int IdxT;
 ** good choice.)
 */
 #if !defined(l_randomizePivot)
-#define l_randomizePivot(L)	luaL_makeseed(L)
-#endif					/* } */
+#define l_randomizePivot(L)    luaL_makeseed(L)
+#endif                    /* } */
 
 
 /* arrays larger than 'RANLIMIT' may use randomized pivots */
-#define RANLIMIT	100u
+#define RANLIMIT    100u
 
 
 static void set2 (lua_State *L, IdxT i, IdxT j) {

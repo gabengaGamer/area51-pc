@@ -2449,7 +2449,7 @@ void obj_mgr::Render3dPrep( xbool DoPortalWalk, const view& PortalView, u8 Start
 //#define cubemapverb
 #ifdef cubemapverb
     x_DebugMsg( "EnvMap: Zone=%d Name=[%s]\n", StartZone, Handle.GetName() );
-#endif	
+#endif    
 
     render::SetAreaCubeMap( Handle );
 }
@@ -2463,7 +2463,7 @@ void obj_mgr::Render3dObjects( xbool bDoPortalWalk, const view& PortalView, u8 S
     X_PROFILE_SCOPE_CATEGORY( "Context", "obj_mgr::Render3dObjects" );
     LOG_STAT( k_stats_HighLevelRender );
 
-	if( g_ZoneMgr.GetPortalCount() == 0 ) bDoPortalWalk = FALSE;
+    if( g_ZoneMgr.GetPortalCount() == 0 ) bDoPortalWalk = FALSE;
     Render3dPrep( bDoPortalWalk, PortalView, StartZone );
     {
         // Handle the normal rendering

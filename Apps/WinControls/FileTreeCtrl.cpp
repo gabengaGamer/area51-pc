@@ -23,18 +23,18 @@ m_bUsePrev(FALSE)
 CFileTreeCtrl::~CFileTreeCtrl()
 {
     if (m_bInit)
-	    m_imageList.DeleteImageList();
+        m_imageList.DeleteImageList();
 }
 
 
 BEGIN_MESSAGE_MAP(CFileTreeCtrl, CTreeCtrl)
-	//{{AFX_MSG_MAP(CFileTreeCtrl)
-	ON_NOTIFY_REFLECT(NM_RCLICK, OnRclick)
-	ON_COMMAND(IDM_FBC_FILE_RENAME, OnFileRename)
-	ON_COMMAND(IDM_FBC_FILE_DELETE, OnFileDelete)
-	ON_NOTIFY_REFLECT(TVN_BEGINLABELEDIT, OnBeginlabeledit)
-	ON_NOTIFY_REFLECT(TVN_ENDLABELEDIT, OnEndlabeledit)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CFileTreeCtrl)
+    ON_NOTIFY_REFLECT(NM_RCLICK, OnRclick)
+    ON_COMMAND(IDM_FBC_FILE_RENAME, OnFileRename)
+    ON_COMMAND(IDM_FBC_FILE_DELETE, OnFileDelete)
+    ON_NOTIFY_REFLECT(TVN_BEGINLABELEDIT, OnBeginlabeledit)
+    ON_NOTIFY_REFLECT(TVN_ENDLABELEDIT, OnEndlabeledit)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -44,15 +44,15 @@ void CFileTreeCtrl::BuildTreeFromPath(CString strRootPath, CString strWildcard, 
 {
     if (!m_bInit)
     {
-	    // Create the image list used by the tree control.
-	    if (!m_imageList.Create (IDB_TREE_DRIVE_ICONS, 16, 1, RGB(0,255,0)))
+        // Create the image list used by the tree control.
+        if (!m_imageList.Create (IDB_TREE_DRIVE_ICONS, 16, 1, RGB(0,255,0)))
         {
             ASSERT(FALSE);
-		    return;
+            return;
         }
 
-	    // Set the image list for the tree control.
-	    SetImageList(&m_imageList, TVSIL_NORMAL);
+        // Set the image list for the tree control.
+        SetImageList(&m_imageList, TVSIL_NORMAL);
         m_bInit = TRUE;
     }
 
@@ -215,7 +215,7 @@ void CFileTreeCtrl::OnRclick(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CFileTreeCtrl::OnContextMenu(CWnd*, CPoint point)
 {
-	CMenu menu;
+    CMenu menu;
     menu.CreatePopupMenu();
     
     UINT nFlags;
@@ -364,6 +364,6 @@ void CFileTreeCtrl::OnEndlabeledit(NMHDR* pNMHDR, LRESULT* pResult)
             *pResult = TRUE;
         }
     }
-	
-	*pResult = FALSE;
+    
+    *pResult = FALSE;
 }

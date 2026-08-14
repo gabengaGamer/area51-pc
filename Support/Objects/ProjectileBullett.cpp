@@ -51,7 +51,7 @@ const object_desc&  bullet_projectile::GetObjectType   ( void )
 
 bullet_projectile::bullet_projectile()
 {
-	m_MaxAliveTime = .3f;
+    m_MaxAliveTime = .3f;
 
     m_bThroughGlass = TRUE;
 }
@@ -69,17 +69,17 @@ void bullet_projectile::OnAdvanceSimulation( f32 DeltaTime )
     X_PROFILE_SCOPE_CATEGORY( "Context", "bullet_projectile::OnAdvanceSimulation" );
     LOG_STAT( k_stats_Projectiles);
     
-	//update collisions
-	if ( OnProcessCollision( DeltaTime ) )
-	{
-		OnMove( m_CurrentPosition );
-		m_MaxAliveTime -= DeltaTime;
+    //update collisions
+    if ( OnProcessCollision( DeltaTime ) )
+    {
+        OnMove( m_CurrentPosition );
+        m_MaxAliveTime -= DeltaTime;
 
-		if ( m_MaxAliveTime < F32_MIN )
-		{
-			g_ObjMgr.DestroyObject( GetGuid() );
-		}
-	}
+        if ( m_MaxAliveTime < F32_MIN )
+        {
+            g_ObjMgr.DestroyObject( GetGuid() );
+        }
+    }
 /*    
     if( m_BulletFlyBySfxID != -1 )
     {
@@ -122,7 +122,7 @@ void bullet_projectile::OnAdvanceSimulation( f32 DeltaTime )
 
 void bullet_projectile::OnMove( const vector3& rNewPos )
 {
-	//transfom the object.
+    //transfom the object.
     base_projectile::OnMove( rNewPos );    
 }
 

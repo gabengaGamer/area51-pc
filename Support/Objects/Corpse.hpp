@@ -1,4 +1,4 @@
-#ifndef	__CORPSE_HPP__
+#ifndef    __CORPSE_HPP__
 #define __CORPSE_HPP__
 
 //=========================================================================
@@ -69,8 +69,8 @@ static      xbool           ReachedMaxActiveLimit   ( void );
                                                             s32             AnimFrame );
             xbool           InitializeEditorPlaced  ( void );
 
-    virtual bbox            GetLocalBBox		    ( void ) const;
-    virtual s32             GetMaterial				( void ) const { return m_Material; }
+    virtual bbox            GetLocalBBox            ( void ) const;
+    virtual s32             GetMaterial                ( void ) const { return m_Material; }
     virtual void            OnRender                ( void );
     
 #ifndef X_RETAIL
@@ -89,7 +89,7 @@ static      xbool           ReachedMaxActiveLimit   ( void );
     virtual void            OnTransform             ( const matrix4& L2W    ); 
     virtual f32             GetHealth               ( void ) { return 0.0f; }
 
-			physics_inst&   GetPhysicsInst          ( void );    
+            physics_inst&   GetPhysicsInst          ( void );    
             void            SetPermanent            ( xbool Permanent );
 
             xcolor          GetFloorColor           ( void ) { return m_FloorProperties.GetColor(); }
@@ -109,7 +109,7 @@ static      xbool           ReachedMaxActiveLimit   ( void );
             eCorpseName         NameToEnum          ( const char* pName );
             xstring             GetEnumStringCorpse ( void );
             const char*         EnumToName          ( eCorpseName theCorpse );
-			const char*         GetScanIdentifier   ( void );
+            const char*         GetScanIdentifier   ( void );
 
             void                StartFading         ( void );            
             void                StartFading         ( f32 NewFadeOutTime );            
@@ -170,8 +170,8 @@ static  s32                     m_ActiveCount;          // # of active (moving) 
         s32                     m_AnimFrame;            // Animation frame to use
         f32                     m_SimulationTime;       // Time to run ragdoll for pose
 
-	    // Blood properties
-	    s32                     m_Material;             // Material type
+        // Blood properties
+        s32                     m_Material;             // Material type
         rhandle<decal_package>  m_hBloodDecalPackage;   // Blood package to use
         s32                     m_BloodDecalGroup;      // Decal group to use
         eCorpseName             m_CorpseName;           // Name of the corpse
@@ -185,7 +185,7 @@ static  s32                     m_ActiveCount;          // # of active (moving) 
 inline
 physics_inst& corpse::GetPhysicsInst( void )
 {
-	return m_PhysicsInst;
+    return m_PhysicsInst;
 }
 
 //=========================================================================

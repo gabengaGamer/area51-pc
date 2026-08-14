@@ -1,7 +1,7 @@
 /*
- *	lame utility library include file
+ *    lame utility library include file
  *
- *	Copyright (c) 1999 Albert L Faber
+ *    Copyright (c) 1999 Albert L Faber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -10,7 +10,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.     See the GNU
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
@@ -149,7 +149,7 @@ typedef struct {
   int   safejoint; /* safe joint stereo mode */
   FLOAT last_en_subshort[4][9];
   FLOAT last_attack_intensity[4][9];
-  FLOAT	last_thm[4][SBMAX_s][3];
+  FLOAT    last_thm[4][SBMAX_s][3];
   int   last_attacks[4][3];
   FLOAT pe_l[4],pe_s[4];
   FLOAT pefirbuf[19];
@@ -192,7 +192,7 @@ typedef struct {
   FLOAT8  athadjust_safe_noiseshaping_thre; // value which max_pow_alt must be greater than
                                             // for noise shaping 2 to be used "safely"                                                     
   FLOAT8  athadjust_safe_athaasensitivity; // used for second determination if it is safe to switch
-	                                      // to noise shaping 2
+                                          // to noise shaping 2
 } presetTune_t;
 
 typedef struct 
@@ -220,7 +220,7 @@ typedef struct
     FLOAT8  l[SBMAX_l];     /* ATH for sfbs in long blocks */
     FLOAT8  s[SBMAX_s];     /* ATH for sfbs in short blocks */
     FLOAT8  cb[CBANDS];     /* ATH for convolution bands */
-    FLOAT   eql_w[BLKSIZE/2];	/* equal loudness weights (based on ATH) */
+    FLOAT   eql_w[BLKSIZE/2];    /* equal loudness weights (based on ATH) */
 } ATH_t;
 
 /**
@@ -322,10 +322,10 @@ struct lame_internal_flags {
 
   int padding;                  /* padding for the current frame? */
   int mode_gr;                    /* granules per frame */
-  int          channels_in;	/* number of channels in the input data stream (PCM or decoded PCM) */
+  int          channels_in;    /* number of channels in the input data stream (PCM or decoded PCM) */
   int          channels_out;  /* number of channels in the output data stream (not used for decoding) */
   resample_t*  resample_in;   /* context for coding (PCM=>MP3) resampling */
-  resample_t*  resample_out;	/* context for decoding (MP3=>PCM) resampling */
+  resample_t*  resample_out;    /* context for decoding (MP3=>PCM) resampling */
   FLOAT8  samplefreq_in;
   FLOAT8  samplefreq_out;
   uint16_t nMusicCRC;
@@ -344,8 +344,8 @@ struct lame_internal_flags {
   unsigned long frame_count;  /* Number of frames coded, 2^32 > 3 years */
   int          mf_samples_to_encode;
   int          mf_size;
-  FLOAT8       ampl;	  /* amplification at the end of the current chunk (1. = 0 dB) */
-  FLOAT8       last_ampl;	  /* amplification at the end of the last chunk    (1. = 0 dB) */
+  FLOAT8       ampl;      /* amplification at the end of the current chunk (1. = 0 dB) */
+  FLOAT8       last_ampl;      /* amplification at the end of the last chunk    (1. = 0 dB) */
   int VBR_min_bitrate;            /* min bitrate index */
   int VBR_max_bitrate;            /* max bitrate index */
   FLOAT resample_ratio;           /* input_samp_rate/output_samp_rate */
@@ -377,12 +377,12 @@ struct lame_internal_flags {
   int noise_shaping_amp;    /*  0 = ISO model: amplify all distorted bands
                                 1 = amplify within 50% of max (on db scale)
                                 2 = amplify only most distorted band
-			     */
+                 */
   int substep_shaping;      /* 0 = no substep
-			       1 = use substep shaping at last step(VBR only)
-			           (not implemented yet)
-			       2 = use substep inside loop
-			    */
+                   1 = use substep shaping at last step(VBR only)
+                       (not implemented yet)
+                   2 = use substep inside loop
+                */
 
   int psymodel;             /* 1 = gpsycho. 0 = none */
   int noise_shaping_stop;   /* 0 = stop at over=0, all scalefacs amplified or
@@ -390,7 +390,7 @@ struct lame_internal_flags {
                                1 = stop when all scalefacs amplified or        
                                    a scalefac has reached max value
                                2 = stop when all scalefacs amplified 
-			    */
+                */
 
   int use_best_huffman;     /* 0 = no.  1=outside loop  2=inside loop(slow) */
 
@@ -469,9 +469,9 @@ struct lame_internal_flags {
 /* to be remembered for the unpredictability measure.  For "r" and        */
 /* "phi_sav", the first index from the left is the channel select and     */
 /* the second index is the "age" of the data.                             */
-  FLOAT8	minval[CBANDS];
-  FLOAT8	nb_1[4][CBANDS], nb_2[4][CBANDS];
-  FLOAT8	nb_s1[4][CBANDS], nb_s2[4][CBANDS];
+  FLOAT8    minval[CBANDS];
+  FLOAT8    nb_1[4][CBANDS], nb_2[4][CBANDS];
+  FLOAT8    nb_s1[4][CBANDS], nb_s2[4][CBANDS];
   FLOAT8  *s3_ss;
   FLOAT8  *s3_ll;
   FLOAT8 decay;
@@ -512,20 +512,20 @@ struct lame_internal_flags {
   
   /* Scale Factor Bands    */
   III_scalefac_t pseudohalf;
-  FLOAT8	w1_l[SBMAX_l], w2_l[SBMAX_l];
-  FLOAT8	w1_s[SBMAX_s], w2_s[SBMAX_s];
+  FLOAT8    w1_l[SBMAX_l], w2_l[SBMAX_l];
+  FLOAT8    w1_s[SBMAX_s], w2_s[SBMAX_s];
   FLOAT8 mld_l[SBMAX_l],mld_s[SBMAX_s];
-  int	bu_l[SBMAX_l],bo_l[SBMAX_l] ;
-  int	bu_s[SBMAX_s],bo_s[SBMAX_s] ;
-  int	npart_l,npart_s;
-  int	npart_l_orig,npart_s_orig;
+  int    bu_l[SBMAX_l],bo_l[SBMAX_l] ;
+  int    bu_s[SBMAX_s],bo_s[SBMAX_s] ;
+  int    npart_l,npart_s;
+  int    npart_l_orig,npart_s_orig;
   
-  int	s3ind[CBANDS][2];
-  int	s3ind_s[CBANDS][2];
+  int    s3ind[CBANDS][2];
+  int    s3ind_s[CBANDS][2];
   FLOAT8 SNR_s[CBANDS];
 
-  int	numlines_s[CBANDS];
-  int	numlines_l[CBANDS];
+  int    numlines_s[CBANDS];
+  int    numlines_l[CBANDS];
   
   
   /* frame analyzer    */
@@ -535,7 +535,7 @@ struct lame_internal_flags {
   
   /* simple statistics */
   int   bitrate_stereoMode_Hist [16] [4+1];
-  int	bitrate_blockType_Hist  [16] [4+1+1];/*norm/start/short/stop/mixed(short)/sum*/
+  int    bitrate_blockType_Hist  [16] [4+1+1];/*norm/start/short/stop/mixed(short)/sum*/
 
   /* ratios  */
   FLOAT8 pe[4];
@@ -543,7 +543,7 @@ struct lame_internal_flags {
   FLOAT8 ms_ener_ratio_old;
 
   /* block type */
-  int	blocktype_old[2];
+  int    blocktype_old[2];
 
   /* used by the frame analyzer */
   plotting_data *pinfo;
@@ -607,9 +607,9 @@ extern void
 getframebits( const lame_global_flags *gfp, int *bitsPerFrame, int *mean_bits);
 
 void fill_buffer(lame_global_flags *gfp,
-		 sample_t *mfbuf[2],
-		 sample_t *in_buffer[2],
-		 int nsamples, int *n_in, int *n_out);
+         sample_t *mfbuf[2],
+         sample_t *in_buffer[2],
+         int nsamples, int *n_in, int *n_out);
 
 int  fill_buffer_resample (
         lame_global_flags *gfp,
@@ -640,8 +640,8 @@ extern void lame_errorf(const lame_internal_flags *gfc, const char *, ...);
 extern void lame_debugf(const lame_internal_flags *gfc, const char *, ...);
 extern void lame_msgf  (const lame_internal_flags *gfc, const char *, ...);
 #define DEBUGF  lame_debugf
-#define ERRORF	lame_errorf
-#define MSGF	lame_msgf
+#define ERRORF    lame_errorf
+#define MSGF    lame_msgf
 
 
 int select_kth_int(int b[], int N, int k);

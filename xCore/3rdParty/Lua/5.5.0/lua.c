@@ -23,14 +23,14 @@
 
 
 #if !defined(LUA_PROGNAME)
-#define LUA_PROGNAME		"lua"
+#define LUA_PROGNAME        "lua"
 #endif
 
 #if !defined(LUA_INIT_VAR)
-#define LUA_INIT_VAR		"LUA_INIT"
+#define LUA_INIT_VAR        "LUA_INIT"
 #endif
 
-#define LUA_INITVARVERSION	LUA_INIT_VAR LUA_VERSUFFIX
+#define LUA_INITVARVERSION    LUA_INIT_VAR LUA_VERSUFFIX
 
 
 static lua_State *globalL = NULL;
@@ -270,11 +270,11 @@ static int handle_script (lua_State *L, char **argv) {
 
 
 /* bits of various argument indicators in 'args' */
-#define has_error	1	/* bad option */
-#define has_i		2	/* -i */
-#define has_v		4	/* -v */
-#define has_e		8	/* -e */
-#define has_E		16	/* -E */
+#define has_error    1    /* bad option */
+#define has_i        2    /* -i */
+#define has_v        4    /* -v */
+#define has_e        8    /* -e */
+#define has_E        16    /* -E */
 
 
 /*
@@ -396,12 +396,12 @@ static int handle_luainit (lua_State *L) {
 */
 
 #if !defined(LUA_PROMPT)
-#define LUA_PROMPT		"> "
-#define LUA_PROMPT2		">> "
+#define LUA_PROMPT        "> "
+#define LUA_PROMPT2        ">> "
 #endif
 
 #if !defined(LUA_MAXINPUT)
-#define LUA_MAXINPUT		512
+#define LUA_MAXINPUT        512
 #endif
 
 
@@ -409,28 +409,28 @@ static int handle_luainit (lua_State *L) {
 ** lua_stdin_is_tty detects whether the standard input is a 'tty' (that
 ** is, whether we're running lua interactively).
 */
-#if !defined(lua_stdin_is_tty)	/* { */
+#if !defined(lua_stdin_is_tty)    /* { */
 
-#if defined(LUA_USE_POSIX)	/* { */
+#if defined(LUA_USE_POSIX)    /* { */
 
 #include <unistd.h>
-#define lua_stdin_is_tty()	isatty(0)
+#define lua_stdin_is_tty()    isatty(0)
 
-#elif defined(LUA_USE_WINDOWS)	/* }{ */
+#elif defined(LUA_USE_WINDOWS)    /* }{ */
 
 #include <io.h>
 #include <windows.h>
 
-#define lua_stdin_is_tty()	_isatty(_fileno(stdin))
+#define lua_stdin_is_tty()    _isatty(_fileno(stdin))
 
-#else				/* }{ */
+#else                /* }{ */
 
 /* ISO C definition */
-#define lua_stdin_is_tty()	1  /* assume stdin is a tty */
+#define lua_stdin_is_tty()    1  /* assume stdin is a tty */
 
-#endif				/* } */
+#endif                /* } */
 
-#endif				/* } */
+#endif                /* } */
 
 
 /*
@@ -441,21 +441,21 @@ static int handle_luainit (lua_State *L) {
 ** * lua_freeline defines how to free a line read by lua_readline.
 */
 
-#if !defined(lua_readline)	/* { */
+#if !defined(lua_readline)    /* { */
 /* Otherwise, all previously listed functions should be defined. */
 
-#if defined(LUA_USE_READLINE)	/* { */
+#if defined(LUA_USE_READLINE)    /* { */
 /* Lua will be linked with '-lreadline' */
 
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#define lua_initreadline(L)	((void)L, rl_readline_name="lua")
-#define lua_readline(buff,prompt)	((void)buff, readline(prompt))
-#define lua_saveline(line)	add_history(line)
-#define lua_freeline(line)	free(line)
+#define lua_initreadline(L)    ((void)L, rl_readline_name="lua")
+#define lua_readline(buff,prompt)    ((void)buff, readline(prompt))
+#define lua_saveline(line)    add_history(line)
+#define lua_freeline(line)    free(line)
 
-#else		/* }{ */
+#else        /* }{ */
 /* use dynamically loaded readline (or nothing) */
 
 /* pointer to 'readline' function (if any) */
@@ -492,7 +492,7 @@ static void lua_freeline (char *line) {
 }
 
 
-#if defined(LUA_USE_DLOPEN) && defined(LUA_READLINELIB)		/* { */
+#if defined(LUA_USE_DLOPEN) && defined(LUA_READLINELIB)        /* { */
 /* try to load 'readline' dynamically */
 
 #include <dlfcn.h>
@@ -512,17 +512,17 @@ static void lua_initreadline (lua_State *L) {
   }
 }
 
-#else		/* }{ */
+#else        /* }{ */
 /* no dlopen or LUA_READLINELIB undefined */
 
 /* Leave pointers with NULL */
-#define lua_initreadline(L)	((void)L)
+#define lua_initreadline(L)    ((void)L)
 
-#endif		/* } */
+#endif        /* } */
 
-#endif				/* } */
+#endif                /* } */
 
-#endif				/* } */
+#endif                /* } */
 
 
 /*
@@ -541,8 +541,8 @@ static const char *get_prompt (lua_State *L, int firstline) {
 }
 
 /* mark in error messages for incomplete statements */
-#define EOFMARK		"<eof>"
-#define marklen		(sizeof(EOFMARK)/sizeof(char) - 1)
+#define EOFMARK        "<eof>"
+#define marklen        (sizeof(EOFMARK)/sizeof(char) - 1)
 
 
 /*
@@ -693,7 +693,7 @@ static void doREPL (lua_State *L) {
 /* }================================================================== */
 
 #if !defined(luai_openlibs)
-#define luai_openlibs(L)	luaL_openselectedlibs(L, ~0, 0)
+#define luai_openlibs(L)    luaL_openselectedlibs(L, ~0, 0)
 #endif
 
 

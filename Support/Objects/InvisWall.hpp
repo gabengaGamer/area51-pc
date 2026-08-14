@@ -34,7 +34,7 @@ class invisible_wall_obj : public object
 public:
     CREATE_RTTI( invisible_wall_obj, object, object )
 
-	                            invisible_wall_obj          (void);
+                                invisible_wall_obj          (void);
                                ~invisible_wall_obj          (void);
 
     virtual bbox                GetLocalBBox    ( void ) const;

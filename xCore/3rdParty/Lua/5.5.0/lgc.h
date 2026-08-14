@@ -32,19 +32,19 @@
 /*
 ** Possible states of the Garbage Collector
 */
-#define GCSpropagate	0
-#define GCSenteratomic	1
-#define GCSatomic	2
-#define GCSswpallgc	3
-#define GCSswpfinobj	4
-#define GCSswptobefnz	5
-#define GCSswpend	6
-#define GCScallfin	7
-#define GCSpause	8
+#define GCSpropagate    0
+#define GCSenteratomic    1
+#define GCSatomic    2
+#define GCSswpallgc    3
+#define GCSswpfinobj    4
+#define GCSswptobefnz    5
+#define GCSswpend    6
+#define GCScallfin    7
+#define GCSpause    8
 
 
 #define issweepphase(g)  \
-	(GCSswpallgc <= (g)->gcstate && (g)->gcstate <= GCSswpend)
+    (GCSswpallgc <= (g)->gcstate && (g)->gcstate <= GCSswpend)
 
 
 /*
@@ -55,20 +55,20 @@
 ** are white again.
 */
 
-#define keepinvariant(g)	((g)->gcstate <= GCSatomic)
+#define keepinvariant(g)    ((g)->gcstate <= GCSatomic)
 
 
 /*
 ** some useful bit tricks
 */
-#define resetbits(x,m)		((x) &= cast_byte(~(m)))
-#define setbits(x,m)		((x) |= (m))
-#define testbits(x,m)		((x) & (m))
-#define bitmask(b)		(1<<(b))
-#define bit2mask(b1,b2)		(bitmask(b1) | bitmask(b2))
-#define l_setbit(x,b)		setbits(x, bitmask(b))
-#define resetbit(x,b)		resetbits(x, bitmask(b))
-#define testbit(x,b)		testbits(x, bitmask(b))
+#define resetbits(x,m)        ((x) &= cast_byte(~(m)))
+#define setbits(x,m)        ((x) |= (m))
+#define testbits(x,m)        ((x) & (m))
+#define bitmask(b)        (1<<(b))
+#define bit2mask(b1,b2)        (bitmask(b1) | bitmask(b2))
+#define l_setbit(x,b)        setbits(x, bitmask(b))
+#define resetbit(x,b)        resetbits(x, bitmask(b))
+#define testbit(x,b)        testbits(x, bitmask(b))
 
 
 /*
@@ -76,50 +76,50 @@
 ** used for object "age" in generational mode. Last bit is used
 ** by tests.
 */
-#define WHITE0BIT	3  /* object is white (type 0) */
-#define WHITE1BIT	4  /* object is white (type 1) */
-#define BLACKBIT	5  /* object is black */
-#define FINALIZEDBIT	6  /* object has been marked for finalization */
+#define WHITE0BIT    3  /* object is white (type 0) */
+#define WHITE1BIT    4  /* object is white (type 1) */
+#define BLACKBIT    5  /* object is black */
+#define FINALIZEDBIT    6  /* object has been marked for finalization */
 
-#define TESTBIT		7
+#define TESTBIT        7
 
 
 
-#define WHITEBITS	bit2mask(WHITE0BIT, WHITE1BIT)
+#define WHITEBITS    bit2mask(WHITE0BIT, WHITE1BIT)
 
 
 #define iswhite(x)      testbits((x)->marked, WHITEBITS)
 #define isblack(x)      testbit((x)->marked, BLACKBIT)
 #define isgray(x)  /* neither white nor black */  \
-	(!testbits((x)->marked, WHITEBITS | bitmask(BLACKBIT)))
+    (!testbits((x)->marked, WHITEBITS | bitmask(BLACKBIT)))
 
-#define tofinalize(x)	testbit((x)->marked, FINALIZEDBIT)
+#define tofinalize(x)    testbit((x)->marked, FINALIZEDBIT)
 
-#define otherwhite(g)	((g)->currentwhite ^ WHITEBITS)
-#define isdeadm(ow,m)	((m) & (ow))
-#define isdead(g,v)	isdeadm(otherwhite(g), (v)->marked)
+#define otherwhite(g)    ((g)->currentwhite ^ WHITEBITS)
+#define isdeadm(ow,m)    ((m) & (ow))
+#define isdead(g,v)    isdeadm(otherwhite(g), (v)->marked)
 
-#define changewhite(x)	((x)->marked ^= WHITEBITS)
+#define changewhite(x)    ((x)->marked ^= WHITEBITS)
 #define nw2black(x)  \
-	check_exp(!iswhite(x), l_setbit((x)->marked, BLACKBIT))
+    check_exp(!iswhite(x), l_setbit((x)->marked, BLACKBIT))
 
-#define luaC_white(g)	cast_byte((g)->currentwhite & WHITEBITS)
+#define luaC_white(g)    cast_byte((g)->currentwhite & WHITEBITS)
 
 
 /* object age in generational mode */
-#define G_NEW		0	/* created in current cycle */
-#define G_SURVIVAL	1	/* created in previous cycle */
-#define G_OLD0		2	/* marked old by frw. barrier in this cycle */
-#define G_OLD1		3	/* first full cycle as old */
-#define G_OLD		4	/* really old object (not to be visited) */
-#define G_TOUCHED1	5	/* old object touched this cycle */
-#define G_TOUCHED2	6	/* old object touched in previous cycle */
+#define G_NEW        0    /* created in current cycle */
+#define G_SURVIVAL    1    /* created in previous cycle */
+#define G_OLD0        2    /* marked old by frw. barrier in this cycle */
+#define G_OLD1        3    /* first full cycle as old */
+#define G_OLD        4    /* really old object (not to be visited) */
+#define G_TOUCHED1    5    /* old object touched this cycle */
+#define G_TOUCHED2    6    /* old object touched in previous cycle */
 
-#define AGEBITS		7  /* all age bits (111) */
+#define AGEBITS        7  /* all age bits (111) */
 
-#define getage(o)	((o)->marked & AGEBITS)
+#define getage(o)    ((o)->marked & AGEBITS)
 #define setage(o,a)  ((o)->marked = cast_byte(((o)->marked & (~AGEBITS)) | a))
-#define isold(o)	(getage(o) > G_SURVIVAL)
+#define isold(o)    (getage(o) > G_SURVIVAL)
 
 
 /*
@@ -198,7 +198,7 @@
 #define LUAI_GCMUL      200
 
 /* How many bytes to allocate before next GC step */
-#define LUAI_GCSTEPSIZE	(200 * sizeof(Table))
+#define LUAI_GCSTEPSIZE    (200 * sizeof(Table))
 
 
 #define setgcparam(g,p,v)  (g->gcparams[LUA_GCP##p] = luaO_codeparam(v))
@@ -210,10 +210,10 @@
 /*
 ** Control when GC is running:
 */
-#define GCSTPUSR	1  /* bit true when GC stopped by user */
-#define GCSTPGC		2  /* bit true when GC stopped by itself */
-#define GCSTPCLS	4  /* bit true when closing Lua state */
-#define gcrunning(g)	((g)->gcstp == 0)
+#define GCSTPUSR    1  /* bit true when GC stopped by user */
+#define GCSTPGC        2  /* bit true when GC stopped by itself */
+#define GCSTPCLS    4  /* bit true when closing Lua state */
+#define gcrunning(g)    ((g)->gcstp == 0)
 
 
 /*
@@ -224,32 +224,32 @@
 */
 
 #if !defined(HARDMEMTESTS)
-#define condchangemem(L,pre,pos,emg)	((void)0)
+#define condchangemem(L,pre,pos,emg)    ((void)0)
 #else
 #define condchangemem(L,pre,pos,emg)  \
-	{ if (gcrunning(G(L))) { pre; luaC_fullgc(L, emg); pos; } }
+    { if (gcrunning(G(L))) { pre; luaC_fullgc(L, emg); pos; } }
 #endif
 
 #define luaC_condGC(L,pre,pos) \
-	{ if (G(L)->GCdebt <= 0) { pre; luaC_step(L); pos;}; \
-	  condchangemem(L,pre,pos,0); }
+    { if (G(L)->GCdebt <= 0) { pre; luaC_step(L); pos;}; \
+      condchangemem(L,pre,pos,0); }
 
 /* more often than not, 'pre'/'pos' are empty */
-#define luaC_checkGC(L)		luaC_condGC(L,(void)0,(void)0)
+#define luaC_checkGC(L)        luaC_condGC(L,(void)0,(void)0)
 
 
 #define luaC_objbarrier(L,p,o) (  \
-	(isblack(p) && iswhite(o)) ? \
-	luaC_barrier_(L,obj2gco(p),obj2gco(o)) : cast_void(0))
+    (isblack(p) && iswhite(o)) ? \
+    luaC_barrier_(L,obj2gco(p),obj2gco(o)) : cast_void(0))
 
 #define luaC_barrier(L,p,v) (  \
-	iscollectable(v) ? luaC_objbarrier(L,p,gcvalue(v)) : cast_void(0))
+    iscollectable(v) ? luaC_objbarrier(L,p,gcvalue(v)) : cast_void(0))
 
 #define luaC_objbarrierback(L,p,o) (  \
-	(isblack(p) && iswhite(o)) ? luaC_barrierback_(L,p) : cast_void(0))
+    (isblack(p) && iswhite(o)) ? luaC_barrierback_(L,p) : cast_void(0))
 
 #define luaC_barrierback(L,p,v) (  \
-	iscollectable(v) ? luaC_objbarrierback(L, p, gcvalue(v)) : cast_void(0))
+    iscollectable(v) ? luaC_objbarrierback(L, p, gcvalue(v)) : cast_void(0))
 
 LUAI_FUNC void luaC_fix (lua_State *L, GCObject *o);
 LUAI_FUNC void luaC_freeallobjects (lua_State *L);

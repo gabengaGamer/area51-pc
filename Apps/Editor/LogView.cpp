@@ -33,12 +33,12 @@ CLogView::~CLogView()
 
 
 BEGIN_MESSAGE_MAP(CLogView, CListCtrl)
-	//{{AFX_MSG_MAP(CLogView)
+    //{{AFX_MSG_MAP(CLogView)
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnItemChanged)
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnDoubleClick)
-	ON_WM_LBUTTONUP()
-	ON_WM_CAPTURECHANGED()
-	//}}AFX_MSG_MAP
+    ON_WM_LBUTTONUP()
+    ON_WM_CAPTURECHANGED()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 //     ON_NOTIFY(LVN_ITEMCHANGED, 0, OnItemChanged)
@@ -53,12 +53,12 @@ enum COLUMN_DATA_TYPE
 #ifdef _DEBUG
 void CLogView::AssertValid() const
 {
-	CListCtrl::AssertValid();
+    CListCtrl::AssertValid();
 }
 
 void CLogView::Dump(CDumpContext& dc) const
 {
-	CListCtrl::Dump(dc);
+    CListCtrl::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -68,12 +68,12 @@ void CLogView::Dump(CDumpContext& dc) const
 
 static col_data columns[] =
 {
-	{ _T("Squence"),           50,  LVCFMT_RIGHT, DT_INT      },
-	{ _T("Channel"),           100, LVCFMT_LEFT,  DT_STRING   },
+    { _T("Squence"),           50,  LVCFMT_RIGHT, DT_INT      },
+    { _T("Channel"),           100, LVCFMT_LEFT,  DT_STRING   },
     { _T("Type"),              100, LVCFMT_LEFT,  DT_STRING   },
-	{ _T("Message"),           800, LVCFMT_LEFT,  DT_STRING   },
-	{ _T("File"),              100, LVCFMT_LEFT,  DT_STRING   },
-	{ _T("Line"),               50, LVCFMT_RIGHT, DT_INT      },
+    { _T("Message"),           800, LVCFMT_LEFT,  DT_STRING   },
+    { _T("File"),              100, LVCFMT_LEFT,  DT_STRING   },
+    { _T("Line"),               50, LVCFMT_RIGHT, DT_INT      },
 };
 
 //=========================================================================
@@ -121,7 +121,7 @@ void CLogView::OnInitialUpdate()
 {
     InsertColumns( columns, 6 );
 
-	SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_NOSCROLL );
+    SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_NOSCROLL );
 
     //
     // Register the call back
@@ -136,47 +136,47 @@ void CLogView::OnInitialUpdate()
 
 BOOL CLogView::PreCreateWindow(CREATESTRUCT& cs) 
 {
-	// TODO: Add your specialized code here and/or call the base class
-	cs.style |= LVS_EX_GRIDLINES | LVS_REPORT;
-	return CListCtrl::PreCreateWindow(cs);
+    // TODO: Add your specialized code here and/or call the base class
+    cs.style |= LVS_EX_GRIDLINES | LVS_REPORT;
+    return CListCtrl::PreCreateWindow(cs);
 }
 
 //=========================================================================
 
 bool CLogView::SortList(
-	// passed in from control, index of column clicked.
-	int nCol,
-	// passed in from control, true if sort order should 
-	// be ascending.
-	bool bAscending )
+    // passed in from control, index of column clicked.
+    int nCol,
+    // passed in from control, true if sort order should 
+    // be ascending.
+    bool bAscending )
 {
     UNREFERENCED_PARAMETER(nCol);
     UNREFERENCED_PARAMETER(bAscending);
-	return true;
+    return true;
 }
 
 //=========================================================================
 
 void CLogView::InsertColumns( col_data* pColumns, s32 ColCount )
 {
-	// TODO: Add your specialized code here and/or call the base class
+    // TODO: Add your specialized code here and/or call the base class
 
     //
     // Add the column names
     //
-	s32 i;
-	for (i = 0; i < ColCount; ++i)
-	{
-		InsertColumn(i, pColumns[i].name, pColumns[i].fmt, 
-			pColumns[i].width);
-	}
+    s32 i;
+    for (i = 0; i < ColCount; ++i)
+    {
+        InsertColumn(i, pColumns[i].name, pColumns[i].fmt, 
+            pColumns[i].width);
+    }
 }
 
 //=========================================================================
 
 void CLogView::OnDoubleClick( NMHDR* pNMHDR, LRESULT* pResult )
 {
-	NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
+    NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
 
     if( lphdi && lphdi->iItem >= 0 )
     {
@@ -242,7 +242,7 @@ void CLogView::OnDoubleClick( NMHDR* pNMHDR, LRESULT* pResult )
 void CLogView::OnItemChanged( NMHDR* pNMHDR, LRESULT* pResult )
 {
     /*
-	NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
+    NMLISTVIEW* lphdi = (NMLISTVIEW*)pNMHDR;
 
     if( lphdi->uNewState == 3 )
     {

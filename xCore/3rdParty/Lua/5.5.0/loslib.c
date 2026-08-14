@@ -29,7 +29,7 @@
 ** options are grouped by length; group of length 2 start with '||'.
 ** ===================================================================
 */
-#if !defined(LUA_STRFTIMEOPTIONS)	/* { */
+#if !defined(LUA_STRFTIMEOPTIONS)    /* { */
 
 #if defined(LUA_USE_WINDOWS)
 #define LUA_STRFTIMEOPTIONS  "aAbBcdHIjmMpSUwWxXyYzZ%" \
@@ -41,7 +41,7 @@
     "||" "EcECExEXEyEY" "OdOeOHOIOmOMOSOuOUOVOwOWOy"  /* two-char options */
 #endif
 
-#endif					/* } */
+#endif                    /* } */
 /* }================================================================== */
 
 
@@ -54,41 +54,41 @@
 /*
 ** type to represent time_t in Lua
 */
-#if !defined(LUA_NUMTIME)	/* { */
+#if !defined(LUA_NUMTIME)    /* { */
 
-#define l_timet			lua_Integer
-#define l_pushtime(L,t)		lua_pushinteger(L,(lua_Integer)(t))
-#define l_gettime(L,arg)	luaL_checkinteger(L, arg)
+#define l_timet            lua_Integer
+#define l_pushtime(L,t)        lua_pushinteger(L,(lua_Integer)(t))
+#define l_gettime(L,arg)    luaL_checkinteger(L, arg)
 
-#else				/* }{ */
+#else                /* }{ */
 
-#define l_timet			lua_Number
-#define l_pushtime(L,t)		lua_pushnumber(L,(lua_Number)(t))
-#define l_gettime(L,arg)	luaL_checknumber(L, arg)
+#define l_timet            lua_Number
+#define l_pushtime(L,t)        lua_pushnumber(L,(lua_Number)(t))
+#define l_gettime(L,arg)    luaL_checknumber(L, arg)
 
-#endif				/* } */
+#endif                /* } */
 
 
-#if !defined(l_gmtime)		/* { */
+#if !defined(l_gmtime)        /* { */
 /*
 ** By default, Lua uses gmtime/localtime, except when POSIX is available,
 ** where it uses gmtime_r/localtime_r
 */
 
-#if defined(LUA_USE_POSIX)	/* { */
+#if defined(LUA_USE_POSIX)    /* { */
 
-#define l_gmtime(t,r)		gmtime_r(t,r)
-#define l_localtime(t,r)	localtime_r(t,r)
+#define l_gmtime(t,r)        gmtime_r(t,r)
+#define l_localtime(t,r)    localtime_r(t,r)
 
-#else				/* }{ */
+#else                /* }{ */
 
 /* ISO C definitions */
-#define l_gmtime(t,r)		((void)(r)->tm_sec, gmtime(t))
-#define l_localtime(t,r)	((void)(r)->tm_sec, localtime(t))
+#define l_gmtime(t,r)        ((void)(r)->tm_sec, gmtime(t))
+#define l_localtime(t,r)    ((void)(r)->tm_sec, localtime(t))
 
-#endif				/* } */
+#endif                /* } */
 
-#endif				/* } */
+#endif                /* } */
 
 /* }================================================================== */
 
@@ -100,16 +100,16 @@
 ** it uses mkstemp.
 ** ===================================================================
 */
-#if !defined(lua_tmpnam)	/* { */
+#if !defined(lua_tmpnam)    /* { */
 
-#if defined(LUA_USE_POSIX)	/* { */
+#if defined(LUA_USE_POSIX)    /* { */
 
 #include <unistd.h>
 
-#define LUA_TMPNAMBUFSIZE	32
+#define LUA_TMPNAMBUFSIZE    32
 
 #if !defined(LUA_TMPNAMTEMPLATE)
-#define LUA_TMPNAMTEMPLATE	"/tmp/lua_XXXXXX"
+#define LUA_TMPNAMTEMPLATE    "/tmp/lua_XXXXXX"
 #endif
 
 #define lua_tmpnam(b,e) { \
@@ -118,15 +118,15 @@
         if (e != -1) close(e); \
         e = (e == -1); }
 
-#else				/* }{ */
+#else                /* }{ */
 
 /* ISO C definitions */
-#define LUA_TMPNAMBUFSIZE	L_tmpnam
-#define lua_tmpnam(b,e)		{ e = (tmpnam(b) == NULL); }
+#define LUA_TMPNAMBUFSIZE    L_tmpnam
+#define lua_tmpnam(b,e)        { e = (tmpnam(b) == NULL); }
 
-#endif				/* } */
+#endif                /* } */
 
-#endif				/* } */
+#endif                /* } */
 /* }================================================================== */
 
 
@@ -135,7 +135,7 @@
 /* Despite claiming to be ISO C, iOS does not implement 'system'. */
 #define l_system(cmd) ((cmd) == NULL ? 0 : -1)
 #else
-#define l_system(cmd)	system(cmd)  /* default definition */
+#define l_system(cmd)    system(cmd)  /* default definition */
 #endif
 #endif
 
@@ -299,7 +299,7 @@ static time_t l_checktime (lua_State *L, int arg) {
 
 
 /* maximum size for an individual 'strftime' item */
-#define SIZETIMEFMT	250
+#define SIZETIMEFMT    250
 
 
 static int os_date (lua_State *L) {

@@ -89,8 +89,8 @@ public:
     static  const   object_desc&    GetObjectType               ( void );
     virtual         s32             GetMaterial                 ( void ) const { return MAT_TYPE_NULL; }
 
-    virtual			void	        OnEnumProp		            ( prop_enum& List );
-    virtual			xbool	        OnProperty		            ( prop_query& I );
+    virtual            void            OnEnumProp                    ( prop_enum& List );
+    virtual            xbool            OnProperty                    ( prop_query& I );
     virtual         void            OnAdvanceSimulation              ( f32 DeltaTime );
     virtual         void            OnActivate                  ( xbool Flag );
     virtual         void            OnKill                      ( void );

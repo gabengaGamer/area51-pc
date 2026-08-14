@@ -30,14 +30,14 @@ CEditInt::~CEditInt()
 
 
 BEGIN_MESSAGE_MAP(CEditInt, CEdit)
-	//{{AFX_MSG_MAP(CEditInt)
-	ON_WM_CTLCOLOR_REFLECT()
-	ON_WM_PAINT()
-	ON_WM_LBUTTONDOWN()
-	ON_WM_SETFOCUS()
-	ON_WM_KILLFOCUS()
-	ON_CONTROL_REFLECT(EN_UPDATE, OnUpdate)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CEditInt)
+    ON_WM_CTLCOLOR_REFLECT()
+    ON_WM_PAINT()
+    ON_WM_LBUTTONDOWN()
+    ON_WM_SETFOCUS()
+    ON_WM_KILLFOCUS()
+    ON_CONTROL_REFLECT(EN_UPDATE, OnUpdate)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -79,22 +79,22 @@ HBRUSH CEditInt::CtlColor(CDC* pDC, UINT nCtlColor)
 
 void CEditInt::OnPaint() 
 {
-	CPaintDC dc(this); // device context for painting
+    CPaintDC dc(this); // device context for painting
 
-	// Get the Client Rectangle
+    // Get the Client Rectangle
     CRect             rcClient;
     GetClientRect     ( rcClient );
 
-	// Get the Text
+    // Get the Text
     CString         editString;
     GetWindowText   ( editString );
 
-	// Draw the background
+    // Draw the background
     CRgn        rgn;
     rgn.CreateRoundRectRgn  ( 0, 0, rcClient.right, rcClient.bottom, 4, 4 );
     dc.FillRgn              ( &rgn, &m_brBackground );
 
-	// Draw the text
+    // Draw the text
     dc.SetBkColor   ( m_clrBackground );
     dc.SetBkMode    ( TRANSPARENT );
     dc.SetTextColor ( m_clrText );
@@ -103,12 +103,12 @@ void CEditInt::OnPaint()
     // Release the text buffer
     editString.ReleaseBuffer();
 
-	// Do not call CEdit::OnPaint() for painting messages
+    // Do not call CEdit::OnPaint() for painting messages
 }
 
 void CEditInt::OnLButtonDown(UINT nFlags, CPoint point) 
 {
-	CEdit::OnLButtonDown(nFlags, point);
+    CEdit::OnLButtonDown(nFlags, point);
 
     SetSel( 0, -1, FALSE ); // Select All
 
@@ -117,16 +117,16 @@ void CEditInt::OnLButtonDown(UINT nFlags, CPoint point)
 
 void CEditInt::OnSetFocus(CWnd* pOldWnd) 
 {
-	CEdit::OnSetFocus(pOldWnd);
+    CEdit::OnSetFocus(pOldWnd);
 
     SetSel( 0, -1, FALSE ); // Select All
-	
+    
     Invalidate(FALSE);
 }
 
 void CEditInt::OnKillFocus(CWnd* pNewWnd) 
 {
-	CEdit::OnKillFocus(pNewWnd);
+    CEdit::OnKillFocus(pNewWnd);
 
     Invalidate(FALSE);
 }
@@ -136,7 +136,7 @@ BOOL CEditInt::PreTranslateMessage(MSG* pMsg)
     // If the message is not intended for this window pass it on
     if( pMsg->hwnd != m_hWnd )
     {
-    	return CEdit::PreTranslateMessage(pMsg);
+        return CEdit::PreTranslateMessage(pMsg);
     }
 
     // Do our own thing with any input
@@ -159,7 +159,7 @@ BOOL CEditInt::PreTranslateMessage(MSG* pMsg)
             GetParent()->SendMessage    ( WM_USER_MSG_EDIT_ENTERED, controlID, (LPARAM)0 );
 
             // Now do the default thing
-        	return CEdit::PreTranslateMessage(pMsg);
+            return CEdit::PreTranslateMessage(pMsg);
         }
 
         if( pMsg->wParam == VK_ESCAPE )
@@ -189,14 +189,14 @@ BOOL CEditInt::PreTranslateMessage(MSG* pMsg)
             pMsg->wParam == VK_DELETE                           ||  // Delete
             pMsg->wParam == VK_BACK                             )   // Backspace
         {
-	        return CEdit::PreTranslateMessage(pMsg);
+            return CEdit::PreTranslateMessage(pMsg);
         }
 
         return TRUE;
     }
 
     // Let the default function handle any other messages
-	return CEdit::PreTranslateMessage(pMsg);
+    return CEdit::PreTranslateMessage(pMsg);
 }
 
 void CEditInt::OnUpdate() 

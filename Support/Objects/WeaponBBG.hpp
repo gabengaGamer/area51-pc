@@ -14,25 +14,25 @@
 class weapon_bbg : public new_weapon
 {
 public:
-	CREATE_RTTI( weapon_bbg , new_weapon , object )
+    CREATE_RTTI( weapon_bbg , new_weapon , object )
 
-								weapon_bbg		        ( void );
-	virtual		  			   ~weapon_bbg		        ( void );
+                                weapon_bbg                ( void );
+    virtual                         ~weapon_bbg                ( void );
 
     // Object description
     virtual const object_desc&  GetTypeDesc             ( void ) const;
     static  const object_desc&  GetObjectType           ( void );
     
-    virtual void                ProcessSfx				( void );    
+    virtual void                ProcessSfx                ( void );    
     virtual s32                 GetTotalSecondaryAmmo   ( void );
 
-    virtual	void	            OnEnumProp		        ( prop_enum& list );
-	virtual	xbool	            OnProperty		        ( prop_query& rPropQuery );
+    virtual    void                OnEnumProp                ( prop_enum& list );
+    virtual    xbool                OnProperty                ( prop_query& rPropQuery );
 
     virtual void                OnAdvanceSimulation          ( f32 DeltaTime );
     virtual void                InitWeapon              ( const vector3& rInitPos, render_state rRenderState, guid OwnerGuid );
 
-    virtual	void				InitWeapon			    (   const char* pSkinFileName , 
+    virtual    void                InitWeapon                (   const char* pSkinFileName , 
                                                             const char* pAnimFileName , 
                                                             const vector3& rInitPos , 
                                                             const render_state& rRenderState = RENDER_STATE_PLAYER,
@@ -60,7 +60,7 @@ public:
 
     virtual xbool               CanAltChainFire         ( void ) {return FALSE;}
 
-    virtual xbool				CanReload			    ( const ammo_priority& Priority );
+    virtual xbool                CanReload                ( const ammo_priority& Priority );
     virtual xbool               CanFire                 ( xbool bIsAltFire );
     virtual void                SetupRenderInformation   ( void );
 
@@ -101,10 +101,10 @@ protected:
     void                ClearLaserPath               ( void );
     void                UpdateLaserPath              ( player& Player );
        
-    virtual	xbool				FireWeaponProtected		    ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
-    virtual	xbool				FireSecondaryProtected	    ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
-    virtual	xbool				FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit  );
-    virtual	xbool				FireNPCSecondaryProtected	( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit  );
+    virtual    xbool                FireWeaponProtected            ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
+    virtual    xbool                FireSecondaryProtected        ( const vector3& InitPos , const vector3& BaseVelocity, const f32& Power , const radian3& InitRot , const guid& Owner, s32 iFirePoint );
+    virtual    xbool                FireNPCWeaponProtected      ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit  );
+    virtual    xbool                FireNPCSecondaryProtected    ( const vector3& BaseVelocity , const vector3& Target , const guid& Owner, f32 fDegradeMultiplier, const xbool isHit  );
    
     virtual void                RenderReloadFX              ( void );
 

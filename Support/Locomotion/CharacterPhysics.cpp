@@ -1617,7 +1617,7 @@ void ComputePlatformMotion( const matrix4&  OldPlatformM,
     //
     // Compute DeltaPos
     //
-	vector3 NewPos = DeltaM * CurrentPos;
+    vector3 NewPos = DeltaM * CurrentPos;
             DeltaPos = NewPos - CurrentPos;
 
     //

@@ -16,35 +16,35 @@ static char THIS_FILE[] = __FILE__;
 
 
 CAviOptions::CAviOptions(CWnd* pParent /*=NULL*/)
-	: CDialog(CAviOptions::IDD, pParent)
+    : CDialog(CAviOptions::IDD, pParent)
 {
-	//{{AFX_DATA_INIT(CAviOptions)
-	m_FileName = _T("");
-	m_OutputRes = -1;
-	m_ViewSel = -1;
-	m_Start = 0;
-	m_End = 0;
-	//}}AFX_DATA_INIT
+    //{{AFX_DATA_INIT(CAviOptions)
+    m_FileName = _T("");
+    m_OutputRes = -1;
+    m_ViewSel = -1;
+    m_Start = 0;
+    m_End = 0;
+    //}}AFX_DATA_INIT
 }
 
 
 void CAviOptions::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CAviOptions)
-	DDX_Text(pDX, IDC_FILENAME, m_FileName);
-	DDX_CBIndex(pDX, IDC_OUTPUT_RES, m_OutputRes);
-	DDX_CBIndex(pDX, IDC_VIEW_SEL, m_ViewSel);
-	DDX_Text(pDX, IDC_START_FRAME, m_Start);
-	DDX_Text(pDX, IDC_END_FRAME, m_End);
-	//}}AFX_DATA_MAP
+    CDialog::DoDataExchange(pDX);
+    //{{AFX_DATA_MAP(CAviOptions)
+    DDX_Text(pDX, IDC_FILENAME, m_FileName);
+    DDX_CBIndex(pDX, IDC_OUTPUT_RES, m_OutputRes);
+    DDX_CBIndex(pDX, IDC_VIEW_SEL, m_ViewSel);
+    DDX_Text(pDX, IDC_START_FRAME, m_Start);
+    DDX_Text(pDX, IDC_END_FRAME, m_End);
+    //}}AFX_DATA_MAP
 }
 
 
 BEGIN_MESSAGE_MAP(CAviOptions, CDialog)
-	//{{AFX_MSG_MAP(CAviOptions)
-	ON_BN_CLICKED(IDC_BROWSE_AVI, OnBrowseAvi)
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CAviOptions)
+    ON_BN_CLICKED(IDC_BROWSE_AVI, OnBrowseAvi)
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -52,7 +52,7 @@ END_MESSAGE_MAP()
 
 void CAviOptions::OnBrowseAvi() 
 {
-	// TODO: Add your control notification handler code here
+    // TODO: Add your control notification handler code here
     char Filter[] = "AVI Files (*.avi)|*.avi||";
 
     UpdateData();
@@ -69,7 +69,7 @@ void CAviOptions::OnBrowseAvi()
 
 void CAviOptions::OnOK() 
 {
-	// TODO: Add extra validation here
+    // TODO: Add extra validation here
     UpdateData();
 
     if ( m_Start > m_End )
@@ -84,19 +84,19 @@ void CAviOptions::OnOK()
         return;
     }
     
-	CDialog::OnOK();
+    CDialog::OnOK();
 }
 
 BOOL CAviOptions::OnInitDialog() 
 {
-	CDialog::OnInitDialog();
-	
-	// TODO: Add extra initialization here
-	
+    CDialog::OnInitDialog();
+    
+    // TODO: Add extra initialization here
+    
     m_ViewSel = VIEW_MAX;
     m_OutputRes = RES_320;
     UpdateData( FALSE );
 
-	return TRUE;  // return TRUE unless you set the focus to a control
-	              // EXCEPTION: OCX Property Pages should return FALSE
+    return TRUE;  // return TRUE unless you set the focus to a control
+                  // EXCEPTION: OCX Property Pages should return FALSE
 }

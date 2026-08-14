@@ -20,13 +20,13 @@
 class COutputBar : public CEditorWorkspaceTabCtrl
 {
 public:
-	COutputBar();
-	virtual ~COutputBar();
+    COutputBar();
+    virtual ~COutputBar();
     BOOL Create(CWnd* pParentWnd, UINT nID, LPCTSTR pWindowName, CSize SizeDefault, DWORD dwAlignStyle, DWORD dwStyle);
 
 // Attributes
 public:
-	CListBox		        m_sheet2;
+    CListBox                m_sheet2;
     CFont                   m_Font;
     CompErrorDisplayCtrl    m_CompileOutput;
     COutputCtrl             m_DebugMsgOutput;

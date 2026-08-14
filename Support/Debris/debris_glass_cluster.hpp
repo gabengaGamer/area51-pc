@@ -29,7 +29,7 @@ public:
 
         //=============================================================================
              debris_glass_cluster           ( void );
-    virtual	~debris_glass_cluster           ( void );
+    virtual    ~debris_glass_cluster           ( void );
 
     virtual void        OnInit              ( void );
 
@@ -41,7 +41,7 @@ public:
     virtual void        OnAdvanceSimulation      ( f32 DeltaTime );
     virtual void        UpdatePhysics       ( f32 DeltaTime );
 
-    virtual void        OnMove				( const vector3& rNewPos );
+    virtual void        OnMove                ( const vector3& rNewPos );
     virtual void        OnRender            ( void );
     virtual void        OnRenderTransparent ( void );
 

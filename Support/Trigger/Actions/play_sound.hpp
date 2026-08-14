@@ -28,8 +28,8 @@ public:
     virtual         const char*         GetTypeName ( void )    { return "Play Sound"; } 
     virtual         const char*         GetTypeInfo ( void )    { return "Plays a sound."; } 
     virtual         void                Execute     ( trigger_object* pParent );    
-    virtual			void	            OnEnumProp	( prop_enum& rList );
-    virtual			xbool	            OnProperty	( prop_query& rPropQuery );
+    virtual            void                OnEnumProp    ( prop_enum& rList );
+    virtual            xbool                OnProperty    ( prop_query& rPropQuery );
    
     virtual         action_types        GetType         ( void ) { return GetTypeStatic();}
     static          action_types        GetTypeStatic   ( void ) { return TYPE_ACTION_PLAY_SOUND;}

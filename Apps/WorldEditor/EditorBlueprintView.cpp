@@ -50,12 +50,12 @@ CEditorBlueprintView::~CEditorBlueprintView()
 
 
 BEGIN_MESSAGE_MAP(CEditorBlueprintView, CPaletteView)
-	//{{AFX_MSG_MAP(CEditorBlueprintView)
-	ON_WM_CREATE()
-	ON_WM_SIZE()
-	ON_NOTIFY(TVN_SELCHANGED, IDR_OBJECT_LIST, OnSelchangeList)
-	ON_COMMAND(ID_BPTB_CREATE_ANCHOR, OnBptbCreateAnchor)
-	ON_COMMAND(ID_BPTB_CREATE_BLUEPRINT, OnBptbCreateBlueprint)
+    //{{AFX_MSG_MAP(CEditorBlueprintView)
+    ON_WM_CREATE()
+    ON_WM_SIZE()
+    ON_NOTIFY(TVN_SELCHANGED, IDR_OBJECT_LIST, OnSelchangeList)
+    ON_COMMAND(ID_BPTB_CREATE_ANCHOR, OnBptbCreateAnchor)
+    ON_COMMAND(ID_BPTB_CREATE_BLUEPRINT, OnBptbCreateBlueprint)
     ON_COMMAND(ID_BPTB_ADD_BLUEPRINT_AS_OBJECTS, OnBptbAddBlueprintAsObjects)
     ON_COMMAND(ID_BPTB_ADD_BLUEPRINT, OnBptbAddBlueprint)
     ON_COMMAND(ID_BPTB_SHATTER_BLUEPRINT, OnBptbShatterBlueprint)
@@ -74,7 +74,7 @@ BEGIN_MESSAGE_MAP(CEditorBlueprintView, CPaletteView)
     ON_UPDATE_COMMAND_UI(ID_BPTB_REFRESH, OnUpdateBptbRefresh)       
     ON_UPDATE_COMMAND_UI(ID_BPTB_RESYNC, OnUpdateBptbResync)       
     ON_UPDATE_COMMAND_UI(ID_BPTB_REPLACE_SELECTED_WITH_BLUEPRINT, OnUpdateBptbReplaceSelectedWithBlueprint)       
-	//}}AFX_MSG_MAP
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -83,8 +83,8 @@ END_MESSAGE_MAP()
 
 void CEditorBlueprintView::OnDraw(CDC* pDC)
 {
-//	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+//    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -93,14 +93,14 @@ void CEditorBlueprintView::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 void CEditorBlueprintView::AssertValid() const
 {
-	CPaletteView::AssertValid();
+    CPaletteView::AssertValid();
 }
 
 //=========================================================================
 
 void CEditorBlueprintView::Dump(CDumpContext& dc) const
 {
-	CPaletteView::Dump(dc);
+    CPaletteView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -110,13 +110,13 @@ void CEditorBlueprintView::Dump(CDumpContext& dc) const
 int CEditorBlueprintView::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
     m_ToolbarResourceId = IDR_BLUEPRINT_BAR;
-	if (CPaletteView::OnCreate(lpCreateStruct) == -1)
-		return -1;
+    if (CPaletteView::OnCreate(lpCreateStruct) == -1)
+        return -1;
 
     if (!m_fbcBlueprints.Create(WS_VISIBLE | WS_CHILD | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | 
                            TVS_EDITLABELS | TVS_SHOWSELALWAYS, CRect(0,0,0,0), this, IDR_OBJECT_LIST))
     {
-        return -1;	      
+        return -1;          
     }
     m_fbcBlueprints.UsePreviousPathAsDisplay(TRUE);
 
@@ -130,12 +130,12 @@ int CEditorBlueprintView::OnCreate(LPCREATESTRUCT lpCreateStruct)
                          CRect(0,0,0,0),this,IDC_STATIC))
     {
         ASSERT(FALSE);
-		return -1;      // fail to create
+        return -1;      // fail to create
     }
     
     BuildTreeFromProject();
 
-	return 0;
+    return 0;
 }
 
 //=========================================================================
@@ -154,15 +154,15 @@ void CEditorBlueprintView::BuildTreeFromProject()
 
 void CEditorBlueprintView::OnInitialUpdate() 
 {
-	CPaletteView::OnInitialUpdate();
-}	
+    CPaletteView::OnInitialUpdate();
+}    
 
 //=========================================================================
 
 void CEditorBlueprintView::OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
-	
+    NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
+    
     CString strPath = m_fbcBlueprints.GetSelectedPath();
 
     if (!m_fbcBlueprints.IsFolder(strPath))
@@ -183,7 +183,7 @@ void CEditorBlueprintView::OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult)
         m_wndPreview.ClearGeom();
     }
 
-	*pResult = 0;
+    *pResult = 0;
 }
 
 //=========================================================================
@@ -378,10 +378,10 @@ void CEditorBlueprintView::AddObjectToRender( text_in& TextIn, CString strPath, 
 
 void CEditorBlueprintView::OnSize(UINT nType, int cx, int cy) 
 {
-	CPaletteView::OnSize(nType, cx, cy);
+    CPaletteView::OnSize(nType, cx, cy);
 
     int nHt = cx/2;
-	CSize size = SizeToolBar(cx, cy);
+    CSize size = SizeToolBar(cx, cy);
 
     if (nHt > (cy/2)) nHt = cy/2;
 
@@ -615,22 +615,22 @@ void CEditorBlueprintView::OnBptbCreateBlueprint()
                 return; 
             }
 
-	        CFileDialog		dlgBrowse(	FALSE, 
-								        _T("bpx"), 
-								        xfs("%d_Objects.bpx",g_WorldEditor.GetSelectedCount()), 
-								        OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, 
-								        (_T("Blueprint Files (*.bpx)|*.bpx||")));
+            CFileDialog        dlgBrowse(    FALSE, 
+                                        _T("bpx"), 
+                                        xfs("%d_Objects.bpx",g_WorldEditor.GetSelectedCount()), 
+                                        OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, 
+                                        (_T("Blueprint Files (*.bpx)|*.bpx||")));
             CString strBPPath = g_Project.GetBlueprintDirForTheme(strTheme);
             dlgBrowse.m_ofn.lpstrInitialDir = strBPPath;
-	        if (dlgBrowse.DoModal() == IDOK)
-	        {
+            if (dlgBrowse.DoModal() == IDOK)
+            {
                 //setup generic undo entry for moving of objects
                 g_WorldEditor.SetCurrentUndoEntry(new transaction_entry(
                     xfs("Creating Blueprint(%s) from %d Objects",
                     dlgBrowse.GetFileName(),
                     g_WorldEditor.GetSelectedCount())));
 
-		        CString strPath = dlgBrowse.GetPathName( );
+                CString strPath = dlgBrowse.GetPathName( );
                 xstring xstrTheme, xstrRelativePath;
                 if (g_WorldEditor.GetThemeInfoFromPath( strPath, xstrTheme, xstrRelativePath ))
                 {
@@ -661,7 +661,7 @@ void CEditorBlueprintView::OnBptbCreateBlueprint()
 
                     //add objects as blueprint
                     editor_blueprint_ref BlueprintReference;
-	                int nAdded = g_WorldEditor.AddBlueprint(xstrTheme, xstrRelativePath, BlueprintReference, TRUE, TRUE);
+                    int nAdded = g_WorldEditor.AddBlueprint(xstrTheme, xstrRelativePath, BlueprintReference, TRUE, TRUE);
                     if (nAdded>0)
                     {
                         GetDocument()->GetFramePointer()->AddBlueprintToActiveLayerView(BlueprintReference.Guid);
@@ -693,7 +693,7 @@ void CEditorBlueprintView::OnBptbCreateBlueprint()
                     g_WorldEditor.SelectBlueprintObjects(BlueprintReference,FALSE);
 
                     m_fbcBlueprints.Refresh();
-	            }	
+                }    
             }
         }
         else
@@ -717,7 +717,7 @@ void CEditorBlueprintView::OnBptbShatterBlueprint()
     xarray<editor_item_descript> lstItemsRemoved;
 
     g_WorldEditor.SetCurrentUndoEntry(new transaction_entry(xfs("Shatter selected blueprints")));
-	g_WorldEditor.ShatterSelectedBlueprints(lstItemsAdded, lstItemsRemoved);
+    g_WorldEditor.ShatterSelectedBlueprints(lstItemsAdded, lstItemsRemoved);
     g_WorldEditor.CommitCurrentUndoEntry();
 
     //remove blueprints from layer view
@@ -772,7 +772,7 @@ void CEditorBlueprintView::OnBptbShatterBlueprintForEdit()
     m4Invert.Invert();
 
     g_WorldEditor.RotateSelectedObjects(m4Invert);
-	g_WorldEditor.ShatterSelectedBlueprints(lstItemsAdded, lstItemsRemoved);
+    g_WorldEditor.ShatterSelectedBlueprints(lstItemsAdded, lstItemsRemoved);
     g_WorldEditor.CommitCurrentUndoEntry();
 
     //remove blueprints from layer view
@@ -906,7 +906,7 @@ void CEditorBlueprintView::OnBptbAddBlueprint()
         if (g_WorldEditor.GetThemeInfoFromPath( strPath, xstrTheme, xstrRelativePath ))
         {
             //add to null layer so this is just temporary
-	        int nAdded = g_WorldEditor.CreateTemporaryBlueprintObjects(xstrTheme, xstrRelativePath);
+            int nAdded = g_WorldEditor.CreateTemporaryBlueprintObjects(xstrTheme, xstrRelativePath);
             if (nAdded>0)
             {
                 GetDocument()->GetFramePointer()->GetEditorView()->EnterBlueprintMode();
@@ -1058,8 +1058,8 @@ void CEditorBlueprintView::OnUpdateBptbReplaceSelectedWithBlueprint(CCmdUI* pCmd
     else 
     {
     }
-    pCmdUI->Enable(bEnable);	
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->Enable(bEnable);    
+    pCmdUI->SetCheck(FALSE);    
 }
 
 //=========================================================================
@@ -1074,11 +1074,11 @@ void CEditorBlueprintView::OnUpdateBptbResync(CCmdUI* pCmdUI)
         g_Project.IsProjectOpen() && 
         g_WorldEditor.IsOneBlueprintSelected(BPRef))
     {
-        pCmdUI->Enable(TRUE);	
+        pCmdUI->Enable(TRUE);    
     }
     else
     {
-        pCmdUI->Enable(FALSE);	
+        pCmdUI->Enable(FALSE);    
     }
-    pCmdUI->SetCheck(FALSE);	
+    pCmdUI->SetCheck(FALSE);    
 }

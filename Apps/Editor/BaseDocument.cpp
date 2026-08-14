@@ -22,9 +22,9 @@ CBaseDocument::CBaseDocument()
 
 BOOL CBaseDocument::OnNewDocument()
 {
-	if (!CDocument::OnNewDocument())
-		return FALSE;
-	return TRUE;
+    if (!CDocument::OnNewDocument())
+        return FALSE;
+    return TRUE;
 }
 
 CBaseDocument::~CBaseDocument()
@@ -33,9 +33,9 @@ CBaseDocument::~CBaseDocument()
 
 
 BEGIN_MESSAGE_MAP(CBaseDocument, CDocument)
-	//{{AFX_MSG_MAP(CBaseDocument)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CBaseDocument)
+        // NOTE - the ClassWizard will add and remove mapping macros here.
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -44,12 +44,12 @@ END_MESSAGE_MAP()
 #ifdef _DEBUG
 void CBaseDocument::AssertValid() const
 {
-	CDocument::AssertValid();
+    CDocument::AssertValid();
 }
 
 void CBaseDocument::Dump(CDumpContext& dc) const
 {
-	CDocument::Dump(dc);
+    CDocument::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -58,14 +58,14 @@ void CBaseDocument::Dump(CDumpContext& dc) const
 
 void CBaseDocument::Serialize(CArchive& ar)
 {
-	if (ar.IsStoring())
-	{
-		// TODO: add storing code here
-	}
-	else
-	{
-		// TODO: add loading code here
-	}
+    if (ar.IsStoring())
+    {
+        // TODO: add storing code here
+    }
+    else
+    {
+        // TODO: add loading code here
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////

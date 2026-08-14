@@ -1032,13 +1032,13 @@ void mutanttank_attack_state::ChangePhase( s32 newPhase )
     
     case PHASE_MUTANTTANK_ATTACK_CHARGE_ALIGN:
         Tank.SetTurnToTargetGoal( Tank.GetTargetGuid(), vector3(0.0f,0.0f,0.0f), 5.0f, TRUE );
-    	break;
+        break;
     case PHASE_MUTANTTANK_ATTACK_CHARGE:
         m_ChargeLineStart = Tank.GetPosition();
         m_ChargeLineEnd   = Tank.GetTargetPosWithOffset( Tank.GetTargetGuid() );
         Tank.SetGotoLocationGoal( m_ChargeLineEnd, loco::MOVE_STYLE_CHARGE, 5.0f );
         m_ChargeSpeed = 0.0f;
-    	break;
+        break;
     case PHASE_MUTANTTANK_ATTACK_CHARGE_SWING:
         Tank.SetPlayAnimationGoal( loco::ANIM_ATTACK_CHARGE_SWING, 0.2f );
         break;
@@ -1065,10 +1065,10 @@ void mutanttank_attack_state::ChangePhase( s32 newPhase )
         break;    
     case PHASE_MUTANTTANK_ATTACK_RANGED_ATTACK:
         Tank.SetPlayAnimationGoal( loco::ANIM_ATTACK_RANGED_ATTACK, 0.2f );
-    	break;
+        break;
     case PHASE_MUTANTTANK_ATTACK_RANGED_ALIGN:
         Tank.SetTurnToTargetGoal( Tank.GetTargetGuid(), vector3(0.0f,0.0f,0.0f), 10.0f );
-    	break;   
+        break;   
     case PHASE_MUTANTTANK_ATTACK_BUBBLE_ALIGN:
         Tank.SetTurnToTargetGoal( Tank.GetTargetGuid(), vector3(0.0f,0.0f,0.0f), 20.0f );
         break;
@@ -1323,7 +1323,7 @@ void mutanttank_attack_state::ChangePhase( s32 newPhase )
             Tank.BeginJump( loco::ANIM_CANISTER_FROM, JumpEndPos, JumpEndYaw, FALSE, TRUE );
         }            
         break;
-    	
+        
     case PHASE_MUTANTTANK_ATTACK_REGEN_SHIELD:
         Tank.SetPlayAnimationGoal( loco::ANIM_SHIELD_REGEN, 0.2f, loco::ANIM_FLAG_TURN_OFF_AIMER );
         break;
@@ -1331,7 +1331,7 @@ void mutanttank_attack_state::ChangePhase( s32 newPhase )
     case PHASE_MUTANTTANK_ATTACK_CONTAGION:
         Tank.SetPlayAnimationGoal( loco::ANIM_SHIELD_SHOOT, 0.2f );
         break;
-    	
+        
     case PHASE_MUTANTTANK_ATTACK_PACE:
         {
             vector3 locationToTarget = Tank.GetToTarget();            
@@ -1375,8 +1375,8 @@ void mutanttank_attack_state::ChangePhase( s32 newPhase )
             nav_connection_slot_id iConn = g_NavMap.GetNearestConnectionInGrid( Tank.GetCurrentConnection(), vDestination);
             Tank.SetGotoLocationGoal( g_NavMap.GetNearestPointOnConnection( iConn, vDestination ) );
         }
-    	break;
-    	
+        break;
+        
     default:        
         if( newPhase >= PHASE_BASE_COUNT )
         {        

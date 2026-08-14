@@ -225,7 +225,7 @@ const matrix4&  anim_skel::GetBoneBindMatrix ( s32 iBone ) const
 
 //=========================================================================
 
-s32	anim_skel::GetBoneIDFromName( const char* pName ) const
+s32    anim_skel::GetBoneIDFromName( const char* pName ) const
 {
     s32 i;
 

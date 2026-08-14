@@ -1,4 +1,4 @@
-#ifndef	__COKE_CAN_HPP__
+#ifndef    __COKE_CAN_HPP__
 #define __COKE_CAN_HPP__
 
 //=========================================================================
@@ -59,9 +59,9 @@ public:
                         coke_can               ( void );
     virtual            ~coke_can               ( void );
 
-    virtual bbox        GetLocalBBox		    ( void ) const;
+    virtual bbox        GetLocalBBox            ( void ) const;
             bbox        GetGeomBBox             ( void ) const;
-    virtual s32         GetMaterial				( void ) const { return MAT_TYPE_SOLID_METAL; }
+    virtual s32         GetMaterial                ( void ) const { return MAT_TYPE_SOLID_METAL; }
     virtual void        OnRender                ( void );
     virtual void        OnRenderShadowCast      ( u64 ProjMask );
     virtual const char* GetLogicalName          ( void )   { return "COKE_CAN"; }

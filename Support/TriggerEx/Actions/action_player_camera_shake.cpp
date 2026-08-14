@@ -47,42 +47,42 @@ xbool action_player_camera_shake::Execute ( f32 DeltaTime )
 
 //=============================================================================
 
-void action_player_camera_shake::OnEnumProp	( prop_enum& rPropList )
+void action_player_camera_shake::OnEnumProp    ( prop_enum& rPropList )
 {
-	rPropList.PropEnumFloat( "Shake Time",         "How long to shake the view", 0 );
+    rPropList.PropEnumFloat( "Shake Time",         "How long to shake the view", 0 );
     rPropList.PropEnumFloat( "Camera Shake Amount","How much to shake the camera", 0 );
     rPropList.PropEnumFloat( "Camera Shake Speed", "How fast to shake the camera", 0 );
-	rPropList.PropEnumFloat( "Feedback Intensity", "How much force feedback in controller", 0 );
-	rPropList.PropEnumFloat( "Feedback Duration",  "How long should force feedback last", 0 );
+    rPropList.PropEnumFloat( "Feedback Intensity", "How much force feedback in controller", 0 );
+    rPropList.PropEnumFloat( "Feedback Duration",  "How long should force feedback last", 0 );
 
     actions_ex_base::OnEnumProp( rPropList );
 }
 
 //=============================================================================
 
-xbool action_player_camera_shake::OnProperty	( prop_query& rPropQuery )
+xbool action_player_camera_shake::OnProperty    ( prop_query& rPropQuery )
 {
-	if ( rPropQuery.VarFloat( "Shake Time" , m_ShakeTime) )
-		return TRUE;
+    if ( rPropQuery.VarFloat( "Shake Time" , m_ShakeTime) )
+        return TRUE;
     
-	if ( rPropQuery.VarFloat( "Feedback Intensity", m_FeedbackIntensity ) )
-		return TRUE;
+    if ( rPropQuery.VarFloat( "Feedback Intensity", m_FeedbackIntensity ) )
+        return TRUE;
 
-	if ( rPropQuery.VarFloat( "Feedback Duration", m_FeedbackDuration ) )
-		return TRUE;
+    if ( rPropQuery.VarFloat( "Feedback Duration", m_FeedbackDuration ) )
+        return TRUE;
 
-	if ( rPropQuery.VarFloat( "Camera Shake Amount", m_CameraShakeAmount ) )
+    if ( rPropQuery.VarFloat( "Camera Shake Amount", m_CameraShakeAmount ) )
     {
-		m_CameraShakeAmount = MAX( 0.0f, m_CameraShakeAmount );
+        m_CameraShakeAmount = MAX( 0.0f, m_CameraShakeAmount );
         m_CameraShakeAmount = MIN( 1.0f, m_CameraShakeAmount );
         return TRUE;
     }
 
-	if ( rPropQuery.VarFloat( "Camera Shake Speed", m_CameraShakeSpeed ) )
+    if ( rPropQuery.VarFloat( "Camera Shake Speed", m_CameraShakeSpeed ) )
     {
-		m_CameraShakeSpeed = MAX( 0.0f, m_CameraShakeSpeed );
+        m_CameraShakeSpeed = MAX( 0.0f, m_CameraShakeSpeed );
         m_CameraShakeSpeed = MIN( 1.0f, m_CameraShakeSpeed );
-		return TRUE;
+        return TRUE;
     }
 
     if( actions_ex_base::OnProperty( rPropQuery ) )

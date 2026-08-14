@@ -22,12 +22,12 @@ class CEditorFrame;
 class CEditorBlueprintView : public CPaletteView
 {
 protected:
-	CEditorBlueprintView();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CEditorBlueprintView)
+    CEditorBlueprintView();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CEditorBlueprintView)
 
 // Attributes
 public:
-	CEditorPaletteDoc* GetDocument();
+    CEditorPaletteDoc* GetDocument();
     BOOL IsBlueprintAddable(CEditorFrame *pFrame);
 
     CResourcePreview    m_wndPreview;
@@ -40,29 +40,29 @@ public:
 public:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorBlueprintView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorBlueprintView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~CEditorBlueprintView();
+    virtual ~CEditorBlueprintView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CEditorBlueprintView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnBptbCreateAnchor();
-	afx_msg void OnBptbCreateBlueprint();
+    //{{AFX_MSG(CEditorBlueprintView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnBptbCreateAnchor();
+    afx_msg void OnBptbCreateBlueprint();
     afx_msg void OnBptbAddBlueprintAsObjects();
     afx_msg void OnBptbAddBlueprint();
     afx_msg void OnBptbShatterBlueprint();
@@ -72,18 +72,18 @@ protected:
     afx_msg void OnBptbReplaceSelectedWithBlueprint();
     afx_msg LRESULT OnFileItemChange(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnFileItemPreChange(WPARAM wParam, LPARAM lParam);
-	afx_msg void OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnUpdateBptbCreateBlueprint(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateBptbCreateAnchor(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateBptbAddBlueprintAsObjects(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateBptbAddBlueprint(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateBptbCreateAnchor(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateBptbAddBlueprintAsObjects(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateBptbAddBlueprint(CCmdUI* pCmdUI);
     afx_msg void OnUpdateBptbShatterBlueprint(CCmdUI* pCmdUI);
     afx_msg void OnUpdateBptbShatterBlueprintForEdit(CCmdUI* pCmdUI);
     afx_msg void OnUpdateBptbRefresh(CCmdUI* pCmdUI);
     afx_msg void OnUpdateBptbResync(CCmdUI* pCmdUI);
     afx_msg void OnUpdateBptbReplaceSelectedWithBlueprint(CCmdUI* pCmdUI);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
 protected:
     BOOL RenderBlueprint(CString strPath);

@@ -1753,7 +1753,7 @@ void poly_cache::GatherCluster( const collision_data&   CollData,
                 // Transform points
                 {
                     //-------------------------------------------------------
-					
+                    
                     const matrix4& M = pL2W[CL.iBone];
                     vector3* pS = CollData.pLowVector + CL.iVectorOffset;
                     vector3* pD = pCL->pPoint;
@@ -1996,7 +1996,7 @@ xbool poly_cache::StepRayClusterWalker( void )
             cell* pCell = AcquireCell(X,Y,Z);
 
             // Loop through clusters in cell and add to list
-            for( s32 i=0; i<pCell->nClusters; i++ )	
+            for( s32 i=0; i<pCell->nClusters; i++ )    
             {
                 cluster* pCL = pCell->ppCluster[i];
 

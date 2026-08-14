@@ -111,9 +111,9 @@ void notepad_object::OnRender ( void )
     vector3 &vPos = pView->GetPosition();
 
     f32 fX = vPos.X - Pos.X;
-	f32 fY = vPos.Y - Pos.Y;
-	f32 fZ = vPos.Z - Pos.Z;
-	if ((fX*fX + fY*fY + fZ*fZ) < (m_fMaxRenderDist*m_fMaxRenderDist))
+    f32 fY = vPos.Y - Pos.Y;
+    f32 fZ = vPos.Z - Pos.Z;
+    if ((fX*fX + fY*fY + fZ*fZ) < (m_fMaxRenderDist*m_fMaxRenderDist))
     {
         if (m_nCurrentLength>0)
         {

@@ -21,13 +21,13 @@ static char THIS_FILE[] = __FILE__;
 IMPLEMENT_DYNCREATE(CView3D, CBaseView)
 
 BEGIN_MESSAGE_MAP(CView3D, CBaseView)
-	//{{AFX_MSG_MAP(CView3D)
-	ON_WM_ERASEBKGND()
-	ON_WM_PAINT()
-	ON_WM_MOUSEMOVE()
-	ON_WM_MOUSEWHEEL()
-	ON_WM_TIMER()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CView3D)
+    ON_WM_ERASEBKGND()
+    ON_WM_PAINT()
+    ON_WM_MOUSEMOVE()
+    ON_WM_MOUSEWHEEL()
+    ON_WM_TIMER()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -36,12 +36,12 @@ END_MESSAGE_MAP()
 #ifdef _DEBUG
 void CView3D::AssertValid() const
 {
-	CBaseView::AssertValid();
+    CBaseView::AssertValid();
 }
 
 void CView3D::Dump(CDumpContext& dc) const
 {
-	CBaseView::Dump(dc);
+    CBaseView::Dump(dc);
 }
 #endif //_DEBUG
 
@@ -83,14 +83,14 @@ void CView3D::SetViewDirty( void )
 
 void CView3D::OnDraw(CDC* pDC)
 {
-	CDocument* pDoc = GetDocument();
+    CDocument* pDoc = GetDocument();
 }
 
 //===========================================================================
 
 BOOL CView3D::OnEraseBkgnd(CDC* pDC) 
 {
-	return TRUE; //CBaseView::OnEraseBkgnd(pDC);
+    return TRUE; //CBaseView::OnEraseBkgnd(pDC);
 }
 
 //===========================================================================
@@ -181,7 +181,7 @@ void CView3D::CameraTranslate( s32 MouseDeltaX, s32 MouseDeltaY, xbool bVertical
 
 void CView3D::OnMouseMove(UINT nFlags, CPoint point) 
 {
-	CBaseView::OnMouseMove(nFlags, point);
+    CBaseView::OnMouseMove(nFlags, point);
     
     //
     // Handle Camera
@@ -291,19 +291,19 @@ void CView3D::CameraSetFocus( const vector3& Focus )
 BOOL CView3D::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt) 
 {
     m_View.Translate( vector3( 0, 0, (float)zDelta), view::VIEW );
-	SetViewDirty();
+    SetViewDirty();
     // TODO: Fix window to get timer update messages and remove this Redraw call
     RedrawWindow();
-	return CBaseView::OnMouseWheel(nFlags, zDelta, pt);
+    return CBaseView::OnMouseWheel(nFlags, zDelta, pt);
 }
 
 //===========================================================================
 
 void CView3D::OnInitialUpdate() 
 {
-	CBaseView::OnInitialUpdate();
-	
-//	CRealTimeMessage* pTimer = new CRealTimeMessage( GetSafeHwnd(), 16, WM_TIMER );
+    CBaseView::OnInitialUpdate();
+    
+//    CRealTimeMessage* pTimer = new CRealTimeMessage( GetSafeHwnd(), 16, WM_TIMER );
 //    if( pTimer )
 //        pTimer->CreateThread(0, 0, NULL);
 }

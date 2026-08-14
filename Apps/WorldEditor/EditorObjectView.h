@@ -17,44 +17,44 @@ class CEditorPaletteDoc;
 class CEditorObjectView : public CPaletteView
 {
 protected:
-	CEditorObjectView();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CEditorObjectView)
+    CEditorObjectView();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CEditorObjectView)
 
     void LoadList();
     BOOL CanAdd();
 
     CResourcePreview    m_wndPreview;
-	CTreeCtrl	        m_rscTree;
+    CTreeCtrl            m_rscTree;
     CStatic             m_stPlaceholder;
 
 // Operations
 public:
-	CEditorPaletteDoc* GetDocument();
+    CEditorPaletteDoc* GetDocument();
     virtual void    OnTabActivate( BOOL bActivate );
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorObjectView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorObjectView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~CEditorObjectView();
+    virtual ~CEditorObjectView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CEditorObjectView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult);
+    //{{AFX_MSG(CEditorObjectView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnSelchangeList(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnOvtbAddPlaysurface();
     afx_msg void OnOvtbAddPropsurface();
     afx_msg void OnOvtbAddAnimsurface();
@@ -69,14 +69,14 @@ protected:
     afx_msg void OnUpdateOvtbUpdateGeomsFromSel(CCmdUI* pCmdUI);
     afx_msg void OnUpdateOvtbUpdateRigidInst(CCmdUI* pCmdUI);
     afx_msg void OnUpdateOvtbSelectBasedOnRigidInst(CCmdUI* pCmdUI);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 
 protected:
     void AddPathToTree(CString strPath, CString strName);
     HTREEITEM DoesChildExist(CString strCurrent, HTREEITEM hParent);
 
-  	CImageList	        m_imageList;
+      CImageList            m_imageList;
     xharray<CString>    m_xaPaths;
     CString             m_strType;
     BOOL                m_bCanAdd;

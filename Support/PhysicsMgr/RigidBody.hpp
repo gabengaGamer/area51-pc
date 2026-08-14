@@ -184,9 +184,9 @@ protected:
         f32                 m_Mass;                 // Mass
         f32                 m_InvMass;              // 1/Mass
         vector3             m_BodyInvInertia;       // Body space inverse inertia (diagonal of matrix)
-        f32				    m_Elasticity;           // Bouncyness
-        f32				    m_StaticFriction;       // Friction when not moving
-        f32				    m_DynamicFriction;      // Friction when moving
+        f32                    m_Elasticity;           // Bouncyness
+        f32                    m_StaticFriction;       // Friction when not moving
+        f32                    m_DynamicFriction;      // Friction when moving
         f32                 m_LinearDamping;        // Linear velocity damping
         f32                 m_AngularDamping;       // Angular velocity damping
         collision_shape*    m_pCollisionShape;      // Pointer to collision shape

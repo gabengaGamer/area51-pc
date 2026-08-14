@@ -17,12 +17,12 @@ class CEditorFrame;
 class CEditorLayerView : public CPaletteView
 {
 protected:
-	CEditorLayerView();           // protected constructor used by dynamic creation
-	DECLARE_DYNCREATE(CEditorLayerView)
+    CEditorLayerView();           // protected constructor used by dynamic creation
+    DECLARE_DYNCREATE(CEditorLayerView)
 
 // Attributes
 public:
-	CEditorPaletteDoc* GetDocument();
+    CEditorPaletteDoc* GetDocument();
 
     void LoadLayers();
     BOOL CanModify(BOOL bLayerChange = FALSE);
@@ -74,42 +74,42 @@ public:
 
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditorLayerView)
-	public:
-	virtual void OnInitialUpdate();
-	protected:
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditorLayerView)
+    public:
+    virtual void OnInitialUpdate();
+    protected:
+    virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	virtual ~CEditorLayerView();
+    virtual ~CEditorLayerView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	// Generated message map functions
+    // Generated message map functions
 protected:
-	//{{AFX_MSG(CEditorLayerView)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnEndLabelEdit(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnLvtbAddLayer();
-	afx_msg void OnLvtbAddFolder();
-	afx_msg void OnLvtbAddZone();
-	afx_msg void OnLvtbAddPortal();
-	afx_msg void OnLvtbAddResource();
-	afx_msg void OnLvtbDeleteLayer();
-	afx_msg void OnLvtbRenameLayer();
-	afx_msg void OnLvtbSetAsActiveLayer();
+    //{{AFX_MSG(CEditorLayerView)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnEndLabelEdit(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnLvtbAddLayer();
+    afx_msg void OnLvtbAddFolder();
+    afx_msg void OnLvtbAddZone();
+    afx_msg void OnLvtbAddPortal();
+    afx_msg void OnLvtbAddResource();
+    afx_msg void OnLvtbDeleteLayer();
+    afx_msg void OnLvtbRenameLayer();
+    afx_msg void OnLvtbSetAsActiveLayer();
     afx_msg void OnLvtbLightLayer();
     afx_msg void OnLvtbSelectLayer();
     afx_msg void OnLvtbLoadLayer();
     afx_msg void OnLvtbLoadAllLayers();
     afx_msg void OnLvtbCheckOutLayer();
-	afx_msg void OnSelchangedTree(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnSelchangedTree(NMHDR* pNMHDR, LRESULT* pResult);
 
     afx_msg void OnNMRclick(NMHDR *pNMHDR, LRESULT *pResult);
     afx_msg void OnNMDblClick(NMHDR *pNMHDR, LRESULT *pResult);
@@ -138,22 +138,22 @@ protected:
     afx_msg void OnLvrmFreezeThisObjectAnimation();
     afx_msg void OnLvrmFreezeThisObjectRigid();
 
-	afx_msg void OnUpdateLvtbAddLayer(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateLvtbAddFolder(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateLvtbAddResource(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateLvtbAddZone(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateLvtbAddPortal(CCmdUI* pCmdUI);   
-	afx_msg void OnUpdateLvtbDeleteLayer(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateLvtbRenameLayer(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateLvtbSetAsActiveLayer(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateLvtbAddLayer(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateLvtbAddFolder(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateLvtbAddResource(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateLvtbAddZone(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateLvtbAddPortal(CCmdUI* pCmdUI);   
+    afx_msg void OnUpdateLvtbDeleteLayer(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateLvtbRenameLayer(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateLvtbSetAsActiveLayer(CCmdUI* pCmdUI);
     afx_msg void OnUpdateLvtbLightLayer(CCmdUI* pCmdUI);
     afx_msg void OnUpdateLvtbSelectLayer(CCmdUI* pCmdUI);
     afx_msg void OnUpdateLvtbLoadLayer(CCmdUI* pCmdUI);
     afx_msg void OnUpdateLvtbLoadAllLayers(CCmdUI* pCmdUI);
     afx_msg void OnUpdateLvtbCheckOutLayer(CCmdUI* pCmdUI);
-	//}}AFX_MSG
+    //}}AFX_MSG
     afx_msg void OnLvtbLightLayerType(UINT nId);
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 
     xhandle FindHandleForObjectGuid( guid Guid );
     guid GetObjectGuidFromHandle( xhandle xh );
@@ -182,7 +182,7 @@ protected:
 
 private:
     CTreeCtrl       m_tcLayer;
-	CImageList	    m_imageList;
+    CImageList        m_imageList;
     xharray<guid>   m_lstObjectGuidStorage;
     xharray<guid>   m_lstBlueprintGuidStorage;
     BOOL            m_bInternalSelect;

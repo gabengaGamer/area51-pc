@@ -23,15 +23,15 @@ void CBaseView::Dump(CDumpContext& dc) const    { CView::Dump(dc); }
 
 
 BEGIN_MESSAGE_MAP(CBaseView, CView)
-	//{{AFX_MSG_MAP(CBaseView)
-	ON_WM_LBUTTONUP()
-	ON_WM_LBUTTONDOWN()
-	ON_WM_MOUSEMOVE()
-	ON_WM_RBUTTONDOWN()
-	ON_WM_RBUTTONUP()
-	ON_WM_SYSKEYDOWN()	
-	ON_WM_SYSKEYUP()	
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CBaseView)
+    ON_WM_LBUTTONUP()
+    ON_WM_LBUTTONDOWN()
+    ON_WM_MOUSEMOVE()
+    ON_WM_RBUTTONDOWN()
+    ON_WM_RBUTTONUP()
+    ON_WM_SYSKEYDOWN()    
+    ON_WM_SYSKEYUP()    
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -64,8 +64,8 @@ CBaseView::~CBaseView()
 
 void CBaseView::OnDraw(CDC* pDC)
 {
-	CDocument* pDoc = GetDocument();
-	// TODO: add draw code here
+    CDocument* pDoc = GetDocument();
+    // TODO: add draw code here
 }
 
 //===========================================================================
@@ -73,7 +73,7 @@ void CBaseView::OnDraw(CDC* pDC)
 void CBaseView::OnLButtonUp(UINT nFlags, CPoint point) 
 {
     m_MouseLeftButton  = FALSE;
-	CView::OnLButtonUp(nFlags, point);
+    CView::OnLButtonUp(nFlags, point);
 
     if( GetMouseLeftButton() == FALSE && GetMouseRightButton() == FALSE )
     {
@@ -91,8 +91,8 @@ void CBaseView::OnLButtonDown(UINT nFlags, CPoint point)
     }
 
     m_MouseLeftButton  = TRUE;
-    m_MouseOldPos      = point;	
-	CView::OnLButtonDown(nFlags, point);
+    m_MouseOldPos      = point;    
+    CView::OnLButtonDown(nFlags, point);
 }
 
 //===========================================================================
@@ -108,7 +108,7 @@ void CBaseView::OnMouseMove(UINT nFlags, CPoint point)
     m_MouseDeltaX   = point.x - m_MouseOldPos.x;
     m_MouseDeltaY   = point.y - m_MouseOldPos.y;
     m_MouseOldPos   = point;
-	CView::OnMouseMove(nFlags, point);
+    CView::OnMouseMove(nFlags, point);
 }
 
 //===========================================================================
@@ -121,8 +121,8 @@ void CBaseView::OnRButtonDown(UINT nFlags, CPoint point)
     }
 
     m_MouseRightButton = TRUE;
-    m_MouseOldPos      = point;	
-	CView::OnRButtonDown(nFlags, point);
+    m_MouseOldPos      = point;    
+    CView::OnRButtonDown(nFlags, point);
 }
 
 //===========================================================================
@@ -130,7 +130,7 @@ void CBaseView::OnRButtonDown(UINT nFlags, CPoint point)
 void CBaseView::OnRButtonUp(UINT nFlags, CPoint point) 
 {
     m_MouseRightButton = FALSE;
-	CView::OnRButtonUp(nFlags, point);
+    CView::OnRButtonUp(nFlags, point);
 
     if( GetMouseLeftButton() == FALSE && GetMouseRightButton() == FALSE )
     {
@@ -144,7 +144,7 @@ void CBaseView::OnRButtonUp(UINT nFlags, CPoint point)
 
 void CBaseView::OnSysKeyUp( UINT nChar, UINT nRepCnt, UINT nFlags )
 {
-	// regular menu stuff will still work (such as ALT-F for File)
+    // regular menu stuff will still work (such as ALT-F for File)
     if ( nChar == VK_CONTROL )
     {
         m_bActionView = FALSE;
@@ -155,7 +155,7 @@ void CBaseView::OnSysKeyUp( UINT nChar, UINT nRepCnt, UINT nFlags )
 
 void CBaseView::OnSysKeyDown( UINT nChar, UINT nRepCnt, UINT nFlags )
 {
-	// regular menu stuff will still work (such as ALT-F for File)
+    // regular menu stuff will still work (such as ALT-F for File)
     if ( nChar == VK_CONTROL )
     {
         m_bActionView = TRUE;
@@ -173,7 +173,7 @@ xbool CBaseView::IsActionMode( void )
 
 void CBaseView::OnActivateView(BOOL bActivate, CView* pActivateView, CView* pDeactiveView) 
 {
-	// TODO: Add your specialized code here and/or call the base class
-	m_bViewActive = bActivate;
-	CView::OnActivateView(bActivate, pActivateView, pDeactiveView);
+    // TODO: Add your specialized code here and/or call the base class
+    m_bViewActive = bActivate;
+    CView::OnActivateView(bActivate, pActivateView, pDeactiveView);
 }

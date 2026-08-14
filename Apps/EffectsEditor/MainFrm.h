@@ -46,7 +46,7 @@ class CMainFrame : public CXTFrameWnd
         CKeyBar             m_KeyBar;
 
     protected:
-	    CXTToolBar          m_wndToolBar;
+        CXTToolBar          m_wndToolBar;
         CProperties         m_wndProperties;
         CParametricSplitter m_Splitter;
 
@@ -60,69 +60,69 @@ class CMainFrame : public CXTFrameWnd
         bool    InitKeyBar( void );
 
     protected: // create from serialization only
-	    CMainFrame();
-	    DECLARE_DYNCREATE(CMainFrame)
+        CMainFrame();
+        DECLARE_DYNCREATE(CMainFrame)
 
     // Overrides
-	    // ClassWizard generated virtual function overrides
-	    //{{AFX_VIRTUAL(CMainFrame)
-	    public:
-	    virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
-	    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	    //}}AFX_VIRTUAL
+        // ClassWizard generated virtual function overrides
+        //{{AFX_VIRTUAL(CMainFrame)
+        public:
+        virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
+        virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+        //}}AFX_VIRTUAL
 
     // Implementation
     public:
-	    virtual ~CMainFrame();
+        virtual ~CMainFrame();
     #ifdef _DEBUG
-	    virtual void AssertValid() const;
-	    virtual void Dump(CDumpContext& dc) const;
+        virtual void AssertValid() const;
+        virtual void Dump(CDumpContext& dc) const;
     #endif
 
 
     // Generated message map functions
     protected:
-	    //{{AFX_MSG(CMainFrame)
-	    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	    afx_msg void OnDestroy();
-	    afx_msg void OnClose();
+        //{{AFX_MSG(CMainFrame)
+        afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+        afx_msg void OnDestroy();
+        afx_msg void OnClose();
         afx_msg LRESULT OnTimeChange(WPARAM, LPARAM);
         afx_msg LRESULT OnKeysChange( WPARAM UserData, LPARAM NewData );
         afx_msg LRESULT OnAnimModeChange( WPARAM UserData, LPARAM NewData );
-	    afx_msg void OnMainToolbarUndo();
-	    afx_msg void OnUpdateMainToolbarUndo(CCmdUI* pCmdUI);
-	    afx_msg void OnMainToolbarRedo();
-	    afx_msg void OnUpdateMainToolbarRedo(CCmdUI* pCmdUI);
-	    afx_msg void OnMainToolbarSelect();
-	    afx_msg void OnMainToolbarMove();
-	    afx_msg void OnMainToolbarRotate();
-	    afx_msg void OnMainToolbarScale();
-	    afx_msg void OnMainToolbarAxisX();
-	    afx_msg void OnMainToolbarAxisY();
-	    afx_msg void OnMainToolbarAxisZ();
-	    afx_msg void OnMainToolbarAlign();
-	    afx_msg void OnUpdateMainToolbarSelect(CCmdUI* pCmdUI);
-	    afx_msg void OnUpdateMainToolbarMove(CCmdUI* pCmdUI);
-	    afx_msg void OnUpdateMainToolbarRotate(CCmdUI* pCmdUI);
-	    afx_msg void OnUpdateMainToolbarScale(CCmdUI* pCmdUI);
-	    afx_msg void OnUpdateMainToolbarAxisX(CCmdUI* pCmdUI);
-	    afx_msg void OnUpdateMainToolbarAxisY(CCmdUI* pCmdUI);
-	    afx_msg void OnUpdateMainToolbarAxisZ(CCmdUI* pCmdUI);
-	    afx_msg void OnUpdateMainToolbarAlign(CCmdUI* pCmdUI);
-	    afx_msg void OnEditSelectAll();
-	    afx_msg void OnEditSelectNone();
-	    afx_msg void OnEditSelectInvert();
-	    afx_msg void OnViewViewportMaximize();
-	    afx_msg void OnUpdateViewViewportMaximize(CCmdUI* pCmdUI);
-	    //}}AFX_MSG
-	    DECLARE_MESSAGE_MAP()
+        afx_msg void OnMainToolbarUndo();
+        afx_msg void OnUpdateMainToolbarUndo(CCmdUI* pCmdUI);
+        afx_msg void OnMainToolbarRedo();
+        afx_msg void OnUpdateMainToolbarRedo(CCmdUI* pCmdUI);
+        afx_msg void OnMainToolbarSelect();
+        afx_msg void OnMainToolbarMove();
+        afx_msg void OnMainToolbarRotate();
+        afx_msg void OnMainToolbarScale();
+        afx_msg void OnMainToolbarAxisX();
+        afx_msg void OnMainToolbarAxisY();
+        afx_msg void OnMainToolbarAxisZ();
+        afx_msg void OnMainToolbarAlign();
+        afx_msg void OnUpdateMainToolbarSelect(CCmdUI* pCmdUI);
+        afx_msg void OnUpdateMainToolbarMove(CCmdUI* pCmdUI);
+        afx_msg void OnUpdateMainToolbarRotate(CCmdUI* pCmdUI);
+        afx_msg void OnUpdateMainToolbarScale(CCmdUI* pCmdUI);
+        afx_msg void OnUpdateMainToolbarAxisX(CCmdUI* pCmdUI);
+        afx_msg void OnUpdateMainToolbarAxisY(CCmdUI* pCmdUI);
+        afx_msg void OnUpdateMainToolbarAxisZ(CCmdUI* pCmdUI);
+        afx_msg void OnUpdateMainToolbarAlign(CCmdUI* pCmdUI);
+        afx_msg void OnEditSelectAll();
+        afx_msg void OnEditSelectNone();
+        afx_msg void OnEditSelectInvert();
+        afx_msg void OnViewViewportMaximize();
+        afx_msg void OnUpdateViewViewportMaximize(CCmdUI* pCmdUI);
+        //}}AFX_MSG
+        DECLARE_MESSAGE_MAP()
 
-	    afx_msg void    OnTimeGotoFirstFrame            ( void );
-	    afx_msg void    OnTimeGotoLastFrame             ( void );
-	    afx_msg void    OnTimeGotoPreviousFrame         ( void );
-	    afx_msg void    OnTimeGotoNextFrame             ( void );
-	    afx_msg void    OnTimePlay                      ( void );
-	    afx_msg void    OnTimeZoomTimeExtents           ( void );
+        afx_msg void    OnTimeGotoFirstFrame            ( void );
+        afx_msg void    OnTimeGotoLastFrame             ( void );
+        afx_msg void    OnTimeGotoPreviousFrame         ( void );
+        afx_msg void    OnTimeGotoNextFrame             ( void );
+        afx_msg void    OnTimePlay                      ( void );
+        afx_msg void    OnTimeZoomTimeExtents           ( void );
 
         afx_msg LRESULT OnProperties_Property_Changed   ( WPARAM ControlID, LPARAM lParam );
 };

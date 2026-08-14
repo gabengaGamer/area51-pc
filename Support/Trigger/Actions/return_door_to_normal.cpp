@@ -66,7 +66,7 @@ void return_door_to_normal::OnRender ( void )
 
 //=============================================================================
 
-void return_door_to_normal::OnEnumProp	( prop_enum& rPropList )
+void return_door_to_normal::OnEnumProp    ( prop_enum& rPropList )
 {
     //object info 
     rPropList.AddGuid ( "Door Guid" , "GUID of the door that you want to open and lock" );
@@ -76,7 +76,7 @@ void return_door_to_normal::OnEnumProp	( prop_enum& rPropList )
 
 //=============================================================================
 
-xbool return_door_to_normal::OnProperty	( prop_query& rPropQuery )
+xbool return_door_to_normal::OnProperty    ( prop_query& rPropQuery )
 {
     if ( rPropQuery.VarGUID ( "Door Guid"  , m_DoorObjectGuid ) )
         return TRUE;

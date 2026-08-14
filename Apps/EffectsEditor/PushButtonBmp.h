@@ -16,7 +16,7 @@ class CPushButtonBmp : public CWnd
 {
     // Construction
     public:
-	    CPushButtonBmp();
+        CPushButtonBmp();
 
     // Attributes
     public:
@@ -25,16 +25,16 @@ class CPushButtonBmp : public CWnd
     public:
 
     // Overrides
-	    // ClassWizard generated virtual function overrides
-	    //{{AFX_VIRTUAL(CPushButtonBmp)
-	public:
-	virtual BOOL Create(CWnd* pParentWnd, const char* Label, int posX, int posY, int nWidth, int nHeight, UINT nID);
-	virtual void MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint = TRUE );
-	//}}AFX_VIRTUAL
+        // ClassWizard generated virtual function overrides
+        //{{AFX_VIRTUAL(CPushButtonBmp)
+    public:
+    virtual BOOL Create(CWnd* pParentWnd, const char* Label, int posX, int posY, int nWidth, int nHeight, UINT nID);
+    virtual void MoveWindow(int x, int y, int nWidth, int nHeight, BOOL bRepaint = TRUE );
+    //}}AFX_VIRTUAL
 
     // Implementation
     public:
-	    virtual     ~CPushButtonBmp();
+        virtual     ~CPushButtonBmp();
 
         enum ButtonType
         {
@@ -93,16 +93,16 @@ class CPushButtonBmp : public CWnd
 ***************************************/
 
 
-	    // Generated message map functions
+        // Generated message map functions
     protected:
-	    //{{AFX_MSG(CPushButtonBmp)
-	    afx_msg void OnPaint();
-	    afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	    afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	    afx_msg LRESULT OnMouseLeave(WPARAM wParam, LPARAM lParam);
-	//}}AFX_MSG
-	    DECLARE_MESSAGE_MAP()
+        //{{AFX_MSG(CPushButtonBmp)
+        afx_msg void OnPaint();
+        afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+        afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+        afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+        afx_msg LRESULT OnMouseLeave(WPARAM wParam, LPARAM lParam);
+    //}}AFX_MSG
+        DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////
