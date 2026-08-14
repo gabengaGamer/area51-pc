@@ -378,7 +378,7 @@ xbool xExceptionThrowHandler( const char* pFileName, s32 LineNum, const char* pM
     // Copy Message
     if( pMessage )
     {
-        s32 Length = strlen( pMessage );
+        s32 Length = x_strlen( pMessage );
         if( (s_iErrorBuffer + Length + 8 ) < ERROR_BUFFER_SIZE )
         {
             s_iErrorBuffer += x_sprintf( &s_ErrorBuffer[ s_iErrorBuffer ], "%s\n\n", pMessage ); 
@@ -388,7 +388,7 @@ xbool xExceptionThrowHandler( const char* pFileName, s32 LineNum, const char* pM
     // Copy the file name
     if( pFileName )
     {
-        s32 Length = strlen( pFileName );
+        s32 Length = x_strlen( pFileName );
         if( (s_iErrorBuffer + Length + 8 ) < ERROR_BUFFER_SIZE )
         {
             s_iErrorBuffer += x_sprintf( &s_ErrorBuffer[ s_iErrorBuffer ], "%s", pFileName ); 
@@ -849,41 +849,6 @@ xbool s_DefaultRTFHandler( const char* pFileName,
 //------------------------------------------------------------------------------
 #endif
 //------------------------------------------------------------------------------
-//==============================================================================
-
-//------------------------------------------------------------------------------
-#ifndef DEFAULT_RTF_HANDLER_DEFINED
-//------------------------------------------------------------------------------
-
-static
-xbool s_DefaultRTFHandler( const char* pFileName,      
-                           s32         LineNumber,     
-                           const char* pExprString,    
-                           const char* pMessageString )
-{
-    // Watch out for infinite assertion failures.
-    if( s_Asserting )
-        BREAK;
-
-    s_Asserting = TRUE;
-
-    x_printf( "***\n*** RUNTIME FAILURE\n" );
-
-    if( pFileName )         x_printf( "*** File: %s on line %d\n", pFileName, LineNumber );
-    else                    x_printf( "*** File: <unknown> on line %d\n", LineNumber );
-    if( pExprString )       x_printf( "*** Expr: %s\n", pExprString );
-    if( pMessageString )    x_printf( "*** Msg : %s\n", pMessageString );
-    
-    x_printf( "***\n" );
-
-    s_Asserting = FALSE;
-    return( TRUE );
-}
-
-//------------------------------------------------------------------------------
-#endif // !DEFAULT_RTF_HANDLER_DEFINED
-//------------------------------------------------------------------------------
-
 //==============================================================================
 //  Callstack walking
 //==============================================================================
