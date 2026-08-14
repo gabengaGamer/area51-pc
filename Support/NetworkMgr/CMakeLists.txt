@@ -184,9 +184,9 @@ a51_add_project( NetworkMgr STATIC
          "${CMAKE_CURRENT_LIST_DIR}/NetworkMgr.cpp"
          "${CMAKE_CURRENT_LIST_DIR}/PainQueue.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/UpdateMgr.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Voice/headset_common.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Voice/Headset_Common.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/Voice/lpc10.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Voice/speex.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Voice/Speex.cpp"
         ${A51_SPEEX_SOURCES}
         "${CMAKE_CURRENT_LIST_DIR}/Voice/VoiceMgr.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/Voice/VoiceProxy.cpp"
@@ -260,7 +260,7 @@ a51_add_project( NetworkMgr STATIC
         "${CMAKE_CURRENT_LIST_DIR}/PainQueue.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/UpdateMgr.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/Voice/lpc10.hpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Voice/speex.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Voice/Speex.hpp"
         ${A51_SPEEX_HEADERS}
         "${CMAKE_CURRENT_LIST_DIR}/Voice/VoiceMgr.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/Voice/VoiceProxy.hpp"

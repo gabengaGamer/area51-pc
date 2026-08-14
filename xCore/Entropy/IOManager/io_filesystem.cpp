@@ -13,7 +13,7 @@
 #include "io_filesystem.hpp"
 #include "io_mgr.hpp"
 #include "x_files.hpp"
-#include "device_host/io_device_host.hpp"
+#include "Device_Host/io_device_host.hpp"
 #include "x_log.hpp"
 
 //==============================================================================

@@ -1,4 +1,4 @@
-#include "../auxiliary/bitmap/aux_bitmap.hpp"
+#include "../Bitmap/aux_Bitmap.hpp"
 #include "TextureMgr.hpp"
 #include "errorlog.hpp"
 

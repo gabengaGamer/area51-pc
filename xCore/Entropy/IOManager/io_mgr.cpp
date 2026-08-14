@@ -19,7 +19,7 @@
 #include "x_workers.hpp"
 #include "io_mgr.hpp"
 #include "io_filesystem.hpp"
-#include "device_host/io_device_host.hpp"
+#include "Device_Host/io_device_host.hpp"
 
 //==============================================================================
 //  LOCAL VARIABLES

@@ -1,6 +1,6 @@
 #include "x_types.hpp"
 #include "x_files.hpp"
-#include "e_simpleallocator.hpp"
+#include "e_SimpleAllocator.hpp"
 
 #define CAPACITY_GROW_SIZE 512
 

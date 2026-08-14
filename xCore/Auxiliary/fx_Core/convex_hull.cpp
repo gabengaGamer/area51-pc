@@ -1,4 +1,4 @@
-#include "entropy.hpp"
+#include "Entropy/Entropy.hpp"
 #include "convex_hull.hpp"
 #include "Render/PrimitiveBatch.hpp"
 

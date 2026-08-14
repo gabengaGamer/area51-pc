@@ -13,7 +13,7 @@
 #endif
 
 #ifndef AUX_BITMAP_HPP
-#include "../../Auxiliary/Bitmap/aux_bitmap.hpp"
+#include "../../Auxiliary/Bitmap/aux_Bitmap.hpp"
 #endif
 
 #ifndef X_MEMORY_HPP

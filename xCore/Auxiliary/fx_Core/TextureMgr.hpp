@@ -2,7 +2,7 @@
 #define __TEXTURE_MGR_HPP
 
 #include "x_files.hpp"
-#include "entropy.hpp"
+#include "Entropy/Entropy.hpp"
 #include "x_bytestream.hpp"
 #include "dlinkedlist.hpp"
 #include "Render/Texture.hpp"

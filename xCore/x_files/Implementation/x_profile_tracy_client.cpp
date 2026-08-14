@@ -26,7 +26,7 @@
 #ifdef min
     #undef min
 #endif
-#include "../../3rdParty/tracy/public/tracy/TracyC.h"
+#include "../../3rdParty/Tracy/public/tracy/TracyC.h"
 
 namespace
 {
@@ -138,6 +138,6 @@ void x_ProfileTracyPlot( u32 MetricId, f64 Value )
     TracyCPlot( s_Metrics[MetricId - 1].Name, Value );
 }
 
-#include "../../3rdParty/tracy/public/TracyClient.cpp"
+#include "../../3rdParty/Tracy/public/TracyClient.cpp"
 
 #endif

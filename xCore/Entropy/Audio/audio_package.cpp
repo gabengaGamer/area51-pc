@@ -15,7 +15,7 @@
 #include "Audio/audio_package.hpp"
 #include "IOManager/io_mgr.hpp"
 #include "x_files.hpp"
-#include "e_audio.hpp"
+#include "e_Audio.hpp"
 
 //==============================================================================
 //  DEFINES

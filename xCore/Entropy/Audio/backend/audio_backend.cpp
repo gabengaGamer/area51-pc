@@ -20,7 +20,7 @@
 #include "Audio/backend/audio_output_mixer.hpp"
 #include "Audio/backend/sdl/audio_output_sdl.hpp"
 
-#include "entropy.hpp"
+#include "Entropy/Entropy.hpp"
 #include "x_threads.hpp"
 
 //==============================================================================
