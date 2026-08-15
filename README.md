@@ -24,7 +24,7 @@ The following prerequisites are required to build the source tree for PC:
 
 ## Running PC Build
 
-1. Download last [asset pack](https://github.com/Source2Spy/area51-pc/releases/tag/DREAMLND51-ASSETS-21.05.2026)
+1. Download last [asset pack](https://github.com/Source2Spy/area51-pc/releases/tag/ASSETS-14.08.2026)
 2. Unzip the archive and place your compiled .exe file into the unzipped folder
 3. Run game
 
