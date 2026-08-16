@@ -190,8 +190,8 @@ xbool dlg_headset::Create( s32                        UserID,
     m_CurrHL = 0;
 
     // set range
-    m_pVolumeSpeaker ->SetRange( 0, 100 );
-    m_pVolumeMic     ->SetRange( 0, 100 );
+    m_pVolumeSpeaker ->SetRange( VOLUME_MIN_PERCENT, VOLUME_MAX_PERCENT );
+    m_pVolumeMic     ->SetRange( VOLUME_MIN_PERCENT, VOLUME_MAX_PERCENT );
 
     // switch off the controls to start
     m_pToggleHeadsetAudio      ->SetFlag( ui_win::WF_VISIBLE, FALSE );

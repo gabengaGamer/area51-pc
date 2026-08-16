@@ -129,8 +129,8 @@ xbool dlg_profile_mouse_controls::Create( s32                       UserID,
     m_pInvertXText      = static_cast<ui_text*>( FindChildByID( IDC_MOUSE_INVERT_X_TEXT ) );
     m_pInvertYText      = static_cast<ui_text*>( FindChildByID( IDC_MOUSE_INVERT_Y_TEXT ) );
 
-    m_pSensitivityX->SetRange( 0, 64 );
-    m_pSensitivityY->SetRange( 0, 64 );
+    m_pSensitivityX->SetRange( 0, MOUSE_SENSITIVITY_MAX );
+    m_pSensitivityY->SetRange( 0, MOUSE_SENSITIVITY_MAX );
 
     player_profile& Profile = g_StateMgr.GetPendingProfile();
     m_OriginalProfile = Profile;

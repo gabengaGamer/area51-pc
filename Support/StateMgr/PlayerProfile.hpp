@@ -23,6 +23,15 @@
 #define MAX_SAVED_LEVELS 20
 
 //==============================================================================
+//  CONTROL SENSITIVITY LIMITS
+//==============================================================================
+
+constexpr u32 MOUSE_SENSITIVITY_DEFAULT   = 16;
+constexpr u32 MOUSE_SENSITIVITY_MAX       = 64;
+constexpr u32 GAMEPAD_SENSITIVITY_DEFAULT = 50;
+constexpr u32 GAMEPAD_SENSITIVITY_MAX     = 200;
+
+//==============================================================================
 //  ENUMS
 //==============================================================================
 
@@ -247,7 +256,7 @@ inline u8 player_profile::GetVolume( u32 Index ) const
 inline void player_profile::SetVolume( u32 Index, u8 Volume )
 {
     ASSERT( Index < 5 );
-    m_Volume[Index] = Volume;
+    m_Volume[Index] = static_cast<u8>( x_clamp( static_cast<s32>( Volume ), VOLUME_MIN_PERCENT, VOLUME_MAX_PERCENT ) );
 }
 
 //==============================================================================

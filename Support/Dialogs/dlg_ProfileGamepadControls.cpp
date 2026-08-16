@@ -135,8 +135,8 @@ xbool dlg_profile_gamepad_controls::Create( s32                       UserID,
     m_pInvertYText      = static_cast<ui_text*>( FindChildByID( IDC_GAMEPAD_INVERT_Y_TEXT ) );
     m_pVibrationText    = static_cast<ui_text*>( FindChildByID( IDC_GAMEPAD_VIBRATION_TEXT ) );
 
-    m_pSensitivityX->SetRange( 0, 200 );
-    m_pSensitivityY->SetRange( 0, 200 );
+    m_pSensitivityX->SetRange( 0, GAMEPAD_SENSITIVITY_MAX );
+    m_pSensitivityY->SetRange( 0, GAMEPAD_SENSITIVITY_MAX );
 
     player_profile& Profile = g_StateMgr.GetPendingProfile();
     m_OriginalProfile = Profile;

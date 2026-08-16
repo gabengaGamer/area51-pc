@@ -5,6 +5,7 @@
 //=========================================================================
 
 #include "PlayerLook.hpp"
+#include "StateMgr/PlayerProfile.hpp"
 
 //=========================================================================
 
@@ -121,9 +122,9 @@ f32 PlayerLook::GetMouseLookSensitivityScale( u32 Sensitivity ) const
 {
     static const f32 SensitivityMin = 0.10f;
     static const f32 SensitivityMax = 12.00f;
-    static const f32 SettingMax     = 64.0f;
+    static const f32 SettingMax     = static_cast<f32>( MOUSE_SENSITIVITY_MAX );
 
-    Sensitivity = MIN( Sensitivity, static_cast<u32>( SettingMax ) );
+    Sensitivity = MIN( Sensitivity, MOUSE_SENSITIVITY_MAX );
     return SensitivityMin + ((SensitivityMax - SensitivityMin) *
                              (static_cast<f32>( Sensitivity ) / SettingMax));
 }

@@ -146,9 +146,9 @@ xbool dlg_profile_av::Create( s32                        UserID,
     m_CurrHL = 0;
 
     // set range
-    m_pVolumeSFX    ->SetRange( 0, 100 );
-    m_pVolumeMusic  ->SetRange( 0, 100 );
-    m_pVolumeSpeech ->SetRange( 0, 100 );
+    m_pVolumeSFX    ->SetRange( VOLUME_MIN_PERCENT, VOLUME_MAX_PERCENT );
+    m_pVolumeMusic  ->SetRange( VOLUME_MIN_PERCENT, VOLUME_MAX_PERCENT );
+    m_pVolumeSpeech ->SetRange( VOLUME_MIN_PERCENT, VOLUME_MAX_PERCENT );
 
     // switch off the controls to start
     m_pVolumeSFX                ->SetFlag( ui_win::WF_VISIBLE, FALSE );

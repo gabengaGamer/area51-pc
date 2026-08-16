@@ -184,10 +184,10 @@ xbool save_data_codec::ProfileFieldsAreValid( const player_profile& Profile )
 {
     return HasNullTerminator( Profile.m_pProfileName,
                               (s32)sizeof(Profile.m_pProfileName) ) &&
-           (Profile.m_MouseSensitivity[0] <= 32) &&
-           (Profile.m_MouseSensitivity[1] <= 32) &&
-           (Profile.m_GamepadSensitivity[0] <= 100) &&
-           (Profile.m_GamepadSensitivity[1] <= 100) &&
+           (Profile.m_MouseSensitivity[0] <= MOUSE_SENSITIVITY_MAX) &&
+           (Profile.m_MouseSensitivity[1] <= MOUSE_SENSITIVITY_MAX) &&
+           (Profile.m_GamepadSensitivity[0] <= GAMEPAD_SENSITIVITY_MAX) &&
+           (Profile.m_GamepadSensitivity[1] <= GAMEPAD_SENSITIVITY_MAX) &&
            (Profile.m_UniqueIdLength >= 0) &&
            (Profile.m_UniqueIdLength <= (s32)sizeof(Profile.m_UniqueId)) &&
            (Profile.m_DifficultyLevel <= DIFFICULTY_HARD);

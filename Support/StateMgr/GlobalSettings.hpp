@@ -35,6 +35,8 @@ constexpr s32               FIELD_OF_VIEW_DEFAULT_DEGREES       = 100;
 constexpr s32               FILM_GRAIN_MIN_STRENGTH             = 0;
 constexpr s32               FILM_GRAIN_MAX_STRENGTH             = 150;
 constexpr s32               FILM_GRAIN_DEFAULT_STRENGTH         = 100;
+constexpr s32               VOLUME_MIN_PERCENT                  = 0;
+constexpr s32               VOLUME_MAX_PERCENT                  = 100;
 constexpr xbool             POST_EFFECT_BACKGROUND_BLUR_DEFAULT = TRUE;
 constexpr xbool             DYNAMIC_SHADOWS_DEFAULT             = FALSE;
 constexpr ShadowFilterType  SHADOW_FILTER_TYPE_DEFAULT          = ShadowFilterType::Evsm;
@@ -330,7 +332,7 @@ inline s32 global_settings::GetVolume( volume_controls Control ) const
 inline void global_settings::SetVolume( volume_controls Control, s32 Value )
 {
     ASSERT( (Control >= VOLUME_SFX) && (Control < VOLUME_LAST) );
-    m_Volume[Control] = Value;
+    m_Volume[Control] = x_clamp( Value, VOLUME_MIN_PERCENT, VOLUME_MAX_PERCENT );
 }
 
 //==============================================================================

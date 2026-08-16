@@ -138,7 +138,7 @@ xbool dlg_audio_settings::Create( s32 UserID, ui_manager* pManager, ui_manager::
     ui_slider* pSliders[] = { m_pVolumeSFX, m_pVolumeMusic, m_pVolumeSpeech, m_pVolumeVideo };
     for( s32 i = 0; i < 4; i++ )
     {
-        pSliders[i]->SetRange( 0, 100 );
+        pSliders[i]->SetRange( VOLUME_MIN_PERCENT, VOLUME_MAX_PERCENT );
         pSliders[i]->UseDefaultSound( FALSE );
         pSliders[i]->SetFlag( ui_win::WF_VISIBLE, FALSE );
     }
