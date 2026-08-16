@@ -128,7 +128,7 @@ static void io_clean_path( char* pClean, const char* pFilename )
 #endif
 }
 
-#if defined( TARGET_LINUX )
+#if defined( TARGET_DESKTOP )
 static void io_clean_host_path( char* pClean, const char* pFilename )
 {
     const char* pSource = pFilename;
@@ -548,7 +548,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     dfs_header*     pHeader = NULL;
     xbool           bSuccess = FALSE;
     char            pCleanFilename[X_MAX_PATH];
-#if defined( TARGET_LINUX )
+#if defined( TARGET_DESKTOP )
     char            pEmuRootPath[X_MAX_PATH];
 #endif
 
@@ -561,8 +561,12 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     // Clean the filename.
     ASSERT( pPathName );
     io_clean_path( pCleanFilename, pPathName );
-#if defined( TARGET_LINUX )
-    io_clean_host_path( pEmuRootPath, pPathName );
+
+    char pHostPrefix[IO_DEVICE_MAX_PREFIX_LENGTH];
+    g_IoMgr.GetDevicePathPrefix( pHostPrefix, IO_DEVICE_HOST );
+
+#if defined( TARGET_DESKTOP )
+    io_clean_host_path( pEmuRootPath, xfs( "%s%s", pHostPrefix, pPathName ) );
 #endif
 
 #ifdef DEBUG_IO
@@ -570,7 +574,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
 #endif
 
     // Open the filesystem header file.
-    pFile = g_IoMgr.OpenDeviceFile( xfs("%s.DFS", pCleanFilename), IO_DEVICE_HOST, io_device::READ );
+    pFile = g_IoMgr.OpenDeviceFile( xfs("%s%s.DFS", pHostPrefix, pCleanFilename), IO_DEVICE_HOST, io_device::READ );
     
     // Success?
     if( pFile )
@@ -646,7 +650,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
         for( j=0 ; (j<pHeader->nSubFiles) && bSuccess ; j++ )
         {
             // Open the sub-file.
-            pFile = g_IoMgr.OpenDeviceFile( xfs("%s.%03d", pCleanFilename, j), IO_DEVICE_HOST, io_device::READ );
+            pFile = g_IoMgr.OpenDeviceFile( xfs("%s%s.%03d", pHostPrefix, pCleanFilename, j), IO_DEVICE_HOST, io_device::READ );
 
             // Only if it was found!
             if( pFile )
@@ -695,7 +699,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     // Attempt DFS emulation from directory if load failed.
     if( !bSuccess )
     {
-#if defined( TARGET_LINUX )
+#if defined( TARGET_DESKTOP )
         pHeader = dfs_BuildHeaderFromDirectory( pEmuRootPath );
 #else
         pHeader = dfs_BuildHeaderFromDirectory( pCleanFilename );

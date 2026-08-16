@@ -17,21 +17,34 @@
 
 namespace
 {
-const char* SAVE_DATA_ROOT = "SAVES";
-const char* SAVE_DATA_TEMP_ROOT = "SAVES\\.tmp";
+xstring s_RootDirectory;
+
+xstring SaveDataRoot( void )
+{
+    return s_RootDirectory.GetLength()
+         ? xstring( xfs( "%s\\SAVES", (const char*)s_RootDirectory ) )
+         : xstring( "SAVES" );
+}
+
+//==============================================================================
+
+xstring SaveDataTempRoot( void )
+{
+    return xstring( xfs( "%s\\.tmp", (const char*)SaveDataRoot() ) );
+}
 
 //==============================================================================
 
 xstring MakePath( const char* pName )
 {
-    return xstring( xfs( "%s\\%s", SAVE_DATA_ROOT, pName ) );
+    return xstring( xfs( "%s\\%s", (const char*)SaveDataRoot(), pName ) );
 }
 
 //==============================================================================
 
 xstring MakeTempPath( const char* pName )
 {
-    return xstring( xfs( "%s\\%s.tmp", SAVE_DATA_TEMP_ROOT, pName ) );
+    return xstring( xfs( "%s\\%s.tmp", (const char*)SaveDataTempRoot(), pName ) );
 }
 
 //==============================================================================
@@ -65,7 +78,7 @@ SaveDataStatus CheckAvailableSpace( s32 RequiredBytes )
     }
 
     ULARGE_INTEGER Available;
-    if( !GetDiskFreeSpaceExA( SAVE_DATA_ROOT, &Available, NULL, NULL ) )
+    if( !GetDiskFreeSpaceExA( (const char*)SaveDataRoot(), &Available, NULL, NULL ) )
     {
         return MapError( GetLastError() );
     }
@@ -164,7 +177,7 @@ void RecoverInterruptedWrites( void )
             continue;
         }
 
-        const xstring TempPath = xstring( xfs( "%s\\%s", SAVE_DATA_TEMP_ROOT, FindData.cFileName ) );
+        const xstring TempPath = xstring( xfs( "%s\\%s", (const char*)SaveDataTempRoot(), FindData.cFileName ) );
         DeleteFileA( TempPath );
     }
     while( FindNextFileA( Find, &FindData ) );
@@ -178,15 +191,22 @@ void RecoverInterruptedWrites( void )
 //  IMPLEMENTATION
 //==============================================================================
 
+void SaveDataBackend_SetRootDirectory( const char* pRootDir )
+{
+    s_RootDirectory = pRootDir ? pRootDir : "";
+}
+
+//==============================================================================
+
 SaveDataStatus save_data_backend::Init( void )
 {
-    SaveDataStatus Status = EnsureDirectory( SAVE_DATA_ROOT );
+    SaveDataStatus Status = EnsureDirectory( (const char*)SaveDataRoot() );
     if( Status != SaveDataStatus::Success )
     {
         return Status;
     }
 
-    Status = EnsureDirectory( SAVE_DATA_TEMP_ROOT );
+    Status = EnsureDirectory( (const char*)SaveDataTempRoot() );
     if( Status != SaveDataStatus::Success )
     {
         return Status;
@@ -317,13 +337,13 @@ SaveDataStatus save_data_backend::WriteAtomic( const char* pName,
         return SaveDataStatus::IoError;
     }
 
-    const SaveDataStatus DirectoryStatus = EnsureDirectory( SAVE_DATA_ROOT );
+    const SaveDataStatus DirectoryStatus = EnsureDirectory( (const char*)SaveDataRoot() );
     if( DirectoryStatus != SaveDataStatus::Success )
     {
         return DirectoryStatus;
     }
 
-    const SaveDataStatus TempDirectoryStatus = EnsureDirectory( SAVE_DATA_TEMP_ROOT );
+    const SaveDataStatus TempDirectoryStatus = EnsureDirectory( (const char*)SaveDataTempRoot() );
     if( TempDirectoryStatus != SaveDataStatus::Success )
     {
         return TempDirectoryStatus;

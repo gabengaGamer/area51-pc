@@ -30,6 +30,7 @@
 #include "NetworkMgr/MsgMgr.hpp"
 #include "StateMgr/StateMgr.hpp"
 #include "SaveData/SaveDataMgr.hpp"
+#include "SaveData/Backend/SaveDataBackend.hpp"
 
 //==============================================================================
 //  OBJECT INCLUDES
@@ -1230,6 +1231,17 @@ void DoStartup( void )
 
     x_DebugMsg( "Entered app.\n" );
 
+    if( !GameAppGetExecutableDirectory( g_FullPath, sizeof( g_FullPath ) ) )
+        x_strcpy( g_FullPath, "." );
+
+    if( !GameAppGetDataDirectory( g_DataPath, sizeof( g_DataPath ) ) )
+        x_strcpy( g_DataPath, g_FullPath );
+
+    x_DebugMsg( "Executable directory: %s\n", g_FullPath );
+    x_DebugMsg( "Data directory: %s\n", g_DataPath );
+
+    SaveDataBackend_SetRootDirectory( g_DataPath );
+
     // get language setting and check for default language.
     x_language DefaultLanguage = CheckLanguageSupport( x_GetConsoleLanguage() );
 
@@ -1257,15 +1269,6 @@ void DoStartup( void )
     x_DebugMsg( "Initialize io system\n" );
 
     g_IoMgr.Init();
-
-    if( !GameAppGetExecutableDirectory( g_FullPath, sizeof( g_FullPath ) ) )
-        x_strcpy( g_FullPath, "." );
-
-    if( !GameAppGetDataDirectory( g_DataPath, sizeof( g_DataPath ) ) )
-        x_strcpy( g_DataPath, g_FullPath );
-
-    x_DebugMsg( "Executable directory: %s\n", g_FullPath );
-    x_DebugMsg( "Data directory: %s\n", g_DataPath );
 
     // Mount the default file system.
     g_IoMgr.SetDevicePathPrefix( xfs( "%s/", g_DataPath ), IO_DEVICE_HOST );
@@ -1376,7 +1379,7 @@ void DoStartup( void )
     
     // Init scripting
     g_ScriptMgr.Init();
-    g_ScriptMgr.RunFile( "SCRIPTS/main.lua" );
+    g_ScriptMgr.RunFile( xfs( "%s/SCRIPTS/main.lua", g_DataPath ) );
 }
 
 //==============================================================================

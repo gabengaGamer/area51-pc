@@ -598,8 +598,8 @@ void player::OnEvent( const event& Event )
         switch( WeaponEvent.WeaponState )
         {
             case new_weapon::EVENT_FIRE:
-            case new_weapon::EVENT_FIRE_LEFT: 
-            case new_weapon::EVENT_FIRE_RIGHT: 
+            case new_weapon::EVENT_FIRE_LEFT:
+            case new_weapon::EVENT_FIRE_RIGHT:
             {
                 // don't allow player to switch weapons, zoom in, attack, etc.
                 if( m_bHidePlayerArms )

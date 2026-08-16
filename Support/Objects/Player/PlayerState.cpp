@@ -648,7 +648,7 @@ void player::BeginIdle( void )
 //------------------------------------------------------------------------------
 
 void player::HandleFireInput( xbool IsAlternateFire )
-{   
+{
     new_weapon* pWeapon = GetCurrentWeaponPtr();
 
     // if your arms are hidden, don't fire.

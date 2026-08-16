@@ -68,8 +68,6 @@ public:
     virtual void                OnRenderTransparent         ( void );
 
     virtual void                BeginSwitchFrom             ( void );
-    virtual void                BeginSwitchTo               ( void );
-    virtual void                EndSwitchTo                 ( void );
             void                FlashLogic                  ( f32 DeltaTime );
             void                CheckForScanComplete        ( void );
             guid                GetScannedGuid              ( void ) { return m_ScannedGuid; }
@@ -104,7 +102,6 @@ protected:
     guid                        m_ScanStartGuid;
     guid                        m_ScanEndGuid;
     xbool                       m_bCanScan;
-    xbool                       m_bBootUpAnimFinished;
     xbool                       m_bInitialScan;
 
     s32                         m_LaserOnLoopId;

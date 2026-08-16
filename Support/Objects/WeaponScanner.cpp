@@ -154,7 +154,6 @@ weapon_scanner::weapon_scanner( void )
 
     m_ScanTimesPerFace = 0;
     m_bCanScan = TRUE;
-    m_bBootUpAnimFinished = TRUE;
     m_bInitialScan = TRUE;
     m_bFlashEnclosures = FALSE;
     m_NumberOfFlashes = 0;
@@ -211,30 +210,13 @@ xbool weapon_scanner::CanFire( xbool bIsAltFire )
 //=========================================================================
 xbool weapon_scanner::CanScan( void )
 {
-    if( m_bCanScan && m_bBootUpAnimFinished )
-    {
-        return TRUE;
-    }
-
-    return FALSE;
+    return m_bCanScan;
 }
 
 //=========================================================================
 void weapon_scanner::BeginSwitchFrom( void )
 {
     ClearScan();
-}
-
-//=========================================================================
-void weapon_scanner::BeginSwitchTo( void )
-{
-    m_bBootUpAnimFinished = FALSE;
-}
-
-//=========================================================================
-void weapon_scanner::EndSwitchTo( void )
-{
-    m_bBootUpAnimFinished = TRUE;
 }
 
 
@@ -833,6 +815,12 @@ void weapon_scanner::OnAdvanceSimulation( f32 DeltaTime )
 
     if( Player.IsFiring() )
     {
+        if( m_bInitialScan && CanScan() && (Player.GetCurrentAnimState() == player::ANIM_STATE_IDLE) )
+        {
+            FireWeaponProtected( vector3(0.0f, 0.0f, 0.0f), vector3(0.0f, 0.0f, 0.0f),
+                                 0.0f, radian3(R_0, R_0, R_0), NULL_GUID, -1 );
+        }
+
         if( CanScan() && !m_bInitialScan )
         {
             //UpdateScanParticles(DeltaTime);

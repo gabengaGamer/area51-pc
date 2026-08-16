@@ -33,8 +33,19 @@ namespace
 
 namespace fs = std::filesystem;
 
-const char* SAVE_DATA_ROOT = "SAVES";
-const char* SAVE_DATA_TEMP_ROOT = "SAVES/.tmp";
+std::string s_RootDirectory;
+
+fs::path SaveDataRoot( void )
+{
+    return s_RootDirectory.empty() ? fs::path( "SAVES" ) : fs::path( s_RootDirectory ) / "SAVES";
+}
+
+//==============================================================================
+
+fs::path SaveDataTempRoot( void )
+{
+    return SaveDataRoot() / ".tmp";
+}
 
 //==============================================================================
 
@@ -59,14 +70,14 @@ SaveDataStatus MapError( const std::error_code& Error )
 
 fs::path MakePath( const char* pName )
 {
-    return fs::path( SAVE_DATA_ROOT ) / pName;
+    return SaveDataRoot() / pName;
 }
 
 //==============================================================================
 
 fs::path MakeTempPath( const char* pName )
 {
-    return fs::path( SAVE_DATA_TEMP_ROOT ) / (std::string( pName ) + ".tmp");
+    return SaveDataTempRoot() / (std::string( pName ) + ".tmp");
 }
 
 //==============================================================================
@@ -124,7 +135,7 @@ xbool HasTempSuffix( const fs::path& Path )
 void DiscardInterruptedWrites( void )
 {
     std::error_code Error;
-    fs::directory_iterator It( SAVE_DATA_TEMP_ROOT, Error );
+    fs::directory_iterator It( SaveDataTempRoot(), Error );
     if( Error )
         return;
 
@@ -149,12 +160,12 @@ void DiscardInterruptedWrites( void )
 SaveDataStatus EnsureRootDirectory( void )
 {
     std::error_code Error;
-    fs::create_directories( SAVE_DATA_ROOT, Error );
+    fs::create_directories( SaveDataRoot(), Error );
     if( Error )
         return MapError( Error );
 
     Error.clear();
-    fs::create_directories( SAVE_DATA_TEMP_ROOT, Error );
+    fs::create_directories( SaveDataTempRoot(), Error );
     return Error ? MapError( Error ) : SaveDataStatus::Success;
 }
 
@@ -166,7 +177,7 @@ SaveDataStatus CheckAvailableSpace( s32 RequiredBytes )
         return SaveDataStatus::Success;
 
     struct statvfs Info;
-    if( statvfs( SAVE_DATA_ROOT, &Info ) != 0 )
+    if( statvfs( SaveDataRoot().c_str(), &Info ) != 0 )
     {
         return MapError( std::error_code( errno, std::generic_category() ) );
     }
@@ -210,6 +221,13 @@ xbool SyncDirectory( const fs::path& Path )
 //  IMPLEMENTATION
 //==============================================================================
 
+void SaveDataBackend_SetRootDirectory( const char* pRootDir )
+{
+    s_RootDirectory = pRootDir ? pRootDir : "";
+}
+
+//==============================================================================
+
 SaveDataStatus save_data_backend::Init( void )
 {
     const SaveDataStatus Status = EnsureRootDirectory();
@@ -233,7 +251,7 @@ SaveDataStatus save_data_backend::List( xarray<save_data_file_info>& Files )
     Files.Clear();
 
     std::error_code Error;
-    fs::directory_iterator It( SAVE_DATA_ROOT, Error );
+    fs::directory_iterator It( SaveDataRoot(), Error );
     if( Error == std::errc::no_such_file_or_directory )
         return SaveDataStatus::Success;
     if( Error )
@@ -363,7 +381,7 @@ SaveDataStatus save_data_backend::WriteAtomic( const char* pName,
         return MapError( Error );
     }
 
-    if( !SyncDirectory( SAVE_DATA_ROOT ) )
+    if( !SyncDirectory( SaveDataRoot() ) )
     {
         return SaveDataStatus::IoError;
     }
