@@ -1975,11 +1975,13 @@ void AppMain( s32 argc, char* argv[] )
 
 //==============================================================================
 
+#if defined( TARGET_LINUX )
 int main( int argc, char* argv[] )
 {
     x_Init( argc, argv );
     AppMain( (s32)argc, argv );
     return eng_ExitPoint();
 }
+#endif // defined( TARGET_LINUX )
 
 //==============================================================================
