@@ -89,7 +89,7 @@ object::~object( void )
 
 //==============================================================================
 
-inline void object::UpdateTransform( void )
+void object::UpdateTransform( void )
 {
     if( !(m_FlagBits & FLAG_DIRTY_TRANSFORM) )
         return;

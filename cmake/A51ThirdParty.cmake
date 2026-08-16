@@ -54,6 +54,8 @@ set( OPUS_INSTALL_PKG_CONFIG_MODULE OFF CACHE BOOL
     "Install Opus pkg-config module" FORCE )
 set( OPUS_INSTALL_CMAKE_CONFIG_MODULE OFF CACHE BOOL
     "Install Opus CMake package module" FORCE )
+set( OPUS_STATIC_RUNTIME ON CACHE BOOL
+    "Build Opus with the static MSVC runtime" FORCE )
 add_subdirectory( "${A51_THIRDPARTY_ROOT}/Libopus"
     "${CMAKE_BINARY_DIR}/thirdparty/Libopus" EXCLUDE_FROM_ALL )
 add_library( a51::opus ALIAS opus )

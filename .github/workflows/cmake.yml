@@ -16,8 +16,8 @@ jobs:
       - name: Configure
         run: cmake --preset windows-vs2022-x64
 
-      - name: Build full Debug graph
-        run: cmake --build --preset windows-vs2022-x64-debug --parallel 4
+      - name: Build full Release graph
+        run: cmake --build --preset windows-vs2022-x64-release --parallel 4
 
       - name: Build custom configurations
         shell: pwsh
@@ -25,6 +25,13 @@ jobs:
           cmake --build --preset windows-vs2022-x64-optdebug --target dfsTool --parallel 4
           cmake --build --preset windows-vs2022-x64-qa --target dfsTool --parallel 4
           cmake --build --preset windows-vs2022-x64-editor-debug --target dfsTool --parallel 4
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: A51-windows-x64-release
+          path: build/windows-vs2022-x64/Apps/GameApp/Release/A51.exe
+          if-no-files-found: error
 
   linux-x64:
     name: Linux x64 / GCC
@@ -50,5 +57,12 @@ jobs:
       - name: Configure
         run: cmake --preset linux-gcc-x64
 
-      - name: Build full Debug graph
-        run: cmake --build --preset linux-gcc-x64-debug --parallel 4 -- -k 0
+      - name: Build full Release graph
+        run: cmake --build --preset linux-gcc-x64-release --parallel 4 -- -k 0
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: A51-linux-x64-release
+          path: build/linux-gcc-x64/Apps/GameApp/Release/A51
+          if-no-files-found: error

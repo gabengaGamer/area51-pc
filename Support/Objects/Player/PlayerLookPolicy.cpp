@@ -120,8 +120,8 @@ void PlayerLook::ScaleGamepadLookVector( vector2& Look )
 f32 PlayerLook::GetMouseLookSensitivityScale( u32 Sensitivity ) const
 {
     static const f32 SensitivityMin = 0.10f;
-    static const f32 SensitivityMax = 6.00f;
-    static const f32 SettingMax     = 32.0f;
+    static const f32 SensitivityMax = 12.00f;
+    static const f32 SettingMax     = 64.0f;
 
     Sensitivity = MIN( Sensitivity, static_cast<u32>( SettingMax ) );
     return SensitivityMin + ((SensitivityMax - SensitivityMin) *

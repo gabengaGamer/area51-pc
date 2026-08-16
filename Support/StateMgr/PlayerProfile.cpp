@@ -19,9 +19,9 @@
 namespace
 {
     constexpr u32 MOUSE_SENSITIVITY_DEFAULT   = 16;
-    constexpr u32 MOUSE_SENSITIVITY_MAX       = 32;
+    constexpr u32 MOUSE_SENSITIVITY_MAX       = 64;
     constexpr u32 GAMEPAD_SENSITIVITY_DEFAULT = 50;
-    constexpr u32 GAMEPAD_SENSITIVITY_MAX     = 100;
+    constexpr u32 GAMEPAD_SENSITIVITY_MAX     = 200;
 
     u32 GetAxisIndex( profile_control_axis Axis )
     {
