@@ -1,6 +1,6 @@
 #include "BlackOp_Cover_State.hpp"
 #include "../Character.hpp"
-#include "navigation/CoverNode.hpp"
+#include "Navigation/CoverNode.hpp"
 #include "Objects/NewWeapon.hpp"
 #include "AudioMgr/AudioMgr.hpp"
 #include "Soldier.hpp"

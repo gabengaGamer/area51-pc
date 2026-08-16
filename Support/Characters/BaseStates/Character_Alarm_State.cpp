@@ -1,6 +1,6 @@
 #include "Character_Alarm_State.hpp"
 #include "../Character.hpp"
-#include "navigation/AlarmNode.hpp"
+#include "Navigation/AlarmNode.hpp"
 #include "Objects/NewWeapon.hpp"
 
 //=========================================================================

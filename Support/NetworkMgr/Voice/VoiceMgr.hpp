@@ -17,7 +17,7 @@
 #include "x_files.hpp"
 #include "Network/NetStream.hpp"
 #include "Headset.hpp"
-#include "NetworkMgr/netlimits.hpp"
+#include "NetworkMgr/NetLimits.hpp"
 
 static_assert( NET_MAX_PLAYERS <= (sizeof( u32 ) * 8), "Voice player masks require at least one bit per player." );
 

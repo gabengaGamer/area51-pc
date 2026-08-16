@@ -6,14 +6,14 @@
 
 #include "PlayerStatus.hpp"
 #include "Player.hpp"
-#include "objects//ParticleEmiter.hpp"
-#include "objects//Corpse.hpp"
-#include "Characters//ActorEffects.hpp"
-#include "PerceptionMgr//PerceptionMgr.hpp"
-#include "NetworkMgr//GameMgr.hpp"
-#include "objects//Render//PostEffectMgr.hpp"
-#include "NetworkMgr//NetworkMgr.hpp"
-#include "InputMgr//GamePad.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/Corpse.hpp"
+#include "Characters/ActorEffects.hpp"
+#include "PerceptionMgr/PerceptionMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "Objects/Render/PostEffectMgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "InputMgr/GamePad.hpp"
 #include "x_math.hpp"
 
 //=========================================================================

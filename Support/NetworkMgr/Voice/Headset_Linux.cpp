@@ -6,7 +6,7 @@
 
 #include "x_types.hpp"
 #include "Headset.hpp"
-#include "speex.hpp"
+#include "Speex.hpp"
 
 //==============================================================================
 

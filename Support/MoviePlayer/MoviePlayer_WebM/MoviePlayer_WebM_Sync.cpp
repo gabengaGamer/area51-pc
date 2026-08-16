@@ -14,8 +14,8 @@
 
 #include "x_target.hpp"
 
-#ifndef TARGET_PC
-#error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
+#if !defined( TARGET_DESKTOP )
+#error This file should only be compiled for a desktop platform. Please check your exclusions on your project spec.
 #endif
 
 //==============================================================================

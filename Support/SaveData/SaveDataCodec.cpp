@@ -7,6 +7,8 @@
 #include "SaveDataCodec.hpp"
 #include "Auxiliary/MiscUtils/BitseryIO.hpp"
 
+#include <memory>
+
 namespace
 {
 
@@ -406,9 +408,9 @@ xbool save_data_codec::EncodeProfile( const player_profile& Profile,
                                       xarray<u8>&           Bytes,
                                       xstring&              Error )
 {
-    profile_save_record Record;
-    Record.Profile = Profile;
-    return bitsery_io::EncodeFile( PROFILE_FILE_FORMAT, Record, Bytes, Error );
+    std::unique_ptr<profile_save_record> Record( new profile_save_record );
+    Record->Profile = Profile;
+    return bitsery_io::EncodeFile( PROFILE_FILE_FORMAT, *Record, Bytes, Error );
 }
 
 //==============================================================================
@@ -417,20 +419,20 @@ xbool save_data_codec::DecodeProfile( const xarray<u8>& Bytes,
                                       player_profile&   Profile,
                                       xstring&          Error )
 {
-    profile_save_record Record;
-    Record.Profile.Reset();
+    std::unique_ptr<profile_save_record> Record( new profile_save_record );
+    Record->Profile.Reset();
     if( !bitsery_io::DecodeFile( Bytes.GetPtr(), Bytes.GetCount(),
-                                 PROFILE_FILE_FORMAT, Record, Error ) )
+                                 PROFILE_FILE_FORMAT, *Record, Error ) )
     {
         return FALSE;
     }
-    if( !ProfileFieldsAreValid( Record.Profile ) )
+    if( !ProfileFieldsAreValid( Record->Profile ) )
     {
         Error = "Serialized profile contains invalid fields.";
         return FALSE;
     }
 
-    Profile = Record.Profile;
+    Profile = Record->Profile;
     Profile.m_Checksum = 0;
     Profile.m_Checksum = x_chksum( &Profile, sizeof(Profile) );
     return TRUE;
@@ -442,9 +444,9 @@ xbool save_data_codec::EncodeSettings( const global_settings& Settings,
                                        xarray<u8>&            Bytes,
                                        xstring&               Error )
 {
-    settings_save_record Record;
-    Record.Settings = Settings;
-    return bitsery_io::EncodeFile( SETTINGS_FILE_FORMAT, Record, Bytes, Error );
+    std::unique_ptr<settings_save_record> Record( new settings_save_record );
+    Record->Settings = Settings;
+    return bitsery_io::EncodeFile( SETTINGS_FILE_FORMAT, *Record, Bytes, Error );
 }
 
 //==============================================================================
@@ -453,20 +455,20 @@ xbool save_data_codec::DecodeSettings( const xarray<u8>& Bytes,
                                        global_settings&  Settings,
                                        xstring&          Error )
 {
-    settings_save_record Record;
-    Record.Settings.Reset();
+    std::unique_ptr<settings_save_record> Record( new settings_save_record );
+    Record->Settings.Reset();
     if( !bitsery_io::DecodeFile( Bytes.GetPtr(), Bytes.GetCount(),
-                                 SETTINGS_FILE_FORMAT, Record, Error ) )
+                                 SETTINGS_FILE_FORMAT, *Record, Error ) )
     {
         return FALSE;
     }
-    if( !SettingsFieldsAreValid( Record.Settings ) )
+    if( !SettingsFieldsAreValid( Record->Settings ) )
     {
         Error = "Serialized settings contain invalid fields.";
         return FALSE;
     }
 
-    Settings = Record.Settings;
+    Settings = Record->Settings;
     Settings.m_Checksum = 0;
     Settings.m_Checksum = x_chksum( &Settings, sizeof(Settings) );
     return TRUE;

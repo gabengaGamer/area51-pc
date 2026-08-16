@@ -1133,6 +1133,14 @@ xthread* x_GetCurrentThread( void )
 
 //==============================================================================
 
+// Returns TRUE after the initial xthread is registered.
+xbool x_IsThreadSystemReady( void )
+{
+    return( s_Initialized && s_pThreadVars && s_pCurrentThread );
+}
+
+//==============================================================================
+
 void x_SetCurrentThread( xthread* pThread )
 {
     if( pThread )

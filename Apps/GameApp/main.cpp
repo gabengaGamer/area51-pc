@@ -90,9 +90,9 @@
 #include "../Support/TriggerEx/TriggerEx_Manager.hpp"
 #include "../Support/Tracers/TracerMgr.hpp"
 #include "../Support/Render/LightMgr.hpp"
-#include "navigation/Nav_Map.hpp"
-#include "navigation/ng_connection2.hpp"
-#include "navigation/ng_node2.hpp"
+#include "Navigation/Nav_Map.hpp"
+#include "Navigation/ng_connection2.hpp"
+#include "Navigation/ng_node2.hpp"
 
 //==============================================================================
 //  UI AND TEXT INCLUDES
@@ -1268,7 +1268,7 @@ void DoStartup( void )
     x_DebugMsg( "Data directory: %s\n", g_DataPath );
 
     // Mount the default file system.
-    g_IoMgr.SetDevicePathPrefix( xfs( "%s/", g_FullPath ), IO_DEVICE_HOST );
+    g_IoMgr.SetDevicePathPrefix( xfs( "%s/", g_DataPath ), IO_DEVICE_HOST );
 
     // Xbox: cache to the utility partition.
     g_LevelLoader.MountDefaultFilesystems();
@@ -1319,7 +1319,7 @@ void DoStartup( void )
     // Initialize the resource system
     x_DebugMsg( "Starting to initialize resource manager\n" );
     g_RscMgr.Init();
-    g_RscMgr.SetRootDirectory( g_FullPath );
+    g_RscMgr.SetRootDirectory( g_DataPath );
     g_RscMgr.SetOnDemandLoading( FALSE );
     x_DebugMsg( "Finished initializing resource manager\n" );
 
@@ -1376,7 +1376,7 @@ void DoStartup( void )
     
     // Init scripting
     g_ScriptMgr.Init();
-    g_ScriptMgr.RunFile( "scripts/main.lua" );    
+    g_ScriptMgr.RunFile( "SCRIPTS/main.lua" );
 }
 
 //==============================================================================
@@ -1972,5 +1972,16 @@ void AppMain( s32 argc, char* argv[] )
     //
     DoShutdown();
 }
+
+#if defined( TARGET_LINUX )
+
+int main( int argc, char* argv[] )
+{
+    x_Init( argc, argv );
+    AppMain( (s32)argc, argv );
+    return eng_ExitPoint();
+}
+
+#endif // defined( TARGET_LINUX )
 
 //==============================================================================

@@ -2,6 +2,18 @@
 set( A51_NETWORK_GAMESPY_SOURCES )
 set( A51_NETWORK_PLATFORM_DEPENDENCIES )
 set( A51_SPEEX_ROOT "${CMAKE_SOURCE_DIR}/xCore/3rdParty/Speex" )
+set( A51_SPEEX_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/speex" )
+file( MAKE_DIRECTORY "${A51_SPEEX_GENERATED_INCLUDE_DIR}" )
+set( INCLUDE_STDINT "#include <stdint.h>" )
+set( SIZE16 "int16_t" )
+set( USIZE16 "uint16_t" )
+set( SIZE32 "int32_t" )
+set( USIZE32 "uint32_t" )
+configure_file(
+    "${A51_SPEEX_ROOT}/include/speex/speex_config_types.h.in"
+    "${A51_SPEEX_GENERATED_INCLUDE_DIR}/speex_config_types.h"
+    @ONLY
+)
 set( A51_SPEEX_SOURCES
     "${A51_SPEEX_ROOT}/libspeex/bits.c"
     "${A51_SPEEX_ROOT}/libspeex/cb_search.c"
@@ -268,6 +280,7 @@ a51_add_project( NetworkMgr STATIC
     DEPENDENCIES
         ${A51_NETWORK_PLATFORM_DEPENDENCIES}
     PRIVATE_INCLUDE_DIRECTORIES
+        "${A51_SPEEX_GENERATED_INCLUDE_DIR}"
         "${CMAKE_SOURCE_DIR}/xCore"
         "${CMAKE_SOURCE_DIR}/xCore/../Support"
         "${CMAKE_SOURCE_DIR}/xCore/Entropy"

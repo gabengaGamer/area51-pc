@@ -1,13 +1,17 @@
-add_subdirectory( EDRscDesc )
-
 set( _a51_portable_app_targets )
 set( _a51_windows_app_targets )
 
 if( A51_BUILD_SELECTED_APPS )
     add_subdirectory( XbmpTool )
-    add_subdirectory( DfsTool )
     add_subdirectory( Art2Code )
-    list( APPEND _a51_portable_app_targets xbmptool dfsTool Art2Code )
+    list( APPEND _a51_portable_app_targets xbmptool Art2Code )
+
+    if( WIN32 )
+        add_subdirectory( DfsTool )
+        list( APPEND _a51_portable_app_targets dfsTool )
+    else()
+        message( STATUS "Skipping DfsTool: current implementation requires Windows headers." )
+    endif()
 
     if( A51_ENABLE_QT AND Qt6_FOUND )
         add_subdirectory( XbmpViewer )

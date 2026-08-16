@@ -57,7 +57,7 @@ object::object( void )
 
 #ifndef TARGET_PC
     // Confirm that matrix is 16 byte aligned
-    ASSERT( (((u32)(&m_L2W)) & 0xF) == 0 );
+    ASSERT( ((reinterpret_cast<uaddr>( &m_L2W ) & 0xF) == 0) );
 #endif
 
 #if defined( USE_OBJECT_NAMES )

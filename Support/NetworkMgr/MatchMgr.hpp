@@ -866,6 +866,14 @@ enum
         void                StatsUpdateWrite            ( void );
 #endif // defined(TARGET_PC)
 
+#if defined(TARGET_LINUX)
+        void                SetAllGameStats             ( const player_stats& Stats );
+        void                SetAllCareerStats           ( const player_stats& Stats );
+        void                UpdateCareerStatsWithGameStats( void );
+        void                InitiateCareerStatsWrite    ( void );
+        const player_stats& GetAllCareerStats           ( void ) { return m_CareerStats.Stats; }
+#endif
+
 private:
         void                UpdateState                 ( f32 DeltaTime );
         void                AppendServer                ( const net_address& Remote, const net_lookup_response& Response );

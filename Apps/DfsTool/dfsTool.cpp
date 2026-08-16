@@ -10,7 +10,7 @@
 
 #include "x_files.hpp"
 #include "Auxiliary/CommandLine/CommandLine.hpp"
-#include "Auxiliary/bitmap/aux_bitmap.hpp"
+#include "Auxiliary/Bitmap/aux_Bitmap.hpp"
 #include "x_bitmap.hpp"
 
 #include "dfs.hpp"

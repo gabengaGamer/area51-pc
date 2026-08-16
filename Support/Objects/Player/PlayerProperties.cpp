@@ -14,9 +14,9 @@
 //=========================================================================
 
 #include "Player.hpp"
-#include "objects//WeaponMutation.hpp"
-#include "StateMgr//StateMgr.hpp"
-#include "PerceptionMgr//PerceptionMgr.hpp"
+#include "Objects/WeaponMutation.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "PerceptionMgr/PerceptionMgr.hpp"
 
 //=========================================================================
 //  IMPLEMENTATION

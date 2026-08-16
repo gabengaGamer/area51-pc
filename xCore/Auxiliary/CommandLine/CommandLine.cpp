@@ -50,7 +50,7 @@ s32 command_line::GetNumArguments( void ) const
 
 //==============================================================================
 
-s32 command_line::FindOption( xstring& Option ) const
+s32 command_line::FindOption( const xstring& Option ) const
 {
     s32     i;
     s32     Found   = -1;

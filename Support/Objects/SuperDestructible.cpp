@@ -20,15 +20,15 @@
 #include "CollisionMgr/PolyCache.hpp"
 #include "GameLib/RigidGeomCollision.hpp"
 #include "Render/Render.hpp"
-#include "Debris/Debris_mgr.hpp"
+#include "Debris/debris_mgr.hpp"
 #include "Objects/ParticleEmiter.hpp"
 #include "Dictionary/Global_Dictionary.hpp"
 #include "TemplateMgr/TemplateMgr.hpp"
 #include "AudioMgr/AudioMgr.hpp"
 #include "Decals/DecalMgr.hpp"
 #include "EventMgr/EventMgr.hpp"
-#include "Object.hpp"
-#include "Actor/actor.hpp"
+#include "object.hpp"
+#include "Actor/Actor.hpp"
 
                                        
 //==========================================================================

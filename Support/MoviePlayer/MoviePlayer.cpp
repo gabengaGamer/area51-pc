@@ -6,6 +6,7 @@
 
 #include "Entropy.hpp"
 #include "MoviePlayer.hpp"
+#include "MoviePlayer_WebM/MoviePlayer_WebM_Private.hpp"
 #include "StateMgr/StateMgr.hpp"
 #include "InputMgr/GamePad.hpp"
 
@@ -56,6 +57,7 @@ static xbool movieplayer_BeginTimedFrame( xtimer& FrameTimer, f32& DeltaTime )
 
 movie_player::movie_player(void)
 {
+    m_pPrivate = new movie_private;
     m_IsLooped = FALSE;
     m_Finished = FALSE;
     m_Volume   = 1.0f;
@@ -67,22 +69,24 @@ movie_player::movie_player(void)
 movie_player::~movie_player(void)
 {
     Kill();
+    delete m_pPrivate;
+    m_pPrivate = NULL;
 }
 
 //==============================================================================
 
 void movie_player::Init(void)
 {
-    m_Private.Init();
+    m_pPrivate->Init();
 }
 
 //==============================================================================
 
 xbool movie_player::Open(const char* pFilename, xbool IsResident, xbool IsLooped)
 {
-    m_Private.SetVolume( m_Volume );
+    m_pPrivate->SetVolume( m_Volume );
 
-    if ( !m_Private.Open(pFilename, IsResident, IsLooped, m_Language) )
+    if ( !m_pPrivate->Open(pFilename, IsResident, IsLooped, m_Language) )
     {
         Kill();
         m_Finished = TRUE;
@@ -100,7 +104,7 @@ xbool movie_player::Open(const char* pFilename, xbool IsResident, xbool IsLooped
 void movie_player::SetVolume( f32 Volume )
 {
     m_Volume = x_clamp( Volume, 0.0f, 1.0f );
-    m_Private.SetVolume( m_Volume );
+    m_pPrivate->SetVolume( m_Volume );
 }
 
 //==============================================================================
@@ -115,19 +119,19 @@ void movie_player::SetLanguage( x_language Language )
 
 void movie_player::Close(void)
 {
-    if (!m_Private.IsRunning())
+    if (!m_pPrivate->IsRunning())
     {
         return;
     }
     
-    m_Private.Close();
+    m_pPrivate->Close();
 }
 
 //==============================================================================
 
 void movie_player::Kill(void)
 {
-    m_Private.Kill();
+    m_pPrivate->Kill();
 }
 
 //==============================================================================
@@ -138,14 +142,49 @@ void movie_player::Render(xbool InRenderLoop)
     {
         if (eng_Begin("Movie"))
         {
-            m_Private.Render();
+            m_pPrivate->Render();
             eng_End();
         }
     }
     else
     {
-        m_Private.Render();
+        m_pPrivate->Render();
     }
+}
+
+//==============================================================================
+
+void movie_player::Pause(void)
+{
+    m_pPrivate->Pause();
+}
+
+//==============================================================================
+
+void movie_player::Resume(void)
+{
+    m_pPrivate->Resume();
+}
+
+//==============================================================================
+
+xbool movie_player::IsPlaying(void)
+{
+    return !m_pPrivate->IsFinished();
+}
+
+//==============================================================================
+
+s32 movie_player::GetWidth(void)
+{
+    return m_pPrivate->GetWidth();
+}
+
+//==============================================================================
+
+s32 movie_player::GetHeight(void)
+{
+    return m_pPrivate->GetHeight();
 }
 
 //==============================================================================

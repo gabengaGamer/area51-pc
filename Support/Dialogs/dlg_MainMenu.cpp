@@ -472,7 +472,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     // check for enabling autoclient/server
     if( !m_bCheckKeySequence )
     {
-    #if defined(TARGET_PC)
+    #if defined(TARGET_DESKTOP)
         if( g_Input.GetFrameSnapshot().IsPressed( INPUT_PS2_BTN_START,   0 ) &&
             g_Input.GetFrameSnapshot().IsPressed( INPUT_PS2_BTN_SELECT,  0 ) )
     #else
@@ -485,7 +485,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     }
     else
     {
-    #if defined(TARGET_PC)
+    #if defined(TARGET_DESKTOP)
         if( g_Input.GetFrameSnapshot().WasPressed( INPUT_PS2_BTN_L_UP,  0 ) )
     #else
         ASSERT(0);
@@ -493,7 +493,7 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
         {
             g_Config.AutoServer = TRUE;
         }
-    #if defined(TARGET_PC)
+    #if defined(TARGET_DESKTOP)
         else if( g_Input.GetFrameSnapshot().WasPressed( INPUT_PS2_BTN_L_DOWN, 0 ) )
     #else
         ASSERT(0);

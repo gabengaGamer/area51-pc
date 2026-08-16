@@ -304,14 +304,14 @@ void dfs_Verify( const xstring& dfsPathName )
 
     // Get total size of files
     u32 TotalLength = pSubFileTable[pHeader->nSubFiles-1].Offset ;
+    u32 Index = 0;
+    s32 nSubFile = 0;
     if( (TotalLength % 32768) != 0 )
     {
         x_printf( "Error: data files length not a multiple of 32768\n" );
         goto End;
     }
 
-    u32 Index = 0;
-    s32 nSubFile = 0;
     while( Index < TotalLength )
     {
         // Find the sub file
@@ -362,4 +362,3 @@ End:
     x_free( pFiledata );
     x_free( pSf );
 }
-

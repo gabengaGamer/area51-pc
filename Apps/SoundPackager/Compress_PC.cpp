@@ -66,29 +66,29 @@ u32 CompressAudioFilePC_PCM( X_FILE* in, X_FILE* out, s32* NumChannels, s32* Lip
         }
 
         // Write out compression method.
-        s32 pc_CompressionMethod = LITTLE_ENDIAN( CompressionMethod );
+        s32 pc_CompressionMethod = X_LITTLE_ENDIAN( CompressionMethod );
         x_fwrite( &pc_CompressionMethod, sizeof(s32), 1, out );
 
         // Write out the compressed size.
         CompressedSize = nSamples * sizeof(s16);
         s32 pc_CompressedSize = CompressedSize;
-        pc_CompressedSize = LITTLE_ENDIAN( pc_CompressedSize );
+        pc_CompressedSize = X_LITTLE_ENDIAN( pc_CompressedSize );
         x_fwrite( &pc_CompressedSize, sizeof(s32), 1, out );
 
         // Write out the lip sync size in bytes
         *LipSyncSize = GetLipSyncSize( nSamples, SampleRate );
         s32 pc_LipSyncSize = *LipSyncSize;
-        pc_LipSyncSize = LITTLE_ENDIAN( pc_LipSyncSize );
+        pc_LipSyncSize = X_LITTLE_ENDIAN( pc_LipSyncSize );
         x_fwrite( &pc_LipSyncSize, sizeof(s32), 1, out );
 
         // Write out the break point size in bytes.
         BreakPointSize = GetBreakPointSize( BreakPoints, nBreakPoints );
         s32 pc_BreakPointSize = BreakPointSize;
-        pc_BreakPointSize = LITTLE_ENDIAN( pc_BreakPointSize );
+        pc_BreakPointSize = X_LITTLE_ENDIAN( pc_BreakPointSize );
         x_fwrite( &pc_BreakPointSize, sizeof(s32), 1, out );
 
         // Write out header size in bytes.
-        s32 pc_HeaderSize = LITTLE_ENDIAN( HeaderSize );
+        s32 pc_HeaderSize = X_LITTLE_ENDIAN( HeaderSize );
         x_fwrite( &pc_HeaderSize, sizeof(s32), 1, out );
 
         // Compress each channel...
@@ -104,10 +104,10 @@ u32 CompressAudioFilePC_PCM( X_FILE* in, X_FILE* out, s32* NumChannels, s32* Lip
             x_memcpy( pCompressedBuffer[i], pSampleBuffer, nSamples * sizeof(s16) );
 
             // Write out the number of samples, sample rate and loop points
-            s32 pc_nSamples     = LITTLE_ENDIAN( nSamples );
-            s32 pc_SampleRate   = LITTLE_ENDIAN( SampleRate );
-            s32 pc_LoopStart    = LITTLE_ENDIAN( LoopStart );
-            s32 pc_LoopEnd      = LITTLE_ENDIAN( LoopEnd );
+            s32 pc_nSamples     = X_LITTLE_ENDIAN( nSamples );
+            s32 pc_SampleRate   = X_LITTLE_ENDIAN( SampleRate );
+            s32 pc_LoopStart    = X_LITTLE_ENDIAN( LoopStart );
+            s32 pc_LoopEnd      = X_LITTLE_ENDIAN( LoopEnd );
             x_fwrite( &pc_nSamples,     sizeof(s32), 1, out );
             x_fwrite( &pc_SampleRate,   sizeof(s32), 1, out );
             x_fwrite( &pc_LoopStart,    sizeof(s32), 1, out );

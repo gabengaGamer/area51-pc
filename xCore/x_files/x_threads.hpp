@@ -268,6 +268,7 @@ static      xarray<xthread*> m_MasterThreadList;
 //==============================================================================
             void        x_InitThreads       (s32 argc, char** argv);
             void        x_KillThreads       (void);
+            xbool       x_IsThreadSystemReady(void);
             void        x_StartMain         (x_thread_entry_fn* pEntry, s32 argc, char** argv);
 
             void        x_DelayThread       (s32 milliseconds);

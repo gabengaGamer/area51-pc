@@ -1,6 +1,6 @@
 ﻿if( WIN32 )
     set( A51_ENTROPY_INPUT_BACKEND
-        "${CMAKE_CURRENT_LIST_DIR}/Input/backend/dinput/input_dinput.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Input/backend/sdl/input_sdl.cpp"
     )
     set( A51_ENTROPY_NETWORK_BACKEND
         "${CMAKE_CURRENT_LIST_DIR}/Network/Backend/NetLib_Windows.cpp"
@@ -8,7 +8,7 @@
     set( A51_ENTROPY_NETWORK_DEPENDENCIES ws2_32 )
 elseif( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
     set( A51_ENTROPY_INPUT_BACKEND
-        "${CMAKE_CURRENT_LIST_DIR}/Input/backend/input_backend_null.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Input/backend/sdl/input_sdl.cpp"
     )
     set( A51_ENTROPY_NETWORK_BACKEND
         "${CMAKE_CURRENT_LIST_DIR}/Network/Backend/NetLib_Linux.cpp"
@@ -146,3 +146,7 @@ a51_add_project( Entropy STATIC
         "${CMAKE_SOURCE_DIR}/xCore/3rdParty"
         "${CMAKE_SOURCE_DIR}/xCore/3rdParty/SDL3/include"
 )
+
+if( TARGET a51::SDL3 )
+    target_link_libraries( Entropy PUBLIC a51::SDL3 )
+endif()

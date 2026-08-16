@@ -49,10 +49,49 @@ xbool match_mgr::Init( net_socket& Local, const net_address Broadcast )
     x_memset( m_Nickname, 0, sizeof( m_Nickname ) );
     x_memset( m_UniqueId, 0, sizeof( m_UniqueId ) );
     x_memset( m_PlayerIdentifier, 0, sizeof( m_PlayerIdentifier ) );
+    x_memset( &m_GameStats, 0, sizeof( m_GameStats ) );
+    x_memset( &m_CareerStats, 0, sizeof( m_CareerStats ) );
 
     ResetServerList();
     SetState( MATCH_IDLE );
     return FALSE;
+}
+
+//==============================================================================
+
+void match_mgr::SetAllGameStats( const player_stats& Stats )
+{
+    m_GameStats = Stats;
+}
+
+//==============================================================================
+
+void match_mgr::SetAllCareerStats( const player_stats& Stats )
+{
+    m_CareerStats.Stats = Stats;
+}
+
+//==============================================================================
+
+void match_mgr::UpdateCareerStatsWithGameStats( void )
+{
+    m_CareerStats.Stats.KillsAsHuman  += m_GameStats.KillsAsHuman;
+    m_CareerStats.Stats.KillsAsMutant += m_GameStats.KillsAsMutant;
+    m_CareerStats.Stats.Deaths        += m_GameStats.Deaths;
+    m_CareerStats.Stats.PlayTime      += m_GameStats.PlayTime;
+    m_CareerStats.Stats.Games         += m_GameStats.Games;
+    m_CareerStats.Stats.Wins          += m_GameStats.Wins;
+    m_CareerStats.Stats.Gold          += m_GameStats.Gold;
+    m_CareerStats.Stats.Silver        += m_GameStats.Silver;
+    m_CareerStats.Stats.Bronze        += m_GameStats.Bronze;
+    m_CareerStats.Stats.Kicks         += m_GameStats.Kicks;
+    m_CareerStats.Stats.VotesStarted  += m_GameStats.VotesStarted;
+}
+
+//==============================================================================
+
+void match_mgr::InitiateCareerStatsWrite( void )
+{
 }
 
 //==============================================================================

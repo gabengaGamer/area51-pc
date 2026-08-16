@@ -28,6 +28,31 @@ The following prerequisites are required to build the source tree for PC:
 2. Unzip the archive and place your compiled .exe file into the unzipped folder
 3. Run game
 
+## CMake Target Selection
+
+CMake configures the complete target graph, but a build target only builds its own dependencies. The regular build presets build `A51` only.
+
+```text
+cmake --preset linux-gcc-x64
+cmake --build --preset linux-gcc-x64-debug
+```
+
+To build an individual application or tool, pass its target name:
+
+```text
+cmake --build build/linux-gcc-x64 --config Debug --target xbmptool
+cmake --build build/linux-gcc-x64 --config Debug --target GeomCompiler
+```
+
+The aggregate targets are available when needed:
+
+```text
+cmake --build build/linux-gcc-x64 --config Debug --target a51_selected_apps
+cmake --build build/linux-gcc-x64 --config Debug --target a51_tools
+```
+
+Running a build without `--target` uses the generator's default `all` target and can build every non-excluded target.
+
 ## Additional info
 
 <details>
@@ -60,16 +85,16 @@ DecalCompiler  | Working
 DecalEditor    | **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 DFSTool        | Working
 EDRscDesc      | Working
-Editor         | **UNDER CONSTRUCTION**
+Editor         | **DEAD**
 EffectsEditor  | **UNDER CONSTRUCTION**
 ELFTool        | **DELETED**
 EventEditor    | **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 FontBuilder    | Working
 FontEditor     | **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 FxEditor       | **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
-FXCompiler     | Working
+FXCompiler     | **DEAD**
 GameApp        | Working
-GeomCompiler   | Working
+GeomCompiler   | **DEAD**
 LocoEditor     | **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 MeshViewer     | **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)
 PropertyEditor | **UNDER CONSTRUCTION**/Lib for: [Editor](https://github.com/gabengaGamer/area51-pc/releases/tag/Editor-1.0)

@@ -14,7 +14,7 @@
 // INCLUDES
 //=========================================================================
 
-#include "navigation/ng_connection2.hpp"
+#include "Navigation/ng_connection2.hpp"
 #include "Objects/Actor/Actor.hpp"
 #include "BaseStates/Character_Trigger_State.hpp"
 #include "BaseStates/Character_Follow_State.hpp"

@@ -48,6 +48,7 @@
 mono_crash.*
 
 # Build results
+/build/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -470,3 +471,13 @@ _ARM64*/
 # committed; the installed tree, compiler-file-hash-cache.json and the
 # vcpkg-running.lock under it are per-checkout build artifacts.
 vcpkg_installed/
+
+# Vendored libvpx source directories overlap the legacy build-name rules.
+!xCore/3rdParty/Libvpx/**/arm/
+!xCore/3rdParty/Libvpx/**/x86/
+!xCore/3rdParty/Libvpx/**/x64/
+!xCore/3rdParty/Libvpx/bin/
+!xCore/3rdParty/Libvpx/bin/x32/
+!xCore/3rdParty/Libvpx/bin/x64/
+!xCore/3rdParty/Libvpx/bin/x32/vpx.lib
+!xCore/3rdParty/Libvpx/bin/x64/vpx.lib

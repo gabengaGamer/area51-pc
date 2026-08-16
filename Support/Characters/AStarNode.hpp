@@ -1,7 +1,7 @@
 #ifndef ASTARNODE_HPP
 #define ASTARNODE_HPP
 
-#include "navigation/ng_node2.hpp"
+#include "Navigation/ng_node2.hpp"
 
 struct astar_node
 {

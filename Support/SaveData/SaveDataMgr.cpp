@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <memory>
 #include <vector>
 
 //==============================================================================
@@ -166,17 +167,17 @@ SaveDataStatus ScanProfiles( save_data_backend& Backend,
         Info.ModifiedDate = Files[i].ModifiedDate;
 
         xarray<u8> Bytes;
-        player_profile Profile;
+        std::unique_ptr<player_profile> Profile( new player_profile );
         const SaveDataStatus ReadStatus = Backend.Read( Files[i].Name, Bytes );
         const SaveDataStatus DecodeStatus = ReadStatus == SaveDataStatus::Success
-            ? DecodeProfileStatus( Bytes, Profile )
+            ? DecodeProfileStatus( Bytes, *Profile )
             : ReadStatus;
 
         if( DecodeStatus == SaveDataStatus::Success )
         {
             Info.bDamaged = FALSE;
-            Info.Name     = xwstring( Profile.GetProfileName() );
-            Info.Hash     = Profile.GetHash();
+            Info.Name     = xwstring( Profile->GetProfileName() );
+            Info.Hash     = Profile->GetHash();
         }
         else
         {

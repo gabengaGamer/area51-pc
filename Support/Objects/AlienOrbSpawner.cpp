@@ -18,7 +18,7 @@
 #include "Dictionary/Global_Dictionary.hpp"
 #include "TemplateMgr/TemplateMgr.hpp"
 #include "Characters/Soldiers/Soldier.hpp"
-#include "navigation/CoverNode.hpp"
+#include "Navigation/CoverNode.hpp"
 #include "Objects/Group.hpp"
 
 //=============================================================================

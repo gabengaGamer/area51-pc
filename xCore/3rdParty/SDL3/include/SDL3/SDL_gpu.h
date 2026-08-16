@@ -884,8 +884,8 @@ typedef enum SDL_GPUTextureFormat
 /**
  * Specifies how a texture is intended to be used by the client.
  *
- * A texture must have at least one usage flag. Note that some usage flag
- * combinations are invalid.
+ * A texture must have at least one usage flag.
+ * Note that combining SAMPLER with STORAGE_READ flags is invalid.
  *
  * With regards to compute storage usage, READ | WRITE means that you can have
  * shader A that only writes into the texture and shader B that only reads
@@ -967,8 +967,10 @@ typedef enum SDL_GPUCubeMapFace
 /**
  * Specifies how a buffer is intended to be used by the client.
  *
- * A buffer must have at least one usage flag. Note that some usage flag
- * combinations are invalid.
+ * A buffer must have at least one usage flag.
+ *
+ * If a buffer has multiple read usages, this may lead to a performance penalty
+ * due to more conservative memory barriers, but it also may not necessarily affect the performance.
  *
  * Unlike textures, READ | WRITE can be used for simultaneous read-write
  * usage. The same data synchronization concerns as textures apply.
@@ -2403,11 +2405,11 @@ typedef struct SDL_GPUVulkanOptions
 {
     Uint32 vulkan_api_version; /**< The Vulkan API version to request for the instance. Use Vulkan's VK_MAKE_VERSION or VK_MAKE_API_VERSION. */
     void *feature_list; /**< Pointer to the first element of a chain of Vulkan feature structs. (Requires API version 1.1 or higher.)*/
-    void *vulkan_10_physical_device_features; /**< Pointer to a VkPhysicalDeviceFeatures struct to enable additional Vulkan 1.0 features. */
-    Uint32 device_extension_count; /**< Number of additional device extensions to require. */
-    const char **device_extension_names; /**< Pointer to a list of additional device extensions to require. */
-    Uint32 instance_extension_count; /**< Number of additional instance extensions to require. */
-    const char **instance_extension_names; /**< Pointer to a list of additional instance extensions to require. */
+	void *vulkan_10_physical_device_features; /**< Pointer to a VkPhysicalDeviceFeatures struct to enable additional Vulkan 1.0 features. */
+	Uint32 device_extension_count; /**< Number of additional device extensions to require. */
+	const char **device_extension_names; /**< Pointer to a list of additional device extensions to require. */
+	Uint32 instance_extension_count; /**< Number of additional instance extensions to require. */
+	const char **instance_extension_names; /**< Pointer to a list of additional instance extensions to require. */
 } SDL_GPUVulkanOptions;
 
 /**

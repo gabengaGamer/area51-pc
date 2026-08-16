@@ -13,7 +13,7 @@
 #include "Characters/Character.hpp"
 #include "TriggerEx/TriggerEx_Manager.hpp"
 #include "Configuration/GameConfig.hpp"
-#include "navigation/Nav_Map.hpp"
+#include "Navigation/Nav_Map.hpp"
 #include "Objects/Actor/Actor.hpp"
 #include "UI/ui_font.hpp"
 #include "UI/ui_renderer.hpp"

@@ -53,7 +53,7 @@ static struct texture_loader : public rsc_loader
             case xbitmap::FMT_16_URGB_1555:
             case xbitmap::FMT_16_RGB_565:
 
-#ifdef TARGET_PC
+#ifdef TARGET_DESKTOP
             case xbitmap::FMT_DXT1:
             case xbitmap::FMT_DXT3:
             case xbitmap::FMT_DXT5:

@@ -262,7 +262,7 @@ void PrintHelp( void )
 
 //=========================================================================
 
-void main( s32 argc, char* argv[] )
+s32 main( s32 argc, char* argv[] )
 {
     x_Init(argc, argv);
 
@@ -284,4 +284,5 @@ void main( s32 argc, char* argv[] )
     }
 
     x_Kill();
+    return 0;
 }

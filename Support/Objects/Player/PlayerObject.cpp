@@ -3,15 +3,15 @@
 //  PlayerObject.cpp
 // 
 //==============================================================================
-#include "player.hpp"
+#include "Player.hpp"
 #include "InputMgr/GamePad.hpp"
 #include "GameLib/StatsMgr.hpp"
 #include "StateMgr/StateMgr.hpp"
 #include "NetworkMgr/GameMgr.hpp"
-#include "objects/HudObject.hpp"
+#include "Objects/HudObject.hpp"
 #include "Characters/ActorEffects.hpp"
 #include "Configuration/GameConfig.hpp"
-#include "Gamelib/DebugCheats.hpp"
+#include "GameLib/DebugCheats.hpp"
 #include "PerceptionMgr/PerceptionMgr.hpp"
 #include "e_Audio.hpp"
 

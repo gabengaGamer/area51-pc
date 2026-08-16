@@ -14,6 +14,7 @@ project( Area51 LANGUAGES C CXX )
 list( APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" )
 include( A51Project )
 include( A51Platform )
+include( A51ThirdParty )
 
 #==========================================================================
 #  OPTIONS AND CONFIGURATIONS
@@ -126,6 +127,32 @@ endif()
 add_subdirectory( xCore )
 add_subdirectory( Support )
 add_subdirectory( Apps )
+
+set( _a51_tool_targets
+    xbmptool
+    Art2Code
+    dfsTool
+    XBMPViewer
+    SoundPackager
+    ShaderTool
+    AnimCompiler
+    BitmapCompiler
+    DecalCompiler
+    FontBuilder
+    stringTool
+)
+
+set( _a51_configured_tool_targets )
+foreach( _a51_tool_target IN LISTS _a51_tool_targets )
+    if( TARGET ${_a51_tool_target} )
+        list( APPEND _a51_configured_tool_targets ${_a51_tool_target} )
+    endif()
+endforeach()
+
+if( _a51_configured_tool_targets )
+    add_custom_target( a51_tools )
+    add_dependencies( a51_tools ${_a51_configured_tool_targets} )
+endif()
 
 #==========================================================================
 #  PLATFORM DEPENDENCIES

@@ -115,8 +115,25 @@
     {
       "name": "selected-apps",
       "hidden": true,
+      "description": "Build the game application and its dependencies.",
+      "targets": [
+        "A51"
+      ]
+    },
+    {
+      "name": "all-apps",
+      "hidden": true,
+      "description": "Build all configured application targets.",
       "targets": [
         "a51_selected_apps"
+      ]
+    },
+    {
+      "name": "all-tools",
+      "hidden": true,
+      "description": "Build all configured tool targets.",
+      "targets": [
+        "a51_tools"
       ]
     },
 

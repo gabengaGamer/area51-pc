@@ -152,6 +152,8 @@ static xbool UsingNew = FALSE;
 
 #endif
 
+static xbool        s_MemoryInitialized = FALSE;
+
 #ifdef USE_MEM_HEADERS
 static mem_header   Anchor;
 #endif
@@ -273,6 +275,9 @@ s32 x_MemQuery( xbool bIncludeAll )
 
 void x_MemInit( void )
 {
+    if( s_MemoryInitialized )
+        return;
+
     sys_mem_Init();
 
 #ifdef USE_MEM_HEADERS
@@ -302,6 +307,8 @@ void x_MemInit( void )
     x_strcpy( MarkComment, "Default 1st Mark" );
 
 #endif // X_MEM_DEBUG
+
+    s_MemoryInitialized = TRUE;
 
 }
 
@@ -1523,6 +1530,8 @@ s32 x_MemGetPtrSize( void* pMemory )
 
     void* sys_mem_malloc( u32 nBytes )
     {
+        if( !s_MemoryInitialized )
+            x_MemInit();
 
         return malloc( nBytes );
     }

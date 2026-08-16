@@ -796,3 +796,15 @@ a51_add_project( Gamelib STATIC
         "${CMAKE_SOURCE_DIR}/xCore/Parsing"
         "${CMAKE_SOURCE_DIR}/xCore/3rdParty/SDL3/include"
 )
+
+if( TARGET a51::SDL3 )
+    target_link_libraries( Gamelib PUBLIC
+        a51::SDL3
+        a51::ogg
+        a51::opus
+        a51::vorbis
+        a51::vorbisenc
+        a51::vpx
+        a51::webm
+    )
+endif()

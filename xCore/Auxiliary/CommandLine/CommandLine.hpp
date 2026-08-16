@@ -64,7 +64,7 @@ public:
 
     s32             GetNumOptions       ( void ) const;
     s32             GetNumArguments     ( void ) const;
-    s32             FindOption          ( xstring& Option ) const;
+    s32             FindOption          ( const xstring& Option ) const;
 
     const xstring&  GetExecutableName   ( void ) const;
     const xstring&  GetOptionName       ( s32 Index ) const;

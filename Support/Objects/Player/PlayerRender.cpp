@@ -10,13 +10,13 @@
 //=========================================================================
 
 #include "Player.hpp"
-#include "Render//PrimitiveDebug.hpp"
-#include "GameLib//RenderContext.hpp"
-#include "Objects//HudObject.hpp"
-#include "Objects//LoreObject.hpp"
-#include "NetworkMgr//NetworkMgr.hpp"
-#include "Ui//ui_renderer.hpp"
-#include "StringMgr//StringMgr.hpp"
+#include "Render/PrimitiveDebug.hpp"
+#include "GameLib/RenderContext.hpp"
+#include "Objects/HudObject.hpp"
+#include "Objects/LoreObject.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
+#include "UI/ui_renderer.hpp"
+#include "StringMgr/StringMgr.hpp"
 #include "e_Audio.hpp"
 
 //=========================================================================

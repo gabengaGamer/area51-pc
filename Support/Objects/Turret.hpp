@@ -13,7 +13,7 @@
 
 #include "Objects/PlaySurface.hpp"
 #include "Animation/AnimPlayer.hpp"
-#include "Characters/Factions.hpp"
+#include "Characters/factions.hpp"
 #include "Objects/Event.hpp"
 #include "Objects/Actor/Actor.hpp"
 

@@ -15,7 +15,7 @@
 #include "NetworkMgr/NetworkMgr.hpp"
 #include "NetworkMgr/GameServer.hpp"
 
-#include "Objects/actor/Actor.hpp"
+#include "Objects/Actor/Actor.hpp"
 #include "NetworkMgr/GameMgr.hpp"
 
 voice_mgr g_VoiceMgr;

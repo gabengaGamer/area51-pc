@@ -44,6 +44,7 @@ struct linux_thread_state
     void*              pParam;
     s32                ThreadId;
     s32                InitialPriority;
+    xbool              OwnsNativeThread;
 };
 
 //==============================================================================
@@ -172,8 +173,7 @@ xbool SetSchedulingPolicy( pthread_t Thread, s32 AbsolutePriority, int& AppliedP
     int Result = pthread_setschedparam( Thread, AppliedPolicy, &Parameters );
     if( (Result != 0) && (AppliedPolicy == SCHED_IDLE) )
     {
-        // SCHED_IDLE is available on supported Linux kernels, but retain a
-        // normal-scheduler fallback for older or restricted environments.
+        // Fall back when SCHED_IDLE is unavailable.
         AppliedPolicy = SCHED_OTHER;
         Result = pthread_setschedparam( Thread, AppliedPolicy, &Parameters );
     }
@@ -308,25 +308,33 @@ xthread_private sys_thread_Create( x_thread_boot_fn* pEntry,
     Private.ThreadId = 0;
     Private.Handle   = NULL;
 
-    if( !pEntry )
-        return sys_thread_GetId();
-
     linux_thread_state* pState = (linux_thread_state*)std::malloc( sizeof(linux_thread_state) );
     if( !pState )
         return Private;
 
     pState->pEntry   = pEntry;
     pState->pParam   = pParam;
-    pState->ThreadId = AllocateThreadId();
+    pState->ThreadId = pEntry ? AllocateThreadId() : GetCurrentThreadId();
     pState->InitialPriority = InitialPriority;
+    pState->OwnsNativeThread = (pEntry != NULL);
 
-    const xbool StartInitialized   = (sem_init( &pState->StartSemaphore, 0, 0 ) == 0);
+    // The initial xthread has no pthread_create() handle.
+    const unsigned StartCount = pEntry ? 0u : 1u;
+    const xbool StartInitialized   = (sem_init( &pState->StartSemaphore, 0, StartCount ) == 0);
     const xbool SuspendInitialized = (StartInitialized && (sem_init( &pState->SuspendSemaphore, 0, 0 ) == 0));
     if( !SuspendInitialized )
     {
         if( StartInitialized )
             sem_destroy( &pState->StartSemaphore );
         std::free( pState );
+        return Private;
+    }
+
+    if( !pEntry )
+    {
+        pState->Thread = pthread_self();
+        Private.ThreadId = pState->ThreadId;
+        Private.Handle   = pState;
         return Private;
     }
 
@@ -373,7 +381,7 @@ void sys_thread_Destroy( xthread_private& Private )
         return;
     }
 
-    if( !pthread_equal( pState->Thread, pthread_self() ) )
+    if( pState->OwnsNativeThread && !pthread_equal( pState->Thread, pthread_self() ) )
     {
         // The common destructor already gave the worker time to terminate
         // cooperatively. Never turn that timeout back into an infinite wait.
@@ -384,7 +392,7 @@ void sys_thread_Destroy( xthread_private& Private )
             std::abort();
         }
     }
-    else
+    else if( pState->OwnsNativeThread )
     {
         // A thread cannot join itself. Detach it before releasing the state.
         const int DetachResult = pthread_detach( pState->Thread );

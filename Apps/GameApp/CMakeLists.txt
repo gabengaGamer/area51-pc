@@ -19,6 +19,30 @@ else()
     message( FATAL_ERROR "GameApp has no platform backend for ${CMAKE_SYSTEM_NAME}" )
 endif()
 
+set( A51_GAME_APP_DEPENDENCIES
+    AudioMgr
+    ConversationMgr
+    UserInterface
+    EventMgr
+    Gamelib
+    Music_mgr
+    Script_mgr
+    NetworkMgr
+    Render
+    StringMgr
+    aux_Bitmap
+    FX
+    Entropy
+    Parsing
+    x_files
+)
+
+if( CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" )
+    # Group circular static-library dependencies for GNU ld.
+    list( INSERT A51_GAME_APP_DEPENDENCIES 0 "-Wl,--start-group" )
+    list( APPEND A51_GAME_APP_DEPENDENCIES "-Wl,--end-group" )
+endif()
+
 a51_add_project( A51 EXECUTABLE
     SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}"
     SOURCES
@@ -38,21 +62,7 @@ a51_add_project( A51 EXECUTABLE
         ${A51_GAME_APP_PLATFORM_SOURCES}
         ${A51_GAME_APP_WINDOWS_RESOURCES}
     DEPENDENCIES
-        AudioMgr
-        ConversationMgr
-        UserInterface
-        EventMgr
-        Gamelib
-        Music_mgr
-        Script_mgr
-        NetworkMgr
-        Render
-        StringMgr
-        aux_Bitmap
-        FX
-        Entropy
-        Parsing
-        x_files
+        ${A51_GAME_APP_DEPENDENCIES}
     PRIVATE_INCLUDE_DIRECTORIES
         "${CMAKE_SOURCE_DIR}/xCore/3rdParty/SDL3/include"
 )

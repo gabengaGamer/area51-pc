@@ -246,7 +246,7 @@ void stats_mgr::DrawBar(    stat_fields thisStat,
                             xcolor BarColor )
 
 {
-#ifndef TARGET_PC
+#if !defined( TARGET_DESKTOP )
 
     X_PROFILE_SCOPE_CATEGORY( "Context", "stats_mgr::Render" );
     
@@ -515,7 +515,7 @@ void stats_mgr::DrawFPS(void)
     if (!m_bShowHorizontalBars)
         return;
     
-#ifndef TARGET_PC   
+#if !defined( TARGET_DESKTOP )
     // Draw.
     vector2 CPUUpperLeft  ( 20.0f,  10.0f );
     vector2 CPULowerRight ( 480.0f, 16.0f );

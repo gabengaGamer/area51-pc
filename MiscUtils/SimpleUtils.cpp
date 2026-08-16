@@ -12,11 +12,11 @@
 #include "CollisionMgr/CollisionMgr.hpp"
 #include "Objects/Player/Player.hpp"
 #include "Characters/Character.hpp"
-#include "objects/Turret.hpp"
+#include "Objects/Turret.hpp"
 #include <x_stdio.hpp>
 #include "Entropy.hpp"
 #include "../MiscUtils/SimpleUtils.hpp"
-#include "NetworkMgr/Networkmgr.hpp"
+#include "NetworkMgr/NetworkMgr.hpp"
 
 //=============================================================================
 

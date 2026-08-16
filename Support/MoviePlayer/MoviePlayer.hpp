@@ -13,9 +13,7 @@
 
 s32 PlaySimpleMovie( const char* movieName );
 
-#ifdef TARGET_PC
-#include "MoviePlayer_WebM/MoviePlayer_WebM_Private.hpp"
-#endif
+class movie_private;
 
 //==============================================================================
 // MOVIE PLAYER CLASS
@@ -36,15 +34,15 @@ public:
     void        SetVolume       (f32 Volume);
     void        SetLanguage     (x_language Language);
     x_language  GetLanguage     (void) const                       { return m_Language;                    };
-    void        Pause           (void)                              { m_Private.Pause();                    };
-    void        Resume          (void)                              { m_Private.Resume();                   };
+    void        Pause           (void);
+    void        Resume          (void);
 
-    xbool       IsPlaying       (void)                              { return !m_Private.IsFinished();       };
-    s32         GetWidth        (void)                              { return m_Private.GetWidth();          };
-    s32         GetHeight       (void)                              { return m_Private.GetHeight();         };
+    xbool       IsPlaying       (void);
+    s32         GetWidth        (void);
+    s32         GetHeight       (void);
 
 private:
-    movie_private   m_Private;
+    movie_private*  m_pPrivate;
     xbool           m_IsLooped;
     xbool           m_Finished;
     f32             m_Volume;

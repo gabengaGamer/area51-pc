@@ -14,6 +14,7 @@
 #include "StateMgr/StateMgr.hpp"
 #include "FX/fx_Mgr.hpp"
 #include "CollisionMgr/PolyCache.hpp"
+#include <cstring>
 #if defined( ENABLE_DEBUG_MENU )
 #include "InputMgr/GamePad.hpp"
 #endif

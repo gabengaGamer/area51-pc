@@ -17,7 +17,7 @@
 #include "PainMgr/Pain.hpp"
 #include "Characters/Character.hpp"
 #include "Objects/Player/Player.hpp"
-#include "navigation/Nav_Map.hpp"
+#include "Navigation/Nav_Map.hpp"
 #include "../../../MiscUtils/SimpleUtils.hpp"
 
 //==============================================================================

@@ -26,6 +26,8 @@
 #if defined( ENABLE_DEBUG_MENU )
 //==============================================================================
 
+#define A51_XWSTRING_FORMAT( ... ) xwstring( (const char*)xfs( __VA_ARGS__ ) )
+
 //==============================================================================
 //  DATA
 //==============================================================================
@@ -206,36 +208,36 @@ void debug_menu_page_multiplayer::OnPreRender( void )
             f32          fStatsTime = ConnMgr.m_StatsClockDebug;
             s32          Packets    = (s32)(Stats.Packets / fStatsTime);
 
-            strPackets    = (const xstring&)xfs( "%04d Packets per second", Packets);
-            strUpdates    = (const xstring&)xfs( "%04d P%03d [%03d] Updates", 
+            strPackets    = A51_XWSTRING_FORMAT( "%04d Packets per second", Packets);
+            strUpdates    = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Updates",
                                 (s32) (Stats.Updates / fStatsTime),
                                 (s32)((Stats.Updates / fStatsTime) / Packets),
                                 Stats.MaxUpdates );
-            strGameMgr    = (const xstring&)xfs( "%04d P%03d [%03d] GameMgr Bytes", 
+            strGameMgr    = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] GameMgr Bytes",
                                 (s32) ((Stats.BitsGameMgr    >> 3) / fStatsTime),
                                 (s32)(((Stats.BitsGameMgr    >> 3) / fStatsTime) / Packets),
                                 (s32)  (Stats.MaxBitsGameMgr >> 3));
-            strVoiceMgr   = (const xstring&)xfs( "%04d P%03d [%03d] VoiceMgr Bytes", 
+            strVoiceMgr   = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] VoiceMgr Bytes",
                                 (s32) ((Stats.BitsVoiceMgr    >> 3) / fStatsTime),
                                 (s32)(((Stats.BitsVoiceMgr    >> 3) / fStatsTime) / Packets),
                                 (s32)  (Stats.MaxBitsVoiceMgr >> 3));
-            strUpdateMgr  = (const xstring&)xfs( "%04d P%03d [%03d] UpdateMgr Bytes", 
+            strUpdateMgr  = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] UpdateMgr Bytes",
                                 (s32) ((Stats.BitsUpdateMgr    >> 3) / fStatsTime),
                                 (s32)(((Stats.BitsUpdateMgr    >> 3) / fStatsTime) / Packets),
                                 (s32)  (Stats.MaxBitsUpdateMgr >> 3));
-            strPlayerBits = (const xstring&)xfs( "%04d P%03d [%03d] Update(player) Bytes", 
+            strPlayerBits = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Update(player) Bytes",
                                 (s32) ((Stats.BitsPlayerUpdates    >> 3) / fStatsTime),
                                 (s32)(((Stats.BitsPlayerUpdates    >> 3) / fStatsTime) / Packets),
                                 (s32)  (Stats.MaxBitsPlayerUpdates >> 3));
-            strGhostBits  = (const xstring&)xfs( "%04d P%03d [%03d] Update(ghost) Bytes", 
+            strGhostBits  = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Update(ghost) Bytes",
                                 (s32) ((Stats.BitsGhostUpdates    >> 3) / fStatsTime),
                                 (s32)(((Stats.BitsGhostUpdates    >> 3) / fStatsTime) / Packets),
                                 (s32)  (Stats.MaxBitsGhostUpdates >> 3));
-            strOtherBits  = (const xstring&)xfs( "%04d P%03d [%03d] Update(other) Bytes", 
+            strOtherBits  = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Update(other) Bytes",
                                 (s32) ((Stats.BitsOtherUpdates    >> 3) / fStatsTime),
                                 (s32)(((Stats.BitsOtherUpdates    >> 3) / fStatsTime) / Packets),
                                 (s32)  (Stats.MaxBitsOtherUpdates >> 3));
-            strTotalBits  = (const xstring&)xfs( "%04d P%03d [%03d] Total Packet Bytes", 
+            strTotalBits  = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Total Packet Bytes",
                                 (s32) ((Stats.BitsTotal    >> 3) / fStatsTime),
                                 (s32)(((Stats.BitsTotal    >> 3) / fStatsTime) / Packets),
                                 (s32)  (Stats.MaxBitsTotal >> 3));
@@ -248,44 +250,44 @@ void debug_menu_page_multiplayer::OnPreRender( void )
         {
             f32 fStatsTime = g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsClockDebug;
             s32 Packets = (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.Packets / fStatsTime);
-            strPackets    = (const xstring&)xfs( "%04d Packets per second", Packets);
-            strUpdates    = (const xstring&)xfs( "%04d P%03d [%03d] Updates", 
+            strPackets    = A51_XWSTRING_FORMAT( "%04d Packets per second", Packets);
+            strUpdates    = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Updates",
                 (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.Updates / fStatsTime),
                 (s32)((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.Updates / fStatsTime)/ Packets),
                 g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.MaxUpdates);
-            strGameMgr    = (const xstring&)xfs( "%04d P%03d [%03d] GameMgr Bytes", 
+            strGameMgr    = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] GameMgr Bytes",
                 (s32)((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsGameMgr >> 3) / fStatsTime),
                 (s32)(((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsGameMgr >> 3) / fStatsTime)/ Packets),
                 (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.MaxBitsGameMgr >> 3));
-            strVoiceMgr   = (const xstring&)xfs( "%04d P%03d [%03d] VoiceMgr Bytes", 
+            strVoiceMgr   = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] VoiceMgr Bytes",
                 (s32)((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsVoiceMgr >> 3) / fStatsTime),
                 (s32)(((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsVoiceMgr >> 3) / fStatsTime)/ Packets),
                 (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.MaxBitsVoiceMgr >> 3));
-            strUpdateMgr  = (const xstring&)xfs( "%04d P%03d [%03d] UpdateMgr Bytes", 
+            strUpdateMgr  = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] UpdateMgr Bytes",
                 (s32)((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsUpdateMgr >> 3) / fStatsTime),
                 (s32)(((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsUpdateMgr >> 3) / fStatsTime)/ Packets),
                 (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.MaxBitsUpdateMgr >> 3));
-            strPlayerBits = (const xstring&)xfs( "%04d P%03d [%03d] Update(player) Bytes", 
+            strPlayerBits = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Update(player) Bytes",
                 (s32)((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsPlayerUpdates >> 3) / fStatsTime),
                 (s32)(((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsPlayerUpdates >> 3) / fStatsTime)/ Packets),
                 (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.MaxBitsPlayerUpdates >> 3));
-            strGhostBits  = (const xstring&)xfs( "%04d P%03d [%03d] Update(ghost) Bytes", 
+            strGhostBits  = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Update(ghost) Bytes",
                 (s32)((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsGhostUpdates >> 3) / fStatsTime),
                 (s32)(((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsGhostUpdates >> 3) / fStatsTime)/ Packets),
                 (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.MaxBitsGhostUpdates >> 3));
-            strOtherBits  = (const xstring&)xfs( "%04d P%03d [%03d] Update(other) Bytes", 
+            strOtherBits  = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Update(other) Bytes",
                 (s32)((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsOtherUpdates >> 3) / fStatsTime),
                 (s32)(((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsOtherUpdates >> 3) / fStatsTime)/ Packets),
                 (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.MaxBitsOtherUpdates >> 3));
-            strTotalBits  = (const xstring&)xfs( "%04d P%03d [%03d] Total Packet Bytes", 
+            strTotalBits  = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Total Packet Bytes",
                 (s32)((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsTotal >> 3) / fStatsTime),
                 (s32)(((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsTotal >> 3) / fStatsTime)/ Packets),
                 (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.MaxBitsTotal >> 3));
-            strPains      = (const xstring&)xfs( "%04d P%03d [%03d] Pains sent", 
+            strPains      = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Pains sent",
                 (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.Pains / fStatsTime),
                 (s32)((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.Pains / fStatsTime)/ Packets),
                 g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.MaxPains);
-            strPainQueue  = (const xstring&)xfs( "%04d P%03d [%03d] Pain Queue Bytes", 
+            strPainQueue  = A51_XWSTRING_FORMAT( "%04d P%03d [%03d] Pain Queue Bytes",
                 (s32)((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsPainQueue >> 3) / fStatsTime),
                 (s32)(((g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.BitsPainQueue >> 3) / fStatsTime)/ Packets),
                 (s32)(g_NetworkMgr.GetClientObject().m_ConnMgr.m_StatsDebug.MaxBitsPainQueue >> 3));

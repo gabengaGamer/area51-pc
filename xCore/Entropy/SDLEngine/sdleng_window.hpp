@@ -55,6 +55,7 @@ typedef void*     sdleng_native_window_handle;
 #endif
 
 typedef void sdleng_window_resize_fn( void* pContext, sdleng_native_window_handle hWindow );
+typedef void sdleng_window_event_fn( void* pContext, const SDL_Event& Event, SDL_WindowID WindowID );
 
 struct sdleng_window_desc
 {
@@ -78,6 +79,8 @@ sdleng_native_instance_handle
 xbool                   sdleng_WindowInit              ( const sdleng_window_desc& Desc );
 void                    sdleng_WindowKill              ( void );
 void                    sdleng_WindowShow              ( void );
+void                    sdleng_WindowProcessEvent     ( const SDL_Event& Event,
+                                                         SDL_WindowID       WindowID );
 xbool                   sdleng_WindowPumpMessages      ( void );
 xbool                   sdleng_WindowWaitForActivity   ( void );
 
@@ -115,6 +118,9 @@ xbool                   sdleng_WindowIsActive          ( void );
 void                    sdleng_WindowSetModeChange     ( xbool Changing );
 void                    sdleng_WindowSetResizeCallback ( sdleng_window_resize_fn* pCallback,
                                                          void*                    pContext );
+void                    sdleng_WindowSetEventCallback  ( sdleng_window_event_fn* pCallback,
+                                                         void*                    pContext );
+xbool                   sdleng_WindowIsCloseRequested  ( void );
 
 //==============================================================================
 //  INLINE FUNCTIONS

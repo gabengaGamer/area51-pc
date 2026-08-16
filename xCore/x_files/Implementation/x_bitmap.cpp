@@ -1370,7 +1370,7 @@ void xbitmap::Unflip4BitNibbles( void )
 //
 //==============================================================================
  
-#if defined( TARGET_PC ) || defined( CONFIG_VIEWER )
+#if defined( TARGET_DESKTOP ) || defined( CONFIG_VIEWER )
 
 void xbitmap::GCNPackTileRGBA8( u32 x, u32 y, u8* dstPtr, s32 Mip )
 {

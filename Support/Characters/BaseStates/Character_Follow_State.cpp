@@ -1,7 +1,7 @@
 #include "Character_Follow_State.hpp"
 #include "Character_Cover_State.hpp"
 #include "../Character.hpp"
-#include "navigation/ng_node2.hpp"
+#include "Navigation/ng_node2.hpp"
 
 //=========================================================================
 // GRAY FOLLOW STATE

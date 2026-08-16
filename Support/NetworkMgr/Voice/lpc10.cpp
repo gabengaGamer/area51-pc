@@ -2114,7 +2114,7 @@ static s16 y[MAXTAP+1]={-21161, -8478, 30892,-10216, 16950};
 static s32 j=MIDTAP, k=MAXTAP;
 
 inline
-s32 random()
+s32 lpc10_random()
 {
     int the_random;
     
@@ -2182,9 +2182,9 @@ void bsynz( f32 *coef, s32 ip, s32 *iv, f32 *sout, f32 *rms, f32 *ratio, f32 *g2
         /*  Generate white noise for unvoiced */
         for (i = 0; i < ip; ++i) 
         {
-            exc[order + i] = (f32) (random() >> 6);
+            exc[order + i] = (f32) (lpc10_random() >> 6);
         }
-        px = ((random() + 32768) * (ip - 1) >> 16) + order + 1;
+        px = ((lpc10_random() + 32768) * (ip - 1) >> 16) + order + 1;
         pulse = *ratio * 85.5f;
         if (pulse > 2e3f) 
         {
@@ -2219,7 +2219,7 @@ void bsynz( f32 *coef, s32 ip, s32 *iv, f32 *sout, f32 *rms, f32 *ratio, f32 *g2
                 lpi2 = lpi1;
                 lpi1 = lpi0;
             }
-            hpi0 = (f32)(random() >> 6);
+            hpi0 = (f32)(lpc10_random() >> 6);
             exc[order + i] = temp + hpi0 * -.125f + hpi1 * .25f + hpi2 * -.125f;
             hpi2 = hpi1;
             hpi1 = hpi0;

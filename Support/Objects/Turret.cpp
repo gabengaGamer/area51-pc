@@ -25,7 +25,7 @@
 
 #include "AudioMgr/AudioMgr.hpp"
 #include "Debris/debris_mgr.hpp"
-#include "render/LightMgr.hpp"
+#include "Render/LightMgr.hpp"
 #include "Objects/ProjectileBullett.hpp"
 #include "TemplateMgr/TemplateMgr.hpp"
 #include "Objects/ProjectileAlienTurret.hpp"

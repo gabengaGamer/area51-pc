@@ -611,7 +611,7 @@ void dlg_load_game::SetSlideInfo( s32         Index,
 
     if( pTextureName && x_stricmp( pTextureName, "<NULL>" ) )
     {
-        const xstring BitmapName = xfs( "load_game_slide_%02d", Index );
+        const xstring BitmapName = (const char*)xfs( "load_game_slide_%02d", Index );
         if( g_UiMgr && (g_UiMgr->LoadBitmap( BitmapName, pTextureName ) >= 0) )
         {
             m_Slides[Index].BitmapName = BitmapName;

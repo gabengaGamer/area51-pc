@@ -165,13 +165,21 @@ void match_mgr::AppendToServerList( const server_info& Response )
 
 xbool operator == ( const server_info& Left, const server_info& Right )
 {
+#if defined(ENABLE_XBOX_LIVE) || defined(ENABLE_GAMESPY)
     return x_memcmp( &Left.SessionID, &Right.SessionID, sizeof(Left.SessionID) )==0;
+#else
+    return Left.ID == Right.ID;
+#endif
 }
 
 //------------------------------------------------------------------------------
 xbool operator != ( const server_info& Left, const server_info& Right )
 {
+#if defined(ENABLE_XBOX_LIVE) || defined(ENABLE_GAMESPY)
     return x_memcmp( &Left.SessionID, &Right.SessionID, sizeof(Left.SessionID) )!=0;
+#else
+    return Left.ID != Right.ID;
+#endif
 }
 
 //------------------------------------------------------------------------------

@@ -10,11 +10,11 @@
 //=========================================================================
 
 #include "Player.hpp"
-#include "Objects//Pickup.hpp"
-#include "objects//WeaponMutation.hpp"
-#include "PerceptionMgr//PerceptionMgr.hpp"
-#include "NetworkMgr//GameMgr.hpp"
-#include "Gamelib//DebugCheats.hpp"
+#include "Objects/Pickup.hpp"
+#include "Objects/WeaponMutation.hpp"
+#include "PerceptionMgr/PerceptionMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "GameLib/DebugCheats.hpp"
 
 //=========================================================================
 //  IMPLEMENTATION

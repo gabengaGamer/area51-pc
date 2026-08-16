@@ -57,6 +57,22 @@ xbool xmutex::Enter( s32 Flags )
 
     if( !pCurrent )
     {
+        // Static constructors can enter xmutex before x_InitThreads().
+        if( !x_IsThreadSystemReady() )
+        {
+            if( m_EnterCount > 0 )
+            {
+                m_EnterCount++;
+                return TRUE;
+            }
+
+            if( !m_Semaphore.Acquire( Flags ) )
+                return FALSE;
+
+            m_EnterCount = 1;
+            return TRUE;
+        }
+
         #if X_THREADS_DEBUG
         x_RecordThreadDebugFailure( X_THREAD_DEBUG_FAILURE_MUTEX_CURRENT_THREAD, this, m_pOwner, NULL, m_EnterCount );
         #endif
@@ -104,11 +120,19 @@ xbool xmutex::Exit( s32 Flags )
     xthread* pCurrent;
 
     ASSERT(m_Initialized);
-    x_BeginAtomic();
-
     pCurrent = x_GetCurrentThread();
 
     ASSERT(m_EnterCount > 0);
+
+    if( !pCurrent && !x_IsThreadSystemReady() )
+    {
+        m_EnterCount--;
+        if( m_EnterCount == 0 )
+            return m_Semaphore.Release( Flags );
+        return TRUE;
+    }
+
+    x_BeginAtomic();
 
     if( m_pOwner != pCurrent )
     {

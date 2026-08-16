@@ -1,8 +1,8 @@
 #include "Character_Idle_State.hpp"
 #include "Character_Cover_State.hpp"
 #include "../Character.hpp"
-#include "navigation/ng_node2.hpp"
-#include "navigation/CoverNode.hpp"
+#include "Navigation/ng_node2.hpp"
+#include "Navigation/CoverNode.hpp"
 #include "Objects/Player/Player.hpp"
 
 //=========================================================================

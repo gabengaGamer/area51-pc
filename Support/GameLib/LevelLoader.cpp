@@ -21,9 +21,9 @@
 #include "../Support/Tracers/TracerMgr.hpp"
 #include "../Support/Render/LightMgr.hpp"
 #include "../Support/Render/RigidColor.hpp"
-#include "navigation/Nav_Map.hpp"
-#include "navigation/ng_connection2.hpp"
-#include "navigation/ng_node2.hpp"
+#include "Navigation/Nav_Map.hpp"
+#include "Navigation/ng_connection2.hpp"
+#include "Navigation/ng_node2.hpp"
 #include "ZoneMgr/ZoneMgr.hpp"
 #include "PlaySurfaceMgr/PlaySurfaceMgr.hpp"
 #include "GameLib/StatsMgr.hpp" 
@@ -324,6 +324,13 @@ void level_loader::BeginLevelLoad( xbool bFullLoad )
     m_LevelLoadStage         = LEVEL_LOAD_FIND_MAP;
     m_pMapEntry              = NULL;
     m_LevelFileSystem        = xfs( "levels/%s/level", g_ActiveConfig.GetLevelPath() );
+#if defined( TARGET_LINUX )
+    // Fix uppercase asset directory issue in Linus stuff.
+    char LinuxLevelFileSystem[X_MAX_PATH];
+    x_strcpy( LinuxLevelFileSystem, m_LevelFileSystem );
+    x_strtoupper( LinuxLevelFileSystem );
+    m_LevelFileSystem = LinuxLevelFileSystem;
+#endif
     m_ScriptDFS              = "";
     m_LoadScriptCommand      = 0;
     m_LoadScriptCommandCount = 0;
@@ -498,6 +505,9 @@ void level_loader::UpdateLevelLoad( f32 TimeBudgetSeconds )
 
         if( !g_IOFSMgr.MountFileSystem( m_LevelFileSystem, 2 ) )
         {
+            LOG_WARNING( "LoadLevel",
+                         "Unable to mount level filesystem '%s'.",
+                         (const char*)m_LevelFileSystem );
             FailLevelLoad();
             return;
         }

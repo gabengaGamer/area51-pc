@@ -17,27 +17,28 @@
 
 #include "x_target.hpp"
 
-#ifndef TARGET_PC
-#error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
+#if !defined( TARGET_DESKTOP )
+#error This file should only be compiled for a desktop platform. Please check your exclusions on your project spec.
 #endif
 
 //==============================================================================
 //  INCLUDES
 //==============================================================================
 
+#include <climits>
 #include "x_files.hpp"
 #include "Entropy.hpp"
 
-#include "3rdParty/WebM/include/webm/mkvparser/mkvparser.h"
-#include "3rdParty/WebM/include/webm/mkvparser/mkvreader.h"
-#include "3rdParty/WebM/include/webm/reader.h"
-#include "3rdParty/WebM/include/vpx/vpx_image.h"
-#include "3rdParty/WebM/include/vpx/vpx_decoder.h"
-#include "3rdParty/WebM/include/vpx/vp8dx.h"
-#include "3rdParty/WebM/include/opus/opus.h"
-#include "3rdParty/WebM/include/opus/opus_multistream.h"
-#include "3rdParty/WebM/include/vorbis/codec.h"
-#include "3rdParty/WebM/include/ogg/ogg.h"
+#include "mkvparser/mkvparser.h"
+#include "mkvparser/mkvreader.h"
+#include "webm/reader.h"
+#include "vpx/vpx_image.h"
+#include "vpx/vpx_decoder.h"
+#include "vpx/vp8dx.h"
+#include "opus.h"
+#include "opus_multistream.h"
+#include "vorbis/codec.h"
+#include "ogg/ogg.h"
 
 struct SDL_AudioStream;
 struct OpusDecoder;

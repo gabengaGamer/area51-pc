@@ -14,7 +14,7 @@
 #include "Obj_mgr/obj_mgr.hpp"
 #include "AStar.hpp"
 #include "Characters/AlertPackage.hpp"
-#include "navigation/ng_connection2.hpp"
+#include "Navigation/ng_connection2.hpp"
 #include "TriggerEx/Actions/action_music_intensity.hpp"
 
 

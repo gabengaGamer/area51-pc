@@ -13,7 +13,7 @@
 
 #include "x_files.hpp"
 #include "Auxiliary/CommandLine/CommandLine.hpp"
-#include "Entropy/ShaderContainerFormat.hpp"
+#include "Entropy/ECS.hpp"
 #include "Parsing/tokenizer.hpp"
 
 //==============================================================================
@@ -34,6 +34,8 @@ enum shader_binding_model
     SHADER_BINDING_NATIVE,
     SHADER_BINDING_SDL,
 };
+
+//------------------------------------------------------------------------------
 
 enum shader_reflection_binding_type
 {

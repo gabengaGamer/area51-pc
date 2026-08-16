@@ -14,8 +14,8 @@
 
 #include "x_target.hpp"
 
-#ifndef TARGET_PC
-#error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
+#if !defined( TARGET_DESKTOP )
+#error This file should only be compiled for a desktop platform. Please check your exclusions on your project spec.
 #endif
 
 //==============================================================================
@@ -30,18 +30,6 @@
 
 #include "MoviePlayer_WebM_Private.hpp"
 #include "UI/ui_renderer.hpp"
-
-// Auto include WebM libs
-#ifdef _MSC_VER
-#pragma comment( lib, "ogg.lib" )
-#pragma comment( lib, "opus.lib" )
-#pragma comment( lib, "opusfile.lib" )
-#pragma comment( lib, "vorbis.lib" )
-#pragma comment( lib, "vorbisenc.lib" )
-#pragma comment( lib, "vorbisfile.lib" )
-#pragma comment( lib, "vpx.lib" )
-#pragma comment( lib, "webm.lib" )
-#endif
 
 //==============================================================================
 // CONSTANTS

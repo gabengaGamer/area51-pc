@@ -61,6 +61,8 @@ static struct sdleng_window_state
     xbool                    OwnsWindow;
     sdleng_window_resize_fn* pResizeCallback;
     void*                    pResizeContext;
+    sdleng_window_event_fn*  pEventCallback;
+    void*                    pEventContext;
 } s_Window;
 
 //==============================================================================
@@ -75,6 +77,15 @@ void sdleng_window_LogSDLError( const char* pContext )
         pError = "unknown SDL error";
 
     x_DebugMsg( "SDLWindow: %s failed: %s\n", pContext, pError );
+}
+
+//==============================================================================
+
+static
+xbool sdleng_WindowCanSetPosition( void )
+{
+    const char* pDriver = SDL_GetCurrentVideoDriver();
+    return (pDriver == NULL) || (x_stricmp( pDriver, "wayland" ) != 0);
 }
 
 //==============================================================================
@@ -421,7 +432,6 @@ void sdleng_WindowShow( void )
 
 //==============================================================================
 
-static
 void sdleng_WindowProcessEvent( const SDL_Event& Event, SDL_WindowID WindowID )
 {
     switch( Event.type )
@@ -478,6 +488,17 @@ void sdleng_WindowProcessEvent( const SDL_Event& Event, SDL_WindowID WindowID )
 
 //==============================================================================
 
+static
+void sdleng_WindowDispatchEvent( const SDL_Event& Event, SDL_WindowID WindowID )
+{
+    sdleng_WindowProcessEvent( Event, WindowID );
+
+    if( s_Window.pEventCallback )
+        s_Window.pEventCallback( s_Window.pEventContext, Event, WindowID );
+}
+
+//==============================================================================
+
 xbool sdleng_WindowPumpMessages( void )
 {
     if( !s_Window.VideoInitialized )
@@ -491,7 +512,7 @@ xbool sdleng_WindowPumpMessages( void )
 
     while( SDL_PollEvent( &Event ) )
     {
-        sdleng_WindowProcessEvent( Event, WindowID );
+        sdleng_WindowDispatchEvent( Event, WindowID );
     }
 
     return !s_Window.CloseRequested;
@@ -515,7 +536,7 @@ xbool sdleng_WindowWaitForActivity( void )
             WindowID = SDL_GetWindowID( s_Window.pWindow );
         }
 
-        sdleng_WindowProcessEvent( Event, WindowID );
+        sdleng_WindowDispatchEvent( Event, WindowID );
     }
 
     return sdleng_WindowPumpMessages();
@@ -754,36 +775,64 @@ xbool sdleng_WindowApplyDisplayMode( s32                 Width,
 
     if( Mode == SDLENG_DISPLAY_BORDERLESS )
     {
+#if defined(TARGET_LINUX)
+        if( !SDL_SetWindowFullscreenMode( s_Window.pWindow, NULL ) ||
+            !SDL_SetWindowFullscreen( s_Window.pWindow, true ) )
+        {
+            sdleng_window_LogSDLError( "SDL borderless fullscreen display mode" );
+            return FALSE;
+        }
+#else
         SDL_Rect DisplayBounds;
         if( !sdleng_WindowGetDisplayBounds( DisplayBounds ) )
         {
             return FALSE;
         }
 
+        const xbool bCanSetPosition = sdleng_WindowCanSetPosition();
         if( !SDL_SetWindowBordered( s_Window.pWindow, false ) ||
-            !SDL_SetWindowPosition( s_Window.pWindow, DisplayBounds.x, DisplayBounds.y ) ||
-            !SDL_SetWindowSize( s_Window.pWindow, DisplayBounds.w, DisplayBounds.h ) )
+            !SDL_SetWindowSize( s_Window.pWindow, DisplayBounds.w, DisplayBounds.h ) ||
+            (bCanSetPosition &&
+             !SDL_SetWindowPosition( s_Window.pWindow, DisplayBounds.x, DisplayBounds.y )) )
         {
             sdleng_window_LogSDLError( "SDL borderless display mode" );
             return FALSE;
         }
+#endif
     }
     else
     {
+#if defined(TARGET_LINUX)
+        const xbool bCanSetPosition = sdleng_WindowCanSetPosition();
+        if( !SDL_SetWindowFullscreen( s_Window.pWindow, false ) ||
+            !SDL_SetWindowBordered( s_Window.pWindow, true ) ||
+            !SDL_SetWindowSize( s_Window.pWindow, Width, Height ) ||
+            (bCanSetPosition &&
+             !SDL_SetWindowPosition( s_Window.pWindow,
+                                      SDL_WINDOWPOS_CENTERED,
+                                      SDL_WINDOWPOS_CENTERED )) )
+        {
+            sdleng_window_LogSDLError( "SDL windowed display mode" );
+            return FALSE;
+        }
+#else
         SDL_DisplayID DisplayID = 0;
         if( !sdleng_WindowGetDisplay( DisplayID ) )
         {
             return FALSE;
         }
 
+        const xbool bCanSetPosition = sdleng_WindowCanSetPosition();
         s32 const CenteredPosition = SDL_WINDOWPOS_CENTERED_DISPLAY( DisplayID );
         if( !SDL_SetWindowBordered( s_Window.pWindow, true ) ||
             !SDL_SetWindowSize( s_Window.pWindow, Width, Height ) ||
-            !SDL_SetWindowPosition( s_Window.pWindow, CenteredPosition, CenteredPosition ) )
+            (bCanSetPosition &&
+             !SDL_SetWindowPosition( s_Window.pWindow, CenteredPosition, CenteredPosition )) )
         {
             sdleng_window_LogSDLError( "SDL windowed display mode" );
             return FALSE;
         }
+#endif
     }
 
     if( !SDL_SyncWindow( s_Window.pWindow ) )
@@ -843,6 +892,21 @@ void sdleng_WindowSetResizeCallback( sdleng_window_resize_fn* pCallback, void* p
 {
     s_Window.pResizeCallback = pCallback;
     s_Window.pResizeContext  = pContext;
+}
+
+//==============================================================================
+
+void sdleng_WindowSetEventCallback( sdleng_window_event_fn* pCallback, void* pContext )
+{
+    s_Window.pEventCallback = pCallback;
+    s_Window.pEventContext  = pContext;
+}
+
+//==============================================================================
+
+xbool sdleng_WindowIsCloseRequested( void )
+{
+    return s_Window.CloseRequested;
 }
 
 //==============================================================================

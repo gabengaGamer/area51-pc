@@ -4,9 +4,9 @@
 // 
 //==============================================================================
 #include "Player.hpp"
-#include "objects/ParticleEmiter.hpp"
+#include "Objects/ParticleEmiter.hpp"
 #include "Sound/EventSoundEmitter.hpp"
-#include "objects/WeaponMutation.hpp"
+#include "Objects/WeaponMutation.hpp"
 #include "StateMgr/StateMgr.hpp"
 
 //=========================================================================

@@ -6,23 +6,23 @@
 
 #include "PlayerInventory.hpp"
 #include "Player.hpp"
-#include "objects//ParticleEmiter.hpp"
-#include "objects//SpawnPoint.hpp"
-#include "objects//FocusObject.hpp"
-#include "Objects//Flashlight.hpp"
-#include "Objects//LoreObject.hpp"
-#include "Objects//Pickup.hpp"
-#include "Characters//ActorEffects.hpp"
-#include "StateMgr//StateMgr.hpp"
-#include "NetworkMgr//GameMgr.hpp"
-#include "Configuration//GameConfig.hpp"
-#include "Gamelib//DebugCheats.hpp"
-#include "TemplateMgr//TemplateMgr.hpp"
+#include "Objects/ParticleEmiter.hpp"
+#include "Objects/SpawnPoint.hpp"
+#include "Objects/FocusObject.hpp"
+#include "Objects/Flashlight.hpp"
+#include "Objects/LoreObject.hpp"
+#include "Objects/Pickup.hpp"
+#include "Characters/ActorEffects.hpp"
+#include "StateMgr/StateMgr.hpp"
+#include "NetworkMgr/GameMgr.hpp"
+#include "Configuration/GameConfig.hpp"
+#include "GameLib/DebugCheats.hpp"
+#include "TemplateMgr/TemplateMgr.hpp"
 
 #ifdef X_EDITOR
 #include "../../../Apps/Editor/Project.hpp"
 #else
-#include "NetworkMgr//MsgMgr.hpp"
+#include "NetworkMgr/MsgMgr.hpp"
 #endif
 
 //=========================================================================
