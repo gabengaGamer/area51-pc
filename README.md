@@ -19,8 +19,7 @@ The main goal is to get the source code into a buildable state on modern systems
 
 The following prerequisites are required to build the source tree for PC:
 
-1. **Visual Studio 2022**
-2. [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/)
+1. **CMake**
 
 ## Running PC Build
 
