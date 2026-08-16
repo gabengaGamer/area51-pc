@@ -60,7 +60,7 @@ Running a build without `--target` uses the generator's default `all` target and
 Platform | Status
 ---------|--------
 Windows  | Working
-Linux    | **UNDER CONSTRUCTION**
+Linux    | Working
 macOS    | Not planed
 Android  | **UNDER CONSTRUCTION**
 iOS      | Not planed
