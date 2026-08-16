@@ -1973,7 +1973,7 @@ void AppMain( s32 argc, char* argv[] )
     DoShutdown();
 }
 
-#if defined( TARGET_LINUX )
+//==============================================================================
 
 int main( int argc, char* argv[] )
 {
@@ -1981,7 +1981,5 @@ int main( int argc, char* argv[] )
     AppMain( (s32)argc, argv );
     return eng_ExitPoint();
 }
-
-#endif // defined( TARGET_LINUX )
 
 //==============================================================================
