@@ -69,6 +69,7 @@ target_compile_features( a51_build_options INTERFACE cxx_std_17 )
 target_compile_definitions( a51_build_options INTERFACE
     "$<$<PLATFORM_ID:Windows>:NOMINMAX>"
     "$<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS>"
+    "$<$<PLATFORM_ID:Windows>:SDL_MAIN_HANDLED>"
     "$<$<STREQUAL:$<CONFIG>,EDITOR-Debug>:CONFIG_DEBUG>"
     "$<$<STREQUAL:$<CONFIG>,EDITOR-Debug>:X_EDITOR>"
 )
