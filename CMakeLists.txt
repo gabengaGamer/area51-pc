@@ -11,6 +11,13 @@ cmake_policy( SET CMP0091 NEW )
 
 project( Area51 LANGUAGES C CXX )
 
+# Must precede include( A51ThirdParty ), which add_subdirectory()'s the bundled libs.
+if( MSVC AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY )
+    set( CMAKE_MSVC_RUNTIME_LIBRARY
+        "MultiThreaded$<$<OR:$<STREQUAL:$<CONFIG>,Debug>,$<STREQUAL:$<CONFIG>,EDITOR-Debug>>:Debug>"
+        CACHE STRING "MSVC runtime library selection" )
+endif()
+
 list( APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" )
 include( A51Project )
 include( A51Platform )
@@ -53,12 +60,6 @@ option( A51_BUILD_WINDOWS_TARGETS "Enable targets whose current implementation r
 if( A51_EXPORT_COMPILE_COMMANDS )
     set( CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
         "Generate compile_commands.json for tooling" FORCE )
-endif()
-
-if( MSVC AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY )
-    set( CMAKE_MSVC_RUNTIME_LIBRARY
-        "MultiThreaded$<$<OR:$<STREQUAL:$<CONFIG>,Debug>,$<STREQUAL:$<CONFIG>,EDITOR-Debug>>:Debug>"
-        CACHE STRING "MSVC runtime library selection" )
 endif()
 
 add_library( a51_build_options INTERFACE )
