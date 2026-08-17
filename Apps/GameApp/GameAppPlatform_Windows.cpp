@@ -74,7 +74,7 @@ xbool GameAppGetDataDirectory( char* pBuffer, s32 BufferSize )
     if( pDataRoot && pDataRoot[0] )
         return( CopyPath( pBuffer, BufferSize, pDataRoot ) );
 
-    return( CopyPath( pBuffer, BufferSize, "C:/GameData/A51/Release/PC" ) );
+    return( GameAppGetExecutableDirectory( pBuffer, BufferSize ) );
 }
 
 //=============================================================================
