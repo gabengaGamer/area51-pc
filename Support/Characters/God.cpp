@@ -890,17 +890,17 @@ xbool god::RequestPathWithEdges( object*                pRequestObject,
     rPathStruct.m_nSteps = nStepsInPath;
 
     s32 i;
-    for (i=0;i<g_PathCount;i++)
+    for (i=0;i<nStepsInPath;i++)
     {
         nav_connection_slot_id iNextConnection;
-        if (i < (g_PathCount-1))
+        if (i < (nStepsInPath-1))
             iNextConnection = g_pPathList[i+1];
         else
             iNextConnection = NULL_NAV_SLOT;
 
         rPathStruct.m_StepData[i].m_CurrentConnection = g_pPathList[i];
-        rPathStruct.m_StepData[i].m_DestConnection    = g_pPathList[i+1];
-        
+        rPathStruct.m_StepData[i].m_DestConnection    = iNextConnection;
+
         nav_node_slot_id iOverlap = NULL_NAV_SLOT;
         g_NavMap.DoOverlap( g_pPathList[i], iNextConnection, &iOverlap );
 
