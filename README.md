@@ -20,6 +20,7 @@ The main goal is to get the source code into a buildable state on modern systems
 The following prerequisites are required to build the source tree for PC:
 
 1. **CMake**
+1. Or legacy **Visual Stido 2022**
 
 ## Running PC Build
 
