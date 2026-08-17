@@ -17,7 +17,7 @@ The main goal is to get the source code into a buildable state on modern systems
 
 ## Building Code
 
-The following prerequisites are required to build the source tree for PC:
+The following prerequisites are required to build the source tree:
 
 1. **CMake**
 1. Or legacy **Visual Studio 2022**
