@@ -15,14 +15,14 @@ The main goal is to get the source code into a buildable state on modern systems
 
 [![Join our Discord](https://github.com/gabengaGamer/area51-pc/assets/54669564/bac6c8a8-2d95-4513-8943-c5c26bd09173)](https://discord.gg/7gGhFSjxsq)
 
-## Building PC Code
+## Building Code
 
 The following prerequisites are required to build the source tree for PC:
 
 1. **CMake**
-1. Or legacy **Visual Stido 2022**
+1. Or legacy **Visual Studio 2022**
 
-## Running PC Build
+## Running Build
 
 1. Download last [asset pack](https://github.com/Source2Spy/area51-pc/releases/tag/ASSETS-14.08.2026)
 2. Download last [executable ](https://github.com/Source2Spy/area51-pc/actions) from github actions
