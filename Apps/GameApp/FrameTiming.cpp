@@ -7,6 +7,8 @@
 #include "FrameTiming.hpp"
 #include "x_files/x_math.hpp"
 
+#define FRAME_TIMING_RECOVER_INVALID_SAMPLES
+
 //==============================================================================
 //  IMPLEMENTATION
 //==============================================================================
@@ -46,8 +48,8 @@ FrameTimingSample FrameTiming::Sample( void )
 FrameTimingSample FrameTiming::Classify( f32 RawDeltaSeconds, f32 MaxDeltaSeconds )
 {
     FrameTimingSample Sample;
-    Sample.Status                = FrameTimingStatus::InvalidValue;
-    Sample.RawDeltaSeconds       = RawDeltaSeconds;
+    Sample.Status               = FrameTimingStatus::InvalidValue;
+    Sample.RawDeltaSeconds      = RawDeltaSeconds;
     Sample.AcceptedDeltaSeconds = 0.0f;
 
     if( !x_isvalid( RawDeltaSeconds ) || (RawDeltaSeconds <= 0.0f) )
@@ -57,11 +59,16 @@ FrameTimingSample FrameTiming::Classify( f32 RawDeltaSeconds, f32 MaxDeltaSecond
 
     if( RawDeltaSeconds > MaxDeltaSeconds )
     {
+#ifdef FRAME_TIMING_RECOVER_INVALID_SAMPLES
+        Sample.Status               = FrameTimingStatus::Valid;
+        Sample.AcceptedDeltaSeconds = MaxDeltaSeconds;
+#else
         Sample.Status = FrameTimingStatus::Hitch;
+#endif
         return Sample;
     }
 
-    Sample.Status                = FrameTimingStatus::Valid;
+    Sample.Status               = FrameTimingStatus::Valid;
     Sample.AcceptedDeltaSeconds = RawDeltaSeconds;
     return Sample;
 }
