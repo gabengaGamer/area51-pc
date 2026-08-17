@@ -24,7 +24,7 @@ The following prerequisites are required to build the source tree:
 
 ## Running Build
 
-1. Download last [asset pack](https://github.com/Source2Spy/area51-pc/releases/tag/ASSETS-14.08.2026)
+1. Download last [asset pack](https://github.com/Source2Spy/area51-pc/releases/tag/ASSETS-14.08.2026) from releases
 2. Download last [executable ](https://github.com/Source2Spy/area51-pc/actions) from github actions
 3. Unzip the archive and place your binary file into the unzipped folder
 4. Run game
