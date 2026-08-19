@@ -31,6 +31,8 @@ The following prerequisites are required to build the source tree:
 
 ## CMake Target Selection
 
+[![CMake portability](https://github.com/Source2Spy/area51-pc/actions/workflows/cmake.yml/badge.svg?branch=master)](https://github.com/Source2Spy/area51-pc/actions/workflows/cmake.yml)
+
 CMake configures the complete target graph, but a build target only builds its own dependencies. The regular build presets build `A51` only.
 
 ```text
