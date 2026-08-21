@@ -7,9 +7,9 @@
   },
   "configurePresets": [
     {
-      "name": "windows-vs2022-base",
+      "name": "windows-msvc-base",
       "hidden": true,
-      "generator": "Visual Studio 17 2022",
+      "generator": "Visual Studio 18 2026",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "condition": {
         "type": "equals",
@@ -21,30 +21,30 @@
       }
     },
     {
-      "name": "windows-vs2022-win32",
-      "inherits": "windows-vs2022-base",
-      "displayName": "Windows MSVC Win32 / Visual Studio 2022",
+      "name": "windows-msvc-win32",
+      "inherits": "windows-msvc-base",
+      "displayName": "Windows MSVC Win32",
       "description": "32-bit x86 multi-configuration MSVC build for Windows.",
       "architecture": "Win32"
     },
     {
-      "name": "windows-vs2022-x64",
-      "inherits": "windows-vs2022-base",
-      "displayName": "Windows MSVC x64 / Visual Studio 2022",
+      "name": "windows-msvc-x64",
+      "inherits": "windows-msvc-base",
+      "displayName": "Windows MSVC x64",
       "description": "64-bit x64 multi-configuration MSVC build for Windows.",
       "architecture": "x64"
     },
     {
-      "name": "windows-vs2022-arm",
-      "inherits": "windows-vs2022-base",
-      "displayName": "Windows MSVC ARM32 / Visual Studio 2022",
+      "name": "windows-msvc-arm",
+      "inherits": "windows-msvc-base",
+      "displayName": "Windows MSVC ARM32",
       "description": "32-bit ARM multi-configuration MSVC build for Windows.",
       "architecture": "ARM"
     },
     {
-      "name": "windows-vs2022-arm64",
-      "inherits": "windows-vs2022-base",
-      "displayName": "Windows MSVC ARM64 / Visual Studio 2022",
+      "name": "windows-msvc-arm64",
+      "inherits": "windows-msvc-base",
+      "displayName": "Windows MSVC ARM64",
       "description": "64-bit ARM multi-configuration MSVC build for Windows.",
       "architecture": "ARM64"
     },
@@ -138,126 +138,123 @@
     },
 
     {
-      "name": "windows-vs2022-win32-debug",
+      "name": "windows-msvc-win32-debug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-win32",
+      "configurePreset": "windows-msvc-win32",
       "configuration": "Debug"
     },
     {
-      "name": "windows-vs2022-win32-optdebug",
+      "name": "windows-msvc-win32-optdebug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-win32",
+      "configurePreset": "windows-msvc-win32",
       "configuration": "OptDebug"
     },
     {
-      "name": "windows-vs2022-win32-qa",
+      "name": "windows-msvc-win32-qa",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-win32",
+      "configurePreset": "windows-msvc-win32",
       "configuration": "QA"
     },
     {
-      "name": "windows-vs2022-win32-release",
+      "name": "windows-msvc-win32-release",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-win32",
+      "configurePreset": "windows-msvc-win32",
       "configuration": "Release"
     },
     {
-      "name": "windows-vs2022-win32-editor-debug",
+      "name": "windows-msvc-win32-editor-debug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-win32",
+      "configurePreset": "windows-msvc-win32",
       "configuration": "EDITOR-Debug"
     },
-
     {
-      "name": "windows-vs2022-x64-debug",
+      "name": "windows-msvc-x64-debug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-x64",
+      "configurePreset": "windows-msvc-x64",
       "configuration": "Debug"
     },
     {
-      "name": "windows-vs2022-x64-optdebug",
+      "name": "windows-msvc-x64-optdebug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-x64",
+      "configurePreset": "windows-msvc-x64",
       "configuration": "OptDebug"
     },
     {
-      "name": "windows-vs2022-x64-qa",
+      "name": "windows-msvc-x64-qa",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-x64",
+      "configurePreset": "windows-msvc-x64",
       "configuration": "QA"
     },
     {
-      "name": "windows-vs2022-x64-release",
+      "name": "windows-msvc-x64-release",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-x64",
+      "configurePreset": "windows-msvc-x64",
       "configuration": "Release"
     },
     {
-      "name": "windows-vs2022-x64-editor-debug",
+      "name": "windows-msvc-x64-editor-debug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-x64",
+      "configurePreset": "windows-msvc-x64",
       "configuration": "EDITOR-Debug"
     },
-
     {
-      "name": "windows-vs2022-arm-debug",
+      "name": "windows-msvc-arm-debug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-arm",
+      "configurePreset": "windows-msvc-arm",
       "configuration": "Debug"
     },
     {
-      "name": "windows-vs2022-arm-optdebug",
+      "name": "windows-msvc-arm-optdebug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-arm",
+      "configurePreset": "windows-msvc-arm",
       "configuration": "OptDebug"
     },
     {
-      "name": "windows-vs2022-arm-qa",
+      "name": "windows-msvc-arm-qa",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-arm",
+      "configurePreset": "windows-msvc-arm",
       "configuration": "QA"
     },
     {
-      "name": "windows-vs2022-arm-release",
+      "name": "windows-msvc-arm-release",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-arm",
+      "configurePreset": "windows-msvc-arm",
       "configuration": "Release"
     },
     {
-      "name": "windows-vs2022-arm-editor-debug",
+      "name": "windows-msvc-arm-editor-debug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-arm",
+      "configurePreset": "windows-msvc-arm",
       "configuration": "EDITOR-Debug"
     },
-
     {
-      "name": "windows-vs2022-arm64-debug",
+      "name": "windows-msvc-arm64-debug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-arm64",
+      "configurePreset": "windows-msvc-arm64",
       "configuration": "Debug"
     },
     {
-      "name": "windows-vs2022-arm64-optdebug",
+      "name": "windows-msvc-arm64-optdebug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-arm64",
+      "configurePreset": "windows-msvc-arm64",
       "configuration": "OptDebug"
     },
     {
-      "name": "windows-vs2022-arm64-qa",
+      "name": "windows-msvc-arm64-qa",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-arm64",
+      "configurePreset": "windows-msvc-arm64",
       "configuration": "QA"
     },
     {
-      "name": "windows-vs2022-arm64-release",
+      "name": "windows-msvc-arm64-release",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-arm64",
+      "configurePreset": "windows-msvc-arm64",
       "configuration": "Release"
     },
     {
-      "name": "windows-vs2022-arm64-editor-debug",
+      "name": "windows-msvc-arm64-editor-debug",
       "inherits": "selected-apps",
-      "configurePreset": "windows-vs2022-arm64",
+      "configurePreset": "windows-msvc-arm64",
       "configuration": "EDITOR-Debug"
     },
 
