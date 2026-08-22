@@ -69,16 +69,6 @@ enum
     SDLENG_DEFAULT_BACKBUFFER_HEIGHT = 768
 };
 
-static
-void sdleng_LogSDLError( const char* pContext )
-{
-    const char* pError = SDL_GetError();
-    if( !pError || !pError[0] )
-        pError = "unknown SDL error";
-
-    x_DebugMsg( "SDLEngine: %s failed: %s\n", pContext, pError );
-}
-
 //==============================================================================
 
 static
@@ -239,7 +229,7 @@ xbool sdleng_ConfigureSwapchain( void )
                                         SDLENG_GPU_SWAPCHAIN_COMPOSITION,
                                         PresentMode ) )
     {
-        sdleng_LogSDLError( "SDL_SetGPUSwapchainParameters" );
+        sdleng_LogError( "SDLEngine", "SDL_SetGPUSwapchainParameters" );
         return FALSE;
     }
 
@@ -361,7 +351,7 @@ xbool sdleng_SubmitCurrentCommandBuffer( void )
 
     if( !bSubmitted )
     {
-        sdleng_LogSDLError( "SDL_SubmitGPUCommandBuffer" );
+        sdleng_LogError( "SDLEngine", "SDL_SubmitGPUCommandBuffer" );
         return FALSE;
     }
 
@@ -406,21 +396,27 @@ xbool sdleng_CreateDeviceForWindow( sdleng_native_window_handle hWindow, s32 Wid
                                            SDLENG_GPU_DRIVER_NAME );
     if( !g_pSDLGPUDevice )
     {
-        sdleng_LogSDLError( "SDL_CreateGPUDevice" );
+        sdleng_LogError( "SDLEngine", "SDL_CreateGPUDevice" );
         sdleng_DestroyDevice();
         return FALSE;
     }
 
     if( !SDL_SetGPUAllowedFramesInFlight( g_pSDLGPUDevice, 1 ) )
     {
-        sdleng_LogSDLError( "SDL_SetGPUAllowedFramesInFlight(1)" );
+        sdleng_LogError( "SDLEngine", "SDL_SetGPUAllowedFramesInFlight(1)" );
+        sdleng_DestroyDevice();
+        return FALSE;
+    }
+
+    if( !sdleng_InitializeFormatPolicy() )
+    {
         sdleng_DestroyDevice();
         return FALSE;
     }
 
     if( !SDL_ClaimWindowForGPUDevice( g_pSDLGPUDevice, g_pSDLWindow ) )
     {
-        sdleng_LogSDLError( "SDL_ClaimWindowForGPUDevice" );
+        sdleng_LogError( "SDLEngine", "SDL_ClaimWindowForGPUDevice" );
         sdleng_DestroyDevice();
         return FALSE;
     }
@@ -464,6 +460,7 @@ void sdleng_DestroyDevice( void )
 
     if( g_pSDLGPUDevice )
     {
+        sdleng_ResetFormatPolicy();
         SDL_DestroyGPUDevice( g_pSDLGPUDevice );
         g_pSDLGPUDevice = NULL;
     }
@@ -484,7 +481,7 @@ xbool sdleng_WaitForIdle( void )
 
     if( !SDL_WaitForGPUIdle( g_pSDLGPUDevice ) )
     {
-        sdleng_LogSDLError( "SDL_WaitForGPUIdle" );
+        sdleng_LogError( "SDLEngine", "SDL_WaitForGPUIdle" );
         return FALSE;
     }
 
@@ -509,7 +506,7 @@ xbool sdleng_AcquireCommandBuffer( void )
     }
     if( !s.pCommandBuffer )
     {
-        sdleng_LogSDLError( "SDL_AcquireGPUCommandBuffer" );
+        sdleng_LogError( "SDLEngine", "SDL_AcquireGPUCommandBuffer" );
         return FALSE;
     }
 
@@ -551,7 +548,7 @@ xbool sdleng_AcquireSwapchainTexture( void )
 
     if( !bAcquired )
     {
-        sdleng_LogSDLError( "SDL_WaitAndAcquireGPUSwapchainTexture" );
+        sdleng_LogError( "SDLEngine", "SDL_WaitAndAcquireGPUSwapchainTexture" );
         return FALSE;
     }
 
@@ -620,7 +617,7 @@ xbool sdleng_BeginRenderPass( const SDL_GPUColorTargetInfo*        pColorTargets
     }
     if( !s.pRenderPass )
     {
-        sdleng_LogSDLError( "SDL_BeginGPURenderPass" );
+        sdleng_LogError( "SDLEngine", "SDL_BeginGPURenderPass" );
         return FALSE;
     }
 
@@ -702,12 +699,12 @@ void sdleng_CancelFrame( void )
     if( bSwapchainAcquired )
     {
         if( !SDL_SubmitGPUCommandBuffer( pCommandBuffer ) )
-            sdleng_LogSDLError( "SDL_SubmitGPUCommandBuffer" );
+            sdleng_LogError( "SDLEngine", "SDL_SubmitGPUCommandBuffer" );
     }
     else
     {
         if( !SDL_CancelGPUCommandBuffer( pCommandBuffer ) )
-            sdleng_LogSDLError( "SDL_CancelGPUCommandBuffer" );
+            sdleng_LogError( "SDLEngine", "SDL_CancelGPUCommandBuffer" );
     }
 
 }

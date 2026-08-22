@@ -172,18 +172,6 @@ xbool sdleng_ValidateGraphicsBindings( void )
 //==============================================================================
 
 static
-void sdlshader_LogSDLError( const char* pContext )
-{
-    const char* pError = SDL_GetError();
-    if( !pError || !pError[0] )
-        pError = "unknown SDL error";
-
-    x_DebugMsg( "SDLShader: %s failed: %s\n", pContext, pError );
-}
-
-//==============================================================================
-
-static
 xbool sdlshader_IsValidStage( shader_stage Stage )
 {
     return (Stage == SHADER_STAGE_VERTEX) ||
@@ -431,41 +419,6 @@ xbool sdlshader_ToSDLGraphicsStage( shader_stage Stage, SDL_GPUShaderStage& SDLS
 //==============================================================================
 
 static
-void sdlshader_LinkShader( shader_backend* pBackend )
-{
-    pBackend->pPrev = NULL;
-    pBackend->pNext = s_pShaderList;
-
-    if( s_pShaderList )
-        s_pShaderList->pPrev = pBackend;
-
-    s_pShaderList = pBackend;
-    s_ShaderCount++;
-}
-
-//==============================================================================
-
-static
-void sdlshader_UnlinkShader( shader_backend* pBackend )
-{
-    if( pBackend->pPrev )
-        pBackend->pPrev->pNext = pBackend->pNext;
-    else if( s_pShaderList == pBackend )
-        s_pShaderList = pBackend->pNext;
-
-    if( pBackend->pNext )
-        pBackend->pNext->pPrev = pBackend->pPrev;
-
-    pBackend->pPrev = NULL;
-    pBackend->pNext = NULL;
-
-    if( s_ShaderCount )
-        s_ShaderCount--;
-}
-
-//==============================================================================
-
-static
 void sdlshader_ReleaseBackend( shader_backend* pBackend )
 {
     if( !pBackend )
@@ -608,7 +561,7 @@ void shader_Kill( void )
     while( s_pShaderList )
     {
         shader_backend* pBackend = s_pShaderList;
-        sdlshader_UnlinkShader( pBackend );
+        sdleng_UnlinkBackend( s_pShaderList, pBackend, s_ShaderCount );
         sdlshader_ReleaseBackend( pBackend );
 
         if( pBackend->pOwner )
@@ -685,7 +638,7 @@ xbool shader_Create( shader& Shader, const shader_desc& Desc )
         Props = SDL_CreateProperties();
         if( !Props )
         {
-            sdlshader_LogSDLError( "SDL_CreateProperties" );
+            sdleng_LogError( "SDLShader", "SDL_CreateProperties" );
             sdlshader_ReleaseBackend( pBackend );
             delete pBackend;
             return FALSE;
@@ -693,7 +646,7 @@ xbool shader_Create( shader& Shader, const shader_desc& Desc )
 
         if( !SDL_SetStringProperty( Props, SDL_PROP_GPU_SHADER_CREATE_NAME_STRING, Desc.pDebugName ) )
         {
-            sdlshader_LogSDLError( "SDL_SetStringProperty" );
+            sdleng_LogError( "SDLShader", "SDL_SetStringProperty" );
             SDL_DestroyProperties( Props );
             sdlshader_ReleaseBackend( pBackend );
             delete pBackend;
@@ -721,7 +674,7 @@ xbool shader_Create( shader& Shader, const shader_desc& Desc )
 
     if( !pShader )
     {
-        sdlshader_LogSDLError( "SDL_CreateGPUShader" );
+        sdleng_LogError( "SDLShader", "SDL_CreateGPUShader" );
         sdlshader_ReleaseBackend( pBackend );
         delete pBackend;
         return FALSE;
@@ -755,7 +708,7 @@ xbool shader_Create( shader& Shader, const shader_desc& Desc )
     Shader.Format   = Desc.Format;
     Shader.pBackend = pBackend;
 
-    sdlshader_LinkShader( pBackend );
+    sdleng_LinkBackend( s_pShaderList, pBackend, s_ShaderCount );
     return TRUE;
 }
 
@@ -843,7 +796,7 @@ void shader_Destroy( shader& Shader )
     if( !pBackend )
         return;
 
-    sdlshader_UnlinkShader( pBackend );
+    sdleng_UnlinkBackend( s_pShaderList, pBackend, s_ShaderCount );
     sdlshader_ReleaseBackend( pBackend );
     delete pBackend;
 

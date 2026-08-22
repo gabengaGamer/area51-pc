@@ -11,6 +11,12 @@ cmake_policy( SET CMP0091 NEW )
 
 project( Area51 LANGUAGES C CXX )
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(
+        $<$<CONFIG:Release>:-g>
+    )
+endif()
+
 # Must precede include( A51ThirdParty ), which add_subdirectory()'s the bundled libs.
 if( MSVC AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY )
     set( CMAKE_MSVC_RUNTIME_LIBRARY

@@ -13,6 +13,7 @@
 //==============================================================================
 
 #include "sdleng_window.hpp"
+#include "sdleng_private.hpp"
 
 #ifndef X_STDIO_HPP
 #include "x_stdio.hpp"
@@ -70,18 +71,6 @@ static struct sdleng_window_state
 //==============================================================================
 
 static
-void sdleng_window_LogSDLError( const char* pContext )
-{
-    const char* pError = SDL_GetError();
-    if( !pError || !pError[0] )
-        pError = "unknown SDL error";
-
-    x_DebugMsg( "SDLWindow: %s failed: %s\n", pContext, pError );
-}
-
-//==============================================================================
-
-static
 xbool sdleng_WindowCanSetPosition( void )
 {
     const char* pDriver = SDL_GetCurrentVideoDriver();
@@ -105,7 +94,7 @@ xbool sdleng_WindowInitVideo( void )
 
     if( !SDL_InitSubSystem( SDL_INIT_VIDEO ) )
     {
-        sdleng_window_LogSDLError( "SDL_InitSubSystem(SDL_INIT_VIDEO)" );
+        sdleng_LogError( "SDLWindow", "SDL_InitSubSystem(SDL_INIT_VIDEO)" );
         return FALSE;
     }
 
@@ -150,13 +139,13 @@ SDL_Window* sdleng_WindowCreateWrapped( sdleng_native_window_handle hWindow )
     SDL_PropertiesID Props = SDL_CreateProperties();
     if( !Props )
     {
-        sdleng_window_LogSDLError( "SDL_CreateProperties" );
+        sdleng_LogError( "SDLWindow", "SDL_CreateProperties" );
         return NULL;
     }
 
     if( !SDL_SetPointerProperty( Props, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, hWindow ) )
     {
-        sdleng_window_LogSDLError( "SDL_SetPointerProperty(SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER)" );
+        sdleng_LogError( "SDLWindow", "SDL_SetPointerProperty(SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER)" );
         SDL_DestroyProperties( Props );
         return NULL;
     }
@@ -165,7 +154,7 @@ SDL_Window* sdleng_WindowCreateWrapped( sdleng_native_window_handle hWindow )
     SDL_DestroyProperties( Props );
 
     if( !pWindow )
-        sdleng_window_LogSDLError( "SDL_CreateWindowWithProperties" );
+        sdleng_LogError( "SDLWindow", "SDL_CreateWindowWithProperties" );
 
     return pWindow;
 #else
@@ -182,7 +171,7 @@ SDL_Window* sdleng_WindowCreateOwned( const sdleng_window_desc& Desc )
     SDL_PropertiesID Props = SDL_CreateProperties();
     if( !Props )
     {
-        sdleng_window_LogSDLError( "SDL_CreateProperties" );
+        sdleng_LogError( "SDLWindow", "SDL_CreateProperties" );
         return NULL;
     }
 
@@ -198,7 +187,7 @@ SDL_Window* sdleng_WindowCreateOwned( const sdleng_window_desc& Desc )
                                  SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN,
                                  Desc.DisplayMode == SDLENG_DISPLAY_BORDERLESS ) )
     {
-        sdleng_window_LogSDLError( "SDL_Set*Property(window create)" );
+        sdleng_LogError( "SDLWindow", "SDL_Set*Property(window create)" );
         SDL_DestroyProperties( Props );
         return NULL;
     }
@@ -207,7 +196,7 @@ SDL_Window* sdleng_WindowCreateOwned( const sdleng_window_desc& Desc )
     SDL_DestroyProperties( Props );
 
     if( !pWindow )
-        sdleng_window_LogSDLError( "SDL_CreateWindowWithProperties" );
+        sdleng_LogError( "SDLWindow", "SDL_CreateWindowWithProperties" );
 
     return pWindow;
 }
@@ -225,7 +214,7 @@ xbool sdleng_WindowGetDisplay( SDL_DisplayID& DisplayID )
 
     if( !DisplayID )
     {
-        sdleng_window_LogSDLError( "SDL_GetDisplayForWindow" );
+        sdleng_LogError( "SDLWindow", "SDL_GetDisplayForWindow" );
         return FALSE;
     }
 
@@ -245,7 +234,7 @@ xbool sdleng_WindowGetDisplayBounds( SDL_Rect& Bounds )
 
     if( !SDL_GetDisplayBounds( DisplayID, &Bounds ) )
     {
-        sdleng_window_LogSDLError( "SDL_GetDisplayBounds" );
+        sdleng_LogError( "SDLWindow", "SDL_GetDisplayBounds" );
         return FALSE;
     }
 
@@ -613,7 +602,7 @@ void sdleng_WindowRefreshClientSize( void )
     int Height = 0;
     if( !SDL_GetWindowSizeInPixels( s_Window.pWindow, &Width, &Height ) )
     {
-        sdleng_window_LogSDLError( "SDL_GetWindowSizeInPixels" );
+        sdleng_LogError( "SDLWindow", "SDL_GetWindowSizeInPixels" );
         Width  = 0;
         Height = 0;
     }
@@ -729,7 +718,7 @@ xbool sdleng_WindowGetResolutions( xarray<sdleng_display_resolution>& Resolution
 
     if( Resolutions.GetCount() == 0 )
     {
-        sdleng_window_LogSDLError( "SDL display mode enumeration" );
+        sdleng_LogError( "SDLWindow", "SDL display mode enumeration" );
         return FALSE;
     }
 
@@ -779,7 +768,7 @@ xbool sdleng_WindowApplyDisplayMode( s32                 Width,
         if( !SDL_SetWindowFullscreenMode( s_Window.pWindow, NULL ) ||
             !SDL_SetWindowFullscreen( s_Window.pWindow, true ) )
         {
-            sdleng_window_LogSDLError( "SDL borderless fullscreen display mode" );
+            sdleng_LogError( "SDLWindow", "SDL borderless fullscreen display mode" );
             return FALSE;
         }
 #else
@@ -795,7 +784,7 @@ xbool sdleng_WindowApplyDisplayMode( s32                 Width,
             (bCanSetPosition &&
              !SDL_SetWindowPosition( s_Window.pWindow, DisplayBounds.x, DisplayBounds.y )) )
         {
-            sdleng_window_LogSDLError( "SDL borderless display mode" );
+            sdleng_LogError( "SDLWindow", "SDL borderless display mode" );
             return FALSE;
         }
 #endif
@@ -812,7 +801,7 @@ xbool sdleng_WindowApplyDisplayMode( s32                 Width,
                                       SDL_WINDOWPOS_CENTERED,
                                       SDL_WINDOWPOS_CENTERED )) )
         {
-            sdleng_window_LogSDLError( "SDL windowed display mode" );
+            sdleng_LogError( "SDLWindow", "SDL windowed display mode" );
             return FALSE;
         }
 #else
@@ -829,7 +818,7 @@ xbool sdleng_WindowApplyDisplayMode( s32                 Width,
             (bCanSetPosition &&
              !SDL_SetWindowPosition( s_Window.pWindow, CenteredPosition, CenteredPosition )) )
         {
-            sdleng_window_LogSDLError( "SDL windowed display mode" );
+            sdleng_LogError( "SDLWindow", "SDL windowed display mode" );
             return FALSE;
         }
 #endif
@@ -837,7 +826,7 @@ xbool sdleng_WindowApplyDisplayMode( s32                 Width,
 
     if( !SDL_SyncWindow( s_Window.pWindow ) )
     {
-        sdleng_window_LogSDLError( "SDL_SyncWindow" );
+        sdleng_LogError( "SDLWindow", "SDL_SyncWindow" );
         return FALSE;
     }
 

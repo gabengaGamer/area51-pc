@@ -208,14 +208,14 @@ static xbool composite_SetPipelineKey( composite_pipeline_key& Key,
         return FALSE;
 
     if( ((u32)ColorFormat >= (u32)RTARGET_FORMAT_COUNT) ||
-        (ColorFormat == RTARGET_FORMAT_DEPTH24_STENCIL8) ||
+        (ColorFormat == RTARGET_FORMAT_DEPTH_STENCIL) ||
         (ColorFormat == RTARGET_FORMAT_DEPTH32F) )
     {
         return FALSE;
     }
 
     if( (DepthFormat != RTARGET_FORMAT_COUNT) &&
-        (DepthFormat != RTARGET_FORMAT_DEPTH24_STENCIL8) &&
+        (DepthFormat != RTARGET_FORMAT_DEPTH_STENCIL) &&
         (DepthFormat != RTARGET_FORMAT_DEPTH32F) )
     {
         return FALSE;

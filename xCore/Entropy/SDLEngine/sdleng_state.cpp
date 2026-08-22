@@ -101,18 +101,6 @@ static u32                      s_SamplerCount  = 0;
 //==============================================================================
 
 static
-void sdlstate_LogSDLError( const char* pContext )
-{
-    const char* pError = SDL_GetError();
-    if( !pError || !pError[0] )
-        pError = "unknown SDL error";
-
-    x_DebugMsg( "SDLState: %s failed: %s\n", pContext, pError );
-}
-
-//==============================================================================
-
-static
 SDL_GPUBlendFactor sdlstate_ToSDLBlendFactor( rstate_blend_factor Factor )
 {
     switch( Factor )
@@ -274,51 +262,6 @@ SDL_GPUVertexElementFormat sdlstate_ToSDLVertexFormat( shader_vertex_format Form
         case SHADER_VERTEX_FORMAT_UBYTE4N_BGRA: return SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM;
         default:                          return SDL_GPU_VERTEXELEMENTFORMAT_INVALID;
     }
-}
-
-//==============================================================================
-
-static
-SDL_GPUTextureFormat sdlstate_ToSDLTargetFormat( rtarget_format Format )
-{
-    switch( Format )
-    {
-        case RTARGET_FORMAT_RGBA8:             return SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
-        case RTARGET_FORMAT_BGRA8:             return SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM;
-        case RTARGET_FORMAT_RGBA16F:           return SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
-        case RTARGET_FORMAT_RGBA32F:           return SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT;
-        case RTARGET_FORMAT_RGB10A2:           return SDL_GPU_TEXTUREFORMAT_R10G10B10A2_UNORM;
-        case RTARGET_FORMAT_R8:                return SDL_GPU_TEXTUREFORMAT_R8_UNORM;
-        case RTARGET_FORMAT_RG16F:             return SDL_GPU_TEXTUREFORMAT_R16G16_FLOAT;
-        case RTARGET_FORMAT_R32F:              return SDL_GPU_TEXTUREFORMAT_R32_FLOAT;
-        case RTARGET_FORMAT_DEPTH24_STENCIL8:  return SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
-        case RTARGET_FORMAT_DEPTH32F:          return SDL_GPU_TEXTUREFORMAT_D32_FLOAT;
-        default:                               return SDL_GPU_TEXTUREFORMAT_INVALID;
-    }
-}
-
-//==============================================================================
-
-static
-xbool sdlstate_ToSDLSampleCount( u32 SampleCount, SDL_GPUSampleCount& SDLSampleCount )
-{
-    switch( SampleCount )
-    {
-        case 1:  SDLSampleCount = SDL_GPU_SAMPLECOUNT_1; return TRUE;
-        case 2:  SDLSampleCount = SDL_GPU_SAMPLECOUNT_2; return TRUE;
-        case 4:  SDLSampleCount = SDL_GPU_SAMPLECOUNT_4; return TRUE;
-        case 8:  SDLSampleCount = SDL_GPU_SAMPLECOUNT_8; return TRUE;
-        default: return FALSE;
-    }
-}
-
-//==============================================================================
-
-static
-xbool sdlstate_IsDepthStencilFormat( rtarget_format Format )
-{
-    return (Format == RTARGET_FORMAT_DEPTH24_STENCIL8) ||
-           (Format == RTARGET_FORMAT_DEPTH32F);
 }
 
 //==============================================================================
@@ -592,41 +535,6 @@ void sdlstate_BuildPresets( void )
 //==============================================================================
 
 static
-void sdlstate_LinkSampler( rstate_sampler_backend* pBackend )
-{
-    pBackend->pPrev = NULL;
-    pBackend->pNext = s_pSamplerList;
-
-    if( s_pSamplerList )
-        s_pSamplerList->pPrev = pBackend;
-
-    s_pSamplerList = pBackend;
-    s_SamplerCount++;
-}
-
-//==============================================================================
-
-static
-void sdlstate_UnlinkSampler( rstate_sampler_backend* pBackend )
-{
-    if( pBackend->pPrev )
-        pBackend->pPrev->pNext = pBackend->pNext;
-    else if( s_pSamplerList == pBackend )
-        s_pSamplerList = pBackend->pNext;
-
-    if( pBackend->pNext )
-        pBackend->pNext->pPrev = pBackend->pPrev;
-
-    pBackend->pPrev = NULL;
-    pBackend->pNext = NULL;
-
-    if( s_SamplerCount )
-        s_SamplerCount--;
-}
-
-//==============================================================================
-
-static
 void sdlstate_ReleaseSamplerBackend( rstate_sampler_backend* pBackend )
 {
     if( !pBackend )
@@ -748,41 +656,6 @@ void sdlstate_ReleasePipelineCacheEntry( render_pipeline_cache_entry* pEntry )
 
     pEntry->pPipeline = NULL;
     sdlstate_FreePipelineKey( pEntry->Key );
-}
-
-//==============================================================================
-
-static
-void sdlstate_LinkPipelineHandle( render_pipeline_backend* pBackend )
-{
-    pBackend->pPrev = NULL;
-    pBackend->pNext = s_pPipelineHandleList;
-
-    if( s_pPipelineHandleList )
-        s_pPipelineHandleList->pPrev = pBackend;
-
-    s_pPipelineHandleList = pBackend;
-    s_PipelineHandleCount++;
-}
-
-//==============================================================================
-
-static
-void sdlstate_UnlinkPipelineHandle( render_pipeline_backend* pBackend )
-{
-    if( pBackend->pPrev )
-        pBackend->pPrev->pNext = pBackend->pNext;
-    else if( s_pPipelineHandleList == pBackend )
-        s_pPipelineHandleList = pBackend->pNext;
-
-    if( pBackend->pNext )
-        pBackend->pNext->pPrev = pBackend->pPrev;
-
-    pBackend->pPrev = NULL;
-    pBackend->pNext = NULL;
-
-    if( s_PipelineHandleCount )
-        s_PipelineHandleCount--;
 }
 
 //==============================================================================
@@ -965,7 +838,7 @@ void rstate_Kill( void )
     while( s_pSamplerList )
     {
         rstate_sampler_backend* pBackend = s_pSamplerList;
-        sdlstate_UnlinkSampler( pBackend );
+        sdleng_UnlinkBackend( s_pSamplerList, pBackend, s_SamplerCount );
         sdlstate_ReleaseSamplerBackend( pBackend );
 
         if( pBackend->pOwner )
@@ -980,7 +853,7 @@ void rstate_Kill( void )
     while( s_pPipelineHandleList )
     {
         render_pipeline_backend* pBackend = s_pPipelineHandleList;
-        sdlstate_UnlinkPipelineHandle( pBackend );
+        sdleng_UnlinkBackend( s_pPipelineHandleList, pBackend, s_PipelineHandleCount );
         sdleng_ClearGraphicsPipelineDebug( pBackend );
 
         if( pBackend->pEntry )
@@ -1095,7 +968,7 @@ xbool render_CreatePipeline( render_pipeline& Pipeline, const render_pipeline_de
     }
 
     SDL_GPUSampleCount SDLSampleCount;
-    if( !sdlstate_ToSDLSampleCount( Desc.SampleCount, SDLSampleCount ) )
+    if( !sdleng_ToSDLSampleCount( Desc.SampleCount, SDLSampleCount ) )
         return FALSE;
 
     if( !Desc.Shader.pVertexShader || !Desc.Shader.pPixelShader )
@@ -1131,13 +1004,13 @@ xbool render_CreatePipeline( render_pipeline& Pipeline, const render_pipeline_de
 
     for( u32 i = 0; i < Desc.ColorCount; i++ )
     {
-        if( sdlstate_IsDepthStencilFormat( Desc.ColorTargets[i].Format ) )
+        if( sdleng_IsDepthFormat( Desc.ColorTargets[i].Format ) )
         {
             sdlstate_FreeVertexInputState( pVertexBuffers, pVertexAttrs );
             return FALSE;
         }
 
-        SDL_GPUTextureFormat Format = sdlstate_ToSDLTargetFormat( Desc.ColorTargets[i].Format );
+        SDL_GPUTextureFormat Format = sdleng_ToSDLTextureFormat( Desc.ColorTargets[i].Format );
         if( Format == SDL_GPU_TEXTUREFORMAT_INVALID )
         {
             sdlstate_FreeVertexInputState( pVertexBuffers, pVertexAttrs );
@@ -1153,6 +1026,17 @@ xbool render_CreatePipeline( render_pipeline& Pipeline, const render_pipeline_de
             return FALSE;
         }
 
+        if( !SDL_GPUTextureSupportsFormat( g_pSDLGPUDevice,
+                                           Format,
+                                           SDL_GPU_TEXTURETYPE_2D,
+                                           SDL_GPU_TEXTUREUSAGE_COLOR_TARGET ) )
+        {
+            x_DebugMsg( "SDLState: color target format %d is not supported\n",
+                        Desc.ColorTargets[i].Format );
+            sdlstate_FreeVertexInputState( pVertexBuffers, pVertexAttrs );
+            return FALSE;
+        }
+
         ColorTargets[i].format = Format;
         sdlstate_FillBlendState( ColorTargets[i].blend_state, Desc.ColorTargets[i].Blend );
     }
@@ -1161,13 +1045,13 @@ xbool render_CreatePipeline( render_pipeline& Pipeline, const render_pipeline_de
     SDL_GPUTextureFormat DepthFormat = SDL_GPU_TEXTUREFORMAT_INVALID;
     if( bHasDepth )
     {
-        if( !sdlstate_IsDepthStencilFormat( Desc.DepthFormat ) )
+        if( !sdleng_IsDepthFormat( Desc.DepthFormat ) )
         {
             sdlstate_FreeVertexInputState( pVertexBuffers, pVertexAttrs );
             return FALSE;
         }
 
-        DepthFormat = sdlstate_ToSDLTargetFormat( Desc.DepthFormat );
+        DepthFormat = sdleng_ToSDLTextureFormat( Desc.DepthFormat );
         if( DepthFormat == SDL_GPU_TEXTUREFORMAT_INVALID )
         {
             sdlstate_FreeVertexInputState( pVertexBuffers, pVertexAttrs );
@@ -1182,6 +1066,30 @@ xbool render_CreatePipeline( render_pipeline& Pipeline, const render_pipeline_de
             sdlstate_FreeVertexInputState( pVertexBuffers, pVertexAttrs );
             return FALSE;
         }
+        if( !SDL_GPUTextureSupportsFormat( g_pSDLGPUDevice,
+                                           DepthFormat,
+                                           SDL_GPU_TEXTURETYPE_2D,
+                                           SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET ) )
+        {
+            x_DebugMsg( "SDLState: depth target format %d is not supported\n", Desc.DepthFormat );
+            sdlstate_FreeVertexInputState( pVertexBuffers, pVertexAttrs );
+            return FALSE;
+        }
+
+        if( Desc.Depth.bStencilEnable && !sdleng_HasStencil( Desc.DepthFormat ) )
+        {
+            x_DebugMsg( "SDLState: stencil state requires a stencil-capable depth target\n" );
+            sdlstate_FreeVertexInputState( pVertexBuffers, pVertexAttrs );
+            return FALSE;
+        }
+    }
+
+    if( Desc.bAlphaToCoverage &&
+        ((Desc.ColorCount == 0) || !sdleng_HasAlpha( Desc.ColorTargets[0].Format )) )
+    {
+        x_DebugMsg( "SDLState: alpha-to-coverage requires an alpha color target\n" );
+        sdlstate_FreeVertexInputState( pVertexBuffers, pVertexAttrs );
+        return FALSE;
     }
 
     SDL_GPUGraphicsPipelineCreateInfo CreateInfo;
@@ -1268,7 +1176,7 @@ xbool render_CreatePipeline( render_pipeline& Pipeline, const render_pipeline_de
             Props = SDL_CreateProperties();
             if( !Props )
             {
-                sdlstate_LogSDLError( "SDL_CreateProperties" );
+                sdleng_LogError( "SDLState", "SDL_CreateProperties" );
                 sdlstate_DeletePipelineHandle( pBackend );
                 sdlstate_FreePipelineKey( Key );
                 return FALSE;
@@ -1276,7 +1184,7 @@ xbool render_CreatePipeline( render_pipeline& Pipeline, const render_pipeline_de
 
             if( !SDL_SetStringProperty( Props, SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING, Desc.pDebugName ) )
             {
-                sdlstate_LogSDLError( "SDL_SetStringProperty" );
+                sdleng_LogError( "SDLState", "SDL_SetStringProperty" );
                 SDL_DestroyProperties( Props );
                 sdlstate_DeletePipelineHandle( pBackend );
                 sdlstate_FreePipelineKey( Key );
@@ -1328,7 +1236,7 @@ xbool render_CreatePipeline( render_pipeline& Pipeline, const render_pipeline_de
 
         if( !pPipeline )
         {
-            sdlstate_LogSDLError( "SDL_CreateGPUGraphicsPipeline" );
+            sdleng_LogError( "SDLState", "SDL_CreateGPUGraphicsPipeline" );
             sdlstate_DeletePipelineHandle( pBackend );
             sdlstate_FreePipelineKey( Key );
             return FALSE;
@@ -1364,7 +1272,7 @@ xbool render_CreatePipeline( render_pipeline& Pipeline, const render_pipeline_de
     pBackend->pEntry = pEntry;
     pEntry->HandleCount++;
     Pipeline.pBackend = pBackend;
-    sdlstate_LinkPipelineHandle( pBackend );
+    sdleng_LinkBackend( s_pPipelineHandleList, pBackend, s_PipelineHandleCount );
     return TRUE;
 }
 
@@ -1384,7 +1292,7 @@ void render_DestroyPipeline( render_pipeline& Pipeline )
     }
 
     sdleng_ClearGraphicsPipelineDebug( pBackend );
-    sdlstate_UnlinkPipelineHandle( pBackend );
+    sdleng_UnlinkBackend( s_pPipelineHandleList, pBackend, s_PipelineHandleCount );
 
     if( pBackend->pEntry )
     {
@@ -1500,13 +1408,13 @@ xbool rstate_CreateSampler( rstate_sampler& Sampler, const rstate_sampler_desc& 
         Props = SDL_CreateProperties();
         if( !Props )
         {
-            sdlstate_LogSDLError( "SDL_CreateProperties" );
+            sdleng_LogError( "SDLState", "SDL_CreateProperties" );
             return FALSE;
         }
 
         if( !SDL_SetStringProperty( Props, SDL_PROP_GPU_SAMPLER_CREATE_NAME_STRING, Desc.pDebugName ) )
         {
-            sdlstate_LogSDLError( "SDL_SetStringProperty" );
+            sdleng_LogError( "SDLState", "SDL_SetStringProperty" );
             SDL_DestroyProperties( Props );
             return FALSE;
         }
@@ -1536,7 +1444,7 @@ xbool rstate_CreateSampler( rstate_sampler& Sampler, const rstate_sampler_desc& 
 
     if( !pSampler )
     {
-        sdlstate_LogSDLError( "SDL_CreateGPUSampler" );
+        sdleng_LogError( "SDLState", "SDL_CreateGPUSampler" );
         return FALSE;
     }
 
@@ -1551,7 +1459,7 @@ xbool rstate_CreateSampler( rstate_sampler& Sampler, const rstate_sampler_desc& 
     pBackend->pOwner   = &Sampler;
     Sampler.pBackend   = pBackend;
 
-    sdlstate_LinkSampler( pBackend );
+    sdleng_LinkBackend( s_pSamplerList, pBackend, s_SamplerCount );
     return TRUE;
 }
 
@@ -1572,7 +1480,7 @@ void rstate_DestroySampler( rstate_sampler& Sampler )
     if( !pBackend )
         return;
 
-    sdlstate_UnlinkSampler( pBackend );
+    sdleng_UnlinkBackend( s_pSamplerList, pBackend, s_SamplerCount );
     sdlstate_ReleaseSamplerBackend( pBackend );
     delete pBackend;
 

@@ -212,7 +212,7 @@ xbool PrimitiveMgr::PrewarmPipelines( void )
         desc.Blend = blendPresets[blendIndex];
 
         desc.Pass.ColorFormat = RTARGET_FORMAT_RGBA8;
-        desc.Pass.DepthFormat = RTARGET_FORMAT_DEPTH24_STENCIL8;
+        desc.Pass.DepthFormat = RTARGET_FORMAT_DEPTH_STENCIL;
         desc.Depth = RSTATE_DEPTH_PRESET_NO_WRITE;
         if ( !GetOrCreatePipeline( desc, TRUE ) )
         {
@@ -238,7 +238,7 @@ xbool PrimitiveMgr::PrewarmPipelines( void )
         // Glow primitives are replayed by ForwardRenderMgr into the HDR glow
         // target instead of the RGBA8 scene target.
         desc.Pass.ColorFormat = RTARGET_FORMAT_RGBA16F;
-        desc.Pass.DepthFormat = RTARGET_FORMAT_DEPTH24_STENCIL8;
+        desc.Pass.DepthFormat = RTARGET_FORMAT_DEPTH_STENCIL;
         desc.Depth = RSTATE_DEPTH_PRESET_NO_WRITE;
         if ( !GetOrCreatePipeline( desc, TRUE ) )
         {
@@ -288,14 +288,14 @@ xbool PrimitiveMgr::ValidatePipelineDesc( PipelineDesc const& desc )
         return FALSE;
     }
 
-    if ( ( desc.Pass.ColorFormat == RTARGET_FORMAT_DEPTH24_STENCIL8 ) ||
+    if ( ( desc.Pass.ColorFormat == RTARGET_FORMAT_DEPTH_STENCIL ) ||
          ( desc.Pass.ColorFormat == RTARGET_FORMAT_DEPTH32F ) )
     {
         return FALSE;
     }
 
     if ( ( desc.Pass.DepthFormat != RTARGET_FORMAT_COUNT ) &&
-         ( desc.Pass.DepthFormat != RTARGET_FORMAT_DEPTH24_STENCIL8 ) &&
+         ( desc.Pass.DepthFormat != RTARGET_FORMAT_DEPTH_STENCIL ) &&
          ( desc.Pass.DepthFormat != RTARGET_FORMAT_DEPTH32F ) )
     {
         return FALSE;
@@ -336,9 +336,13 @@ xbool PrimitiveMgr::BuildPipelineDesc( render_pipeline_desc& pipelineDesc, Pipel
         return FALSE;
     }
 
-    shader_vertex_buffer_desc vertexBuffer;
-    vertexBuffer.Slot = 0;
-    vertexBuffer.Stride = sizeof( Vertex );
+    static shader_vertex_buffer_desc const vertexBuffer = []()
+    {
+        shader_vertex_buffer_desc result;
+        result.Slot = 0;
+        result.Stride = sizeof( Vertex );
+        return result;
+    }();
 
     static shader_vertex_element const layout[] = {
         shader_vertex_element( 0, 0, SHADER_VERTEX_FORMAT_FLOAT3, offsetof( Vertex, Position ) ),

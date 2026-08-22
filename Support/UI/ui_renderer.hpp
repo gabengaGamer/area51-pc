@@ -148,7 +148,7 @@ struct ui_vertex
 
 struct ui_material
 {
-    const shader_resource* pTexture;
+    shader_resource        Texture;
     ui_blend_mode          Blend;
     ui_sampler_mode        Sampler;
 

@@ -186,6 +186,9 @@
     <ClCompile Include="SDLEngine\sdleng.cpp">
       <Filter>SDLEngine</Filter>
     </ClCompile>
+    <ClCompile Include="SDLEngine\sdleng_utils.cpp">
+      <Filter>SDLEngine</Filter>
+    </ClCompile>
     <ClCompile Include="SDLEngine\sdleng_composite.cpp">
       <Filter>SDLEngine</Filter>
     </ClCompile>

@@ -49,6 +49,7 @@ a51_add_project( Entropy STATIC
         "${CMAKE_CURRENT_LIST_DIR}/SDLEngine/sdleng_rtarget.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/SDLEngine/sdleng_shader.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/SDLEngine/sdleng_state.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/SDLEngine/sdleng_utils.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/SDLEngine/sdleng_vram.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/SDLEngine/sdleng_window.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/Input/e_Input.cpp"

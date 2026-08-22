@@ -360,7 +360,7 @@ ui_vertex::ui_vertex( const vector2& InPosition,
 //------------------------------------------------------------------------------
 
 ui_material::ui_material( void ) :
-    pTexture( NULL ),
+    Texture (),
     Blend   ( UI_BLEND_ALPHA ),
     Sampler ( UI_SAMPLER_LINEAR_CLAMP )
 {
@@ -371,10 +371,13 @@ ui_material::ui_material( void ) :
 ui_material::ui_material( const texture& InTexture,
                           ui_blend_mode BlendMode,
                           ui_sampler_mode SamplerMode ) :
-    pTexture( InTexture.GetShaderResource() ),
+    Texture (),
     Blend   ( BlendMode ),
     Sampler ( SamplerMode )
 {
+    const shader_resource* pResource = InTexture.GetShaderResource();
+    if( pResource )
+        Texture = *pResource;
 }
 
 //------------------------------------------------------------------------------
@@ -382,7 +385,7 @@ ui_material::ui_material( const texture& InTexture,
 ui_material::ui_material( const shader_resource& InTexture,
                           ui_blend_mode BlendMode,
                           ui_sampler_mode SamplerMode ) :
-    pTexture( &InTexture ),
+    Texture ( InTexture ),
     Blend   ( BlendMode ),
     Sampler ( SamplerMode )
 {
@@ -426,7 +429,7 @@ ui_draw_list::ui_draw_list( void ) :
 
 void ui_draw_list::BeginFrame( irect const& Bounds )
 {
-    ASSERTS( (m_CoordinateStack.GetCount() == 0) || AreStacksBalanced(),
+    ASSERTS( AreStacksBalanced(),
              "UI coordinate or clip stack leaked across frames" );
 
     m_vertices.SetCount( 0 );
@@ -460,6 +463,11 @@ void ui_draw_list::Clear( void )
 
 void ui_draw_list::PushClipRect( const irect& Rect )
 {
+    ASSERTS( (m_CoordinateStack.GetCount() > 0) && (m_ClipStack.GetCount() > 0),
+             "Cannot push a UI clip rect without an active coordinate space" );
+    if( (m_CoordinateStack.GetCount() == 0) || (m_ClipStack.GetCount() == 0) )
+        return;
+
     irect Clipped = Rect;
     if( m_ClipStack.GetCount() > 0 )
     {
@@ -479,6 +487,11 @@ void ui_draw_list::PushClipRect( const irect& Rect )
 
 void ui_draw_list::PopClipRect( void )
 {
+    ASSERTS( (m_CoordinateStack.GetCount() > 0) && (m_ClipStack.GetCount() > 0),
+             "Cannot pop a UI clip rect without an active coordinate space" );
+    if( (m_CoordinateStack.GetCount() == 0) || (m_ClipStack.GetCount() == 0) )
+        return;
+
     const s32 CoordinateClipDepth = GetCoordinateClipDepth();
     ASSERTS( m_ClipStack.GetCount() > CoordinateClipDepth,
              "Cannot pop the root clip rect for the current UI coordinate space" );
@@ -500,9 +513,14 @@ void ui_draw_list::PushCoordinateSpace( ui_coordinate_space CoordinateSpace,
                                         const irect& Bounds,
                                         const irect& Viewport )
 {
-    ASSERT( (CoordinateSpace >= 0) && (CoordinateSpace < UI_COORDINATE_SPACE_COUNT) );
-    ASSERT( m_CoordinateStack.GetCount() > 0 );
-    ASSERT( (Bounds.GetWidth() > 0) && (Bounds.GetHeight() > 0) );
+    const xbool IsValid =
+        (CoordinateSpace >= 0) && (CoordinateSpace < UI_COORDINATE_SPACE_COUNT) &&
+        (m_CoordinateStack.GetCount() > 0) &&
+        (m_ClipStack.GetCount() > 0) &&
+        (Bounds.GetWidth() > 0) && (Bounds.GetHeight() > 0);
+    ASSERTS( IsValid, "Cannot push an invalid UI coordinate space" );
+    if( !IsValid )
+        return;
 
     m_ClipStack.Append() = Bounds;
     coordinate_state& State = m_CoordinateStack.Append();
@@ -572,7 +590,7 @@ xbool ui_draw_list::AreStacksBalanced( void ) const
 
 xbool ui_draw_list::IsSameCommand( const command& A, const command& B ) const
 {
-    return (A.Material.pTexture == B.Material.pTexture) &&
+    return (A.Material.Texture.pBackend == B.Material.Texture.pBackend) &&
            (A.Material.Blend    == B.Material.Blend   ) &&
            (A.Material.Sampler  == B.Material.Sampler ) &&
            (A.CoordinateSpace   == B.CoordinateSpace  ) &&
@@ -621,7 +639,8 @@ xbool ui_draw_list::AddTriangles( const ui_material& Material,
 
     if( (Material.Blend < 0) || (Material.Blend >= UI_BLEND_COUNT) ||
         (Material.Sampler < 0) || (Material.Sampler >= UI_SAMPLER_COUNT) ||
-        (m_ClipStack.GetCount() == 0) )
+        (m_ClipStack.GetCount() == 0) ||
+        (m_CoordinateStack.GetCount() == 0) )
     {
         return FALSE;
     }
@@ -1264,8 +1283,8 @@ void ui_renderer::Execute( void )
         if( !BindPipeline( pBackBuffer->Desc.Format, Command.Material.Blend ) )
             continue;
 
-        const shader_resource* pTexture = Command.Material.pTexture;
-        if( !pTexture || !*pTexture )
+        const shader_resource* pTexture = &Command.Material.Texture;
+        if( !*pTexture )
             pTexture = vram_GetShaderResource( m_whiteTexture );
 
         const rstate_sampler* pSampler = GetSampler( Command.Material.Sampler );
@@ -1508,9 +1527,13 @@ xbool ui_renderer::BuildPipelineDesc( render_pipeline_desc& Desc,
         return FALSE;
     }
 
-    shader_vertex_buffer_desc VertexBuffer;
-    VertexBuffer.Slot   = 0;
-    VertexBuffer.Stride = sizeof(ui_vertex);
+    static const shader_vertex_buffer_desc VertexBuffer = []()
+    {
+        shader_vertex_buffer_desc Desc;
+        Desc.Slot   = 0;
+        Desc.Stride = sizeof(ui_vertex);
+        return Desc;
+    }();
 
     static const shader_vertex_element Layout[] =
     {

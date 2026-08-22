@@ -41,18 +41,6 @@ static rbuffer_index_format                   s_IndexFormat = RBUFFER_INDEX_FORM
 //==============================================================================
 
 static
-void sdlbuffer_LogSDLError( const char* pContext )
-{
-    const char* pError = SDL_GetError();
-    if( !pError || !pError[0] )
-        pError = "unknown SDL error";
-
-    x_DebugMsg( "SDLBuffer: %s failed: %s\n", pContext, pError );
-}
-
-//==============================================================================
-
-static
 void sdlbuffer_InvalidateBindings( SDL_GPUBuffer* pBuffer )
 {
     for( s32 i = 0; i < s_VertexBindings.GetCount(); ++i )
@@ -169,41 +157,6 @@ SDL_GPUIndexElementSize sdlbuffer_ToSDLIndexFormat( rbuffer_index_format Format 
 //==============================================================================
 
 static
-void sdlbuffer_LinkBuffer( rbuffer_backend* pBackend )
-{
-    pBackend->pPrev = NULL;
-    pBackend->pNext = s_pBufferList;
-
-    if( s_pBufferList )
-        s_pBufferList->pPrev = pBackend;
-
-    s_pBufferList = pBackend;
-    s_BufferCount++;
-}
-
-//==============================================================================
-
-static
-void sdlbuffer_UnlinkBuffer( rbuffer_backend* pBackend )
-{
-    if( pBackend->pPrev )
-        pBackend->pPrev->pNext = pBackend->pNext;
-    else if( s_pBufferList == pBackend )
-        s_pBufferList = pBackend->pNext;
-
-    if( pBackend->pNext )
-        pBackend->pNext->pPrev = pBackend->pPrev;
-
-    pBackend->pPrev = NULL;
-    pBackend->pNext = NULL;
-
-    if( s_BufferCount )
-        s_BufferCount--;
-}
-
-//==============================================================================
-
-static
 void sdlbuffer_ReleaseBackend( rbuffer_backend* pBackend )
 {
     if( !pBackend )
@@ -288,37 +241,6 @@ void sdlbuffer_ReleaseTransientUploadBuffer( SDL_GPUTransferBuffer* pTransferBuf
 //==============================================================================
 
 static
-xbool sdlbuffer_GetCopyCommandBuffer( SDL_GPUCommandBuffer*& pCommandBuffer, xbool& bOwnCommandBuffer )
-{
-    if( sdleng_InRenderPass() )
-    {
-        x_DebugMsg( "SDLBuffer: buffer upload cannot run inside a render pass\n" );
-        return FALSE;
-    }
-
-    pCommandBuffer    = sdleng_GetCommandBuffer();
-    bOwnCommandBuffer = FALSE;
-
-    if( pCommandBuffer )
-        return TRUE;
-
-    if( !g_pSDLGPUDevice )
-        return FALSE;
-
-    pCommandBuffer = SDL_AcquireGPUCommandBuffer( g_pSDLGPUDevice );
-    if( !pCommandBuffer )
-    {
-        sdlbuffer_LogSDLError( "SDL_AcquireGPUCommandBuffer" );
-        return FALSE;
-    }
-
-    bOwnCommandBuffer = TRUE;
-    return TRUE;
-}
-
-//==============================================================================
-
-static
 xbool sdlbuffer_SubmitUpload( rbuffer& Buffer, const rbuffer_upload_desc& Upload )
 {
     if( !Buffer.pBackend || !Buffer.pBackend->pBuffer || !Upload.pData || (Upload.Size == 0) )
@@ -337,7 +259,7 @@ xbool sdlbuffer_SubmitUpload( rbuffer& Buffer, const rbuffer_upload_desc& Upload
     xbool bOwnTransferBuffer = FALSE;
     if( !sdlbuffer_GetUploadBuffer( Buffer, Upload, pTransferBuffer, bOwnTransferBuffer ) )
     {
-        sdlbuffer_LogSDLError( "SDL_CreateGPUTransferBuffer" );
+        sdleng_LogError( "SDLBuffer", "SDL_CreateGPUTransferBuffer" );
         return FALSE;
     }
 
@@ -346,7 +268,7 @@ xbool sdlbuffer_SubmitUpload( rbuffer& Buffer, const rbuffer_upload_desc& Upload
                                               bOwnTransferBuffer ? false : true );
     if( !pMapped )
     {
-        sdlbuffer_LogSDLError( "SDL_MapGPUTransferBuffer" );
+        sdleng_LogError( "SDLBuffer", "SDL_MapGPUTransferBuffer" );
         sdlbuffer_ReleaseTransientUploadBuffer( pTransferBuffer, bOwnTransferBuffer );
         return FALSE;
     }
@@ -356,7 +278,9 @@ xbool sdlbuffer_SubmitUpload( rbuffer& Buffer, const rbuffer_upload_desc& Upload
 
     SDL_GPUCommandBuffer* pCommandBuffer = NULL;
     xbool bOwnCommandBuffer = FALSE;
-    if( !sdlbuffer_GetCopyCommandBuffer( pCommandBuffer, bOwnCommandBuffer ) )
+    if( !sdleng_AcquireTransientCommandBuffer( pCommandBuffer,
+                                                bOwnCommandBuffer,
+                                                "SDLBuffer" ) )
     {
         sdlbuffer_ReleaseTransientUploadBuffer( pTransferBuffer, bOwnTransferBuffer );
         return FALSE;
@@ -365,9 +289,8 @@ xbool sdlbuffer_SubmitUpload( rbuffer& Buffer, const rbuffer_upload_desc& Upload
     SDL_GPUCopyPass* pCopyPass = SDL_BeginGPUCopyPass( pCommandBuffer );
     if( !pCopyPass )
     {
-        sdlbuffer_LogSDLError( "SDL_BeginGPUCopyPass" );
-        if( bOwnCommandBuffer )
-            SDL_CancelGPUCommandBuffer( pCommandBuffer );
+        sdleng_LogError( "SDLBuffer", "SDL_BeginGPUCopyPass" );
+        sdleng_CancelTransientCommandBuffer( pCommandBuffer, bOwnCommandBuffer );
         sdlbuffer_ReleaseTransientUploadBuffer( pTransferBuffer, bOwnTransferBuffer );
         return FALSE;
     }
@@ -389,9 +312,10 @@ xbool sdlbuffer_SubmitUpload( rbuffer& Buffer, const rbuffer_upload_desc& Upload
                            Upload.bCycle ? true : false );
     SDL_EndGPUCopyPass( pCopyPass );
 
-    if( bOwnCommandBuffer && !SDL_SubmitGPUCommandBuffer( pCommandBuffer ) )
+    if( !sdleng_SubmitTransientCommandBuffer( pCommandBuffer,
+                                               bOwnCommandBuffer,
+                                               "SDLBuffer" ) )
     {
-        sdlbuffer_LogSDLError( "SDL_SubmitGPUCommandBuffer" );
         sdlbuffer_ReleaseTransientUploadBuffer( pTransferBuffer, bOwnTransferBuffer );
         return FALSE;
     }
@@ -427,13 +351,13 @@ xbool rbuffer_Create( rbuffer& Buffer, const rbuffer_desc& Desc, const void* pIn
         Props = SDL_CreateProperties();
         if( !Props )
         {
-            sdlbuffer_LogSDLError( "SDL_CreateProperties" );
+            sdleng_LogError( "SDLBuffer", "SDL_CreateProperties" );
             return FALSE;
         }
 
         if( !SDL_SetStringProperty( Props, SDL_PROP_GPU_BUFFER_CREATE_NAME_STRING, Desc.pDebugName ) )
         {
-            sdlbuffer_LogSDLError( "SDL_SetStringProperty" );
+            sdleng_LogError( "SDLBuffer", "SDL_SetStringProperty" );
             SDL_DestroyProperties( Props );
             return FALSE;
         }
@@ -452,7 +376,7 @@ xbool rbuffer_Create( rbuffer& Buffer, const rbuffer_desc& Desc, const void* pIn
 
     if( !pBuffer )
     {
-        sdlbuffer_LogSDLError( "SDL_CreateGPUBuffer" );
+        sdleng_LogError( "SDLBuffer", "SDL_CreateGPUBuffer" );
         return FALSE;
     }
 
@@ -477,7 +401,7 @@ xbool rbuffer_Create( rbuffer& Buffer, const rbuffer_desc& Desc, const void* pIn
 
     Buffer.Desc     = Desc;
     Buffer.pBackend = pBackend;
-    sdlbuffer_LinkBuffer( pBackend );
+    sdleng_LinkBackend( s_pBufferList, pBackend, s_BufferCount );
 
     if( pInitialData )
     {
@@ -500,7 +424,7 @@ void rbuffer_Destroy( rbuffer& Buffer )
         return;
 
     sdlbuffer_InvalidateBindings( pBackend->pBuffer );
-    sdlbuffer_UnlinkBuffer( pBackend );
+    sdleng_UnlinkBackend( s_pBufferList, pBackend, s_BufferCount );
     sdlbuffer_ReleaseBackend( pBackend );
     delete pBackend;
 

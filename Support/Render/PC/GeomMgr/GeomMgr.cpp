@@ -2472,7 +2472,7 @@ render_pipeline* GeomMgr::GetRigidPipeline( RenderStateSelection const& state, x
     desc.ColorTargets[1].Blend = rstate_GetBlendDesc( state.Blend );
     desc.ColorTargets[2].Blend = rstate_GetBlendDesc( state.Blend );
     desc.ColorTargets[3].Blend = rstate_GetBlendDesc( state.Blend );
-    desc.DepthFormat = RTARGET_FORMAT_DEPTH24_STENCIL8;
+    desc.DepthFormat = RTARGET_FORMAT_DEPTH_STENCIL;
     desc.pDebugName = state.SceneOnly ? "GeomRigidScene" : "GeomRigidGBuffer";
 
     return isPrewarm ? m_rigidPipelines.Prewarm( index, desc ) : m_rigidPipelines.GetOrCreate( index, desc );
@@ -2540,7 +2540,7 @@ render_pipeline* GeomMgr::GetSkinPipeline( RenderStateSelection const& state, xb
     desc.ColorTargets[1].Blend = rstate_GetBlendDesc( state.Blend );
     desc.ColorTargets[2].Blend = rstate_GetBlendDesc( state.Blend );
     desc.ColorTargets[3].Blend = rstate_GetBlendDesc( state.Blend );
-    desc.DepthFormat = RTARGET_FORMAT_DEPTH24_STENCIL8;
+    desc.DepthFormat = RTARGET_FORMAT_DEPTH_STENCIL;
     desc.pDebugName = state.SceneOnly ? "GeomSkinScene" : "GeomSkinGBuffer";
 
     return isPrewarm ? m_skinPipelines.Prewarm( index, desc ) : m_skinPipelines.GetOrCreate( index, desc );

@@ -100,7 +100,7 @@ xbool pip_render_target::Create( s32 TargetWidth, s32 TargetHeight )
     }
 
     rtarget_desc depthDesc = colorDesc;
-    depthDesc.Format         = RTARGET_FORMAT_DEPTH24_STENCIL8;
+    depthDesc.Format         = RTARGET_FORMAT_DEPTH_STENCIL;
     depthDesc.bBindAsTexture = FALSE;
 
     if( !rtarget_Create( DepthTarget, depthDesc ) )

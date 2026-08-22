@@ -49,6 +49,65 @@
 extern SDL_GPUDevice*          g_pSDLGPUDevice;
 extern SDL_Window*             g_pSDLWindow;
 
+//==============================================================================
+//  SHARED SDL GPU POLICY
+//==============================================================================
+
+void                            sdleng_LogError                   ( const char* pSubsystem,
+                                                                    const char* pContext );
+xbool                           sdleng_InitializeFormatPolicy     ( void );
+void                            sdleng_ResetFormatPolicy          ( void );
+xbool                           sdleng_ToSDLSampleCount           ( u32 SampleCount,
+                                                                    SDL_GPUSampleCount& SDLSampleCount );
+SDL_GPUTextureFormat            sdleng_ToSDLTextureFormat         ( rtarget_format Format );
+SDL_GPUTextureFormat            sdleng_ToSDLTextureFormat         ( vram_texture_format Format );
+xbool                           sdleng_IsDepthFormat               ( rtarget_format Format );
+xbool                           sdleng_IsDepthFormat               ( vram_texture_format Format );
+xbool                           sdleng_HasStencil                  ( rtarget_format Format );
+xbool                           sdleng_HasAlpha                    ( rtarget_format Format );
+xbool                           sdleng_AcquireTransientCommandBuffer( SDL_GPUCommandBuffer*& pCommandBuffer,
+                                                                      xbool& bOwned,
+                                                                      const char* pSubsystem );
+xbool                           sdleng_SubmitTransientCommandBuffer ( SDL_GPUCommandBuffer* pCommandBuffer,
+                                                                      xbool bOwned,
+                                                                      const char* pSubsystem );
+void                            sdleng_CancelTransientCommandBuffer ( SDL_GPUCommandBuffer* pCommandBuffer,
+                                                                      xbool bOwned );
+
+//==============================================================================
+
+template<typename T>
+inline void sdleng_LinkBackend( T*& pHead, T* pBackend, u32& Count )
+{
+    pBackend->pPrev = NULL;
+    pBackend->pNext = pHead;
+    if( pHead )
+        pHead->pPrev = pBackend;
+    pHead = pBackend;
+    ++Count;
+}
+
+//==============================================================================
+
+template<typename T>
+inline void sdleng_UnlinkBackend( T*& pHead, T* pBackend, u32& Count )
+{
+    if( pBackend->pPrev )
+        pBackend->pPrev->pNext = pBackend->pNext;
+    else if( pHead == pBackend )
+        pHead = pBackend->pNext;
+
+    if( pBackend->pNext )
+        pBackend->pNext->pPrev = pBackend->pPrev;
+
+    pBackend->pPrev = NULL;
+    pBackend->pNext = NULL;
+    if( Count )
+        --Count;
+}
+
+//==============================================================================
+
 enum sdleng_present_policy
 {
     SDLENG_PRESENT_VSYNC = 0,

@@ -81,18 +81,6 @@ static sdlrtarget_cache            s_TargetCache;
 //==============================================================================
 
 static
-void sdlrtarget_LogSDLError( const char* pContext )
-{
-    const char* pError = SDL_GetError();
-    if( !pError || !pError[0] )
-        pError = "unknown SDL error";
-
-    x_DebugMsg( "SDLRTarget: %s failed: %s\n", pContext, pError );
-}
-
-//==============================================================================
-
-static
 SDL_FColor sdlrtarget_ToSDLColor( const f32 Color[4] )
 {
     SDL_FColor SDLColor;
@@ -101,27 +89,6 @@ SDL_FColor sdlrtarget_ToSDLColor( const f32 Color[4] )
     SDLColor.b = Color ? Color[2] : 0.0f;
     SDLColor.a = Color ? Color[3] : 1.0f;
     return SDLColor;
-}
-
-//==============================================================================
-
-static
-SDL_GPUTextureFormat sdlrtarget_ToSDLFormat( rtarget_format Format )
-{
-    switch( Format )
-    {
-        case RTARGET_FORMAT_RGBA8:             return SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
-        case RTARGET_FORMAT_BGRA8:             return SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM;
-        case RTARGET_FORMAT_RGBA16F:           return SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
-        case RTARGET_FORMAT_RGBA32F:           return SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT;
-        case RTARGET_FORMAT_RGB10A2:           return SDL_GPU_TEXTUREFORMAT_R10G10B10A2_UNORM;
-        case RTARGET_FORMAT_R8:                return SDL_GPU_TEXTUREFORMAT_R8_UNORM;
-        case RTARGET_FORMAT_RG16F:             return SDL_GPU_TEXTUREFORMAT_R16G16_FLOAT;
-        case RTARGET_FORMAT_R32F:              return SDL_GPU_TEXTUREFORMAT_R32_FLOAT;
-        case RTARGET_FORMAT_DEPTH24_STENCIL8:  return SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
-        case RTARGET_FORMAT_DEPTH32F:          return SDL_GPU_TEXTUREFORMAT_D32_FLOAT;
-        default:                               return SDL_GPU_TEXTUREFORMAT_INVALID;
-    }
 }
 
 //==============================================================================
@@ -137,21 +104,6 @@ rtarget_format sdlrtarget_FromSDLFormat( SDL_GPUTextureFormat Format )
         case SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT: return RTARGET_FORMAT_RGBA16F;
         case SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT: return RTARGET_FORMAT_RGBA32F;
         default: return RTARGET_FORMAT_COUNT;
-    }
-}
-
-//==============================================================================
-
-static
-xbool sdlrtarget_ToSDLSampleCount( u32 SampleCount, SDL_GPUSampleCount& SDLSampleCount )
-{
-    switch( SampleCount )
-    {
-        case 1:  SDLSampleCount = SDL_GPU_SAMPLECOUNT_1; return TRUE;
-        case 2:  SDLSampleCount = SDL_GPU_SAMPLECOUNT_2; return TRUE;
-        case 4:  SDLSampleCount = SDL_GPU_SAMPLECOUNT_4; return TRUE;
-        case 8:  SDLSampleCount = SDL_GPU_SAMPLECOUNT_8; return TRUE;
-        default: return FALSE;
     }
 }
 
@@ -215,49 +167,6 @@ xbool sdlrtarget_ToSDLDepthStoreOp( rtarget_store_op Op, SDL_GPUStoreOp& SDLStor
         default:
             return FALSE;
     }
-}
-
-//==============================================================================
-
-static
-xbool sdlrtarget_HasStencil( rtarget_format Format )
-{
-    return Format == RTARGET_FORMAT_DEPTH24_STENCIL8;
-}
-
-//==============================================================================
-
-static
-void sdlrtarget_LinkTarget( rtarget_backend* pBackend )
-{
-    pBackend->pPrev = NULL;
-    pBackend->pNext = s_pTargetList;
-
-    if( s_pTargetList )
-        s_pTargetList->pPrev = pBackend;
-
-    s_pTargetList = pBackend;
-    s_TargetCount++;
-}
-
-//==============================================================================
-
-static
-void sdlrtarget_UnlinkTarget( rtarget_backend* pBackend )
-{
-    if( pBackend->pPrev )
-        pBackend->pPrev->pNext = pBackend->pNext;
-    else if( s_pTargetList == pBackend )
-        s_pTargetList = pBackend->pNext;
-
-    if( pBackend->pNext )
-        pBackend->pNext->pPrev = pBackend->pPrev;
-
-    pBackend->pPrev = NULL;
-    pBackend->pNext = NULL;
-
-    if( s_TargetCount )
-        s_TargetCount--;
 }
 
 //==============================================================================
@@ -518,7 +427,7 @@ xbool sdlrtarget_EnsureBackBufferDepth( void )
     rtarget_desc DepthDesc;
     DepthDesc.Width          = BackBufferDesc.Width;
     DepthDesc.Height         = BackBufferDesc.Height;
-    DepthDesc.Format         = RTARGET_FORMAT_DEPTH24_STENCIL8;
+    DepthDesc.Format         = RTARGET_FORMAT_DEPTH_STENCIL;
     DepthDesc.SampleCount    = BackBufferDesc.SampleCount;
     DepthDesc.SampleQuality  = 0;
     DepthDesc.bBindAsTexture = FALSE;
@@ -563,6 +472,9 @@ xbool sdlrtarget_FillColorTargetInfo( const rtarget_color_attachment_desc& Src,
 
     SDL_GPUStoreOp StoreOp;
     if( !sdlrtarget_ToSDLStoreOp( Src.StoreOp, StoreOp ) )
+        return FALSE;
+
+    if( Src.bCycle && (Src.LoadOp == RTARGET_LOAD_LOAD) )
         return FALSE;
 
     Dst.texture              = Src.pTarget->pBackend->pTexture;
@@ -613,7 +525,8 @@ xbool sdlrtarget_FillDepthTargetInfo( const rtarget_depth_attachment_desc& Src,
     if( !Src.pTarget->bIsDepthTarget )
         return FALSE;
 
-    if( (Src.MipLevel > 255) || (Src.Layer > 255) )
+    // rtarget textures are currently always single-level, single-layer 2D textures.
+    if( (Src.MipLevel != 0) || (Src.Layer != 0) )
         return FALSE;
 
     SDL_GPUStoreOp DepthStoreOp;
@@ -624,12 +537,20 @@ xbool sdlrtarget_FillDepthTargetInfo( const rtarget_depth_attachment_desc& Src,
         return FALSE;
     }
 
+    if( Src.bCycle &&
+        ((Src.DepthLoadOp == RTARGET_LOAD_LOAD) ||
+         (sdleng_HasStencil( Src.pTarget->Desc.Format ) &&
+          (Src.StencilLoadOp == RTARGET_LOAD_LOAD))) )
+    {
+        return FALSE;
+    }
+
     Dst.texture          = Src.pTarget->pBackend->pTexture;
     Dst.clear_depth      = Src.ClearDepth;
     Dst.load_op          = sdlrtarget_ToSDLLoadOp( Src.DepthLoadOp );
     Dst.store_op         = DepthStoreOp;
-    Dst.stencil_load_op  = sdlrtarget_HasStencil( Src.pTarget->Desc.Format ) ? sdlrtarget_ToSDLLoadOp( Src.StencilLoadOp ) : SDL_GPU_LOADOP_DONT_CARE;
-    Dst.stencil_store_op = sdlrtarget_HasStencil( Src.pTarget->Desc.Format ) ? StencilStoreOp : SDL_GPU_STOREOP_DONT_CARE;
+    Dst.stencil_load_op  = sdleng_HasStencil( Src.pTarget->Desc.Format ) ? sdlrtarget_ToSDLLoadOp( Src.StencilLoadOp ) : SDL_GPU_LOADOP_DONT_CARE;
+    Dst.stencil_store_op = sdleng_HasStencil( Src.pTarget->Desc.Format ) ? StencilStoreOp : SDL_GPU_STOREOP_DONT_CARE;
     Dst.cycle            = Src.bCycle ? true : false;
     Dst.clear_stencil    = Src.ClearStencil;
     Dst.mip_level        = (Uint8)Src.MipLevel;
@@ -639,29 +560,6 @@ xbool sdlrtarget_FillDepthTargetInfo( const rtarget_depth_attachment_desc& Src,
 }
 
 //==============================================================================
-
-static
-xbool sdlrtarget_GetCopyCommandBuffer( SDL_GPUCommandBuffer*& pCommandBuffer, xbool& bOwnCommandBuffer )
-{
-    pCommandBuffer      = sdleng_GetCommandBuffer();
-    bOwnCommandBuffer   = FALSE;
-
-    if( pCommandBuffer )
-        return TRUE;
-
-    if( !g_pSDLGPUDevice )
-        return FALSE;
-
-    pCommandBuffer = SDL_AcquireGPUCommandBuffer( g_pSDLGPUDevice );
-    if( !pCommandBuffer )
-    {
-        sdlrtarget_LogSDLError( "SDL_AcquireGPUCommandBuffer" );
-        return FALSE;
-    }
-
-    bOwnCommandBuffer = TRUE;
-    return TRUE;
-}
 
 //==============================================================================
 //  SYSTEM FUNCTIONS
@@ -686,7 +584,7 @@ void rtarget_Kill( void )
     while( s_pTargetList )
     {
         rtarget_backend* pBackend = s_pTargetList;
-        sdlrtarget_UnlinkTarget( pBackend );
+        sdleng_UnlinkBackend( s_pTargetList, pBackend, s_TargetCount );
         sdlrtarget_ReleaseBackend( pBackend );
 
         if( pBackend->pOwner )
@@ -724,12 +622,12 @@ xbool rtarget_Create( rtarget& Target, const rtarget_desc& Desc )
         return FALSE;
     }
 
-    SDL_GPUTextureFormat Format = sdlrtarget_ToSDLFormat( Desc.Format );
+    SDL_GPUTextureFormat Format = sdleng_ToSDLTextureFormat( Desc.Format );
     if( Format == SDL_GPU_TEXTUREFORMAT_INVALID )
         return FALSE;
 
     SDL_GPUSampleCount SampleCount;
-    if( !sdlrtarget_ToSDLSampleCount( Desc.SampleCount, SampleCount ) )
+    if( !sdleng_ToSDLSampleCount( Desc.SampleCount, SampleCount ) )
         return FALSE;
 
     if( !SDL_GPUTextureSupportsSampleCount( g_pSDLGPUDevice, Format, SampleCount ) )
@@ -748,7 +646,7 @@ xbool rtarget_Create( rtarget& Target, const rtarget_desc& Desc )
     SDL_PropertiesID Props = SDL_CreateProperties();
     if( !Props )
     {
-        sdlrtarget_LogSDLError( "SDL_CreateProperties" );
+        sdleng_LogError( "SDLRTarget", "SDL_CreateProperties" );
         return FALSE;
     }
 
@@ -772,7 +670,7 @@ xbool rtarget_Create( rtarget& Target, const rtarget_desc& Desc )
 
     if( !bPropertiesValid )
     {
-        sdlrtarget_LogSDLError( "SDL_SetProperty" );
+        sdleng_LogError( "SDLRTarget", "SDL_SetProperty" );
         SDL_DestroyProperties( Props );
         return FALSE;
     }
@@ -781,7 +679,7 @@ xbool rtarget_Create( rtarget& Target, const rtarget_desc& Desc )
     {
         if( !SDL_SetStringProperty( Props, SDL_PROP_GPU_TEXTURE_CREATE_NAME_STRING, Desc.pDebugName ) )
         {
-            sdlrtarget_LogSDLError( "SDL_SetStringProperty" );
+            sdleng_LogError( "SDLRTarget", "SDL_SetStringProperty" );
             SDL_DestroyProperties( Props );
             return FALSE;
         }
@@ -805,7 +703,7 @@ xbool rtarget_Create( rtarget& Target, const rtarget_desc& Desc )
 
     if( !pTexture )
     {
-        sdlrtarget_LogSDLError( "SDL_CreateGPUTexture" );
+        sdleng_LogError( "SDLRTarget", "SDL_CreateGPUTexture" );
         return FALSE;
     }
 
@@ -834,7 +732,7 @@ xbool rtarget_Create( rtarget& Target, const rtarget_desc& Desc )
     Target.bIsDepthTarget = bDepth;
     Target.pBackend       = pBackend;
 
-    sdlrtarget_LinkTarget( pBackend );
+    sdleng_LinkBackend( s_pTargetList, pBackend, s_TargetCount );
     return TRUE;
 }
 
@@ -852,7 +750,7 @@ void rtarget_Destroy( rtarget& Target )
         return;
     }
 
-    sdlrtarget_UnlinkTarget( pBackend );
+    sdleng_UnlinkBackend( s_pTargetList, pBackend, s_TargetCount );
     sdlrtarget_ReleaseBackend( pBackend );
     delete pBackend;
 
@@ -1149,15 +1047,16 @@ xbool rtarget_Copy( const rtarget_copy_desc& Desc )
 
     SDL_GPUCommandBuffer* pCommandBuffer = NULL;
     xbool bOwnCommandBuffer = FALSE;
-    if( !sdlrtarget_GetCopyCommandBuffer( pCommandBuffer, bOwnCommandBuffer ) )
+    if( !sdleng_AcquireTransientCommandBuffer( pCommandBuffer,
+                                                bOwnCommandBuffer,
+                                                "SDLRTarget" ) )
         return FALSE;
 
     SDL_GPUCopyPass* pCopyPass = SDL_BeginGPUCopyPass( pCommandBuffer );
     if( !pCopyPass )
     {
-        sdlrtarget_LogSDLError( "SDL_BeginGPUCopyPass" );
-        if( bOwnCommandBuffer )
-            SDL_CancelGPUCommandBuffer( pCommandBuffer );
+        sdleng_LogError( "SDLRTarget", "SDL_BeginGPUCopyPass" );
+        sdleng_CancelTransientCommandBuffer( pCommandBuffer, bOwnCommandBuffer );
         return FALSE;
     }
 
@@ -1188,9 +1087,10 @@ xbool rtarget_Copy( const rtarget_copy_desc& Desc )
                                  Desc.bCycle ? true : false );
     SDL_EndGPUCopyPass( pCopyPass );
 
-    if( bOwnCommandBuffer && !SDL_SubmitGPUCommandBuffer( pCommandBuffer ) )
+    if( !sdleng_SubmitTransientCommandBuffer( pCommandBuffer,
+                                               bOwnCommandBuffer,
+                                               "SDLRTarget" ) )
     {
-        sdlrtarget_LogSDLError( "SDL_SubmitGPUCommandBuffer" );
         return FALSE;
     }
 
@@ -1293,8 +1193,7 @@ const shader_resource* rtarget_GetShaderResource( const rtarget& Target )
 
 xbool rtarget_IsDepthFormat( rtarget_format Format )
 {
-    return (Format == RTARGET_FORMAT_DEPTH24_STENCIL8) ||
-           (Format == RTARGET_FORMAT_DEPTH32F);
+    return sdleng_IsDepthFormat( Format );
 }
 
 //==============================================================================
@@ -1311,7 +1210,7 @@ const char* rtarget_GetFormatName( rtarget_format Format )
         case RTARGET_FORMAT_R8:               return "R8";
         case RTARGET_FORMAT_RG16F:            return "RG16F";
         case RTARGET_FORMAT_R32F:             return "R32F";
-        case RTARGET_FORMAT_DEPTH24_STENCIL8: return "DEPTH24_STENCIL8";
+        case RTARGET_FORMAT_DEPTH_STENCIL: return "DEPTH_STENCIL";
         case RTARGET_FORMAT_DEPTH32F:         return "DEPTH32F";
         default:                              return "UNKNOWN";
     }

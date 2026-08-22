@@ -337,7 +337,7 @@ xbool DecalRenderer::PrewarmPipelines( void )
         for ( u32 blendIndex = 0; blendIndex < ARRAYSIZE( blendPresets ); ++blendIndex )
         {
             desc.Blend = blendPresets[blendIndex];
-            desc.Pass.DepthFormat = RTARGET_FORMAT_DEPTH24_STENCIL8;
+            desc.Pass.DepthFormat = RTARGET_FORMAT_DEPTH_STENCIL;
             desc.Depth = RSTATE_DEPTH_PRESET_NO_WRITE;
             if ( !GetOrCreatePipeline( desc, TRUE ) )
             {
@@ -812,11 +812,15 @@ xbool DecalRenderer::BuildPipelineDesc( render_pipeline_desc& out, PipelineDesc 
         return FALSE;
     }
 
-    shader_vertex_buffer_desc vertexBuffer;
-    vertexBuffer.Slot = 0;
-    vertexBuffer.Stride = sizeof( Vertex );
+    static shader_vertex_buffer_desc const vertexBuffer = []()
+    {
+        shader_vertex_buffer_desc result;
+        result.Slot = 0;
+        result.Stride = sizeof( Vertex );
+        return result;
+    }();
 
-    shader_vertex_element const layout[] = {
+    static shader_vertex_element const layout[] = {
         shader_vertex_element( 0, 0, SHADER_VERTEX_FORMAT_FLOAT3, offsetof( Vertex, Position ) ),
         shader_vertex_element( 1, 0, SHADER_VERTEX_FORMAT_UBYTE4N_BGRA, offsetof( Vertex, Color ) ),
         shader_vertex_element( 2, 0, SHADER_VERTEX_FORMAT_FLOAT2, offsetof( Vertex, UV ) ) };

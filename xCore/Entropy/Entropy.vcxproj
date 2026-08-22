@@ -499,6 +499,7 @@
     <ClCompile Include="SDLEngine\sdleng_rtarget.cpp" />
     <ClCompile Include="SDLEngine\sdleng_shader.cpp" />
     <ClCompile Include="SDLEngine\sdleng_state.cpp" />
+    <ClCompile Include="SDLEngine\sdleng_utils.cpp" />
     <ClCompile Include="SDLEngine\sdleng_vram.cpp" />
     <ClCompile Include="SDLEngine\sdleng_window.cpp" />
     <ClCompile Include="Input\e_Input.cpp" />

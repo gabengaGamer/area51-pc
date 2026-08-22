@@ -312,7 +312,7 @@ render_pipeline* GeomMgr::GetDynamicPipeline( u32 RenderFlags )
     Desc.ColorTargets[0].Blend = rstate_GetBlendDesc( RSTATE_BLEND_PRESET_NONE );
     Desc.ColorTargets[1].Blend = rstate_GetBlendDesc( RSTATE_BLEND_PRESET_NONE );
     Desc.ColorTargets[2].Blend = rstate_GetBlendDesc( RSTATE_BLEND_PRESET_NONE );
-    Desc.DepthFormat = RTARGET_FORMAT_DEPTH24_STENCIL8;
+    Desc.DepthFormat = RTARGET_FORMAT_DEPTH_STENCIL;
     Desc.pDebugName = Wireframe ? "GeomDynamicWireGBuffer" : "GeomDynamicGBuffer";
 
     return m_dynamicPipelines.GetOrCreate( Wireframe ? 1 : 0, Desc );
