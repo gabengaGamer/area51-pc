@@ -462,24 +462,27 @@ f32 hud_object::GetLetterBoxAmount( void ) const
 
 //==============================================================================
 
-void hud_object::RenderLetterBox( const rect& VP, f32 Amount )
+void hud_object::RenderLetterBox( const irect& VP, f32 Amount )
 {
-    // Compute percentage of bar coverage
-    f32 BarHeight = (f32)VP.GetHeight() * 0.2f * Amount;
+    // Compute percentage of bar coverage in physical pixels
+    const f32 ClampedAmount = x_clamp( Amount, 0.0f, 1.0f );
+    const s32 ViewportHeight = VP.GetHeight();
+    const s32 BarHeight = iMin( ViewportHeight,
+                                iMax( 0, (s32)x_round( (f32)ViewportHeight * 0.2f * ClampedAmount, 1.0f ) ) );
 
     // Compute top bar
-    irect TopRect( (s32)( VP.Min.X - 3.0f ),
-        (s32)( VP.Min.Y - 1.0f ), 
-        (s32)( VP.Max.X + 2.0f ),
-        (s32)( VP.Min.Y + BarHeight ) );
+    const irect TopRect( VP.l,
+                         VP.t,
+                         VP.r,
+                         VP.t + BarHeight );
 
     // Compute bottom bar
-    irect BottomRect( (s32)( VP.Min.X - 3.0f ),
-        (s32)( VP.Max.Y - BarHeight ),
-        (s32)( VP.Max.X + 2.0f ),
-        (s32)( VP.Max.Y ) );
+    const irect BottomRect( VP.l,
+                            VP.b - BarHeight,
+                            VP.r,
+                            VP.b );
 
-#ifdef X_EDITOR    
+#ifdef X_EDITOR
     const xcolor BarColor = XCOLOR_PURPLE;
 #else
     const xcolor BarColor = XCOLOR_BLACK;
@@ -557,24 +560,28 @@ void hud_object::OnRender( void )
         LayoutPlayerHud( PlayerHud, HudViewDimensions );
     }
 
-    g_UIRenderer.PushHudSpace( ScreenViewport );
-
     // Draw the cinematic bars?
     if( ( g_first_person ) && ( IsLetterBoxOn() ) )
     {
-        RenderLetterBox( HudViewDimensions, GetLetterBoxAmount() );
+        g_UIRenderer.PushScreenSpace( ScreenViewport );
+        RenderLetterBox( ScreenViewport, GetLetterBoxAmount() );
+        g_UIRenderer.PopScreenSpace();
+
+        g_UIRenderer.PushHudSpace( ScreenViewport );
         ((hud_renderable*)PlayerHud.m_HudComponents[ HUD_ELEMENT_TEXT_BOX ])->OnRender( pActivePlayer );
+        g_UIRenderer.PopHudSpace();
     }
     else
     {
+        g_UIRenderer.PushHudSpace( ScreenViewport );
         PlayerHud.OnRender();
 
         // Timer
         if( m_RenderTimer )
             RenderTimer( HudViewDimensions );
-    }
 
-    g_UIRenderer.PopHudSpace();
+        g_UIRenderer.PopHudSpace();
+    }
 
     g_UIRenderer.PushScreenSpace( ScreenViewport );
     RenderFrameRateInfo();

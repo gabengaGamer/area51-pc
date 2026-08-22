@@ -65,7 +65,7 @@ public:
             void            SetupLetterBox          ( xbool On, f32 ScrollTime = 0.0f );
             xbool           IsLetterBoxOn           ( void ) const;
             f32             GetLetterBoxAmount      ( void ) const;
-            static  void            RenderLetterBox         ( const rect& VP, f32 Percent );
+            static  void            RenderLetterBox         ( const irect& VP, f32 Percent );
 
             void            SetObjectiveText        ( s32 TableNameIndex, s32 TitleStringIndex );
             void            RenderObjectiveText     ( void );

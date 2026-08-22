@@ -566,16 +566,15 @@ void camera::RenderEditorView( void )
     m_View.SetPixelScale( PixelScale );
     RenderView( Viewport );
     
-    // Render letter box?        
+    // Render letter box?
     if( ( bIsCinemaCamera ) && ( eng_Begin() ) )
     {
-        rect VP;
-        VP.Min.Set( (f32)Viewport.l, (f32)Viewport.t );
-        VP.Max.Set( (f32)Viewport.r, (f32)Viewport.b );
-        hud_object::RenderLetterBox( VP, 1.0f );
+        g_UIRenderer.PushScreenSpace( Viewport );
+        hud_object::RenderLetterBox( Viewport, 1.0f );
+        g_UIRenderer.PopScreenSpace();
         eng_End();
     }
-        
+
     // Render red border
     if( eng_Begin() )    
     {
