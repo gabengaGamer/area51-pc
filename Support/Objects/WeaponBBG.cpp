@@ -191,6 +191,18 @@ void weapon_bbg::OnRenderTransparent(void)
     // Call base class render which basically just calls object::OnRenderTransparent().
     new_weapon::OnRenderTransparent();
 
+    object* pOwner = g_ObjMgr.GetObjectByGuid( m_ParentGuid );
+    if( (m_CurrentRenderState == RENDER_STATE_PLAYER) &&
+        pOwner && pOwner->IsKindOf( player::GetRTTI() ) &&
+        !player::GetSafeType( *pOwner ).IsCinemaRunning() )
+    {
+        UpdateLaserPath( player::GetSafeType( *pOwner ) );
+    }
+    else
+    {
+        ClearLaserPath();
+    }
+
     if( m_LaserSegmentCount > 0 )
     {
         const texture* pLaserTexture = m_LaserTexture.GetPointer();
@@ -291,6 +303,12 @@ void weapon_bbg::UpdateLaserPath( player& Player )
     vector3 EndPos;
     Player.GetProjectileHitLocation( EndPos, FALSE );
     vector3 OldStartPos = StartPos;
+
+    vector3 TraceDirection = EndPos - StartPos;
+    if( TraceDirection.SafeNormalize() )
+    {
+        EndPos += TraceDirection * 10.0f;
+    }
 
     g_CollisionMgr.AddToIgnoreList( Player.GetGuid() );
     g_CollisionMgr.RaySetup( Player.GetGuid(), StartPos, EndPos );
@@ -838,19 +856,6 @@ void weapon_bbg::OnAdvanceSimulation( f32 DeltaTime )
 
     new_weapon::OnAdvanceSimulation( DeltaTime );
 
-    object* pOwner = g_ObjMgr.GetObjectByGuid( m_ParentGuid );
-    if( (m_CurrentRenderState == RENDER_STATE_PLAYER) &&
-        pOwner && pOwner->IsKindOf( player::GetRTTI() ) )
-    {
-        player& Player = player::GetSafeType( *pOwner );
-        if( !Player.IsCinemaRunning() )
-        {
-            UpdateLaserPath( Player );
-            return;
-        }
-    }
-
-    ClearLaserPath();
 }
 
 //==============================================================================
