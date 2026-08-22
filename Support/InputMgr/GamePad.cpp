@@ -58,7 +58,7 @@ struct mapping_definition
     input_gadget            GadgetID;
     f32                     Scale;
     u32                     ContextMask;
-    input_action_value_mode ValueMode = INPUT_ACTION_VALUE_POSITIVE_AXIS;
+    input_action_value_mode ValueMode = INPUT_ACTION_VALUE_AUTO;
 };
 
 //-------------------------------------------------------------------------
@@ -182,10 +182,10 @@ const logical_definition s_DebugMenuLogicals[] =
 static
 const mapping_definition s_GameplayMappings[] =
 {
-    { ingame_pad::MOVE_FORWARD,                          INPUT_XBOX_STICK_LEFT_Y,   1.0f,   INGAME_CONTEXT },
-    { ingame_pad::MOVE_BACKWARD,                         INPUT_XBOX_STICK_LEFT_Y,   -1.0f,  INGAME_CONTEXT },
-    { ingame_pad::STRAFE_LEFT,                           INPUT_XBOX_STICK_LEFT_X,   -1.0f,  INGAME_CONTEXT },
-    { ingame_pad::STRAFE_RIGHT,                          INPUT_XBOX_STICK_LEFT_X,   1.0f,   INGAME_CONTEXT },
+    { ingame_pad::MOVE_FORWARD,                          INPUT_XBOX_STICK_LEFT_Y,   1.0f,   INGAME_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { ingame_pad::MOVE_BACKWARD,                         INPUT_XBOX_STICK_LEFT_Y,   -1.0f,  INGAME_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { ingame_pad::STRAFE_LEFT,                           INPUT_XBOX_STICK_LEFT_X,   -1.0f,  INGAME_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { ingame_pad::STRAFE_RIGHT,                          INPUT_XBOX_STICK_LEFT_X,   1.0f,   INGAME_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { ingame_pad::LOOK_HORIZONTAL,                       INPUT_XBOX_STICK_RIGHT_X,  1.0f,   INGAME_CONTEXT, INPUT_ACTION_VALUE_SIGNED_AXIS },
     { ingame_pad::LOOK_VERTICAL,                         INPUT_XBOX_STICK_RIGHT_Y,  -1.0f,  INGAME_CONTEXT, INPUT_ACTION_VALUE_SIGNED_AXIS },
     { ingame_pad::ACTION_JUMP,                           INPUT_XBOX_BTN_A,          1.0f,   INGAME_CONTEXT },
@@ -259,10 +259,10 @@ const mapping_definition s_GameplayMappings[] =
     { ingame_pad::ACTION_DROP_FLAG,                      INPUT_KBD_N,               1.0f,   INGAME_CONTEXT },
     { ingame_pad::ACTION_SCOREBOARD,                     INPUT_KBD_TAB,             1.0f,   INGAME_CONTEXT },
 
-    { ingame_pad::MOVE_FORWARD,                          INPUT_PS2_STICK_LEFT_Y,    1.0f,   INGAME_CONTEXT },
-    { ingame_pad::MOVE_BACKWARD,                         INPUT_PS2_STICK_LEFT_Y,    -1.0f,  INGAME_CONTEXT },
-    { ingame_pad::STRAFE_LEFT,                           INPUT_PS2_STICK_LEFT_X,    -1.0f,  INGAME_CONTEXT },
-    { ingame_pad::STRAFE_RIGHT,                          INPUT_PS2_STICK_LEFT_X,    1.0f,   INGAME_CONTEXT },
+    { ingame_pad::MOVE_FORWARD,                          INPUT_PS2_STICK_LEFT_Y,    1.0f,   INGAME_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { ingame_pad::MOVE_BACKWARD,                         INPUT_PS2_STICK_LEFT_Y,    -1.0f,  INGAME_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { ingame_pad::STRAFE_LEFT,                           INPUT_PS2_STICK_LEFT_X,    -1.0f,  INGAME_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { ingame_pad::STRAFE_RIGHT,                          INPUT_PS2_STICK_LEFT_X,    1.0f,   INGAME_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { ingame_pad::LOOK_HORIZONTAL,                       INPUT_PS2_STICK_RIGHT_X,   1.0f,   INGAME_CONTEXT, INPUT_ACTION_VALUE_SIGNED_AXIS },
     { ingame_pad::LOOK_VERTICAL,                         INPUT_PS2_STICK_RIGHT_Y,   -1.0f,  INGAME_CONTEXT, INPUT_ACTION_VALUE_SIGNED_AXIS },
     { ingame_pad::ACTION_JUMP,                           INPUT_PS2_BTN_L1,          1.0f,   INGAME_CONTEXT },
@@ -315,10 +315,10 @@ const mapping_definition s_FrontendMappings[] =
     { frontend_pad::UI_DOWN,                             INPUT_XBOX_BTN_DOWN,       1.0f,   FRONTEND_CONTEXT },
     { frontend_pad::UI_LEFT,                             INPUT_XBOX_BTN_LEFT,       1.0f,   FRONTEND_CONTEXT },
     { frontend_pad::UI_RIGHT,                            INPUT_XBOX_BTN_RIGHT,      1.0f,   FRONTEND_CONTEXT },
-    { frontend_pad::UI_UP,                               INPUT_XBOX_STICK_LEFT_Y,   1.0f,   FRONTEND_CONTEXT },
-    { frontend_pad::UI_DOWN,                             INPUT_XBOX_STICK_LEFT_Y,   -1.0f,  FRONTEND_CONTEXT },
-    { frontend_pad::UI_LEFT,                             INPUT_XBOX_STICK_LEFT_X,   -1.0f,  FRONTEND_CONTEXT },
-    { frontend_pad::UI_RIGHT,                            INPUT_XBOX_STICK_LEFT_X,   1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_UP,                               INPUT_XBOX_STICK_LEFT_Y,   1.0f,   FRONTEND_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { frontend_pad::UI_DOWN,                             INPUT_XBOX_STICK_LEFT_Y,   -1.0f,  FRONTEND_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { frontend_pad::UI_LEFT,                             INPUT_XBOX_STICK_LEFT_X,   -1.0f,  FRONTEND_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { frontend_pad::UI_RIGHT,                            INPUT_XBOX_STICK_LEFT_X,   1.0f,   FRONTEND_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { frontend_pad::UI_SELECT,                           INPUT_XBOX_BTN_A,          1.0f,   FRONTEND_CONTEXT },
     { frontend_pad::UI_BACK,                             INPUT_XBOX_BTN_B,          1.0f,   FRONTEND_CONTEXT },
     { frontend_pad::UI_BACK,                             INPUT_XBOX_BTN_BACK,       1.0f,   FRONTEND_CONTEXT },
@@ -348,10 +348,10 @@ const mapping_definition s_FrontendMappings[] =
     { frontend_pad::UI_DOWN,                             INPUT_PS2_BTN_L_DOWN,      1.0f,   FRONTEND_CONTEXT },
     { frontend_pad::UI_LEFT,                             INPUT_PS2_BTN_L_LEFT,      1.0f,   FRONTEND_CONTEXT },
     { frontend_pad::UI_RIGHT,                            INPUT_PS2_BTN_L_RIGHT,     1.0f,   FRONTEND_CONTEXT },
-    { frontend_pad::UI_UP,                               INPUT_PS2_STICK_LEFT_Y,    1.0f,   FRONTEND_CONTEXT },
-    { frontend_pad::UI_DOWN,                             INPUT_PS2_STICK_LEFT_Y,    -1.0f,  FRONTEND_CONTEXT },
-    { frontend_pad::UI_LEFT,                             INPUT_PS2_STICK_LEFT_X,    -1.0f,  FRONTEND_CONTEXT },
-    { frontend_pad::UI_RIGHT,                            INPUT_PS2_STICK_LEFT_X,    1.0f,   FRONTEND_CONTEXT },
+    { frontend_pad::UI_UP,                               INPUT_PS2_STICK_LEFT_Y,    1.0f,   FRONTEND_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { frontend_pad::UI_DOWN,                             INPUT_PS2_STICK_LEFT_Y,    -1.0f,  FRONTEND_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { frontend_pad::UI_LEFT,                             INPUT_PS2_STICK_LEFT_X,    -1.0f,  FRONTEND_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
+    { frontend_pad::UI_RIGHT,                            INPUT_PS2_STICK_LEFT_X,    1.0f,   FRONTEND_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { frontend_pad::UI_SELECT,                           INPUT_PS2_BTN_CROSS,       1.0f,   FRONTEND_CONTEXT },
     { frontend_pad::UI_BACK,                             INPUT_PS2_BTN_SQUARE,      1.0f,   FRONTEND_CONTEXT },
     { frontend_pad::UI_DELETE,                           INPUT_PS2_BTN_CIRCLE,      1.0f,   FRONTEND_CONTEXT },
@@ -376,13 +376,13 @@ const mapping_definition s_DebugMenuMappings[] =
     { frontend_pad::DEBUG_MENU_PREV_PAGE,                INPUT_XBOX_BTN_WHITE,      1.0f,   DEBUG_MENU_CONTEXT },
     { frontend_pad::DEBUG_MENU_PREV_PAGE,                INPUT_XBOX_L_TRIGGER,      1.0f,   DEBUG_MENU_CONTEXT },
     { frontend_pad::DEBUG_MENU_NEXT_ITEM,                INPUT_XBOX_BTN_DOWN,       1.0f,   DEBUG_MENU_CONTEXT },
-    { frontend_pad::DEBUG_MENU_NEXT_ITEM,                INPUT_XBOX_STICK_LEFT_Y,  -1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_NEXT_ITEM,                INPUT_XBOX_STICK_LEFT_Y,  -1.0f,   DEBUG_MENU_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { frontend_pad::DEBUG_MENU_PREV_ITEM,                INPUT_XBOX_BTN_UP,         1.0f,   DEBUG_MENU_CONTEXT },
-    { frontend_pad::DEBUG_MENU_PREV_ITEM,                INPUT_XBOX_STICK_LEFT_Y,   1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_PREV_ITEM,                INPUT_XBOX_STICK_LEFT_Y,   1.0f,   DEBUG_MENU_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { frontend_pad::DEBUG_MENU_INCREMENT,                INPUT_XBOX_BTN_RIGHT,      1.0f,   DEBUG_MENU_CONTEXT },
-    { frontend_pad::DEBUG_MENU_INCREMENT,                INPUT_XBOX_STICK_LEFT_X,   1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_INCREMENT,                INPUT_XBOX_STICK_LEFT_X,   1.0f,   DEBUG_MENU_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { frontend_pad::DEBUG_MENU_DECREMENT,                INPUT_XBOX_BTN_LEFT,       1.0f,   DEBUG_MENU_CONTEXT },
-    { frontend_pad::DEBUG_MENU_DECREMENT,                INPUT_XBOX_STICK_LEFT_X,  -1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_DECREMENT,                INPUT_XBOX_STICK_LEFT_X,  -1.0f,   DEBUG_MENU_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { frontend_pad::DEBUG_MENU_ACTION,                   INPUT_XBOX_BTN_A,          1.0f,   DEBUG_MENU_CONTEXT },
     { frontend_pad::DEBUG_MENU_ACTION,                   INPUT_XBOX_BTN_X,          1.0f,   DEBUG_MENU_CONTEXT },
 
@@ -403,13 +403,13 @@ const mapping_definition s_DebugMenuMappings[] =
     { frontend_pad::DEBUG_MENU_PREV_PAGE,                INPUT_PS2_BTN_L1,          1.0f,   DEBUG_MENU_CONTEXT },
     { frontend_pad::DEBUG_MENU_PREV_PAGE,                INPUT_PS2_BTN_L2,          1.0f,   DEBUG_MENU_CONTEXT },
     { frontend_pad::DEBUG_MENU_NEXT_ITEM,                INPUT_PS2_BTN_L_DOWN,      1.0f,   DEBUG_MENU_CONTEXT },
-    { frontend_pad::DEBUG_MENU_NEXT_ITEM,                INPUT_PS2_STICK_LEFT_Y,   -1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_NEXT_ITEM,                INPUT_PS2_STICK_LEFT_Y,   -1.0f,   DEBUG_MENU_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { frontend_pad::DEBUG_MENU_PREV_ITEM,                INPUT_PS2_BTN_L_UP,        1.0f,   DEBUG_MENU_CONTEXT },
-    { frontend_pad::DEBUG_MENU_PREV_ITEM,                INPUT_PS2_STICK_LEFT_Y,    1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_PREV_ITEM,                INPUT_PS2_STICK_LEFT_Y,    1.0f,   DEBUG_MENU_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { frontend_pad::DEBUG_MENU_INCREMENT,                INPUT_PS2_BTN_L_RIGHT,     1.0f,   DEBUG_MENU_CONTEXT },
-    { frontend_pad::DEBUG_MENU_INCREMENT,                INPUT_PS2_STICK_LEFT_X,    1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_INCREMENT,                INPUT_PS2_STICK_LEFT_X,    1.0f,   DEBUG_MENU_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { frontend_pad::DEBUG_MENU_DECREMENT,                INPUT_PS2_BTN_L_LEFT,      1.0f,   DEBUG_MENU_CONTEXT },
-    { frontend_pad::DEBUG_MENU_DECREMENT,                INPUT_PS2_STICK_LEFT_X,   -1.0f,   DEBUG_MENU_CONTEXT },
+    { frontend_pad::DEBUG_MENU_DECREMENT,                INPUT_PS2_STICK_LEFT_X,   -1.0f,   DEBUG_MENU_CONTEXT, INPUT_ACTION_VALUE_POSITIVE_AXIS },
     { frontend_pad::DEBUG_MENU_ACTION,                   INPUT_PS2_BTN_CROSS,       1.0f,   DEBUG_MENU_CONTEXT },
     { frontend_pad::DEBUG_MENU_ACTION,                   INPUT_PS2_BTN_CIRCLE,      1.0f,   DEBUG_MENU_CONTEXT },
 };

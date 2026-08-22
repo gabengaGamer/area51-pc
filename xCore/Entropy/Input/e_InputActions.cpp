@@ -41,6 +41,19 @@ xbool IsInputDeviceValid( input_device Device )
 //==============================================================================
 
 static
+f32 TransformAnalogValue( f32 Value, f32 Scale, input_action_value_mode ValueMode )
+{
+    Value *= Scale;
+    if( ValueMode == INPUT_ACTION_VALUE_POSITIVE_AXIS )
+    {
+        Value = MAX( Value, 0.0f );
+    }
+    return Value;
+}
+
+//==============================================================================
+
+static
 void RecordSampleValue( f32&                 SampledValue,
                         input_action_source& SampledSource,
                         f32                  Value,
@@ -414,6 +427,24 @@ void input_action_map::AddBinding( s32                     ActionID,
         return;
     }
 
+    input_gadget_info const& Info = input_system::GetGadgetInfo( GadgetID );
+    if( ValueMode == INPUT_ACTION_VALUE_AUTO )
+    {
+        if( Info.ValueKind == INPUT_VALUE_RELATIVE_AXIS )
+        {
+            ValueMode = INPUT_ACTION_VALUE_SIGNED_AXIS;
+        }
+        else if( Info.ValueKind == INPUT_VALUE_PULSE )
+        {
+            ValueMode = INPUT_ACTION_VALUE_POSITIVE_AXIS;
+        }
+        else if( Info.ValueKind == INPUT_VALUE_ABSOLUTE_AXIS )
+        {
+            ASSERT( FALSE );
+            ValueMode = INPUT_ACTION_VALUE_SIGNED_AXIS;
+        }
+    }
+
     binding& Binding      = m_Bindings[Platform].Append();
     Binding.GadgetID      = GadgetID;
     Binding.Scale         = Scale;
@@ -561,12 +592,10 @@ void input_action_map::SampleBinding( input_snapshot const& Snapshot,
     {
         if( Info.ValueKind == INPUT_VALUE_ABSOLUTE_AXIS )
         {
-            f32 Value = Snapshot.GetValue( Binding.GadgetID, DeviceID ) * Binding.Scale;
-            if( Binding.ValueMode == INPUT_ACTION_VALUE_POSITIVE_AXIS )
-            {
-                Value = MAX( Value, 0.0f );
-            }
-            Binding.LastAnalogValue = Value;
+            Binding.LastAnalogValue = TransformAnalogValue(
+                Snapshot.GetValue( Binding.GadgetID, DeviceID ),
+                Binding.Scale,
+                Binding.ValueMode );
         }
         return;
     }
@@ -663,11 +692,7 @@ void input_action_map::SampleAnalogBinding( input_snapshot const& Snapshot,
     f32 Value = Snapshot.GetValue( Binding.GadgetID, DeviceID );
 
     (void)OverrideActionValue( Binding.ActionID, Value );
-    Value *= Binding.Scale;
-    if( Binding.ValueMode == INPUT_ACTION_VALUE_POSITIVE_AXIS )
-    {
-        Value = MAX( Value, 0.0f );
-    }
+    Value = TransformAnalogValue( Value, Binding.Scale, Binding.ValueMode );
     OnActionValue( Binding.ActionID, Value );
     RecordSample( Action, Value, Binding.GadgetID, DeviceID );
 
