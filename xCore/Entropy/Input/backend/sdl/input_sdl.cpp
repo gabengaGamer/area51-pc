@@ -29,8 +29,8 @@ static s32 const MAX_GAMEPADS = INPUT_MAX_DEVICES;
 
 static byte const DIGITAL_ON = (1 << 0);
 
-static f32 const LEFT_STICK_DEAD_ZONE  = 7849.0f / 32768.0f;
-static f32 const RIGHT_STICK_DEAD_ZONE = 8689.0f / 32768.0f;
+static f32 const LEFT_STICK_DEAD_ZONE  = 0.30f;
+static f32 const RIGHT_STICK_DEAD_ZONE = 0.30f;
 static f32 const TRIGGER_THRESHOLD     = 30.0f   / 255.0f;
 
 enum

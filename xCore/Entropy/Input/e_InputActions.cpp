@@ -561,7 +561,12 @@ void input_action_map::SampleBinding( input_snapshot const& Snapshot,
     {
         if( Info.ValueKind == INPUT_VALUE_ABSOLUTE_AXIS )
         {
-            Binding.LastAnalogValue = Snapshot.GetValue( Binding.GadgetID, DeviceID ) * Binding.Scale;
+            f32 Value = Snapshot.GetValue( Binding.GadgetID, DeviceID ) * Binding.Scale;
+            if( Binding.ValueMode == INPUT_ACTION_VALUE_POSITIVE_AXIS )
+            {
+                Value = MAX( Value, 0.0f );
+            }
+            Binding.LastAnalogValue = Value;
         }
         return;
     }
@@ -659,6 +664,10 @@ void input_action_map::SampleAnalogBinding( input_snapshot const& Snapshot,
 
     (void)OverrideActionValue( Binding.ActionID, Value );
     Value *= Binding.Scale;
+    if( Binding.ValueMode == INPUT_ACTION_VALUE_POSITIVE_AXIS )
+    {
+        Value = MAX( Value, 0.0f );
+    }
     OnActionValue( Binding.ActionID, Value );
     RecordSample( Action, Value, Binding.GadgetID, DeviceID );
 

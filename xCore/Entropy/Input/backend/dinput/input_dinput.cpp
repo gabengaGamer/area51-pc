@@ -716,8 +716,8 @@ void ReadXboxPad( s32 DeviceID )
 
         // Radial deadzone: if the stick magnitude is inside the dead zone we zero
         // both axes so they don't drift; outside we rescale to fill the full range.
-        const f32 LDZ = (f32)XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE  * StickInv;
-        const f32 RDZ = (f32)XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE * StickInv;
+        const f32 LDZ = 0.30f;
+        const f32 RDZ = 0.30f;
 
         f32 LMag = sqrtf( LX*LX + LY*LY );
         if( LMag > 1.0f )
