@@ -30,7 +30,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: A51-windows-x64-release
-          path: build/windows-vs2022-x64/Apps/GameApp/Release/A51.exe
+          path: build/windows-msvc-x64/Apps/GameApp/Release/A51.exe
           if-no-files-found: error
 
   linux-x64:
