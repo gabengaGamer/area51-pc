@@ -122,8 +122,9 @@ namespace
 //=============================================================================
 
 render::primitive_draw_desc fx_CreateMaterial( const texture& Texture,
-                                                    s32            CombineMode,
-                                                    xbool          ReadZ )
+                                                s32            CombineMode,
+                                                xbool          ReadZ,
+                                                render::primitive_sampler_mode Sampler )
 {
     render::primitive_blend_mode Blend = render::PRIMITIVE_BLEND_ALPHA;
     render::primitive_output_mode Output = render::PRIMITIVE_OUTPUT_COUNT;
@@ -182,7 +183,7 @@ render::primitive_draw_desc fx_CreateMaterial( const texture& Texture,
                                         Blend,
                                         ReadZ ? render::PRIMITIVE_DEPTH_READ_ONLY : render::PRIMITIVE_DEPTH_DISABLED,
                                         render::PRIMITIVE_RASTER_SOLID_NO_CULL,
-                                        render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
+                                        Sampler,
                                         Layer,
                                         Output );
 }

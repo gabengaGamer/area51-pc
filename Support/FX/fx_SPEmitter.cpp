@@ -500,7 +500,8 @@ void fx_spemitter::SubmitRender( const fx_effect_base* pEffect ) const
         UniScale *= GetUniformScale();
 
     const render::primitive_draw_desc Material =
-        fx_CreateMaterial( *pDiffuse, EmitterDef.CombineMode, EmitterDef.ReadZ );
+        fx_CreateMaterial( *pDiffuse, EmitterDef.CombineMode, EmitterDef.ReadZ,
+                           render::PRIMITIVE_SAMPLER_LINEAR_CLAMP );
 
     if( EmitterDef.Flags & SPE_VELOCITY_ORIENTED )
     {

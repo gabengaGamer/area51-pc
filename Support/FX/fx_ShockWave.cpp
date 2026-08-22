@@ -326,7 +326,8 @@ void fx_shockwave::SubmitRender( const fx_effect_base* pEffect ) const
     if( pDiffuse )
     {
         const render::primitive_draw_desc Material =
-            fx_CreateMaterial( *pDiffuse, ShockWaveDef.CombineMode, ShockWaveDef.ReadZ );
+            fx_CreateMaterial( *pDiffuse, ShockWaveDef.CombineMode, ShockWaveDef.ReadZ,
+                               render::PRIMITIVE_SAMPLER_LINEAR_WRAP );
 
         VERIFY( fx_SubmitMesh( Material,
                                L2W,

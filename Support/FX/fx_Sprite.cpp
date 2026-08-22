@@ -68,7 +68,8 @@ void fx_sprite::SubmitRender( const fx_effect_base* pEffect ) const
     if( pDiffuse )
     {
         const render::primitive_draw_desc Material =
-            fx_CreateMaterial( *pDiffuse, SpriteDef.CombineMode, SpriteDef.ReadZ );
+            fx_CreateMaterial( *pDiffuse, SpriteDef.CombineMode, SpriteDef.ReadZ,
+                               render::PRIMITIVE_SAMPLER_LINEAR_CLAMP );
 
         VERIFY( render::SubmitPrimitiveSprite( Material,
                                                Position,

@@ -80,7 +80,8 @@ void fx_plane::SubmitRender( const fx_effect_base* pEffect ) const
         const s16     Indices[6]   = { 0, 3, 2, 2, 1, 0 };
 
         const render::primitive_draw_desc Material =
-            fx_CreateMaterial( *pDiffuse, PlaneDef.CombineMode, PlaneDef.ReadZ );
+            fx_CreateMaterial( *pDiffuse, PlaneDef.CombineMode, PlaneDef.ReadZ,
+                               render::PRIMITIVE_SAMPLER_LINEAR_WRAP );
 
         VERIFY( fx_SubmitMesh( Material,
                                L2W,
