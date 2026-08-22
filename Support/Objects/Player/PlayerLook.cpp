@@ -12,25 +12,20 @@
 
 //=========================================================================
 
-static void ApplyMouseZoomModifiers( PlayerLookSample& Sample,
-                                     f32               HorizontalFovRatio,
-                                     f32               MovementModifier )
+static 
+f32 CalculateZoomFovScale( radian OriginalFov,
+                           radian ZoomFov )
 {
-    Sample.MouseYaw   /= HorizontalFovRatio;
-    Sample.MouseYaw   *= MovementModifier;
-    Sample.MousePitch *= MovementModifier;
-}
+    f32 const OriginalProjectionScale = x_tan( OriginalFov * 0.5f );
+    f32 const ZoomProjectionScale     = x_tan( ZoomFov     * 0.5f );
 
-//=========================================================================
+    ASSERT( OriginalProjectionScale > F32_MIN );
+    if( OriginalProjectionScale <= F32_MIN )
+    {
+        return 1.0f;
+    }
 
-static void ApplyGamepadZoomModifiers( PlayerLookSample& Sample,
-                                       f32               HorizontalFovRatio,
-                                       f32               MovementModifier )
-{
-    Sample.GamepadYaw   /= HorizontalFovRatio;
-    Sample.GamepadPitch /= HorizontalFovRatio;
-    Sample.GamepadYaw   *= MovementModifier;
-    Sample.GamepadPitch *= MovementModifier;
+    return ZoomProjectionScale / OriginalProjectionScale;
 }
 
 //=========================================================================
@@ -76,15 +71,14 @@ void player::ApplyZoomLookModifiers( PlayerLookSample& Sample )
         return;
     }
 
-    f32 const HorizontalFovRatio = m_OriginalViewInfo.XFOV / pWeapon->GetXFOV();
-    f32 const MovementModifier = pWeapon->GetZoomMovementMod();
+    f32 const ZoomFovScale = CalculateZoomFovScale( m_OriginalViewInfo.XFOV,
+                                                    pWeapon->GetXFOV() );
+    f32 const LookScale = ZoomFovScale * pWeapon->GetZoomMovementMod();
 
-    ApplyMouseZoomModifiers( Sample,
-                             HorizontalFovRatio,
-                             MovementModifier );
-    ApplyGamepadZoomModifiers( Sample,
-                               HorizontalFovRatio,
-                               MovementModifier );
+    Sample.MouseYaw     *= LookScale;
+    Sample.MousePitch   *= LookScale;
+    Sample.GamepadYaw   *= LookScale;
+    Sample.GamepadPitch *= LookScale;
 }
 
 //=========================================================================
