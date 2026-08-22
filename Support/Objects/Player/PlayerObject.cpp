@@ -268,7 +268,7 @@ player::player( void ) :
     m_pPlayerTitle = "Unknown Mutation";
     
     m_PeakLandVelocity      = -1.0f;
-    m_PeakJumpVelocity      = -1.0f;
+    m_bJumpStarted          = FALSE;
 
     // Get the players ear id.
     m_AudioEarID = g_AudioMgr.CreateEar();

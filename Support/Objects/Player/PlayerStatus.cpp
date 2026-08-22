@@ -789,6 +789,7 @@ void player::ResetFallStateAfterDiscontinuity( void )
     m_bFalling = FALSE;
     m_bJustLanded = FALSE;
     m_JumpBufferTime = 0.0f;
+    m_bJumpStarted = FALSE;
     m_JumpedOffLadderGuid = NULL_GUID;
     SetIsAirborn( m_Physics.IsAirborn() );
 }

@@ -42,7 +42,7 @@ public:
     void                SetMaxCollsions     ( s32 Max ) { m_MaxCollisions = Max; }
     bbox                GetBBox             ( void ) const;
     xbool               SetCrouchParametric ( f32 NormalizePercent );
-    void                Jump                ( f32 YVel );
+    xbool               Jump                ( f32 YVel );
     void                FlingWithVelocity   ( const vector3& Velocity,
                                                     f32      AirControl,
                                                     xbool    FlingOnly,

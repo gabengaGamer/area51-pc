@@ -511,7 +511,7 @@ public:
             s32             GetLocalSlot        ( void ) const { return m_LocalSlot; }
             const PlayerInputState& GetInputState( void ) const { return m_Input.GetState(); }
             void            SetLocalSlot        ( s32 Slot) { m_LocalSlot = Slot; }
-    virtual void            Jump                ( void );
+    virtual xbool           Jump                ( void );
             void            HitJumpPad          ( const vector3& Velocity, 
                                                         f32      DeltaTime, 
                                                         f32      AirControl, 
@@ -1199,7 +1199,7 @@ protected:
     f32                     m_fShakeMaxPitch;
     f32                     m_fShakeMaxYaw;
     f32                     m_PeakLandVelocity;             // The maximum vertival velocity the player reached while landing.
-    f32                     m_PeakJumpVelocity;             // The maximum vertival velocity the player reached while jumping.
+    xbool                   m_bJumpStarted;                 // TRUE when a jump has started this frame.
 
     guid                    m_LoreObjectGuids[MAX_LORE_ITEMS];      // The lore objects for this level
     xbool                   m_bAllLoreObjectsCollected;             // have we collected all the lore objects

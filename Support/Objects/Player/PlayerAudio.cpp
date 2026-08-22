@@ -135,7 +135,10 @@ xbool player::InvalidSound( void )
 void player::UpdateAudio( f32 DeltaTime )
 {
     if( GetLocalSlot() == -1 )
+    {
+        m_bJumpStarted = FALSE;
         return;
+    }
 
     // Update the ear.
     view& View = GetSimulationView();
@@ -149,16 +152,11 @@ void player::UpdateAudio( f32 DeltaTime )
 
 void player::ProcessSfxEvents ( void )
 {
-    // Did we jumped.
-    if( (m_Physics.GetFallMode()) && (m_Physics.GetVelocity().GetY() > 0.0f) && (m_PeakJumpVelocity == -1.0f) )
+    // Did we jump?
+    if( m_bJumpStarted )
     {
-        m_PeakJumpVelocity = m_Physics.GetVelocity().GetY();
+        m_bJumpStarted = FALSE;
         g_AudioMgr.PlayVolumeClipped( "HumanMale_JumpGrunt", GetPosition(), GetZone1(), TRUE );
-    }
-    
-    if( (m_Physics.GetVelocity().GetY() <= 0.0f) && !(m_Physics.GetFallMode()) )
-    {
-        m_PeakJumpVelocity = -1.0f;
     }
             
     // Are we going to land.

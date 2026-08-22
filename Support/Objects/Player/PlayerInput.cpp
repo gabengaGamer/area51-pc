@@ -393,10 +393,7 @@ void player::OnButtonInput( f32 DeltaTime )
 
         if( (m_JumpBufferTime > 0.0f) && !m_Physics.GetFallMode() )
         {
-            xbool const WasOnLadder = m_bOnLadder;
-            Jump();
-
-            if( WasOnLadder || m_Physics.GetJumpMode() )
+            if( Jump() )
             {
                 m_JumpBufferTime = 0.0f;
 

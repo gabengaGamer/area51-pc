@@ -1186,7 +1186,6 @@ void character_physics::UpdatePhysics( f32 DeltaTime, f32 IncomingVerticalVeloci
                 m_bFallMode         = FALSE;
                 m_bFlingMode        = FALSE;
                 m_bTrackingGround   = TRUE;
-                m_Position          = m_GroundPos;
             }
         }
     }
@@ -1344,22 +1343,27 @@ xbool character_physics::SetCrouchParametric( f32 NormalizePercent )
 }
 
 //=========================================================================
-void character_physics::Jump( f32 Vel )
+xbool character_physics::Jump( f32 Vel )
 {
 #ifdef LOG_CHARACTER_PHYSICS
     CLOG_MESSAGE( g_LogCharacterPhysics, "character_physics::Jump", "" );
 #endif
 
-    if( m_bFallMode )
-        return;
+    // Must be standing on the ground
+    if( m_bFallMode || m_bJumpMode || !m_bTrackingGround )
+        return FALSE;
 
-    m_Velocity += vector3( 0, Vel, 0 );
+    // Ground tracking can add vertical velocity on slopes. Do not carry it
+    // into the jump.
+    m_Velocity.GetY() = Vel;
     m_bJumpMode = TRUE;
     m_bTrackingGround = FALSE;
 
 #ifdef LOG_CHARACTER_PHYSICS
     CLOG_MESSAGE( g_LogCharacterPhysics, "character_physics::Jump", "Set Jump" );
 #endif
+
+    return TRUE;
 }
 
 //=========================================================================

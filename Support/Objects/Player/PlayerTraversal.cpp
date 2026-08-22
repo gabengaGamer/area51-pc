@@ -178,7 +178,7 @@ xbool player::UpdateLadderMovement( f32 DeltaTime )
 
 //===========================================================================
 
-void player::Jump( void )
+xbool player::Jump( void )
 {
 
     // Lookup physics
@@ -192,6 +192,8 @@ void player::Jump( void )
         vector3 Vel = Physics.GetVelocity();
         Vel += m_LadderOutDir * LADDER_JUMP_OFF_VEL;
         Physics.SetVelocity(Vel);
+        m_bJumpStarted = TRUE;
+        return TRUE;
     }
     else
     {
@@ -199,18 +201,15 @@ void player::Jump( void )
         if( g_MPTweaks.Active )
             JumpVelocity *= g_MPTweaks.JumpSpeed;
 
-        // Do not carry uphill ground velocity into the jump. Keep horizontal
-        // movement and any downward velocity intact.
-        vector3 Velocity = Physics.GetVelocity();
-        if( Velocity.GetY() > 0.0f )
-        {
-            Velocity.GetY() = 0.0f;
-            Physics.SetVelocity( Velocity );
-        }
-
         // Jump vertically
-        Physics.Jump( JumpVelocity );
-    }             
+        if( Physics.Jump( JumpVelocity ) )
+        {
+            m_bJumpStarted = TRUE;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }
 
 //===========================================================================
