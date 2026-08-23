@@ -12,138 +12,332 @@
 #include "e_ScratchMem.hpp"
 
 //=========================================================================
-// GLOBAL INSTANCE
+//  GLOBAL INSTANCE
 //=========================================================================
 
 light_mgr g_LightMgr;
 
 //=========================================================================
-// FUNCTIONS
+//  HELPER FUNCTIONS
 //=========================================================================
 
-static f32 ComputeLightScore( xcolor const& color, f32 intensity )
+static 
+f32 ComputeLightScore( xcolor const& Color, f32 Intensity )
 {
-    f32 const r = static_cast<f32>( color.R ) * intensity;
-    f32 const g = static_cast<f32>( color.G ) * intensity;
-    f32 const b = static_cast<f32>( color.B ) * intensity;
+    f32 const R = static_cast<f32>( Color.R ) * Intensity;
+    f32 const G = static_cast<f32>( Color.G ) * Intensity;
+    f32 const B = static_cast<f32>( Color.B ) * Intensity;
 
-    return r * r + g * g + b * b;
+    return R * R + G * G + B * B;
 }
 
-static void ScaleLightColor( xcolor& dst, xcolor const& src, f32 intensity )
+//=========================================================================
+
+static 
+void ScaleLightColor( xcolor& Destination, xcolor const& Source, f32 Intensity )
 {
-    dst.R = static_cast<u8>( MIN( 255.0f, static_cast<f32>( src.R ) * intensity ) );
-    dst.G = static_cast<u8>( MIN( 255.0f, static_cast<f32>( src.G ) * intensity ) );
-    dst.B = static_cast<u8>( MIN( 255.0f, static_cast<f32>( src.B ) * intensity ) );
-    dst.A = static_cast<u8>( MIN( 255.0f, static_cast<f32>( src.A ) * intensity ) );
+    Destination.R = static_cast<u8>( MIN( 255.0f, static_cast<f32>( Source.R ) * Intensity ) );
+    Destination.G = static_cast<u8>( MIN( 255.0f, static_cast<f32>( Source.G ) * Intensity ) );
+    Destination.B = static_cast<u8>( MIN( 255.0f, static_cast<f32>( Source.B ) * Intensity ) );
+    Destination.A = static_cast<u8>( MIN( 255.0f, static_cast<f32>( Source.A ) * Intensity ) );
 }
 
-static f32 ComputeSpotConeAttenuation( vector3 const& lightPos, vector3 const& lightDirection, f32 outerConeCos,
-                                       f32 coneCosRangeInv, vector3 const& targetPos )
+//=========================================================================
+
+static 
+f32 ComputeSpotConeAttenuation( vector3 const& LightPosition, vector3 const& LightDirection, f32 OuterConeCos,
+                                f32 ConeCosRangeInv, vector3 const& TargetPosition )
 {
-    vector3 toTarget = targetPos - lightPos;
-    if ( !toTarget.SafeNormalize() )
+    vector3 ToTarget = TargetPosition - LightPosition;
+    if( !ToTarget.SafeNormalize() )
     {
         return 1.0f;
     }
 
-    f32 const spotCos = lightDirection.Dot( toTarget );
+    f32 const SpotCos = LightDirection.Dot( ToTarget );
 
-    return MINMAX( 0.0f, ( spotCos - outerConeCos ) * coneCosRangeInv, 1.0f );
+    return MINMAX( 0.0f, ( SpotCos - OuterConeCos ) * ConeCosRangeInv, 1.0f );
 }
 
-static xbool SphereIntersectsFiniteCone( vector3 const& sphereCenter, f32 sphereRadius, vector3 const& coneApex,
-                                         vector3 const& coneAxis, f32 coneOuterCos, f32 coneOuterSin, f32 coneOuterTan,
-                                         f32 coneLength )
+//=========================================================================
+
+static 
+xbool SphereIntersectsFiniteCone( vector3 const& SphereCenter, f32 SphereRadius, vector3 const& ConeApex,
+                                  vector3 const& ConeAxis, f32 ConeOuterCos, f32 ConeOuterSin, f32 ConeOuterTan,
+                                  f32 ConeLength )
 {
-    ASSERT( coneOuterCos > 0.0f );
+    ASSERT( ConeOuterCos > 0.0f );
 
-    vector3 const toCenter = sphereCenter - coneApex;
-    f32 const     centerDistSq = toCenter.Dot( toCenter );
-    f32 const     axialDistance = coneAxis.Dot( toCenter );
-    f32 const     sphereRadiusSq = sphereRadius * sphereRadius;
+    vector3 const ToCenter = SphereCenter - ConeApex;
+    f32 const     CenterDistSq = ToCenter.Dot( ToCenter );
+    f32 const     AxialDistance = ConeAxis.Dot( ToCenter );
+    f32 const     SphereRadiusSq = SphereRadius * SphereRadius;
 
-    if ( axialDistance < -sphereRadius )
+    if( AxialDistance < -SphereRadius )
     {
         return FALSE;
     }
 
-    if ( axialDistance > ( coneLength + sphereRadius ) )
+    if( AxialDistance > ( ConeLength + SphereRadius ) )
     {
         return FALSE;
     }
 
-    if ( axialDistance <= 0.0f )
+    if( AxialDistance <= 0.0f )
     {
-        return ( centerDistSq <= sphereRadiusSq );
+        return ( CenterDistSq <= SphereRadiusSq );
     }
 
-    f32 const radialDistanceSq = MAX( centerDistSq - ( axialDistance * axialDistance ), 0.0f );
-    f32 const radialDistance = x_sqrt( radialDistanceSq );
+    f32 const RadialDistanceSq = MAX( CenterDistSq - ( AxialDistance * AxialDistance ), 0.0f );
+    f32 const RadialDistance = x_sqrt( RadialDistanceSq );
 
-    if ( axialDistance < coneLength )
+    if( AxialDistance < ConeLength )
     {
-        f32 const sideDistance = ( radialDistance * coneOuterCos ) - ( axialDistance * coneOuterSin );
-        if ( sideDistance <= sphereRadius )
+        f32 const SideDistance = ( RadialDistance * ConeOuterCos ) - ( AxialDistance * ConeOuterSin );
+        if( SideDistance <= SphereRadius )
         {
             return TRUE;
         }
     }
 
-    f32 const coneCapRadius = coneLength * coneOuterTan;
-    f32 const capAxialDelta = MAX( axialDistance - coneLength, 0.0f );
-    f32 const capRadialDelta = MAX( radialDistance - coneCapRadius, 0.0f );
-    return ( ( capAxialDelta * capAxialDelta ) + ( capRadialDelta * capRadialDelta ) ) <= sphereRadiusSq;
+    f32 const ConeCapRadius = ConeLength * ConeOuterTan;
+    f32 const CapAxialDelta = MAX( AxialDistance - ConeLength, 0.0f );
+    f32 const CapRadialDelta = MAX( RadialDistance - ConeCapRadius, 0.0f );
+    return ( ( CapAxialDelta * CapAxialDelta ) + ( CapRadialDelta * CapRadialDelta ) ) <= SphereRadiusSq;
 }
 
-static xbool SpotLightAffectsSphere( vector3 const& lightPos, vector3 const& lightDirection, f32 outerConeCos,
-                                     f32 outerConeSin, f32 outerConeTan, f32 lightRadius, vector3 const& sphereCenter,
-                                     f32 sphereRadius )
+//=========================================================================
+
+static 
+xbool SpotLightAffectsSphere( vector3 const& LightPosition, vector3 const& LightDirection, f32 OuterConeCos,
+                              f32 OuterConeSin, f32 OuterConeTan, f32 LightRadius, vector3 const& SphereCenter,
+                              f32 SphereRadius )
 {
-    if ( outerConeCos <= 0.0f )
+    if( OuterConeCos <= 0.0f )
     {
         return TRUE;
     }
 
-    return SphereIntersectsFiniteCone( sphereCenter, sphereRadius, lightPos, lightDirection, outerConeCos, outerConeSin,
-                                       outerConeTan, lightRadius );
+    return SphereIntersectsFiniteCone( SphereCenter, SphereRadius, LightPosition, LightDirection,
+                                       OuterConeCos, OuterConeSin, OuterConeTan, LightRadius );
 }
 
-static void SetupLightCone( f32 innerAngle, f32 outerAngle, f32& innerConeCos, f32& outerConeCos, f32& outerConeSin,
-                            f32& outerConeTan, f32& coneCosRangeInv )
+//=========================================================================
+
+static 
+void SetupLightCone( f32 InnerAngle, f32 OuterAngle, f32& InnerConeCos, f32& OuterConeCos, f32& OuterConeSin,
+                     f32& OuterConeTan, f32& ConeCosRangeInv )
 {
-    innerConeCos = x_cos( DEG_TO_RAD( innerAngle ) * 0.5f );
-    outerConeCos = x_cos( DEG_TO_RAD( outerAngle ) * 0.5f );
+    InnerConeCos = x_cos( DEG_TO_RAD( InnerAngle ) * 0.5f );
+    OuterConeCos = x_cos( DEG_TO_RAD( OuterAngle ) * 0.5f );
 
-    f32 const coneCosRange = MAX( innerConeCos - outerConeCos, 0.0001f );
-    coneCosRangeInv = 1.0f / coneCosRange;
+    f32 const ConeCosRange = MAX( InnerConeCos - OuterConeCos, 0.0001f );
+    ConeCosRangeInv = 1.0f / ConeCosRange;
 
-    if ( outerConeCos > 0.0f )
+    if( OuterConeCos > 0.0f )
     {
-        outerConeSin = x_sqrt( MAX( 1.0f - ( outerConeCos * outerConeCos ), 0.0f ) );
-        outerConeTan = outerConeSin / outerConeCos;
+        OuterConeSin = x_sqrt( MAX( 1.0f - ( OuterConeCos * OuterConeCos ), 0.0f ) );
+        OuterConeTan = OuterConeSin / OuterConeCos;
     }
     else
     {
-        outerConeSin = 0.0f;
-        outerConeTan = 0.0f;
+        OuterConeSin = 0.0f;
+        OuterConeTan = 0.0f;
     }
 }
 
-static void SetupOmniLightCone( f32& innerConeCos, f32& outerConeCos, f32& outerConeSin, f32& outerConeTan,
-                                f32& coneCosRangeInv )
+//=========================================================================
+
+static 
+void SetupOmniLightCone( f32& InnerConeCos, f32& OuterConeCos, f32& OuterConeSin, f32& OuterConeTan,
+                         f32& ConeCosRangeInv )
 {
-    innerConeCos = 1.0f;
-    outerConeCos = 1.0f;
-    outerConeSin = 0.0f;
-    outerConeTan = 0.0f;
-    coneCosRangeInv = 0.0f;
+    InnerConeCos = 1.0f;
+    OuterConeCos = 1.0f;
+    OuterConeSin = 0.0f;
+    OuterConeTan = 0.0f;
+    ConeCosRangeInv = 0.0f;
 }
 
-light_mgr::light_mgr( void )
-    : m_firstLink( -1 ), m_nFadingLights( 0 ), m_nDynamicLights( 0 ), m_nCharLights( 0 ), m_isInCollection( FALSE ),
-      m_nSpadLights( 0 ), m_nNonCharLightsInSpad( 0 ), m_pSpadLights( NULL ), m_nCollectedLights( 0 )
+//=========================================================================
 
+static 
+void BuildLightCookieUV( vector3 const& Direction, vector3& CookieU, vector3& CookieV )
+{
+    vector3 Forward = Direction;
+    if( !Forward.SafeNormalize() )
+    {
+        Forward.Set( 0.0f, 0.0f, 1.0f );
+    }
+
+    CookieU = vector3( 0.0f, 1.0f, 0.0f ).Cross( Forward );
+    if( !CookieU.SafeNormalize() )
+    {
+        CookieU = vector3( 1.0f, 0.0f, 0.0f ).Cross( Forward );
+        if( !CookieU.SafeNormalize() )
+        {
+            CookieU.Set( 1.0f, 0.0f, 0.0f );
+        }
+    }
+
+    CookieV = Forward.Cross( CookieU );
+    if( !CookieV.SafeNormalize() )
+    {
+        CookieV.Set( 0.0f, 1.0f, 0.0f );
+    }
+}
+
+//=========================================================================
+//  FUNCTIONS
+//=========================================================================
+
+s32 light_mgr::SpadLightSortFn( void const* pA, void const* pB )
+{
+    light_mgr::spad_light const* pLightA = static_cast<light_mgr::spad_light const*>( pA );
+    light_mgr::spad_light const* pLightB = static_cast<light_mgr::spad_light const*>( pB );
+
+    if( pLightA->CharOnly > pLightB->CharOnly )
+    {
+        return 1;
+    }
+    if( pLightA->CharOnly < pLightB->CharOnly )
+    {
+        return -1;
+    }
+    if( pLightA->Score > pLightB->Score )
+    {
+        return -1;
+    }
+    if( pLightA->Score < pLightB->Score )
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+//=========================================================================
+
+xbool light_mgr::CalcDirLight( dir_light* pDestination, matrix4 const& LocalToWorld,
+                               bbox const& LocalBBox, bbox const& WorldBBox,
+                               vector3 const& WorldBBoxCenter, vector3 const& Position,
+                               f32 Radius, f32 Intensity, xcolor const& Color, s32 Shape,
+                               vector3 const& Direction, f32 OuterConeCos, f32 ConeCosRangeInv )
+{
+    if( WorldBBox.Intersect( Position, Radius ) )
+    {
+        // Move the light into local space so the bounding box remains accurate.
+        vector3 Temp = Position - LocalToWorld.GetTranslation();
+        vector3 LocalPosition( Temp.GetX() * LocalToWorld( 0, 0 ) +
+                               Temp.GetY() * LocalToWorld( 0, 1 ) +
+                               Temp.GetZ() * LocalToWorld( 0, 2 ),
+                               Temp.GetX() * LocalToWorld( 1, 0 ) +
+                               Temp.GetY() * LocalToWorld( 1, 1 ) +
+                               Temp.GetZ() * LocalToWorld( 1, 2 ),
+                               Temp.GetX() * LocalToWorld( 2, 0 ) +
+                               Temp.GetY() * LocalToWorld( 2, 1 ) +
+                               Temp.GetZ() * LocalToWorld( 2, 2 ) );
+
+        // Find the squared distance from the light to the local bounding box.
+        f32 DistanceDelta;
+        f32 DistanceSquared = 0.0f;
+        if( LocalPosition.GetX() > LocalBBox.Max.GetX() )
+        {
+            DistanceDelta = LocalPosition.GetX() - LocalBBox.Max.GetX();
+            DistanceSquared += DistanceDelta * DistanceDelta;
+        }
+
+        if( LocalPosition.GetX() < LocalBBox.Min.GetX() )
+        {
+            DistanceDelta = LocalBBox.Min.GetX() - LocalPosition.GetX();
+            DistanceSquared += DistanceDelta * DistanceDelta;
+        }
+
+        if( LocalPosition.GetY() > LocalBBox.Max.GetY() )
+        {
+            DistanceDelta = LocalPosition.GetY() - LocalBBox.Max.GetY();
+            DistanceSquared += DistanceDelta * DistanceDelta;
+        }
+
+        if( LocalPosition.GetY() < LocalBBox.Min.GetY() )
+        {
+            DistanceDelta = LocalBBox.Min.GetY() - LocalPosition.GetY();
+            DistanceSquared += DistanceDelta * DistanceDelta;
+        }
+
+        if( LocalPosition.GetZ() > LocalBBox.Max.GetZ() )
+        {
+            DistanceDelta = LocalPosition.GetZ() - LocalBBox.Max.GetZ();
+            DistanceSquared += DistanceDelta * DistanceDelta;
+        }
+
+        if( LocalPosition.GetZ() < LocalBBox.Min.GetZ() )
+        {
+            DistanceDelta = LocalBBox.Min.GetZ() - LocalPosition.GetZ();
+            DistanceSquared += DistanceDelta * DistanceDelta;
+        }
+
+        // Convert distance attenuation into light intensity.
+        f32 RadiusSquared = Radius * Radius;
+
+        if( RadiusSquared == 0.0f )
+        {
+            RadiusSquared = 1.0f;
+        }
+
+        f32 LightIntensity = 1.0f - DistanceSquared / RadiusSquared;
+        LightIntensity = MAX( LightIntensity, 0.0f );
+        LightIntensity *= Intensity;
+
+        if( LightIntensity > 0.0f )
+        {
+            // Point the derived directional light toward the object's center.
+            if( Shape == LIGHT_SHAPE_SPOT )
+            {
+                LightIntensity *= ComputeSpotConeAttenuation( Position, Direction, OuterConeCos,
+                                                               ConeCosRangeInv, WorldBBoxCenter );
+            }
+
+            if( LightIntensity <= 0.0f )
+            {
+                return FALSE;
+            }
+
+            vector3 LightDirection = WorldBBoxCenter - Position;
+            if( !LightDirection.SafeNormalize() )
+            {
+                // The light may be placed exactly at the object's center.
+                LightDirection.Set( 0.7071f, -0.7071f, 0.0f );
+            }
+
+            pDestination->Col.R = static_cast<u8>( MIN( LightIntensity * static_cast<f32>( Color.R ), 255.0f ) );
+            pDestination->Col.G = static_cast<u8>( MIN( LightIntensity * static_cast<f32>( Color.G ), 255.0f ) );
+            pDestination->Col.B = static_cast<u8>( MIN( LightIntensity * static_cast<f32>( Color.B ), 255.0f ) );
+            pDestination->Col.A = 0;
+            pDestination->Dir = LightDirection;
+
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+//=========================================================================
+
+light_mgr::light_mgr( void )
+    : m_firstLink( -1 )
+    , m_nFadingLights( 0 )
+    , m_nDynamicLights( 0 )
+    , m_nCharLights( 0 )
+    , m_isInCollection( FALSE )
+    , m_nSpadLights( 0 )
+    , m_nNonCharLightsInSpad( 0 )
+    , m_pSpadLights( nullptr )
+    , m_pLightBvhNodes( nullptr )
+    , m_pLightBvhLightIndices( nullptr )
+    , m_nLightBvhNodes( 0 )
+    , m_nCollectedLights( 0 )
 {
     x_memset( m_fadingLights, 0, sizeof( fading_light ) * MAX_FADING_LIGHTS );
     x_memset( &m_collectionStats, 0, sizeof( m_collectionStats ) );
@@ -157,117 +351,197 @@ light_mgr::~light_mgr( void )
 
 //=========================================================================
 
-void light_mgr::AddFadingLight( vector3 const& pos, xcolor const& c, f32 radius, f32 intensity, f32 fadeTime )
+s32 light_mgr::AddLight( void )
 {
-    // early return
-    if ( fadeTime <= 0.0f )
+    // Find a free slot and track the weakest light in case replacement is required.
+    s32 LightIndex;
+    f32 WeakestScore = F32_MAX;
+    s32 LightToReplace = -1;
+
+    for( LightIndex = 0; LightIndex < MAX_FADING_LIGHTS; LightIndex++ )
     {
-        return;
+        if( !m_fadingLights[LightIndex].Valid )
+        {
+            break;
+        }
+
+        f32 Score = ComputeLightScore( m_fadingLights[LightIndex].CurrentColor, m_fadingLights[LightIndex].Intensity );
+
+        if( ( LightToReplace == -1 ) || ( Score < WeakestScore ) )
+        {
+            LightToReplace = LightIndex;
+            WeakestScore = Score;
+        }
     }
 
-    // add a light to the linked list of lights
-    s32 iLight = AddLight();
+    if( LightIndex == MAX_FADING_LIGHTS )
+    {
+        // The replaced light is already linked, so no link repair is required.
+        // NOTE: We should rarely hit this, but if we do and it starts to kick out
+        // any vital lights, we could start merging lights together (sounds like fun!)
+        ASSERT( LightToReplace != -1 );
+        LightIndex = LightToReplace;
+    }
+    else
+    {
+        // TODO: Consider cache-friendly insertion if this list becomes a hotspot.
+        if( m_firstLink != -1 )
+        {
+            m_fadingLights[m_firstLink].PrevLink = LightIndex;
+        }
 
-    // now we can fill in the light data
-    m_fadingLights[iLight].Pos = pos;
-    m_fadingLights[iLight].Radius = radius;
-    m_fadingLights[iLight].StartColor = c;
-    m_fadingLights[iLight].CurrentColor = c;
-    m_fadingLights[iLight].FadeTime = fadeTime;
-    m_fadingLights[iLight].ElapsedTime = 0.0f;
-    m_fadingLights[iLight].Valid = TRUE;
-    m_fadingLights[iLight].InterpolationT = 0.0f;
-    m_fadingLights[iLight].Intensity = intensity;
+        m_fadingLights[LightIndex].NextLink = m_firstLink;
+        m_fadingLights[LightIndex].PrevLink = -1;
+        m_firstLink = LightIndex;
+        m_nFadingLights++;
+    }
+
+    ASSERT( ( LightIndex >= 0 ) && ( LightIndex < MAX_FADING_LIGHTS ) );
+    return LightIndex;
 }
 
 //=========================================================================
 
-s32 light_mgr::RegisterSpotLightCookie( texture::handle const& cookie )
+void light_mgr::RemoveLight( s32 LightIndex )
 {
-    texture* pTexture = cookie.GetPointer();
-    if ( !pTexture )
+    ASSERT( ( LightIndex >= 0 ) && ( LightIndex < MAX_FADING_LIGHTS ) );
+    ASSERT( m_fadingLights[LightIndex].Valid );
+
+    m_fadingLights[LightIndex].Valid = FALSE;
+
+    // Repair the linked list.
+    s32 Previous = m_fadingLights[LightIndex].PrevLink;
+    s32 Next = m_fadingLights[LightIndex].NextLink;
+    if( Previous != -1 )
+    {
+        m_fadingLights[Previous].NextLink = Next;
+    }
+    if( Next != -1 )
+    {
+        m_fadingLights[Next].PrevLink = Previous;
+    }
+    if( LightIndex == m_firstLink )
+    {
+        ASSERT( Previous == -1 );
+        m_firstLink = Next;
+    }
+
+    m_nFadingLights--;
+}
+
+//=========================================================================
+
+void light_mgr::AddFadingLight( vector3 const& Position, xcolor const& Color, f32 Radius, f32 Intensity, f32 FadeTime )
+{
+    if( FadeTime <= 0.0f )
+    {
+        return;
+    }
+
+    s32 LightIndex = AddLight();
+
+    m_fadingLights[LightIndex].Pos = Position;
+    m_fadingLights[LightIndex].Radius = Radius;
+    m_fadingLights[LightIndex].StartColor = Color;
+    m_fadingLights[LightIndex].CurrentColor = Color;
+    m_fadingLights[LightIndex].FadeTime = FadeTime;
+    m_fadingLights[LightIndex].ElapsedTime = 0.0f;
+    m_fadingLights[LightIndex].Valid = TRUE;
+    m_fadingLights[LightIndex].InterpolationT = 0.0f;
+    m_fadingLights[LightIndex].Intensity = Intensity;
+}
+
+//=========================================================================
+
+void light_mgr::OnUpdate( f32 DeltaTime )
+{
+    for( s32 LightIndex = 0; LightIndex < MAX_FADING_LIGHTS; LightIndex++ )
+    {
+        if( m_fadingLights[LightIndex].Valid )
+        {
+            m_fadingLights[LightIndex].ElapsedTime += DeltaTime;
+
+            if( m_fadingLights[LightIndex].ElapsedTime >= m_fadingLights[LightIndex].FadeTime )
+            {
+                RemoveLight( LightIndex );
+            }
+            else
+            {
+                f32 T = m_fadingLights[LightIndex].ElapsedTime / m_fadingLights[LightIndex].FadeTime;
+                f32 R = static_cast<f32>( m_fadingLights[LightIndex].StartColor.R );
+                f32 G = static_cast<f32>( m_fadingLights[LightIndex].StartColor.G );
+                f32 B = static_cast<f32>( m_fadingLights[LightIndex].StartColor.B );
+
+                m_fadingLights[LightIndex].InterpolationT = T;
+                m_fadingLights[LightIndex].CurrentColor.R = static_cast<u8>( R * ( 1.0f - T ) );
+                m_fadingLights[LightIndex].CurrentColor.G = static_cast<u8>( G * ( 1.0f - T ) );
+                m_fadingLights[LightIndex].CurrentColor.B = static_cast<u8>( B * ( 1.0f - T ) );
+            }
+        }
+    }
+}
+
+//=========================================================================
+
+s32 light_mgr::RegisterSpotLightCookie( texture::handle const& Cookie )
+{
+    texture* pTexture = Cookie.GetPointer();
+    if( pTexture == nullptr )
     {
         return -1;
     }
 
-    for ( s32 i = 0; i < m_lightCookieFaces.GetCount(); i++ )
+    for( s32 Index = 0; Index < m_lightCookieFaces.GetCount(); Index++ )
     {
-        if ( m_lightCookieFaces[i].GetPointer() == pTexture )
+        if( m_lightCookieFaces[Index].GetPointer() == pTexture )
         {
-            return i;
+            return Index;
         }
     }
 
-    m_lightCookieFaces.Append() = cookie;
+    m_lightCookieFaces.Append() = Cookie;
     return m_lightCookieFaces.GetCount() - 1;
 }
 
 //=========================================================================
 
-static void BuildLightCookieUV( vector3 const& direction, vector3& cookieU, vector3& cookieV )
+void light_mgr::AddDynamicLight( vector3 const& Position, xcolor const& Color, f32 Radius,
+                                 f32 Intensity, xbool CharOnly, s32 Shape, xbool CastShadows,
+                                 f32 InnerRadius, vector3 const& Direction, f32 Falloff,
+                                 f32 InnerAngle, f32 OuterAngle, s32 ShadowMapResolution, s32 ShadowPriority,
+                                 texture::handle const& Cookie )
 {
-    vector3 forward = direction;
-    if ( !forward.SafeNormalize() )
+    vector3 LightDirection = Direction;
+
+    if( Shape != LIGHT_SHAPE_SPOT )
     {
-        forward.Set( 0.0f, 0.0f, 1.0f );
+        Shape = LIGHT_SHAPE_OMNI;
     }
 
-    cookieU = vector3( 0.0f, 1.0f, 0.0f ).Cross( forward );
-    if ( !cookieU.SafeNormalize() )
+    InnerRadius = MAX( 0.0f, MIN( InnerRadius, Radius ) );
+    Falloff = MINMAX( 0.0f, Falloff, 1.0f );
+    if( ( Radius > 0.0001f ) && ( InnerRadius > 0.0f ) )
     {
-        cookieU = vector3( 1.0f, 0.0f, 0.0f ).Cross( forward );
-        if ( !cookieU.SafeNormalize() )
+        Falloff = MINMAX( 0.0f, 1.0f - ( InnerRadius / Radius ), 1.0f );
+    }
+    InnerAngle = MAX( 0.0f, InnerAngle );
+    OuterAngle = MAX( InnerAngle, OuterAngle );
+    if( !LightDirection.SafeNormalize() )
+    {
+        LightDirection.Set( 0.0f, 0.0f, 1.0f );
+    }
+
+    if( CharOnly )
+    {
+        if( m_nCharLights >= MAX_CHAR_LIGHTS )
         {
-            cookieU.Set( 1.0f, 0.0f, 0.0f );
-        }
-    }
-
-    cookieV = forward.Cross( cookieU );
-    if ( !cookieV.SafeNormalize() )
-    {
-        cookieV.Set( 0.0f, 1.0f, 0.0f );
-    }
-}
-
-//=========================================================================
-
-void light_mgr::AddDynamicLight( vector3 const& pos, xcolor const& c, f32 radius, f32 intensity, xbool charOnly,
-                                 s32 shape, xbool castShadows, f32 innerRadius, vector3 const& direction, f32 falloff,
-                                 f32 innerAngle, f32 outerAngle, s32 shadowMapResolution, s32 shadowPriority,
-                                 texture::handle const& cookie )
-{
-    vector3 lightDirection = direction;
-
-    if ( shape != LIGHT_SHAPE_SPOT )
-    {
-        shape = LIGHT_SHAPE_OMNI;
-    }
-
-    innerRadius = MAX( 0.0f, MIN( innerRadius, radius ) );
-    falloff = MINMAX( 0.0f, falloff, 1.0f );
-    if ( ( radius > 0.0001f ) && ( innerRadius > 0.0f ) )
-    {
-        falloff = MINMAX( 0.0f, 1.0f - ( innerRadius / radius ), 1.0f );
-    }
-    innerAngle = MAX( 0.0f, innerAngle );
-    outerAngle = MAX( innerAngle, outerAngle );
-    if ( !lightDirection.SafeNormalize() )
-    {
-        lightDirection.Set( 0.0f, 0.0f, 1.0f );
-    }
-
-    if ( charOnly )
-    {
-        if ( m_nCharLights >= MAX_CHAR_LIGHTS )
-        {
-            // ASSERT( FALSE );
             return;
         }
         x_memset( &m_charLights[m_nCharLights], 0, sizeof( dynamic_light ) );
-        m_charLights[m_nCharLights].Pos = pos;
-        m_charLights[m_nCharLights].Radius = radius;
-        m_charLights[m_nCharLights].Intensity = intensity;
-        m_charLights[m_nCharLights].Color = c;
+        m_charLights[m_nCharLights].Pos = Position;
+        m_charLights[m_nCharLights].Radius = Radius;
+        m_charLights[m_nCharLights].Intensity = Intensity;
+        m_charLights[m_nCharLights].Color = Color;
         m_charLights[m_nCharLights].Shape = LIGHT_SHAPE_OMNI;
         m_charLights[m_nCharLights].InnerConeCos = 1.0f;
         m_charLights[m_nCharLights].OuterConeCos = 1.0f;
@@ -279,247 +553,80 @@ void light_mgr::AddDynamicLight( vector3 const& pos, xcolor const& c, f32 radius
     }
     else
     {
-        if ( m_nDynamicLights >= MAX_DYNAMIC_LIGHTS )
+        if( m_nDynamicLights >= MAX_DYNAMIC_LIGHTS )
         {
-            // ASSERT( FALSE );
             return;
         }
 
-        f32 innerConeCos;
-        f32 outerConeCos;
-        f32 outerConeSin;
-        f32 outerConeTan;
-        f32 coneCosRangeInv;
-        if ( shape == LIGHT_SHAPE_SPOT )
+        f32 InnerConeCos;
+        f32 OuterConeCos;
+        f32 OuterConeSin;
+        f32 OuterConeTan;
+        f32 ConeCosRangeInv;
+        if( Shape == LIGHT_SHAPE_SPOT )
         {
-            SetupLightCone( innerAngle, outerAngle, innerConeCos, outerConeCos, outerConeSin, outerConeTan,
-                            coneCosRangeInv );
+            SetupLightCone( InnerAngle, OuterAngle, InnerConeCos, OuterConeCos, OuterConeSin, OuterConeTan,
+                            ConeCosRangeInv );
         }
         else
         {
-            SetupOmniLightCone( innerConeCos, outerConeCos, outerConeSin, outerConeTan, coneCosRangeInv );
+            SetupOmniLightCone( InnerConeCos, OuterConeCos, OuterConeSin, OuterConeTan, ConeCosRangeInv );
         }
 
-        vector3   cookieU( 1.0f, 0.0f, 0.0f );
-        vector3   cookieV( 0.0f, 1.0f, 0.0f );
-        s32 const cookieIndex = ( shape == LIGHT_SHAPE_SPOT ) ? RegisterSpotLightCookie( cookie ) : -1;
-        if ( cookieIndex >= 0 )
+        vector3   CookieU( 1.0f, 0.0f, 0.0f );
+        vector3   CookieV( 0.0f, 1.0f, 0.0f );
+        s32 const CookieIndex = ( Shape == LIGHT_SHAPE_SPOT ) ? RegisterSpotLightCookie( Cookie ) : -1;
+        if( CookieIndex >= 0 )
         {
-            BuildLightCookieUV( lightDirection, cookieU, cookieV );
+            BuildLightCookieUV( LightDirection, CookieU, CookieV );
         }
 
-        m_dynamicLights[m_nDynamicLights].Pos = pos;
-        m_dynamicLights[m_nDynamicLights].Radius = radius;
-        m_dynamicLights[m_nDynamicLights].Intensity = intensity;
-        m_dynamicLights[m_nDynamicLights].Color = c;
-        m_dynamicLights[m_nDynamicLights].Direction = lightDirection;
-        m_dynamicLights[m_nDynamicLights].Falloff = falloff;
-        m_dynamicLights[m_nDynamicLights].InnerAngle = innerAngle;
-        m_dynamicLights[m_nDynamicLights].OuterAngle = outerAngle;
-        m_dynamicLights[m_nDynamicLights].InnerConeCos = innerConeCos;
-        m_dynamicLights[m_nDynamicLights].OuterConeCos = outerConeCos;
-        m_dynamicLights[m_nDynamicLights].OuterConeSin = outerConeSin;
-        m_dynamicLights[m_nDynamicLights].OuterConeTan = outerConeTan;
-        m_dynamicLights[m_nDynamicLights].ConeCosRangeInv = coneCosRangeInv;
-        m_dynamicLights[m_nDynamicLights].Shape = shape;
-        m_dynamicLights[m_nDynamicLights].ShadowMapResolution = shadowMapResolution;
-        m_dynamicLights[m_nDynamicLights].ShadowPriority = shadowPriority;
-        m_dynamicLights[m_nDynamicLights].CastShadows = castShadows;
-        m_dynamicLights[m_nDynamicLights].CookieIndex = cookieIndex;
-        m_dynamicLights[m_nDynamicLights].CookieU = cookieU;
-        m_dynamicLights[m_nDynamicLights].CookieV = cookieV;
+        m_dynamicLights[m_nDynamicLights].Pos = Position;
+        m_dynamicLights[m_nDynamicLights].Radius = Radius;
+        m_dynamicLights[m_nDynamicLights].Intensity = Intensity;
+        m_dynamicLights[m_nDynamicLights].Color = Color;
+        m_dynamicLights[m_nDynamicLights].Direction = LightDirection;
+        m_dynamicLights[m_nDynamicLights].Falloff = Falloff;
+        m_dynamicLights[m_nDynamicLights].InnerAngle = InnerAngle;
+        m_dynamicLights[m_nDynamicLights].OuterAngle = OuterAngle;
+        m_dynamicLights[m_nDynamicLights].InnerConeCos = InnerConeCos;
+        m_dynamicLights[m_nDynamicLights].OuterConeCos = OuterConeCos;
+        m_dynamicLights[m_nDynamicLights].OuterConeSin = OuterConeSin;
+        m_dynamicLights[m_nDynamicLights].OuterConeTan = OuterConeTan;
+        m_dynamicLights[m_nDynamicLights].ConeCosRangeInv = ConeCosRangeInv;
+        m_dynamicLights[m_nDynamicLights].Shape = Shape;
+        m_dynamicLights[m_nDynamicLights].ShadowMapResolution = ShadowMapResolution;
+        m_dynamicLights[m_nDynamicLights].ShadowPriority = ShadowPriority;
+        m_dynamicLights[m_nDynamicLights].CastShadows = CastShadows;
+        m_dynamicLights[m_nDynamicLights].CookieIndex = CookieIndex;
+        m_dynamicLights[m_nDynamicLights].CookieU = CookieU;
+        m_dynamicLights[m_nDynamicLights].CookieV = CookieV;
         m_nDynamicLights++;
     }
 }
 
 //=========================================================================
 
-void light_mgr::OnUpdate( f32 deltaTime )
+void light_mgr::GetDynamicLight( s32 Index, vector3& Position, f32& Radius, xcolor& Color,
+                                 s32& Shape, xbool& CastShadows, f32& InnerRadius,
+                                 vector3& Direction, f32& Falloff, f32& InnerAngle, f32& OuterAngle,
+                                 s32& ShadowMapResolution, s32& ShadowPriority ) const
 {
-    for ( s32 iLight = 0; iLight < MAX_FADING_LIGHTS; iLight++ )
-    {
-        if ( m_fadingLights[iLight].Valid )
-        {
-            m_fadingLights[iLight].ElapsedTime += deltaTime;
+    ASSERT( ( Index >= 0 ) && ( Index < m_nDynamicLights ) );
 
-            if ( m_fadingLights[iLight].ElapsedTime >= m_fadingLights[iLight].FadeTime )
-            {
-                RemoveLight( iLight );
-            }
-            else
-            {
-                f32 t = m_fadingLights[iLight].ElapsedTime / m_fadingLights[iLight].FadeTime;
-                f32 r = static_cast<f32>( m_fadingLights[iLight].StartColor.R );
-                f32 g = static_cast<f32>( m_fadingLights[iLight].StartColor.G );
-                f32 b = static_cast<f32>( m_fadingLights[iLight].StartColor.B );
-
-                m_fadingLights[iLight].InterpolationT = t;
-                m_fadingLights[iLight].CurrentColor.R = static_cast<u8>( r * ( 1.0f - t ) );
-                m_fadingLights[iLight].CurrentColor.G = static_cast<u8>( g * ( 1.0f - t ) );
-                m_fadingLights[iLight].CurrentColor.B = static_cast<u8>( b * ( 1.0f - t ) );
-            }
-        }
-    }
-}
-
-//=========================================================================
-
-s32 light_mgr::AddLight( void )
-{
-    // find the first available light, remembering the light with the least
-    // amount of time left in case we need to kick one out.
-    s32 iLight;
-    f32 weakestI = F32_MAX;
-    s32 lightToReplace = -1;
-
-    for ( iLight = 0; iLight < MAX_FADING_LIGHTS; iLight++ )
-    {
-        if ( !m_fadingLights[iLight].Valid )
-        {
-            break;
-        }
-
-        f32 i = ComputeLightScore( m_fadingLights[iLight].CurrentColor, m_fadingLights[iLight].Intensity );
-
-        if ( ( lightToReplace == -1 ) || ( i < weakestI ) )
-        {
-            lightToReplace = iLight;
-            weakestI = i;
-        }
-    }
-
-    // was there room in the array?
-    if ( iLight == MAX_FADING_LIGHTS )
-    {
-        // replace an old light, the old one was already in the linked list,
-        // so no need to fix up any links
-
-        // NOTE: We should rarely hit this, but if we do and it starts to kick out
-        // any vital lights, we could start merging lights together (sounds like fun!)
-        ASSERT( lightToReplace != -1 );
-        iLight = lightToReplace;
-    }
-    else
-    {
-        // #### TODO: If this linked-list business starts hitting the cache pretty
-        //  hard, insert into the middle of the list so that we at least move
-        //  forward through the cache.
-
-        // add the new light to the start of the linked list
-        if ( m_firstLink != -1 )
-        {
-            m_fadingLights[m_firstLink].PrevLink = iLight;
-        }
-
-        m_fadingLights[iLight].NextLink = m_firstLink;
-        m_fadingLights[iLight].PrevLink = -1;
-        m_firstLink = iLight;
-        m_nFadingLights++;
-    }
-
-    ASSERT( ( iLight >= 0 ) && ( iLight < MAX_FADING_LIGHTS ) );
-    return iLight;
-}
-
-//=========================================================================
-
-void light_mgr::RemoveLight( s32 lightIndex )
-{
-    ASSERT( ( lightIndex >= 0 ) && ( lightIndex < MAX_FADING_LIGHTS ) );
-    ASSERT( m_fadingLights[lightIndex].Valid );
-
-    // invalidate the light
-    m_fadingLights[lightIndex].Valid = FALSE;
-
-    // patch up the linked list indices
-    s32 prev = m_fadingLights[lightIndex].PrevLink;
-    s32 next = m_fadingLights[lightIndex].NextLink;
-    if ( prev != -1 )
-    {
-        m_fadingLights[prev].NextLink = next;
-    }
-    if ( next != -1 )
-    {
-        m_fadingLights[next].PrevLink = prev;
-    }
-    if ( lightIndex == m_firstLink )
-    {
-        ASSERT( prev == -1 );
-        m_firstLink = next;
-    }
-
-    m_nFadingLights--;
-}
-
-//=========================================================================
-
-void light_mgr::InsertCollectedCharLight( dir_light const& light, s32 maxLightCount )
-{
-    ASSERT( maxLightCount <= MAX_COLLECTED_LIGHTS );
-
-    if ( maxLightCount <= 0 )
-    {
-        return;
-    }
-
-    f32 const newScore = ComputeLightScore( light.Col, 1.0f );
-    s32       insertAt = m_nCollectedLights;
-
-    if ( m_nCollectedLights == maxLightCount )
-    {
-        f32 const lowestScore = ComputeLightScore( m_collectedCharLights[m_nCollectedLights - 1].Col, 1.0f );
-        if ( newScore <= lowestScore )
-        {
-            return;
-        }
-
-        insertAt = m_nCollectedLights - 1;
-    }
-    else
-    {
-        m_nCollectedLights++;
-    }
-
-    while ( insertAt > 0 )
-    {
-        f32 const prevScore = ComputeLightScore( m_collectedCharLights[insertAt - 1].Col, 1.0f );
-        if ( newScore <= prevScore )
-        {
-            break;
-        }
-
-        m_collectedCharLights[insertAt] = m_collectedCharLights[insertAt - 1];
-        insertAt--;
-    }
-
-    m_collectedCharLights[insertAt] = light;
-}
-
-//=========================================================================
-
-s32 SpadLightSortFn( void const* pA, void const* pB )
-{
-    light_mgr::spad_light const* pLightA = static_cast<light_mgr::spad_light const*>( pA );
-    light_mgr::spad_light const* pLightB = static_cast<light_mgr::spad_light const*>( pB );
-
-    if ( pLightA->CharOnly > pLightB->CharOnly )
-    {
-        return 1;
-    }
-    if ( pLightA->CharOnly < pLightB->CharOnly )
-    {
-        return -1;
-    }
-    if ( pLightA->Score > pLightB->Score )
-    {
-        return -1;
-    }
-    if ( pLightA->Score < pLightB->Score )
-    {
-        return 1;
-    }
-
-    return 0;
+    dynamic_light const& Light = m_dynamicLights[Index];
+    Position = Light.Pos;
+    Radius = Light.Radius;
+    InnerRadius = MAX( 0.0f, Light.Radius * ( 1.0f - Light.Falloff ) );
+    Direction = Light.Direction;
+    Falloff = Light.Falloff;
+    InnerAngle = Light.InnerAngle;
+    OuterAngle = Light.OuterAngle;
+    Shape = Light.Shape;
+    ShadowMapResolution = Light.ShadowMapResolution;
+    ShadowPriority = Light.ShadowPriority;
+    CastShadows = Light.CastShadows;
+    ScaleLightColor( Color, Light.Color, Light.Intensity );
 }
 
 //=========================================================================
@@ -530,114 +637,111 @@ void light_mgr::BeginLightCollection( void )
 
     x_memset( &m_collectionStats, 0, sizeof( m_collectionStats ) );
 
-    // Allocate space for the spad lights.
-    s32 nLights = m_nFadingLights + m_nDynamicLights + m_nCharLights;
+    // Allocate frame-local light data.
+    s32 LightCount = m_nFadingLights + m_nDynamicLights + m_nCharLights;
     smem_StackPushMarker();
-    if ( nLights > 0 )
+    if( LightCount > 0 )
     {
-        m_pSpadLights = reinterpret_cast<spad_light*>( smem_StackAlloc( sizeof( spad_light ) * nLights ) );
+        m_pSpadLights = reinterpret_cast<spad_light*>( smem_StackAlloc( sizeof( spad_light ) * LightCount ) );
     }
     else
     {
-        m_pSpadLights = NULL;
+        m_pSpadLights = nullptr;
     }
-    ASSERT( ( nLights == 0 ) || m_pSpadLights );
+    ASSERT( ( LightCount == 0 ) || m_pSpadLights );
 
-    // Add the optimized lights to scratchpad
-    nLights = 0;
+    LightCount = 0;
 
-    // add the dynamic lights
-    s32 i;
-    for ( i = 0; i < m_nDynamicLights; i++ )
+    // Add dynamic lights.
+    s32 Index;
+    for( Index = 0; Index < m_nDynamicLights; Index++ )
     {
-        dynamic_light& light = m_dynamicLights[i];
-        m_pSpadLights[nLights].Pos = light.Pos;
-        m_pSpadLights[nLights].Radius = light.Radius;
-        m_pSpadLights[nLights].Intensity = light.Intensity;
-        m_pSpadLights[nLights].Color = light.Color;
-        m_pSpadLights[nLights].Falloff = light.Falloff;
-        m_pSpadLights[nLights].Score = ComputeLightScore( light.Color, light.Intensity );
-        m_pSpadLights[nLights].CharOnly = FALSE;
-        m_pSpadLights[nLights].Shape = light.Shape;
-        m_pSpadLights[nLights].Direction = light.Direction;
-        m_pSpadLights[nLights].InnerConeCos = light.InnerConeCos;
-        m_pSpadLights[nLights].OuterConeCos = light.OuterConeCos;
-        m_pSpadLights[nLights].OuterConeSin = light.OuterConeSin;
-        m_pSpadLights[nLights].OuterConeTan = light.OuterConeTan;
-        m_pSpadLights[nLights].ConeCosRangeInv = light.ConeCosRangeInv;
-        m_pSpadLights[nLights].CookieIndex = light.CookieIndex;
-        m_pSpadLights[nLights].CookieU = light.CookieU;
-        m_pSpadLights[nLights].CookieV = light.CookieV;
-        m_pSpadLights[nLights].DynamicLightIndex = i;
-        nLights++;
+        dynamic_light& Light = m_dynamicLights[Index];
+        m_pSpadLights[LightCount].Pos = Light.Pos;
+        m_pSpadLights[LightCount].Radius = Light.Radius;
+        m_pSpadLights[LightCount].Intensity = Light.Intensity;
+        m_pSpadLights[LightCount].Color = Light.Color;
+        m_pSpadLights[LightCount].Falloff = Light.Falloff;
+        m_pSpadLights[LightCount].Score = ComputeLightScore( Light.Color, Light.Intensity );
+        m_pSpadLights[LightCount].CharOnly = FALSE;
+        m_pSpadLights[LightCount].Shape = Light.Shape;
+        m_pSpadLights[LightCount].Direction = Light.Direction;
+        m_pSpadLights[LightCount].InnerConeCos = Light.InnerConeCos;
+        m_pSpadLights[LightCount].OuterConeCos = Light.OuterConeCos;
+        m_pSpadLights[LightCount].OuterConeSin = Light.OuterConeSin;
+        m_pSpadLights[LightCount].OuterConeTan = Light.OuterConeTan;
+        m_pSpadLights[LightCount].ConeCosRangeInv = Light.ConeCosRangeInv;
+        m_pSpadLights[LightCount].CookieIndex = Light.CookieIndex;
+        m_pSpadLights[LightCount].CookieU = Light.CookieU;
+        m_pSpadLights[LightCount].CookieV = Light.CookieV;
+        m_pSpadLights[LightCount].DynamicLightIndex = Index;
+        LightCount++;
     }
 
-    // add the fading lights
-    s32 currLink = m_firstLink;
-    while ( currLink != -1 )
+    // Add fading lights.
+    s32 CurrentLink = m_firstLink;
+    while( CurrentLink != -1 )
     {
-        fading_light& light = m_fadingLights[currLink];
-        m_pSpadLights[nLights].Pos = light.Pos;
-        m_pSpadLights[nLights].Radius = light.Radius;
-        m_pSpadLights[nLights].Intensity = light.Intensity;
-        m_pSpadLights[nLights].Color = light.CurrentColor;
-        m_pSpadLights[nLights].Falloff = 1.0f;
-        m_pSpadLights[nLights].Score = ComputeLightScore( light.CurrentColor, light.Intensity );
-        m_pSpadLights[nLights].CharOnly = FALSE;
-        m_pSpadLights[nLights].Shape = LIGHT_SHAPE_OMNI;
-        m_pSpadLights[nLights].Direction.Set( 0.0f, 0.0f, 1.0f );
-        m_pSpadLights[nLights].InnerConeCos = 1.0f;
-        m_pSpadLights[nLights].OuterConeCos = 1.0f;
-        m_pSpadLights[nLights].OuterConeSin = 0.0f;
-        m_pSpadLights[nLights].OuterConeTan = 0.0f;
-        m_pSpadLights[nLights].ConeCosRangeInv = 0.0f;
-        m_pSpadLights[nLights].CookieIndex = -1;
-        m_pSpadLights[nLights].CookieU.Set( 1.0f, 0.0f, 0.0f );
-        m_pSpadLights[nLights].CookieV.Set( 0.0f, 1.0f, 0.0f );
-        m_pSpadLights[nLights].DynamicLightIndex = -1;
-        nLights++;
+        fading_light& Light = m_fadingLights[CurrentLink];
+        m_pSpadLights[LightCount].Pos = Light.Pos;
+        m_pSpadLights[LightCount].Radius = Light.Radius;
+        m_pSpadLights[LightCount].Intensity = Light.Intensity;
+        m_pSpadLights[LightCount].Color = Light.CurrentColor;
+        m_pSpadLights[LightCount].Falloff = 1.0f;
+        m_pSpadLights[LightCount].Score = ComputeLightScore( Light.CurrentColor, Light.Intensity );
+        m_pSpadLights[LightCount].CharOnly = FALSE;
+        m_pSpadLights[LightCount].Shape = LIGHT_SHAPE_OMNI;
+        m_pSpadLights[LightCount].Direction.Set( 0.0f, 0.0f, 1.0f );
+        m_pSpadLights[LightCount].InnerConeCos = 1.0f;
+        m_pSpadLights[LightCount].OuterConeCos = 1.0f;
+        m_pSpadLights[LightCount].OuterConeSin = 0.0f;
+        m_pSpadLights[LightCount].OuterConeTan = 0.0f;
+        m_pSpadLights[LightCount].ConeCosRangeInv = 0.0f;
+        m_pSpadLights[LightCount].CookieIndex = -1;
+        m_pSpadLights[LightCount].CookieU.Set( 1.0f, 0.0f, 0.0f );
+        m_pSpadLights[LightCount].CookieV.Set( 0.0f, 1.0f, 0.0f );
+        m_pSpadLights[LightCount].DynamicLightIndex = -1;
+        LightCount++;
 
-        currLink = light.NextLink;
+        CurrentLink = Light.NextLink;
     }
 
-    // We've collected everything but the character lights now. These are the
-    // lights that will be used for all non-skinned geometry.
-    m_nNonCharLightsInSpad = nLights;
+    // Non-character geometry only sees lights collected up to this point.
+    m_nNonCharLightsInSpad = LightCount;
 
-    // add the character lights
-    for ( i = 0; i < m_nCharLights; i++ )
+    // Add character-only lights.
+    for( Index = 0; Index < m_nCharLights; Index++ )
     {
-        dynamic_light& light = m_charLights[i];
-        m_pSpadLights[nLights].Pos = light.Pos;
-        m_pSpadLights[nLights].Radius = light.Radius;
-        m_pSpadLights[nLights].Intensity = light.Intensity;
-        m_pSpadLights[nLights].Color = light.Color;
-        m_pSpadLights[nLights].Falloff = 1.0f;
-        m_pSpadLights[nLights].Score = ComputeLightScore( light.Color, light.Intensity );
-        m_pSpadLights[nLights].CharOnly = TRUE;
-        m_pSpadLights[nLights].Shape = LIGHT_SHAPE_OMNI;
-        m_pSpadLights[nLights].Direction.Set( 0.0f, 0.0f, 1.0f );
-        m_pSpadLights[nLights].InnerConeCos = 1.0f;
-        m_pSpadLights[nLights].OuterConeCos = 1.0f;
-        m_pSpadLights[nLights].OuterConeSin = 0.0f;
-        m_pSpadLights[nLights].OuterConeTan = 0.0f;
-        m_pSpadLights[nLights].ConeCosRangeInv = 0.0f;
-        m_pSpadLights[nLights].CookieIndex = -1;
-        m_pSpadLights[nLights].CookieU.Set( 1.0f, 0.0f, 0.0f );
-        m_pSpadLights[nLights].CookieV.Set( 0.0f, 1.0f, 0.0f );
-        m_pSpadLights[nLights].DynamicLightIndex = -1;
-        nLights++;
+        dynamic_light& Light = m_charLights[Index];
+        m_pSpadLights[LightCount].Pos = Light.Pos;
+        m_pSpadLights[LightCount].Radius = Light.Radius;
+        m_pSpadLights[LightCount].Intensity = Light.Intensity;
+        m_pSpadLights[LightCount].Color = Light.Color;
+        m_pSpadLights[LightCount].Falloff = 1.0f;
+        m_pSpadLights[LightCount].Score = ComputeLightScore( Light.Color, Light.Intensity );
+        m_pSpadLights[LightCount].CharOnly = TRUE;
+        m_pSpadLights[LightCount].Shape = LIGHT_SHAPE_OMNI;
+        m_pSpadLights[LightCount].Direction.Set( 0.0f, 0.0f, 1.0f );
+        m_pSpadLights[LightCount].InnerConeCos = 1.0f;
+        m_pSpadLights[LightCount].OuterConeCos = 1.0f;
+        m_pSpadLights[LightCount].OuterConeSin = 0.0f;
+        m_pSpadLights[LightCount].OuterConeTan = 0.0f;
+        m_pSpadLights[LightCount].ConeCosRangeInv = 0.0f;
+        m_pSpadLights[LightCount].CookieIndex = -1;
+        m_pSpadLights[LightCount].CookieU.Set( 1.0f, 0.0f, 0.0f );
+        m_pSpadLights[LightCount].CookieV.Set( 0.0f, 1.0f, 0.0f );
+        m_pSpadLights[LightCount].DynamicLightIndex = -1;
+        LightCount++;
     }
 
-    // sort the lights based on their score...this will mean that lights
-    // with a higher intensity and color will get precedence when it comes
-    // time to whittle them down to a nice number for the hardware
-    if ( nLights > 1 )
+    // Higher-scoring lights take precedence during later collection.
+    if( LightCount > 1 )
     {
-        x_qsort( m_pSpadLights, nLights, sizeof( spad_light ), SpadLightSortFn );
+        x_qsort( m_pSpadLights, LightCount, sizeof( spad_light ), SpadLightSortFn );
     }
 
-    m_nSpadLights = nLights;
+    m_nSpadLights = LightCount;
+    BuildLightBvh();
     m_isInCollection = TRUE;
 }
 
@@ -647,12 +751,14 @@ void light_mgr::EndLightCollection( void )
 {
     ASSERT( m_isInCollection );
 
-    // free up the spad lights
     smem_StackPopToMarker();
 
     m_nSpadLights = 0;
     m_nNonCharLightsInSpad = 0;
-    m_pSpadLights = NULL;
+    m_pSpadLights = nullptr;
+    m_pLightBvhNodes = nullptr;
+    m_pLightBvhLightIndices = nullptr;
+    m_nLightBvhNodes = 0;
     m_isInCollection = FALSE;
 }
 
@@ -660,48 +766,195 @@ void light_mgr::EndLightCollection( void )
 
 void light_mgr::ResetAfterException( void )
 {
+    m_pLightBvhNodes = nullptr;
+    m_pLightBvhLightIndices = nullptr;
+    m_nLightBvhNodes = 0;
     m_isInCollection = FALSE;
 }
 
 //=========================================================================
 
-s32 light_mgr::CollectLights( bbox const& worldBBox, s32 maxLightCount )
+s32 light_mgr::BuildLightBvhNode( s32 FirstLight, s32 LightCount )
+{
+    ASSERT( LightCount > 0 );
+    ASSERT( m_nLightBvhNodes < MAX_LIGHT_BVH_NODES );
+
+    light_bvh_node& Node = m_pLightBvhNodes[m_nLightBvhNodes++];
+    Node.Bounds = bbox( m_pSpadLights[m_pLightBvhLightIndices[FirstLight]].Pos,
+                        m_pSpadLights[m_pLightBvhLightIndices[FirstLight]].Radius );
+    for( s32 LightOffset = 1; LightOffset < LightCount; LightOffset++ )
+    {
+        spad_light const& Light = m_pSpadLights[m_pLightBvhLightIndices[FirstLight + LightOffset]];
+        Node.Bounds += bbox( Light.Pos, Light.Radius );
+    }
+
+    Node.LeftChild = -1;
+    Node.RightChild = -1;
+    Node.FirstLight = FirstLight;
+    Node.LightCount = LightCount;
+    if( LightCount <= 8 )
+    {
+        return m_nLightBvhNodes - 1;
+    }
+
+    vector3 const Extent = Node.Bounds.GetSize();
+    s32 const Axis = ( Extent.GetX() >= Extent.GetY() && Extent.GetX() >= Extent.GetZ() )
+                         ? 0
+                         : ( Extent.GetY() >= Extent.GetZ() ) ? 1 : 2;
+
+    // The light count is bounded, so insertion sort avoids comparator context storage.
+    for( s32 LightOffset = FirstLight + 1; LightOffset < FirstLight + LightCount; LightOffset++ )
+    {
+        s32 const LightIndex = m_pLightBvhLightIndices[LightOffset];
+        f32 const Coordinate = ( Axis == 0 ) ? m_pSpadLights[LightIndex].Pos.GetX()
+                              : ( Axis == 1 ) ? m_pSpadLights[LightIndex].Pos.GetY()
+                                            : m_pSpadLights[LightIndex].Pos.GetZ();
+        s32 InsertAt = LightOffset;
+        while( InsertAt > FirstLight )
+        {
+            spad_light const& Previous = m_pSpadLights[m_pLightBvhLightIndices[InsertAt - 1]];
+            f32 const PreviousCoordinate = ( Axis == 0 ) ? Previous.Pos.GetX()
+                                         : ( Axis == 1 ) ? Previous.Pos.GetY() : Previous.Pos.GetZ();
+            if( PreviousCoordinate <= Coordinate )
+            {
+                break;
+            }
+
+            m_pLightBvhLightIndices[InsertAt] = m_pLightBvhLightIndices[InsertAt - 1];
+            InsertAt--;
+        }
+        m_pLightBvhLightIndices[InsertAt] = LightIndex;
+    }
+
+    s32 const NodeIndex = m_nLightBvhNodes - 1;
+    s32 const LeftLightCount = LightCount / 2;
+    Node.LeftChild = BuildLightBvhNode( FirstLight, LeftLightCount );
+    Node.RightChild = BuildLightBvhNode( FirstLight + LeftLightCount, LightCount - LeftLightCount );
+    Node.FirstLight = 0;
+    Node.LightCount = 0;
+    return NodeIndex;
+}
+
+//=========================================================================
+
+void light_mgr::BuildLightBvh( void )
+{
+    m_nLightBvhNodes = 0;
+    m_pLightBvhNodes = nullptr;
+    m_pLightBvhLightIndices = nullptr;
+    if( m_nSpadLights <= 0 )
+    {
+        return;
+    }
+
+    m_pLightBvhNodes = reinterpret_cast<light_bvh_node*>(
+        smem_StackAlloc( sizeof( light_bvh_node ) * MAX_LIGHT_BVH_NODES ) );
+    m_pLightBvhLightIndices = reinterpret_cast<s32*>( smem_StackAlloc( sizeof( s32 ) * m_nSpadLights ) );
+    ASSERT( m_pLightBvhNodes && m_pLightBvhLightIndices );
+
+    for( s32 LightIndex = 0; LightIndex < m_nSpadLights; LightIndex++ )
+    {
+        m_pLightBvhLightIndices[LightIndex] = LightIndex;
+    }
+
+    BuildLightBvhNode( 0, m_nSpadLights );
+}
+
+//=========================================================================
+
+void light_mgr::InsertCollectedSceneLight( s32 LightIndex, s32 MaxLightCount )
+{
+    f32 const NewScore = m_pSpadLights[LightIndex].Score;
+    s32       InsertAt = m_nCollectedLights;
+
+    if( m_nCollectedLights == MaxLightCount )
+    {
+        if( NewScore <= m_pSpadLights[m_collectedLights[m_nCollectedLights - 1]].Score )
+        {
+            return;
+        }
+
+        InsertAt = m_nCollectedLights - 1;
+    }
+    else
+    {
+        m_nCollectedLights++;
+    }
+
+    while( InsertAt > 0 )
+    {
+        if( NewScore <= m_pSpadLights[m_collectedLights[InsertAt - 1]].Score )
+        {
+            break;
+        }
+
+        m_collectedLights[InsertAt] = m_collectedLights[InsertAt - 1];
+        InsertAt--;
+    }
+
+    m_collectedLights[InsertAt] = LightIndex;
+}
+
+//=========================================================================
+
+s32 light_mgr::CollectLights( bbox const& WorldBBox, s32 MaxLightCount )
 {
     ASSERT( m_isInCollection );
     ASSERT( m_pSpadLights || ( m_nSpadLights == 0 ) );
 
-    s32 i;
     m_nCollectedLights = 0;
     m_collectionStats.SceneQueries++;
-    maxLightCount = MIN( MAX( 0, maxLightCount ), MAX_COLLECTED_LIGHTS );
-    if ( ( maxLightCount <= 0 ) || ( m_nNonCharLightsInSpad <= 0 ) )
+    MaxLightCount = MIN( MAX( 0, MaxLightCount ), MAX_COLLECTED_LIGHTS );
+    if( ( MaxLightCount <= 0 ) || ( m_nNonCharLightsInSpad <= 0 ) || ( m_nLightBvhNodes <= 0 ) )
     {
         return m_nCollectedLights;
     }
 
-    vector3 const worldBBoxCenter = worldBBox.GetCenter();
-    f32 const     worldBBoxRadius = worldBBox.GetRadius();
+    vector3 const WorldBBoxCenter = WorldBBox.GetCenter();
+    f32 const     WorldBBoxRadius = WorldBBox.GetRadius();
+    s32           NodeStack[MAX_LIGHT_BVH_NODES];
+    s32           StackCount = 0;
+    NodeStack[StackCount++] = 0;
 
-    for ( i = 0; ( i < m_nNonCharLightsInSpad ) && ( m_nCollectedLights < maxLightCount ); i++ )
+    while( StackCount > 0 )
     {
-        m_collectionStats.SceneCandidates++;
-        ASSERT( !m_pSpadLights[i].CharOnly );
-
-        xbool bIntersects;
-
-        bIntersects = worldBBox.Intersect( m_pSpadLights[i].Pos, m_pSpadLights[i].Radius );
-        if ( bIntersects && ( m_pSpadLights[i].Shape == LIGHT_SHAPE_SPOT ) )
+        light_bvh_node const& Node = m_pLightBvhNodes[NodeStack[--StackCount]];
+        if( !Node.Bounds.Intersect( WorldBBox ) )
         {
-            bIntersects =
-                SpotLightAffectsSphere( m_pSpadLights[i].Pos, m_pSpadLights[i].Direction, m_pSpadLights[i].OuterConeCos,
-                                        m_pSpadLights[i].OuterConeSin, m_pSpadLights[i].OuterConeTan,
-                                        m_pSpadLights[i].Radius, worldBBoxCenter, worldBBoxRadius );
+            continue;
         }
 
-        if ( bIntersects )
+        if( Node.LightCount <= 0 )
         {
-            m_collectedLights[m_nCollectedLights++] = i;
-            m_collectionStats.SceneHits++;
+            ASSERT( ( Node.LeftChild >= 0 ) && ( Node.RightChild >= 0 ) );
+            NodeStack[StackCount++] = Node.LeftChild;
+            NodeStack[StackCount++] = Node.RightChild;
+            continue;
+        }
+
+        for( s32 LightOffset = 0; LightOffset < Node.LightCount; LightOffset++ )
+        {
+            s32 const LightIndex = m_pLightBvhLightIndices[Node.FirstLight + LightOffset];
+            spad_light const& Light = m_pSpadLights[LightIndex];
+            if( Light.CharOnly )
+            {
+                continue;
+            }
+
+            m_collectionStats.SceneCandidates++;
+            xbool Intersects = WorldBBox.Intersect( Light.Pos, Light.Radius );
+            if( Intersects && ( Light.Shape == LIGHT_SHAPE_SPOT ) )
+            {
+                Intersects = SpotLightAffectsSphere( Light.Pos, Light.Direction, Light.OuterConeCos,
+                                                     Light.OuterConeSin, Light.OuterConeTan, Light.Radius,
+                                                     WorldBBoxCenter, WorldBBoxRadius );
+            }
+
+            if( Intersects )
+            {
+                InsertCollectedSceneLight( LightIndex, MaxLightCount );
+                m_collectionStats.SceneHits++;
+            }
         }
     }
 
@@ -710,242 +963,191 @@ s32 light_mgr::CollectLights( bbox const& worldBBox, s32 maxLightCount )
 
 //=========================================================================
 
-void light_mgr::GetCollectedLight( s32 index, vector3& pos, f32& radius, xcolor& c )
+void light_mgr::GetCollectedLight( s32 Index, vector3& Position, f32& Radius, xcolor& Color )
 {
-    ASSERT( ( index >= 0 ) && ( index < m_nCollectedLights ) );
+    ASSERT( ( Index >= 0 ) && ( Index < m_nCollectedLights ) );
     ASSERT( m_isInCollection );
     ASSERT( m_pSpadLights );
 
-    spad_light& light = m_pSpadLights[m_collectedLights[index]];
-    pos = light.Pos;
-    radius = light.Radius;
-    ScaleLightColor( c, light.Color, light.Intensity );
+    spad_light& Light = m_pSpadLights[m_collectedLights[Index]];
+    Position = Light.Pos;
+    Radius = Light.Radius;
+    ScaleLightColor( Color, Light.Color, Light.Intensity );
 }
 
 //=========================================================================
 
-void light_mgr::GetCollectedLightInfo( s32 index, vector3& pos, f32& radius, xcolor& c, f32& falloff )
+void light_mgr::GetCollectedLightInfo( s32 Index, vector3& Position, f32& Radius, xcolor& Color, f32& Falloff )
 {
-    ASSERT( ( index >= 0 ) && ( index < m_nCollectedLights ) );
+    ASSERT( ( Index >= 0 ) && ( Index < m_nCollectedLights ) );
     ASSERT( m_isInCollection );
     ASSERT( m_pSpadLights );
 
-    spad_light& light = m_pSpadLights[m_collectedLights[index]];
-    pos = light.Pos;
-    radius = light.Radius;
-    falloff = light.Falloff;
-    ScaleLightColor( c, light.Color, light.Intensity );
+    spad_light& Light = m_pSpadLights[m_collectedLights[Index]];
+    Position = Light.Pos;
+    Radius = Light.Radius;
+    Falloff = Light.Falloff;
+    ScaleLightColor( Color, Light.Color, Light.Intensity );
 }
 
 //=========================================================================
 
-void light_mgr::GetCollectedLightInfo( s32 index, vector3& pos, f32& radius, xcolor& c, f32& falloff, s32& shape,
-                                       vector3& direction, f32& innerConeCos, f32& outerConeCos )
+void light_mgr::GetCollectedLightInfo( s32 Index, vector3& Position, f32& Radius, xcolor& Color,
+                                       f32& Falloff, s32& Shape, vector3& Direction,
+                                       f32& InnerConeCos, f32& OuterConeCos )
 {
-    ASSERT( ( index >= 0 ) && ( index < m_nCollectedLights ) );
+    ASSERT( ( Index >= 0 ) && ( Index < m_nCollectedLights ) );
     ASSERT( m_isInCollection );
     ASSERT( m_pSpadLights );
 
-    spad_light& light = m_pSpadLights[m_collectedLights[index]];
-    pos = light.Pos;
-    radius = light.Radius;
-    falloff = light.Falloff;
-    shape = light.Shape;
-    direction = light.Direction;
-    innerConeCos = light.InnerConeCos;
-    outerConeCos = light.OuterConeCos;
-    ScaleLightColor( c, light.Color, light.Intensity );
+    spad_light& Light = m_pSpadLights[m_collectedLights[Index]];
+    Position = Light.Pos;
+    Radius = Light.Radius;
+    Falloff = Light.Falloff;
+    Shape = Light.Shape;
+    Direction = Light.Direction;
+    InnerConeCos = Light.InnerConeCos;
+    OuterConeCos = Light.OuterConeCos;
+    ScaleLightColor( Color, Light.Color, Light.Intensity );
 }
 
 //=========================================================================
 
-void light_mgr::GetCollectedLightCookie( s32 index, s32& cookieIndex, vector3& cookieU, vector3& cookieV )
+void light_mgr::GetCollectedLightCookie( s32 Index, s32& CookieIndex, vector3& CookieU, vector3& CookieV )
 {
-    ASSERT( ( index >= 0 ) && ( index < m_nCollectedLights ) );
+    ASSERT( ( Index >= 0 ) && ( Index < m_nCollectedLights ) );
     ASSERT( m_isInCollection );
     ASSERT( m_pSpadLights );
 
-    spad_light& light = m_pSpadLights[m_collectedLights[index]];
-    cookieIndex = light.CookieIndex;
-    cookieU = light.CookieU;
-    cookieV = light.CookieV;
+    spad_light& Light = m_pSpadLights[m_collectedLights[Index]];
+    CookieIndex = Light.CookieIndex;
+    CookieU = Light.CookieU;
+    CookieV = Light.CookieV;
 }
 
 //=========================================================================
 
-s32 light_mgr::GetCollectedDynamicLightIndex( s32 index ) const
+s32 light_mgr::GetCollectedDynamicLightIndex( s32 Index ) const
 {
-    ASSERT( ( index >= 0 ) && ( index < m_nCollectedLights ) );
+    ASSERT( ( Index >= 0 ) && ( Index < m_nCollectedLights ) );
     ASSERT( m_isInCollection );
     ASSERT( m_pSpadLights );
 
-    return m_pSpadLights[m_collectedLights[index]].DynamicLightIndex;
+    return m_pSpadLights[m_collectedLights[Index]].DynamicLightIndex;
 }
 
 //=========================================================================
 
-xbool light_mgr::CalcDirLight( dir_light* pDst, matrix4 const& l2W, bbox const& b, bbox const& worldBox,
-                               vector3 const& worldBoxCenter, vector3 const& pos, f32 radius, f32 intensity, xcolor& c,
-                               s32 shape, vector3 const& direction, f32 outerConeCos, f32 coneCosRangeInv )
+void light_mgr::GetLight( s32 Index, vector3& Position, f32& Radius, xcolor& Color ) const
 {
-    if ( worldBox.Intersect( pos, radius ) )
+    ASSERT( m_isInCollection );
+    ASSERT( ( Index >= 0 ) && ( Index < m_nSpadLights ) );
+    ASSERT( m_pSpadLights );
+
+    spad_light& Light = m_pSpadLights[Index];
+    Position = Light.Pos;
+    Radius = Light.Radius;
+    ScaleLightColor( Color, Light.Color, Light.Intensity );
+}
+
+//=========================================================================
+
+void light_mgr::InsertCollectedCharLight( dir_light const& Light, s32 MaxLightCount )
+{
+    ASSERT( MaxLightCount <= MAX_COLLECTED_LIGHTS );
+
+    if( MaxLightCount <= 0 )
     {
-        //
-        // convert the point light into a directional light
-        //
-
-        // to make things easier and avoid having the bounding box grow to an
-        // inaccurate shape, move the light into the bbox's local space.
-        vector3 temp = pos - l2W.GetTranslation();
-        vector3 lPos( temp.GetX() * l2W( 0, 0 ) + temp.GetY() * l2W( 0, 1 ) + temp.GetZ() * l2W( 0, 2 ),
-                      temp.GetX() * l2W( 1, 0 ) + temp.GetY() * l2W( 1, 1 ) + temp.GetZ() * l2W( 1, 2 ),
-                      temp.GetX() * l2W( 2, 0 ) + temp.GetY() * l2W( 2, 1 ) + temp.GetZ() * l2W( 2, 2 ) );
-
-        // find the distance from the light to the bounding box, and use that to adjust
-        // the directional intensity
-        f32 ftemp;
-        f32 dist = 0.0f;
-        if ( lPos.GetX() > b.Max.GetX() )
-        {
-            ftemp = lPos.GetX() - b.Max.GetX();
-            dist += ftemp * ftemp;
-        }
-
-        if ( lPos.GetX() < b.Min.GetX() )
-        {
-            ftemp = b.Min.GetX() - lPos.GetX();
-            dist += ftemp * ftemp;
-        }
-
-        if ( lPos.GetY() > b.Max.GetY() )
-        {
-            ftemp = lPos.GetY() - b.Max.GetY();
-            dist += ftemp * ftemp;
-        }
-
-        if ( lPos.GetY() < b.Min.GetY() )
-        {
-            ftemp = b.Min.GetY() - lPos.GetY();
-            dist += ftemp * ftemp;
-        }
-
-        if ( lPos.GetZ() > b.Max.GetZ() )
-        {
-            ftemp = lPos.GetZ() - b.Max.GetZ();
-            dist += ftemp * ftemp;
-        }
-
-        if ( lPos.GetZ() < b.Min.GetZ() )
-        {
-            ftemp = b.Min.GetZ() - lPos.GetZ();
-            dist += ftemp * ftemp;
-        }
-
-        // now we can calculate the lights intensity
-        f32 radiusSqr = radius * radius;
-
-        if ( radiusSqr == 0.0f )
-        {
-            radiusSqr = 1.0f;
-        }
-
-        f32 i = 1.0f - dist / radiusSqr;
-        i = MAX( i, 0.0f );
-        i *= intensity;
-
-        if ( i > 0.0f )
-        {
-            // and the direction of the light should just be based on the
-            // bounding box's center point
-            if ( shape == LIGHT_SHAPE_SPOT )
-            {
-                i *= ComputeSpotConeAttenuation( pos, direction, outerConeCos, coneCosRangeInv, worldBoxCenter );
-            }
-
-            if ( i <= 0.0f )
-            {
-                return FALSE;
-            }
-
-            vector3 lDir = worldBoxCenter - pos;
-            if ( !lDir.SafeNormalize() )
-            {
-                // this can happen if the light happens to be placed at the center of
-                // the object (odd case but still possible)
-                lDir.Set( 0.7071f, -0.7071f, 0.0f );
-            }
-
-            // now we can set up the light
-            pDst->Col.R = static_cast<u8>( MIN( i * static_cast<f32>( c.R ), 255.0f ) );
-            pDst->Col.G = static_cast<u8>( MIN( i * static_cast<f32>( c.G ), 255.0f ) );
-            pDst->Col.B = static_cast<u8>( MIN( i * static_cast<f32>( c.B ), 255.0f ) );
-            pDst->Col.A = 0;
-            pDst->Dir = lDir;
-
-            return TRUE;
-        }
+        return;
     }
 
-    return FALSE;
+    f32 const NewScore = ComputeLightScore( Light.Col, 1.0f );
+    s32       InsertAt = m_nCollectedLights;
+
+    if( m_nCollectedLights == MaxLightCount )
+    {
+        f32 const LowestScore = ComputeLightScore( m_collectedCharLights[m_nCollectedLights - 1].Col, 1.0f );
+        if( NewScore <= LowestScore )
+        {
+            return;
+        }
+
+        InsertAt = m_nCollectedLights - 1;
+    }
+    else
+    {
+        m_nCollectedLights++;
+    }
+
+    while( InsertAt > 0 )
+    {
+        f32 const PreviousScore = ComputeLightScore( m_collectedCharLights[InsertAt - 1].Col, 1.0f );
+        if( NewScore <= PreviousScore )
+        {
+            break;
+        }
+
+        m_collectedCharLights[InsertAt] = m_collectedCharLights[InsertAt - 1];
+        InsertAt--;
+    }
+
+    m_collectedCharLights[InsertAt] = Light;
 }
 
 //=========================================================================
 
-s32 light_mgr::CollectCharLights( matrix4 const& l2W, bbox const& b, s32 maxLightCount )
+s32 light_mgr::CollectCharLights( matrix4 const& LocalToWorld, bbox const& LocalBBox, s32 MaxLightCount )
 {
+    ASSERT( m_isInCollection );
+
     m_nCollectedLights = 0;
     m_collectionStats.CharQueries++;
-    maxLightCount = MIN( MAX( 0, maxLightCount ), MAX_COLLECTED_LIGHTS );
-    if ( maxLightCount <= 0 )
+    MaxLightCount = MIN( MAX( 0, MaxLightCount ), MAX_COLLECTED_LIGHTS );
+    if( MaxLightCount <= 0 )
     {
         return m_nCollectedLights;
     }
 
-    bbox worldBox = b;
-    worldBox.Transform( l2W );
-    vector3 const worldBoxCenter = l2W * b.GetCenter();
-    dir_light     light;
+    bbox WorldBBox = LocalBBox;
+    WorldBBox.Transform( LocalToWorld );
+    vector3 const WorldBBoxCenter = LocalToWorld * LocalBBox.GetCenter();
+    dir_light     Light;
 
-    // walk the list collecting fading lights that may intersect
-    s32 currLink = m_firstLink;
-    while ( currLink != -1 )
+    if( m_nLightBvhNodes <= 0 )
     {
-        m_collectionStats.CharCandidates++;
-        if ( CalcDirLight( &light, l2W, b, worldBox, worldBoxCenter, m_fadingLights[currLink].Pos,
-                           m_fadingLights[currLink].Radius, m_fadingLights[currLink].Intensity,
-                           m_fadingLights[currLink].CurrentColor ) )
-        {
-            InsertCollectedCharLight( light, maxLightCount );
-            m_collectionStats.CharHits++;
-        }
-        currLink = m_fadingLights[currLink].NextLink;
+        return m_nCollectedLights;
     }
 
-    // now go through all of the normal character lights
-    for ( s32 iCharLight = 0; iCharLight < m_nCharLights; iCharLight++ )
+    s32 NodeStack[MAX_LIGHT_BVH_NODES];
+    s32 StackCount = 0;
+    NodeStack[StackCount++] = 0;
+    while( StackCount > 0 )
     {
-        m_collectionStats.CharCandidates++;
-        if ( CalcDirLight( &light, l2W, b, worldBox, worldBoxCenter, m_charLights[iCharLight].Pos,
-                           m_charLights[iCharLight].Radius, m_charLights[iCharLight].Intensity,
-                           m_charLights[iCharLight].Color ) )
+        light_bvh_node const& Node = m_pLightBvhNodes[NodeStack[--StackCount]];
+        if( !Node.Bounds.Intersect( WorldBBox ) )
         {
-            InsertCollectedCharLight( light, maxLightCount );
-            m_collectionStats.CharHits++;
+            continue;
         }
-    }
 
-    // now go through all of the dynamic lights
-    for ( s32 iDynamicLight = 0; iDynamicLight < m_nDynamicLights; iDynamicLight++ )
-    {
-        m_collectionStats.CharCandidates++;
-        if ( CalcDirLight( &light, l2W, b, worldBox, worldBoxCenter, m_dynamicLights[iDynamicLight].Pos,
-                           m_dynamicLights[iDynamicLight].Radius, m_dynamicLights[iDynamicLight].Intensity,
-                           m_dynamicLights[iDynamicLight].Color, m_dynamicLights[iDynamicLight].Shape,
-                           m_dynamicLights[iDynamicLight].Direction, m_dynamicLights[iDynamicLight].OuterConeCos,
-                           m_dynamicLights[iDynamicLight].ConeCosRangeInv ) )
+        if( Node.LightCount <= 0 )
         {
-            InsertCollectedCharLight( light, maxLightCount );
-            m_collectionStats.CharHits++;
+            NodeStack[StackCount++] = Node.LeftChild;
+            NodeStack[StackCount++] = Node.RightChild;
+            continue;
+        }
+
+        for( s32 LightOffset = 0; LightOffset < Node.LightCount; LightOffset++ )
+        {
+            spad_light const& Candidate = m_pSpadLights[m_pLightBvhLightIndices[Node.FirstLight + LightOffset]];
+            m_collectionStats.CharCandidates++;
+            if( CalcDirLight( &Light, LocalToWorld, LocalBBox, WorldBBox, WorldBBoxCenter,
+                              Candidate.Pos, Candidate.Radius, Candidate.Intensity, Candidate.Color,
+                              Candidate.Shape, Candidate.Direction, Candidate.OuterConeCos,
+                              Candidate.ConeCosRangeInv ) )
+            {
+                InsertCollectedCharLight( Light, MaxLightCount );
+                m_collectionStats.CharHits++;
+            }
         }
     }
 
@@ -954,96 +1156,75 @@ s32 light_mgr::CollectCharLights( matrix4 const& l2W, bbox const& b, s32 maxLigh
 
 //=========================================================================
 
-s32 light_mgr::CollectCharLightsOnly( matrix4 const& l2W, bbox const& b, s32 maxLightCount )
-{
-    m_nCollectedLights = 0;
-    m_collectionStats.CharQueries++;
-    maxLightCount = MIN( MAX( 0, maxLightCount ), MAX_COLLECTED_LIGHTS );
-    if ( maxLightCount <= 0 )
-    {
-        return m_nCollectedLights;
-    }
-
-    bbox worldBox = b;
-    worldBox.Transform( l2W );
-    vector3 const worldBoxCenter = l2W * b.GetCenter();
-    dir_light     light;
-
-    // walk the list collecting fading lights that may intersect
-    s32 currLink = m_firstLink;
-    while ( currLink != -1 )
-    {
-        m_collectionStats.CharCandidates++;
-        if ( CalcDirLight( &light, l2W, b, worldBox, worldBoxCenter, m_fadingLights[currLink].Pos,
-                           m_fadingLights[currLink].Radius, m_fadingLights[currLink].Intensity,
-                           m_fadingLights[currLink].CurrentColor ) )
-        {
-            InsertCollectedCharLight( light, maxLightCount );
-            m_collectionStats.CharHits++;
-        }
-        currLink = m_fadingLights[currLink].NextLink;
-    }
-
-    // now go through only the normal character lights
-    for ( s32 iCharLight = 0; iCharLight < m_nCharLights; iCharLight++ )
-    {
-        m_collectionStats.CharCandidates++;
-        if ( CalcDirLight( &light, l2W, b, worldBox, worldBoxCenter, m_charLights[iCharLight].Pos,
-                           m_charLights[iCharLight].Radius, m_charLights[iCharLight].Intensity,
-                           m_charLights[iCharLight].Color ) )
-        {
-            InsertCollectedCharLight( light, maxLightCount );
-            m_collectionStats.CharHits++;
-        }
-    }
-
-    return m_nCollectedLights;
-}
-
-//=========================================================================
-
-void light_mgr::GetCollectedCharLight( s32 index, vector3& dir, xcolor& c )
-{
-    ASSERT( ( index >= 0 ) && ( index < m_nCollectedLights ) );
-    dir = m_collectedCharLights[index].Dir;
-    c = m_collectedCharLights[index].Col;
-}
-
-//=========================================================================
-
-void light_mgr::GetDynamicLight( s32 index, vector3& pos, f32& radius, xcolor& c, s32& shape, xbool& castShadows,
-                                 f32& innerRadius, vector3& direction, f32& falloff, f32& innerAngle, f32& outerAngle,
-                                 s32& shadowMapResolution, s32& shadowPriority ) const
-{
-    ASSERT( ( index >= 0 ) && ( index < m_nDynamicLights ) );
-
-    dynamic_light const& light = m_dynamicLights[index];
-    pos = light.Pos;
-    radius = light.Radius;
-    innerRadius = MAX( 0.0f, light.Radius * ( 1.0f - light.Falloff ) );
-    direction = light.Direction;
-    falloff = light.Falloff;
-    innerAngle = light.InnerAngle;
-    outerAngle = light.OuterAngle;
-    shape = light.Shape;
-    shadowMapResolution = light.ShadowMapResolution;
-    shadowPriority = light.ShadowPriority;
-    castShadows = light.CastShadows;
-    ScaleLightColor( c, light.Color, light.Intensity );
-}
-
-//=========================================================================
-
-void light_mgr::GetLight( s32 index, vector3& pos, f32& radius, xcolor& c ) const
+s32 light_mgr::CollectCharLightsOnly( matrix4 const& LocalToWorld, bbox const& LocalBBox, s32 MaxLightCount )
 {
     ASSERT( m_isInCollection );
-    ASSERT( ( index >= 0 ) && ( index < m_nSpadLights ) );
-    ASSERT( m_pSpadLights );
 
-    spad_light& light = m_pSpadLights[index];
-    pos = light.Pos;
-    radius = light.Radius;
-    ScaleLightColor( c, light.Color, light.Intensity );
+    m_nCollectedLights = 0;
+    m_collectionStats.CharQueries++;
+    MaxLightCount = MIN( MAX( 0, MaxLightCount ), MAX_COLLECTED_LIGHTS );
+    if( MaxLightCount <= 0 )
+    {
+        return m_nCollectedLights;
+    }
+
+    bbox WorldBBox = LocalBBox;
+    WorldBBox.Transform( LocalToWorld );
+    vector3 const WorldBBoxCenter = LocalToWorld * LocalBBox.GetCenter();
+    dir_light     Light;
+
+    if( m_nLightBvhNodes <= 0 )
+    {
+        return m_nCollectedLights;
+    }
+
+    s32 NodeStack[MAX_LIGHT_BVH_NODES];
+    s32 StackCount = 0;
+    NodeStack[StackCount++] = 0;
+    while( StackCount > 0 )
+    {
+        light_bvh_node const& Node = m_pLightBvhNodes[NodeStack[--StackCount]];
+        if( !Node.Bounds.Intersect( WorldBBox ) )
+        {
+            continue;
+        }
+
+        if( Node.LightCount <= 0 )
+        {
+            NodeStack[StackCount++] = Node.LeftChild;
+            NodeStack[StackCount++] = Node.RightChild;
+            continue;
+        }
+
+        for( s32 LightOffset = 0; LightOffset < Node.LightCount; LightOffset++ )
+        {
+            spad_light const& Candidate = m_pSpadLights[m_pLightBvhLightIndices[Node.FirstLight + LightOffset]];
+            // Fading lights apply to characters; regular dynamic lights do not here.
+            if( !Candidate.CharOnly && ( Candidate.DynamicLightIndex >= 0 ) )
+            {
+                continue;
+            }
+
+            m_collectionStats.CharCandidates++;
+            if( CalcDirLight( &Light, LocalToWorld, LocalBBox, WorldBBox, WorldBBoxCenter,
+                              Candidate.Pos, Candidate.Radius, Candidate.Intensity, Candidate.Color,
+                              Candidate.Shape, Candidate.Direction, Candidate.OuterConeCos,
+                              Candidate.ConeCosRangeInv ) )
+            {
+                InsertCollectedCharLight( Light, MaxLightCount );
+                m_collectionStats.CharHits++;
+            }
+        }
+    }
+
+    return m_nCollectedLights;
 }
 
 //=========================================================================
+
+void light_mgr::GetCollectedCharLight( s32 Index, vector3& Direction, xcolor& Color )
+{
+    ASSERT( ( Index >= 0 ) && ( Index < m_nCollectedLights ) );
+    Direction = m_collectedCharLights[Index].Dir;
+    Color = m_collectedCharLights[Index].Col;
+}

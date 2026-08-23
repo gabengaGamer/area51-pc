@@ -27,12 +27,16 @@ enum
     MAX_PRIMITIVE_VERTICES = 65535
 };
 
+//-----------------------------------------------------------------------------
+
 enum primitive_topology
 {
     PRIMITIVE_TOPOLOGY_TRIANGLE_LIST = 0,
     PRIMITIVE_TOPOLOGY_LINE_LIST,
     PRIMITIVE_TOPOLOGY_COUNT
 };
+
+//-----------------------------------------------------------------------------
 
 enum primitive_blend_mode
 {
@@ -44,6 +48,8 @@ enum primitive_blend_mode
     PRIMITIVE_BLEND_COUNT
 };
 
+//-----------------------------------------------------------------------------
+
 enum primitive_depth_mode
 {
     PRIMITIVE_DEPTH_DISABLED = 0,
@@ -51,6 +57,8 @@ enum primitive_depth_mode
     PRIMITIVE_DEPTH_READ_WRITE,
     PRIMITIVE_DEPTH_COUNT
 };
+
+//-----------------------------------------------------------------------------
 
 enum primitive_raster_mode
 {
@@ -61,6 +69,8 @@ enum primitive_raster_mode
     PRIMITIVE_RASTER_COLLISION_BIASED,
     PRIMITIVE_RASTER_COUNT
 };
+
+//-----------------------------------------------------------------------------
 
 enum primitive_sampler_mode
 {
@@ -73,6 +83,8 @@ enum primitive_sampler_mode
     PRIMITIVE_SAMPLER_COUNT
 };
 
+//-----------------------------------------------------------------------------
+
 enum primitive_output_mode
 {
     PRIMITIVE_OUTPUT_COLOR = 0,
@@ -80,6 +92,8 @@ enum primitive_output_mode
     PRIMITIVE_OUTPUT_DISTORTION,
     PRIMITIVE_OUTPUT_COUNT
 };
+
+//-----------------------------------------------------------------------------
 
 enum primitive_render_layer
 {
@@ -90,6 +104,8 @@ enum primitive_render_layer
     PRIMITIVE_LAYER_COUNT
 };
 
+//-----------------------------------------------------------------------------
+
 struct primitive_vertex
 {
     primitive_vertex ( void );
@@ -99,6 +115,8 @@ struct primitive_vertex
     u32      Color;
     vector2  UV;
 };
+
+//-----------------------------------------------------------------------------
 
 struct primitive_draw_desc
 {
@@ -119,6 +137,8 @@ struct primitive_draw_desc
     f32                     DistortionScale;
 };
 
+//=============================================================================
+
 xbool SubmitPrimitives ( primitive_draw_desc const& desc, matrix4 const& localToWorld,
                          primitive_vertex const* pVertices, s32 nVertices, u16 const* pIndices, s32 nIndices );
 
@@ -133,6 +153,8 @@ xbool SubmitPrimitiveVelocityBillboards ( primitive_draw_desc const& desc, s32 n
                                           matrix4 const* pLocalToWorld, matrix4 const* pVelocityMatrix,
                                           vector4 const* pPositions,
                                           vector4 const* pVelocities, u32 const* pColors );
+
+//=============================================================================
 
 class PrimitiveBatch
 {

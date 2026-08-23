@@ -10,26 +10,28 @@
 #include "x_debug.hpp"
 
 //=============================================================================
-//  HELPERS
+//  HELPER FUNCTIONS
 //=============================================================================
 
-namespace
-{
-static xcolor ColorFromPackedRGBA( u32 color )
+static 
+xcolor ColorFromPackedRGBA( u32 color )
 {
     return xcolor( static_cast<u8>( color & 0xff ), static_cast<u8>( ( color >> 8 ) & 0xff ),
                    static_cast<u8>( ( color >> 16 ) & 0xff ), static_cast<u8>( ( color >> 24 ) & 0xff ) );
 }
 
-static xbool AppendQuad( render::primitive_vertex* pVertices,
-                         s32                       maxVertices,
-                         s32&                      vertexCount,
-                         u16*                      pIndices,
-                         s32                       maxIndices,
-                         s32&                      indexCount,
-                         vector3 const*            pPositions,
-                         vector2 const*            pUVs,
-                         xcolor const&             color )
+//=============================================================================
+
+static 
+xbool AppendQuad( render::primitive_vertex* pVertices,
+                  s32                       maxVertices,
+                  s32&                      vertexCount,
+                  u16*                      pIndices,
+                  s32                       maxIndices,
+                  s32&                      indexCount,
+                  vector3 const*            pPositions,
+                  vector2 const*            pUVs,
+                  xcolor const&             color )
 {
     if( !pVertices || !pIndices || !pPositions || !pUVs ||
         ((vertexCount + 4) > maxVertices) || ((indexCount + 6) > maxIndices) )
@@ -47,10 +49,9 @@ static xbool AppendQuad( render::primitive_vertex* pVertices,
 
     return TRUE;
 }
-} // namespace
 
 //=============================================================================
-//  TYPES
+//  IMPLEMENTATION
 //=============================================================================
 
 render::primitive_vertex::primitive_vertex( void )
@@ -97,8 +98,6 @@ render::primitive_draw_desc::primitive_draw_desc( texture const* pDrawTexture, p
     ASSERT( ( Output == PRIMITIVE_OUTPUT_DISTORTION ) == ( Layer == PRIMITIVE_LAYER_DISTORTION ) );
 }
 
-//=============================================================================
-//  PRIMITIVE BATCH
 //=============================================================================
 
 render::PrimitiveBatch::PrimitiveBatch( primitive_draw_desc const& desc )
@@ -374,8 +373,6 @@ s32 render::PrimitiveBatch::GetIndexCount( void ) const
 }
 
 //=============================================================================
-//  SPECIALIZED SUBMISSION
-//=============================================================================
 
 xbool render::SubmitPrimitiveSprite( primitive_draw_desc const& desc, vector3 const& position, vector2 const& size,
                                      vector2 const& uV0, vector2 const& uV1, xcolor const& color, radian rotation )
@@ -596,5 +593,3 @@ xbool render::SubmitPrimitiveVelocityBillboards( primitive_draw_desc const& desc
 
     return TRUE;
 }
-
-//=============================================================================

@@ -20,7 +20,7 @@
 
 class RenderPipelineCache
 {
-  public:
+public:
     RenderPipelineCache();
     ~RenderPipelineCache();
 
@@ -36,7 +36,7 @@ class RenderPipelineCache
     // Releases every pipeline handle owned by this cache.
     void Reset();
 
-  private:
+private:
     struct Entry
     {
         Entry();

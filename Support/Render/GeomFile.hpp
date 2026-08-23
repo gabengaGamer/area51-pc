@@ -21,27 +21,29 @@ struct rigid_geom;
 struct skin_geom;
 
 //=========================================================================
-//  GEOMETRY FILE
+//  TYPES
 //=========================================================================
 
-namespace geom_file
+class geom_file
 {
+public:
 
-enum
-{
-    VERSION = 42,
+    enum
+    {
+        VERSION = 42,
+    };
+
+    static xbool Validate  ( rigid_geom const& Geom, xstring& Error );
+    static xbool Validate  ( skin_geom const& Geom, xstring& Error );
+
+    static xbool LoadRigid ( X_FILE* pFile, rigid_geom*& pGeom, xstring& Error );
+    static xbool LoadSkin  ( X_FILE* pFile, skin_geom*& pGeom, xstring& Error );
+
+    static xbool SaveRigid ( X_FILE* pFile, rigid_geom const& Geom, xstring& Error );
+    static xbool SaveSkin  ( X_FILE* pFile, skin_geom const& Geom, xstring& Error );
+    static xbool SaveRigid ( char const* pFileName, rigid_geom const& Geom, xstring& Error );
+    static xbool SaveSkin  ( char const* pFileName, skin_geom const& Geom, xstring& Error );
 };
-
-xbool LoadRigid( X_FILE* pFile, rigid_geom*& pGeom, xstring& error );
-xbool LoadSkin( X_FILE* pFile, skin_geom*& pGeom, xstring& error );
-xbool SaveRigid( X_FILE* pFile, rigid_geom const& geom, xstring& error );
-xbool SaveSkin( X_FILE* pFile, skin_geom const& geom, xstring& error );
-xbool SaveRigid( char const* pFileName, rigid_geom const& geom, xstring& error );
-xbool SaveSkin( char const* pFileName, skin_geom const& geom, xstring& error );
-xbool Validate( rigid_geom const& geom, xstring& error );
-xbool Validate( skin_geom const& geom, xstring& error );
-
-} // namespace geom_file
 
 //=========================================================================
 #endif // GEOM_FILE_HPP

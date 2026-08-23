@@ -9,18 +9,14 @@
 //=========================================================================
 
 #include "ShadowMapMgr.hpp"
-
 #include "x_array.hpp"
-
 #include "../Objects/object.hpp"
 #include "../Objects/Player/Player.hpp"
 #include "../Obj_mgr/obj_mgr.hpp"
 #include "../PlaySurfaceMgr/PlaySurfaceMgr.hpp"
 #include "../ZoneMgr/ZoneMgr.hpp"
-
 #include "LightMgr.hpp"
 #include "Render.hpp"
-
 #include "Entropy.hpp"
 
 //=========================================================================
@@ -30,18 +26,16 @@
 ShadowMapMgr g_ShadowMapMgr;
 
 //=========================================================================
-//  FILE-LOCAL TYPES
+//  TYPES
 //=========================================================================
 
-namespace
-{
 struct ShadowPointFace
 {
     radian Pitch;
     radian Yaw;
 };
 
-//---------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
 struct ShadowLight
 {
@@ -53,7 +47,6 @@ struct ShadowLight
     f32     Falloff;
     radian  FOV;
     s32     ShadowMapResolution;
-    f32     PointFaceCoverageCos;
     s32     ShadowPriority;
     s32     SourceCount;
     s32     RelevantCasterStart;
@@ -61,26 +54,7 @@ struct ShadowLight
     f32     Score;
 };
 
-//---------------------------------------------------------------------
-
-ShadowPointFace const kPointShadowFaces[POINT_SHADOW_FACE_COUNT] = {
-    { -R_90, R_0 }, { R_90, R_0 }, { R_0, R_0 }, { R_0, R_180 }, { R_0, R_90 }, { R_0, -R_90 },
-};
-
-//---------------------------------------------------------------------
-
-radian const kPointShadowFOV = R_90;
-radian const kMinSpotShadowFOV = DEG_TO_RAD( 1.0f );
-s32 const    kMinShadowPriority = 0;
-s32 const    kMaxShadowPriority = 4;
-f32 const    kPointShadowProjectionOverlapTexels = 4.0f;
-f32 const    kShadowCasterScoreWeight = 4096.0f;
-f32 const    kPlayerShadowScoreBonus = 8192.0f;
-f32 const    kShadowRadiusScorePenalty = 0.25f;
-f32 const    kShadowSourceTypeSpot = 0.0f;
-f32 const    kShadowSourceTypePointFace = 1.0f;
-
-//---------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
 struct ShadowConeTest
 {
@@ -92,7 +66,7 @@ struct ShadowConeTest
     f32     Length;
 };
 
-//---------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
 struct DynamicShadowLight
 {
@@ -106,7 +80,7 @@ struct DynamicShadowLight
     s32     ShadowMapResolution;
 };
 
-//---------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
 struct ShadowCasterRecord
 {
@@ -123,226 +97,16 @@ struct ShadowCasterRecord
     f32                       WorldBBoxRadius;
 };
 
-//---------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
-struct ShadowCasterMaskRecord
+struct ShadowCasterHashEntry
 {
     ShadowCasterRecord Caster;
     u64                SourceMask;
+    xbool              Occupied;
 };
 
-//---------------------------------------------------------------------
-
-f32 ComputeBBoxBoundingSphereRadius( bbox const& worldBBox );
-
-//---------------------------------------------------------------------
-
-void SetShadowCasterBounds( ShadowCasterRecord& caster, bbox const& worldBBox )
-{
-    caster.WorldBBoxCenter = worldBBox.GetCenter();
-    caster.WorldBBoxRadius = ComputeBBoxBoundingSphereRadius( worldBBox );
-}
-
-//---------------------------------------------------------------------
-
-ShadowCasterRecord MakeObjectShadowCaster( object* pCaster, bbox const& worldBBox )
-{
-    ShadowCasterRecord caster;
-    caster.Type = ShadowCasterRecord::CASTER_OBJECT;
-    caster.pObject = pCaster;
-    caster.pPlaySurface = NULL;
-    SetShadowCasterBounds( caster, worldBBox );
-    return caster;
-}
-
-//---------------------------------------------------------------------
-
-ShadowCasterRecord MakePlaySurfaceShadowCaster( playsurface_mgr::surface* pSurface, bbox const& worldBBox )
-{
-    ShadowCasterRecord caster;
-    caster.Type = ShadowCasterRecord::CASTER_PLAY_SURFACE;
-    caster.pObject = NULL;
-    caster.pPlaySurface = pSurface;
-    SetShadowCasterBounds( caster, worldBBox );
-    return caster;
-}
-
-//---------------------------------------------------------------------
-
-xbool SameShadowCaster( ShadowCasterRecord const& a, ShadowCasterRecord const& b )
-{
-    if ( a.Type != b.Type )
-    {
-        return FALSE;
-    }
-
-    if ( a.Type == ShadowCasterRecord::CASTER_OBJECT )
-    {
-        return ( a.pObject == b.pObject );
-    }
-
-    return ( a.pPlaySurface == b.pPlaySurface );
-}
-
-//---------------------------------------------------------------------
-
-uaddr GetShadowCasterSortKey( ShadowCasterRecord const& caster )
-{
-    if ( caster.Type == ShadowCasterRecord::CASTER_OBJECT )
-    {
-        return reinterpret_cast<uaddr>( caster.pObject );
-    }
-
-    return reinterpret_cast<uaddr>( caster.pPlaySurface );
-}
-
-//---------------------------------------------------------------------
-
-s32 ShadowCasterMaskCompareFn( void const* pA, void const* pB )
-{
-    ShadowCasterMaskRecord const& a = *( (ShadowCasterMaskRecord const*)pA );
-    ShadowCasterMaskRecord const& b = *( (ShadowCasterMaskRecord const*)pB );
-
-    if ( a.Caster.Type != b.Caster.Type )
-    {
-        return ( a.Caster.Type < b.Caster.Type ) ? -1 : 1;
-    }
-
-    uaddr const aKey = GetShadowCasterSortKey( a.Caster );
-    uaddr const bKey = GetShadowCasterSortKey( b.Caster );
-
-    if ( aKey < bKey )
-    {
-        return -1;
-    }
-    if ( aKey > bKey )
-    {
-        return 1;
-    }
-
-    return 0;
-}
-
-//---------------------------------------------------------------------
-
-radian GetShadowLightFOV( DynamicShadowLight const& dynamicLight )
-{
-    if ( dynamicLight.Shape == light_mgr::LIGHT_SHAPE_OMNI )
-    {
-        return kPointShadowFOV;
-    }
-
-    return MAX( kMinSpotShadowFOV, DEG_TO_RAD( dynamicLight.OuterAngle ) );
-}
-
-//---------------------------------------------------------------------
-
-s32 GetShadowLightSourceCount( s32 lightShape )
-{
-    if ( lightShape == light_mgr::LIGHT_SHAPE_OMNI )
-    {
-        return POINT_SHADOW_FACE_COUNT;
-    }
-
-    return 1;
-}
-
-//---------------------------------------------------------------------
-
-s32 ClampShadowMapResolution( s32 shadowMapResolution )
-{
-    if ( shadowMapResolution >= 4096 )
-    {
-        return 4096;
-    }
-    if ( shadowMapResolution >= 2048 )
-    {
-        return 2048;
-    }
-    if ( shadowMapResolution >= 1024 )
-    {
-        return 1024;
-    }
-    if ( shadowMapResolution >= 512 )
-    {
-        return 512;
-    }
-    return 256;
-}
-
-//---------------------------------------------------------------------
-
-s32 ClampShadowPriority( s32 shadowPriority )
-{
-    if ( shadowPriority < kMinShadowPriority )
-    {
-        return kMinShadowPriority;
-    }
-    if ( shadowPriority > kMaxShadowPriority )
-    {
-        return kMaxShadowPriority;
-    }
-    return shadowPriority;
-}
-
-//---------------------------------------------------------------------
-
-f32 ComputePointFaceCoverageCos( s32 faceResolutionTexels )
-{
-    // Takes an actual texel count now, not a resolution to bucket-clamp.
-    f32 const coverageScale = static_cast<f32>( faceResolutionTexels ) /
-                              ( static_cast<f32>( faceResolutionTexels ) + kPointShadowProjectionOverlapTexels );
-    f32 const safeScale = MAX( coverageScale, 0.0001f );
-    f32 const tanHalfFov = x_tan( kPointShadowFOV * 0.5f ) / safeScale;
-    f32 const cornerLengthSq = 1.0f + ( 2.0f * tanHalfFov * tanHalfFov );
-    return 1.0f / x_sqrt( cornerLengthSq );
-}
-
-//---------------------------------------------------------------------
-
-f32 ComputePointShadowNearZ( f32 lightRadius )
-{
-    return MAX( 0.5f, lightRadius * 0.0025f );
-}
-
-//---------------------------------------------------------------------
-
-f32 ComputePointShadowReceiveNearZ( f32 lightRadius )
-{
-    return MAX( 0.05f, lightRadius * 0.00025f );
-}
-
-//---------------------------------------------------------------------
-
-f32 ComputeSpotShadowReceiveNearZ( f32 lightRadius )
-{
-    return MAX( 0.05f, lightRadius * 0.0005f );
-}
-
-//---------------------------------------------------------------------
-
-s32 ReduceShadowMapResolution( s32 shadowMapResolution )
-{
-    if ( shadowMapResolution > 2048 )
-    {
-        return 2048;
-    }
-    if ( shadowMapResolution > 1024 )
-    {
-        return 1024;
-    }
-    if ( shadowMapResolution > 512 )
-    {
-        return 512;
-    }
-    if ( shadowMapResolution > 256 )
-    {
-        return 256;
-    }
-    return 256;
-}
-
-//---------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
 struct ShadowAtlasEntry
 {
@@ -354,14 +118,7 @@ struct ShadowAtlasEntry
     s32 AtlasTileY;
 };
 
-//---------------------------------------------------------------------
-
-xbool IsPowerOfTwo( s32 value )
-{
-    return ( value > 0 ) && ( ( value & ( value - 1 ) ) == 0 );
-}
-
-//---------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
 struct ShadowAtlasFreeNode
 {
@@ -370,955 +127,1307 @@ struct ShadowAtlasFreeNode
     s32 TileSize;
 };
 
-//---------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
-s32 GetShadowAtlasSplitCount( s32 atlasSize, s32 minTileSize )
+struct ShadowMapMgr::ScratchData
 {
-    ASSERT( atlasSize > 0 );
-    ASSERT( minTileSize > 0 );
-    ASSERT( IsPowerOfTwo( atlasSize ) );
-    ASSERT( IsPowerOfTwo( minTileSize ) );
-    ASSERT( atlasSize >= minTileSize );
+    xarray<ShadowCasterRecord>    RelevantCasters;
+    xarray<ShadowCasterRecord>    ShadowCasters;
+    xarray<u64>                   CasterMasks;
+    xarray<ShadowCasterHashEntry> CasterHash;
+    xarray<ShadowAtlasFreeNode>   AtlasFreeNodes;
+};
 
-    s32 splitCount = 0;
-    while ( atlasSize > minTileSize )
+//=========================================================================
+//  CONSTANTS
+//=========================================================================
+
+static ShadowPointFace const PointShadowFaces[POINT_SHADOW_FACE_COUNT] =
+{
+    { -R_90,  R_0   },
+    {  R_90,  R_0   },
+    {  R_0,   R_0   },
+    {  R_0,   R_180 },
+    {  R_0,   R_90  },
+    {  R_0,  -R_90  },
+};
+
+//-------------------------------------------------------------------------
+
+static radian const PointShadowFOV                      = R_90;
+static radian const MinSpotShadowFOV                    = DEG_TO_RAD( 1.0f );
+static s32 const    MinShadowPriority                   = 0;
+static s32 const    MaxShadowPriority                   = 4;
+static f32 const    PointShadowProjectionOverlapTexels  = 4.0f;
+static f32 const    PlayerShadowScoreBonus              = 8192.0f;
+static f32 const    ShadowRadiusScorePenalty            = 0.25f;
+static f32 const    ShadowSourceTypeSpot                = 0.0f;
+static f32 const    ShadowSourceTypePointFace           = 1.0f;
+
+//=========================================================================
+//  HELPER FUNCTIONS
+//=========================================================================
+
+static 
+s32 ClampShadowMapResolution( s32 ShadowMapResolution )
+{
+    if( ShadowMapResolution >= 4096 )
     {
-        atlasSize /= 2;
-        splitCount++;
+        return 4096;
+    }
+    if( ShadowMapResolution >= 2048 )
+    {
+        return 2048;
+    }
+    if( ShadowMapResolution >= 1024 )
+    {
+        return 1024;
+    }
+    if( ShadowMapResolution >= 512 )
+    {
+        return 512;
+    }
+    return 256;
+}
+
+//=========================================================================
+
+static 
+s32 ReduceShadowMapResolution( s32 ShadowMapResolution )
+{
+    if( ShadowMapResolution > 2048 )
+    {
+        return 2048;
+    }
+    if( ShadowMapResolution > 1024 )
+    {
+        return 1024;
+    }
+    if( ShadowMapResolution > 512 )
+    {
+        return 512;
+    }
+    if( ShadowMapResolution > 256 )
+    {
+        return 256;
+    }
+    return 256;
+}
+
+//=========================================================================
+
+static 
+s32 ClampShadowPriority( s32 ShadowPriority )
+{
+    if( ShadowPriority < MinShadowPriority )
+    {
+        return MinShadowPriority;
+    }
+    if( ShadowPriority > MaxShadowPriority )
+    {
+        return MaxShadowPriority;
+    }
+    return ShadowPriority;
+}
+
+//=========================================================================
+
+static 
+f32 ComputePointShadowNearZ( f32 LightRadius )
+{
+    return MAX( 0.5f, LightRadius * 0.0025f );
+}
+
+//=========================================================================
+
+static 
+f32 ComputePointShadowReceiveNearZ( f32 LightRadius )
+{
+    return MAX( 0.05f, LightRadius * 0.00025f );
+}
+
+//=========================================================================
+
+static 
+f32 ComputeSpotShadowReceiveNearZ( f32 LightRadius )
+{
+    return MAX( 0.05f, LightRadius * 0.0005f );
+}
+
+//=========================================================================
+
+static 
+f32 ComputePointFaceCoverageCos( s32 FaceResolutionTexels )
+{
+    f32 const CoverageScale = static_cast<f32>( FaceResolutionTexels ) /
+                              ( static_cast<f32>( FaceResolutionTexels ) + PointShadowProjectionOverlapTexels );
+    f32 const SafeScale = MAX( CoverageScale, 0.0001f );
+    f32 const TanHalfFOV = x_tan( PointShadowFOV * 0.5f ) / SafeScale;
+    f32 const CornerLengthSq = 1.0f + ( 2.0f * TanHalfFOV * TanHalfFOV );
+    return 1.0f / x_sqrt( CornerLengthSq );
+}
+
+//=========================================================================
+
+static 
+radian GetShadowLightFOV( DynamicShadowLight const& DynamicLightData )
+{
+    if( DynamicLightData.Shape == light_mgr::LIGHT_SHAPE_OMNI )
+    {
+        return PointShadowFOV;
     }
 
-    return splitCount;
+    return MAX( MinSpotShadowFOV, DEG_TO_RAD( DynamicLightData.OuterAngle ) );
 }
 
-//---------------------------------------------------------------------
+//=========================================================================
 
-s32 GetMaxShadowAtlasFreeNodeCount( s32 atlasSize, s32 nEntries )
+static 
+s32 GetShadowLightSourceCount( s32 LightShape )
 {
-    s32 const splitCount = GetShadowAtlasSplitCount( atlasSize, 256 );
-    return 1 + ( MAX( nEntries, 0 ) * splitCount * 3 );
-}
-
-//---------------------------------------------------------------------
-
-void AppendShadowAtlasFreeNode( xarray<ShadowAtlasFreeNode>& freeNodes, s32 atlasTileX, s32 atlasTileY, s32 tileSize )
-{
-    ShadowAtlasFreeNode& node = freeNodes.Append();
-    node.AtlasTileX = atlasTileX;
-    node.AtlasTileY = atlasTileY;
-    node.TileSize = tileSize;
-}
-
-//---------------------------------------------------------------------
-
-void SortShadowAtlasEntries( ShadowAtlasEntry* pEntries, s32 nEntries )
-{
-    for ( s32 i = 1; i < nEntries; i++ )
+    if( LightShape == light_mgr::LIGHT_SHAPE_OMNI )
     {
-        ShadowAtlasEntry const entry = pEntries[i];
-        s32                    j = i - 1;
-        while ( j >= 0 )
-        {
-            if ( pEntries[j].TileSize > entry.TileSize )
-            {
-                break;
-            }
-
-            if ( ( pEntries[j].TileSize == entry.TileSize ) && ( pEntries[j].ShadowPriority > entry.ShadowPriority ) )
-            {
-                break;
-            }
-
-            if ( ( pEntries[j].TileSize == entry.TileSize ) && ( pEntries[j].ShadowPriority == entry.ShadowPriority ) &&
-                 ( pEntries[j].ShadowScore > entry.ShadowScore ) )
-            {
-                break;
-            }
-
-            if ( ( pEntries[j].TileSize == entry.TileSize ) && ( pEntries[j].ShadowPriority == entry.ShadowPriority ) &&
-                 ( pEntries[j].ShadowScore == entry.ShadowScore ) && ( pEntries[j].SourceIndex < entry.SourceIndex ) )
-            {
-                break;
-            }
-
-            pEntries[j + 1] = pEntries[j];
-            j--;
-        }
-
-        pEntries[j + 1] = entry;
+        return POINT_SHADOW_FACE_COUNT;
     }
+
+    return 1;
 }
 
-//---------------------------------------------------------------------
+//=========================================================================
 
-xbool TryPackShadowAtlasEntries( ShadowAtlasEntry* pEntries, s32 nEntries, s32 atlasSize,
-                                 xarray<ShadowAtlasFreeNode>& freeNodes )
+static 
+s32 GetAtlasGuardTexels( f32 FilterRadius )
 {
-    SortShadowAtlasEntries( pEntries, nEntries );
+    s32 const GuardTexels = static_cast<s32>( x_ceil( FilterRadius ) ) + 1;
+    return ( GuardTexels > 0 ) ? GuardTexels : 1;
+}
 
-    ASSERT( IsPowerOfTwo( atlasSize ) );
-    if ( !IsPowerOfTwo( atlasSize ) )
+//=========================================================================
+
+static 
+f32 ComputeBBoxBoundingSphereRadius( bbox const& WorldBBox )
+{
+    vector3 const Extents = ( WorldBBox.Max - WorldBBox.Min ) * 0.5f;
+    return x_sqrt( Extents.Dot( Extents ) );
+}
+
+//=========================================================================
+
+static 
+void SetShadowCasterBounds( ShadowCasterRecord& Caster, bbox const& WorldBBox )
+{
+    Caster.WorldBBoxCenter = WorldBBox.GetCenter();
+    Caster.WorldBBoxRadius = ComputeBBoxBoundingSphereRadius( WorldBBox );
+}
+
+//=========================================================================
+
+static 
+ShadowCasterRecord MakeObjectShadowCaster( object* pCaster, bbox const& WorldBBox )
+{
+    ShadowCasterRecord Caster;
+    Caster.Type = ShadowCasterRecord::CASTER_OBJECT;
+    Caster.pObject = pCaster;
+    Caster.pPlaySurface = nullptr;
+    SetShadowCasterBounds( Caster, WorldBBox );
+    return Caster;
+}
+
+//=========================================================================
+
+static 
+ShadowCasterRecord MakePlaySurfaceShadowCaster( playsurface_mgr::surface* pSurface, bbox const& WorldBBox )
+{
+    ShadowCasterRecord Caster;
+    Caster.Type = ShadowCasterRecord::CASTER_PLAY_SURFACE;
+    Caster.pObject = nullptr;
+    Caster.pPlaySurface = pSurface;
+    SetShadowCasterBounds( Caster, WorldBBox );
+    return Caster;
+}
+
+//=========================================================================
+
+static 
+xbool SameShadowCaster( ShadowCasterRecord const& A, ShadowCasterRecord const& B )
+{
+    if( A.Type != B.Type )
     {
         return FALSE;
     }
 
-    freeNodes.SetCount( 0 );
-    s32 const requiredCapacity = GetMaxShadowAtlasFreeNodeCount( atlasSize, nEntries );
-    if ( freeNodes.GetCapacity() < requiredCapacity )
+    if( A.Type == ShadowCasterRecord::CASTER_OBJECT )
     {
-        freeNodes.SetCapacity( requiredCapacity );
+        return ( A.pObject == B.pObject );
     }
-    AppendShadowAtlasFreeNode( freeNodes, 0, 0, atlasSize );
 
-    for ( s32 i = 0; i < nEntries; i++ )
+    return ( A.pPlaySurface == B.pPlaySurface );
+}
+
+//=========================================================================
+
+static 
+uaddr GetShadowCasterKey( ShadowCasterRecord const& Caster )
+{
+    if( Caster.Type == ShadowCasterRecord::CASTER_OBJECT )
     {
-        s32 const tileSize = pEntries[i].TileSize;
-        ASSERT( IsPowerOfTwo( tileSize ) );
-        if ( !IsPowerOfTwo( tileSize ) )
+        return reinterpret_cast<uaddr>( Caster.pObject );
+    }
+
+    return reinterpret_cast<uaddr>( Caster.pPlaySurface );
+}
+
+//=========================================================================
+
+static 
+u32 GetShadowCasterHash( ShadowCasterRecord const& Caster )
+{
+    uaddr const Key = GetShadowCasterKey( Caster );
+    return static_cast<u32>( Key ^ ( Key >> 16 ) ^ static_cast<uaddr>( Caster.Type ) );
+}
+
+//=========================================================================
+
+static 
+void SetupShadowConeTest( ShadowConeTest& Cone, vector3 const& Apex, vector3 const& Direction, f32 CosOuter, f32 Length )
+{
+    Cone.Apex = Apex;
+    Cone.Axis = Direction;
+    if( !Cone.Axis.SafeNormalize() )
+    {
+        Cone.Axis.Set( 0.0f, 0.0f, 1.0f );
+    }
+
+    Cone.CosOuter = MAX( CosOuter, 0.0001f );
+    Cone.SinOuter = x_sqrt( MAX( 1.0f - ( Cone.CosOuter * Cone.CosOuter ), 0.0f ) );
+    Cone.TanOuter = Cone.SinOuter / Cone.CosOuter;
+    Cone.Length = Length;
+}
+
+//=========================================================================
+
+static 
+xbool SphereIntersectsFiniteCone( vector3 const& SphereCenter, f32 SphereRadius, ShadowConeTest const& Cone )
+{
+    vector3 const ToCenter = SphereCenter - Cone.Apex;
+    f32 const     CenterDistSq = ToCenter.Dot( ToCenter );
+    f32 const     AxialDistance = Cone.Axis.Dot( ToCenter );
+    f32 const     SphereRadiusSq = SphereRadius * SphereRadius;
+
+    if( AxialDistance < -SphereRadius )
+    {
+        return FALSE;
+    }
+
+    if( AxialDistance > ( Cone.Length + SphereRadius ) )
+    {
+        return FALSE;
+    }
+
+    if( AxialDistance <= 0.0f )
+    {
+        return ( CenterDistSq <= SphereRadiusSq );
+    }
+
+    f32 const RadialDistanceSq = MAX( CenterDistSq - ( AxialDistance * AxialDistance ), 0.0f );
+    f32 const RadialDistance = x_sqrt( RadialDistanceSq );
+
+    if( AxialDistance < Cone.Length )
+    {
+        f32 const SideDistance = ( RadialDistance * Cone.CosOuter ) - ( AxialDistance * Cone.SinOuter );
+        if( SideDistance <= SphereRadius )
         {
-            return FALSE;
+            return TRUE;
         }
-        if ( ( tileSize <= 0 ) || ( tileSize > atlasSize ) )
-        {
-            return FALSE;
-        }
+    }
 
-        s32 iBestNode = -1;
-        for ( s32 iNode = 0; iNode < freeNodes.GetCount(); iNode++ )
-        {
-            ShadowAtlasFreeNode const& node = freeNodes[iNode];
-            if ( node.TileSize < tileSize )
-            {
-                continue;
-            }
+    f32 const ConeCapRadius = Cone.Length * Cone.TanOuter;
+    f32 const CapAxialDelta = MAX( AxialDistance - Cone.Length, 0.0f );
+    f32 const CapRadialDelta = MAX( RadialDistance - ConeCapRadius, 0.0f );
+    return ( ( CapAxialDelta * CapAxialDelta ) + ( CapRadialDelta * CapRadialDelta ) ) <= SphereRadiusSq;
+}
 
-            if ( iBestNode < 0 )
-            {
-                iBestNode = iNode;
-                continue;
-            }
+//=========================================================================
 
-            ShadowAtlasFreeNode const& bestNode = freeNodes[iBestNode];
-            if ( node.TileSize < bestNode.TileSize )
-            {
-                iBestNode = iNode;
-                continue;
-            }
+static 
+xbool SourceConeAffectsBBox( ShadowConeTest const& Cone, bbox const& WorldBBox )
+{
+    return SphereIntersectsFiniteCone( WorldBBox.GetCenter(), ComputeBBoxBoundingSphereRadius( WorldBBox ), Cone );
+}
 
-            if ( ( node.TileSize == bestNode.TileSize ) && ( node.AtlasTileY < bestNode.AtlasTileY ) )
-            {
-                iBestNode = iNode;
-                continue;
-            }
+//=========================================================================
 
-            if ( ( node.TileSize == bestNode.TileSize ) && ( node.AtlasTileY == bestNode.AtlasTileY ) &&
-                 ( node.AtlasTileX < bestNode.AtlasTileX ) )
-            {
-                iBestNode = iNode;
-            }
-        }
+static 
+xbool ShadowCasterBoundsAreRelevant( bbox const& CasterBBox, u8 Zone1, u8 Zone2, vector3 const& LightPos,
+                                     f32 LightRadius, ShadowConeTest const* pConeTest = nullptr )
+{
 
-        if ( iBestNode < 0 )
-        {
-            return FALSE;
-        }
+    if( !g_ZoneMgr.IsZoneVisible( Zone1 ) && !g_ZoneMgr.IsZoneVisible( Zone2 ) )
+    {
+        return FALSE;
+    }
 
-        ShadowAtlasFreeNode node = freeNodes[iBestNode];
-        freeNodes[iBestNode] = freeNodes[freeNodes.GetCount() - 1];
-        freeNodes.SetCount( freeNodes.GetCount() - 1 );
+    if( !CasterBBox.Intersect( LightPos, LightRadius ) )
+    {
+        return FALSE;
+    }
 
-        while ( node.TileSize > tileSize )
-        {
-            s32 const childTileSize = node.TileSize / 2;
-
-            if ( ( childTileSize <= 0 ) || ( childTileSize < tileSize ) )
-            {
-                return FALSE;
-            }
-
-            AppendShadowAtlasFreeNode( freeNodes, node.AtlasTileX + childTileSize, node.AtlasTileY, childTileSize );
-            AppendShadowAtlasFreeNode( freeNodes, node.AtlasTileX, node.AtlasTileY + childTileSize, childTileSize );
-            AppendShadowAtlasFreeNode( freeNodes, node.AtlasTileX + childTileSize, node.AtlasTileY + childTileSize,
-                                       childTileSize );
-
-            node.TileSize = childTileSize;
-        }
-
-        pEntries[i].AtlasTileX = node.AtlasTileX;
-        pEntries[i].AtlasTileY = node.AtlasTileY;
+    if( pConeTest )
+    {
+        return SourceConeAffectsBBox( *pConeTest, CasterBBox );
     }
 
     return TRUE;
 }
 
-//---------------------------------------------------------------------
+//=========================================================================
 
-s32 GetShadowAtlasSizeForEntries( ShadowAtlasEntry* pEntries, s32 nEntries, xarray<ShadowAtlasFreeNode>& freeNodes )
+static 
+vector3 const& GetPointShadowFaceDirection( s32 FaceIndex )
 {
-    for ( s32 atlasSize = 256; atlasSize <= MAX_SHADOW_ATLAS_SIZE; atlasSize *= 2 )
+    ASSERT( FaceIndex >= 0 );
+    ASSERT( FaceIndex < POINT_SHADOW_FACE_COUNT );
+
+    static xbool   s_Initialized = FALSE;
+    static vector3 s_FaceDirections[POINT_SHADOW_FACE_COUNT];
+
+    if( !s_Initialized )
     {
-        if ( TryPackShadowAtlasEntries( pEntries, nEntries, atlasSize, freeNodes ) )
+        for( s32 Index = 0; Index < POINT_SHADOW_FACE_COUNT; Index++ )
         {
-            return atlasSize;
+            matrix4 FaceL2W;
+            FaceL2W.Setup( vector3( 1.0f, 1.0f, 1.0f ),
+                           radian3( PointShadowFaces[Index].Pitch, PointShadowFaces[Index].Yaw, R_0 ),
+                           vector3( 0.0f, 0.0f, 0.0f ) );
+
+            s_FaceDirections[Index] = FaceL2W.RotateVector( vector3( 0.0f, 0.0f, 1.0f ) );
+            if( !s_FaceDirections[Index].SafeNormalize() )
+            {
+                s_FaceDirections[Index].Set( 0.0f, 0.0f, 1.0f );
+            }
+        }
+
+        s_Initialized = TRUE;
+    }
+
+    return s_FaceDirections[FaceIndex];
+}
+
+//=========================================================================
+
+static 
+xbool PointShadowFaceAffectsCaster( ShadowConeTest const& Cone, ShadowCasterRecord const& Caster )
+{
+    return SphereIntersectsFiniteCone( Caster.WorldBBoxCenter, Caster.WorldBBoxRadius, Cone );
+}
+
+//=========================================================================
+
+static 
+f32 GetShadowLightScore( DynamicShadowLight const& DynamicLightData, player* pActivePlayer )
+{
+    f32 LightScore = static_cast<f32>( DynamicLightData.Color.R + DynamicLightData.Color.G + DynamicLightData.Color.B );
+    LightScore -= DynamicLightData.Radius * ShadowRadiusScorePenalty;
+
+    if( pActivePlayer && pActivePlayer->GetBBox().Intersect( DynamicLightData.Pos, DynamicLightData.Radius ) )
+    {
+        LightScore += PlayerShadowScoreBonus;
+    }
+
+    return LightScore;
+}
+
+//=========================================================================
+
+static 
+xbool BuildShadowLightCandidate( ShadowLight& ShadowLightData, s32 LightIndex, player* pActivePlayer )
+{
+    DynamicShadowLight DynamicLightData;
+    xbool              CastShadows;
+    f32                UnusedInnerRadius;
+    f32                UnusedInnerAngle;
+    s32                ShadowMapResolution;
+    s32                ShadowPriority;
+
+    g_LightMgr.GetDynamicLight( LightIndex, DynamicLightData.Pos, DynamicLightData.Radius,
+                                DynamicLightData.Color, DynamicLightData.Shape, CastShadows, UnusedInnerRadius,
+                                DynamicLightData.Direction, DynamicLightData.Falloff, UnusedInnerAngle,
+                                DynamicLightData.OuterAngle, ShadowMapResolution, ShadowPriority );
+
+    static_cast<void>( UnusedInnerRadius );
+    static_cast<void>( UnusedInnerAngle );
+
+    if( !CastShadows || ( DynamicLightData.Radius <= 0.0f ) )
+    {
+        return FALSE;
+    }
+
+    DynamicLightData.ShadowMapResolution = ClampShadowMapResolution( ShadowMapResolution );
+    ShadowLightData.DynamicLightIndex = LightIndex;
+
+    ShadowLightData.Shape = DynamicLightData.Shape;
+    ShadowLightData.Pos = DynamicLightData.Pos;
+    ShadowLightData.Direction = DynamicLightData.Direction;
+    ShadowLightData.Radius = DynamicLightData.Radius;
+    ShadowLightData.Falloff = DynamicLightData.Falloff;
+    ShadowLightData.FOV = GetShadowLightFOV( DynamicLightData );
+    ShadowLightData.ShadowMapResolution = DynamicLightData.ShadowMapResolution;
+    ShadowLightData.ShadowPriority = ClampShadowPriority( ShadowPriority );
+    ShadowLightData.SourceCount = GetShadowLightSourceCount( DynamicLightData.Shape );
+    ShadowLightData.RelevantCasterStart = 0;
+    ShadowLightData.RelevantCasterCount = 0;
+    ShadowLightData.Score = GetShadowLightScore( DynamicLightData, pActivePlayer );
+    return TRUE;
+}
+
+//=========================================================================
+
+static 
+xbool SortsBeforeShadowLight( ShadowLight const& A, ShadowLight const& B )
+{
+    if( A.ShadowPriority != B.ShadowPriority )
+    {
+        return ( A.ShadowPriority > B.ShadowPriority );
+    }
+
+    if( A.Score != B.Score )
+    {
+        return ( A.Score > B.Score );
+    }
+
+    if( A.ShadowMapResolution != B.ShadowMapResolution )
+    {
+        return ( A.ShadowMapResolution > B.ShadowMapResolution );
+    }
+
+    if( A.SourceCount != B.SourceCount )
+    {
+        return ( A.SourceCount < B.SourceCount );
+    }
+
+    return FALSE;
+}
+
+//=========================================================================
+
+static 
+void InsertShadowLight( ShadowLight* pLights, s32& LightCount, ShadowLight const& Light )
+{
+    if( LightCount >= light_mgr::MAX_DYNAMIC_LIGHTS )
+    {
+        if( !SortsBeforeShadowLight( Light, pLights[LightCount - 1] ) )
+        {
+            return;
+        }
+
+        LightCount--;
+    }
+
+    s32 InsertAt = LightCount;
+    while( InsertAt > 0 )
+    {
+        if( !SortsBeforeShadowLight( Light, pLights[InsertAt - 1] ) )
+        {
+            break;
+        }
+
+        pLights[InsertAt] = pLights[InsertAt - 1];
+        InsertAt--;
+    }
+
+    pLights[InsertAt] = Light;
+    LightCount++;
+}
+
+//=========================================================================
+
+static 
+s32 SelectShadowLights( ShadowLight const* pShadowLightCandidates, s32 CandidateShadowLightCount, ShadowLight* pShadowLights )
+{
+    s32 PointShadowLightCount = 0;
+    s32 ShadowLightCount = 0;
+    s32 ShadowSourceCount = 0;
+
+    for( s32 LightIndex = 0; LightIndex < CandidateShadowLightCount; LightIndex++ )
+    {
+        ShadowLight const& Candidate = pShadowLightCandidates[LightIndex];
+
+        if( ( Candidate.Shape == light_mgr::LIGHT_SHAPE_OMNI ) && ( PointShadowLightCount >= MAX_SHADOW_LIGHTS ) )
+        {
+            continue;
+        }
+
+        if( ( ShadowSourceCount + Candidate.SourceCount ) > MAX_SHADOW_SOURCES )
+        {
+            continue;
+        }
+
+        pShadowLights[ShadowLightCount++] = Candidate;
+        ShadowSourceCount += Candidate.SourceCount;
+
+        if( Candidate.Shape == light_mgr::LIGHT_SHAPE_OMNI )
+        {
+            PointShadowLightCount++;
+        }
+    }
+
+    return ShadowLightCount;
+}
+
+//=========================================================================
+
+static 
+xbool IsSelectedShadowLight( ShadowLight const* pShadowLights, s32 ShadowLightCount, s32 DynamicLightIndex )
+{
+    for( s32 LightIndex = 0; LightIndex < ShadowLightCount; LightIndex++ )
+    {
+        if( pShadowLights[LightIndex].DynamicLightIndex == DynamicLightIndex )
+        {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+//=========================================================================
+
+static 
+void RestoreShadowLightResolutions( ShadowLight* pShadowLights, s32 ShadowLightCount, ShadowLight const* pShadowLightCandidates,
+                                    s32 CandidateShadowLightCount )
+{
+    for( s32 LightIndex = 0; LightIndex < ShadowLightCount; LightIndex++ )
+    {
+        for( s32 CandidateIndex = 0; CandidateIndex < CandidateShadowLightCount; CandidateIndex++ )
+        {
+            if( pShadowLights[LightIndex].DynamicLightIndex ==
+                pShadowLightCandidates[CandidateIndex].DynamicLightIndex )
+            {
+                pShadowLights[LightIndex].ShadowMapResolution =
+                    pShadowLightCandidates[CandidateIndex].ShadowMapResolution;
+                break;
+            }
+        }
+    }
+}
+
+//=========================================================================
+
+static 
+void AddRelevantObjectCaster( object* pCandidate, ShadowLight const& ShadowLightData, ShadowConeTest const* pLightConeTest,
+                              xarray<ShadowCasterRecord>& RelevantCasters )
+{
+    if( !pCandidate || ( pCandidate->GetType() == object::TYPE_PLAY_SURFACE ) )
+    {
+        return;
+    }
+
+#ifdef X_EDITOR
+    if( pCandidate->IsHidden() )
+    {
+        return;
+    }
+#endif
+
+    bbox const& CandidateBBox = pCandidate->GetBBox();
+    if( !ShadowCasterBoundsAreRelevant( CandidateBBox, static_cast<u8>( pCandidate->GetZone1() ),
+                                         static_cast<u8>( pCandidate->GetZone2() ), ShadowLightData.Pos,
+                                         ShadowLightData.Radius, pLightConeTest ) )
+    {
+        return;
+    }
+
+    RelevantCasters.Append( MakeObjectShadowCaster( pCandidate, CandidateBBox ) );
+}
+
+//=========================================================================
+
+static 
+xbool CollectShadowLightCasters( ShadowLight& ShadowLightData, xarray<ShadowCasterRecord>& RelevantCasters )
+{
+    s32 const RelevantCasterStart = RelevantCasters.GetCount();
+    bbox const LightBBox( ShadowLightData.Pos, ShadowLightData.Radius );
+    ShadowConeTest        LightConeTest;
+    ShadowConeTest const* pLightConeTest = nullptr;
+    if( ShadowLightData.Shape == light_mgr::LIGHT_SHAPE_SPOT )
+    {
+        f32 const LightConeOuterCos = x_cos( ShadowLightData.FOV * 0.5f );
+        if( LightConeOuterCos > 0.0f )
+        {
+            SetupShadowConeTest( LightConeTest, ShadowLightData.Pos, ShadowLightData.Direction, LightConeOuterCos,
+                                 ShadowLightData.Radius );
+            pLightConeTest = &LightConeTest;
+        }
+    }
+
+    g_ObjMgr.SelectBBox( object::ATTR_ALL, LightBBox, object::TYPE_ALL_TYPES );
+    for( slot_id SlotId = g_ObjMgr.StartLoop(); SlotId != SLOT_NULL; SlotId = g_ObjMgr.GetNextResult( SlotId ) )
+    {
+        AddRelevantObjectCaster( g_ObjMgr.GetObjectBySlot( SlotId ), ShadowLightData, pLightConeTest, RelevantCasters );
+    }
+    g_ObjMgr.EndLoop();
+
+    g_PlaySurfaceMgr.CollectSurfaces( LightBBox, object::ATTR_ALL, 0 );
+    for( playsurface_mgr::surface* pSurface = g_PlaySurfaceMgr.GetNextSurface(); pSurface;
+          pSurface = g_PlaySurfaceMgr.GetNextSurface() )
+    {
+        if( !pSurface->RenderInst.IsNull() &&
+             ShadowCasterBoundsAreRelevant( pSurface->WorldBBox, static_cast<u8>( pSurface->ZoneInfo & 0xff ),
+                                            static_cast<u8>( pSurface->ZoneInfo >> 8 ), ShadowLightData.Pos,
+                                            ShadowLightData.Radius, pLightConeTest ) )
+        {
+            RelevantCasters.Append( MakePlaySurfaceShadowCaster( pSurface, pSurface->WorldBBox ) );
+        }
+    }
+
+    ShadowLightData.RelevantCasterStart = RelevantCasterStart;
+    ShadowLightData.RelevantCasterCount = RelevantCasters.GetCount() - RelevantCasterStart;
+    return ( ShadowLightData.RelevantCasterCount > 0 );
+}
+
+//=========================================================================
+
+static 
+void RefillShadowLights( ShadowLight* pShadowLightCandidates, s32 CandidateShadowLightCount, ShadowLight* pShadowLights, s32& ShadowLightCount,
+                         xbool* pCasterTested, xbool* pHasCasters, xbool const* pAtlasRejected, xarray<ShadowCasterRecord>& RelevantCasters )
+{
+    s32 ShadowSourceCount = 0;
+    s32 PointShadowLightCount = 0;
+    for( s32 LightIndex = 0; LightIndex < ShadowLightCount; LightIndex++ )
+    {
+        ShadowSourceCount += pShadowLights[LightIndex].SourceCount;
+        if( pShadowLights[LightIndex].Shape == light_mgr::LIGHT_SHAPE_OMNI )
+        {
+            PointShadowLightCount++;
+        }
+    }
+
+    for( s32 CandidateIndex = 0; CandidateIndex < CandidateShadowLightCount; CandidateIndex++ )
+    {
+        ShadowLight const& Candidate = pShadowLightCandidates[CandidateIndex];
+        s32 const DynamicLightIndex = Candidate.DynamicLightIndex;
+        if( pAtlasRejected[DynamicLightIndex] ||
+            IsSelectedShadowLight( pShadowLights, ShadowLightCount, DynamicLightIndex ) )
+        {
+            continue;
+        }
+        if( ( Candidate.Shape == light_mgr::LIGHT_SHAPE_OMNI ) && ( PointShadowLightCount >= MAX_SHADOW_LIGHTS ) )
+        {
+            continue;
+        }
+        if( ( ShadowSourceCount + Candidate.SourceCount ) > MAX_SHADOW_SOURCES )
+        {
+            continue;
+        }
+
+        if( !pCasterTested[DynamicLightIndex] )
+        {
+            ShadowLight TestedCandidate = Candidate;
+            pHasCasters[DynamicLightIndex] = CollectShadowLightCasters( TestedCandidate, RelevantCasters );
+            pShadowLightCandidates[CandidateIndex].RelevantCasterStart = TestedCandidate.RelevantCasterStart;
+            pShadowLightCandidates[CandidateIndex].RelevantCasterCount = TestedCandidate.RelevantCasterCount;
+            pCasterTested[DynamicLightIndex] = TRUE;
+        }
+        if( !pHasCasters[DynamicLightIndex] )
+        {
+            continue;
+        }
+
+        pShadowLights[ShadowLightCount++] = pShadowLightCandidates[CandidateIndex];
+        ShadowSourceCount += Candidate.SourceCount;
+        if( Candidate.Shape == light_mgr::LIGHT_SHAPE_OMNI )
+        {
+            PointShadowLightCount++;
+        }
+    }
+}
+
+//=========================================================================
+
+static 
+u64 BuildFullShadowLightSourceMask( ShadowLight const& ShadowLightData, s32 SourceBase )
+{
+    u64 SourceMask = 0;
+
+    for( s32 SourceIndex = 0; SourceIndex < ShadowLightData.SourceCount; SourceIndex++ )
+    {
+        SourceMask |= ( static_cast<u64>( 1 ) << ( SourceBase + SourceIndex ) );
+    }
+
+    return SourceMask;
+}
+
+//=========================================================================
+
+static 
+u64 BuildShadowCasterSourceMask( ShadowLight const& ShadowLightData, s32 SourceBase, ShadowCasterRecord const& Caster, u64 LightSourceMask,
+                                 ShadowConeTest const* pPointFaceCones )
+{
+    if( ShadowLightData.SourceCount <= 0 )
+    {
+        return 0;
+    }
+
+    if( ShadowLightData.Shape != light_mgr::LIGHT_SHAPE_OMNI )
+    {
+        return LightSourceMask;
+    }
+
+    s32 const FaceCount = ( ShadowLightData.SourceCount < POINT_SHADOW_FACE_COUNT )
+                              ? ShadowLightData.SourceCount
+                              : POINT_SHADOW_FACE_COUNT;
+    u64 SourceMask = 0;
+
+    ASSERT( pPointFaceCones );
+    for( s32 FaceIndex = 0; FaceIndex < FaceCount; FaceIndex++ )
+    {
+        if( PointShadowFaceAffectsCaster( pPointFaceCones[FaceIndex], Caster ) )
+        {
+            SourceMask |= ( static_cast<u64>( 1 ) << ( SourceBase + FaceIndex ) );
+        }
+    }
+
+    return SourceMask;
+}
+
+//=========================================================================
+
+static 
+void AddShadowCastersInLight( xarray<ShadowCasterRecord> const& RelevantCasters, ShadowLight const& ShadowLightData,
+                              xarray<ShadowCasterHashEntry>& CasterHash, s32 HashMask, s32 SourceBase )
+{
+    s32 const             EndRelevantCaster = ShadowLightData.RelevantCasterStart + ShadowLightData.RelevantCasterCount;
+    u64 const             LightSourceMask = BuildFullShadowLightSourceMask( ShadowLightData, SourceBase );
+    ShadowConeTest        PointFaceCones[POINT_SHADOW_FACE_COUNT];
+    ShadowConeTest const* pPointFaceCones = nullptr;
+
+    if( ShadowLightData.Shape == light_mgr::LIGHT_SHAPE_OMNI )
+    {
+        s32 const FaceCount = ( ShadowLightData.SourceCount < POINT_SHADOW_FACE_COUNT )
+                                  ? ShadowLightData.SourceCount
+                                  : POINT_SHADOW_FACE_COUNT;
+        f32 const PointFaceCoverageCos = ComputePointFaceCoverageCos( ShadowLightData.ShadowMapResolution );
+
+        for( s32 FaceIndex = 0; FaceIndex < FaceCount; FaceIndex++ )
+        {
+            SetupShadowConeTest( PointFaceCones[FaceIndex], ShadowLightData.Pos,
+                                 GetPointShadowFaceDirection( FaceIndex ), PointFaceCoverageCos,
+                                 ShadowLightData.Radius );
+        }
+
+        pPointFaceCones = PointFaceCones;
+    }
+
+    for( s32 RelevantCasterIndex = ShadowLightData.RelevantCasterStart; RelevantCasterIndex < EndRelevantCaster;
+          RelevantCasterIndex++ )
+    {
+        ShadowCasterRecord const& Caster = RelevantCasters[RelevantCasterIndex];
+        u64 const                 SourceMask =
+            BuildShadowCasterSourceMask( ShadowLightData, SourceBase, Caster, LightSourceMask, pPointFaceCones );
+
+        if( SourceMask == 0 )
+        {
+            continue;
+        }
+
+        s32 HashIndex = static_cast<s32>( GetShadowCasterHash( Caster ) & static_cast<u32>( HashMask ) );
+        while( CasterHash[HashIndex].Occupied && !SameShadowCaster( CasterHash[HashIndex].Caster, Caster ) )
+        {
+            HashIndex = ( HashIndex + 1 ) & HashMask;
+        }
+
+        ShadowCasterHashEntry& Entry = CasterHash[HashIndex];
+        if( !Entry.Occupied )
+        {
+            Entry.Caster = Caster;
+            Entry.SourceMask = SourceMask;
+            Entry.Occupied = TRUE;
+        }
+        else
+        {
+            Entry.SourceMask |= SourceMask;
+        }
+    }
+}
+
+//=========================================================================
+
+static 
+void CollectShadowCastersForLights( xarray<ShadowCasterRecord> const& RelevantCasters, ShadowLight const* pShadowLights, s32 ShadowLightCount,
+                                    xarray<ShadowCasterRecord>& ShadowCasters, xarray<u64>& CasterMasks, xarray<ShadowCasterHashEntry>& CasterHash )
+{
+    if( RelevantCasters.GetCount() <= 0 )
+    {
+        return;
+    }
+
+    s32 HashSize = 1;
+    while( HashSize < ( RelevantCasters.GetCount() * 2 ) )
+    {
+        HashSize <<= 1;
+    }
+    CasterHash.SetCount( HashSize );
+    x_memset( CasterHash.GetPtr(), 0, sizeof( ShadowCasterHashEntry ) * HashSize );
+
+    s32 SourceBase = 0;
+    for( s32 LightIndex = 0; LightIndex < ShadowLightCount; LightIndex++ )
+    {
+        ShadowLight const& ShadowLightData = pShadowLights[LightIndex];
+        AddShadowCastersInLight( RelevantCasters, ShadowLightData, CasterHash, HashSize - 1, SourceBase );
+        SourceBase += ShadowLightData.SourceCount;
+    }
+
+    for( s32 EntryIndex = 0; EntryIndex < HashSize; EntryIndex++ )
+    {
+        ShadowCasterHashEntry const& Entry = CasterHash[EntryIndex];
+        if( Entry.Occupied )
+        {
+            ShadowCasters.Append( Entry.Caster );
+            CasterMasks.Append( Entry.SourceMask );
+        }
+    }
+}
+
+//=========================================================================
+
+static 
+xbool IsPowerOfTwo( s32 Value )
+{
+    return ( Value > 0 ) && ( ( Value & ( Value - 1 ) ) == 0 );
+}
+
+//=========================================================================
+
+static 
+s32 GetShadowAtlasSplitCount( s32 AtlasSize, s32 MinTileSize )
+{
+    ASSERT( AtlasSize > 0 );
+    ASSERT( MinTileSize > 0 );
+    ASSERT( IsPowerOfTwo( AtlasSize ) );
+    ASSERT( IsPowerOfTwo( MinTileSize ) );
+    ASSERT( AtlasSize >= MinTileSize );
+
+    s32 SplitCount = 0;
+    while( AtlasSize > MinTileSize )
+    {
+        AtlasSize /= 2;
+        SplitCount++;
+    }
+
+    return SplitCount;
+}
+
+//=========================================================================
+
+static 
+s32 GetMaxShadowAtlasFreeNodeCount( s32 AtlasSize, s32 EntryCount )
+{
+    s32 const SplitCount = GetShadowAtlasSplitCount( AtlasSize, 256 );
+    return 1 + ( MAX( EntryCount, 0 ) * SplitCount * 3 );
+}
+
+//=========================================================================
+
+static 
+void AppendShadowAtlasFreeNode( xarray<ShadowAtlasFreeNode>& FreeNodes, s32 AtlasTileX, s32 AtlasTileY, s32 TileSize )
+{
+    ShadowAtlasFreeNode& Node = FreeNodes.Append();
+    Node.AtlasTileX = AtlasTileX;
+    Node.AtlasTileY = AtlasTileY;
+    Node.TileSize = TileSize;
+}
+
+//=========================================================================
+
+static 
+void SortShadowAtlasEntries( ShadowAtlasEntry* pEntries, s32 EntryCount )
+{
+    for( s32 Index = 1; Index < EntryCount; Index++ )
+    {
+        ShadowAtlasEntry const Entry = pEntries[Index];
+        s32                    J = Index - 1;
+        while( J >= 0 )
+        {
+            if( pEntries[J].TileSize > Entry.TileSize )
+            {
+                break;
+            }
+
+            if( ( pEntries[J].TileSize == Entry.TileSize ) && ( pEntries[J].ShadowPriority > Entry.ShadowPriority ) )
+            {
+                break;
+            }
+
+            if( ( pEntries[J].TileSize == Entry.TileSize ) && ( pEntries[J].ShadowPriority == Entry.ShadowPriority ) &&
+                 ( pEntries[J].ShadowScore > Entry.ShadowScore ) )
+            {
+                break;
+            }
+
+            if( ( pEntries[J].TileSize == Entry.TileSize ) && ( pEntries[J].ShadowPriority == Entry.ShadowPriority ) &&
+                 ( pEntries[J].ShadowScore == Entry.ShadowScore ) && ( pEntries[J].SourceIndex < Entry.SourceIndex ) )
+            {
+                break;
+            }
+
+            pEntries[J + 1] = pEntries[J];
+            J--;
+        }
+
+        pEntries[J + 1] = Entry;
+    }
+}
+
+//=========================================================================
+
+static 
+xbool TryPackShadowAtlasEntries( ShadowAtlasEntry* pEntries, s32 EntryCount, s32 AtlasSize, xarray<ShadowAtlasFreeNode>& FreeNodes )
+{
+    SortShadowAtlasEntries( pEntries, EntryCount );
+
+    ASSERT( IsPowerOfTwo( AtlasSize ) );
+    if( !IsPowerOfTwo( AtlasSize ) )
+    {
+        return FALSE;
+    }
+
+    FreeNodes.SetCount( 0 );
+    s32 const RequiredCapacity = GetMaxShadowAtlasFreeNodeCount( AtlasSize, EntryCount );
+    if( FreeNodes.GetCapacity() < RequiredCapacity )
+    {
+        FreeNodes.SetCapacity( RequiredCapacity );
+    }
+    AppendShadowAtlasFreeNode( FreeNodes, 0, 0, AtlasSize );
+
+    for( s32 Index = 0; Index < EntryCount; Index++ )
+    {
+        s32 const TileSize = pEntries[Index].TileSize;
+        ASSERT( IsPowerOfTwo( TileSize ) );
+        if( !IsPowerOfTwo( TileSize ) )
+        {
+            return FALSE;
+        }
+        if( ( TileSize <= 0 ) || ( TileSize > AtlasSize ) )
+        {
+            return FALSE;
+        }
+
+        s32 BestNodeIndex = -1;
+        for( s32 NodeIndex = 0; NodeIndex < FreeNodes.GetCount(); NodeIndex++ )
+        {
+            ShadowAtlasFreeNode const& Node = FreeNodes[NodeIndex];
+            if( Node.TileSize < TileSize )
+            {
+                continue;
+            }
+
+            if( BestNodeIndex < 0 )
+            {
+                BestNodeIndex = NodeIndex;
+                continue;
+            }
+
+            ShadowAtlasFreeNode const& BestNode = FreeNodes[BestNodeIndex];
+            if( Node.TileSize < BestNode.TileSize )
+            {
+                BestNodeIndex = NodeIndex;
+                continue;
+            }
+
+            if( ( Node.TileSize == BestNode.TileSize ) && ( Node.AtlasTileY < BestNode.AtlasTileY ) )
+            {
+                BestNodeIndex = NodeIndex;
+                continue;
+            }
+
+            if( ( Node.TileSize == BestNode.TileSize ) && ( Node.AtlasTileY == BestNode.AtlasTileY ) &&
+                 ( Node.AtlasTileX < BestNode.AtlasTileX ) )
+            {
+                BestNodeIndex = NodeIndex;
+            }
+        }
+
+        if( BestNodeIndex < 0 )
+        {
+            return FALSE;
+        }
+
+        ShadowAtlasFreeNode Node = FreeNodes[BestNodeIndex];
+        FreeNodes[BestNodeIndex] = FreeNodes[FreeNodes.GetCount() - 1];
+        FreeNodes.SetCount( FreeNodes.GetCount() - 1 );
+
+        while( Node.TileSize > TileSize )
+        {
+            s32 const ChildTileSize = Node.TileSize / 2;
+
+            if( ( ChildTileSize <= 0 ) || ( ChildTileSize < TileSize ) )
+            {
+                return FALSE;
+            }
+
+            AppendShadowAtlasFreeNode( FreeNodes, Node.AtlasTileX + ChildTileSize, Node.AtlasTileY, ChildTileSize );
+            AppendShadowAtlasFreeNode( FreeNodes, Node.AtlasTileX, Node.AtlasTileY + ChildTileSize, ChildTileSize );
+            AppendShadowAtlasFreeNode( FreeNodes, Node.AtlasTileX + ChildTileSize, Node.AtlasTileY + ChildTileSize,
+                                       ChildTileSize );
+
+            Node.TileSize = ChildTileSize;
+        }
+
+        pEntries[Index].AtlasTileX = Node.AtlasTileX;
+        pEntries[Index].AtlasTileY = Node.AtlasTileY;
+    }
+
+    return TRUE;
+}
+
+//=========================================================================
+
+static 
+s32 GetShadowAtlasSizeForEntries( ShadowAtlasEntry* pEntries, s32 EntryCount, xarray<ShadowAtlasFreeNode>& FreeNodes )
+{
+    for( s32 AtlasSize = 256; AtlasSize <= MAX_SHADOW_ATLAS_SIZE; AtlasSize *= 2 )
+    {
+        if( TryPackShadowAtlasEntries( pEntries, EntryCount, AtlasSize, FreeNodes ) )
+        {
+            return AtlasSize;
         }
     }
 
     return 0;
 }
 
-//---------------------------------------------------------------------
+//=========================================================================
 
-xbool SortsBeforeShadowLight( ShadowLight const& a, ShadowLight const& b )
+static 
+xbool AtlasFitsShadowLights( ShadowLight const* pShadowLights, s32 ShadowLightCount, xarray<ShadowAtlasFreeNode>& FreeNodes )
 {
-    if ( a.ShadowPriority != b.ShadowPriority )
+    ShadowAtlasEntry Entries[MAX_SHADOW_SOURCES];
+    s32              EntryCount = 0;
+
+    for( s32 LightIndex = 0; LightIndex < ShadowLightCount; LightIndex++ )
     {
-        return ( a.ShadowPriority > b.ShadowPriority );
-    }
-
-    if ( a.Score != b.Score )
-    {
-        return ( a.Score > b.Score );
-    }
-
-    if ( a.ShadowMapResolution != b.ShadowMapResolution )
-    {
-        return ( a.ShadowMapResolution > b.ShadowMapResolution );
-    }
-
-    if ( a.SourceCount != b.SourceCount )
-    {
-        return ( a.SourceCount < b.SourceCount );
-    }
-
-    return FALSE;
-}
-
-//---------------------------------------------------------------------
-
-f32 ComputeBBoxBoundingSphereRadius( bbox const& worldBBox )
-{
-    vector3 const extents = ( worldBBox.Max - worldBBox.Min ) * 0.5f;
-    return x_sqrt( extents.Dot( extents ) );
-}
-
-//---------------------------------------------------------------------
-
-void SetupShadowConeTest( ShadowConeTest& cone, vector3 const& apex, vector3 const& direction, f32 cosOuter,
-                          f32 length )
-{
-    cone.Apex = apex;
-    cone.Axis = direction;
-    if ( !cone.Axis.SafeNormalize() )
-    {
-        cone.Axis.Set( 0.0f, 0.0f, 1.0f );
-    }
-
-    cone.CosOuter = MAX( cosOuter, 0.0001f );
-    cone.SinOuter = x_sqrt( MAX( 1.0f - ( cone.CosOuter * cone.CosOuter ), 0.0f ) );
-    cone.TanOuter = cone.SinOuter / cone.CosOuter;
-    cone.Length = length;
-}
-
-//---------------------------------------------------------------------
-
-xbool SphereIntersectsFiniteCone( vector3 const& sphereCenter, f32 sphereRadius, ShadowConeTest const& cone )
-{
-    vector3 const toCenter = sphereCenter - cone.Apex;
-    f32 const     centerDistSq = toCenter.Dot( toCenter );
-    f32 const     axialDistance = cone.Axis.Dot( toCenter );
-    f32 const     sphereRadiusSq = sphereRadius * sphereRadius;
-
-    if ( axialDistance < -sphereRadius )
-    {
-        return FALSE;
-    }
-
-    if ( axialDistance > ( cone.Length + sphereRadius ) )
-    {
-        return FALSE;
-    }
-
-    if ( axialDistance <= 0.0f )
-    {
-        return ( centerDistSq <= sphereRadiusSq );
-    }
-
-    f32 const radialDistanceSq = MAX( centerDistSq - ( axialDistance * axialDistance ), 0.0f );
-    f32 const radialDistance = x_sqrt( radialDistanceSq );
-
-    if ( axialDistance < cone.Length )
-    {
-        f32 const sideDistance = ( radialDistance * cone.CosOuter ) - ( axialDistance * cone.SinOuter );
-        if ( sideDistance <= sphereRadius )
+        ShadowLight const& ShadowLightData = pShadowLights[LightIndex];
+        for( s32 SourceIndex = 0; SourceIndex < ShadowLightData.SourceCount; SourceIndex++ )
         {
-            return TRUE;
+            ASSERT( EntryCount < MAX_SHADOW_SOURCES );
+            Entries[EntryCount].SourceIndex = EntryCount;
+            Entries[EntryCount].TileSize = ClampShadowMapResolution( ShadowLightData.ShadowMapResolution );
+            Entries[EntryCount].ShadowPriority = ShadowLightData.ShadowPriority;
+            Entries[EntryCount].ShadowScore = ShadowLightData.Score;
+            Entries[EntryCount].AtlasTileX = 0;
+            Entries[EntryCount].AtlasTileY = 0;
+            EntryCount++;
         }
     }
 
-    f32 const coneCapRadius = cone.Length * cone.TanOuter;
-    f32 const capAxialDelta = MAX( axialDistance - cone.Length, 0.0f );
-    f32 const capRadialDelta = MAX( radialDistance - coneCapRadius, 0.0f );
-    return ( ( capAxialDelta * capAxialDelta ) + ( capRadialDelta * capRadialDelta ) ) <= sphereRadiusSq;
-}
-
-//---------------------------------------------------------------------
-
-xbool SourceConeAffectsBBox( ShadowConeTest const& cone, bbox const& worldBBox )
-{
-    return SphereIntersectsFiniteCone( worldBBox.GetCenter(), ComputeBBoxBoundingSphereRadius( worldBBox ), cone );
-}
-
-//---------------------------------------------------------------------
-
-xbool ShadowCasterBoundsAreRelevant( bbox const& casterBBox, u8 zone1, u8 zone2, vector3 const& lightPos,
-                                     f32 lightRadius, ShadowConeTest const* pConeTest = NULL )
-{
-    // Deep and raw
-    // if( !g_ZoneMgr.IsBBoxVisible( CasterBBox,
-    //                              Zone1,
-    //                              Zone2 ) )
-    //{
-    //    return FALSE;
-    //}
-
-    if ( !g_ZoneMgr.IsZoneVisible( zone1 ) && !g_ZoneMgr.IsZoneVisible( zone2 ) )
-    {
-        return FALSE;
-    }
-
-    if ( !casterBBox.Intersect( lightPos, lightRadius ) )
-    {
-        return FALSE;
-    }
-
-    if ( pConeTest )
-    {
-        return SourceConeAffectsBBox( *pConeTest, casterBBox );
-    }
-
-    return TRUE;
-}
-
-//---------------------------------------------------------------------
-
-f32 GetShadowLightScore( DynamicShadowLight const& dynamicLight, s32 localCasterCount, player* pActivePlayer )
-{
-    f32 lightScore = static_cast<f32>( dynamicLight.Color.R + dynamicLight.Color.G + dynamicLight.Color.B );
-    lightScore += static_cast<f32>( localCasterCount ) * kShadowCasterScoreWeight;
-    lightScore -= dynamicLight.Radius * kShadowRadiusScorePenalty;
-
-    if ( pActivePlayer && pActivePlayer->GetBBox().Intersect( dynamicLight.Pos, dynamicLight.Radius ) )
-    {
-        lightScore += kPlayerShadowScoreBonus;
-    }
-
-    return lightScore;
-}
-
-//---------------------------------------------------------------------
-
-xbool BuildShadowLight( ShadowLight& shadowLight, s32 lightIndex, player* pActivePlayer,
-                        xarray<ShadowCasterRecord>& relevantCasters )
-{
-    DynamicShadowLight dynamicLight;
-    xbool              castShadows;
-    f32                unusedInnerRadius;
-    f32                unusedInnerAngle;
-    s32                shadowMapResolution;
-    s32                shadowPriority;
-
-    g_LightMgr.GetDynamicLight( lightIndex, dynamicLight.Pos, dynamicLight.Radius, dynamicLight.Color,
-                                dynamicLight.Shape, castShadows, unusedInnerRadius, dynamicLight.Direction,
-                                dynamicLight.Falloff, unusedInnerAngle, dynamicLight.OuterAngle, shadowMapResolution,
-                                shadowPriority );
-
-    static_cast<void>( unusedInnerRadius );
-    static_cast<void>( unusedInnerAngle );
-
-    if ( !castShadows || ( dynamicLight.Radius <= 0.0f ) )
-    {
-        return FALSE;
-    }
-
-    dynamicLight.ShadowMapResolution = ClampShadowMapResolution( shadowMapResolution );
-    shadowLight.DynamicLightIndex = lightIndex;
-
-    ShadowConeTest        lightConeTest;
-    ShadowConeTest const* pLightConeTest = NULL;
-    if ( dynamicLight.Shape == light_mgr::LIGHT_SHAPE_SPOT )
-    {
-        f32 const lightConeOuterCos = x_cos( DEG_TO_RAD( dynamicLight.OuterAngle ) * 0.5f );
-        if ( lightConeOuterCos > 0.0f )
-        {
-            SetupShadowConeTest( lightConeTest, dynamicLight.Pos, dynamicLight.Direction, lightConeOuterCos,
-                                 dynamicLight.Radius );
-            pLightConeTest = &lightConeTest;
-        }
-    }
-
-    s32 const relevantCasterStart = relevantCasters.GetCount();
-    s32       localCasterCount = 0;
-    bbox      lightBBox = bbox( dynamicLight.Pos, dynamicLight.Radius );
-
-    // TODO: GS: Dont forget unlock me, after patching ALL level files.
-    // g_ObjMgr.SelectBBox( object::ATTR_CAST_SHADOWS,
-    //                     LightBBox,
-    //                     object::TYPE_ALL_TYPES );
-    g_ObjMgr.SelectBBox( object::ATTR_ALL, lightBBox, object::TYPE_ALL_TYPES );
-
-    for ( slot_id slotId = g_ObjMgr.StartLoop(); slotId != SLOT_NULL; slotId = g_ObjMgr.GetNextResult( slotId ) )
-    {
-        object* pCandidate = g_ObjMgr.GetObjectBySlot( slotId );
-        if ( !pCandidate )
-        {
-            continue;
-        }
-
-#ifdef X_EDITOR
-        if ( pCandidate->IsHidden() )
-        {
-            continue;
-        }
-#endif
-
-        if ( pCandidate->GetType() == object::TYPE_PLAY_SURFACE )
-        {
-            continue;
-        }
-
-        bbox const& candidateBBox = pCandidate->GetBBox();
-        if ( !ShadowCasterBoundsAreRelevant( candidateBBox, static_cast<u8>( pCandidate->GetZone1() ),
-                                             static_cast<u8>( pCandidate->GetZone2() ), dynamicLight.Pos,
-                                             dynamicLight.Radius, pLightConeTest ) )
-        {
-            continue;
-        }
-
-        relevantCasters.Append( MakeObjectShadowCaster( pCandidate, candidateBBox ) );
-        localCasterCount++;
-    }
-    g_ObjMgr.EndLoop();
-
-    // TODO: GS: Dont forget unlock me, after patching ALL level files.
-    // g_PlaySurfaceMgr.CollectSurfaces( LightBBox,
-    //                                  object::ATTR_CAST_SHADOWS,
-    //                                  0 );
-    g_PlaySurfaceMgr.CollectSurfaces( lightBBox, object::ATTR_ALL, 0 );
-
-    playsurface_mgr::surface* pSurface = g_PlaySurfaceMgr.GetNextSurface();
-    while ( pSurface )
-    {
-        if ( !pSurface->RenderInst.IsNull() &&
-             ShadowCasterBoundsAreRelevant( pSurface->WorldBBox, static_cast<u8>( pSurface->ZoneInfo & 0xff ),
-                                            static_cast<u8>( pSurface->ZoneInfo >> 8 ), dynamicLight.Pos,
-                                            dynamicLight.Radius, pLightConeTest ) )
-        {
-            relevantCasters.Append( MakePlaySurfaceShadowCaster( pSurface, pSurface->WorldBBox ) );
-            localCasterCount++;
-        }
-
-        pSurface = g_PlaySurfaceMgr.GetNextSurface();
-    }
-
-    if ( localCasterCount <= 0 )
-    {
-        return FALSE;
-    }
-
-    shadowLight.Shape = dynamicLight.Shape;
-    shadowLight.Pos = dynamicLight.Pos;
-    shadowLight.Direction = dynamicLight.Direction;
-    shadowLight.Radius = dynamicLight.Radius;
-    shadowLight.Falloff = dynamicLight.Falloff;
-    shadowLight.FOV = GetShadowLightFOV( dynamicLight );
-    shadowLight.ShadowMapResolution = dynamicLight.ShadowMapResolution;
-    shadowLight.PointFaceCoverageCos = ( dynamicLight.Shape == light_mgr::LIGHT_SHAPE_OMNI )
-                                           ? ComputePointFaceCoverageCos( dynamicLight.ShadowMapResolution )
-                                           : 0.0f;
-    shadowLight.ShadowPriority = ClampShadowPriority( shadowPriority );
-    shadowLight.SourceCount = GetShadowLightSourceCount( dynamicLight.Shape );
-    shadowLight.RelevantCasterStart = relevantCasterStart;
-    shadowLight.RelevantCasterCount = localCasterCount;
-    shadowLight.Score = GetShadowLightScore( dynamicLight, localCasterCount, pActivePlayer );
-    return TRUE;
-}
-
-//---------------------------------------------------------------------
-
-vector3 const& GetPointShadowFaceDirection( s32 iFace )
-{
-    ASSERT( iFace >= 0 );
-    ASSERT( iFace < POINT_SHADOW_FACE_COUNT );
-
-    static xbool   sInitialized = FALSE;
-    static vector3 sFaceDirections[POINT_SHADOW_FACE_COUNT];
-
-    if ( !sInitialized )
-    {
-        for ( s32 i = 0; i < POINT_SHADOW_FACE_COUNT; i++ )
-        {
-            matrix4 faceL2W;
-            faceL2W.Setup( vector3( 1.0f, 1.0f, 1.0f ),
-                           radian3( kPointShadowFaces[i].Pitch, kPointShadowFaces[i].Yaw, R_0 ),
-                           vector3( 0.0f, 0.0f, 0.0f ) );
-
-            sFaceDirections[i] = faceL2W.RotateVector( vector3( 0.0f, 0.0f, 1.0f ) );
-            if ( !sFaceDirections[i].SafeNormalize() )
-            {
-                sFaceDirections[i].Set( 0.0f, 0.0f, 1.0f );
-            }
-        }
-
-        sInitialized = TRUE;
-    }
-
-    return sFaceDirections[iFace];
-}
-
-//---------------------------------------------------------------------
-
-xbool PointShadowFaceAffectsCaster( ShadowConeTest const& cone, ShadowCasterRecord const& caster )
-{
-    return SphereIntersectsFiniteCone( caster.WorldBBoxCenter, caster.WorldBBoxRadius, cone );
-}
-
-//---------------------------------------------------------------------
-
-u64 BuildFullShadowLightSourceMask( ShadowLight const& shadowLight, s32 sourceBase )
-{
-    u64 sourceMask = 0;
-
-    for ( s32 iSource = 0; iSource < shadowLight.SourceCount; iSource++ )
-    {
-        sourceMask |= ( u64{ 1 } << ( sourceBase + iSource ) );
-    }
-
-    return sourceMask;
-}
-
-//---------------------------------------------------------------------
-
-u64 BuildShadowCasterSourceMask( ShadowLight const& shadowLight, s32 sourceBase, ShadowCasterRecord const& caster,
-                                 u64 lightSourceMask, ShadowConeTest const* pPointFaceCones )
-{
-    if ( shadowLight.SourceCount <= 0 )
-    {
-        return 0;
-    }
-
-    if ( shadowLight.Shape != light_mgr::LIGHT_SHAPE_OMNI )
-    {
-        return lightSourceMask;
-    }
-
-    s32 const nFaces =
-        ( shadowLight.SourceCount < POINT_SHADOW_FACE_COUNT ) ? shadowLight.SourceCount : POINT_SHADOW_FACE_COUNT;
-    u64 sourceMask = 0;
-
-    ASSERT( pPointFaceCones );
-    for ( s32 iFace = 0; iFace < nFaces; iFace++ )
-    {
-        if ( PointShadowFaceAffectsCaster( pPointFaceCones[iFace], caster ) )
-        {
-            sourceMask |= ( u64{ 1 } << ( sourceBase + iFace ) );
-        }
-    }
-
-    return sourceMask;
-}
-
-//---------------------------------------------------------------------
-
-void AddShadowCastersInLight( xarray<ShadowCasterRecord> const& relevantCasters, ShadowLight const& shadowLight,
-                              xarray<ShadowCasterMaskRecord>& pendingCasterMasks, s32 sourceBase )
-{
-    s32 const             endRelevantCaster = shadowLight.RelevantCasterStart + shadowLight.RelevantCasterCount;
-    u64 const             lightSourceMask = BuildFullShadowLightSourceMask( shadowLight, sourceBase );
-    ShadowConeTest        pointFaceCones[POINT_SHADOW_FACE_COUNT];
-    ShadowConeTest const* pPointFaceCones = NULL;
-
-    if ( shadowLight.Shape == light_mgr::LIGHT_SHAPE_OMNI )
-    {
-        s32 const nFaces =
-            ( shadowLight.SourceCount < POINT_SHADOW_FACE_COUNT ) ? shadowLight.SourceCount : POINT_SHADOW_FACE_COUNT;
-
-        for ( s32 iFace = 0; iFace < nFaces; iFace++ )
-        {
-            SetupShadowConeTest( pointFaceCones[iFace], shadowLight.Pos, GetPointShadowFaceDirection( iFace ),
-                                 shadowLight.PointFaceCoverageCos, shadowLight.Radius );
-        }
-
-        pPointFaceCones = pointFaceCones;
-    }
-
-    for ( s32 iRelevantCaster = shadowLight.RelevantCasterStart; iRelevantCaster < endRelevantCaster;
-          iRelevantCaster++ )
-    {
-        ShadowCasterRecord const& caster = relevantCasters[iRelevantCaster];
-        u64 const                 sourceMask =
-            BuildShadowCasterSourceMask( shadowLight, sourceBase, caster, lightSourceMask, pPointFaceCones );
-
-        if ( sourceMask == 0 )
-        {
-            continue;
-        }
-
-        ShadowCasterMaskRecord& record = pendingCasterMasks.Append();
-        record.Caster = caster;
-        record.SourceMask = sourceMask;
-    }
-}
-
-//---------------------------------------------------------------------
-
-void MergeShadowCasterMasks( xarray<ShadowCasterMaskRecord>& pendingCasterMasks, xarray<ShadowCasterRecord>& ppCasters,
-                             xarray<u64>& casterMasks )
-{
-    if ( pendingCasterMasks.GetCount() <= 0 )
-    {
-        return;
-    }
-
-    x_qsort( pendingCasterMasks.GetPtr(), pendingCasterMasks.GetCount(), sizeof( ShadowCasterMaskRecord ),
-             ShadowCasterMaskCompareFn );
-
-    for ( s32 i = 0; i < pendingCasterMasks.GetCount(); i++ )
-    {
-        ShadowCasterMaskRecord const& record = pendingCasterMasks[i];
-        s32 const                     iLast = ppCasters.GetCount() - 1;
-
-        if ( ( iLast < 0 ) || !SameShadowCaster( ppCasters[iLast], record.Caster ) )
-        {
-            ppCasters.Append( record.Caster );
-            casterMasks.Append( record.SourceMask );
-            continue;
-        }
-
-        casterMasks[iLast] |= record.SourceMask;
-    }
-}
-
-//---------------------------------------------------------------------
-
-void CollectShadowCastersForLights( xarray<ShadowCasterRecord> const& relevantCasters, ShadowLight const* pShadowLights,
-                                    s32 nShadowLights, xarray<ShadowCasterRecord>& ppCasters, xarray<u64>& casterMasks,
-                                    xarray<ShadowCasterMaskRecord>& pendingCasterMasks )
-{
-    s32 sourceBase = 0;
-    pendingCasterMasks.SetCount( 0 );
-    pendingCasterMasks.SetGrowAmount( MAX( 128, relevantCasters.GetCount() ) );
-
-    for ( s32 iLight = 0; iLight < nShadowLights; iLight++ )
-    {
-        ShadowLight const& shadowLight = pShadowLights[iLight];
-
-        AddShadowCastersInLight( relevantCasters, shadowLight, pendingCasterMasks, sourceBase );
-        sourceBase += shadowLight.SourceCount;
-    }
-
-    MergeShadowCasterMasks( pendingCasterMasks, ppCasters, casterMasks );
-}
-
-void AddPointShadowSources( vector3 const& lightPos, f32 lightRadius, f32 lightFalloff, s32 shadowMapResolution,
-                            s32 shadowPriority, f32 shadowScore, s32 dynamicLightIndex )
-{
-    for ( s32 iFace = 0; iFace < ARRAYSIZE( kPointShadowFaces ); iFace++ )
-    {
-        matrix4 faceL2W;
-        faceL2W.Setup( vector3( 1.0f, 1.0f, 1.0f ),
-                       radian3( kPointShadowFaces[iFace].Pitch, kPointShadowFaces[iFace].Yaw, R_0 ), lightPos );
-
-        render::AddPointShadowMapSource( faceL2W, kPointShadowFOV, lightRadius, lightFalloff, shadowMapResolution,
-                                         shadowPriority, shadowScore, dynamicLightIndex );
-    }
-}
-
-//---------------------------------------------------------------------
-
-void AddSpotShadowSource( vector3 const& lightPos, vector3 const& lightDirection, radian shadowFov, f32 lightRadius,
-                          f32 lightFalloff, s32 shadowMapResolution, s32 shadowPriority, f32 shadowScore,
-                          s32 dynamicLightIndex )
-{
-    matrix4 spotL2W;
-    spotL2W.Setup( vector3( 1.0f, 1.0f, 1.0f ), radian3( lightDirection.GetPitch(), lightDirection.GetYaw(), R_0 ),
-                   lightPos );
-
-    render::AddSpotShadowMapSource( spotL2W, shadowFov, lightRadius, lightFalloff, shadowMapResolution, shadowPriority,
-                                    shadowScore, dynamicLightIndex );
-}
-
-//---------------------------------------------------------------------
-
-void AddShadowSources( ShadowLight const* pShadowLights, s32 nShadowLights )
-{
-    for ( s32 iLight = 0; iLight < nShadowLights; iLight++ )
-    {
-        ShadowLight const& shadowLight = pShadowLights[iLight];
-
-        if ( shadowLight.Shape == light_mgr::LIGHT_SHAPE_OMNI )
-        {
-            AddPointShadowSources( shadowLight.Pos, shadowLight.Radius, shadowLight.Falloff,
-                                   shadowLight.ShadowMapResolution, shadowLight.ShadowPriority, shadowLight.Score,
-                                   shadowLight.DynamicLightIndex );
-        }
-        else
-        {
-            AddSpotShadowSource( shadowLight.Pos, shadowLight.Direction, shadowLight.FOV, shadowLight.Radius,
-                                 shadowLight.Falloff, shadowLight.ShadowMapResolution, shadowLight.ShadowPriority,
-                                 shadowLight.Score, shadowLight.DynamicLightIndex );
-        }
-    }
-}
-
-//---------------------------------------------------------------------
-
-void InsertShadowLight( ShadowLight* pLights, s32& nLights, ShadowLight const& light )
-{
-    if ( nLights >= light_mgr::MAX_DYNAMIC_LIGHTS )
-    {
-        if ( !SortsBeforeShadowLight( light, pLights[nLights - 1] ) )
-        {
-            return;
-        }
-
-        nLights--;
-    }
-
-    s32 insertAt = nLights;
-    while ( insertAt > 0 )
-    {
-        if ( !SortsBeforeShadowLight( light, pLights[insertAt - 1] ) )
-        {
-            break;
-        }
-
-        pLights[insertAt] = pLights[insertAt - 1];
-        insertAt--;
-    }
-
-    pLights[insertAt] = light;
-    nLights++;
-}
-
-//---------------------------------------------------------------------
-
-s32 SelectShadowLights( ShadowLight const* pShadowLightCandidates, s32 nCandidateShadowLights,
-                        ShadowLight* pShadowLights )
-{
-    s32 nPointShadowLights = 0;
-    s32 nShadowLights = 0;
-    s32 nShadowSources = 0;
-
-    for ( s32 iLight = 0; iLight < nCandidateShadowLights; iLight++ )
-    {
-        ShadowLight const& candidate = pShadowLightCandidates[iLight];
-
-        if ( ( candidate.Shape == light_mgr::LIGHT_SHAPE_OMNI ) && ( nPointShadowLights >= MAX_SHADOW_LIGHTS ) )
-        {
-            continue;
-        }
-
-        if ( ( nShadowSources + candidate.SourceCount ) > MAX_SHADOW_SOURCES )
-        {
-            continue;
-        }
-
-        pShadowLights[nShadowLights++] = candidate;
-        nShadowSources += candidate.SourceCount;
-
-        if ( candidate.Shape == light_mgr::LIGHT_SHAPE_OMNI )
-        {
-            nPointShadowLights++;
-        }
-    }
-
-    return nShadowLights;
-}
-
-//---------------------------------------------------------------------
-
-xbool AtlasFitsShadowLights( ShadowLight const* pShadowLights, s32 nShadowLights,
-                             xarray<ShadowAtlasFreeNode>& freeNodes )
-{
-    ShadowAtlasEntry entries[MAX_SHADOW_SOURCES];
-    s32              nEntries = 0;
-
-    for ( s32 iLight = 0; iLight < nShadowLights; iLight++ )
-    {
-        ShadowLight const& shadowLight = pShadowLights[iLight];
-        for ( s32 iSource = 0; iSource < shadowLight.SourceCount; iSource++ )
-        {
-            ASSERT( nEntries < MAX_SHADOW_SOURCES );
-            entries[nEntries].SourceIndex = nEntries;
-            entries[nEntries].TileSize = ClampShadowMapResolution( shadowLight.ShadowMapResolution );
-            entries[nEntries].ShadowPriority = shadowLight.ShadowPriority;
-            entries[nEntries].ShadowScore = shadowLight.Score;
-            entries[nEntries].AtlasTileX = 0;
-            entries[nEntries].AtlasTileY = 0;
-            nEntries++;
-        }
-    }
-
-    if ( nEntries <= 0 )
+    if( EntryCount <= 0 )
     {
         return TRUE;
     }
 
-    return ( GetShadowAtlasSizeForEntries( entries, nEntries, freeNodes ) > 0 );
+    return ( GetShadowAtlasSizeForEntries( Entries, EntryCount, FreeNodes ) > 0 );
 }
 
-//---------------------------------------------------------------------
+//=========================================================================
 
-s32 FindShadowLightForResolutionDrop( ShadowLight const* pShadowLights, s32 nShadowLights, s32 shadowPriority )
+static 
+s32 FindShadowLightForResolutionDrop( ShadowLight const* pShadowLights, s32 ShadowLightCount, s32 ShadowPriority )
 {
-    s32 iBestLight = -1;
+    s32 BestLightIndex = -1;
 
-    for ( s32 iLight = 0; iLight < nShadowLights; iLight++ )
+    for( s32 LightIndex = 0; LightIndex < ShadowLightCount; LightIndex++ )
     {
-        ShadowLight const& shadowLight = pShadowLights[iLight];
-        if ( shadowLight.ShadowPriority != shadowPriority )
+        ShadowLight const& ShadowLightData = pShadowLights[LightIndex];
+        if( ShadowLightData.ShadowPriority != ShadowPriority )
         {
             continue;
         }
-        if ( shadowLight.ShadowMapResolution <= 256 )
+        if( ShadowLightData.ShadowMapResolution <= 256 )
         {
-            continue;
-        }
-
-        if ( iBestLight < 0 )
-        {
-            iBestLight = iLight;
             continue;
         }
 
-        ShadowLight const& bestLight = pShadowLights[iBestLight];
-        if ( shadowLight.Score < bestLight.Score )
+        if( BestLightIndex < 0 )
         {
-            iBestLight = iLight;
+            BestLightIndex = LightIndex;
             continue;
         }
 
-        if ( ( shadowLight.Score == bestLight.Score ) &&
-             ( shadowLight.ShadowMapResolution > bestLight.ShadowMapResolution ) )
+        ShadowLight const& BestLight = pShadowLights[BestLightIndex];
+        if( ShadowLightData.Score < BestLight.Score )
         {
-            iBestLight = iLight;
+            BestLightIndex = LightIndex;
+            continue;
+        }
+
+        if( ( ShadowLightData.Score == BestLight.Score ) &&
+             ( ShadowLightData.ShadowMapResolution > BestLight.ShadowMapResolution ) )
+        {
+            BestLightIndex = LightIndex;
         }
     }
 
-    return iBestLight;
+    return BestLightIndex;
 }
 
-//---------------------------------------------------------------------
+//=========================================================================
 
-s32 FindShadowLightForRemoval( ShadowLight const* pShadowLights, s32 nShadowLights, s32 shadowPriority )
+static 
+s32 FindShadowLightForRemoval( ShadowLight const* pShadowLights, s32 ShadowLightCount, s32 ShadowPriority )
 {
-    s32 iBestLight = -1;
+    s32 BestLightIndex = -1;
 
-    for ( s32 iLight = 0; iLight < nShadowLights; iLight++ )
+    for( s32 LightIndex = 0; LightIndex < ShadowLightCount; LightIndex++ )
     {
-        ShadowLight const& shadowLight = pShadowLights[iLight];
-        if ( shadowLight.ShadowPriority != shadowPriority )
+        ShadowLight const& ShadowLightData = pShadowLights[LightIndex];
+        if( ShadowLightData.ShadowPriority != ShadowPriority )
         {
             continue;
         }
 
-        if ( iBestLight < 0 )
+        if( BestLightIndex < 0 )
         {
-            iBestLight = iLight;
+            BestLightIndex = LightIndex;
             continue;
         }
 
-        ShadowLight const& bestLight = pShadowLights[iBestLight];
-        if ( shadowLight.Score < bestLight.Score )
+        ShadowLight const& BestLight = pShadowLights[BestLightIndex];
+        if( ShadowLightData.Score < BestLight.Score )
         {
-            iBestLight = iLight;
+            BestLightIndex = LightIndex;
             continue;
         }
 
-        if ( ( shadowLight.Score == bestLight.Score ) &&
-             ( shadowLight.ShadowMapResolution > bestLight.ShadowMapResolution ) )
+        if( ( ShadowLightData.Score == BestLight.Score ) &&
+             ( ShadowLightData.ShadowMapResolution > BestLight.ShadowMapResolution ) )
         {
-            iBestLight = iLight;
+            BestLightIndex = LightIndex;
         }
     }
 
-    return iBestLight;
+    return BestLightIndex;
 }
 
-//---------------------------------------------------------------------
+//=========================================================================
 
-void RemoveShadowLight( ShadowLight* pShadowLights, s32& nShadowLights, s32 removeIndex )
+static 
+void RemoveShadowLight( ShadowLight* pShadowLights, s32& ShadowLightCount, s32 RemoveIndex )
 {
-    ASSERT( ( removeIndex >= 0 ) && ( removeIndex < nShadowLights ) );
+    ASSERT( ( RemoveIndex >= 0 ) && ( RemoveIndex < ShadowLightCount ) );
 
-    for ( s32 iLight = removeIndex + 1; iLight < nShadowLights; iLight++ )
+    for( s32 LightIndex = RemoveIndex + 1; LightIndex < ShadowLightCount; LightIndex++ )
     {
-        pShadowLights[iLight - 1] = pShadowLights[iLight];
+        pShadowLights[LightIndex - 1] = pShadowLights[LightIndex];
     }
 
-    nShadowLights--;
+    ShadowLightCount--;
 }
 
-//---------------------------------------------------------------------
+//=========================================================================
 
-void ResolveAtlasBudget( ShadowLight* pShadowLights, s32& nShadowLights, xarray<ShadowAtlasFreeNode>& freeNodes )
+static 
+void ResolveAtlasBudget( ShadowLight* pShadowLights, s32& ShadowLightCount, xarray<ShadowAtlasFreeNode>& FreeNodes )
 {
-    for ( s32 shadowPriority = kMinShadowPriority; shadowPriority <= kMaxShadowPriority; shadowPriority++ )
+    for( s32 ShadowPriority = MinShadowPriority; ShadowPriority <= MaxShadowPriority; ShadowPriority++ )
     {
-        while ( !AtlasFitsShadowLights( pShadowLights, nShadowLights, freeNodes ) )
+        while( !AtlasFitsShadowLights( pShadowLights, ShadowLightCount, FreeNodes ) )
         {
-            s32 const iLightToReduce = FindShadowLightForResolutionDrop( pShadowLights, nShadowLights, shadowPriority );
-            if ( iLightToReduce >= 0 )
+            s32 const LightToReduceIndex =
+                FindShadowLightForResolutionDrop( pShadowLights, ShadowLightCount, ShadowPriority );
+            if( LightToReduceIndex >= 0 )
             {
-                pShadowLights[iLightToReduce].ShadowMapResolution =
-                    ReduceShadowMapResolution( pShadowLights[iLightToReduce].ShadowMapResolution );
+                pShadowLights[LightToReduceIndex].ShadowMapResolution =
+                    ReduceShadowMapResolution( pShadowLights[LightToReduceIndex].ShadowMapResolution );
                 continue;
             }
 
-            s32 const iLightToRemove = FindShadowLightForRemoval( pShadowLights, nShadowLights, shadowPriority );
-            if ( iLightToRemove >= 0 )
+            s32 const LightToRemoveIndex = FindShadowLightForRemoval( pShadowLights, ShadowLightCount, ShadowPriority );
+            if( LightToRemoveIndex >= 0 )
             {
-                RemoveShadowLight( pShadowLights, nShadowLights, iLightToRemove );
+                RemoveShadowLight( pShadowLights, ShadowLightCount, LightToRemoveIndex );
                 continue;
             }
 
             break;
         }
 
-        if ( AtlasFitsShadowLights( pShadowLights, nShadowLights, freeNodes ) )
+        if( AtlasFitsShadowLights( pShadowLights, ShadowLightCount, FreeNodes ) )
         {
             return;
         }
     }
 }
 
-//---------------------------------------------------------------------
+//=========================================================================
 
-s32 GetAtlasGuardTexels( f32 filterRadius )
+static
+void AddPointShadowSources( vector3 const& LightPos, f32 LightRadius, f32 LightFalloff, s32 ShadowMapResolution,
+                            s32 ShadowPriority, f32 ShadowScore, s32 DynamicLightIndex )
 {
-    s32 const guardTexels = static_cast<s32>( x_ceil( filterRadius ) ) + 1;
-    return ( guardTexels > 0 ) ? guardTexels : 1;
+    for( s32 FaceIndex = 0; FaceIndex < ARRAYSIZE( PointShadowFaces ); FaceIndex++ )
+    {
+        matrix4 FaceL2W;
+        FaceL2W.Setup( vector3( 1.0f, 1.0f, 1.0f ),
+                       radian3( PointShadowFaces[FaceIndex].Pitch, PointShadowFaces[FaceIndex].Yaw, R_0 ), LightPos );
+
+        render::AddPointShadowMapSource( FaceL2W, PointShadowFOV, LightRadius, LightFalloff, ShadowMapResolution,
+                                         ShadowPriority, ShadowScore, DynamicLightIndex );
+    }
 }
-} // namespace
 
 //=========================================================================
-//  FUNCTIONS
-//=========================================================================
 
-struct ShadowMapMgr::ScratchData
+static 
+void AddSpotShadowSource( vector3 const& LightPos, vector3 const& LightDirection, radian ShadowFOV, f32 LightRadius, f32 LightFalloff, 
+                          s32 ShadowMapResolution, s32 ShadowPriority, f32 ShadowScore, s32 DynamicLightIndex )
 {
-    xarray<ShadowCasterRecord>     RelevantCasters;
-    xarray<ShadowCasterRecord>     ShadowCasters;
-    xarray<u64>                    CasterMasks;
-    xarray<ShadowCasterMaskRecord> PendingCasterMasks;
-    xarray<ShadowAtlasFreeNode>    AtlasFreeNodes;
-};
+    matrix4 SpotL2W;
+    SpotL2W.Setup( vector3( 1.0f, 1.0f, 1.0f ), radian3( LightDirection.GetPitch(), LightDirection.GetYaw(), R_0 ),
+                   LightPos );
 
+    render::AddSpotShadowMapSource( SpotL2W, ShadowFOV, LightRadius, LightFalloff, ShadowMapResolution, ShadowPriority,
+                                    ShadowScore, DynamicLightIndex );
+}
+
+//=========================================================================
+
+static 
+void AddShadowSources( ShadowLight const* pShadowLights, s32 ShadowLightCount )
+{
+    for( s32 LightIndex = 0; LightIndex < ShadowLightCount; LightIndex++ )
+    {
+        ShadowLight const& ShadowLightData = pShadowLights[LightIndex];
+
+        if( ShadowLightData.Shape == light_mgr::LIGHT_SHAPE_OMNI )
+        {
+            AddPointShadowSources( ShadowLightData.Pos, ShadowLightData.Radius, ShadowLightData.Falloff,
+                                   ShadowLightData.ShadowMapResolution, ShadowLightData.ShadowPriority,
+                                   ShadowLightData.Score, ShadowLightData.DynamicLightIndex );
+        }
+        else
+        {
+            AddSpotShadowSource( ShadowLightData.Pos, ShadowLightData.Direction, ShadowLightData.FOV,
+                                 ShadowLightData.Radius, ShadowLightData.Falloff, ShadowLightData.ShadowMapResolution,
+                                 ShadowLightData.ShadowPriority, ShadowLightData.Score,
+                                 ShadowLightData.DynamicLightIndex );
+        }
+    }
+}
+
+//=========================================================================
+//  IMPLEMENTATION
 //=========================================================================
 
 ShadowMapMgr::ShadowMapMgr( void )
-  : m_pScratch( NULL ), m_sourceCount( 0 ), m_pointFaceCount( 0 ), m_pointLightCount( 0 ), m_atlasSourceCount( 0 ),
-      m_atlasSize( 0 ), m_atlasSizeFloor( 0 ), m_atlasLayoutDirty( FALSE ), m_enabled( TRUE ),
-      m_shadowFilterType( ShadowFilterType::Evsm )
+    : m_pScratch( nullptr )
+    , m_sourceCount( 0 )
+    , m_pointFaceCount( 0 )
+    , m_pointLightCount( 0 )
+    , m_atlasSourceCount( 0 )
+    , m_atlasSize( 0 )
+    , m_atlasSizeFloor( 0 )
+    , m_atlasLayoutDirty( FALSE )
+    , m_enabled( TRUE )
+    , m_shadowFilterType( ShadowFilterType::Evsm )
 {
     x_memset( m_sources, 0, sizeof( m_sources ) );
 }
@@ -1329,19 +1438,270 @@ ShadowMapMgr::~ShadowMapMgr( void )
 {
     ClearSources();
     delete m_pScratch;
-    m_pScratch = NULL;
+    m_pScratch = nullptr;
 }
 
 //=========================================================================
 
 ShadowMapMgr::ScratchData& ShadowMapMgr::GetScratch( void )
 {
-    if ( !m_pScratch )
+    if( !m_pScratch )
     {
         m_pScratch = new ScratchData;
     }
 
     return *m_pScratch;
+}
+
+//=========================================================================
+
+void ShadowMapMgr::ComputePerspectiveSource( ShadowSource& Destination, s32 SourceType,
+                                             matrix4 const& LocalToWorld, radian FieldOfView,
+                                             f32 LightRadius, f32 LightFalloff, s32 ShadowMapResolution ) const
+{
+    ShadowMapResolution = ClampShadowMapResolution( ShadowMapResolution );
+
+    f32 ReceiveNearZ = ComputeSpotShadowReceiveNearZ( LightRadius );
+    f32 NearZ = MAX( 0.5f, LightRadius * 0.01f );
+
+    if( SourceType == SHADOW_SOURCE_POINT_FACE )
+    {
+        ReceiveNearZ = ComputePointShadowReceiveNearZ( LightRadius );
+        NearZ = ComputePointShadowNearZ( LightRadius );
+    }
+
+    NearZ = MAX( 0.01f, NearZ );
+
+    f32 FarZ = MAX( NearZ + 1.0f, LightRadius );
+
+    matrix4 W2Proj = LocalToWorld;
+    W2Proj.InvertRT();
+
+    f32 const TanHalfFOV = x_tan( FieldOfView * 0.5f );
+    f32       Scale = ( TanHalfFOV > 0.0f ) ? ( 1.0f / TanHalfFOV ) : 1.0f;
+
+    if( SourceType == SHADOW_SOURCE_POINT_FACE )
+    {
+        f32 const CoverageScale = static_cast<f32>( ShadowMapResolution ) /
+                                  ( static_cast<f32>( ShadowMapResolution ) + PointShadowProjectionOverlapTexels );
+        Scale *= CoverageScale;
+    }
+
+    matrix4 Proj2Clip;
+    Proj2Clip.Zero();
+
+    if( SourceType == SHADOW_SOURCE_POINT_FACE )
+    {
+        Proj2Clip( 0, 0 ) = Scale;
+    }
+    else
+    {
+        Proj2Clip( 0, 0 ) = -Scale;
+    }
+
+    Proj2Clip( 1, 1 ) = Scale;
+    Proj2Clip( 2, 2 ) = FarZ / ( FarZ - NearZ );
+    Proj2Clip( 3, 2 ) = -( NearZ * FarZ ) / ( FarZ - NearZ );
+    Proj2Clip( 2, 3 ) = 1.0f;
+
+    Destination.Type = SourceType;
+    Destination.DynamicLightIndex = -1;
+    Destination.PointLightIndex = -1;
+    Destination.FaceIndex = -1;
+    Destination.RequestedResolution = ShadowMapResolution;
+    Destination.ShadowPriority = MinShadowPriority;
+    Destination.ShadowScore = 0.0f;
+    Destination.WorldToClip = Proj2Clip * W2Proj;
+    Destination.WorldToAtlas = Destination.WorldToClip;
+    Destination.FaceLightDirFalloff.Zero();
+    Destination.FaceLightData.Zero();
+    Destination.LightFalloff = LightFalloff;
+    Destination.NearZ = NearZ;
+    Destination.ReceiveNearZ = ReceiveNearZ;
+    Destination.FarZ = FarZ;
+    Destination.AtlasX = 0;
+    Destination.AtlasY = 0;
+    Destination.AtlasWidth = ShadowMapResolution;
+    Destination.AtlasHeight = ShadowMapResolution;
+    Destination.AtlasTileX = 0;
+    Destination.AtlasTileY = 0;
+    Destination.AtlasTileWidth = ShadowMapResolution;
+    Destination.AtlasTileHeight = ShadowMapResolution;
+
+    vector3 const LightPos = LocalToWorld.GetTranslation();
+    vector3 const Extent( FarZ, FarZ, FarZ );
+    Destination.LightPosRadius = vector4( LightPos.GetX(), LightPos.GetY(), LightPos.GetZ(), LightRadius );
+    Destination.WorldBBox.Set( LightPos - Extent, LightPos + Extent );
+}
+
+//=========================================================================
+
+void ShadowMapMgr::UpdateAtlasLayout( void )
+{
+    m_atlasSize = 0;
+
+    if( m_atlasSourceCount <= 0 )
+    {
+        return;
+    }
+
+    ScratchData& Scratch = GetScratch();
+
+    ShadowAtlasEntry Entries[MAX_SHADOW_SOURCES];
+    s32              EntryCount = 0;
+
+    for( s32 Index = 0; Index < m_sourceCount; Index++ )
+    {
+        ShadowSource const& Source = m_sources[Index];
+        ASSERT( EntryCount < MAX_SHADOW_SOURCES );
+        Entries[EntryCount].SourceIndex = Index;
+        Entries[EntryCount].TileSize = ClampShadowMapResolution( Source.RequestedResolution );
+        Entries[EntryCount].ShadowPriority = Source.ShadowPriority;
+        Entries[EntryCount].ShadowScore = Source.ShadowScore;
+        Entries[EntryCount].AtlasTileX = 0;
+        Entries[EntryCount].AtlasTileY = 0;
+        EntryCount++;
+    }
+
+    s32 AtlasSize = GetShadowAtlasSizeForEntries( Entries, EntryCount, Scratch.AtlasFreeNodes );
+    while( AtlasSize <= 0 )
+    {
+        s32 LargestEntryIndex = -1;
+        for( s32 Index = 0; Index < EntryCount; Index++ )
+        {
+            if( Entries[Index].TileSize <= 256 )
+            {
+                continue;
+            }
+
+            if( LargestEntryIndex < 0 )
+            {
+                LargestEntryIndex = Index;
+                continue;
+            }
+
+            if( Entries[Index].ShadowPriority < Entries[LargestEntryIndex].ShadowPriority )
+            {
+                LargestEntryIndex = Index;
+                continue;
+            }
+
+            if( ( Entries[Index].ShadowPriority == Entries[LargestEntryIndex].ShadowPriority ) &&
+                 ( Entries[Index].ShadowScore < Entries[LargestEntryIndex].ShadowScore ) )
+            {
+                LargestEntryIndex = Index;
+                continue;
+            }
+
+            if( ( Entries[Index].ShadowPriority == Entries[LargestEntryIndex].ShadowPriority ) &&
+                 ( Entries[Index].ShadowScore == Entries[LargestEntryIndex].ShadowScore ) &&
+                 ( Entries[Index].TileSize > Entries[LargestEntryIndex].TileSize ) )
+            {
+                LargestEntryIndex = Index;
+            }
+        }
+
+        if( LargestEntryIndex < 0 )
+        {
+            ASSERT( FALSE );
+            break;
+        }
+
+        ShadowSource const& SelectedSource = m_sources[Entries[LargestEntryIndex].SourceIndex];
+        s32 const ReducedTileSize = ReduceShadowMapResolution( Entries[LargestEntryIndex].TileSize );
+        if( SelectedSource.Type == SHADOW_SOURCE_POINT_FACE )
+        {
+            for( s32 Index = 0; Index < EntryCount; Index++ )
+            {
+                ShadowSource const& Source = m_sources[Entries[Index].SourceIndex];
+                if( ( Source.Type == SHADOW_SOURCE_POINT_FACE ) &&
+                     ( Source.PointLightIndex == SelectedSource.PointLightIndex ) )
+                {
+                    Entries[Index].TileSize = ReducedTileSize;
+                }
+            }
+        }
+        else
+        {
+            Entries[LargestEntryIndex].TileSize = ReducedTileSize;
+        }
+        AtlasSize = GetShadowAtlasSizeForEntries( Entries, EntryCount, Scratch.AtlasFreeNodes );
+    }
+
+    s32 const AtlasFloorCap = 4096;
+    if( AtlasSize < m_atlasSizeFloor )
+    {
+        AtlasSize = m_atlasSizeFloor;
+    }
+    if( AtlasSize <= AtlasFloorCap && AtlasSize > m_atlasSizeFloor )
+    {
+        m_atlasSizeFloor = AtlasSize;
+    }
+
+    m_atlasSize = AtlasSize;
+
+    f32 DepthFilterRadius = 0.0f;
+    if( m_shadowFilterType == ShadowFilterType::Evsm )
+    {
+        // Conversion preserves normalized atlas coordinates. Reserve enough
+        // depth texels for the scaled moment-space kernel at the selected
+        // atlas ratio.
+        s32 const MomentAtlasSize = MIN( MAX( AtlasSize / 2, 1 ), MAX_SHADOW_MOMENT_ATLAS_SIZE );
+        f32 const DepthToMomentScale = static_cast<f32>( AtlasSize ) / static_cast<f32>( MomentAtlasSize );
+        DepthFilterRadius =
+            static_cast<f32>( SHADOW_EVSM_BLUR_RADIUS ) * SHADOW_EVSM_BLUR_SCALE * DepthToMomentScale;
+    }
+    s32 const GuardTexels = GetAtlasGuardTexels( DepthFilterRadius );
+
+    for( s32 Index = 0; Index < EntryCount; Index++ )
+    {
+        ShadowSource& Source = m_sources[Entries[Index].SourceIndex];
+        s32 const     TileSize = Entries[Index].TileSize;
+
+        Source.AtlasTileX = Entries[Index].AtlasTileX;
+        Source.AtlasTileY = Entries[Index].AtlasTileY;
+        Source.AtlasTileWidth = TileSize;
+        Source.AtlasTileHeight = TileSize;
+        Source.AtlasX = Source.AtlasTileX;
+        Source.AtlasY = Source.AtlasTileY;
+        Source.AtlasWidth = Source.AtlasTileWidth;
+        Source.AtlasHeight = Source.AtlasTileHeight;
+
+        if( GuardTexels > 0 )
+        {
+            s32 const MaxGuardX = ( Source.AtlasWidth > 2 ) ? ( ( Source.AtlasWidth - 1 ) / 2 ) : 0;
+            s32 const MaxGuardY = ( Source.AtlasHeight > 2 ) ? ( ( Source.AtlasHeight - 1 ) / 2 ) : 0;
+            s32 const GuardX = ( GuardTexels < MaxGuardX ) ? GuardTexels : MaxGuardX;
+            s32 const GuardY = ( GuardTexels < MaxGuardY ) ? GuardTexels : MaxGuardY;
+
+            Source.AtlasX += GuardX;
+            Source.AtlasY += GuardY;
+            Source.AtlasWidth -= GuardX * 2;
+            Source.AtlasHeight -= GuardY * 2;
+        }
+
+        if( Source.Type == SHADOW_SOURCE_POINT_FACE )
+        {
+            f32 const RequestedResolution = static_cast<f32>( ClampShadowMapResolution( Source.RequestedResolution ) );
+            f32 const RequestedCoverage =
+                RequestedResolution / ( RequestedResolution + PointShadowProjectionOverlapTexels );
+            f32 const ActualResolution = static_cast<f32>( Source.AtlasWidth );
+            f32 const ActualCoverage = ActualResolution / ( ActualResolution + PointShadowProjectionOverlapTexels );
+            f32 const CoverageCorrection = ActualCoverage / RequestedCoverage;
+            Source.WorldToClip.Scale( vector3( CoverageCorrection, CoverageCorrection, 1.0f ) );
+            Source.FaceLightData.GetX() = ComputePointFaceCoverageCos( Source.AtlasWidth );
+        }
+
+        Source.WorldToAtlas = Source.WorldToClip;
+        Source.WorldToAtlas.Scale( vector3( 0.5f, -0.5f, 1.0f ) );
+        Source.WorldToAtlas.Translate( vector3( 0.5f, 0.5f, 0.0f ) );
+        Source.WorldToAtlas.Scale( vector3( static_cast<f32>( Source.AtlasWidth ) / static_cast<f32>( m_atlasSize ),
+                                            static_cast<f32>( Source.AtlasHeight ) / static_cast<f32>( m_atlasSize ),
+                                            1.0f ) );
+        Source.WorldToAtlas.Translate( vector3( static_cast<f32>( Source.AtlasX ) / static_cast<f32>( m_atlasSize ),
+                                                static_cast<f32>( Source.AtlasY ) / static_cast<f32>( m_atlasSize ),
+                                                0.0f ) );
+    }
 }
 
 //=========================================================================
@@ -1360,7 +1720,7 @@ void ShadowMapMgr::ClearSources( void )
 
 void ShadowMapMgr::FinalizeSources( void )
 {
-    if ( !m_atlasLayoutDirty )
+    if( !m_atlasLayoutDirty )
     {
         return;
     }
@@ -1395,298 +1755,50 @@ void ShadowMapMgr::SetShadowFilterType( ShadowFilterType Type )
 
 //=========================================================================
 
-void ShadowMapMgr::ComputePerspectiveSource( ShadowSource& dest, s32 sourceType, matrix4 const& l2W, radian fov,
-                                             f32 lightRadius, f32 lightFalloff, s32 shadowMapResolution ) const
+xbool ShadowMapMgr::AddPointSource( matrix4 const& LocalToWorld, radian FieldOfView, f32 LightRadius, f32 LightFalloff,
+                                    s32 ShadowMapResolution, s32 ShadowPriority, f32 ShadowScore,
+                                    s32 DynamicLightIndex )
 {
-    shadowMapResolution = ClampShadowMapResolution( shadowMapResolution );
-
-    f32 receiveNearZ = ComputeSpotShadowReceiveNearZ( lightRadius );
-    f32 nearZ = MAX( 0.5f, lightRadius * 0.01f );
-
-    if ( sourceType == SHADOW_SOURCE_POINT_FACE )
-    {
-        receiveNearZ = ComputePointShadowReceiveNearZ( lightRadius );
-        nearZ = ComputePointShadowNearZ( lightRadius );
-    }
-
-    nearZ = MAX( 0.01f, nearZ );
-
-    f32 farZ = MAX( nearZ + 1.0f, lightRadius );
-
-    matrix4 w2Proj = l2W;
-    w2Proj.InvertRT();
-
-    f32 const tanHalfFov = x_tan( fov * 0.5f );
-    f32       scale = ( tanHalfFov > 0.0f ) ? ( 1.0f / tanHalfFov ) : 1.0f;
-
-    if ( sourceType == SHADOW_SOURCE_POINT_FACE )
-    {
-        f32 const coverageScale = static_cast<f32>( shadowMapResolution ) /
-                                  ( static_cast<f32>( shadowMapResolution ) + kPointShadowProjectionOverlapTexels );
-        scale *= coverageScale;
-    }
-
-    matrix4 proj2Clip;
-    proj2Clip.Zero();
-
-    if ( sourceType == SHADOW_SOURCE_POINT_FACE )
-    {
-        proj2Clip( 0, 0 ) = scale;
-    }
-    else
-    {
-        proj2Clip( 0, 0 ) = -scale;
-    }
-
-    proj2Clip( 1, 1 ) = scale;
-    proj2Clip( 2, 2 ) = farZ / ( farZ - nearZ );
-    proj2Clip( 3, 2 ) = -( nearZ * farZ ) / ( farZ - nearZ );
-    proj2Clip( 2, 3 ) = 1.0f;
-
-    dest.Type = sourceType;
-    dest.DynamicLightIndex = -1;
-    dest.PointLightIndex = -1;
-    dest.FaceIndex = -1;
-    dest.RequestedResolution = shadowMapResolution;
-    dest.ShadowPriority = kMinShadowPriority;
-    dest.ShadowScore = 0.0f;
-    dest.WorldToClip = proj2Clip * w2Proj;
-    dest.WorldToAtlas = dest.WorldToClip;
-    dest.FaceLightDirFalloff.Zero();
-    dest.FaceLightData.Zero();
-    dest.LightFalloff = lightFalloff;
-    dest.NearZ = nearZ;
-    dest.ReceiveNearZ = receiveNearZ;
-    dest.FarZ = farZ;
-    dest.AtlasX = 0;
-    dest.AtlasY = 0;
-    dest.AtlasWidth = shadowMapResolution;
-    dest.AtlasHeight = shadowMapResolution;
-    dest.AtlasTileX = 0;
-    dest.AtlasTileY = 0;
-    dest.AtlasTileWidth = shadowMapResolution;
-    dest.AtlasTileHeight = shadowMapResolution;
-
-    vector3 const lightPos = l2W.GetTranslation();
-    vector3 const extent( farZ, farZ, farZ );
-    dest.LightPosRadius = vector4( lightPos.GetX(), lightPos.GetY(), lightPos.GetZ(), lightRadius );
-    dest.WorldBBox.Set( lightPos - extent, lightPos + extent );
-}
-
-//=========================================================================
-
-void ShadowMapMgr::UpdateAtlasLayout( void )
-{
-    m_atlasSize = 0;
-
-    if ( m_atlasSourceCount <= 0 )
-    {
-        return;
-    }
-
-    ScratchData& scratch = GetScratch();
-
-    ShadowAtlasEntry entries[MAX_SHADOW_SOURCES];
-    s32              nEntries = 0;
-
-    for ( s32 i = 0; i < m_sourceCount; i++ )
-    {
-        ShadowSource const& source = m_sources[i];
-        ASSERT( nEntries < MAX_SHADOW_SOURCES );
-        entries[nEntries].SourceIndex = i;
-        entries[nEntries].TileSize = ClampShadowMapResolution( source.RequestedResolution );
-        entries[nEntries].ShadowPriority = source.ShadowPriority;
-        entries[nEntries].ShadowScore = source.ShadowScore;
-        entries[nEntries].AtlasTileX = 0;
-        entries[nEntries].AtlasTileY = 0;
-        nEntries++;
-    }
-
-    s32 atlasSize = GetShadowAtlasSizeForEntries( entries, nEntries, scratch.AtlasFreeNodes );
-    while ( atlasSize <= 0 )
-    {
-        s32 iLargestEntry = -1;
-        for ( s32 i = 0; i < nEntries; i++ )
-        {
-            if ( entries[i].TileSize <= 256 )
-            {
-                continue;
-            }
-
-            if ( iLargestEntry < 0 )
-            {
-                iLargestEntry = i;
-                continue;
-            }
-
-            if ( entries[i].ShadowPriority < entries[iLargestEntry].ShadowPriority )
-            {
-                iLargestEntry = i;
-                continue;
-            }
-
-            if ( ( entries[i].ShadowPriority == entries[iLargestEntry].ShadowPriority ) &&
-                 ( entries[i].ShadowScore < entries[iLargestEntry].ShadowScore ) )
-            {
-                iLargestEntry = i;
-                continue;
-            }
-
-            if ( ( entries[i].ShadowPriority == entries[iLargestEntry].ShadowPriority ) &&
-                 ( entries[i].ShadowScore == entries[iLargestEntry].ShadowScore ) &&
-                 ( entries[i].TileSize > entries[iLargestEntry].TileSize ) )
-            {
-                iLargestEntry = i;
-            }
-        }
-
-        if ( iLargestEntry < 0 )
-        {
-            ASSERT( FALSE );
-            break;
-        }
-
-        ShadowSource const& selectedSource = m_sources[entries[iLargestEntry].SourceIndex];
-        s32 const reducedTileSize = ReduceShadowMapResolution( entries[iLargestEntry].TileSize );
-        if ( selectedSource.Type == SHADOW_SOURCE_POINT_FACE )
-        {
-            for ( s32 i = 0; i < nEntries; i++ )
-            {
-                ShadowSource const& source = m_sources[entries[i].SourceIndex];
-                if ( ( source.Type == SHADOW_SOURCE_POINT_FACE ) &&
-                     ( source.PointLightIndex == selectedSource.PointLightIndex ) )
-                {
-                    entries[i].TileSize = reducedTileSize;
-                }
-            }
-        }
-        else
-        {
-            entries[iLargestEntry].TileSize = reducedTileSize;
-        }
-        atlasSize = GetShadowAtlasSizeForEntries( entries, nEntries, scratch.AtlasFreeNodes );
-    }
-
-    s32 const kAtlasFloorCap = 4096;
-    if ( atlasSize < m_atlasSizeFloor )
-    {
-        atlasSize = m_atlasSizeFloor;
-    }
-    if ( atlasSize <= kAtlasFloorCap && atlasSize > m_atlasSizeFloor )
-    {
-        m_atlasSizeFloor = atlasSize;
-    }
-
-    m_atlasSize = atlasSize;
-
-    f32 depthFilterRadius = 0.0f;
-    if( m_shadowFilterType == ShadowFilterType::Evsm )
-    {
-        // Conversion preserves normalized atlas coordinates. Reserve enough
-        // depth texels for the scaled moment-space kernel at the selected
-        // atlas ratio.
-        s32 const momentAtlasSize = MIN( MAX( atlasSize / 2, 1 ), MAX_SHADOW_MOMENT_ATLAS_SIZE );
-        f32 const depthToMomentScale = static_cast<f32>( atlasSize ) / static_cast<f32>( momentAtlasSize );
-        depthFilterRadius =
-            static_cast<f32>( SHADOW_EVSM_BLUR_RADIUS ) * SHADOW_EVSM_BLUR_SCALE * depthToMomentScale;
-    }
-    s32 const guardTexels = GetAtlasGuardTexels( depthFilterRadius );
-
-    for ( s32 i = 0; i < nEntries; i++ )
-    {
-        ShadowSource& source = m_sources[entries[i].SourceIndex];
-        s32 const     tileSize = entries[i].TileSize;
-
-        source.AtlasTileX = entries[i].AtlasTileX;
-        source.AtlasTileY = entries[i].AtlasTileY;
-        source.AtlasTileWidth = tileSize;
-        source.AtlasTileHeight = tileSize;
-        source.AtlasX = source.AtlasTileX;
-        source.AtlasY = source.AtlasTileY;
-        source.AtlasWidth = source.AtlasTileWidth;
-        source.AtlasHeight = source.AtlasTileHeight;
-
-        if ( guardTexels > 0 )
-        {
-            s32 const maxGuardX = ( source.AtlasWidth > 2 ) ? ( ( source.AtlasWidth - 1 ) / 2 ) : 0;
-            s32 const maxGuardY = ( source.AtlasHeight > 2 ) ? ( ( source.AtlasHeight - 1 ) / 2 ) : 0;
-            s32 const guardX = ( guardTexels < maxGuardX ) ? guardTexels : maxGuardX;
-            s32 const guardY = ( guardTexels < maxGuardY ) ? guardTexels : maxGuardY;
-
-            source.AtlasX += guardX;
-            source.AtlasY += guardY;
-            source.AtlasWidth -= guardX * 2;
-            source.AtlasHeight -= guardY * 2;
-        }
-
-        if ( source.Type == SHADOW_SOURCE_POINT_FACE )
-        {
-            f32 const requestedResolution = static_cast<f32>( ClampShadowMapResolution( source.RequestedResolution ) );
-            f32 const requestedCoverage =
-                requestedResolution / ( requestedResolution + kPointShadowProjectionOverlapTexels );
-            f32 const actualResolution = static_cast<f32>( source.AtlasWidth );
-            f32 const actualCoverage = actualResolution / ( actualResolution + kPointShadowProjectionOverlapTexels );
-            f32 const coverageCorrection = actualCoverage / requestedCoverage;
-            source.WorldToClip.Scale( vector3( coverageCorrection, coverageCorrection, 1.0f ) );
-            source.FaceLightData.GetX() = ComputePointFaceCoverageCos( source.AtlasWidth );
-        }
-
-        source.WorldToAtlas = source.WorldToClip;
-        source.WorldToAtlas.Scale( vector3( 0.5f, -0.5f, 1.0f ) );
-        source.WorldToAtlas.Translate( vector3( 0.5f, 0.5f, 0.0f ) );
-        source.WorldToAtlas.Scale( vector3( static_cast<f32>( source.AtlasWidth ) / static_cast<f32>( m_atlasSize ),
-                                            static_cast<f32>( source.AtlasHeight ) / static_cast<f32>( m_atlasSize ),
-                                            1.0f ) );
-        source.WorldToAtlas.Translate( vector3( static_cast<f32>( source.AtlasX ) / static_cast<f32>( m_atlasSize ),
-                                                static_cast<f32>( source.AtlasY ) / static_cast<f32>( m_atlasSize ),
-                                                0.0f ) );
-    }
-}
-
-//=========================================================================
-
-xbool ShadowMapMgr::AddPointSource( matrix4 const& l2W, radian fov, f32 lightRadius, f32 lightFalloff,
-                                    s32 shadowMapResolution, s32 shadowPriority, f32 shadowScore,
-                                    s32 dynamicLightIndex )
-{
-    if ( !m_enabled )
+    if( !m_enabled )
     {
         return FALSE;
     }
 
-    if ( m_sourceCount >= MAX_SHADOW_SOURCES )
-    {
-        return FALSE;
-    }
-    if ( m_pointLightCount >= MAX_SHADOW_LIGHTS && ( m_pointFaceCount % POINT_SHADOW_FACE_COUNT ) == 0 )
+    if( m_sourceCount >= MAX_SHADOW_SOURCES )
     {
         return FALSE;
     }
 
-    ShadowSource& source = m_sources[m_sourceCount];
-    ComputePerspectiveSource( source, SHADOW_SOURCE_POINT_FACE, l2W, fov, lightRadius, lightFalloff,
-                              shadowMapResolution );
-
-    vector3 faceDirection = l2W.RotateVector( vector3( 0.0f, 0.0f, 1.0f ) );
-    if ( !faceDirection.SafeNormalize() )
+    if( ( m_pointLightCount >= MAX_SHADOW_LIGHTS ) &&
+        ( ( m_pointFaceCount % POINT_SHADOW_FACE_COUNT ) == 0 ) )
     {
-        faceDirection.Set( 0.0f, 0.0f, 1.0f );
+        return FALSE;
     }
 
-    source.FaceLightDirFalloff.Set( faceDirection.GetX(), faceDirection.GetY(), faceDirection.GetZ(), lightFalloff );
-    source.FaceLightData.Set( ComputePointFaceCoverageCos( shadowMapResolution ), source.ReceiveNearZ, source.FarZ,
-                              kShadowSourceTypePointFace );
-    source.ShadowPriority = ClampShadowPriority( shadowPriority );
-    source.ShadowScore = shadowScore;
-    source.DynamicLightIndex = dynamicLightIndex;
-    source.PointLightIndex = m_pointFaceCount / POINT_SHADOW_FACE_COUNT;
-    source.FaceIndex = m_pointFaceCount % POINT_SHADOW_FACE_COUNT;
+    ShadowSource& Source = m_sources[m_sourceCount];
+    ComputePerspectiveSource( Source, SHADOW_SOURCE_POINT_FACE, LocalToWorld, FieldOfView, LightRadius, LightFalloff,
+                              ShadowMapResolution );
+
+    vector3 FaceDirection = LocalToWorld.RotateVector( vector3( 0.0f, 0.0f, 1.0f ) );
+    if( !FaceDirection.SafeNormalize() )
+    {
+        FaceDirection.Set( 0.0f, 0.0f, 1.0f );
+    }
+
+    Source.FaceLightDirFalloff.Set( FaceDirection.GetX(), FaceDirection.GetY(), FaceDirection.GetZ(), LightFalloff );
+    Source.FaceLightData.Set( ComputePointFaceCoverageCos( ShadowMapResolution ), Source.ReceiveNearZ, Source.FarZ,
+                              ShadowSourceTypePointFace );
+    Source.ShadowPriority = ClampShadowPriority( ShadowPriority );
+    Source.ShadowScore = ShadowScore;
+    Source.DynamicLightIndex = DynamicLightIndex;
+    Source.PointLightIndex = m_pointFaceCount / POINT_SHADOW_FACE_COUNT;
+    Source.FaceIndex = m_pointFaceCount % POINT_SHADOW_FACE_COUNT;
     m_sourceCount++;
     m_pointFaceCount++;
     m_atlasSourceCount++;
     m_atlasLayoutDirty = TRUE;
 
-    if ( source.FaceIndex == 0 )
+    if( Source.FaceIndex == 0 )
     {
         m_pointLightCount++;
     }
@@ -1696,33 +1808,34 @@ xbool ShadowMapMgr::AddPointSource( matrix4 const& l2W, radian fov, f32 lightRad
 
 //=========================================================================
 
-xbool ShadowMapMgr::AddSpotSource( matrix4 const& l2W, radian fov, f32 lightRadius, f32 lightFalloff,
-                                   s32 shadowMapResolution, s32 shadowPriority, f32 shadowScore, s32 dynamicLightIndex )
+xbool ShadowMapMgr::AddSpotSource( matrix4 const& LocalToWorld, radian FieldOfView, f32 LightRadius, f32 LightFalloff,
+                                   s32 ShadowMapResolution, s32 ShadowPriority, f32 ShadowScore, s32 DynamicLightIndex )
 {
-    if ( !m_enabled )
+    if( !m_enabled )
     {
         return FALSE;
     }
 
-    if ( m_sourceCount >= MAX_SHADOW_SOURCES )
+    if( m_sourceCount >= MAX_SHADOW_SOURCES )
     {
         return FALSE;
     }
 
-    ShadowSource& source = m_sources[m_sourceCount];
-    ComputePerspectiveSource( source, SHADOW_SOURCE_SPOT, l2W, fov, lightRadius, lightFalloff, shadowMapResolution );
+    ShadowSource& Source = m_sources[m_sourceCount];
+    ComputePerspectiveSource( Source, SHADOW_SOURCE_SPOT, LocalToWorld, FieldOfView, LightRadius,
+                              LightFalloff, ShadowMapResolution );
 
-    vector3 spotDirection = l2W.RotateVector( vector3( 0.0f, 0.0f, 1.0f ) );
-    if ( !spotDirection.SafeNormalize() )
+    vector3 SpotDirection = LocalToWorld.RotateVector( vector3( 0.0f, 0.0f, 1.0f ) );
+    if( !SpotDirection.SafeNormalize() )
     {
-        spotDirection.Set( 0.0f, 0.0f, 1.0f );
+        SpotDirection.Set( 0.0f, 0.0f, 1.0f );
     }
 
-    source.FaceLightDirFalloff.Set( spotDirection.GetX(), spotDirection.GetY(), spotDirection.GetZ(), lightFalloff );
-    source.FaceLightData.Set( x_cos( fov * 0.5f ), source.ReceiveNearZ, source.FarZ, kShadowSourceTypeSpot );
-    source.ShadowPriority = ClampShadowPriority( shadowPriority );
-    source.ShadowScore = shadowScore;
-    source.DynamicLightIndex = dynamicLightIndex;
+    Source.FaceLightDirFalloff.Set( SpotDirection.GetX(), SpotDirection.GetY(), SpotDirection.GetZ(), LightFalloff );
+    Source.FaceLightData.Set( x_cos( FieldOfView * 0.5f ), Source.ReceiveNearZ, Source.FarZ, ShadowSourceTypeSpot );
+    Source.ShadowPriority = ClampShadowPriority( ShadowPriority );
+    Source.ShadowScore = ShadowScore;
+    Source.DynamicLightIndex = DynamicLightIndex;
     m_sourceCount++;
     m_atlasSourceCount++;
     m_atlasLayoutDirty = TRUE;
@@ -1731,51 +1844,7 @@ xbool ShadowMapMgr::AddSpotSource( matrix4 const& l2W, radian fov, f32 lightRadi
 
 //=========================================================================
 
-ShadowMapMgr::ShadowSource const& ShadowMapMgr::GetSource( s32 sourceIndex ) const
-{
-    ASSERT( ( sourceIndex >= 0 ) && ( sourceIndex < m_sourceCount ) );
-    ASSERT( !m_atlasLayoutDirty );
-    return m_sources[sourceIndex];
-}
-
-//=========================================================================
-
-s32 ShadowMapMgr::GetSourceCount( void ) const
-{
-    return m_sourceCount;
-}
-
-//=========================================================================
-
-s32 ShadowMapMgr::GetAtlasSize( void ) const
-{
-    return ( m_atlasSize > 0 ) ? m_atlasSize : MAX_SHADOW_ATLAS_SIZE;
-}
-
-//=========================================================================
-
-s32 ShadowMapMgr::GetAtlasSourceCount( void ) const
-{
-    return m_atlasSourceCount;
-}
-
-//=========================================================================
-
-ShadowFilterType ShadowMapMgr::GetShadowFilterType( void ) const
-{
-    return m_shadowFilterType;
-}
-
-//=========================================================================
-
-xbool ShadowMapMgr::HasActiveSources( void ) const
-{
-    return m_enabled && ( m_sourceCount > 0 );
-}
-
-//=========================================================================
-
-void ShadowMapMgr::CreateShadowMap( object* const* pPCasterCandidates, s32 nCasterCandidates )
+void ShadowMapMgr::CreateShadowMap( void )
 {
     X_PROFILE_SCOPE_CATEGORY( "Renderer", "ShadowMap/Create" );
 
@@ -1785,160 +1854,209 @@ void ShadowMapMgr::CreateShadowMap( object* const* pPCasterCandidates, s32 nCast
         return;
     }
 
-    static xprofile_counter shadowMapDynamicLights =
+    static xprofile_counter ShadowMapDynamicLights =
         x_GetProfiler().RegisterCounter( "ShadowMapDynamicLights", "RenderCounter" );
-    static xprofile_counter shadowMapCandidateLights =
+    static xprofile_counter ShadowMapCandidateLights =
         x_GetProfiler().RegisterCounter( "ShadowMapCandidateLights", "RenderCounter" );
-    static xprofile_counter shadowMapSelectedLights =
+    static xprofile_counter ShadowMapSelectedLights =
         x_GetProfiler().RegisterCounter( "ShadowMapSelectedLights", "RenderCounter" );
-    static xprofile_counter shadowMapPointLights =
+    static xprofile_counter ShadowMapPointLights =
         x_GetProfiler().RegisterCounter( "ShadowMapPointLights", "RenderCounter" );
-    static xprofile_counter shadowMapSpotLights =
+    static xprofile_counter ShadowMapSpotLights =
         x_GetProfiler().RegisterCounter( "ShadowMapSpotLights", "RenderCounter" );
-    static xprofile_counter shadowMapRelevantCasterRefs =
+    static xprofile_counter ShadowMapRelevantCasterRefs =
         x_GetProfiler().RegisterCounter( "ShadowMapRelevantCasterRefs", "RenderCounter" );
-    static xprofile_counter shadowMapUniqueCasters =
+    static xprofile_counter ShadowMapUniqueCasters =
         x_GetProfiler().RegisterCounter( "ShadowMapUniqueCasters", "RenderCounter" );
-    static xprofile_counter shadowMapObjectCasters =
+    static xprofile_counter ShadowMapObjectCasters =
         x_GetProfiler().RegisterCounter( "ShadowMapObjectCasters", "RenderCounter" );
-    static xprofile_counter shadowMapPlaySurfaceCasters =
+    static xprofile_counter ShadowMapPlaySurfaceCasters =
         x_GetProfiler().RegisterCounter( "ShadowMapPlaySurfaceCasters", "RenderCounter" );
-    static xprofile_counter shadowMapCasterSourceLinks =
+    static xprofile_counter ShadowMapCasterSourceLinks =
         x_GetProfiler().RegisterCounter( "ShadowMapCasterSourceLinks", "RenderCounter" );
-    static xprofile_counter shadowMapActiveSources =
+    static xprofile_counter ShadowMapActiveSources =
         x_GetProfiler().RegisterCounter( "ShadowMapActiveSources", "RenderCounter" );
-    static xprofile_counter shadowMapAtlasSources =
+    static xprofile_counter ShadowMapAtlasSources =
         x_GetProfiler().RegisterCounter( "ShadowMapAtlasSources", "RenderCounter" );
 
-    static_cast<void>( pPCasterCandidates );
-
-    ShadowLight                 shadowLightCandidates[light_mgr::MAX_DYNAMIC_LIGHTS];
-    ShadowLight                 shadowLights[light_mgr::MAX_DYNAMIC_LIGHTS];
-    s32                         nCandidateShadowLights = 0;
+    ShadowLight                 ShadowLightCandidates[light_mgr::MAX_DYNAMIC_LIGHTS];
+    ShadowLight                 ShadowLights[light_mgr::MAX_DYNAMIC_LIGHTS];
+    s32                         CandidateShadowLightCount = 0;
     player*                     pActivePlayer = SMP_UTIL_GetActivePlayer();
-    ScratchData&                scratch = GetScratch();
-    xarray<ShadowCasterRecord>& relevantCasters = scratch.RelevantCasters;
-    xarray<ShadowCasterRecord>& shadowCasters = scratch.ShadowCasters;
-    xarray<u64>&                casterMasks = scratch.CasterMasks;
-    relevantCasters.SetCount( 0 );
-    shadowCasters.SetCount( 0 );
-    casterMasks.SetCount( 0 );
-    relevantCasters.SetGrowAmount( MAX( 128, nCasterCandidates ) );
-    shadowCasters.SetGrowAmount( MAX( 128, nCasterCandidates ) );
-    casterMasks.SetGrowAmount( MAX( 128, nCasterCandidates ) );
+    ScratchData&                Scratch = GetScratch();
+    xarray<ShadowCasterRecord>& RelevantCasters = Scratch.RelevantCasters;
+    xarray<ShadowCasterRecord>& ShadowCasters = Scratch.ShadowCasters;
+    xarray<u64>&                CasterMasks = Scratch.CasterMasks;
+    RelevantCasters.SetCount( 0 );
+    ShadowCasters.SetCount( 0 );
+    CasterMasks.SetCount( 0 );
+    RelevantCasters.SetGrowAmount( 128 );
+    ShadowCasters.SetGrowAmount( 128 );
+    CasterMasks.SetGrowAmount( 128 );
 
-    s32 const nDynamicLights = g_LightMgr.GetNDynamicLights();
-    shadowMapDynamicLights.Add( nDynamicLights );
+    s32 const DynamicLightCount = g_LightMgr.GetNDynamicLights();
+    ShadowMapDynamicLights.Add( DynamicLightCount );
     {
         X_PROFILE_SCOPE_CATEGORY( "Renderer", "ShadowMap/BuildLightCandidates" );
-        for ( s32 iLight = 0; iLight < nDynamicLights; iLight++ )
+        for( s32 LightIndex = 0; LightIndex < DynamicLightCount; LightIndex++ )
         {
-            ShadowLight shadowLight;
-            if ( !BuildShadowLight( shadowLight, iLight, pActivePlayer, relevantCasters ) )
+            ShadowLight ShadowLightData;
+            if( !BuildShadowLightCandidate( ShadowLightData, LightIndex, pActivePlayer ) )
             {
                 continue;
             }
 
-            InsertShadowLight( shadowLightCandidates, nCandidateShadowLights, shadowLight );
+            InsertShadowLight( ShadowLightCandidates, CandidateShadowLightCount, ShadowLightData );
         }
     }
-    shadowMapCandidateLights.Add( nCandidateShadowLights );
-    shadowMapRelevantCasterRefs.Add( relevantCasters.GetCount() );
-
-    s32 nShadowLights;
+    ShadowMapCandidateLights.Add( CandidateShadowLightCount );
+    s32 ShadowLightCount;
     {
         X_PROFILE_SCOPE_CATEGORY( "Renderer", "ShadowMap/SelectAndPackLights" );
-        nShadowLights = SelectShadowLights( shadowLightCandidates, nCandidateShadowLights, shadowLights );
+        ShadowLightCount = SelectShadowLights( ShadowLightCandidates, CandidateShadowLightCount, ShadowLights );
 
-        ResolveAtlasBudget( shadowLights, nShadowLights, scratch.AtlasFreeNodes );
+        ResolveAtlasBudget( ShadowLights, ShadowLightCount, Scratch.AtlasFreeNodes );
     }
 
-    s32 nPointLights = 0;
-    s32 nSpotLights = 0;
-    for ( s32 i = 0; i < nShadowLights; ++i )
+    // Caster collection is lazy: rejected candidates never query the scene,
+    // while empty selections are replaced from the ranked candidate list.
     {
-        if ( shadowLights[i].Shape == light_mgr::LIGHT_SHAPE_OMNI )
+        X_PROFILE_SCOPE_CATEGORY( "Renderer", "ShadowMap/BuildSelectedLightCasters" );
+        xbool CasterTested[light_mgr::MAX_DYNAMIC_LIGHTS] = { FALSE };
+        xbool HasCasters[light_mgr::MAX_DYNAMIC_LIGHTS] = { FALSE };
+        xbool AtlasRejected[light_mgr::MAX_DYNAMIC_LIGHTS] = { FALSE };
+        s32 LightsWithCastersCount = 0;
+        for( s32 LightIndex = 0; LightIndex < ShadowLightCount; LightIndex++ )
         {
-            nPointLights++;
+            ShadowLight ShadowLightData = ShadowLights[LightIndex];
+            s32 const DynamicLightIndex = ShadowLightData.DynamicLightIndex;
+            CasterTested[DynamicLightIndex] = TRUE;
+            HasCasters[DynamicLightIndex] = CollectShadowLightCasters( ShadowLightData, RelevantCasters );
+            if( !HasCasters[DynamicLightIndex] )
+            {
+                continue;
+            }
+
+            ShadowLights[LightsWithCastersCount++] = ShadowLightData;
+        }
+        ShadowLightCount = LightsWithCastersCount;
+
+        xbool RemovedByAtlas;
+        do
+        {
+            RestoreShadowLightResolutions( ShadowLights, ShadowLightCount, ShadowLightCandidates,
+                                           CandidateShadowLightCount );
+            RefillShadowLights( ShadowLightCandidates, CandidateShadowLightCount, ShadowLights, ShadowLightCount,
+                                CasterTested, HasCasters, AtlasRejected, RelevantCasters );
+
+            xbool SelectedBeforeResolve[light_mgr::MAX_DYNAMIC_LIGHTS] = { FALSE };
+            for( s32 LightIndex = 0; LightIndex < ShadowLightCount; LightIndex++ )
+            {
+                SelectedBeforeResolve[ShadowLights[LightIndex].DynamicLightIndex] = TRUE;
+            }
+
+            ResolveAtlasBudget( ShadowLights, ShadowLightCount, Scratch.AtlasFreeNodes );
+            RemovedByAtlas = FALSE;
+            for( s32 CandidateIndex = 0; CandidateIndex < CandidateShadowLightCount; CandidateIndex++ )
+            {
+                s32 const DynamicLightIndex = ShadowLightCandidates[CandidateIndex].DynamicLightIndex;
+                if( SelectedBeforeResolve[DynamicLightIndex] &&
+                     !IsSelectedShadowLight( ShadowLights, ShadowLightCount, DynamicLightIndex ) )
+                {
+                    AtlasRejected[DynamicLightIndex] = TRUE;
+                    RemovedByAtlas = TRUE;
+                }
+            }
+        } while( RemovedByAtlas );
+    }
+    ShadowMapRelevantCasterRefs.Add( RelevantCasters.GetCount() );
+
+    s32 PointLightCount = 0;
+    s32 SpotLightCount = 0;
+    for( s32 Index = 0; Index < ShadowLightCount; Index++ )
+    {
+        if( ShadowLights[Index].Shape == light_mgr::LIGHT_SHAPE_OMNI )
+        {
+            PointLightCount++;
         }
         else
         {
-            nSpotLights++;
+            SpotLightCount++;
         }
     }
-    shadowMapSelectedLights.Add( nShadowLights );
-    shadowMapPointLights.Add( nPointLights );
-    shadowMapSpotLights.Add( nSpotLights );
+    ShadowMapSelectedLights.Add( ShadowLightCount );
+    ShadowMapPointLights.Add( PointLightCount );
+    ShadowMapSpotLights.Add( SpotLightCount );
 
-    if ( nShadowLights <= 0 )
+    if( ShadowLightCount <= 0 )
     {
-        shadowMapUniqueCasters.Add( 0 );
-        shadowMapObjectCasters.Add( 0 );
-        shadowMapPlaySurfaceCasters.Add( 0 );
-        shadowMapCasterSourceLinks.Add( 0 );
-        shadowMapActiveSources.Add( 0 );
-        shadowMapAtlasSources.Add( 0 );
+        ShadowMapUniqueCasters.Add( 0 );
+        ShadowMapObjectCasters.Add( 0 );
+        ShadowMapPlaySurfaceCasters.Add( 0 );
+        ShadowMapCasterSourceLinks.Add( 0 );
+        ShadowMapActiveSources.Add( 0 );
+        ShadowMapAtlasSources.Add( 0 );
         return;
     }
 
     {
         X_PROFILE_SCOPE_CATEGORY( "Renderer", "ShadowMap/CollectCasters" );
-        CollectShadowCastersForLights( relevantCasters, shadowLights, nShadowLights, shadowCasters, casterMasks,
-                                       scratch.PendingCasterMasks );
+        CollectShadowCastersForLights( RelevantCasters, ShadowLights, ShadowLightCount, ShadowCasters, CasterMasks,
+                                       Scratch.CasterHash );
     }
 
-    s32 nObjectCasters = 0;
-    s32 nPlaySurfaceCasters = 0;
-    u64 nCasterSourceLinks = 0;
-    for ( s32 i = 0; i < shadowCasters.GetCount(); ++i )
+    s32 ObjectCasterCount = 0;
+    s32 PlaySurfaceCasterCount = 0;
+    u64 CasterSourceLinkCount = 0;
+    for( s32 Index = 0; Index < ShadowCasters.GetCount(); Index++ )
     {
-        if ( shadowCasters[i].Type == ShadowCasterRecord::CASTER_OBJECT )
+        if( ShadowCasters[Index].Type == ShadowCasterRecord::CASTER_OBJECT )
         {
-            nObjectCasters++;
+            ObjectCasterCount++;
         }
         else
         {
-            nPlaySurfaceCasters++;
+            PlaySurfaceCasterCount++;
         }
 
-        u64 mask = casterMasks[i];
-        while ( mask )
+        u64 Mask = CasterMasks[Index];
+        while( Mask )
         {
-            nCasterSourceLinks += mask & 1;
-            mask >>= 1;
+            CasterSourceLinkCount += Mask & 1;
+            Mask >>= 1;
         }
     }
-    shadowMapUniqueCasters.Add( shadowCasters.GetCount() );
-    shadowMapObjectCasters.Add( nObjectCasters );
-    shadowMapPlaySurfaceCasters.Add( nPlaySurfaceCasters );
-    shadowMapCasterSourceLinks.Add( static_cast<f64>( nCasterSourceLinks ) );
+    ShadowMapUniqueCasters.Add( ShadowCasters.GetCount() );
+    ShadowMapObjectCasters.Add( ObjectCasterCount );
+    ShadowMapPlaySurfaceCasters.Add( PlaySurfaceCasterCount );
+    ShadowMapCasterSourceLinks.Add( static_cast<f64>( CasterSourceLinkCount ) );
 
-    if ( eng_Begin( "Shadow Map" ) )
+    if( eng_Begin( "Shadow Map" ) )
     {
         render::BeginShadowCreation();
-        AddShadowSources( shadowLights, nShadowLights );
+        AddShadowSources( ShadowLights, ShadowLightCount );
         FinalizeSources();
-        shadowMapActiveSources.Add( GetSourceCount() );
-        shadowMapAtlasSources.Add( GetAtlasSourceCount() );
+        ShadowMapActiveSources.Add( GetSourceCount() );
+        ShadowMapAtlasSources.Add( GetAtlasSourceCount() );
 
         {
             X_PROFILE_SCOPE_CATEGORY( "Renderer", "ShadowMap/SubmitCasters" );
-            for ( s32 i = 0; i < shadowCasters.GetCount(); i++ )
+            for( s32 Index = 0; Index < ShadowCasters.GetCount(); Index++ )
             {
-                ShadowCasterRecord const& caster = shadowCasters[i];
+                ShadowCasterRecord const& Caster = ShadowCasters[Index];
 
-                if ( caster.Type == ShadowCasterRecord::CASTER_OBJECT )
+                if( Caster.Type == ShadowCasterRecord::CASTER_OBJECT )
                 {
-                    ASSERT( caster.pObject );
-                    caster.pObject->OnRenderShadowCast( casterMasks[i] );
+                    ASSERT( Caster.pObject );
+                    Caster.pObject->OnRenderShadowCast( CasterMasks[Index] );
                 }
                 else
                 {
-                    ASSERT( caster.pPlaySurface );
-                    if ( !caster.pPlaySurface->RenderInst.IsNull() )
+                    ASSERT( Caster.pPlaySurface );
+                    if( !Caster.pPlaySurface->RenderInst.IsNull() )
                     {
-                        render::AddRigidCasterSimple( caster.pPlaySurface->RenderInst, &caster.pPlaySurface->L2W,
-                                                      casterMasks[i] );
+                        render::AddRigidCasterSimple( Caster.pPlaySurface->RenderInst, &Caster.pPlaySurface->L2W,
+                                                      CasterMasks[Index] );
                     }
                 }
             }
@@ -1949,7 +2067,7 @@ void ShadowMapMgr::CreateShadowMap( object* const* pPCasterCandidates, s32 nCast
     }
     else
     {
-        shadowMapActiveSources.Add( 0 );
-        shadowMapAtlasSources.Add( 0 );
+        ShadowMapActiveSources.Add( 0 );
+        ShadowMapAtlasSources.Add( 0 );
     }
 }

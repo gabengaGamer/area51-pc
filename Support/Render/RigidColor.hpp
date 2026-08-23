@@ -29,9 +29,7 @@ struct RigidColorData
 namespace rigid_color_file
 {
 xbool Load( X_FILE* pFile, RigidColorData& data, xstring& error );
-
 xbool Save( X_FILE* pFile, RigidColorData const& data, xstring& error );
-
 xbool Save( char const* pFileName, RigidColorData const& data, xstring& error );
 } // namespace rigid_color_file
 

@@ -2429,7 +2429,7 @@ void obj_mgr::Render3dPrep( xbool DoPortalWalk, const view& PortalView, u8 Start
     if( g_RenderContext.m_bIsPipRender == 0 )
     {
         CompleteVisibilityTests();
-        g_ShadowMapMgr.CreateShadowMap( NULL, 0 );
+        g_ShadowMapMgr.CreateShadowMap();
     }
 
     // Clear the list of special render objects;

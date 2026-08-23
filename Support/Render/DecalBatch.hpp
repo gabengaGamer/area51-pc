@@ -31,12 +31,16 @@ enum decal_blend_mode
     DECAL_BLEND_COUNT
 };
 
+//-----------------------------------------------------------------------------
+
 enum decal_draw_flags
 {
     DECAL_DRAW_FLAG_NONE       = 0,
     DECAL_DRAW_FLAG_GLOW       = ( 1u << 0 ),
     DECAL_DRAW_FLAG_ENV_MAPPED = ( 1u << 1 )
 };
+
+//-----------------------------------------------------------------------------
 
 struct decal_vertex
 {
@@ -47,6 +51,8 @@ struct decal_vertex
     u32      Color;
     vector2  UV;
 };
+
+//-----------------------------------------------------------------------------
 
 struct decal_draw_desc
 {
@@ -59,6 +65,8 @@ struct decal_draw_desc
     vector3          GeometricNormal;
     xcolor           Ambient;
 };
+
+//=============================================================================
 
 xbool SubmitDecalBatch ( decal_draw_desc const& desc, decal_vertex const* pVertices, s32 nVertices,
                          u16 const* pIndices, s32 nIndices );

@@ -4,6 +4,10 @@
 //
 //=============================================================================
 
+//=========================================================================
+//  INCLUDES
+//=========================================================================
+
 #include "PrimitiveDebug.hpp"
 
 #include "UI/ui_renderer.hpp"
@@ -13,14 +17,11 @@
 #include "x_debug.hpp"
 
 //=============================================================================
-//  HELPERS
+//  HELPER FUNCTIONS
 //=============================================================================
 
-namespace
-{
-static render::primitive_draw_desc LineDesc( render::primitive_depth_mode depth,
-                                             render::primitive_raster_mode raster =
-                                                 render::PRIMITIVE_RASTER_SOLID_NO_CULL )
+static 
+render::primitive_draw_desc LineDesc( render::primitive_depth_mode depth, render::primitive_raster_mode raster = render::PRIMITIVE_RASTER_SOLID_NO_CULL )
 {
     return render::primitive_draw_desc( NULL, render::PRIMITIVE_TOPOLOGY_LINE_LIST, render::PRIMITIVE_BLEND_ALPHA,
                                         depth, raster, render::PRIMITIVE_SAMPLER_LINEAR_CLAMP,
@@ -29,8 +30,8 @@ static render::primitive_draw_desc LineDesc( render::primitive_depth_mode depth,
 
 //=============================================================================
 
-static render::primitive_draw_desc TriangleDesc( render::primitive_depth_mode depth,
-                                                 render::primitive_raster_mode raster )
+static 
+render::primitive_draw_desc TriangleDesc( render::primitive_depth_mode depth, render::primitive_raster_mode raster )
 {
     return render::primitive_draw_desc( NULL, render::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
                                         render::PRIMITIVE_BLEND_ALPHA, depth, raster,
@@ -40,7 +41,8 @@ static render::primitive_draw_desc TriangleDesc( render::primitive_depth_mode de
 
 //=============================================================================
 
-static matrix4 IdentityMatrix( void )
+static 
+matrix4 IdentityMatrix( void )
 {
     matrix4 result;
     result.Identity();
@@ -49,7 +51,8 @@ static matrix4 IdentityMatrix( void )
 
 //=============================================================================
 
-static xbool AddBoxLines( render::PrimitiveBatch& batch, bbox const& bounds, xcolor color )
+static 
+xbool AddBoxLines( render::PrimitiveBatch& batch, bbox const& bounds, xcolor color )
 {
     vector3 const positions[8] = {
         vector3( bounds.Min.GetX(), bounds.Min.GetY(), bounds.Min.GetZ() ),
@@ -75,9 +78,9 @@ static xbool AddBoxLines( render::PrimitiveBatch& batch, bbox const& bounds, xco
 
 //=============================================================================
 
-static xbool SubmitVolumeGeometry( vector3 const& position0, vector3 const& position1, f32 width, f32 height,
-                                   xcolor color, render::primitive_depth_mode depth,
-                                   matrix4 const& localToWorld )
+static 
+xbool SubmitVolumeGeometry( vector3 const& position0, vector3 const& position1, f32 width, f32 height,
+                            xcolor color, render::primitive_depth_mode depth, matrix4 const& localToWorld )
 {
     vector3 corners[8];
     vector3 slope = position0 - position1;
@@ -119,7 +122,8 @@ static xbool SubmitVolumeGeometry( vector3 const& position0, vector3 const& posi
 
 //=============================================================================
 
-static xbool GetProjectedPoint( vector3 const& position, vector3& screenPosition, irect& screenBounds )
+static 
+xbool GetProjectedPoint( vector3 const& position, vector3& screenPosition, irect& screenBounds )
 {
     view const* pView = eng_GetView();
     if ( !pView )
@@ -140,10 +144,9 @@ static xbool GetProjectedPoint( vector3 const& position, vector3& screenPosition
     screenBounds.Set( 0, 0, width, height );
     return TRUE;
 }
-} // namespace
 
 //=============================================================================
-//  WORLD HELPERS
+//  IMPLEMENTATION
 //=============================================================================
 
 xbool render::debug::Line( vector3 const& position0, vector3 const& position1, xcolor color,
@@ -565,8 +568,6 @@ xbool render::debug::Frustum( view const& frustumView, xcolor color, f32 distanc
 }
 
 //=============================================================================
-//  SCREEN HELPERS
-//=============================================================================
 
 xbool render::debug::Marker( vector3 const& position, xcolor color )
 {
@@ -665,5 +666,3 @@ xbool render::debug::Label( vector3 const& position, xcolor color, char const* p
     text_PopColor();
     return TRUE;
 }
-
-//=============================================================================

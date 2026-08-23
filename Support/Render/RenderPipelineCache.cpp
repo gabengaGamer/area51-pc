@@ -13,6 +13,8 @@
 #include "x_debug.hpp"
 
 //=========================================================================
+//  IMPLEMENTATION
+//=========================================================================
 
 RenderPipelineCache::Entry::Entry() : m_key( 0 ), m_pipeline(), m_isPrewarmed( FALSE ), m_isUsed( FALSE )
 {
@@ -183,5 +185,3 @@ void RenderPipelineCache::Reset()
     m_numRuntimeMisses = 0;
     m_entries.Clear();
 }
-
-//=============================================================================

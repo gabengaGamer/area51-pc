@@ -86,8 +86,6 @@ rigid_geom::~rigid_geom( void )
 
 extern xbool RigidGeom_GetTriangle( rigid_geom const* pRigidGeom, s32 key, vector3& p0, vector3& p1, vector3& p2 );
 
-//=========================================================================
-
 xbool rigid_geom::GetGeoTri( s32 key, vector3& v0, vector3& v1, vector3& v2 ) const
 {
     if ( key == -1 )

@@ -14,424 +14,451 @@
 #include "SkinGeom.hpp"
 
 //=========================================================================
-//  PRIVATE CONSTANTS
+//  CONSTANTS
 //=========================================================================
-
-namespace
-{
 
 enum
 {
-    MAX_SMALL_ARRAY_COUNT = ( 1 << 20 ),
-    MAX_LARGE_ARRAY_COUNT = ( 1 << 25 ),
-    MAX_STRING_DATA_SIZE = ( 1 << 27 ),
+    MaxSmallArrayCount = ( 1 << 20 ),
+    MaxLargeArrayCount = ( 1 << 25 ),
+    MaxStringDataSize  = ( 1 << 27 ),
 };
 
-using bitsery_io::ReadEmptyArray;
-using bitsery_io::ReadObjectArray;
-using bitsery_io::ReadS32;
-using bitsery_io::ReadValueArray;
-using bitsery_io::SetInvalidData;
+//---------------------------------------------------------------------------
 
-bitsery_io::file_format const RIGID_FILE_FORMAT = {
+static bitsery_io::file_format const RigidFileFormat =
+{
     { 'R', 'I', 'G', 'M' },
     geom_file::VERSION,
 };
 
-bitsery_io::file_format const SKIN_FILE_FORMAT = {
+//---------------------------------------------------------------------------
+
+static bitsery_io::file_format const SkinFileFormat =
+{
     { 'S', 'K', 'N', 'M' },
     geom_file::VERSION,
 };
 
 //=========================================================================
+//  TYPES
+//=========================================================================
 
-xbool RangeIsValid( s32 first, s32 count, s32 arrayCount )
+typedef bitsery::Serializer<bitsery_io::output_adapter> output_serializer;
+
+//=========================================================================
+//  HELPER FUNCTIONS
+//=========================================================================
+
+static xbool RangeIsValid( s32 First, s32 Count, s32 ArrayCount )
 {
-    return ( ( first >= 0 ) && ( count >= 0 ) && ( first <= arrayCount ) && ( count <= ( arrayCount - first ) ) );
+    return ( First >= 0 ) && ( Count >= 0 ) && ( First <= ArrayCount ) && ( Count <= ( ArrayCount - First ) );
 }
 
 //=========================================================================
 
-xbool IsIndexOrMinusOne( s32 index, s32 arrayCount )
+static xbool IsIndexOrMinusOne( s32 Index, s32 ArrayCount )
 {
-    return ( ( index == -1 ) || ( ( index >= 0 ) && ( index < arrayCount ) ) );
+    return ( Index == -1 ) || ( ( Index >= 0 ) && ( Index < ArrayCount ) );
 }
 
 //=========================================================================
 
-xbool HasString( geom const& geom, s32 offset )
+static xbool HasString( geom const& Geom, s32 Offset )
 {
-    if ( ( offset < 0 ) || ( offset >= geom.m_stringDataSize ) )
+    if( ( Offset < 0 ) || ( Offset >= Geom.m_stringDataSize ) )
     {
-        return ( FALSE );
+        return FALSE;
     }
 
-    for ( s32 i = offset; i < geom.m_stringDataSize; i++ )
+    for( s32 Index = Offset; Index < Geom.m_stringDataSize; Index++ )
     {
-        if ( geom.m_pStringData[i] == 0 )
+        if( Geom.m_pStringData[Index] == 0 )
         {
-            return ( TRUE );
+            return TRUE;
         }
     }
 
-    return ( FALSE );
+    return FALSE;
 }
 
-} // namespace
-
 //=========================================================================
-//  VALUE DESERIALIZATION
+//  VALUE SERIALIZATION
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, vector2& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, vector2& Value )
 {
-    serializer.value4b( value.X );
-    serializer.value4b( value.Y );
+    Serializer.value4b( Value.X );
+    Serializer.value4b( Value.Y );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, vector3p& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, vector3p& Value )
 {
-    serializer.value4b( value.X );
-    serializer.value4b( value.Y );
-    serializer.value4b( value.Z );
+    Serializer.value4b( Value.X );
+    Serializer.value4b( Value.Y );
+    Serializer.value4b( Value.Z );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, vector3& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, vector3& Value )
 {
-    serializer.value4b( value.GetX() );
-    serializer.value4b( value.GetY() );
-    serializer.value4b( value.GetZ() );
-    value.GetIW() = 0;
+    Serializer.value4b( Value.GetX() );
+    Serializer.value4b( Value.GetY() );
+    Serializer.value4b( Value.GetZ() );
+    Value.GetIW() = 0;
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, quaternion& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, quaternion& Value )
 {
-    serializer.value4b( value.X );
-    serializer.value4b( value.Y );
-    serializer.value4b( value.Z );
-    serializer.value4b( value.W );
+    Serializer.value4b( Value.X );
+    Serializer.value4b( Value.Y );
+    Serializer.value4b( Value.Z );
+    Serializer.value4b( Value.W );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, bbox& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, bbox& Value )
 {
-    serializer.object( value.Min );
-    serializer.object( value.Max );
+    Serializer.object( Value.Min );
+    Serializer.object( Value.Max );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::bone& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::bone& Value )
 {
-    serializer.object( value.BindRotation );
-    serializer.object( value.BindPosition );
-    serializer.object( value.BBox );
-    serializer.value2b( value.HitLocation );
-    serializer.value2b( value.iRigidBody );
+    Serializer.object( Value.BindRotation );
+    Serializer.object( Value.BindPosition );
+    Serializer.object( Value.BBox );
+    Serializer.value2b( Value.HitLocation );
+    Serializer.value2b( Value.iRigidBody );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::property_section& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::property_section& Value )
 {
-    ReadS32( serializer, value.NameOffset );
-    ReadS32( serializer, value.iProperty );
-    ReadS32( serializer, value.nProperties );
+    bitsery_io::ReadS32( Serializer, Value.NameOffset );
+    bitsery_io::ReadS32( Serializer, Value.iProperty );
+    bitsery_io::ReadS32( Serializer, Value.nProperties );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::property& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::property& Value )
 {
     u8 type = 0;
 
-    ReadS32( serializer, value.NameOffset );
-    serializer.value1b( type );
-    serializer.value4b( value.Value.Integer );
+    bitsery_io::ReadS32( Serializer, Value.NameOffset );
+    Serializer.value1b( type );
+    Serializer.value4b( Value.Value.Integer );
 
-    value.Type = type;
+    Value.Type = type;
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::rigid_body::dof& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::rigid_body::dof& Value )
 {
-    serializer.value4b( value.Flags );
-    serializer.value4b( value.Min );
-    serializer.value4b( value.Max );
+    Serializer.value4b( Value.Flags );
+    Serializer.value4b( Value.Min );
+    Serializer.value4b( Value.Max );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::rigid_body& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::rigid_body& Value )
 {
-    serializer.object( value.BodyBindRotation );
-    serializer.object( value.BodyBindPosition );
-    serializer.object( value.PivotBindRotation );
-    serializer.object( value.PivotBindPosition );
-    ReadS32( serializer, value.NameOffset );
-    serializer.value4b( value.Mass );
-    serializer.value4b( value.Radius );
-    serializer.value4b( value.Width );
-    serializer.value4b( value.Height );
-    serializer.value4b( value.Length );
-    serializer.value2b( value.Type );
-    serializer.value2b( value.Flags );
-    serializer.value2b( value.iParentBody );
-    serializer.value2b( value.iBone );
-    serializer.value4b( value.CollisionMask );
+    Serializer.object( Value.BodyBindRotation );
+    Serializer.object( Value.BodyBindPosition );
+    Serializer.object( Value.PivotBindRotation );
+    Serializer.object( Value.PivotBindPosition );
+    bitsery_io::ReadS32( Serializer, Value.NameOffset );
+    Serializer.value4b( Value.Mass );
+    Serializer.value4b( Value.Radius );
+    Serializer.value4b( Value.Width );
+    Serializer.value4b( Value.Height );
+    Serializer.value4b( Value.Length );
+    Serializer.value2b( Value.Type );
+    Serializer.value2b( Value.Flags );
+    Serializer.value2b( Value.iParentBody );
+    Serializer.value2b( Value.iBone );
+    Serializer.value4b( Value.CollisionMask );
 
-    for ( s32 i = 0; i < 6; i++ )
+    for( s32 i = 0; i < 6; i++ )
     {
-        serializer.object( value.DOF[i] );
+        Serializer.object( Value.DOF[i] );
     }
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::mesh& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::mesh& Value )
 {
-    serializer.object( value.BBox );
-    ReadS32( serializer, value.NameOffset );
-    ReadS32( serializer, value.iSubMesh );
-    ReadS32( serializer, value.nSubMeshes );
-    ReadS32( serializer, value.nBones );
-    ReadS32( serializer, value.nFaces );
-    ReadS32( serializer, value.nVertices );
+    Serializer.object( Value.BBox );
+    bitsery_io::ReadS32( Serializer, Value.NameOffset );
+    bitsery_io::ReadS32( Serializer, Value.iSubMesh );
+    bitsery_io::ReadS32( Serializer, Value.nSubMeshes );
+    bitsery_io::ReadS32( Serializer, Value.nBones );
+    bitsery_io::ReadS32( Serializer, Value.nFaces );
+    bitsery_io::ReadS32( Serializer, Value.nVertices );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::submesh& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::submesh& Value )
 {
-    ReadS32( serializer, value.iSection );
-    ReadS32( serializer, value.nSections );
-    ReadS32( serializer, value.iMaterial );
-    serializer.value4b( value.WorldPixelSize );
+    bitsery_io::ReadS32( Serializer, Value.iSection );
+    bitsery_io::ReadS32( Serializer, Value.nSections );
+    bitsery_io::ReadS32( Serializer, Value.iMaterial );
+    Serializer.value4b( Value.WorldPixelSize );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::material::uvanim& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::material::uvanim& Value )
 {
-    serializer.value1b( value.Type );
-    serializer.value1b( value.StartFrame );
-    serializer.value1b( value.FPS );
-    ReadS32( serializer, value.iKey );
-    ReadS32( serializer, value.nKeys );
+    Serializer.value1b( Value.Type );
+    Serializer.value1b( Value.StartFrame );
+    Serializer.value1b( Value.FPS );
+    bitsery_io::ReadS32( Serializer, Value.iKey );
+    bitsery_io::ReadS32( Serializer, Value.nKeys );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::material& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::material& Value )
 {
-    serializer.object( value.UVAnim );
-    serializer.value4b( value.DetailScale );
-    serializer.value4b( value.FixedAlpha );
-    serializer.value2b( value.Flags );
-    serializer.value1b( value.Type );
-    ReadS32( serializer, value.iTexture );
-    ReadS32( serializer, value.nTextures );
-    ReadS32( serializer, value.iVirtualMat );
-    ReadS32( serializer, value.nVirtualMats );
+    Serializer.object( Value.UVAnim );
+    Serializer.value4b( Value.DetailScale );
+    Serializer.value4b( Value.FixedAlpha );
+    Serializer.value2b( Value.Flags );
+    Serializer.value1b( Value.Type );
+    bitsery_io::ReadS32( Serializer, Value.iTexture );
+    bitsery_io::ReadS32( Serializer, Value.nTextures );
+    bitsery_io::ReadS32( Serializer, Value.iVirtualMat );
+    bitsery_io::ReadS32( Serializer, Value.nVirtualMats );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::texture& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::texture& Value )
 {
-    ReadS32( serializer, value.DescOffset );
-    ReadS32( serializer, value.FileNameOffset );
+    bitsery_io::ReadS32( Serializer, Value.DescOffset );
+    bitsery_io::ReadS32( Serializer, Value.FileNameOffset );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::uvkey& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::uvkey& Value )
 {
-    serializer.value1b( value.OffsetU );
-    serializer.value1b( value.OffsetV );
+    Serializer.value1b( Value.OffsetU );
+    Serializer.value1b( Value.OffsetV );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::virtual_mesh& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::virtual_mesh& Value )
 {
-    ReadS32( serializer, value.NameOffset );
-    ReadS32( serializer, value.iLOD );
-    ReadS32( serializer, value.nLODs );
+    bitsery_io::ReadS32( Serializer, Value.NameOffset );
+    bitsery_io::ReadS32( Serializer, Value.iLOD );
+    bitsery_io::ReadS32( Serializer, Value.nLODs );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, geom::virtual_texture& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, geom::virtual_texture& Value )
 {
-    ReadS32( serializer, value.NameOffset );
-    serializer.value4b( value.MaterialMask );
+    bitsery_io::ReadS32( Serializer, Value.NameOffset );
+    Serializer.value4b( Value.MaterialMask );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, collision_data::mat_info& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, collision_data::mat_info& Value )
 {
-    serializer.value2b( value.SoundType );
-    serializer.value2b( value.Flags );
+    Serializer.value2b( Value.SoundType );
+    Serializer.value2b( Value.Flags );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, collision_data::high_cluster& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, collision_data::high_cluster& Value )
 {
-    serializer.object( value.BBox );
-    ReadS32( serializer, value.nTris );
-    serializer.value4b( value.iMesh );
-    serializer.value4b( value.iBone );
-    serializer.value4b( value.iSection );
-    ReadS32( serializer, value.iOffset );
-    serializer.object( value.MaterialInfo );
+    Serializer.object( Value.BBox );
+    bitsery_io::ReadS32( Serializer, Value.nTris );
+    Serializer.value4b( Value.iMesh );
+    Serializer.value4b( Value.iBone );
+    Serializer.value4b( Value.iSection );
+    bitsery_io::ReadS32( Serializer, Value.iOffset );
+    Serializer.object( Value.MaterialInfo );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, collision_data::low_cluster& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, collision_data::low_cluster& Value )
 {
-    serializer.object( value.BBox );
-    ReadS32( serializer, value.iVectorOffset );
-    ReadS32( serializer, value.nPoints );
-    ReadS32( serializer, value.nNormals );
-    ReadS32( serializer, value.iQuadOffset );
-    ReadS32( serializer, value.nQuads );
-    serializer.value4b( value.iMesh );
-    serializer.value4b( value.iBone );
+    Serializer.object( Value.BBox );
+    bitsery_io::ReadS32( Serializer, Value.iVectorOffset );
+    bitsery_io::ReadS32( Serializer, Value.nPoints );
+    bitsery_io::ReadS32( Serializer, Value.nNormals );
+    bitsery_io::ReadS32( Serializer, Value.iQuadOffset );
+    bitsery_io::ReadS32( Serializer, Value.nQuads );
+    Serializer.value4b( Value.iMesh );
+    Serializer.value4b( Value.iBone );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, collision_data::low_quad& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, collision_data::low_quad& Value )
 {
-    for ( s32 i = 0; i < 4; i++ )
+    for( s32 i = 0; i < 4; i++ )
     {
-        serializer.value1b( value.iP[i] );
+        Serializer.value1b( Value.iP[i] );
     }
 
-    serializer.value1b( value.iN );
-    serializer.value1b( value.Flags );
+    Serializer.value1b( Value.iN );
+    Serializer.value1b( Value.Flags );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, rigid_geom::vertex& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, rigid_geom::vertex& Value )
 {
-    serializer.object( value.Pos );
-    serializer.object( value.Normal );
-    serializer.object( value.UV );
+    Serializer.object( Value.Pos );
+    Serializer.object( Value.Normal );
+    Serializer.object( Value.UV );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, skin_geom::vertex& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, skin_geom::vertex& Value )
 {
-    serializer.object( value.Position );
-    serializer.object( value.Normal );
-    serializer.object( value.UV );
-    serializer.value4b( value.Weights.X );
-    serializer.value4b( value.Weights.Y );
-    serializer.value2b( value.Bones[0] );
-    serializer.value2b( value.Bones[1] );
+    Serializer.object( Value.Position );
+    Serializer.object( Value.Normal );
+    Serializer.object( Value.UV );
+    Serializer.value4b( Value.Weights.X );
+    Serializer.value4b( Value.Weights.Y );
+    Serializer.value2b( Value.Bones[0] );
+    Serializer.value2b( Value.Bones[1] );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, rigid_geom::section& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, rigid_geom::section& Value )
 {
-    ReadS32( serializer, value.FirstVertex );
-    ReadS32( serializer, value.nVertices );
-    ReadS32( serializer, value.FirstIndex );
-    ReadS32( serializer, value.nIndices );
-    serializer.value4b( value.iBone );
-    serializer.value4b( value.iColor );
+    bitsery_io::ReadS32( Serializer, Value.FirstVertex );
+    bitsery_io::ReadS32( Serializer, Value.nVertices );
+    bitsery_io::ReadS32( Serializer, Value.FirstIndex );
+    bitsery_io::ReadS32( Serializer, Value.nIndices );
+    Serializer.value4b( Value.iBone );
+    Serializer.value4b( Value.iColor );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, skin_geom::section& value )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, skin_geom::section& Value )
 {
-    ReadS32( serializer, value.FirstVertex );
-    ReadS32( serializer, value.nVertices );
-    ReadS32( serializer, value.FirstIndex );
-    ReadS32( serializer, value.nIndices );
-    ReadS32( serializer, value.FirstBone );
-    ReadS32( serializer, value.nBones );
+    bitsery_io::ReadS32( Serializer, Value.FirstVertex );
+    bitsery_io::ReadS32( Serializer, Value.nVertices );
+    bitsery_io::ReadS32( Serializer, Value.FirstIndex );
+    bitsery_io::ReadS32( Serializer, Value.nIndices );
+    bitsery_io::ReadS32( Serializer, Value.FirstBone );
+    bitsery_io::ReadS32( Serializer, Value.nBones );
 }
 
 //=========================================================================
 //  GEOMETRY DESERIALIZATION
 //=========================================================================
 
-namespace
-{
-
-template <class SERIALIZER> void ReadBoneMasks( SERIALIZER& serializer, geom& geom )
+template <class SERIALIZER>
+static void ReadBoneMasks( SERIALIZER& Serializer, geom& Geom )
 {
     u32 maskCount = 0;
-    serializer.value4b( maskCount );
+    Serializer.value4b( maskCount );
 
-    if ( maskCount > MAX_SMALL_ARRAY_COUNT )
+    if( maskCount > MaxSmallArrayCount )
     {
-        SetInvalidData( serializer );
+        bitsery_io::SetInvalidData( Serializer );
         return;
     }
 
-    geom.m_nBoneMasks = static_cast<s32>( maskCount );
-    geom.m_pBoneMasks = geom.m_nBoneMasks > 0 ? new geom::bone_masks[geom.m_nBoneMasks] : NULL;
+    Geom.m_nBoneMasks = static_cast<s32>( maskCount );
+    Geom.m_pBoneMasks = Geom.m_nBoneMasks > 0 ? new geom::bone_masks[Geom.m_nBoneMasks] : nullptr;
 
     xarray<u32> firstWeights;
     xarray<u32> weightCounts;
-    firstWeights.SetCount( geom.m_nBoneMasks );
-    weightCounts.SetCount( geom.m_nBoneMasks );
+    firstWeights.SetCount( Geom.m_nBoneMasks );
+    weightCounts.SetCount( Geom.m_nBoneMasks );
 
-    for ( s32 i = 0; i < geom.m_nBoneMasks; i++ )
+    for( s32 i = 0; i < Geom.m_nBoneMasks; i++ )
     {
         u32 nameOffset = 0;
-        serializer.value4b( nameOffset );
-        serializer.value4b( firstWeights[i] );
-        serializer.value4b( weightCounts[i] );
+        Serializer.value4b( nameOffset );
+        Serializer.value4b( firstWeights[i] );
+        Serializer.value4b( weightCounts[i] );
 
-        if ( nameOffset > 0x7fffffffu )
+        if( nameOffset > 0x7fffffffu )
         {
-            SetInvalidData( serializer );
+            bitsery_io::SetInvalidData( Serializer );
             return;
         }
 
-        geom.m_pBoneMasks[i].NameOffset = static_cast<s32>( nameOffset );
-        geom.m_pBoneMasks[i].nBones = 0;
-        x_memset( geom.m_pBoneMasks[i].Weights, 0, sizeof( geom.m_pBoneMasks[i].Weights ) );
+        Geom.m_pBoneMasks[i].NameOffset = static_cast<s32>( nameOffset );
+        Geom.m_pBoneMasks[i].nBones = 0;
+        x_memset( Geom.m_pBoneMasks[i].Weights, 0, sizeof( Geom.m_pBoneMasks[i].Weights ) );
     }
 
-    f32* pWeights = NULL;
+    f32* pWeights = nullptr;
     s32  nWeights = 0;
-    ReadValueArray<4>( serializer, pWeights, nWeights, MAX_LARGE_ARRAY_COUNT );
+    bitsery_io::ReadValueArray<4>( Serializer, pWeights, nWeights, MaxLargeArrayCount );
 
-    for ( s32 i = 0; i < geom.m_nBoneMasks; i++ )
+    for( s32 i = 0; i < Geom.m_nBoneMasks; i++ )
     {
-        if ( ( weightCounts[i] > MAX_ANIM_BONES ) || ( firstWeights[i] > static_cast<u32>( nWeights ) ) ||
+        if( ( weightCounts[i] > MAX_ANIM_BONES ) || ( firstWeights[i] > static_cast<u32>( nWeights ) ) ||
              ( weightCounts[i] > ( static_cast<u32>( nWeights ) - firstWeights[i] ) ) )
         {
             delete[] pWeights;
-            SetInvalidData( serializer );
+            bitsery_io::SetInvalidData( Serializer );
             return;
         }
 
-        geom.m_pBoneMasks[i].nBones = static_cast<s32>( weightCounts[i] );
-        for ( s32 j = 0; j < geom.m_pBoneMasks[i].nBones; j++ )
+        Geom.m_pBoneMasks[i].nBones = static_cast<s32>( weightCounts[i] );
+        for( s32 j = 0; j < Geom.m_pBoneMasks[i].nBones; j++ )
         {
-            geom.m_pBoneMasks[i].Weights[j] = pWeights[firstWeights[i] + j];
+            Geom.m_pBoneMasks[i].Weights[j] = pWeights[firstWeights[i] + j];
         }
     }
 
@@ -440,816 +467,812 @@ template <class SERIALIZER> void ReadBoneMasks( SERIALIZER& serializer, geom& ge
 
 //=========================================================================
 
-template <class SERIALIZER> void ReadCommonGeom( SERIALIZER& serializer, geom& geom )
+template <class SERIALIZER>
+static void ReadCommonGeom( SERIALIZER& Serializer, geom& Geom )
 {
-    serializer.object( geom.m_BBox );
-    ReadS32( serializer, geom.m_nFaces );
-    ReadS32( serializer, geom.m_nVertices );
-    ReadS32( serializer, geom.m_nVirtualMaterials );
-    if ( geom.m_nVirtualMaterials > MAX_SMALL_ARRAY_COUNT )
+    Serializer.object( Geom.m_BBox );
+    bitsery_io::ReadS32( Serializer, Geom.m_nFaces );
+    bitsery_io::ReadS32( Serializer, Geom.m_nVertices );
+    bitsery_io::ReadS32( Serializer, Geom.m_nVirtualMaterials );
+    if( Geom.m_nVirtualMaterials > MaxSmallArrayCount )
     {
-        SetInvalidData( serializer );
+        bitsery_io::SetInvalidData( Serializer );
         return;
     }
 
-    ReadObjectArray( serializer, geom.m_pBone, geom.m_nBones, MAX_SMALL_ARRAY_COUNT );
-    ReadBoneMasks( serializer, geom );
-    ReadObjectArray( serializer, geom.m_pPropertySections, geom.m_nPropertySections, MAX_SMALL_ARRAY_COUNT );
-    ReadObjectArray( serializer, geom.m_pProperties, geom.m_nProperties, MAX_SMALL_ARRAY_COUNT );
-    ReadObjectArray( serializer, geom.m_pRigidBodies, geom.m_nRigidBodies, MAX_SMALL_ARRAY_COUNT );
-    ReadObjectArray( serializer, geom.m_pMesh, geom.m_nMeshes, MAX_SMALL_ARRAY_COUNT );
-    ReadObjectArray( serializer, geom.m_pSubMesh, geom.m_nSubMeshes, MAX_SMALL_ARRAY_COUNT );
-    ReadObjectArray( serializer, geom.m_pMaterial, geom.m_nMaterials, MAX_SMALL_ARRAY_COUNT );
-    ReadObjectArray( serializer, geom.m_pTexture, geom.m_nTextures, MAX_SMALL_ARRAY_COUNT );
-    ReadObjectArray( serializer, geom.m_pUVKey, geom.m_nUVKeys, MAX_LARGE_ARRAY_COUNT );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pBone, Geom.m_nBones, MaxSmallArrayCount );
+    ReadBoneMasks( Serializer, Geom );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pPropertySections, Geom.m_nPropertySections, MaxSmallArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pProperties, Geom.m_nProperties, MaxSmallArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pRigidBodies, Geom.m_nRigidBodies, MaxSmallArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pMesh, Geom.m_nMeshes, MaxSmallArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pSubMesh, Geom.m_nSubMeshes, MaxSmallArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pMaterial, Geom.m_nMaterials, MaxSmallArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pTexture, Geom.m_nTextures, MaxSmallArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pUVKey, Geom.m_nUVKeys, MaxLargeArrayCount );
 
     s32 lodMaskCount = 0;
-    ReadValueArray<2>( serializer, geom.m_pLODSizes, geom.m_nLODs, MAX_SMALL_ARRAY_COUNT );
-    ReadValueArray<8>( serializer, geom.m_pLODMasks, lodMaskCount, MAX_SMALL_ARRAY_COUNT );
-    if ( lodMaskCount != geom.m_nLODs )
+    bitsery_io::ReadValueArray<2>( Serializer, Geom.m_pLODSizes, Geom.m_nLODs, MaxSmallArrayCount );
+    bitsery_io::ReadValueArray<8>( Serializer, Geom.m_pLODMasks, lodMaskCount, MaxSmallArrayCount );
+    if( lodMaskCount != Geom.m_nLODs )
     {
-        SetInvalidData( serializer );
+        bitsery_io::SetInvalidData( Serializer );
         return;
     }
 
-    ReadObjectArray( serializer, geom.m_pVirtualMeshes, geom.m_nVirtualMeshes, MAX_SMALL_ARRAY_COUNT );
-    ReadObjectArray( serializer, geom.m_pVirtualTextures, geom.m_nVirtualTextures, MAX_SMALL_ARRAY_COUNT );
-    ReadValueArray<1>( serializer, geom.m_pStringData, geom.m_stringDataSize, MAX_STRING_DATA_SIZE );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pVirtualMeshes, Geom.m_nVirtualMeshes, MaxSmallArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pVirtualTextures, Geom.m_nVirtualTextures, MaxSmallArrayCount );
+    bitsery_io::ReadValueArray<1>( Serializer, Geom.m_pStringData, Geom.m_stringDataSize, MaxStringDataSize );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void ReadCollision( SERIALIZER& serializer, collision_data& collision )
+template <class SERIALIZER>
+static void ReadCollision( SERIALIZER& Serializer, collision_data& Collision )
 {
-    serializer.object( collision.BBox );
-    ReadObjectArray( serializer, collision.pHighCluster, collision.nHighClusters, MAX_SMALL_ARRAY_COUNT );
-    ReadValueArray<2>( serializer, collision.pHighIndexToVert0, collision.nHighIndices, MAX_LARGE_ARRAY_COUNT );
-    ReadObjectArray( serializer, collision.pLowCluster, collision.nLowClusters, MAX_SMALL_ARRAY_COUNT );
-    ReadObjectArray( serializer, collision.pLowVector, collision.nLowVectors, MAX_LARGE_ARRAY_COUNT );
-    ReadObjectArray( serializer, collision.pLowQuad, collision.nLowQuads, MAX_LARGE_ARRAY_COUNT );
+    Serializer.object( Collision.BBox );
+    bitsery_io::ReadObjectArray( Serializer, Collision.pHighCluster, Collision.nHighClusters, MaxSmallArrayCount );
+    bitsery_io::ReadValueArray<2>( Serializer, Collision.pHighIndexToVert0, Collision.nHighIndices, MaxLargeArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Collision.pLowCluster, Collision.nLowClusters, MaxSmallArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Collision.pLowVector, Collision.nLowVectors, MaxLargeArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Collision.pLowQuad, Collision.nLowQuads, MaxLargeArrayCount );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void ReadEmptyCollision( SERIALIZER& serializer )
+template <class SERIALIZER>
+static void ReadEmptyCollision( SERIALIZER& Serializer )
 {
     bbox ignored;
-    serializer.object( ignored );
-    ReadEmptyArray( serializer );
-    ReadEmptyArray( serializer );
-    ReadEmptyArray( serializer );
-    ReadEmptyArray( serializer );
-    ReadEmptyArray( serializer );
+    Serializer.object( ignored );
+    bitsery_io::ReadEmptyArray( Serializer );
+    bitsery_io::ReadEmptyArray( Serializer );
+    bitsery_io::ReadEmptyArray( Serializer );
+    bitsery_io::ReadEmptyArray( Serializer );
+    bitsery_io::ReadEmptyArray( Serializer );
 }
 
 //=========================================================================
+//  GEOMETRY VALIDATION
+//=========================================================================
 
-xbool ValidateCommon( geom const& geom )
+static xbool ValidateCommon( geom const& Geom )
 {
-    if ( ( geom.m_nFaces < 0 ) || ( geom.m_nVertices < 0 ) || ( geom.m_nVirtualMaterials < 0 ) )
+    if( ( Geom.m_nFaces < 0 ) || ( Geom.m_nVertices < 0 ) || ( Geom.m_nVirtualMaterials < 0 ) )
     {
-        return ( FALSE );
+        return FALSE;
     }
 
-    for ( s32 i = 0; i < geom.m_nBones; i++ )
+    for( s32 i = 0; i < Geom.m_nBones; i++ )
     {
-        if ( !IsIndexOrMinusOne( geom.m_pBone[i].iRigidBody, geom.m_nRigidBodies ) )
+        if( !IsIndexOrMinusOne( Geom.m_pBone[i].iRigidBody, Geom.m_nRigidBodies ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_nBoneMasks; i++ )
+    for( s32 i = 0; i < Geom.m_nBoneMasks; i++ )
     {
-        if ( !HasString( geom, geom.m_pBoneMasks[i].NameOffset ) || ( geom.m_pBoneMasks[i].nBones < 0 ) ||
-             ( geom.m_pBoneMasks[i].nBones > MAX_ANIM_BONES ) )
+        if( !HasString( Geom, Geom.m_pBoneMasks[i].NameOffset ) || ( Geom.m_pBoneMasks[i].nBones < 0 ) ||
+             ( Geom.m_pBoneMasks[i].nBones > MAX_ANIM_BONES ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_nPropertySections; i++ )
+    for( s32 i = 0; i < Geom.m_nPropertySections; i++ )
     {
-        geom::property_section const& section = geom.m_pPropertySections[i];
-        if ( !HasString( geom, section.NameOffset ) ||
-             !RangeIsValid( section.iProperty, section.nProperties, geom.m_nProperties ) )
+        geom::property_section const& section = Geom.m_pPropertySections[i];
+        if( !HasString( Geom, section.NameOffset ) ||
+             !RangeIsValid( section.iProperty, section.nProperties, Geom.m_nProperties ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_nProperties; i++ )
+    for( s32 i = 0; i < Geom.m_nProperties; i++ )
     {
-        geom::property const& property = geom.m_pProperties[i];
-        if ( !HasString( geom, property.NameOffset ) || ( property.Type < 0 ) ||
+        geom::property const& property = Geom.m_pProperties[i];
+        if( !HasString( Geom, property.NameOffset ) || ( property.Type < 0 ) ||
              ( property.Type >= geom::property::TYPE_TOTAL ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
 
-        if ( ( property.Type == geom::property::TYPE_STRING ) && !HasString( geom, property.Value.StringOffset ) )
+        if( ( property.Type == geom::property::TYPE_STRING ) && !HasString( Geom, property.Value.StringOffset ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_nRigidBodies; i++ )
+    for( s32 i = 0; i < Geom.m_nRigidBodies; i++ )
     {
-        geom::rigid_body const& body = geom.m_pRigidBodies[i];
-        if ( !HasString( geom, body.NameOffset ) || !IsIndexOrMinusOne( body.iParentBody, geom.m_nRigidBodies ) ||
-             !IsIndexOrMinusOne( body.iBone, geom.m_nBones ) )
+        geom::rigid_body const& body = Geom.m_pRigidBodies[i];
+        if( !HasString( Geom, body.NameOffset ) || !IsIndexOrMinusOne( body.iParentBody, Geom.m_nRigidBodies ) ||
+             !IsIndexOrMinusOne( body.iBone, Geom.m_nBones ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_nMeshes; i++ )
+    for( s32 i = 0; i < Geom.m_nMeshes; i++ )
     {
-        geom::mesh const& mesh = geom.m_pMesh[i];
-        if ( !HasString( geom, mesh.NameOffset ) || !RangeIsValid( mesh.iSubMesh, mesh.nSubMeshes, geom.m_nSubMeshes ) )
+        geom::mesh const& mesh = Geom.m_pMesh[i];
+        if( !HasString( Geom, mesh.NameOffset ) || !RangeIsValid( mesh.iSubMesh, mesh.nSubMeshes, Geom.m_nSubMeshes ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_nMaterials; i++ )
+    for( s32 i = 0; i < Geom.m_nMaterials; i++ )
     {
-        geom::material const& material = geom.m_pMaterial[i];
-        if ( !RangeIsValid( material.iTexture, material.nTextures, geom.m_nTextures ) ||
-             !RangeIsValid( material.iVirtualMat, material.nVirtualMats, geom.m_nVirtualMaterials ) ||
-             !RangeIsValid( material.UVAnim.iKey, material.UVAnim.nKeys, geom.m_nUVKeys ) )
+        geom::material const& material = Geom.m_pMaterial[i];
+        if( !RangeIsValid( material.iTexture, material.nTextures, Geom.m_nTextures ) ||
+             !RangeIsValid( material.iVirtualMat, material.nVirtualMats, Geom.m_nVirtualMaterials ) ||
+             !RangeIsValid( material.UVAnim.iKey, material.UVAnim.nKeys, Geom.m_nUVKeys ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_nTextures; i++ )
+    for( s32 i = 0; i < Geom.m_nTextures; i++ )
     {
-        if ( !HasString( geom, geom.m_pTexture[i].DescOffset ) ||
-             !HasString( geom, geom.m_pTexture[i].FileNameOffset ) )
+        if( !HasString( Geom, Geom.m_pTexture[i].DescOffset ) ||
+             !HasString( Geom, Geom.m_pTexture[i].FileNameOffset ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_nVirtualMeshes; i++ )
+    for( s32 i = 0; i < Geom.m_nVirtualMeshes; i++ )
     {
-        geom::virtual_mesh const& mesh = geom.m_pVirtualMeshes[i];
-        if ( !HasString( geom, mesh.NameOffset ) || !RangeIsValid( mesh.iLOD, mesh.nLODs, geom.m_nLODs ) )
+        geom::virtual_mesh const& mesh = Geom.m_pVirtualMeshes[i];
+        if( !HasString( Geom, mesh.NameOffset ) || !RangeIsValid( mesh.iLOD, mesh.nLODs, Geom.m_nLODs ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_nVirtualTextures; i++ )
+    for( s32 i = 0; i < Geom.m_nVirtualTextures; i++ )
     {
-        if ( !HasString( geom, geom.m_pVirtualTextures[i].NameOffset ) )
+        if( !HasString( Geom, Geom.m_pVirtualTextures[i].NameOffset ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    return ( TRUE );
+    return TRUE;
 }
 
 //=========================================================================
 
-xbool ValidateRigid( rigid_geom const& geom )
+static xbool ValidateRigid( rigid_geom const& Geom )
 {
-    if ( !ValidateCommon( geom ) )
+    if( !ValidateCommon( Geom ) )
     {
-        return ( FALSE );
+        return FALSE;
     }
 
-    for ( s32 i = 0; i < geom.m_nSubMeshes; i++ )
+    for( s32 i = 0; i < Geom.m_nSubMeshes; i++ )
     {
-        geom::submesh const& submesh = geom.m_pSubMesh[i];
-        if ( !RangeIsValid( submesh.iSection, submesh.nSections, geom.m_nSections ) || ( submesh.iMaterial < 0 ) ||
-             ( submesh.iMaterial >= geom.m_nMaterials ) )
+        geom::submesh const& submesh = Geom.m_pSubMesh[i];
+        if( !RangeIsValid( submesh.iSection, submesh.nSections, Geom.m_nSections ) || ( submesh.iMaterial < 0 ) ||
+             ( submesh.iMaterial >= Geom.m_nMaterials ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_nSections; i++ )
+    for( s32 i = 0; i < Geom.m_nSections; i++ )
     {
-        rigid_geom::section const& section = geom.m_pSection[i];
-        if ( !RangeIsValid( section.FirstVertex, section.nVertices, geom.m_nVertexData ) ||
-             !RangeIsValid( section.FirstIndex, section.nIndices, geom.m_nIndices ) ||
-             !IsIndexOrMinusOne( section.iBone, geom.m_nBones ) )
+        rigid_geom::section const& section = Geom.m_pSection[i];
+        if( !RangeIsValid( section.FirstVertex, section.nVertices, Geom.m_nVertexData ) ||
+             !RangeIsValid( section.FirstIndex, section.nIndices, Geom.m_nIndices ) ||
+             !IsIndexOrMinusOne( section.iBone, Geom.m_nBones ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
 
-        for ( s32 j = 0; j < section.nIndices; j++ )
+        for( s32 j = 0; j < section.nIndices; j++ )
         {
-            u32 const vertexIndex = geom.m_pIndex[section.FirstIndex + j];
-            if ( ( vertexIndex < static_cast<u32>( section.FirstVertex ) ) ||
+            u32 const vertexIndex = Geom.m_pIndex[section.FirstIndex + j];
+            if( ( vertexIndex < static_cast<u32>( section.FirstVertex ) ) ||
                  ( vertexIndex >= static_cast<u32>( section.FirstVertex + section.nVertices ) ) )
             {
-                return ( FALSE );
+                return FALSE;
             }
         }
     }
 
-    for ( s32 i = 0; i < geom.m_collision.nHighClusters; i++ )
+    for( s32 i = 0; i < Geom.m_collision.nHighClusters; i++ )
     {
-        collision_data::high_cluster const& cluster = geom.m_collision.pHighCluster[i];
+        collision_data::high_cluster const& cluster = Geom.m_collision.pHighCluster[i];
 
-        if ( !RangeIsValid( cluster.iOffset, cluster.nTris, geom.m_collision.nHighIndices ) ||
-             !IsIndexOrMinusOne( cluster.iMesh, geom.m_nMeshes ) ||
-             !IsIndexOrMinusOne( cluster.iBone, geom.m_nBones ) ||
-             !IsIndexOrMinusOne( cluster.iSection, geom.m_nSections ) )
+        if( !RangeIsValid( cluster.iOffset, cluster.nTris, Geom.m_collision.nHighIndices ) ||
+             !IsIndexOrMinusOne( cluster.iMesh, Geom.m_nMeshes ) ||
+             !IsIndexOrMinusOne( cluster.iBone, Geom.m_nBones ) ||
+             !IsIndexOrMinusOne( cluster.iSection, Geom.m_nSections ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_collision.nLowClusters; i++ )
+    for( s32 i = 0; i < Geom.m_collision.nLowClusters; i++ )
     {
-        collision_data::low_cluster const& cluster = geom.m_collision.pLowCluster[i];
+        collision_data::low_cluster const& cluster = Geom.m_collision.pLowCluster[i];
         u64 const vectorCount = static_cast<u64>( cluster.nPoints ) + static_cast<u64>( cluster.nNormals );
 
-        if ( ( vectorCount > 0x7fffffffu ) ||
-             !RangeIsValid( cluster.iVectorOffset, static_cast<s32>( vectorCount ), geom.m_collision.nLowVectors ) ||
-             !RangeIsValid( cluster.iQuadOffset, cluster.nQuads, geom.m_collision.nLowQuads ) ||
-             !IsIndexOrMinusOne( cluster.iMesh, geom.m_nMeshes ) || !IsIndexOrMinusOne( cluster.iBone, geom.m_nBones ) )
+        if( ( vectorCount > 0x7fffffffu ) ||
+             !RangeIsValid( cluster.iVectorOffset, static_cast<s32>( vectorCount ), Geom.m_collision.nLowVectors ) ||
+             !RangeIsValid( cluster.iQuadOffset, cluster.nQuads, Geom.m_collision.nLowQuads ) ||
+             !IsIndexOrMinusOne( cluster.iMesh, Geom.m_nMeshes ) || !IsIndexOrMinusOne( cluster.iBone, Geom.m_nBones ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    return ( TRUE );
+    return TRUE;
 }
 
 //=========================================================================
 
-xbool ValidateSkin( skin_geom const& geom )
+static xbool ValidateSkin( skin_geom const& Geom )
 {
-    if ( !ValidateCommon( geom ) )
+    if( !ValidateCommon( Geom ) )
     {
-        return ( FALSE );
+        return FALSE;
     }
 
-    for ( s32 i = 0; i < geom.m_nSubMeshes; i++ )
+    for( s32 i = 0; i < Geom.m_nSubMeshes; i++ )
     {
-        geom::submesh const& submesh = geom.m_pSubMesh[i];
-        if ( !RangeIsValid( submesh.iSection, submesh.nSections, geom.m_nSections ) || ( submesh.iMaterial < 0 ) ||
-             ( submesh.iMaterial >= geom.m_nMaterials ) )
+        geom::submesh const& submesh = Geom.m_pSubMesh[i];
+        if( !RangeIsValid( submesh.iSection, submesh.nSections, Geom.m_nSections ) || ( submesh.iMaterial < 0 ) ||
+             ( submesh.iMaterial >= Geom.m_nMaterials ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
     }
 
-    for ( s32 i = 0; i < geom.m_nSections; i++ )
+    for( s32 i = 0; i < Geom.m_nSections; i++ )
     {
-        skin_geom::section const& section = geom.m_pSection[i];
-        if ( !RangeIsValid( section.FirstVertex, section.nVertices, geom.m_nVertexData ) ||
-             !RangeIsValid( section.FirstIndex, section.nIndices, geom.m_nIndices ) ||
-             !RangeIsValid( section.FirstBone, section.nBones, geom.m_nBonePalette ) )
+        skin_geom::section const& section = Geom.m_pSection[i];
+        if( !RangeIsValid( section.FirstVertex, section.nVertices, Geom.m_nVertexData ) ||
+             !RangeIsValid( section.FirstIndex, section.nIndices, Geom.m_nIndices ) ||
+             !RangeIsValid( section.FirstBone, section.nBones, Geom.m_nBonePalette ) )
         {
-            return ( FALSE );
+            return FALSE;
         }
 
-        for ( s32 j = 0; j < section.nIndices; j++ )
+        for( s32 j = 0; j < section.nIndices; j++ )
         {
-            u32 const vertexIndex = geom.m_pIndex[section.FirstIndex + j];
-            if ( ( vertexIndex < static_cast<u32>( section.FirstVertex ) ) ||
+            u32 const vertexIndex = Geom.m_pIndex[section.FirstIndex + j];
+            if( ( vertexIndex < static_cast<u32>( section.FirstVertex ) ) ||
                  ( vertexIndex >= static_cast<u32>( section.FirstVertex + section.nVertices ) ) )
             {
-                return ( FALSE );
+                return FALSE;
             }
 
-            skin_geom::vertex const& vertex = geom.m_pVertex[vertexIndex];
-            for ( s32 weightIndex = 0; weightIndex < 2; weightIndex++ )
+            skin_geom::vertex const& vertex = Geom.m_pVertex[vertexIndex];
+            for( s32 weightIndex = 0; weightIndex < 2; weightIndex++ )
             {
-                if ( vertex.Weights[weightIndex] == 0.0f )
+                if( vertex.Weights[weightIndex] == 0.0f )
                 {
                     continue;
                 }
 
                 u16 const paletteIndex = vertex.Bones[weightIndex];
-                if ( ( paletteIndex >= section.nBones ) ||
-                     ( geom.m_pBonePalette[section.FirstBone + paletteIndex] == 0xffffu ) )
+                if( ( paletteIndex >= section.nBones ) ||
+                     ( Geom.m_pBonePalette[section.FirstBone + paletteIndex] == 0xffffu ) )
                 {
-                    return ( FALSE );
+                    return FALSE;
                 }
             }
         }
     }
 
-    return ( TRUE );
+    return TRUE;
 }
-
-} // namespace
 
 //=========================================================================
 //  ARCHIVE SERIALIZATION
 //=========================================================================
 
-namespace
+static void WriteS32( output_serializer& Serializer, s32 Value )
 {
-
-using OutputSerializer = bitsery::Serializer<bitsery_io::output_adapter>;
-
-//=========================================================================
-
-void WriteS32( OutputSerializer& serializer, s32 value )
-{
-    u32 wireValue = static_cast<u32>( value );
-    serializer.value4b( wireValue );
+    u32 wireValue = static_cast<u32>( Value );
+    Serializer.value4b( wireValue );
 }
 
 //=========================================================================
 
-template <size_t SIZE, class TYPE> void WriteValueArray( OutputSerializer& serializer, TYPE* pArray, s32 count )
+template <size_t SIZE, class TYPE>
+static void WriteValueArray( output_serializer& Serializer, TYPE* pArray, s32 count )
 {
     u32 wireCount = static_cast<u32>( count );
-    serializer.value4b( wireCount );
+    Serializer.value4b( wireCount );
 
-    for ( s32 i = 0; i < count; i++ )
+    for( s32 i = 0; i < count; i++ )
     {
-        serializer.template value<SIZE>( pArray[i] );
+        Serializer.template value<SIZE>( pArray[i] );
     }
 }
 
 //=========================================================================
 
-template <class TYPE> void WriteObjectArray( OutputSerializer& serializer, TYPE* pArray, s32 count )
+template <class TYPE>
+static void WriteObjectArray( output_serializer& Serializer, TYPE* pArray, s32 count )
 {
     u32 wireCount = static_cast<u32>( count );
-    serializer.value4b( wireCount );
+    Serializer.value4b( wireCount );
 
-    for ( s32 i = 0; i < count; i++ )
+    for( s32 i = 0; i < count; i++ )
     {
-        serializer.object( pArray[i] );
+        Serializer.object( pArray[i] );
     }
 }
 
 //=========================================================================
 
-void WriteEmptyArray( OutputSerializer& serializer )
+static void WriteEmptyArray( output_serializer& Serializer )
 {
     u32 count = 0;
-    serializer.value4b( count );
+    Serializer.value4b( count );
 }
 
 //=========================================================================
 
-void WriteBoneMasks( OutputSerializer& serializer, geom& geom )
+static void WriteBoneMasks( output_serializer& Serializer, geom& Geom )
 {
-    u32 maskCount = static_cast<u32>( geom.m_nBoneMasks );
-    serializer.value4b( maskCount );
+    u32 maskCount = static_cast<u32>( Geom.m_nBoneMasks );
+    Serializer.value4b( maskCount );
 
     u32 firstWeight = 0;
-    for ( s32 i = 0; i < geom.m_nBoneMasks; i++ )
+    for( s32 i = 0; i < Geom.m_nBoneMasks; i++ )
     {
-        geom::bone_masks& mask = geom.m_pBoneMasks[i];
+        geom::bone_masks& mask = Geom.m_pBoneMasks[i];
         u32               nameOffset = static_cast<u32>( mask.NameOffset );
         u32               weightCount = static_cast<u32>( mask.nBones );
 
-        serializer.value4b( nameOffset );
-        serializer.value4b( firstWeight );
-        serializer.value4b( weightCount );
+        Serializer.value4b( nameOffset );
+        Serializer.value4b( firstWeight );
+        Serializer.value4b( weightCount );
         firstWeight += weightCount;
     }
 
-    serializer.value4b( firstWeight );
-    for ( s32 i = 0; i < geom.m_nBoneMasks; i++ )
+    Serializer.value4b( firstWeight );
+    for( s32 i = 0; i < Geom.m_nBoneMasks; i++ )
     {
-        geom::bone_masks& mask = geom.m_pBoneMasks[i];
-        for ( s32 j = 0; j < mask.nBones; j++ )
+        geom::bone_masks& mask = Geom.m_pBoneMasks[i];
+        for( s32 j = 0; j < mask.nBones; j++ )
         {
-            serializer.value4b( mask.Weights[j] );
+            Serializer.value4b( mask.Weights[j] );
         }
     }
 }
 
 //=========================================================================
 
-void WriteCommonGeom( OutputSerializer& serializer, geom& geom )
+static void WriteCommonGeom( output_serializer& Serializer, geom& Geom )
 {
-    serializer.object( geom.m_BBox );
-    WriteS32( serializer, geom.m_nFaces );
-    WriteS32( serializer, geom.m_nVertices );
-    WriteS32( serializer, geom.m_nVirtualMaterials );
+    Serializer.object( Geom.m_BBox );
+    WriteS32( Serializer, Geom.m_nFaces );
+    WriteS32( Serializer, Geom.m_nVertices );
+    WriteS32( Serializer, Geom.m_nVirtualMaterials );
 
-    WriteObjectArray( serializer, geom.m_pBone, geom.m_nBones );
-    WriteBoneMasks( serializer, geom );
-    WriteObjectArray( serializer, geom.m_pPropertySections, geom.m_nPropertySections );
-    WriteObjectArray( serializer, geom.m_pProperties, geom.m_nProperties );
-    WriteObjectArray( serializer, geom.m_pRigidBodies, geom.m_nRigidBodies );
-    WriteObjectArray( serializer, geom.m_pMesh, geom.m_nMeshes );
-    WriteObjectArray( serializer, geom.m_pSubMesh, geom.m_nSubMeshes );
-    WriteObjectArray( serializer, geom.m_pMaterial, geom.m_nMaterials );
-    WriteObjectArray( serializer, geom.m_pTexture, geom.m_nTextures );
-    WriteObjectArray( serializer, geom.m_pUVKey, geom.m_nUVKeys );
-    WriteValueArray<2>( serializer, geom.m_pLODSizes, geom.m_nLODs );
-    WriteValueArray<8>( serializer, geom.m_pLODMasks, geom.m_nLODs );
-    WriteObjectArray( serializer, geom.m_pVirtualMeshes, geom.m_nVirtualMeshes );
-    WriteObjectArray( serializer, geom.m_pVirtualTextures, geom.m_nVirtualTextures );
-    WriteValueArray<1>( serializer, geom.m_pStringData, geom.m_stringDataSize );
+    WriteObjectArray( Serializer, Geom.m_pBone, Geom.m_nBones );
+    WriteBoneMasks( Serializer, Geom );
+    WriteObjectArray( Serializer, Geom.m_pPropertySections, Geom.m_nPropertySections );
+    WriteObjectArray( Serializer, Geom.m_pProperties, Geom.m_nProperties );
+    WriteObjectArray( Serializer, Geom.m_pRigidBodies, Geom.m_nRigidBodies );
+    WriteObjectArray( Serializer, Geom.m_pMesh, Geom.m_nMeshes );
+    WriteObjectArray( Serializer, Geom.m_pSubMesh, Geom.m_nSubMeshes );
+    WriteObjectArray( Serializer, Geom.m_pMaterial, Geom.m_nMaterials );
+    WriteObjectArray( Serializer, Geom.m_pTexture, Geom.m_nTextures );
+    WriteObjectArray( Serializer, Geom.m_pUVKey, Geom.m_nUVKeys );
+    WriteValueArray<2>( Serializer, Geom.m_pLODSizes, Geom.m_nLODs );
+    WriteValueArray<8>( Serializer, Geom.m_pLODMasks, Geom.m_nLODs );
+    WriteObjectArray( Serializer, Geom.m_pVirtualMeshes, Geom.m_nVirtualMeshes );
+    WriteObjectArray( Serializer, Geom.m_pVirtualTextures, Geom.m_nVirtualTextures );
+    WriteValueArray<1>( Serializer, Geom.m_pStringData, Geom.m_stringDataSize );
 }
 
 //=========================================================================
 
-void WriteCollision( OutputSerializer& serializer, collision_data& collision )
+static void WriteCollision( output_serializer& Serializer, collision_data& Collision )
 {
-    serializer.object( collision.BBox );
-    WriteObjectArray( serializer, collision.pHighCluster, collision.nHighClusters );
-    WriteValueArray<2>( serializer, collision.pHighIndexToVert0, collision.nHighIndices );
-    WriteObjectArray( serializer, collision.pLowCluster, collision.nLowClusters );
-    WriteObjectArray( serializer, collision.pLowVector, collision.nLowVectors );
-    WriteObjectArray( serializer, collision.pLowQuad, collision.nLowQuads );
+    Serializer.object( Collision.BBox );
+    WriteObjectArray( Serializer, Collision.pHighCluster, Collision.nHighClusters );
+    WriteValueArray<2>( Serializer, Collision.pHighIndexToVert0, Collision.nHighIndices );
+    WriteObjectArray( Serializer, Collision.pLowCluster, Collision.nLowClusters );
+    WriteObjectArray( Serializer, Collision.pLowVector, Collision.nLowVectors );
+    WriteObjectArray( Serializer, Collision.pLowQuad, Collision.nLowQuads );
 }
 
 //=========================================================================
 
-void WriteEmptyCollision( OutputSerializer& serializer )
+static void WriteEmptyCollision( output_serializer& Serializer )
 {
     bbox emptyBBox;
     emptyBBox.Min.Set( 0.0f, 0.0f, 0.0f );
     emptyBBox.Max.Set( 0.0f, 0.0f, 0.0f );
-    serializer.object( emptyBBox );
-    WriteEmptyArray( serializer );
-    WriteEmptyArray( serializer );
-    WriteEmptyArray( serializer );
-    WriteEmptyArray( serializer );
-    WriteEmptyArray( serializer );
+    Serializer.object( emptyBBox );
+    WriteEmptyArray( Serializer );
+    WriteEmptyArray( Serializer );
+    WriteEmptyArray( Serializer );
+    WriteEmptyArray( Serializer );
+    WriteEmptyArray( Serializer );
 }
-
-} // namespace
 
 //=========================================================================
 //  OUTPUT OBJECT SERIALIZATION
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, geom::property_section& value )
+static void serialize( output_serializer& Serializer, geom::property_section& Value )
 {
-    WriteS32( serializer, value.NameOffset );
-    WriteS32( serializer, value.iProperty );
-    WriteS32( serializer, value.nProperties );
+    WriteS32( Serializer, Value.NameOffset );
+    WriteS32( Serializer, Value.iProperty );
+    WriteS32( Serializer, Value.nProperties );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, geom::property& value )
+static void serialize( output_serializer& Serializer, geom::property& Value )
 {
-    WriteS32( serializer, value.NameOffset );
-    u8 type = static_cast<u8>( value.Type );
-    serializer.value1b( type );
-    serializer.value4b( value.Value.Integer );
+    WriteS32( Serializer, Value.NameOffset );
+    u8 type = static_cast<u8>( Value.Type );
+    Serializer.value1b( type );
+    Serializer.value4b( Value.Value.Integer );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, geom::rigid_body& value )
+static void serialize( output_serializer& Serializer, geom::rigid_body& Value )
 {
-    serializer.object( value.BodyBindRotation );
-    serializer.object( value.BodyBindPosition );
-    serializer.object( value.PivotBindRotation );
-    serializer.object( value.PivotBindPosition );
-    WriteS32( serializer, value.NameOffset );
-    serializer.value4b( value.Mass );
-    serializer.value4b( value.Radius );
-    serializer.value4b( value.Width );
-    serializer.value4b( value.Height );
-    serializer.value4b( value.Length );
-    serializer.value2b( value.Type );
-    serializer.value2b( value.Flags );
-    serializer.value2b( value.iParentBody );
-    serializer.value2b( value.iBone );
-    serializer.value4b( value.CollisionMask );
+    Serializer.object( Value.BodyBindRotation );
+    Serializer.object( Value.BodyBindPosition );
+    Serializer.object( Value.PivotBindRotation );
+    Serializer.object( Value.PivotBindPosition );
+    WriteS32( Serializer, Value.NameOffset );
+    Serializer.value4b( Value.Mass );
+    Serializer.value4b( Value.Radius );
+    Serializer.value4b( Value.Width );
+    Serializer.value4b( Value.Height );
+    Serializer.value4b( Value.Length );
+    Serializer.value2b( Value.Type );
+    Serializer.value2b( Value.Flags );
+    Serializer.value2b( Value.iParentBody );
+    Serializer.value2b( Value.iBone );
+    Serializer.value4b( Value.CollisionMask );
 
-    for ( s32 i = 0; i < 6; i++ )
+    for( s32 i = 0; i < 6; i++ )
     {
-        serializer.object( value.DOF[i] );
+        Serializer.object( Value.DOF[i] );
     }
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, geom::mesh& value )
+static void serialize( output_serializer& Serializer, geom::mesh& Value )
 {
-    serializer.object( value.BBox );
-    WriteS32( serializer, value.NameOffset );
-    WriteS32( serializer, value.iSubMesh );
-    WriteS32( serializer, value.nSubMeshes );
-    WriteS32( serializer, value.nBones );
-    WriteS32( serializer, value.nFaces );
-    WriteS32( serializer, value.nVertices );
+    Serializer.object( Value.BBox );
+    WriteS32( Serializer, Value.NameOffset );
+    WriteS32( Serializer, Value.iSubMesh );
+    WriteS32( Serializer, Value.nSubMeshes );
+    WriteS32( Serializer, Value.nBones );
+    WriteS32( Serializer, Value.nFaces );
+    WriteS32( Serializer, Value.nVertices );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, geom::submesh& value )
+static void serialize( output_serializer& Serializer, geom::submesh& Value )
 {
-    WriteS32( serializer, value.iSection );
-    WriteS32( serializer, value.nSections );
-    WriteS32( serializer, value.iMaterial );
-    serializer.value4b( value.WorldPixelSize );
+    WriteS32( Serializer, Value.iSection );
+    WriteS32( Serializer, Value.nSections );
+    WriteS32( Serializer, Value.iMaterial );
+    Serializer.value4b( Value.WorldPixelSize );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, geom::material::uvanim& value )
+static void serialize( output_serializer& Serializer, geom::material::uvanim& Value )
 {
-    serializer.value1b( value.Type );
-    serializer.value1b( value.StartFrame );
-    serializer.value1b( value.FPS );
-    WriteS32( serializer, value.iKey );
-    WriteS32( serializer, value.nKeys );
+    Serializer.value1b( Value.Type );
+    Serializer.value1b( Value.StartFrame );
+    Serializer.value1b( Value.FPS );
+    WriteS32( Serializer, Value.iKey );
+    WriteS32( Serializer, Value.nKeys );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, geom::material& value )
+static void serialize( output_serializer& Serializer, geom::material& Value )
 {
-    serializer.object( value.UVAnim );
-    serializer.value4b( value.DetailScale );
-    serializer.value4b( value.FixedAlpha );
-    serializer.value2b( value.Flags );
-    serializer.value1b( value.Type );
-    WriteS32( serializer, value.iTexture );
-    WriteS32( serializer, value.nTextures );
-    WriteS32( serializer, value.iVirtualMat );
-    WriteS32( serializer, value.nVirtualMats );
+    Serializer.object( Value.UVAnim );
+    Serializer.value4b( Value.DetailScale );
+    Serializer.value4b( Value.FixedAlpha );
+    Serializer.value2b( Value.Flags );
+    Serializer.value1b( Value.Type );
+    WriteS32( Serializer, Value.iTexture );
+    WriteS32( Serializer, Value.nTextures );
+    WriteS32( Serializer, Value.iVirtualMat );
+    WriteS32( Serializer, Value.nVirtualMats );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, geom::texture& value )
+static void serialize( output_serializer& Serializer, geom::texture& Value )
 {
-    WriteS32( serializer, value.DescOffset );
-    WriteS32( serializer, value.FileNameOffset );
+    WriteS32( Serializer, Value.DescOffset );
+    WriteS32( Serializer, Value.FileNameOffset );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, geom::virtual_mesh& value )
+static void serialize( output_serializer& Serializer, geom::virtual_mesh& Value )
 {
-    WriteS32( serializer, value.NameOffset );
-    WriteS32( serializer, value.iLOD );
-    WriteS32( serializer, value.nLODs );
+    WriteS32( Serializer, Value.NameOffset );
+    WriteS32( Serializer, Value.iLOD );
+    WriteS32( Serializer, Value.nLODs );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, geom::virtual_texture& value )
+static void serialize( output_serializer& Serializer, geom::virtual_texture& Value )
 {
-    WriteS32( serializer, value.NameOffset );
-    serializer.value4b( value.MaterialMask );
+    WriteS32( Serializer, Value.NameOffset );
+    Serializer.value4b( Value.MaterialMask );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, collision_data::high_cluster& value )
+static void serialize( output_serializer& Serializer, collision_data::high_cluster& Value )
 {
-    serializer.object( value.BBox );
-    WriteS32( serializer, value.nTris );
-    serializer.value4b( value.iMesh );
-    serializer.value4b( value.iBone );
-    serializer.value4b( value.iSection );
-    WriteS32( serializer, value.iOffset );
-    serializer.object( value.MaterialInfo );
+    Serializer.object( Value.BBox );
+    WriteS32( Serializer, Value.nTris );
+    Serializer.value4b( Value.iMesh );
+    Serializer.value4b( Value.iBone );
+    Serializer.value4b( Value.iSection );
+    WriteS32( Serializer, Value.iOffset );
+    Serializer.object( Value.MaterialInfo );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, collision_data::low_cluster& value )
+static void serialize( output_serializer& Serializer, collision_data::low_cluster& Value )
 {
-    serializer.object( value.BBox );
-    WriteS32( serializer, value.iVectorOffset );
-    WriteS32( serializer, value.nPoints );
-    WriteS32( serializer, value.nNormals );
-    WriteS32( serializer, value.iQuadOffset );
-    WriteS32( serializer, value.nQuads );
-    serializer.value4b( value.iMesh );
-    serializer.value4b( value.iBone );
+    Serializer.object( Value.BBox );
+    WriteS32( Serializer, Value.iVectorOffset );
+    WriteS32( Serializer, Value.nPoints );
+    WriteS32( Serializer, Value.nNormals );
+    WriteS32( Serializer, Value.iQuadOffset );
+    WriteS32( Serializer, Value.nQuads );
+    Serializer.value4b( Value.iMesh );
+    Serializer.value4b( Value.iBone );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, rigid_geom::section& value )
+static void serialize( output_serializer& Serializer, rigid_geom::section& Value )
 {
-    WriteS32( serializer, value.FirstVertex );
-    WriteS32( serializer, value.nVertices );
-    WriteS32( serializer, value.FirstIndex );
-    WriteS32( serializer, value.nIndices );
-    serializer.value4b( value.iBone );
-    serializer.value4b( value.iColor );
+    WriteS32( Serializer, Value.FirstVertex );
+    WriteS32( Serializer, Value.nVertices );
+    WriteS32( Serializer, Value.FirstIndex );
+    WriteS32( Serializer, Value.nIndices );
+    Serializer.value4b( Value.iBone );
+    Serializer.value4b( Value.iColor );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, skin_geom::section& value )
+static void serialize( output_serializer& Serializer, skin_geom::section& Value )
 {
-    WriteS32( serializer, value.FirstVertex );
-    WriteS32( serializer, value.nVertices );
-    WriteS32( serializer, value.FirstIndex );
-    WriteS32( serializer, value.nIndices );
-    WriteS32( serializer, value.FirstBone );
-    WriteS32( serializer, value.nBones );
+    WriteS32( Serializer, Value.FirstVertex );
+    WriteS32( Serializer, Value.nVertices );
+    WriteS32( Serializer, Value.FirstIndex );
+    WriteS32( Serializer, Value.nIndices );
+    WriteS32( Serializer, Value.FirstBone );
+    WriteS32( Serializer, Value.nBones );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, rigid_geom& geom )
+static void serialize( output_serializer& Serializer, rigid_geom& Geom )
 {
-    WriteCommonGeom( serializer, geom );
-    WriteCollision( serializer, geom.m_collision );
-    WriteValueArray<4>( serializer, geom.m_pIndex, geom.m_nIndices );
-    WriteObjectArray( serializer, geom.m_pVertex, geom.m_nVertexData );
-    WriteEmptyArray( serializer );
-    WriteObjectArray( serializer, geom.m_pSection, geom.m_nSections );
-    WriteEmptyArray( serializer );
-    WriteEmptyArray( serializer );
+    WriteCommonGeom( Serializer, Geom );
+    WriteCollision( Serializer, Geom.m_collision );
+    WriteValueArray<4>( Serializer, Geom.m_pIndex, Geom.m_nIndices );
+    WriteObjectArray( Serializer, Geom.m_pVertex, Geom.m_nVertexData );
+    WriteEmptyArray( Serializer );
+    WriteObjectArray( Serializer, Geom.m_pSection, Geom.m_nSections );
+    WriteEmptyArray( Serializer );
+    WriteEmptyArray( Serializer );
 }
 
 //=========================================================================
 
-void serialize( OutputSerializer& serializer, skin_geom& geom )
+static void serialize( output_serializer& Serializer, skin_geom& Geom )
 {
-    WriteCommonGeom( serializer, geom );
-    WriteEmptyCollision( serializer );
-    WriteValueArray<4>( serializer, geom.m_pIndex, geom.m_nIndices );
-    WriteEmptyArray( serializer );
-    WriteObjectArray( serializer, geom.m_pVertex, geom.m_nVertexData );
-    WriteEmptyArray( serializer );
-    WriteObjectArray( serializer, geom.m_pSection, geom.m_nSections );
-    WriteValueArray<2>( serializer, geom.m_pBonePalette, geom.m_nBonePalette );
+    WriteCommonGeom( Serializer, Geom );
+    WriteEmptyCollision( Serializer );
+    WriteValueArray<4>( Serializer, Geom.m_pIndex, Geom.m_nIndices );
+    WriteEmptyArray( Serializer );
+    WriteObjectArray( Serializer, Geom.m_pVertex, Geom.m_nVertexData );
+    WriteEmptyArray( Serializer );
+    WriteObjectArray( Serializer, Geom.m_pSection, Geom.m_nSections );
+    WriteValueArray<2>( Serializer, Geom.m_pBonePalette, Geom.m_nBonePalette );
 }
 
 //=========================================================================
 //  ARCHIVE DESERIALIZATION
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, rigid_geom& geom )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, rigid_geom& Geom )
 {
-    ReadCommonGeom( serializer, geom );
-    ReadCollision( serializer, geom.m_collision );
-    ReadValueArray<4>( serializer, geom.m_pIndex, geom.m_nIndices, MAX_LARGE_ARRAY_COUNT );
-    ReadObjectArray( serializer, geom.m_pVertex, geom.m_nVertexData, MAX_LARGE_ARRAY_COUNT );
-    ReadEmptyArray( serializer );
-    ReadObjectArray( serializer, geom.m_pSection, geom.m_nSections, MAX_SMALL_ARRAY_COUNT );
-    ReadEmptyArray( serializer );
-    ReadEmptyArray( serializer );
+    ReadCommonGeom( Serializer, Geom );
+    ReadCollision( Serializer, Geom.m_collision );
+    bitsery_io::ReadValueArray<4>( Serializer, Geom.m_pIndex, Geom.m_nIndices, MaxLargeArrayCount );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pVertex, Geom.m_nVertexData, MaxLargeArrayCount );
+    bitsery_io::ReadEmptyArray( Serializer );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pSection, Geom.m_nSections, MaxSmallArrayCount );
+    bitsery_io::ReadEmptyArray( Serializer );
+    bitsery_io::ReadEmptyArray( Serializer );
 }
 
 //=========================================================================
 
-template <class SERIALIZER> void serialize( SERIALIZER& serializer, skin_geom& geom )
+template <class SERIALIZER>
+static void serialize( SERIALIZER& Serializer, skin_geom& Geom )
 {
-    ReadCommonGeom( serializer, geom );
-    ReadEmptyCollision( serializer );
-    ReadValueArray<4>( serializer, geom.m_pIndex, geom.m_nIndices, MAX_LARGE_ARRAY_COUNT );
-    ReadEmptyArray( serializer );
-    ReadObjectArray( serializer, geom.m_pVertex, geom.m_nVertexData, MAX_LARGE_ARRAY_COUNT );
-    ReadEmptyArray( serializer );
-    ReadObjectArray( serializer, geom.m_pSection, geom.m_nSections, MAX_SMALL_ARRAY_COUNT );
-    ReadValueArray<2>( serializer, geom.m_pBonePalette, geom.m_nBonePalette, MAX_LARGE_ARRAY_COUNT );
+    ReadCommonGeom( Serializer, Geom );
+    ReadEmptyCollision( Serializer );
+    bitsery_io::ReadValueArray<4>( Serializer, Geom.m_pIndex, Geom.m_nIndices, MaxLargeArrayCount );
+    bitsery_io::ReadEmptyArray( Serializer );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pVertex, Geom.m_nVertexData, MaxLargeArrayCount );
+    bitsery_io::ReadEmptyArray( Serializer );
+    bitsery_io::ReadObjectArray( Serializer, Geom.m_pSection, Geom.m_nSections, MaxSmallArrayCount );
+    bitsery_io::ReadValueArray<2>( Serializer, Geom.m_pBonePalette, Geom.m_nBonePalette, MaxLargeArrayCount );
 }
 
 //=========================================================================
-//  GEOMETRY FILE
+//  FUNCTIONS
 //=========================================================================
 
-xbool geom_file::LoadRigid( X_FILE* pFile, rigid_geom*& pGeom, xstring& error )
+xbool geom_file::Validate( rigid_geom const& Geom, xstring& Error )
 {
-    error.Clear();
-    pGeom = NULL;
+    Error.Clear();
+    if( ValidateRigid( Geom ) )
+    {
+        return TRUE;
+    }
+
+    return bitsery_io::Fail( Error, "Rigid geometry payload failed validation." );
+}
+
+//=========================================================================
+
+xbool geom_file::Validate( skin_geom const& Geom, xstring& Error )
+{
+    Error.Clear();
+    if( ValidateSkin( Geom ) )
+    {
+        return TRUE;
+    }
+
+    return bitsery_io::Fail( Error, "Skin geometry payload failed validation." );
+}
+
+//=========================================================================
+
+xbool geom_file::LoadRigid( X_FILE* pFile, rigid_geom*& pGeom, xstring& Error )
+{
+    Error.Clear();
+    pGeom = nullptr;
 
     pGeom = new rigid_geom;
-    if ( !bitsery_io::Read( pFile, RIGID_FILE_FORMAT, *pGeom, error ) )
+    if( !bitsery_io::Read( pFile, RigidFileFormat, *pGeom, Error ) )
     {
         delete pGeom;
-        pGeom = NULL;
-        return ( FALSE );
+        pGeom = nullptr;
+        return FALSE;
     }
 
-    if ( !ValidateRigid( *pGeom ) )
+    if( !ValidateRigid( *pGeom ) )
     {
         delete pGeom;
-        pGeom = NULL;
-        return ( bitsery_io::Fail( error, "Rigid geometry payload failed validation." ) );
+        pGeom = nullptr;
+        return bitsery_io::Fail( Error, "Rigid geometry payload failed validation." );
     }
 
-    return ( TRUE );
+    return TRUE;
 }
 
 //=========================================================================
 
-xbool geom_file::LoadSkin( X_FILE* pFile, skin_geom*& pGeom, xstring& error )
+xbool geom_file::LoadSkin( X_FILE* pFile, skin_geom*& pGeom, xstring& Error )
 {
-    error.Clear();
-    pGeom = NULL;
+    Error.Clear();
+    pGeom = nullptr;
 
     pGeom = new skin_geom;
-    if ( !bitsery_io::Read( pFile, SKIN_FILE_FORMAT, *pGeom, error ) )
+    if( !bitsery_io::Read( pFile, SkinFileFormat, *pGeom, Error ) )
     {
         delete pGeom;
-        pGeom = NULL;
-        return ( FALSE );
+        pGeom = nullptr;
+        return FALSE;
     }
 
-    if ( !ValidateSkin( *pGeom ) )
+    if( !ValidateSkin( *pGeom ) )
     {
         delete pGeom;
-        pGeom = NULL;
-        return ( bitsery_io::Fail( error, "Skin geometry payload failed validation." ) );
+        pGeom = nullptr;
+        return bitsery_io::Fail( Error, "Skin geometry payload failed validation." );
     }
 
-    return ( TRUE );
+    return TRUE;
 }
 
 //=========================================================================
 
-xbool geom_file::Validate( rigid_geom const& geom, xstring& error )
+xbool geom_file::SaveRigid( X_FILE* pFile, rigid_geom const& Geom, xstring& Error )
 {
-    error.Clear();
-    if ( ValidateRigid( geom ) )
+    if( !Validate( Geom, Error ) )
     {
-        return ( TRUE );
+        return FALSE;
     }
 
-    return ( bitsery_io::Fail( error, "Rigid geometry payload failed validation." ) );
+    return bitsery_io::Write( pFile, RigidFileFormat, Geom, Error );
 }
 
 //=========================================================================
 
-xbool geom_file::Validate( skin_geom const& geom, xstring& error )
+xbool geom_file::SaveSkin( X_FILE* pFile, skin_geom const& Geom, xstring& Error )
 {
-    error.Clear();
-    if ( ValidateSkin( geom ) )
+    if( !Validate( Geom, Error ) )
     {
-        return ( TRUE );
+        return FALSE;
     }
 
-    return ( bitsery_io::Fail( error, "Skin geometry payload failed validation." ) );
+    return bitsery_io::Write( pFile, SkinFileFormat, Geom, Error );
 }
 
 //=========================================================================
 
-xbool geom_file::SaveRigid( X_FILE* pFile, rigid_geom const& geom, xstring& error )
+xbool geom_file::SaveRigid( char const* pFileName, rigid_geom const& Geom, xstring& Error )
 {
-    if ( !Validate( geom, error ) )
+    if( !pFileName || !pFileName[0] )
     {
-        return ( FALSE );
-    }
-
-    return ( bitsery_io::Write( pFile, RIGID_FILE_FORMAT, geom, error ) );
-}
-
-//=========================================================================
-
-xbool geom_file::SaveSkin( X_FILE* pFile, skin_geom const& geom, xstring& error )
-{
-    if ( !Validate( geom, error ) )
-    {
-        return ( FALSE );
-    }
-
-    return ( bitsery_io::Write( pFile, SKIN_FILE_FORMAT, geom, error ) );
-}
-
-//=========================================================================
-
-xbool geom_file::SaveRigid( char const* pFileName, rigid_geom const& geom, xstring& error )
-{
-    if ( !pFileName || !pFileName[0] )
-    {
-        return ( bitsery_io::Fail( error, "Rigid geometry output filename is empty." ) );
+        return bitsery_io::Fail( Error, "Rigid geometry output filename is empty." );
     }
 
     X_FILE* pFile = x_fopen( pFileName, "wb" );
-    if ( !pFile )
+    if( !pFile )
     {
-        return ( bitsery_io::Fail( error, "Failed to open the rigid geometry output file." ) );
+        return bitsery_io::Fail( Error, "Failed to open the rigid geometry output file." );
     }
 
-    xbool const result = SaveRigid( pFile, geom, error );
+    xbool const Result = SaveRigid( pFile, Geom, Error );
     x_fclose( pFile );
-    return ( result );
+    return Result;
 }
 
 //=========================================================================
 
-xbool geom_file::SaveSkin( char const* pFileName, skin_geom const& geom, xstring& error )
+xbool geom_file::SaveSkin( char const* pFileName, skin_geom const& Geom, xstring& Error )
 {
-    if ( !pFileName || !pFileName[0] )
+    if( !pFileName || !pFileName[0] )
     {
-        return ( bitsery_io::Fail( error, "Skin geometry output filename is empty." ) );
+        return bitsery_io::Fail( Error, "Skin geometry output filename is empty." );
     }
 
     X_FILE* pFile = x_fopen( pFileName, "wb" );
-    if ( !pFile )
+    if( !pFile )
     {
-        return ( bitsery_io::Fail( error, "Failed to open the skin geometry output file." ) );
+        return bitsery_io::Fail( Error, "Failed to open the skin geometry output file." );
     }
 
-    xbool const result = SaveSkin( pFile, geom, error );
+    xbool const Result = SaveSkin( pFile, Geom, Error );
     x_fclose( pFile );
-    return ( result );
+    return Result;
 }
-
-//=========================================================================

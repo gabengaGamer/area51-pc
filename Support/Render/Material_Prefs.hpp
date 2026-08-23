@@ -7,6 +7,10 @@
 #ifndef MATERIAL_PREFS_HPP
 #define MATERIAL_PREFS_HPP
 
+//=============================================================================
+//  ENUMS
+//=============================================================================
+
 enum material_type
 {
     Material_Not_Used,
@@ -23,6 +27,8 @@ enum material_type
 
     Material_NumTypes,
 };
+
+//-----------------------------------------------------------------------------
 
 // Material flags stored in geometry data. Geometry keeps aliases for format
 // compatibility, while material owns their render semantics.
@@ -42,5 +48,5 @@ enum material_flags
 };
 
 //=============================================================================
-#endif
+#endif  // MATERIAL_PREFS_HPP
 //=============================================================================

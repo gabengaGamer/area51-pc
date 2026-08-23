@@ -12,9 +12,8 @@
 #include "Auxiliary/MiscUtils/BitseryIO.hpp"
 
 //=============================================================================
-
-namespace
-{
+//  LOCAL CONSTANTS
+//=============================================================================
 
 enum
 {
@@ -22,13 +21,18 @@ enum
     MAX_RIGID_COLOR_COUNT = 16 * 1024 * 1024,
 };
 
+//-----------------------------------------------------------------------------
+
 bitsery_io::file_format const RIGID_COLOR_FILE_FORMAT = {
     { 'R', 'C', 'L', 'R' },
     RIGID_COLOR_FILE_VERSION,
 };
 
 //=============================================================================
+//  HELPER FUNCTIONS
+//=============================================================================
 
+static
 xbool Validate( RigidColorData const& data, xstring& error )
 {
     if ( data.Colors.GetCount() > MAX_RIGID_COLOR_COUNT )
@@ -39,10 +43,8 @@ xbool Validate( RigidColorData const& data, xstring& error )
     return ( TRUE );
 }
 
-} // namespace
-
 //=============================================================================
-//  BITSERY SERIALIZATION
+//  IMPLEMENTATION
 //=============================================================================
 
 void serialize( bitsery::Serializer<bitsery_io::output_adapter>& serializer, RigidColorData& data )
@@ -77,8 +79,6 @@ void serialize( bitsery::Deserializer<bitsery_io::input_adapter>& serializer, Ri
     }
 }
 
-//=============================================================================
-//  RIGID COLOR FILE
 //=============================================================================
 
 xbool rigid_color_file::Load( X_FILE* pFile, RigidColorData& data, xstring& error )
@@ -131,5 +131,3 @@ xbool rigid_color_file::Save( char const* pFileName, RigidColorData const& data,
     x_fclose( pFile );
     return ( result );
 }
-
-//=============================================================================
