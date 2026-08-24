@@ -1350,7 +1350,7 @@ xbool character_physics::Jump( f32 Vel )
 #endif
 
     // Must be standing on the ground
-    if( m_bFallMode || m_bJumpMode || !m_bTrackingGround )
+    if( IsAirborn() )
         return FALSE;
 
     // Ground tracking can add vertical velocity on slopes. Do not carry it
