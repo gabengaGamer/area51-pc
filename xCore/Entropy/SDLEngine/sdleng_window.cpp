@@ -780,9 +780,9 @@ xbool sdleng_WindowApplyDisplayMode( s32                 Width,
 
         const xbool bCanSetPosition = sdleng_WindowCanSetPosition();
         if( !SDL_SetWindowBordered( s_Window.pWindow, false ) ||
-            !SDL_SetWindowSize( s_Window.pWindow, DisplayBounds.w, DisplayBounds.h ) ||
             (bCanSetPosition &&
-             !SDL_SetWindowPosition( s_Window.pWindow, DisplayBounds.x, DisplayBounds.y )) )
+             !SDL_SetWindowPosition( s_Window.pWindow, DisplayBounds.x, DisplayBounds.y )) ||
+             !SDL_SetWindowSize( s_Window.pWindow, DisplayBounds.w, DisplayBounds.h ) )
         {
             sdleng_LogError( "SDLWindow", "SDL borderless display mode" );
             return FALSE;
