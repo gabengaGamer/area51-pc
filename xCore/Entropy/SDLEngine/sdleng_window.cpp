@@ -779,10 +779,16 @@ xbool sdleng_WindowApplyDisplayMode( s32                 Width,
         }
 
         const xbool bCanSetPosition = sdleng_WindowCanSetPosition();
+
+        // Windows/Vulkan can treat a borderless window that exactly matches
+        // the monitor bounds as an exclusive-fullscreen candidate, which has
+        // been observed to stall the swapchain during the transition. Grow
+        // the window by one pixel past the bottom edge so it never matches
+        // the monitor rect exactly, while still covering the whole desktop.
         if( !SDL_SetWindowBordered( s_Window.pWindow, false ) ||
             (bCanSetPosition &&
              !SDL_SetWindowPosition( s_Window.pWindow, DisplayBounds.x, DisplayBounds.y )) ||
-             !SDL_SetWindowSize( s_Window.pWindow, DisplayBounds.w, DisplayBounds.h ) )
+             !SDL_SetWindowSize( s_Window.pWindow, DisplayBounds.w, DisplayBounds.h + 1 ) )
         {
             sdleng_LogError( "SDLWindow", "SDL borderless display mode" );
             return FALSE;
