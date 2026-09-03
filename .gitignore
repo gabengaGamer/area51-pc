@@ -56,6 +56,10 @@ mono_crash.*
 x64/
 x86/
 [Ww][Ii][Nn]32/
+!xCore/3rdParty/Libvorbis/win32/
+!xCore/3rdParty/Libvorbis/win32/vorbis.def
+!xCore/3rdParty/Libvorbis/win32/vorbisenc.def
+!xCore/3rdParty/Libvorbis/win32/vorbisfile.def
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
