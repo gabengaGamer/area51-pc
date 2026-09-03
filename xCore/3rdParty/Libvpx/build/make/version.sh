@@ -51,7 +51,7 @@ extra_version=${bare_version##-}
 
 #since they'll be used as integers below make sure they are or force to 0
 for v in major_version minor_version patch_version; do
-    if eval echo \$$v |grep -E -q '[^[:digit:]]'; then
+    if eval echo \$$v |grep -E -q '^$|[^[:digit:]]'; then
         eval $v=0
     fi
 done
