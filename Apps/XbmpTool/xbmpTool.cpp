@@ -28,7 +28,7 @@ enum target
     BITMAP_TARGET_GENERIC,
     BITMAP_TARGET_XBOX,
     BITMAP_TARGET_PS2,
-    BITMAP_TARGET_PC,
+    BITMAP_TARGET_DESKTOP,
 };
 
 //==============================================================================
@@ -204,7 +204,7 @@ void ExecuteScript( command_line& CommandLine, xbitmap& Bitmap, const xstring& B
 
     // Reset script state
     OutputFolder.Clear();
-    Target = BITMAP_TARGET_PC;
+    Target = BITMAP_TARGET_DESKTOP;
 
     // Build commands from command line
     for( i=0 ; i<CommandLine.GetNumOptions() ; i++ )
@@ -233,7 +233,7 @@ void ExecuteScript( command_line& CommandLine, xbitmap& Bitmap, const xstring& B
 
         if( OptName == "PC" )
         {
-            Target = BITMAP_TARGET_PC;
+            Target = BITMAP_TARGET_DESKTOP;
             auxbmp_ConvertToD3D( Bitmap );
         }
 

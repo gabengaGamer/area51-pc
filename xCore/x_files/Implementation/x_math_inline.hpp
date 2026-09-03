@@ -388,7 +388,7 @@ inline f32 x_sqr ( f32 a )  { return( a * a ); }
 
 #include <math.h>
 
-#ifdef TARGET_DESKTOP
+#if defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
 inline f32 x_sqrt    ( f32 a )        { return(                (f32)(sqrtf ( a ) ) ); }
 inline f32 x_1sqrt   ( f32 a )        { return(         1.0f / (f32)(sqrtf ( a ) ) ); }
 inline f32 x_log     ( f32 a )        { return(                (f32)(logf  ( a ) ) ); }

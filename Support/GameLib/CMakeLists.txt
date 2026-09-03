@@ -2,9 +2,9 @@
     set( A51_SAVE_DATA_BACKEND_SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/../SaveData/Backend/SaveDataBackend_Windows.cpp"
     )
-elseif( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
+elseif( CMAKE_SYSTEM_NAME MATCHES "^(Linux|Android)$" )
     set( A51_SAVE_DATA_BACKEND_SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/../SaveData/Backend/SaveDataBackend_Linux.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/../SaveData/Backend/SaveDataBackend_POSIX.cpp"
     )
 else()
     message( FATAL_ERROR "Gamelib has no SaveData backend for ${CMAKE_SYSTEM_NAME}" )

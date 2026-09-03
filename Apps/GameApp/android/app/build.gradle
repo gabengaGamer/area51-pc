@@ -1,0 +1,45 @@
+plugins {
+    id 'com.android.application'
+}
+
+def gameAssetDirectory = project.findProperty('A51_ASSET_DIR') ?: 'src/main/assets'
+
+android {
+    namespace = 'com.area51.game'
+    compileSdk 36
+    ndkVersion '29.0.14206865'
+
+    defaultConfig {
+        applicationId 'com.area51.game'
+        minSdk 21
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+
+        externalNativeBuild {
+            cmake {
+                arguments '-DA51_BUILD_SELECTED_APPS=ON',
+                          '-DA51_ENABLE_QT=OFF',
+                          '-DA51_BUILD_WINDOWS_TARGETS=OFF'
+                abiFilters 'arm64-v8a'
+            }
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = [
+                'src/main/java',
+                '../../../../xCore/3rdParty/SDL3/android-project/app/src/main/java'
+            ]
+            assets.srcDirs = [gameAssetDirectory]
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path '../../../../CMakeLists.txt'
+            version '3.31.6'
+        }
+    }
+}

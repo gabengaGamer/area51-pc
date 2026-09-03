@@ -6,7 +6,7 @@
 
 #include "x_types.hpp"
 
-#if !defined(TARGET_PC)
+#if !defined(TARGET_WINDOWS)
 #error This should only be getting compiled for the PC platform. Check your dependancies.
 #endif
 

@@ -6,7 +6,7 @@
 
 #include "x_target.hpp"
 
-#if defined(TARGET_DESKTOP) && defined(ENTROPY_RENDER_SDL)
+#if (defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)) && defined(ENTROPY_RENDER_SDL)
 
 //==============================================================================
 //  INCLUDES
@@ -22,7 +22,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#if defined(TARGET_LINUX)
+#if defined(TARGET_POSIX)
 #include <time.h>
 #endif
 
@@ -32,7 +32,7 @@
 
 #define SCRACH_MEM_SIZE     (2*1024*1024)
 
-#if defined(TARGET_LINUX)
+#if defined(TARGET_POSIX)
 static const u64 FILETIME_UNIX_EPOCH       = 116444736000000000ULL;
 static const u64 FILETIME_TICKS_PER_SECOND = 10000000ULL;
 #endif
@@ -404,7 +404,7 @@ void sdleng_core_ApplyPendingSettings( void )
 //  DESKTOP ENTRY POINTS
 //==============================================================================
 
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
 
 void eng_EntryPoint( s32&                       argc,
                      char**&                    argv,
@@ -432,7 +432,7 @@ void eng_EntryPoint( s32&                       argc,
 
 s32 eng_ExitPoint( void )
 {
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
     SetThreadExecutionState( ES_CONTINUOUS );
 #endif
     x_Kill();
@@ -607,7 +607,7 @@ void eng_UpdateDisplayWindow( eng_native_window_handle hWindow )
 
 //==============================================================================
 
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
 LRESULT CALLBACK eng_D3DWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     return DefWindowProc( hWnd, uMsg, wParam, lParam );
@@ -1208,7 +1208,7 @@ void eng_Reboot( reboot_reason Reason )
 
 datestamp eng_GetDate( void )
 {
-#if defined(TARGET_LINUX)
+#if defined(TARGET_POSIX)
     struct timespec Time;
 
     if( clock_gettime( CLOCK_REALTIME, &Time ) != 0 )
@@ -1233,7 +1233,7 @@ datestamp eng_GetDate( void )
 
 split_date eng_SplitDate( datestamp DateStamp )
 {
-#if defined(TARGET_LINUX)
+#if defined(TARGET_POSIX)
     split_date SplitDate;
     struct tm Time;
     datestamp Ticks;
@@ -1276,7 +1276,7 @@ split_date eng_SplitDate( datestamp DateStamp )
 
 datestamp eng_JoinDate( const split_date& SplitDate )
 {
-#if defined(TARGET_LINUX)
+#if defined(TARGET_POSIX)
     struct tm Time;
     time_t Seconds;
 
@@ -1371,5 +1371,5 @@ s32 eng_ScreenShotY( void )
 #endif // !defined(X_RETAIL) || defined(X_QA)
 
 //==============================================================================
-#endif // defined(TARGET_DESKTOP) && defined(ENTROPY_RENDER_SDL)
+#endif // (defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)) && defined(ENTROPY_RENDER_SDL)
 //==============================================================================

@@ -296,7 +296,7 @@ m_TriggerSlot(-1),
 m_EnteringDelay(TRUE),
 m_EnteringRecovery(TRUE)
 {
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     m_Selector.Init( this );
 #endif
     
@@ -389,7 +389,7 @@ void trigger_object::OnEnumProp( prop_enum&  rPropList )
 {
     object::OnEnumProp( rPropList );
         
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     m_Selector.OnEnumProp( rPropList );
 #endif
 
@@ -444,7 +444,7 @@ xbool trigger_object::OnProperty( prop_query& rPropQuery )
     if( OnPropertyDynamic( rPropQuery ) )
         return TRUE;
     
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     if( m_Selector.OnProperty( rPropQuery ) )
         return TRUE;
 #endif

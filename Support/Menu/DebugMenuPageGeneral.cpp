@@ -79,7 +79,7 @@ debug_menu_page_general::debug_menu_page_general( ) : debug_menu_page()
 #endif
 
 
-#if !defined( TARGET_PC )
+#if !defined( TARGET_WINDOWS )
                             #ifdef TARGET_XBOX
                             AddItemSeperator( );
                             AddItemBool( "Show vertex usage", g_ShowVertexUsage );
@@ -120,7 +120,7 @@ void debug_menu_page_general::OnChangeItem( debug_menu_item* pItem )
 
     if( pItem == m_pItemScreenShot )
     {
-#if !defined( X_RETAIL ) && !defined( TARGET_PC )
+#if !defined( X_RETAIL ) && !defined( TARGET_WINDOWS )
         eng_ScreenShot( DEBUG_SCREEN_SHOT_DIR, g_ScreenShotSize + 1 );
 #endif
     }

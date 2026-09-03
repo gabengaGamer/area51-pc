@@ -25,7 +25,7 @@
 #define WRITE_TGA                ( 1<<2 )
 
 #define TARGET_PLATFORM_XBOX    ( 1<<3 )
-#define TARGET_PLATFORM_PC        ( 1<<4 )
+#define TARGET_PLATFORM_DESKTOP        ( 1<<4 )
 #define TARGET_PLATFORM_PS2        ( 1<<5 )
 #define TARGET_PLATFORM_GCN        ( 1<<6 )
 
@@ -868,7 +868,7 @@ int main( int argc, char** argv )
             if( Option == "PC" )
             {
                 OptStringPC = cl.GetOptionString( i );
-                s_OutputFormat |= TARGET_PLATFORM_PC;
+                s_OutputFormat |= TARGET_PLATFORM_DESKTOP;
                 continue;
             }
         
@@ -931,11 +931,11 @@ int main( int argc, char** argv )
         }   // end For(... GetNumOptions...)
 
         if( !(s_OutputFormat & TARGET_PLATFORM_PS2) &&
-            !(s_OutputFormat & TARGET_PLATFORM_PC)  &&
+            !(s_OutputFormat & TARGET_PLATFORM_DESKTOP)  &&
             !(s_OutputFormat & TARGET_PLATFORM_XBOX) &&
             !(s_OutputFormat & TARGET_PLATFORM_GCN) )
         {
-            s_OutputFormat = TARGET_PLATFORM_PC;
+            s_OutputFormat = TARGET_PLATFORM_DESKTOP;
         }
 
         //==============================================================================
@@ -1325,7 +1325,7 @@ int main( int argc, char** argv )
             CompileTargetPC( cl, fbm, OptStringXBOX );
         }
 
-        if( s_OutputFormat & TARGET_PLATFORM_PC )
+        if( s_OutputFormat & TARGET_PLATFORM_DESKTOP )
         {    
             CompileTargetPC( cl, fbm, OptStringPC );
         }

@@ -56,7 +56,7 @@ void return_door_to_normal::OnRender ( void )
     if ( !ObjectPtr.IsValid() )
         return;
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     vector3 MyPosition =  GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
     render::debug::Line( MyPosition, ObjectPtr.m_pObject->GetPosition(), s_OpenReturnToNormal );
     render::debug::Box( ObjectPtr.m_pObject->GetBBox(), s_OpenReturnToNormal );

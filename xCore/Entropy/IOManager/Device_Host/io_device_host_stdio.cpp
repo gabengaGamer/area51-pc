@@ -12,8 +12,8 @@
 
 #include "x_types.hpp"
 
-#if !defined( TARGET_DESKTOP )
-#error "This host filesystem backend requires a desktop target."
+#if !defined( TARGET_DESKTOP ) && !defined( TARGET_MOBILE )
+#error "This host filesystem backend requires a desktop or mobile target."
 #endif
 
 //==========================================================================
@@ -27,6 +27,10 @@
 #include "io_device_host.hpp"
 
 #include <stdio.h>
+
+#if defined( TARGET_ANDROID )
+#include "SDL3/SDL_iostream.h"
+#endif
 
 //==========================================================================
 //  DEFINES
@@ -48,8 +52,12 @@ static io_device_file s_HostFiles[ HOSTFS_NUM_FILES ];
 
 static io_device::device_data s_DeviceData =
 {
-#if defined( TARGET_LINUX )
+#if defined( TARGET_POSIX )
+#if defined( TARGET_ANDROID )
+    "Android HostFS",
+#else
     "Linux HostFS",
+#endif
 #else
     "Windows HostFS",
 #endif
@@ -90,7 +98,7 @@ void io_device_host::CleanFilename( char* pClean, const char* pFilename )
     ASSERT( pFilename );
     ASSERT( x_strlen( pFilename ) < IO_DEVICE_FILENAME_LIMIT );
 
-#if defined( TARGET_LINUX )
+#if defined( TARGET_POSIX )
     const char Separator = '/';
 #else
     const char Separator = '\\';
@@ -145,10 +153,37 @@ xbool io_device_host::DeviceOpen( const char* pFilename,
                                   io_device_file* pFile,
                                   open_flags OpenFlags )
 {
-    (void)OpenFlags;
-
     char CleanFile[ IO_DEVICE_FILENAME_LIMIT ];
     CleanFilename( CleanFile, pFilename );
+
+#if defined( TARGET_ANDROID )
+    const char* pMode = (OpenFlags & WRITE)
+                      ? ((OpenFlags & APPEND) ? "ab" : "wb")
+                      : "rb";
+    SDL_IOStream* pStream = SDL_IOFromFile( CleanFile, pMode );
+    if( !pStream )
+    {
+        return FALSE;
+    }
+
+    const Sint64 FileLength = SDL_GetIOSize( pStream );
+    if( (FileLength < 0) || (FileLength > S32_MAX) )
+    {
+        SDL_CloseIO( pStream );
+        return FALSE;
+    }
+
+    if( SDL_SeekIO( pStream, 0, SDL_IO_SEEK_SET ) < 0 )
+    {
+        SDL_CloseIO( pStream );
+        return FALSE;
+    }
+
+    pFile->Handle = pStream;
+    pFile->Length = (s32)FileLength;
+    return TRUE;
+#else
+    (void)OpenFlags;
 
     pFile->Handle = fopen( CleanFile, "rb" );
     if( !pFile->Handle )
@@ -181,6 +216,7 @@ xbool io_device_host::DeviceOpen( const char* pFilename,
     }
 
     return TRUE;
+#endif
 }
 
 //==========================================================================
@@ -197,6 +233,17 @@ xbool io_device_host::DeviceRead( io_device_file* pFile,
     LogDeviceRead( pFile, Length, Offset );
 #endif
 
+#if defined( TARGET_ANDROID )
+    if( SDL_SeekIO( (SDL_IOStream*)pFile->Handle, Offset, SDL_IO_SEEK_SET ) < 0 )
+    {
+        ReadCallback( -1, pFile->pHardwareData );
+        return FALSE;
+    }
+
+    const s32 ReadLength = (s32)SDL_ReadIO( (SDL_IOStream*)pFile->Handle,
+                                            pBuffer,
+                                            (size_t)Length );
+#else
     if( fseek( (FILE*)pFile->Handle, Offset, SEEK_SET ) != 0 )
     {
         ReadCallback( -1, pFile->pHardwareData );
@@ -204,6 +251,7 @@ xbool io_device_host::DeviceRead( io_device_file* pFile,
     }
 
     const s32 ReadLength = (s32)fread( pBuffer, 1, Length, (FILE*)pFile->Handle );
+#endif
     ReadCallback( (ReadLength == Length) ? ReadLength : -1, pFile->pHardwareData );
     return (ReadLength == Length);
 }
@@ -232,7 +280,11 @@ void io_device_host::DeviceClose( io_device_file* pFile )
 {
     if( pFile && pFile->Handle )
     {
+#if defined( TARGET_ANDROID )
+        SDL_CloseIO( (SDL_IOStream*)pFile->Handle );
+#else
         fclose( (FILE*)pFile->Handle );
+#endif
         pFile->Handle = NULL;
     }
 }

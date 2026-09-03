@@ -9,10 +9,10 @@
 #ifndef X_THREADS_PRIVATE_HPP
 #define X_THREADS_PRIVATE_HPP
 
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
 #include <windows.h>
 #define X_THREAD_BOOT_DECL unsigned __stdcall
-#elif defined( TARGET_LINUX )
+#elif defined( TARGET_POSIX )
 #define X_THREAD_BOOT_DECL void
 #else
 #define X_THREAD_BOOT_DECL void
@@ -24,11 +24,11 @@ struct xthread_private
 {
     s32 ThreadId;
 
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
     HANDLE Handle;
     HANDLE SuspendSemaphore;
     s32    SemaphoreCount;
-#elif defined( TARGET_LINUX )
+#elif defined( TARGET_POSIX )
     void* Handle;
 #endif
 

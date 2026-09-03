@@ -2,14 +2,14 @@
 //
 //  input_sdl.cpp
 //
-//  SDL3 desktop input backend.
+//  SDL3 input backend.
 //
 //==============================================================================
 
 #include "x_target.hpp"
 
-#if !defined( TARGET_DESKTOP )
-#error This file should only be compiled for desktop platforms.
+#if !defined( TARGET_DESKTOP ) && !defined( TARGET_MOBILE )
+#error This file should only be compiled for desktop or mobile platforms.
 #endif
 
 #include "x_files.hpp"
@@ -1099,6 +1099,26 @@ public:
         }
 
         return FALSE;
+    }
+
+    xbool IsDevicePresent( input_device Device, s32 DeviceID ) const override
+    {
+        if( (DeviceID < 0) || (DeviceID >= INPUT_MAX_DEVICES) )
+            return FALSE;
+
+        switch( Device )
+        {
+        case INPUT_DEVICE_KEYBOARD:
+        case INPUT_DEVICE_MOUSE:
+            return DeviceID == 0;
+
+        case INPUT_DEVICE_GAMEPAD:
+            return s_Input.Gamepad[DeviceID].pGamepad &&
+                   SDL_GamepadConnected( s_Input.Gamepad[DeviceID].pGamepad );
+
+        default:
+            return FALSE;
+        }
     }
 
     s32 GetPadCount( void ) const override

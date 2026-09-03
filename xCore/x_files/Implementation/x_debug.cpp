@@ -38,14 +38,19 @@
 
 #include <stdio.h>  // for printf
 
-#ifdef TARGET_PC
+#if defined( TARGET_ANDROID )
+#include <android/log.h>
+#endif
+
+#ifdef TARGET_WINDOWS
 #include "../x_bytestream.hpp"
 #include <richedit.h>
 #endif
 
 //==============================================================================
 
-#if defined( X_RETAIL ) && !defined( X_QA ) && !defined( TARGET_DESKTOP )
+#if defined( X_RETAIL ) && !defined( X_QA ) && \
+    !defined( TARGET_DESKTOP ) && !defined( TARGET_ANDROID )
 #error Exclude x_debug.cpp from retail builds.
 #endif
 
@@ -86,7 +91,7 @@ static      x_debug_msg_fn*     s_DebugMsgFunction = NULL;
 static      char                s_Cause[CAUSE_BUFFER_SIZE] = {0};
 #endif
 
-#ifdef TARGET_DESKTOP
+#if defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
 static      char                s_ErrorBuffer[ ERROR_BUFFER_SIZE ];
 static      s32                 s_iErrorBuffer = 0;
 static      s32                 s_iErrorLast   = 0;
@@ -105,7 +110,7 @@ static      s32                 s_iErrorLast   = 0;
 //==============================================================================
 //  Debugger Message
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 #include <windows.h>    // OutputDebugString()
 #endif
 
@@ -116,7 +121,7 @@ xbool g_bSkipThrowCatchAssertDialogs = FALSE;
 
 //==============================================================================
 
-#ifdef TARGET_DESKTOP
+#if defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
 const char* xExceptionGetErrorString( void )
 {
     return s_ErrorBuffer;
@@ -125,7 +130,7 @@ const char* xExceptionGetErrorString( void )
 
 //==============================================================================
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 
 const char* s_pRTF_Title = NULL;
 const char* s_pRTF_Message = NULL;
@@ -286,13 +291,13 @@ s32 RTFDialog( const char* pTitle, const char* pMessage )
     return Result;
 }
 
-#endif // TARGET_PC
+#endif // TARGET_WINDOWS
 
 //==============================================================================
 
 xbool xExceptionCatchHandler( const char* pFileName, s32 LineNum, const char* pMessage, xbool& bSkipDialog )
 {
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 
 #ifdef X_LOGGING
     log_LOCK();
@@ -335,7 +340,7 @@ xbool xExceptionCatchHandler( const char* pFileName, s32 LineNum, const char* pM
 
 //==============================================================================
 
-#ifdef TARGET_DESKTOP
+#if defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
 
 xbool xExceptionThrowHandler( const char* pFileName, s32 LineNum, const char* pMessage, xbool bConcatenate, xbool& bSkipDialog )
 {
@@ -346,7 +351,7 @@ xbool xExceptionThrowHandler( const char* pFileName, s32 LineNum, const char* pM
 
 //==============================================================================
 
-#ifdef TARGET_DESKTOP
+#if defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
 
 xbool xExceptionThrowHandler( const char* pFileName, s32 LineNum, const char* pMessage, xbool bConcatenate, s32 Code, xbool& bSkipDialog )
 {
@@ -420,7 +425,7 @@ xbool xExceptionThrowHandler( const char* pFileName, s32 LineNum, const char* pM
     //log_ERROR( "ExceptionTHROW", s_ErrorBuffer  );
     //LOG_FLUSH();
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 
     if( (g_bSkipAllThrowDialogs == FALSE) &&  (g_bSkipThrowCatchAssertDialogs==FALSE) )
     {
@@ -467,8 +472,10 @@ static void sys_dbg_OutputConsole(s32 Channel, const char* pString)
         return;
     }
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     OutputDebugString(pString);
+#elif defined( TARGET_ANDROID )
+    __android_log_print( ANDROID_LOG_INFO, "A51", "%s", pString );
 #else
     printf("%s",pString);
 #endif
@@ -685,7 +692,7 @@ static void s_DefaultLogHandler(const char *pString)
 //==============================================================================
 
 //------------------------------------------------------------------------------
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 //------------------------------------------------------------------------------
 
 #define DEFAULT_RTF_HANDLER_DEFINED
@@ -807,7 +814,7 @@ xbool s_DefaultRTFHandler( const char* pFileName,
 }
 
 //------------------------------------------------------------------------------
-#endif // TARGET_PC
+#endif // TARGET_WINDOWS
 //------------------------------------------------------------------------------
 
 //==============================================================================
@@ -857,7 +864,7 @@ xbool s_DefaultRTFHandler( const char* pFileName,
 //       rather than requiring linkage with dbghelp.lib
 
 //------------------------------------------------------------------------------
-#if defined(TARGET_PC) && defined(USE_DBGHELP)
+#if defined(TARGET_WINDOWS) && defined(USE_DBGHELP)
 //------------------------------------------------------------------------------
 
 #include <dbghelp.h>

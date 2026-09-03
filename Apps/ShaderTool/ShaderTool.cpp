@@ -10,11 +10,14 @@
 
 #include "ShaderTool.hpp"
 
+#include <errno.h>
 #include <stdio.h>
 
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
 #include <direct.h>
 #include <windows.h>
+#else
+#include <sys/stat.h>
 #endif
 
 //==============================================================================
@@ -44,7 +47,7 @@ xbool CreateDirectoryOne( const xstring& Path )
     if( Path.IsEmpty() )
         return TRUE;
 
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
     DWORD Attrib = GetFileAttributesA( (const char*)Path );
     if( (Attrib != INVALID_FILE_ATTRIBUTES) && (Attrib & FILE_ATTRIBUTE_DIRECTORY) )
         return TRUE;
@@ -55,7 +58,17 @@ xbool CreateDirectoryOne( const xstring& Path )
     Attrib = GetFileAttributesA( (const char*)Path );
     return ((Attrib != INVALID_FILE_ATTRIBUTES) && (Attrib & FILE_ATTRIBUTE_DIRECTORY));
 #else
-    return FALSE;
+    struct stat Info;
+    if( stat( (const char*)Path, &Info ) == 0 )
+        return S_ISDIR( Info.st_mode ) ? TRUE : FALSE;
+
+    if( mkdir( (const char*)Path, 0755 ) == 0 )
+        return TRUE;
+
+    if( errno != EEXIST )
+        return FALSE;
+
+    return (stat( (const char*)Path, &Info ) == 0) && S_ISDIR( Info.st_mode );
 #endif
 }
 
@@ -305,10 +318,10 @@ xbool BuildEcsMeta( const shader_entry&                         Shader,
     x_store_le32( pMeta + ECS_META_STAGE,                  Stage );
     x_store_le32( pMeta + ECS_META_BINDING_ABI,            ECS_BINDING_ABI_V1 );
     x_store_le32( pMeta + ECS_META_FLAGS,                  0 );
-    x_store_le32( pMeta + ECS_META_SAMPLER_COUNT,          Resources.Samplers );
-    x_store_le32( pMeta + ECS_META_UNIFORM_COUNT,          Resources.UniformBuffers );
-    x_store_le32( pMeta + ECS_META_STORAGE_TEXTURE_COUNT,  Resources.StorageTextures );
-    x_store_le32( pMeta + ECS_META_STORAGE_BUFFER_COUNT,   Resources.StorageBuffers );
+    x_store_le32( pMeta + ECS_META_SAMPLER_COUNT,          Resources.SamplerCount );
+    x_store_le32( pMeta + ECS_META_UNIFORM_COUNT,          Resources.UniformBufferCount );
+    x_store_le32( pMeta + ECS_META_STORAGE_TEXTURE_COUNT,  Resources.StorageTextureCount );
+    x_store_le32( pMeta + ECS_META_STORAGE_BUFFER_COUNT,   Resources.StorageBufferCount );
     x_store_le32( pMeta + ECS_META_BINDING_COUNT,          BindingCount );
     x_store_le32( pMeta + ECS_META_BINDING_STRIDE,         ECS_BINDING_RECORD_SIZE );
     x_store_le32( pMeta + ECS_META_BINDINGS_OFFSET,        BindingsOffset );
@@ -660,14 +673,18 @@ xstring JoinPath( const xstring& Path, const xstring& File )
     if( IsSlash( Path[Path.GetLength() - 1] ) )
         return Path + File;
 
+#if defined( TARGET_WINDOWS )
     return Path + "\\" + File;
+#else
+    return Path + "/" + File;
+#endif
 }
 
 //==============================================================================
 
 xstring NormalizePath( const xstring& Path )
 {
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
     char  Buffer[MAX_PATH];
     DWORD Length = GetFullPathNameA( (const char*)Path, MAX_PATH, Buffer, NULL );
 
@@ -778,7 +795,7 @@ xbool WriteBinaryFile( const xstring& PathName, const void* pData, s32 Size )
 
 xbool RemoveFile( const xstring& PathName )
 {
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
     if( DeleteFileA( (const char*)PathName ) )
         return TRUE;
 
@@ -801,7 +818,7 @@ xbool RemoveFile( const xstring& PathName )
 
 xbool ReplaceFile( const xstring& TempPath, const xstring& FinalPath )
 {
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
     return MoveFileExA( (const char*)TempPath,
                         (const char*)FinalPath,
                         MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH );
@@ -847,7 +864,7 @@ xstring PdbPath( const shader_script& Script, const shader_entry& Shader )
 
 xstring TempPathFor( const xstring& PathName )
 {
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
     return xstring( (const char*)xfs( "%s.tmp.%u", (const char*)PathName,
                                                   (u32)GetCurrentProcessId() ) );
 #else
@@ -875,7 +892,7 @@ const char* BindingModelName( shader_binding_model Model )
 void DisplayHelp( void )
 {
     x_printf( "\n" );
-    x_printf( "ShaderTool (c)2002 Inevitable Entertainment Inc.\n"
+    x_printf( "ShaderTool (c)2002 Inevitable Entertainment Inc.\n" );
     x_printf( "\n" );
     x_printf( "  usage:\n" );
     x_printf( "         ShaderTool [-clean] [-v] <script.shaderscript>\n" );

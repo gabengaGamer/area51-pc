@@ -227,7 +227,7 @@ bbox trigger_spatial_object::GetLocalBBox( void ) const
         break;
     }
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     vector3 size = BBox.GetSize();
 
     if ( size == vector3(0,0,0) )

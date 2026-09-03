@@ -10,13 +10,17 @@
 
 #include "ShaderTool.hpp"
 
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS ) || defined( TARGET_LINUX )
+#if defined( TARGET_WINDOWS )
 #include <windows.h>
 #include <unknwn.h>
 #include <objidl.h>
 #include <oleauto.h>
+#endif
 #include <dxcapi.h>
+#define interface struct
 #include <d3d12shader.h>
+#undef interface
 #include <limits.h>
 #include <string>
 #include <vector>
@@ -24,7 +28,7 @@
 
 //==============================================================================
 
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS ) || defined( TARGET_LINUX )
 
 template <class T>
 class dxc_ptr
@@ -60,6 +64,7 @@ private:
 static
 std::wstring ToWide( const xstring& Text )
 {
+#if defined( TARGET_WINDOWS )
     const s32 Length = MultiByteToWideChar( CP_ACP,
                                            0,
                                            (const char*)Text,
@@ -79,6 +84,13 @@ std::wstring ToWide( const xstring& Text )
                          Length );
 
     return Result;
+#else
+    CA2W Converted( (const char*)Text );
+    if( !Converted.m_psz )
+        return std::wstring();
+
+    return std::wstring( Converted.m_psz );
+#endif
 }
 
 //==============================================================================
@@ -540,7 +552,7 @@ xbool ReflectResources( IDxcUtils*              pUtils,
                           Binding.Name, Binding.Space, ResourceSpace, (const char*)Shader.Name );
                 return FALSE;
             }
-            Resources.Samplers = MAX( Resources.Samplers, End );
+            Resources.SamplerCount = MAX( Resources.SamplerCount, End );
         }
         else if( Binding.Type == D3D_SIT_CBUFFER )
         {
@@ -550,7 +562,7 @@ xbool ReflectResources( IDxcUtils*              pUtils,
                           Binding.Name, Binding.Space, UniformSpace, (const char*)Shader.Name );
                 return FALSE;
             }
-            Resources.UniformBuffers = MAX( Resources.UniformBuffers, End );
+            Resources.UniformBufferCount = MAX( Resources.UniformBufferCount, End );
             AddReflectionBinding( OutBindings,
                                   SHADER_REFLECT_UNIFORM_BUFFER,
                                   Binding.Name,
@@ -559,11 +571,11 @@ xbool ReflectResources( IDxcUtils*              pUtils,
         }
     }
 
-    if( (Script.BindingModel == SHADER_BINDING_SDL) && (Resources.UniformBuffers > 4) )
+    if( (Script.BindingModel == SHADER_BINDING_SDL) && (Resources.UniformBufferCount > 4) )
     {
         x_printf( "Error: SDL supports at most four uniform buffers per graphics stage; shader %s needs %u\n",
                   (const char*)Shader.Name,
-                  Resources.UniformBuffers );
+                  Resources.UniformBufferCount );
         return FALSE;
     }
 
@@ -576,7 +588,7 @@ xbool ReflectResources( IDxcUtils*              pUtils,
         const u32 End = BindingEnd( Binding );
         if( IsSampledTexture( Bindings, Binding ) )
         {
-            if( End > Resources.Samplers )
+            if( End > Resources.SamplerCount )
             {
                 x_printf( "Error: Sampled texture '%s' at slot %u has no matching sampler in shader %s\n",
                           Binding.Name, End - 1, (const char*)Shader.Name );
@@ -591,23 +603,23 @@ xbool ReflectResources( IDxcUtils*              pUtils,
         }
         else if( Script.BindingModel == SHADER_BINDING_SDL )
         {
-            if( (Binding.Space != ResourceSpace) || (Binding.BindPoint < Resources.Samplers) )
+            if( (Binding.Space != ResourceSpace) || (Binding.BindPoint < Resources.SamplerCount) )
             {
                 x_printf( "Error: SDL storage texture '%s' must follow %u sampled textures in space%u in shader %s\n",
-                          Binding.Name, Resources.Samplers, ResourceSpace, (const char*)Shader.Name );
+                          Binding.Name, Resources.SamplerCount, ResourceSpace, (const char*)Shader.Name );
                 return FALSE;
             }
-            Resources.StorageTextures = MAX( Resources.StorageTextures,
-                                             End - Resources.Samplers );
+            Resources.StorageTextureCount = MAX( Resources.StorageTextureCount,
+                                                 End - Resources.SamplerCount );
             AddReflectionBinding( OutBindings,
                                   SHADER_REFLECT_STORAGE_TEXTURE,
                                   Binding.Name,
-                                  Binding.BindPoint - Resources.Samplers,
+                                  Binding.BindPoint - Resources.SamplerCount,
                                   Binding.BindCount );
         }
         else if( Script.BindingModel == SHADER_BINDING_NATIVE )
         {
-            Resources.StorageTextures = MAX( Resources.StorageTextures, End );
+            Resources.StorageTextureCount = MAX( Resources.StorageTextureCount, End );
             AddReflectionBinding( OutBindings,
                                   SHADER_REFLECT_STORAGE_TEXTURE,
                                   Binding.Name,
@@ -616,7 +628,7 @@ xbool ReflectResources( IDxcUtils*              pUtils,
         }
     }
 
-    const u32 StorageBufferBase = Resources.Samplers + Resources.StorageTextures;
+    const u32 StorageBufferBase = Resources.SamplerCount + Resources.StorageTextureCount;
     for( s32 i=0; i<Bindings.GetCount(); i++ )
     {
         const D3D12_SHADER_INPUT_BIND_DESC& Binding = Bindings[i];
@@ -639,8 +651,8 @@ xbool ReflectResources( IDxcUtils*              pUtils,
                               Binding.Name, StorageBufferBase, ResourceSpace, (const char*)Shader.Name );
                     return FALSE;
                 }
-                Resources.StorageBuffers = MAX( Resources.StorageBuffers,
-                                                End - StorageBufferBase );
+                Resources.StorageBufferCount = MAX( Resources.StorageBufferCount,
+                                                    End - StorageBufferBase );
                 AddReflectionBinding( OutBindings,
                                       SHADER_REFLECT_STORAGE_BUFFER,
                                       Binding.Name,
@@ -649,7 +661,7 @@ xbool ReflectResources( IDxcUtils*              pUtils,
             }
             else if( Script.BindingModel == SHADER_BINDING_NATIVE )
             {
-                Resources.StorageBuffers = MAX( Resources.StorageBuffers, End );
+                Resources.StorageBufferCount = MAX( Resources.StorageBufferCount, End );
                 AddReflectionBinding( OutBindings,
                                       SHADER_REFLECT_STORAGE_BUFFER,
                                       Binding.Name,
@@ -664,13 +676,13 @@ xbool ReflectResources( IDxcUtils*              pUtils,
                 x_printf( "Error: SDL graphics shaders cannot use UAV resource '%s'\n", Binding.Name );
                 return FALSE;
             }
-            Resources.StorageTextures = MAX( Resources.StorageTextures, End );
+            Resources.StorageTextureCount = MAX( Resources.StorageTextureCount, End );
         }
     }
 
     if( Script.BindingModel == SHADER_BINDING_SDL )
     {
-        for( u32 Slot=0; Slot<Resources.Samplers; Slot++ )
+        for( u32 Slot=0; Slot<Resources.SamplerCount; Slot++ )
         {
             if( !HasSamplerSlot( Bindings, Slot, ResourceSpace ) ||
                 !HasTextureSlot( Bindings, Slot, ResourceSpace ) )
@@ -682,7 +694,7 @@ xbool ReflectResources( IDxcUtils*              pUtils,
             }
         }
 
-        for( u32 Slot=0; Slot<Resources.UniformBuffers; Slot++ )
+        for( u32 Slot=0; Slot<Resources.UniformBufferCount; Slot++ )
         {
             if( !HasUniformBufferSlot( Bindings, Slot, UniformSpace ) )
             {
@@ -693,9 +705,9 @@ xbool ReflectResources( IDxcUtils*              pUtils,
             }
         }
 
-        for( u32 Slot=0; Slot<Resources.StorageTextures; Slot++ )
+        for( u32 Slot=0; Slot<Resources.StorageTextureCount; Slot++ )
         {
-            const u32 BindingSlot = Resources.Samplers + Slot;
+            const u32 BindingSlot = Resources.SamplerCount + Slot;
             if( !HasTextureSlot( Bindings, BindingSlot, ResourceSpace ) ||
                 HasSamplerSlot( Bindings, BindingSlot, ResourceSpace ) )
             {
@@ -706,7 +718,7 @@ xbool ReflectResources( IDxcUtils*              pUtils,
             }
         }
 
-        for( u32 Slot=0; Slot<Resources.StorageBuffers; Slot++ )
+        for( u32 Slot=0; Slot<Resources.StorageBufferCount; Slot++ )
         {
             const u32 BindingSlot = StorageBufferBase + Slot;
             if( !HasStorageBufferSlot( Bindings, BindingSlot, ResourceSpace ) )

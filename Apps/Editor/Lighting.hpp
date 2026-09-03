@@ -16,23 +16,23 @@ enum
 void lighting_Initialize                ( void );
 void lighting_ExportTo3DMax             ( const xarray<guid>& lGuid, const char* pFileName );
 
-void lighting_LightObject               ( platform            Platform,
+void lighting_LightObject               ( asset_platform            Platform,
                                           guid                Guid,
                                           const matrix4&      L2W,
                                           s32                 Mode );
 
-void lighting_LightObjects              ( platform            Platform,
+void lighting_LightObjects              ( asset_platform            Platform,
                                           const xarray<guid>& lGuid,
                                           s32                 Mode );
 
-void lighting_CreateColorTable          ( platform            Platform,
+void lighting_CreateColorTable          ( asset_platform            Platform,
                                           const xarray<guid>& lGuid,
                                           const char*         pFileName );
 
-void lighting_CreatePlaySurfaceColors   ( platform            Platform,
+void lighting_CreatePlaySurfaceColors   ( asset_platform            Platform,
                                           const xarray<guid>& lGuid );
 
-void lighting_KillPlaySurfaceColors     ( platform            Platform,
+void lighting_KillPlaySurfaceColors     ( asset_platform            Platform,
                                           const xarray<guid>& lGuid );
 
 #endif

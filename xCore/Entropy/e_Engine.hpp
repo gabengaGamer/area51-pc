@@ -89,8 +89,8 @@ enum reboot_reason
     REBOOT_UPDATE,
 };
 
-#if defined(TARGET_DESKTOP)
-#if defined(TARGET_PC)
+#if defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
+#if defined(TARGET_WINDOWS)
 struct HWND__;
 struct HINSTANCE__;
 
@@ -158,9 +158,9 @@ xbool           eng_OpenURL             ( const char* pURL );
 //  DESKTOP HOST FUNCTIONS
 //==============================================================================
 
-#if defined(TARGET_DESKTOP)
+#if defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
 
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
 void            eng_EntryPoint              ( s32&                       argc,
                                               char**&                    argv,
                                               eng_native_instance_handle hInstance,
@@ -191,7 +191,7 @@ void            eng_SetResolution           ( s32 Width, s32 Height );
 eng_native_instance_handle
                 eng_GetNativeInstance       ( void );
 
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
 #define AppMain AppMain( s32 argc, char* argv[] );                           \
                                                                               \
 s32 __stdcall WinMain( eng_native_instance_handle hInstance,                  \
@@ -211,7 +211,7 @@ s32 __stdcall WinMain( eng_native_instance_handle hInstance,                  \
 void AppMain
 #endif
 
-#endif // TARGET_DESKTOP
+#endif // TARGET_DESKTOP || TARGET_MOBILE
 
 //==============================================================================
 //  INLINE FUNCTIONS

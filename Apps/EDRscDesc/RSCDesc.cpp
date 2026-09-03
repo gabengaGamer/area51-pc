@@ -37,7 +37,7 @@ public:
     virtual void    OnGetCompilerDependencies   ( xarray<xstring>& List    ) {}; 
     virtual void    OnGetCompilerRules          ( xstring& CompilerRules     ) { CompilerRules = m_CompilerRules; };
     virtual void    OnCheckIntegrity            ( void )                       {}
-    virtual void    OnGetFinalDependencies      ( xarray<xstring>& List, platform Platform, const char* pDirectory ) {}
+    virtual void    OnGetFinalDependencies      ( xarray<xstring>& List, asset_platform Platform, const char* pDirectory ) {}
     external_rsc_desc( void );
 
     xstring  m_CompilerRules;
@@ -321,22 +321,22 @@ rsc_desc_mgr::rsc_desc_mgr( void )
     m_IsCompiling = FALSE;
     m_bStopBuild  = FALSE;
 
-    m_Platform[0].Platform = PLATFORM_PC;
+    m_Platform[0].Platform = ASSET_PLATFORM_DESKTOP;
     m_Platform[0].bCompile = TRUE;
     x_sprintf( m_Platform[0].OutputDir, "PC"  );
     x_strcpy( m_Platform[0].Cmd, "PC" );
 
-    m_Platform[1].Platform = PLATFORM_GCN;
+    m_Platform[1].Platform = ASSET_PLATFORM_GCN;
     m_Platform[1].bCompile = FALSE;
     x_sprintf( m_Platform[1].OutputDir, "GCN" );
     x_strcpy( m_Platform[1].Cmd, "GCN" );
 
-    m_Platform[2].Platform = PLATFORM_XBOX;
+    m_Platform[2].Platform = ASSET_PLATFORM_XBOX;
     m_Platform[2].bCompile = FALSE;
     x_sprintf( m_Platform[2].OutputDir, "XBOX" );
     x_strcpy( m_Platform[2].Cmd, "XBOX" );
 
-    m_Platform[3].Platform = PLATFORM_PS2;
+    m_Platform[3].Platform = ASSET_PLATFORM_PS2;
     m_Platform[3].bCompile = FALSE;
     x_sprintf( m_Platform[3].OutputDir, "PS2" );
     x_strcpy( m_Platform[3].Cmd, "PS2" );

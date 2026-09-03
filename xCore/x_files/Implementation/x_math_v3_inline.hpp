@@ -1029,6 +1029,15 @@ vector3p::operator const vector3( void ) const
 }
 
 //==============================================================================
+
+inline
+vector3& vector3::operator = ( const vector3p& V )
+{
+    Set( V.X, V.Y, V.Z );
+    return( *this );
+}
+
+//==============================================================================
 inline
 f32 vector3::ClosestPointToRectangle( 
     const vector3& P0,                      // Origin from the edges. 

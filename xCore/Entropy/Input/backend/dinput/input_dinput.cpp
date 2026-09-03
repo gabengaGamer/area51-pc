@@ -10,7 +10,7 @@
 
 #include "x_target.hpp"
 
-#ifndef TARGET_PC
+#ifndef TARGET_WINDOWS
 #error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
 #endif
 
@@ -139,6 +139,7 @@ public:
     virtual xbool   IsGadgetDown        ( input_gadget GadgetID, s32 DeviceID ) const;
     virtual f32     GetGadgetValue      ( input_gadget GadgetID, s32 DeviceID ) const;
     virtual xbool   IsGadgetPresent     ( input_gadget GadgetID, s32 DeviceID ) const;
+    virtual xbool   IsDevicePresent     ( input_device Device, s32 DeviceID ) const;
     virtual s32     GetPadCount         ( void ) const;
 
     virtual void    Feedback            ( f32 Duration, f32 Intensity, s32 DeviceID );
@@ -1216,6 +1217,35 @@ xbool dinput_input_backend::IsGadgetPresent( input_gadget GadgetID, s32 DeviceID
     }
 
     return FALSE;
+}
+
+//==============================================================================
+
+xbool dinput_input_backend::IsDevicePresent( input_device Device, s32 DeviceID ) const
+{
+    if( (DeviceID < 0) || (DeviceID >= MAX_DEVICES) )
+        return FALSE;
+
+    switch( Device )
+    {
+    case INPUT_DEVICE_KEYBOARD:
+    {
+        s32 const KeybdDevice = s_Input.KeybdDevice[ DeviceID ];
+        return( (KeybdDevice >= 0) && (KeybdDevice < MAX_DEVICES) );
+    }
+
+    case INPUT_DEVICE_MOUSE:
+    {
+        s32 const MouseDevice = s_Input.MouseDevice[ DeviceID ];
+        return( (MouseDevice >= 0) && (MouseDevice < MAX_DEVICES) );
+    }
+
+    case INPUT_DEVICE_GAMEPAD:
+        return (DeviceID < XUSER_MAX_COUNT) && s_Input.bXboxConnected[ DeviceID ];
+
+    default:
+        return FALSE;
+    }
 }
 
 //==============================================================================

@@ -11,6 +11,7 @@
 
 xbool GameAppGetExecutableDirectory( char* pBuffer, s32 BufferSize );
 xbool GameAppGetDataDirectory      ( char* pBuffer, s32 BufferSize );
+xbool GameAppGetSaveDirectory      ( char* pBuffer, s32 BufferSize );
 void  GameAppSetWindowIcon         ( void );
 
 //==============================================================================

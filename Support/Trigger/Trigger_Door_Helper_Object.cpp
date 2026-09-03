@@ -100,7 +100,7 @@ void trigger_door_helper_object::Render ( u32 ParentAttribs )
     OnRender();
     if( ParentAttribs & ATTR_EDITOR_SELECTED )
     {
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
         render::debug::Box ( GetBBox(), XCOLOR_BLUE);
 #endif
     }

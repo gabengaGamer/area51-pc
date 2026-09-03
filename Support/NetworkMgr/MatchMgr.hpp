@@ -19,7 +19,7 @@ extern const char* const MATCH_DOWNLOAD_LOCATION;
 // NOTE: If the provider is not defined, then only local network lookups will be performed.
 //
 //
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
 #define ENABLE_GAMESPY
 #endif
 
@@ -622,7 +622,7 @@ public:
         void                NotifyKick                  ( const char* UniqueId );
         void                ShowOnlineStatus            ( xbool IsEnabled );
         
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
         void                SetBuddies                  (const char* buddies);
         void                ReleasePatch                ( void );
 #endif        
@@ -646,7 +646,7 @@ public:
         xbool               IsAcquireComplete           ( void );
         void                StartIndirectLookup         ( void );
         void                StartLogin                  ( void );
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
         void                BecomeClient                ( const server_info& Config );
 #else
         void                BecomeClient                ( void );
@@ -837,7 +837,7 @@ private:
 
 #endif
 
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
 
 enum 
 {
@@ -864,9 +864,9 @@ enum
         void                StatsUpdateConnect          ( void );
         void                StatsUpdateRead             ( void );
         void                StatsUpdateWrite            ( void );
-#endif // defined(TARGET_PC)
+#endif // defined(TARGET_WINDOWS)
 
-#if defined(TARGET_LINUX)
+#if defined(TARGET_POSIX)
         void                SetAllGameStats             ( const player_stats& Stats );
         void                SetAllCareerStats           ( const player_stats& Stats );
         void                UpdateCareerStatsWithGameStats( void );
@@ -917,7 +917,7 @@ private:
         xarray<server_info> m_PendingResponseList;
         xarray<lobby_info>  m_LobbyList;
         xarray<online_user> m_UserAccounts;
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
         xarray<server_info> m_ServerList;
 #endif
         s32                 m_ActiveAccount;
@@ -1004,7 +1004,7 @@ private:
         xarray<buddy_info>  m_RecentPlayers;
         xbool               m_IsVoiceCapable;
         
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
         char*               m_pMessageOfTheDay;
         char*               m_pMessageOfTheDayBuffer;
         char                m_BuddyList[100];

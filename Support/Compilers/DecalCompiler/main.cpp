@@ -23,7 +23,7 @@
 enum export_platform
 {
     EXPORT_UNKNOWN = 0,
-    EXPORT_PC,
+    EXPORT_DESKTOP,
     EXPORT_PS2,
     EXPORT_XBOX
 };
@@ -387,7 +387,7 @@ const char* CompileBitmap( const char* pOutputPath, const char* pSourceBitmap, u
         case EXPORT_UNKNOWN:
             x_throw( "Internal error: platform not specified" );
             break;
-        case EXPORT_PC:
+        case EXPORT_DESKTOP:
             if ( FormatFlags & BITMAP_FORMAT_INTENSITY )
                 bmp_util::ProcessDetailMap( BMP, FALSE );
             auxbmp_ConvertToD3D( BMP );
@@ -762,7 +762,7 @@ void ExecuteScript( command_line& CommandLine )
                                X_MAX_PATH - 1,
                                "Decal package output path" );
 
-            Output.Platform = EXPORT_PC;
+            Output.Platform = EXPORT_DESKTOP;
             if( OptName == xstring( "PS2" ) )
             {
                 Output.Platform = EXPORT_PS2;

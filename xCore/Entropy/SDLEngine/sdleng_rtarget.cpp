@@ -8,7 +8,7 @@
 
 #include "x_target.hpp"
 
-#if defined(TARGET_DESKTOP) && defined(ENTROPY_RENDER_SDL)
+#if (defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)) && defined(ENTROPY_RENDER_SDL)
 
 //==============================================================================
 //  INCLUDES
@@ -1217,5 +1217,5 @@ const char* rtarget_GetFormatName( rtarget_format Format )
 }
 
 //==============================================================================
-#endif // defined(TARGET_DESKTOP) && defined(ENTROPY_RENDER_SDL)
+#endif // (defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)) && defined(ENTROPY_RENDER_SDL)
 //==============================================================================

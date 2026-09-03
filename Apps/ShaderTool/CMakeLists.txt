@@ -13,4 +13,5 @@
         CommandLine
         Parsing
         x_files
+        dxcompiler
 )

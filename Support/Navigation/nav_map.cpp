@@ -1623,7 +1623,7 @@ vector3 nav_map::GetClosestPointToLine( nav_map::overlap_vert* pVerts, s32 nVert
         if ( fTestDist < fClosestDist )
         {
             fClosestDist = fTestDist;
-            vClosestPoint = pVerts[i].m_Pos;
+            vClosestPoint.Set( pVerts[i].m_Pos.X, pVerts[i].m_Pos.Y, pVerts[i].m_Pos.Z );
         }
         
         // Test for intersection
@@ -1637,8 +1637,10 @@ vector3 nav_map::GetClosestPointToLine( nav_map::overlap_vert* pVerts, s32 nVert
         //   /   \
         // C      B
         vector3 A,B,C,D;
-        A = pVerts[i].m_Pos;
-        B = pVerts[(i+1)%nVerts].m_Pos;
+        A.Set( pVerts[i].m_Pos.X, pVerts[i].m_Pos.Y, pVerts[i].m_Pos.Z );
+        B.Set( pVerts[(i+1)%nVerts].m_Pos.X,
+               pVerts[(i+1)%nVerts].m_Pos.Y,
+               pVerts[(i+1)%nVerts].m_Pos.Z );
         C = vStart;
         D = vEnd;
 
@@ -1654,7 +1656,7 @@ vector3 nav_map::GetClosestPointToLine( nav_map::overlap_vert* pVerts, s32 nVert
             if (x_abs(numA) < 0.0001f )
             {
                 //lines are coincident, so let's just return a point on the line
-                vClosestPoint = pVerts[i].m_Pos;
+                vClosestPoint.Set( pVerts[i].m_Pos.X, pVerts[i].m_Pos.Y, pVerts[i].m_Pos.Z );
                 break;
             }
 

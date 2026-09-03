@@ -8,7 +8,7 @@
 
 enum export_targets
 {
-    EXPORT_PC,
+    EXPORT_DESKTOP,
     EXPORT_PS2,
     EXPORT_GCN,
     EXPORT_XBOX,

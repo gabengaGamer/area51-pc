@@ -99,10 +99,10 @@ if( WIN32 )
     list( APPEND A51_NETWORK_GAMESPY_SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/GameSpy/callbacks.cpp"
     )
-elseif( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
+elseif( CMAKE_SYSTEM_NAME MATCHES "^(Linux|Android)$" )
     list( APPEND A51_NETWORK_PLATFORM_SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/MatchMgr_Linux.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Voice/Headset_Linux.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/MatchMgr_POSIX.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Voice/Headset_POSIX.cpp"
     )
 else()
     message( FATAL_ERROR "NetworkMgr has no platform backend for ${CMAKE_SYSTEM_NAME}" )

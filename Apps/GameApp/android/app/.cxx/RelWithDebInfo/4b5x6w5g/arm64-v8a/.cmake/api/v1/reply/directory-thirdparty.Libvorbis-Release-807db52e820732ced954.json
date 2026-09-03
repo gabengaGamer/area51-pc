@@ -1,0 +1,45 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"xCore/3rdParty/Libvorbis/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 83,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "lib/pkgconfig",
+			"paths" : 
+			[
+				"Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/Libvorbis/vorbis.pc",
+				"Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/Libvorbis/vorbisenc.pc",
+				"Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/Libvorbis/vorbisfile.pc"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "thirdparty/Libvorbis",
+		"source" : "xCore/3rdParty/Libvorbis"
+	}
+}

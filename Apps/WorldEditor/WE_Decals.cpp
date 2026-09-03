@@ -138,7 +138,7 @@ guid world_editor::PlaceDecalFromTemporary( void )
 
 //==============================================================================
 
-void world_editor::ExportDecals( const char* FileName, xarray<guid>& lstGuids, platform PlatformType )
+void world_editor::ExportDecals( const char* FileName, xarray<guid>& lstGuids, asset_platform PlatformType )
 {
     g_DecalMgr.BeginStaticDecalExport( FileName );
 

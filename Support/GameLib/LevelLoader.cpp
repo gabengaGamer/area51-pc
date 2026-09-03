@@ -324,7 +324,7 @@ void level_loader::BeginLevelLoad( xbool bFullLoad )
     m_LevelLoadStage         = LEVEL_LOAD_FIND_MAP;
     m_pMapEntry              = NULL;
     m_LevelFileSystem        = xfs( "levels/%s/level", g_ActiveConfig.GetLevelPath() );
-#if defined( TARGET_LINUX )
+#if defined( TARGET_POSIX )
     // Fix uppercase asset directory issue in Linus stuff.
     char LinuxLevelFileSystem[X_MAX_PATH];
     x_strcpy( LinuxLevelFileSystem, m_LevelFileSystem );

@@ -95,7 +95,7 @@ public:
     virtual void        OnGetCompilerDependencies   ( xarray<xstring>& List  );
     virtual void        OnGetCompilerRules          ( xstring& CompilerRules ) = 0;
     virtual const char* OnGetCompilerOutputOption   ( void ) const             { return "OUTPUT"; }
-    virtual void        OnGetFinalDependencies      ( xarray<xstring>& List, platform Platform, const char* pDirectory );
+    virtual void        OnGetFinalDependencies      ( xarray<xstring>& List, asset_platform Platform, const char* pDirectory );
 
     // Specific geom description functions
             void        RefreshSourceFileInfo       ( void );

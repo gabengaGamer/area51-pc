@@ -140,7 +140,7 @@ xcolor ConvertColorTo4444( xcolor Color )
 
 //=============================================================================
 
-static xbool GetInfo( platform Platform, guid Guid, info& Info )
+static xbool GetInfo( asset_platform Platform, guid Guid, info& Info )
 {
     object* pObject = g_ObjMgr.GetObjectByGuid( Guid );
     
@@ -396,12 +396,12 @@ void lighting_Initialize( void )
 
 //=============================================================================
 
-void lighting_LightObject( platform       Platform,
+void lighting_LightObject( asset_platform       Platform,
                            guid           Guid,
                            const matrix4& L2W,
                            s32            Mode )
 {
-    if( Platform != PLATFORM_PC )
+    if( Platform != ASSET_PLATFORM_DESKTOP )
         x_throw( "Can only light the objects in the PC version" );
 
     // Take the world light vector into the local space of the object
@@ -567,7 +567,7 @@ void lighting_LightObject( platform       Platform,
 
 //=============================================================================
 
-void lighting_LightObjects( platform            Platform,
+void lighting_LightObjects( asset_platform            Platform,
                             const xarray<guid>& lGuid,
                             s32                 Mode )
 {
@@ -703,13 +703,13 @@ void lighting_LightObjects( platform            Platform,
 
 //=============================================================================
 
-static s32 LoadPlatformGeom( platform Platform, const info& InfoPC, xarray<rigid_geom*>& lRigidGeom )
+static s32 LoadPlatformGeom( asset_platform Platform, const info& InfoPC, xarray<rigid_geom*>& lRigidGeom )
 {
     s32 nColors = 0;
 
     switch( Platform )
     {
-        case PLATFORM_XBOX :
+        case ASSET_PLATFORM_XBOX :
         {
             const char* pFileNamePC = InfoPC.pRigidInst->GetRigidGeomName();
             if( pFileNamePC == NULL )
@@ -739,7 +739,7 @@ static s32 LoadPlatformGeom( platform Platform, const info& InfoPC, xarray<rigid
             break;
         }
 
-        case PLATFORM_PS2 :
+        case ASSET_PLATFORM_PS2 :
         {
             // Convert PC Geom filename to PS2
             const char* pFileNamePC = InfoPC.pRigidInst->GetRigidGeomName();
@@ -773,7 +773,7 @@ static s32 LoadPlatformGeom( platform Platform, const info& InfoPC, xarray<rigid
             break;
         }
 
-        case PLATFORM_PC :
+        case ASSET_PLATFORM_DESKTOP :
             nColors += InfoPC.pGeom->GetNVerts();
             break;
     }
@@ -793,9 +793,9 @@ static void UnloadAllPlatformGeom( const xarray<rigid_geom*>& lRigidGeom )
 
 //=============================================================================
 
-static s32 CopyColors( platform Platform, const info& InfoPC, u32* pColBase )
+static s32 CopyColors( asset_platform Platform, const info& InfoPC, u32* pColBase )
 {
-    ASSERT( (Platform == PLATFORM_PC) || (Platform == PLATFORM_XBOX) );
+    ASSERT( (Platform == ASSET_PLATFORM_DESKTOP) || (Platform == ASSET_PLATFORM_XBOX) );
 
     s32 nColors = 0;
     rigid_geom& RigidGeomPC = *(rigid_geom*)InfoPC.pGeom;
@@ -838,7 +838,7 @@ void lighting_ExportTo3DMax( const xarray<guid>& lGuid, const char* pFileName )
     for( i=0; i<lGuid.GetCount(); i++ )
     {
         info Info;
-        if ( GetInfo( PLATFORM_PC, lGuid[i], Info ) == FALSE )
+        if ( GetInfo( ASSET_PLATFORM_DESKTOP, lGuid[i], Info ) == FALSE )
             continue;
 
         object* pObject = g_ObjMgr.GetObjectByGuid( lGuid[i] );
@@ -858,7 +858,7 @@ void lighting_ExportTo3DMax( const xarray<guid>& lGuid, const char* pFileName )
         {
             info Info;
 
-            if ( GetInfo( PLATFORM_PC, lGuid[k], Info ) == FALSE )
+            if ( GetInfo( ASSET_PLATFORM_DESKTOP, lGuid[k], Info ) == FALSE )
                 continue;
 
             const char* pObjectName = Info.pRigidInst->GetRigidGeomName();
@@ -957,9 +957,9 @@ void lighting_ExportTo3DMax( const xarray<guid>& lGuid, const char* pFileName )
 
 //=============================================================================
 
-void lighting_CreateColorTable( platform Platform, const xarray<guid>& lGuid, const char* pFileName )
+void lighting_CreateColorTable( asset_platform Platform, const xarray<guid>& lGuid, const char* pFileName )
 {
-    if( (Platform != PLATFORM_PC) && (Platform != PLATFORM_XBOX) )
+    if( (Platform != ASSET_PLATFORM_DESKTOP) && (Platform != ASSET_PLATFORM_XBOX) )
     {
         x_throw( "Rigid color export supports only 32-bit PC/Xbox colors." );
     }
@@ -1024,9 +1024,9 @@ void lighting_CreateColorTable( platform Platform, const xarray<guid>& lGuid, co
 
 //=============================================================================
 
-void lighting_CreatePlaySurfaceColors( platform Platform, const xarray<guid>& lGuid )
+void lighting_CreatePlaySurfaceColors( asset_platform Platform, const xarray<guid>& lGuid )
 {
-    if( (Platform != PLATFORM_PC) && (Platform != PLATFORM_XBOX) )
+    if( (Platform != ASSET_PLATFORM_DESKTOP) && (Platform != ASSET_PLATFORM_XBOX) )
     {
         x_throw( "Play-surface rigid colors support only 32-bit PC/Xbox colors." );
     }
@@ -1091,7 +1091,7 @@ void lighting_CreatePlaySurfaceColors( platform Platform, const xarray<guid>& lG
 
 //=============================================================================
 
-void lighting_KillPlaySurfaceColors( platform Platform, const xarray<guid>& lGuid )
+void lighting_KillPlaySurfaceColors( asset_platform Platform, const xarray<guid>& lGuid )
 {
     xarray<info>        lInfo;
 

@@ -158,7 +158,7 @@ void notepad_object::OnRender ( void )
                 text_GetParams( Dummy, Dummy, Dummy, Dummy,
                                 CharWidth, CharHeight, Dummy );
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
                 //hack fix for PC
                 CharWidth -= 2;
 #endif

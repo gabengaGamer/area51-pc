@@ -10,9 +10,11 @@ if( CMAKE_SYSTEM_NAME STREQUAL "Windows" )
     set( A51_TARGET_PLATFORM Windows )
 elseif( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
     set( A51_TARGET_PLATFORM Linux )
+elseif( CMAKE_SYSTEM_NAME STREQUAL "Android" )
+    set( A51_TARGET_PLATFORM Android )
 else()
     message( FATAL_ERROR
-        "Area 51 supports Windows and Linux targets only; "
+        "Area 51 supports Windows, Linux, and Android targets; "
         "CMAKE_SYSTEM_NAME is '${CMAKE_SYSTEM_NAME}'." )
 endif()
 

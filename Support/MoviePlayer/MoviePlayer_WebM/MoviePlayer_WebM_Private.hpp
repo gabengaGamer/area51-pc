@@ -17,8 +17,8 @@
 
 #include "x_target.hpp"
 
-#if !defined( TARGET_DESKTOP )
-#error This file should only be compiled for a desktop platform. Please check your exclusions on your project spec.
+#if !defined( TARGET_DESKTOP ) && !defined( TARGET_MOBILE )
+#error This file should only be compiled for desktop or mobile platforms. Please check your exclusions on your project spec.
 #endif
 
 //==============================================================================

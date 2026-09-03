@@ -132,6 +132,10 @@ float4 GeomComputeGlow( GEOM_PIXEL_INPUT input,
         return glow;
     }
 
+#if A51_DISABLE_ALPHA_ILLUMINATION
+    return glow;
+#endif
+
     const bool bUseDiffuse           = ( materialFlags & MATERIAL_FLAG_ILLUM_USE_DIFFUSE ) != 0;
     const bool bDiffusePerPixelIllum = ( materialFlags & MATERIAL_FLAG_DIFF_PERPIXEL_ILLUM ) != 0;
     const bool bAlphaPerPixelIllum   = ( materialFlags & MATERIAL_FLAG_ALPHA_PERPIXEL_ILLUM ) != 0;

@@ -21,7 +21,7 @@
 #   include<../3rdParty/DXTLibrary/ImageDXTC.h>
 #   if _MSC_VER >= 1300
 #       define WIN32_LEAN_AND_MEAN
-#       ifdef TARGET_PC
+#       ifdef TARGET_WINDOWS
 #           include <windows.h>
 #           include <D3d8.h>
 #           include <XGraphics.h>
@@ -118,7 +118,7 @@ static AlphaType GetAlphaUsage( xbitmap& Source )
 
 static void PackImage( xbitmap& Dest,const xbitmap& Source,xbool bForceMips,DXTCMethod Method )
 {
-#ifndef TARGET_PC
+#ifndef TARGET_WINDOWS
     (void)bForceMips;
     (void)Method;
     (void)Source;

@@ -10,7 +10,7 @@
 
 #include "x_target.hpp"
 
-#ifndef TARGET_PC
+#ifndef TARGET_WINDOWS
 #error This file should only be compiled for PC platform. Please check your exclusions on your project spec.
 #endif
 

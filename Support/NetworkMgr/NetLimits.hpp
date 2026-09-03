@@ -9,9 +9,9 @@
 
 //==============================================================================
 
-#ifdef TARGET_DESKTOP
-const s32   NET_MAX_PER_CLIENT          =     1;        // No split screen on PC.
-const s32   NET_MAX_LOCAL_CLIENTS       =    31;        // PC servers can host 31 clients.
+#if defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
+const s32   NET_MAX_PER_CLIENT          =     1;        // No split-screen local client.
+const s32   NET_MAX_LOCAL_CLIENTS       =    31;        // Client-hosted servers can host 31 remote clients.
 #endif
 
 #ifdef DEDICATED_SERVER

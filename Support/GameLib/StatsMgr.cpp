@@ -16,7 +16,7 @@
 #include "StatsMgr.hpp"
 #include "UI/ui_renderer.hpp"
 
-#ifndef TARGET_PC
+#ifndef TARGET_WINDOWS
 #include "e_Engine.hpp"
 #endif
 
@@ -246,7 +246,7 @@ void stats_mgr::DrawBar(    stat_fields thisStat,
                             xcolor BarColor )
 
 {
-#if !defined( TARGET_DESKTOP )
+#if !defined( TARGET_DESKTOP ) && !defined( TARGET_MOBILE )
 
     X_PROFILE_SCOPE_CATEGORY( "Context", "stats_mgr::Render" );
     
@@ -515,7 +515,7 @@ void stats_mgr::DrawFPS(void)
     if (!m_bShowHorizontalBars)
         return;
     
-#if !defined( TARGET_DESKTOP )
+#if !defined( TARGET_DESKTOP ) && !defined( TARGET_MOBILE )
     // Draw.
     vector2 CPUUpperLeft  ( 20.0f,  10.0f );
     vector2 CPULowerRight ( 480.0f, 16.0f );

@@ -77,7 +77,7 @@ void rigidgeom_rsc_desc::OnGetCompilerDependencies( xarray<xstring>& List )
 
 //=========================================================================
 
-void rigidgeom_rsc_desc::OnGetFinalDependencies( xarray<xstring>& List, platform Platform, const char* pDirectory )
+void rigidgeom_rsc_desc::OnGetFinalDependencies( xarray<xstring>& List, asset_platform Platform, const char* pDirectory )
 {
     //
     // accumulate dependencies from the base class

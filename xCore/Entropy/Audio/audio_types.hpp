@@ -20,8 +20,8 @@
 //  DEFINES
 //==============================================================================
 
-// Desktop builds share the PC audio package format, including Linux.
-#ifdef TARGET_DESKTOP
+// Androids and Desktops uses the same audio package encoding as the PC runtime.
+#if defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
 #define PACKAGE_VERSION                 PC_PACKAGE_VERSION
 #define TARGET_ID                       PC_TARGET_ID
 #endif

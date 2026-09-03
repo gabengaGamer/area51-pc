@@ -12,7 +12,7 @@
 //  INCLUDES
 //==============================================================================
 
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
 #include <io.h>
 #else
 #include <glob.h>
@@ -376,7 +376,7 @@ s32 command_line::Glob( const xstring& Pattern, xarray<xstring>& Results, xbool 
     SplitPath( Pattern, Path, File );
 
     // Begin find
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
     _finddata_t Data;
     intptr_t handle = _findfirst( Pattern, &Data );
     if( handle != -1 )

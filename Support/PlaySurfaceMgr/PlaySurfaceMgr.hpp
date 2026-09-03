@@ -63,7 +63,7 @@ public:
     // Rebuild routines
     //---------------------------------------------------------------------
 
-    void RebuildList        ( const xarray<guid>& lstGuidsToExport,platform PlatformType );
+    void RebuildList        ( const xarray<guid>& lstGuidsToExport,asset_platform PlatformType );
 
     //---------------------------------------------------------------------
     // File routines
@@ -72,7 +72,7 @@ public:
     void OpenFile           ( const char* Filename, xbool DoLoad );
     void UnloadZone         ( zone_mgr::zone_id Zone );
     void LoadZone           ( zone_mgr::zone_id Zone );
-    void SaveFile           ( platform  PlatformType );
+    void SaveFile           ( asset_platform  PlatformType );
     void BeginLoadAllZones  ( void );
     xbool UpdateLoadAllZones( void );
     void CloseFile          ( void );

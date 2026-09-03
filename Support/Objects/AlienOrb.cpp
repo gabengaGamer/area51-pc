@@ -1456,7 +1456,7 @@ void alien_orb::OnDebugRender( void )
         }
     }
 }
-#endif // TARGET_PC
+#endif // TARGET_WINDOWS
 #endif // X_RETAIL
 
 //=============================================================================

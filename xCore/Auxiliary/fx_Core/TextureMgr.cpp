@@ -299,7 +299,7 @@ void texture_mgr::ExportList( const char* pFileName, s32 ExportTarget )
         {
             switch( ExportTarget )
             {
-            case EXPORT_TARGET_PC:
+            case EXPORT_TARGET_DESKTOP:
                 {
                     xbool Success = pRec->Texture.m_bitmap.Save( FP );
                     if( !Success )
@@ -361,7 +361,7 @@ void texture_mgr::ExportNames( xbytestream& Stream, s32 ExportTarget )
 
             switch( ExportTarget )
             {
-            case EXPORT_TARGET_PC:
+            case EXPORT_TARGET_DESKTOP:
             case EXPORT_TARGET_XBOX:
             case EXPORT_TARGET_PS2:
                 {
@@ -455,7 +455,7 @@ void texture_mgr::ExportXBMPs( const char* pFileName, s32 ExportTarget )
                 }
                 break;
 
-                case EXPORT_TARGET_PC:
+                case EXPORT_TARGET_DESKTOP:
                 {
                     //  alpha:   FMT_32_ARGB_8888 
                     // no alpha: FMT_32_URGB_8888

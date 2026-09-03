@@ -72,6 +72,13 @@ xbool GameAppGetDataDirectory( char* pBuffer, s32 BufferSize )
 
 //=============================================================================
 
+xbool GameAppGetSaveDirectory( char* pBuffer, s32 BufferSize )
+{
+    return( GameAppGetDataDirectory( pBuffer, BufferSize ) );
+}
+
+//=============================================================================
+
 void GameAppSetWindowIcon( void )
 {
 }

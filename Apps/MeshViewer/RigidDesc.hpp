@@ -12,7 +12,7 @@ public:
     virtual xbool       OnProperty                  ( prop_query& I          );
     virtual void        OnGetCompilerDependencies   ( xarray<xstring>& List  );
     virtual void        OnGetCompilerRules          ( xstring& CompilerRules );
-    virtual void        OnGetFinalDependencies      ( xarray<xstring>& List, platform Platform, const char* pDirectory );
+    virtual void        OnGetFinalDependencies      ( xarray<xstring>& List, asset_platform Platform, const char* pDirectory );
     
 protected:
     char                m_CollisionFileName[256];

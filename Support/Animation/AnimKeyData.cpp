@@ -212,12 +212,14 @@ inline void anim_key_stream::GrabKey( const decode_context& Context,
         else
         if( Context.TF == SINGLE_VALUE )
         {
-            Key.Translation = ((vector3p*)(Context.pData + Context.TO))[ 0 ];
+            const vector3p& Translation = ((vector3p*)(Context.pData + Context.TO))[ 0 ];
+            Key.Translation.Set( Translation.X, Translation.Y, Translation.Z );
         }
         else
         if( Context.TF == PRECISION_32 )
         {
-            Key.Translation = ((vector3p*)(Context.pData + Context.TO))[ iFrame ];
+            const vector3p& Translation = ((vector3p*)(Context.pData + Context.TO))[ iFrame ];
+            Key.Translation.Set( Translation.X, Translation.Y, Translation.Z );
         }
         else
         {

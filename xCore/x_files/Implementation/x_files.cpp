@@ -24,7 +24,7 @@
 
 //------------------------------------------------------------------------------
 
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
 #include <windows.h>
 // This is PC specific. This will force x_Init to be called
 // prior to the constructors so constructors should be able to

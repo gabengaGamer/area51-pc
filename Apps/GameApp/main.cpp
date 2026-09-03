@@ -16,6 +16,11 @@
 
 #include "Entropy.hpp"  
 
+#if defined( TARGET_ANDROID )
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_timer.h>
+#endif
+
 //==============================================================================
 //  SYSTEM MANAGER INCLUDES
 //==============================================================================
@@ -265,6 +270,8 @@ void        Render                  ( void );
 
 #if defined( TARGET_DESKTOP )
 #include "main_desktop.inl"
+#elif defined( TARGET_MOBILE )
+#include "main_mobile.inl"
 #endif
 
 //==============================================================================
@@ -391,7 +398,7 @@ void UpdateAudio( f32 DeltaTime )
     X_PROFILE_SCOPE_CATEGORY( "Context", "UpdateAudio" );
 
     #ifdef AUDIO_ENABLE
-    
+
     g_ConverseMgr.Update( DeltaTime );
     g_MusicStateMgr.Update();
     g_MusicMgr.Update( DeltaTime );
@@ -1240,7 +1247,12 @@ void DoStartup( void )
     x_DebugMsg( "Executable directory: %s\n", g_FullPath );
     x_DebugMsg( "Data directory: %s\n", g_DataPath );
 
-    SaveDataBackend_SetRootDirectory( g_DataPath );
+    char SavePath[256];
+    if( !GameAppGetSaveDirectory( SavePath, sizeof( SavePath ) ) )
+        x_strcpy( SavePath, g_DataPath );
+
+    x_DebugMsg( "Save directory: %s\n", SavePath );
+    SaveDataBackend_SetRootDirectory( SavePath );
 
     // get language setting and check for default language.
     x_language DefaultLanguage = CheckLanguageSupport( x_GetConsoleLanguage() );
@@ -1759,7 +1771,6 @@ void AppMain( s32 argc, char* argv[] )
     // Do core startup
     //
     DoStartup();
-
     // Initialize editable settings from the values restored during startup.
     g_StateMgr.InitPendingSettings();
 
@@ -1978,13 +1989,13 @@ void AppMain( s32 argc, char* argv[] )
 
 //==============================================================================
 
-#if defined( TARGET_LINUX )
+#if defined( TARGET_POSIX )
 int main( int argc, char* argv[] )
 {
     x_Init( argc, argv );
     AppMain( (s32)argc, argv );
     return eng_ExitPoint();
 }
-#endif // defined( TARGET_LINUX )
+#endif // defined( TARGET_POSIX )
 
 //==============================================================================

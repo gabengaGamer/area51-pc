@@ -4,18 +4,24 @@
         "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_threads_pc.cpp"
     )
     set( X_FILES_PLATFORM_DEPENDENCIES )
-elseif( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
+elseif( CMAKE_SYSTEM_NAME MATCHES "^(Linux|Android)$" )
     find_package( Threads REQUIRED )
     set( X_FILES_PLATFORM_SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_atomic_linux.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_threads_linux.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_atomic_posix.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_threads_posix.cpp"
     )
     set( X_FILES_PLATFORM_DEPENDENCIES Threads::Threads )
 
+    if( CMAKE_SYSTEM_NAME STREQUAL "Android" )
+        list( APPEND X_FILES_PLATFORM_DEPENDENCIES log )
+    endif()
+
     # The libatomic library is required for 64-bit atomics on 32-bit Linux.
-    find_library( A51_ATOMIC_LIBRARY NAMES atomic )
-    if( A51_ATOMIC_LIBRARY )
-        list( APPEND X_FILES_PLATFORM_DEPENDENCIES "${A51_ATOMIC_LIBRARY}" )
+    if( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
+        find_library( A51_ATOMIC_LIBRARY NAMES atomic )
+        if( A51_ATOMIC_LIBRARY )
+            list( APPEND X_FILES_PLATFORM_DEPENDENCIES "${A51_ATOMIC_LIBRARY}" )
+        endif()
     endif()
 else()
     message( FATAL_ERROR "x_files has no threading backend for ${CMAKE_SYSTEM_NAME}." )
@@ -107,3 +113,9 @@ a51_add_project( x_files STATIC
         "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_stdio_private.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_threads_private.hpp"
 )
+
+if( CMAKE_SYSTEM_NAME STREQUAL "Android" AND
+    CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+    target_compile_options( x_files PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:-Wno-register>" )
+endif()

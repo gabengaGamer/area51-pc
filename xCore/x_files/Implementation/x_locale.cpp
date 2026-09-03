@@ -39,7 +39,7 @@ static  x_console_territory s_Territory = XL_TERRITORY_AMERICA;
 // GS: Let's continue to obtain the system language this way for now; 
 // in the future, the user will have to specify it in the UI themselves.
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 static 
 x_language x_MapWindowsLanguage( LANGID const LangId )
 {
@@ -82,7 +82,7 @@ x_language x_MapWindowsLanguage( LANGID const LangId )
 
 //==============================================================================
 
-#ifdef TARGET_LINUX
+#ifdef TARGET_POSIX
 // TODO:
 #endif
 
@@ -166,11 +166,11 @@ const char* x_GetLocaleStringInternal( x_language const Language, x_locale_code_
 
 const x_language x_GetConsoleLanguage( void )
 {      
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
     LANGID const LangId = GetUserDefaultLangID();
     x_language const Lang = x_MapWindowsLanguage( LangId );
     return Lang;
-#elif defined( TARGET_LINUX )
+#elif defined( TARGET_POSIX )
     // TODO:
     return XL_LANG_ENGLISH;
 #else

@@ -30,7 +30,7 @@ public:
     rigid_geom*         GetRigidGeom        ( void     ) const;
     s32                 GetNumColors        ( void     ) const;
     const u32*          GetColorTable       ( void     ) const;
-    const u32*          GetColorTable       ( platform ) const;
+    const u32*          GetColorTable       ( asset_platform ) const;
     const char*         GetRigidGeomName    ( void     ) const;
 
     void                SetColorTable       ( const u32* pColorTable, s32 iColor, s32 nColors );

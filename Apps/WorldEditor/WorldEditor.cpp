@@ -3157,7 +3157,7 @@ void RemoveDuplicates( xarray<xstring>& List )
 
 //=========================================================================
 
-s32 GetDependencies( xarray<xstring>& Dest, xarray<xstring>& Source, const char* pPlatformString,platform PlatformType )
+s32 GetDependencies( xarray<xstring>& Dest, xarray<xstring>& Source, const char* pPlatformString,asset_platform PlatformType )
 {
     s32 Result = 0;
 
@@ -3548,7 +3548,7 @@ void CreateFileList( xarray<xstring>& Destination, const char* pPath, const char
 xbool world_editor::BuildDFSFile( const char* pExportName,
                                   const char* pReleasePath,
                                   const char* pPlatformString,
-                                  platform     PlatformType
+                                  asset_platform     PlatformType
                                  )
 {
     text_out TextOut;
@@ -3855,7 +3855,7 @@ xbool world_editor::BuildDFSFile( const char* pExportName,
         DumpListToFile( CommonDataListing,    CommonData            );
 
         // Now build the dfs files.
-        xbool bEnableCRC = (PlatformType == PLATFORM_XBOX);
+        xbool bEnableCRC = (PlatformType == ASSET_PLATFORM_XBOX);
         WriteDFSFile( xfs("%s\\BOOT",     (const char*)RootPath),      BootDataListing,      bEnableCRC );
         WriteDFSFile( xfs("%s\\PRELOAD",  (const char*)RootPath),      PreloadDataListing,   bEnableCRC );
         WriteDFSFile( xfs("%s\\RESOURCE", (const char*)LevelFilePath), LevelResourceListing, bEnableCRC );
@@ -3945,8 +3945,8 @@ xbool world_editor::ExportToLevel( const char* pName )
         if( g_Settings.GetPlatfromExportI( n ) == FALSE )
             continue;
 
-        platform     PlatformType   = g_Settings.GetPlatformTypeI  ( n );
-        if ((PlatformType != PLATFORM_PC) && (PlatformType != PLATFORM_XBOX))
+        asset_platform     PlatformType   = g_Settings.GetPlatformTypeI  ( n );
+        if ((PlatformType != ASSET_PLATFORM_DESKTOP) && (PlatformType != ASSET_PLATFORM_XBOX))
         {
             nExportPlatformCount++;
         }
@@ -3969,7 +3969,7 @@ xbool world_editor::ExportToLevel( const char* pName )
 
         const char* pReleasePath    = g_Settings.GetReleasePath();
         const char* pPlatformString = g_Settings.GetPlatformStringI( n );
-        platform     PlatformType   = g_Settings.GetPlatformTypeI  ( n );
+        asset_platform     PlatformType   = g_Settings.GetPlatformTypeI  ( n );
 
         // Delete all the level_data.* files
         {
@@ -4004,7 +4004,7 @@ xbool world_editor::ExportToLevel( const char* pName )
         }
 
 // CJ: The PC game is working and now needs exported data
-//        if( PlatformType != PLATFORM_PC )
+//        if( PlatformType != ASSET_PLATFORM_DESKTOP )
         {
             char pFileName[ MAX_PATH ];
             x_splitpath( pName, NULL, NULL, pFileName, NULL );
@@ -10859,22 +10859,22 @@ void world_editor::ComputeLightLayer( const char* pLayer, s32 iType )
     switch(iType)
     {
     case 1:
-        lighting_LightObjects( PLATFORM_PC, lstGuids, LIGHTING_DIRECTIONAL );
+        lighting_LightObjects( ASSET_PLATFORM_DESKTOP, lstGuids, LIGHTING_DIRECTIONAL );
         break;
     case 2:
-        lighting_LightObjects( PLATFORM_PC, lstGuids, LIGHTING_DISTANCE );
+        lighting_LightObjects( ASSET_PLATFORM_DESKTOP, lstGuids, LIGHTING_DISTANCE );
         break;
     case 3:
-        lighting_LightObjects( PLATFORM_PC, lstGuids, LIGHTING_DYNAMIC );
+        lighting_LightObjects( ASSET_PLATFORM_DESKTOP, lstGuids, LIGHTING_DYNAMIC );
         break;
     case 4:
-        lighting_LightObjects( PLATFORM_PC, lstGuids, LIGHTING_WHITE );
+        lighting_LightObjects( ASSET_PLATFORM_DESKTOP, lstGuids, LIGHTING_WHITE );
         break;
     case 5:
-        lighting_LightObjects( PLATFORM_PC, lstGuids, LIGHTING_RAYCAST );
+        lighting_LightObjects( ASSET_PLATFORM_DESKTOP, lstGuids, LIGHTING_RAYCAST );
         break;
     case 6:
-        lighting_LightObjects( PLATFORM_PC, lstGuids, LIGHTING_ZONE );
+        lighting_LightObjects( ASSET_PLATFORM_DESKTOP, lstGuids, LIGHTING_ZONE );
         break;
 
     default:
@@ -11903,7 +11903,7 @@ void world_editor::CreateResourceLoadList(
     X_FILE*         outFile;
     s32             i;
     const char*     pPlatformString = g_Settings.GetPlatformStringI( iPlatform );
-    platform        PlatformType    = g_Settings.GetPlatformTypeI  ( iPlatform );
+    asset_platform        PlatformType    = g_Settings.GetPlatformTypeI  ( iPlatform );
 
     outFile = x_fopen(fileName, "wt" ); 
     if(outFile == NULL )

@@ -210,7 +210,7 @@ protected:
     u32                 m_ElseAndFlags;                 // And flags for Else block, all these bits must be true.
     u32                 m_ElseOrFlags;                  // OR  flags for Else block, any of these bits can be true..
  
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     trigger_selector    m_Selector;                     // Selector object used to actually determine the type of condition and actions to create..
 #endif
 

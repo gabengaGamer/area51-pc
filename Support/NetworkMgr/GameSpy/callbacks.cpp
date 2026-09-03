@@ -10,7 +10,7 @@
 //
 //==============================================================================
 
-#if !defined(TARGET_PC)
+#if !defined(TARGET_WINDOWS)
 #error This should only be included for gamespy support.
 #endif
 

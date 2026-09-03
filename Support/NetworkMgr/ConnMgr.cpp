@@ -1271,7 +1271,7 @@ void conn_mgr::WriteManagerData( conn_packet& Packet, netstream& BitStream )
     }
 #endif
 
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
     // Desktop voice travels in the reliable connection packet.  The server
     // owns one proxy per client; a client sends its local headset data.
     if( m_pVoiceProxy != NULL )
@@ -1412,7 +1412,7 @@ void conn_mgr::ProcessManagerData( netstream& BitStream )
     }
 #endif
 
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
     // This mirrors the desktop voice payload written above.  Server-side
     // connections terminate in a voice proxy; the local client terminates in
     // the global voice manager.

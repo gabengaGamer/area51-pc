@@ -14,8 +14,8 @@
 #include "x_plus.hpp"
 #include "windows.h"
 
-#if !defined(TARGET_PC)
-  #error "dfs_Build.cpp is only valid for TARGET_PC"
+#if !defined(TARGET_WINDOWS)
+  #error "dfs_Build.cpp is only valid for TARGET_WINDOWS"
 #endif
 
 #include <string.h>

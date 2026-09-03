@@ -351,7 +351,7 @@ static s32 ExportDecalCompareFn( const void* pA, const void* pB )
 
 //==============================================================================
 
-void decal_mgr::SetupExportVertBuffers( platform PlatformType )
+void decal_mgr::SetupExportVertBuffers( asset_platform PlatformType )
 {
     static const s32 kVertsForAlign = 4;
     s32 HWBufferSize = render::GetHardwareBufferSize();
@@ -478,7 +478,7 @@ void decal_mgr::SetupExportVertBuffers( platform PlatformType )
                     m_pStaticData->pUV[nVertsTotal+nVertsInZone].V      = (s16)(Vert.UV.Y*4096.0f);
 
                     u32& Color = m_pStaticData->pColor[nVertsTotal+nVertsInZone];
-                    if( PlatformType == PLATFORM_PS2 )
+                    if( PlatformType == ASSET_PLATFORM_PS2 )
                     {
                         Color = ((u8)(128.0f*(f32)(Decal.Color.R/255.0f))<<0) +
                                 ((u8)(128.0f*(f32)(Decal.Color.G/255.0f))<<8) +
@@ -510,7 +510,7 @@ void decal_mgr::SetupExportVertBuffers( platform PlatformType )
 
 //==============================================================================
 
-void decal_mgr::EndStaticDecalExport( platform PlatformType )
+void decal_mgr::EndStaticDecalExport( asset_platform PlatformType )
 {
     ASSERT( s_bExportingStaticDecals );
     if ( !s_bExportingStaticDecals )

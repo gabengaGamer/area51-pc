@@ -161,9 +161,13 @@ xbool dlg_main_menu::Create( s32                        UserID,
 #if defined(TARGET_DESKTOP)    
     m_pButtonExit         ->SetFlag(ui_win::WF_VISIBLE, FALSE);
 #endif    
-#if defined(TARGET_DESKTOP) || defined(LAN_PARTY_BUILD)
+//#if defined(TARGET_DESKTOP) || defined(LAN_PARTY_BUILD)
     m_pButtonMultiPlayer  ->SetFlag(ui_win::WF_DISABLED, TRUE);
+//#endif
+#if defined(TARGET_POSIX)
+    m_pButtonOnline       ->SetFlag(ui_win::WF_DISABLED, TRUE);
 #endif
+
 
     // set up nav text 
     xwstring navText(g_StringTableMgr( "ui", "IDS_NAV_SELECT" ));
@@ -468,16 +472,12 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     }
 
 #ifndef CONFIG_RETAIL
-
+#if defined(TARGET_DESKTOP)
     // check for enabling autoclient/server
     if( !m_bCheckKeySequence )
     {
-    #if defined(TARGET_DESKTOP)
         if( g_Input.GetFrameSnapshot().IsPressed( INPUT_PS2_BTN_START,   0 ) &&
             g_Input.GetFrameSnapshot().IsPressed( INPUT_PS2_BTN_SELECT,  0 ) )
-    #else
-        ASSERT(0);
-    #endif
         {
             // enable escape sequence checking
             m_bCheckKeySequence = TRUE;
@@ -485,23 +485,16 @@ void dlg_main_menu::OnUpdate ( ui_win* pWin, f32 DeltaTime )
     }
     else
     {
-    #if defined(TARGET_DESKTOP)
         if( g_Input.GetFrameSnapshot().WasPressed( INPUT_PS2_BTN_L_UP,  0 ) )
-    #else
-        ASSERT(0);
-    #endif
         {
             g_Config.AutoServer = TRUE;
         }
-    #if defined(TARGET_DESKTOP)
         else if( g_Input.GetFrameSnapshot().WasPressed( INPUT_PS2_BTN_L_DOWN, 0 ) )
-    #else
-        ASSERT(0);
-    #endif
         {
             g_Config.AutoClient = TRUE;
         }
     }
+#endif
 #endif
 }
 

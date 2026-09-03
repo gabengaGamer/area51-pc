@@ -464,6 +464,8 @@ friend  vector2         operator *          (       f32      S,  const vector2& 
 //  VECTOR3
 //==============================================================================
 
+struct vector3p;
+
 union PC_ALIGNMENT(16) vector3
 {
 
@@ -549,6 +551,7 @@ friend  radian          v3_AngleBetween         ( const vector3& V1, const vecto
         
         vector3         operator -              ( void ) const;
 const   vector3&        operator =              ( const vector4& V );
+        vector3&        operator =              ( const vector3p& V );
         vector3&        operator +=             ( const vector3& V );
         vector3&        operator -=             ( const vector3& V );
         vector3&        operator *=             ( f32 Scalar );

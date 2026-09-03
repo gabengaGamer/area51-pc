@@ -84,7 +84,7 @@ void set_actor_faction::OnRender ( void )
 
     if ( !ActorPtr.IsValid() )
         return;
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     vector3 MyPosition = GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
     render::debug::Line( MyPosition, ActorPtr.m_pObject->GetPosition(), s_ActivateColor );
     render::debug::Box( ActorPtr.m_pObject->GetBBox(), s_ActivateColor );

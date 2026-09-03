@@ -1,0 +1,57 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"xCore/3rdParty/Libogg/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 118,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"thirdparty/Libogg/libogg.a"
+			],
+			"targetId" : "ogg::@b4bb1e11f88f3a2ec7ca",
+			"targetIndex" : 26,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "include/ogg",
+			"paths" : 
+			[
+				"Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/Libogg/include/ogg/config_types.h",
+				"xCore/3rdParty/Libogg/include/ogg/ogg.h",
+				"xCore/3rdParty/Libogg/include/ogg/os_types.h"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "thirdparty/Libogg",
+		"source" : "xCore/3rdParty/Libogg"
+	}
+}

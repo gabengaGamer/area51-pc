@@ -19,7 +19,7 @@
 // Define ENABLE_PROFILE to enable the legacy profile code. The timer routines
 // in x_timer.cpp must also use the non-zero timer versions.
 
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
 #include <windows.h>
 #endif
 
@@ -425,7 +425,7 @@ X_THREAD_BOOT_DECL x_thread_Root( void* pInit )
     ASSERTS( pThread->m_Startup.Sentinal == X_THR_START_SENTINAL, "x_thread_Root: Invalid xthread structure passed" );
     pThread->m_Startup.pEntry( pThread->m_Startup.argc, pThread->m_Startup.argv );
     pThread->Kill();
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
     return 0;
 #endif
 }
@@ -829,7 +829,7 @@ static void x_IdleLoop( void )
     xthread_private ThreadId;
 
     ThreadId = sys_thread_GetId();
-#if defined( TARGET_LINUX )
+#if defined( TARGET_POSIX )
     sys_thread_SetPriority( ThreadId, THREAD_BASE_PRIORITY - 1 );
 #else
     sys_thread_SetPriority( ThreadId, THREAD_BASE_PRIORITY );
@@ -841,7 +841,7 @@ static void x_IdleLoop( void )
     TicksFor100ms = x_GetTicksPerMs() * 100;
     while( s_pThreadVars->m_pAppMain->IsActive() )
     {
-#if defined( TARGET_LINUX )
+#if defined( TARGET_POSIX )
         sys_thread_Delay( 1 );
 #endif
 #if defined( bwatson ) && defined( TARGET_DEV )
@@ -1009,7 +1009,7 @@ void x_RecordThreadDebugFailure( x_thread_debug_failure_type Type,
         s_GetDiagnosticThreadIds( pOwner, pFailure->OwnerThreadId, pFailure->OwnerSystemId );
         s_GetDiagnosticThreadIds( pCurrent, pFailure->CurrentThreadId, pFailure->CurrentSystemId );
 
-        #if defined( TARGET_PC )
+        #if defined( TARGET_WINDOWS )
         char Message[256];
         wsprintfA( Message,
                    "x_files: threading failure=%d mutex=%p actual=%d cached=%d owner=%d current=%d count=%d\n",

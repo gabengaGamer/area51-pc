@@ -12,8 +12,8 @@
 
 #include "x_target.hpp"
 
-#if !defined( TARGET_LINUX )
-    #error This file should only be compiled for Linux platform.
+#if !defined( TARGET_POSIX )
+    #error This file should only be compiled for POSIX platforms.
 #endif
 
 //==============================================================================
@@ -61,6 +61,13 @@ public:
     xbool IsGadgetPresent( input_gadget GadgetID, s32 DeviceID ) const override
     {
         (void)GadgetID;
+        (void)DeviceID;
+        return FALSE;
+    }
+
+    xbool IsDevicePresent( input_device Device, s32 DeviceID ) const override
+    {
+        (void)Device;
         (void)DeviceID;
         return FALSE;
     }

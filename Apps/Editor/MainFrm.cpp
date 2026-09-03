@@ -1267,19 +1267,19 @@ void CMainFrame::LoadProjectFromCommandLine( void )
             s32 nPlatform = g_Settings.GetPlatformCount();
             for( s32 i=0 ; i<nPlatform ; i++ )
             {
-                platform    PlatformType = g_Settings.GetPlatformTypeI( i );
+                asset_platform    PlatformType = g_Settings.GetPlatformTypeI( i );
                 switch( PlatformType )
                 {
-                case PLATFORM_PC:
+                case ASSET_PLATFORM_DESKTOP:
                     g_Settings.SetPlatfromExportI( i, bExportPC );
                     break;
-                case PLATFORM_PS2:
+                case ASSET_PLATFORM_PS2:
                     g_Settings.SetPlatfromExportI( i, bExportPS2 );
                     break;
-                case PLATFORM_XBOX:
+                case ASSET_PLATFORM_XBOX:
                     g_Settings.SetPlatfromExportI( i, bExportXBOX );
                     break;
-                case PLATFORM_GCN:
+                case ASSET_PLATFORM_GCN:
                     g_Settings.SetPlatfromExportI( i, bExportGC );
                     break;
                 default:

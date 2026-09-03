@@ -9,14 +9,14 @@
 
 #include "x_target.hpp"
 
-#if defined(TARGET_DESKTOP)
+#if defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
 
 //==============================================================================
 //  INCLUDES
 //==============================================================================
 
 #include "x_files.hpp"
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
 #include <windows.h>
 #endif
 #include "SDL3/SDL.h"
@@ -45,7 +45,7 @@ private:
     s32             m_Height;
 };
 
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
 typedef HINSTANCE sdleng_native_instance_handle;
 typedef HWND      sdleng_native_window_handle;
 #else
@@ -154,7 +154,7 @@ inline s32 sdleng_display_resolution::GetHeight( void ) const
     return m_Height;
 }
 
-#endif // defined(TARGET_DESKTOP)
+#endif // defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
 
 //==============================================================================
 #endif // SDLENG_WINDOW_HPP

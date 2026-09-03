@@ -415,7 +415,7 @@ xbool input_snapshot::IsPresent( input_gadget GadgetID, s32 DeviceID ) const
 input_system::input_system( void )
 {
     m_CurrentDevice      = INPUT_DEVICE_KEYBOARD;
-    m_CurrentPlatform    = INPUT_PLATFORM_PC;
+    m_CurrentPlatform    = INPUT_PLATFORM_DESKTOP;
     m_InitDesc.pWindow = NULL;
     m_pBackend          = NULL;
     m_FrameSnapshot.Clear();
@@ -479,6 +479,47 @@ f32 input_system::GetRawGadgetValue( input_gadget GadgetID, s32 DeviceID ) const
 xbool input_system::IsRawGadgetPresent( input_gadget GadgetID, s32 DeviceID ) const
 {
     return m_pBackend ? m_pBackend->IsGadgetPresent( GadgetID, DeviceID ) : FALSE;
+}
+
+//==============================================================================
+
+xbool input_system::IsDevicePresent( input_device Device, s32 DeviceID ) const
+{
+    return m_pBackend ? m_pBackend->IsDevicePresent( Device, DeviceID ) : FALSE;
+}
+
+//==============================================================================
+
+xbool input_system::FindAvailableDevice( input_device& Device, s32& DeviceID ) const
+{
+    Device   = INPUT_DEVICE_NONE;
+    DeviceID = -1;
+
+    if( !m_pBackend )
+        return FALSE;
+
+    // Device classes are data-driven by the input_device enum.  Adding a new
+    // backend/device type automatically makes it eligible for fallback.
+    for( s32 DeviceIndex = INPUT_DEVICE_NONE + 1;
+         DeviceIndex < INPUT_DEVICE_COUNT;
+         DeviceIndex++ )
+    {
+        input_device const Candidate = (input_device)DeviceIndex;
+        if( Candidate == INPUT_DEVICE_MESSAGE )
+            continue;
+
+        for( s32 CandidateID = 0; CandidateID < INPUT_MAX_DEVICES; CandidateID++ )
+        {
+            if( m_pBackend->IsDevicePresent( Candidate, CandidateID ) )
+            {
+                Device   = Candidate;
+                DeviceID = CandidateID;
+                return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
 }
 
 //==============================================================================

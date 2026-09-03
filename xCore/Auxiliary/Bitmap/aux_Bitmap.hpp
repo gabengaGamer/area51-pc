@@ -38,7 +38,7 @@ void    auxbmp_SetupDefault (       xbitmap& Bitmap );
 
 xbool   auxbmp_SetColorAlpha(       xbitmap& Bitmap, xcolor Clr, u8 NewAlpha );
 
-void    auxbmp_MakeDxDvBump (       xbitmap& Dest, const xbitmap& Source, platform Platfrom );
+void    auxbmp_MakeDxDvBump (       xbitmap& Dest, const xbitmap& Source, asset_platform Platfrom );
 
         // The MakeDiffuseFrom--- functions generate
         // a RGB888 xbitmap

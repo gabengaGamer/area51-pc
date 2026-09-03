@@ -86,13 +86,13 @@ s32 rigid_inst::GetNumColors( void ) const
 
 //=============================================================================
 
-const u32* rigid_inst::GetColorTable( platform PlatformType ) const
+const u32* rigid_inst::GetColorTable( asset_platform PlatformType ) const
 {
-    ASSERT( (PlatformType == PLATFORM_XBOX) ||
-            (PlatformType == PLATFORM_PC) );
+    ASSERT( (PlatformType == ASSET_PLATFORM_XBOX) ||
+            (PlatformType == ASSET_PLATFORM_DESKTOP) );
 
-    if( (PlatformType != PLATFORM_XBOX) &&
-        (PlatformType != PLATFORM_PC) )
+    if( (PlatformType != ASSET_PLATFORM_XBOX) &&
+        (PlatformType != ASSET_PLATFORM_DESKTOP) )
     {
         return( NULL );
     }

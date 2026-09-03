@@ -221,7 +221,7 @@ void playsurface_mgr::SortSurfaces( playsurface_mgr::zone_info& Zone )
 
 //=========================================================================
 
-void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,platform PlatformType )
+void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,asset_platform PlatformType )
 {
     s32     i;
     s32     iGuid;
@@ -305,13 +305,13 @@ void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,platform
             u32 Size;
             switch( PlatformType )
             {
-                case PLATFORM_XBOX:
+                case ASSET_PLATFORM_XBOX:
                     Size = sizeof(u32)*ZoneInfo.NColors;
                     break;
-                case PLATFORM_PS2:
+                case ASSET_PLATFORM_PS2:
                     Size = sizeof(u16)*ZoneInfo.NColors;
                     break;
-                case PLATFORM_PC:
+                case ASSET_PLATFORM_DESKTOP:
                     Size = sizeof(u32)*ZoneInfo.NColors;
                     break;
 
@@ -337,13 +337,13 @@ void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,platform
             u32 Size;
             switch( PlatformType )
             {
-                case PLATFORM_XBOX:
+                case ASSET_PLATFORM_XBOX:
                     Size = sizeof(u32)*ZoneInfo.NColors;
                     break;
-                case PLATFORM_PS2:
+                case ASSET_PLATFORM_PS2:
                     Size = sizeof(u16)*ZoneInfo.NColors;
                     break;
-                case PLATFORM_PC:
+                case ASSET_PLATFORM_DESKTOP:
                     Size = sizeof(u32)*ZoneInfo.NColors;
                     break;
 
@@ -409,13 +409,13 @@ void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,platform
         pSurface->AttrBits  = pObject->GetAttrBits() & AttrBits;
         switch( PlatformType )
         {
-            case PLATFORM_XBOX:
+            case ASSET_PLATFORM_XBOX:
                 pSurface->ColorOffset   = pZoneInfo->NColors*sizeof(u32);
                 break;
-            case PLATFORM_PS2:
+            case ASSET_PLATFORM_PS2:
                 pSurface->ColorOffset   = pZoneInfo->NColors*sizeof(u16);
                 break;
-            case PLATFORM_PC:
+            case ASSET_PLATFORM_DESKTOP:
                 pSurface->ColorOffset   = pZoneInfo->NColors*sizeof(u32);
                 break;
 
@@ -440,13 +440,13 @@ void playsurface_mgr::RebuildList( const xarray<guid>& lstGuidsToExport,platform
             u32 Size;
             switch( PlatformType )
             {
-                case PLATFORM_XBOX:
+                case ASSET_PLATFORM_XBOX:
                     Size = RigidInst.GetNumColors()*sizeof(u32);
                     break;
-                case PLATFORM_PS2:
+                case ASSET_PLATFORM_PS2:
                     Size = RigidInst.GetNumColors()*sizeof(u16);
                     break;
-                case PLATFORM_PC:
+                case ASSET_PLATFORM_DESKTOP:
                     Size = RigidInst.GetNumColors()*sizeof(u32);
                     break;
 
@@ -643,7 +643,7 @@ xbool playsurface_mgr::UpdateLoadAllZones( void )
 
 //=========================================================================
 
-void playsurface_mgr::SaveFile( platform PlatformType )
+void playsurface_mgr::SaveFile( asset_platform PlatformType )
 {
     ASSERT( m_File && !m_Loading );
 
@@ -679,13 +679,13 @@ void playsurface_mgr::SaveFile( platform PlatformType )
         StartOffset           += m_Zones[i].NSurfaces*sizeof(surface);
         switch( PlatformType )
         {
-            case PLATFORM_XBOX:
+            case ASSET_PLATFORM_XBOX:
                 StartOffset   += m_Zones[i].NColors*sizeof(u32);
                 break;
-            case PLATFORM_PS2:
+            case ASSET_PLATFORM_PS2:
                 StartOffset   += m_Zones[i].NColors*sizeof(u16);
                 break;
-            case PLATFORM_PC:
+            case ASSET_PLATFORM_DESKTOP:
                 StartOffset   += m_Zones[i].NColors*sizeof(u32);
                 break;
 
@@ -708,13 +708,13 @@ void playsurface_mgr::SaveFile( platform PlatformType )
         StartOffset           += m_Portals[i].NSurfaces*sizeof(surface);
         switch( PlatformType )
         {
-            case PLATFORM_XBOX:
+            case ASSET_PLATFORM_XBOX:
                 StartOffset   += m_Portals[i].NColors*sizeof(u32);
                 break;
-            case PLATFORM_PS2:
+            case ASSET_PLATFORM_PS2:
                 StartOffset   += m_Portals[i].NColors*sizeof(u16);
                 break;
-            case PLATFORM_PC:
+            case ASSET_PLATFORM_DESKTOP:
                 StartOffset   += m_Portals[i].NColors*sizeof(u32);
                 break;
 
@@ -735,13 +735,13 @@ void playsurface_mgr::SaveFile( platform PlatformType )
         {
             switch( PlatformType )
             {
-                case PLATFORM_XBOX:
+                case ASSET_PLATFORM_XBOX:
                     x_fwrite( ZoneToSave.pColorData, sizeof(u32), ZoneToSave.NColors, m_File );
                     break;
-                case PLATFORM_PS2:
+                case ASSET_PLATFORM_PS2:
                     x_fwrite( ZoneToSave.pColorData, sizeof(u16), ZoneToSave.NColors, m_File );
                     break;
-                case PLATFORM_PC:
+                case ASSET_PLATFORM_DESKTOP:
                     x_fwrite( ZoneToSave.pColorData, sizeof(u32), ZoneToSave.NColors, m_File );
                     break;
 
@@ -761,13 +761,13 @@ void playsurface_mgr::SaveFile( platform PlatformType )
         {
             switch( PlatformType )
             {
-                case PLATFORM_XBOX:
+                case ASSET_PLATFORM_XBOX:
                     x_fwrite( ZoneToSave.pColorData, sizeof(u32), ZoneToSave.NColors, m_File );
                     break;
-                case PLATFORM_PS2:
+                case ASSET_PLATFORM_PS2:
                     x_fwrite( ZoneToSave.pColorData, sizeof(u16), ZoneToSave.NColors, m_File );
                     break;
-                case PLATFORM_PC:
+                case ASSET_PLATFORM_DESKTOP:
                     x_fwrite( ZoneToSave.pColorData, sizeof(u32), ZoneToSave.NColors, m_File );
                     break;
 

@@ -34,7 +34,7 @@ enum input_platform
     INPUT_PLATFORM_NONE = -1,
     INPUT_PLATFORM_PS2,
     INPUT_PLATFORM_XBOX,
-    INPUT_PLATFORM_PC,
+    INPUT_PLATFORM_DESKTOP, // TODO: GS: Mobile ?
     INPUT_PLATFORM_COUNT
 };
 
@@ -282,6 +282,11 @@ public:
 #ifdef TARGET_DESKTOP
     s32                 GetPadCount             ( void ) const;
 #endif
+
+    xbool               IsDevicePresent         ( input_device Device,
+                                                  s32          DeviceID ) const;
+    xbool               FindAvailableDevice     ( input_device& Device,
+                                                  s32&          DeviceID ) const;
 
     //--------------------------------------------------------------------------
     // Gadget Metadata

@@ -8,34 +8,75 @@
 #define X_TARGET_HPP
 
 //==============================================================================
-//  Platforms - Do not change the order of this enumeration
+//  Runtime platform families
 //==============================================================================
 
 enum platform
 {
     PLATFORM_NONE    = 0,
-    PLATFORM_PC      = (1<<0),
-    PLATFORM_GCN     = (1<<1),
-    PLATFORM_PS2     = (1<<2),
-    PLATFORM_XBOX    = (1<<3),
-    PLATFORM_ALL     = 0xffffffff
+    PLATFORM_DESKTOP = (1<<0),
+    PLATFORM_MOBILE  = (1<<1),
+    PLATFORM_ALL     = PLATFORM_DESKTOP | PLATFORM_MOBILE
+};
+
+//==============================================================================
+//  Asset export platforms
+//------------------------------------------------------------------------------
+// These values are serialized in editor/resource data. Keep their numeric
+// values stable while the runtime platform family is modernized.
+//==============================================================================
+
+enum asset_platform
+{
+    ASSET_PLATFORM_NONE    = 0,
+    ASSET_PLATFORM_DESKTOP = (1<<0), // Former PC asset target.
+    ASSET_PLATFORM_GCN     = (1<<1),
+    ASSET_PLATFORM_PS2     = (1<<2),
+    ASSET_PLATFORM_XBOX    = (1<<3),
+    ASSET_PLATFORM_MOBILE  = (1<<4),
+    ASSET_PLATFORM_ALL     = 0xffffffff
 };
 
 //==============================================================================
 //  Targets
 //------------------------------------------------------------------------------
-// The valid desktop targets are PC (Windows) and Linux.
+// The valid targets are WINDOWS, ANDROID, and LINUX.
 //==============================================================================
 
-// TARGET_PC is Windows desktop only. TARGET_LINUX is Linux desktop only.
-// TARGET_DESKTOP is the shared desktop implementation selector.
+#if defined( TARGET_ANDROID )
+    #ifdef VALID_TARGET
+        #define MULTIPLE_TARGETS
+    #else
+        #define TARGET_MOBILE
+        #define TARGET_POSIX
+        #define X_LITTLE_ENDIAN
+        #define X_EXCEPTIONS
+        #define VALID_TARGET
+    #endif
+#endif
 
-#if defined( TARGET_PC ) || defined( TARGET_LINUX )
+//------------------------------------------------------------------------------
+
+#if defined( TARGET_LINUX )
     #ifdef VALID_TARGET
         #define MULTIPLE_TARGETS
     #else
         #define TARGET_DESKTOP
-        #define TARGET_PLATFORM PLATFORM_PC
+        #define TARGET_POSIX
+        #define X_LITTLE_ENDIAN
+        #define X_EXCEPTIONS
+        #define VALID_TARGET
+    #endif
+#endif
+
+//------------------------------------------------------------------------------
+
+// TARGET_WINDOWS will be the default if no TARGET_ macro was defined
+#if( defined( TARGET_WINDOWS ) || !defined( VALID_TARGET ) )
+    #ifdef VALID_TARGET
+        #define MULTIPLE_TARGETS
+    #else
+        #define TARGET_DESKTOP    
         #define X_LITTLE_ENDIAN
         #define X_EXCEPTIONS
         #define VALID_TARGET
@@ -58,7 +99,7 @@ enum platform
         #define TARGET_DEV
         #define X_DEBUG_MSG
         #define X_PROFILE 1
-        #if defined( TARGET_PC )
+        #if defined( TARGET_WINDOWS )
             #define X_PROFILE_TRACY 1
         #endif
         #define X_LOGGING
@@ -83,7 +124,7 @@ enum platform
         #define X_LOGGING
         #define X_DEBUG
         #define X_PROFILE 1
-        #if defined( TARGET_PC )
+        #if defined( TARGET_WINDOWS )
             #define X_PROFILE_TRACY 1
         #endif
         #define X_MEM_DEBUG
@@ -174,7 +215,7 @@ enum platform
 
 //------------------------------------------------------------------------------
 
-#if defined( TARGET_DESKTOP )
+#if defined( VALID_TARGET )
     #define USE_SYSTEM_NEW_DELETE
 #endif
 
@@ -225,16 +266,6 @@ enum platform
 
 #if(  defined( X_BIG_ENDIAN ) &&  defined( X_LITTLE_ENDIAN ) )
     #error Both Endian specifications are defined!
-#endif
-
-//==============================================================================
-//
-//  Make sure platform is properly defined.
-//
-//==============================================================================
-
-#if defined( TARGET_PC ) && defined( TARGET_LINUX )
-    #error TARGET_PC and TARGET_LINUX cannot be defined together.
 #endif
 
 //==============================================================================

@@ -6,7 +6,7 @@
 
 #include "x_target.hpp"
 
-#if defined(TARGET_DESKTOP) && defined(ENTROPY_RENDER_SDL)
+#if (defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)) && defined(ENTROPY_RENDER_SDL)
 
 //==============================================================================
 //  INCLUDES
@@ -833,5 +833,5 @@ void sdleng_GetBackBufferSize( s32& Width, s32& Height )
 }
 
 //==============================================================================
-#endif // defined(TARGET_DESKTOP) && defined(ENTROPY_RENDER_SDL)
+#endif // (defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)) && defined(ENTROPY_RENDER_SDL)
 //==============================================================================

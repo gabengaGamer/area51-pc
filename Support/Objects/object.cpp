@@ -55,7 +55,7 @@ object::object( void )
     m_bDrawBBox = false;
 #endif // X_EDITOR
 
-#ifndef TARGET_PC
+#ifndef TARGET_WINDOWS
     // Confirm that matrix is 16 byte aligned
     ASSERT( ((reinterpret_cast<uaddr>( &m_L2W ) & 0xF) == 0) );
 #endif

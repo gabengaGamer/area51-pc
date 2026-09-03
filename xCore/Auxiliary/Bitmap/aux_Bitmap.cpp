@@ -497,7 +497,7 @@ void auxbmp_ConvertToGCN( xbitmap& Bitmap, xbool Swizzle )
 
 void auxbmp_ConvertToNative( xbitmap& Bitmap )
 {
-    #ifdef TARGET_PC
+    #ifdef TARGET_WINDOWS
     auxbmp_ConvertToD3D( Bitmap );
     return;
     #endif
@@ -652,7 +652,7 @@ xbool auxbmp_SetColorAlpha( xbitmap& Bitmap, xcolor Clr, u8 NewAlpha )
 
 //==============================================================================
 
-void auxbmp_MakeDxDvBump( xbitmap& Dest, const xbitmap& Source, platform Platfrom )
+void auxbmp_MakeDxDvBump( xbitmap& Dest, const xbitmap& Source, asset_platform Platfrom )
 {
     s32 x,y;
     const s32 W       = Source.GetWidth();
@@ -661,7 +661,7 @@ void auxbmp_MakeDxDvBump( xbitmap& Dest, const xbitmap& Source, platform Platfro
     ASSERT( &Dest != &Source );
 
     // Create new bitmap for dx, dv, lum
-    if( Platfrom == PLATFORM_GCN )
+    if( Platfrom == ASSET_PLATFORM_GCN )
     {
         Dest.Setup( xbitmap::FMT_32_RGBA_8888,
                     W, H,
@@ -690,7 +690,7 @@ void auxbmp_MakeDxDvBump( xbitmap& Dest, const xbitmap& Source, platform Platfro
         //s8     Lum = ( v00>1 ) ? 63 : 127;                               // Put some generic luminance value
         u8     A,B;
 
-        if( Platfrom == PLATFORM_GCN )
+        if( Platfrom == ASSET_PLATFORM_GCN )
         {
             A = (u8)(Du + 127l);
             B = (u8)(Dv + 127l);
@@ -698,7 +698,7 @@ void auxbmp_MakeDxDvBump( xbitmap& Dest, const xbitmap& Source, platform Platfro
             // Write the final color
             Dest.SetPixelColor( xcolor( 0, A, B, 0), x, y );
         }
-        else if( Platfrom == PLATFORM_PC || Platfrom == PLATFORM_XBOX )
+        else if( Platfrom == ASSET_PLATFORM_DESKTOP || Platfrom == ASSET_PLATFORM_XBOX )
         {
             Dest.SetPixelColor( xcolor( 0, Du, Dv, 0), x, y );
         }

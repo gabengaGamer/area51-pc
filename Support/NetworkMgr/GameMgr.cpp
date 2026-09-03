@@ -1186,7 +1186,7 @@ void game_mgr::Connect(       s32&    PlayerIndex,
     // Muting.
     {
         // On XBox this will lookup the mutelist from the XBox Live service
-        #if defined ( TARGET_PC )
+        #if defined ( TARGET_WINDOWS )
         {
         }
         #endif
@@ -2186,7 +2186,7 @@ void game_mgr::AcceptUpdate( const bitstream& BS )
                     if( (OldConnected == FALSE) && (Player.IsConnected == TRUE) )
                     {
                         // On XBox this will lookup the mutelist from the XBox Live service
-                        #if defined ( TARGET_PC )
+                        #if defined ( TARGET_WINDOWS )
                         {
                         }
                         #endif

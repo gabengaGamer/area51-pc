@@ -1221,8 +1221,6 @@ void view::UpdateV2C( void ) const
         ASSERT(m_ShotSize >= 1) ;
 #endif // !defined( CONFIG_RETAIL )
 
-    #ifdef TARGET_DESKTOP
-
         f32 W = (f32)(1.0f / x_tan( m_XFOV*0.5f ));
         f32 H = (f32)(1.0f / x_tan( m_YFOV*0.5f ));
         f32 Q = m_ZFar/( m_ZFar - m_ZNear);
@@ -1231,12 +1229,6 @@ void view::UpdateV2C( void ) const
         m_V2C(2,2) =  Q;
         m_V2C(3,2) = -Q*m_ZNear;
         m_V2C(2,3) =  1;
-
-    #else
-
-        ASSERT( FALSE );
-    
-    #endif
     }
 }
 
@@ -1250,8 +1242,6 @@ void view::UpdateC2S( void ) const
 
         x_memset( &m_C2S, 0, sizeof(matrix4) );
 
-    #ifdef TARGET_DESKTOP
-
         f32 W = (m_ViewportX1 - m_ViewportX0+1)*0.5f;
         f32 H = (m_ViewportY1 - m_ViewportY0+1)*0.5f;
 
@@ -1261,12 +1251,6 @@ void view::UpdateC2S( void ) const
         m_C2S(3,3) =  1;
         m_C2S(3,0) =  W + m_ViewportX0;
         m_C2S(3,1) =  H + m_ViewportY0;
-    
-    #else
-
-        ASSERT( FALSE );
-
-    #endif
     }
 }
 

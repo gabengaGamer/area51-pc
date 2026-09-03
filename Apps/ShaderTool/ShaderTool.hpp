@@ -13,7 +13,7 @@
 
 #include "x_files.hpp"
 #include "Auxiliary/CommandLine/CommandLine.hpp"
-#include "Entropy/ECS.hpp"
+#include "Entropy/e_ECS.hpp"
 #include "Parsing/tokenizer.hpp"
 
 //==============================================================================
@@ -48,24 +48,6 @@ enum shader_reflection_binding_type
 //==============================================================================
 //  STRUCTS
 //==============================================================================
-
-struct shader_resource_counts
-{
-    u32 Samplers;
-    u32 UniformBuffers;
-    u32 StorageTextures;
-    u32 StorageBuffers;
-
-    shader_resource_counts( void ) :
-        Samplers       ( 0 ),
-        UniformBuffers ( 0 ),
-        StorageTextures( 0 ),
-        StorageBuffers ( 0 )
-    {
-    }
-};
-
-//------------------------------------------------------------------------------
 
 struct shader_reflection_binding
 {

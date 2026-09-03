@@ -32,11 +32,11 @@
 
 #include <stdio.h>
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 #include <windows.h>
 #endif
 
-#ifdef TARGET_LINUX
+#ifdef TARGET_POSIX
 #include <sys/stat.h>
 #endif
 
@@ -617,7 +617,7 @@ void ansi_Print( const char* pString )
 
 void ansi_PrintAt( const char* pString, s32 X, s32 Y )
 {
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     HANDLE                      hConOut;
     CONSOLE_SCREEN_BUFFER_INFO  SBI;
     COORD                       Coord;
@@ -633,14 +633,14 @@ void ansi_PrintAt( const char* pString, s32 X, s32 Y )
     SetConsoleCursorPosition  ( hConOut, Coord );
 #endif
 
-#ifndef TARGET_PC
+#ifndef TARGET_WINDOWS
     (void)X;
     (void)Y;
 #endif
 
     printf( "%s", pString );
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     SetConsoleCursorPosition  ( hConOut, SBI.dwCursorPosition );
 #endif
 }
@@ -650,7 +650,7 @@ void ansi_PrintAt( const char* pString, s32 X, s32 Y )
 //==============================================================================
 
 //==============================================================================
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
 //==============================================================================
 
 xbool   x_GetFileTime( const char* pFileName, u64& FileTime )
@@ -669,7 +669,7 @@ xbool   x_GetFileTime( const char* pFileName, u64& FileTime )
 }
 
 //==============================================================================
-#elif defined(TARGET_LINUX)
+#elif defined(TARGET_POSIX)
 //==============================================================================
 
 xbool x_GetFileTime( const char* pFileName, u64& FileTime )

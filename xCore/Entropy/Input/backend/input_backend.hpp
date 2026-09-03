@@ -29,6 +29,7 @@ public:
     virtual xbool               IsGadgetDown              ( input_gadget GadgetID, s32 DeviceID ) const = 0;
     virtual f32                 GetGadgetValue            ( input_gadget GadgetID, s32 DeviceID ) const = 0;
     virtual xbool               IsGadgetPresent           ( input_gadget GadgetID, s32 DeviceID ) const = 0;
+    virtual xbool               IsDevicePresent           ( input_device Device, s32 DeviceID ) const = 0;
     virtual s32                 GetPadCount               ( void ) const = 0;
 
     virtual void                Feedback                  ( f32 Duration, f32 Intensity, s32 DeviceID ) = 0;

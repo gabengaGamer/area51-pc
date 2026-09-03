@@ -87,7 +87,7 @@ xbool       SMP_UTIL_IsHiddenManualResource   ( prop_query&         PropQuery,
 
 //=========================================================================
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 
 #endif
 //=========================================================================

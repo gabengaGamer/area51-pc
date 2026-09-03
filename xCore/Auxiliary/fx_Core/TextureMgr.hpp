@@ -12,7 +12,7 @@ namespace fx_core
 
 enum export_target
 {
-    EXPORT_TARGET_PC,
+    EXPORT_TARGET_DESKTOP,
     EXPORT_TARGET_PS2,
     EXPORT_TARGET_GCN,
     EXPORT_TARGET_XBOX,

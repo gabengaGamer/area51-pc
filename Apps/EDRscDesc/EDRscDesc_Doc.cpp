@@ -183,10 +183,10 @@ void EDRscDesc_Doc::Build( void )
     // Build the platform flag
     //
     u32 Platform = 0;
-    if( m_bCompileNintendo ) Platform |= PLATFORM_GCN;
-    if( m_bCompilePS2      ) Platform |= PLATFORM_PS2;
-    if( m_bCompileXBox     ) Platform |= PLATFORM_XBOX;
-    if( m_bCompilePC       ) Platform |= PLATFORM_PC;
+    if( m_bCompileNintendo ) Platform |= ASSET_PLATFORM_GCN;
+    if( m_bCompilePS2      ) Platform |= ASSET_PLATFORM_PS2;
+    if( m_bCompileXBox     ) Platform |= ASSET_PLATFORM_XBOX;
+    if( m_bCompilePC       ) Platform |= ASSET_PLATFORM_DESKTOP;
 
     //
     // Set verbose mode

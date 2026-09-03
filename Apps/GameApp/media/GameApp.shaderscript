@@ -3,7 +3,7 @@ settings:
     targets all
     binding_model sdl
     source_root shaders
-    out_root ../SHADERS/Build
+    out_root /mnt/Mount2/Dream/SHADERS/Build
 
 shaders:
     shader composite_vs vertex a51_composite.hlsl VSMain vs_6_0

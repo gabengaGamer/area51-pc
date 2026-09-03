@@ -1078,7 +1078,7 @@ void geom_rsc_desc::OnGetCompilerDependencies( xarray<xstring>& List )
 
 //=========================================================================
 
-void geom_rsc_desc::OnGetFinalDependencies( xarray<xstring>& List, platform Platform, const char* pDirectory )
+void geom_rsc_desc::OnGetFinalDependencies( xarray<xstring>& List, asset_platform Platform, const char* pDirectory )
 {
     (void)List;
     (void)Platform;

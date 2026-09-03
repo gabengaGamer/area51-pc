@@ -13,9 +13,9 @@
 #include "x_files.hpp"
 #include "io_dfs.hpp"
 
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
     #include <windows.h>
-#elif defined( TARGET_LINUX )
+#elif defined( TARGET_POSIX )
     #include <dirent.h>
     #include <sys/stat.h>
 #endif
@@ -159,7 +159,7 @@ void dfs_BuildFileName( const dfs_header* pHeader, s32 iFile, char* pFileName )
 // DFS EMULATION
 //==============================================================================
 
-#if defined( TARGET_DESKTOP )
+#if defined( TARGET_DESKTOP ) || defined( TARGET_MOBILE )
 struct dfs_emulated_entry
 {
     xstring RelPath;
@@ -183,7 +183,7 @@ struct dfs_string_entry
 
 //==============================================================================
 
-#if defined( TARGET_DESKTOP )
+#if defined( TARGET_DESKTOP ) || defined( TARGET_MOBILE )
 static 
 void dfs_SplitRelativePath( const char* pRelativePath, xstring& Path, xstring& Name, xstring& Ext )
 {
@@ -224,7 +224,7 @@ void dfs_SplitRelativePath( const char* pRelativePath, xstring& Path, xstring& N
         Name = pBase;
     }
 
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
     if( Path.GetLength() > 0 ) Path.MakeUpper();
     if( Name.GetLength() > 0 ) Name.MakeUpper();
     if( Ext.GetLength()  > 0 ) Ext.MakeUpper();
@@ -280,7 +280,7 @@ xbool dfs_CollectFiles( const char* pRootPath, const char* pRelativePath, xarray
     if( Depth > 64 )
         return FALSE;
     
-#if defined( TARGET_PC )
+#if defined( TARGET_WINDOWS )
     char SearchPath[X_MAX_PATH];
     WIN32_FIND_DATA FindData;
     HANDLE hFind;
@@ -340,7 +340,7 @@ xbool dfs_CollectFiles( const char* pRootPath, const char* pRelativePath, xarray
 
     FindClose( hFind );
     return TRUE;
-#elif defined( TARGET_LINUX )
+#elif defined( TARGET_POSIX )
     char SearchPath[X_MAX_PATH];
     DIR* pDirectory;
     struct dirent* pDirectoryEntry;
@@ -422,7 +422,7 @@ xbool dfs_CollectFiles( const char* pRootPath, const char* pRelativePath, xarray
 
 dfs_header* dfs_BuildHeaderFromDirectory( const char* pRootPath )
 {
-#if defined( TARGET_DESKTOP )
+#if defined( TARGET_DESKTOP ) || defined( TARGET_MOBILE )
     xarray<dfs_emulated_entry> Entries;
     xarray<dfs_string_entry>   StringTable;
     u64 TotalDataSize = 0;

@@ -1,0 +1,116 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"xCore/3rdParty/Libwebm/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 462,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 470,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 473,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 475,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"thirdparty/Libwebm/libwebm.a"
+			],
+			"targetId" : "webm::@0531f3ccdb08cd0bfb17",
+			"targetIndex" : 31,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "include/webm",
+			"paths" : 
+			[
+				"xCore/3rdParty/Libwebm/webm_parser/include/webm/buffer_reader.h",
+				"xCore/3rdParty/Libwebm/webm_parser/include/webm/callback.h",
+				"xCore/3rdParty/Libwebm/webm_parser/include/webm/dom_types.h",
+				"xCore/3rdParty/Libwebm/webm_parser/include/webm/element.h",
+				"xCore/3rdParty/Libwebm/webm_parser/include/webm/file_reader.h",
+				"xCore/3rdParty/Libwebm/webm_parser/include/webm/id.h",
+				"xCore/3rdParty/Libwebm/webm_parser/include/webm/istream_reader.h",
+				"xCore/3rdParty/Libwebm/webm_parser/include/webm/reader.h",
+				"xCore/3rdParty/Libwebm/webm_parser/include/webm/status.h",
+				"xCore/3rdParty/Libwebm/webm_parser/include/webm/webm_parser.h"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "include/webm/common",
+			"paths" : 
+			[
+				"xCore/3rdParty/Libwebm/common/webmids.h"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 3,
+			"component" : "Unspecified",
+			"destination" : "include/webm/mkvmuxer",
+			"paths" : 
+			[
+				"xCore/3rdParty/Libwebm/mkvmuxer/mkvmuxer.h",
+				"xCore/3rdParty/Libwebm/mkvmuxer/mkvmuxertypes.h",
+				"xCore/3rdParty/Libwebm/mkvmuxer/mkvmuxerutil.h",
+				"xCore/3rdParty/Libwebm/mkvmuxer/mkvwriter.h"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "Unspecified",
+			"destination" : "include/webm/mkvparser",
+			"paths" : 
+			[
+				"xCore/3rdParty/Libwebm/mkvparser/mkvparser.h",
+				"xCore/3rdParty/Libwebm/mkvparser/mkvreader.h"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "thirdparty/Libwebm",
+		"source" : "xCore/3rdParty/Libwebm"
+	}
+}

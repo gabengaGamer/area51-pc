@@ -6,7 +6,7 @@
 
 #include "x_target.hpp"
 
-#if defined(TARGET_DESKTOP) && defined(ENTROPY_RENDER_SDL)
+#if (defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)) && defined(ENTROPY_RENDER_SDL)
 
 //==============================================================================
 //  INCLUDES
@@ -944,5 +944,5 @@ SDL_GPUBuffer* sdleng_GetGPUBuffer( const shader_resource* pResource )
 }
 
 //==============================================================================
-#endif // defined(TARGET_DESKTOP) && defined(ENTROPY_RENDER_SDL)
+#endif  // (defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)) && defined(ENTROPY_RENDER_SDL)
 //==============================================================================

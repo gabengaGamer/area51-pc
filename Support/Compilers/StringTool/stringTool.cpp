@@ -18,7 +18,7 @@
 
 #define MAX_COLUMNS     5  // Number of columns we are interested in
 #define MAX_PLATFORMS   1
-#define PLATFORM_PC     0
+#define STRING_PLATFORM_DESKTOP 0
 
 //==============================================================================
 //  DISPLAY HELP
@@ -105,11 +105,11 @@ int main( int argc, char** argv )
     iOpt = CommandLine.FindOption( xstring("PC") );
     if( iOpt != -1 )
     {
-        BinName[PLATFORM_PC] = CommandLine.GetOptionString( iOpt );
+        BinName[STRING_PLATFORM_DESKTOP] = CommandLine.GetOptionString( iOpt );
     }
     else
     {
-        BinName[PLATFORM_PC].Clear();
+        BinName[STRING_PLATFORM_DESKTOP].Clear();
     }
 
     DebugOutput = (CommandLine.FindOption( xstring("DEBUG") ) != -1 );
@@ -495,7 +495,7 @@ int main( int argc, char** argv )
                 const s32 HeaderLength = Header.GetLength();
                 Binary.Insert( 0, Header );
 
-        for( s32 iPlatform = PLATFORM_PC; iPlatform < MAX_PLATFORMS; iPlatform++ )
+        for( s32 iPlatform = STRING_PLATFORM_DESKTOP; iPlatform < MAX_PLATFORMS; iPlatform++ )
         {    
             if( BinName[iPlatform].GetLength() == 0 )
                 continue;

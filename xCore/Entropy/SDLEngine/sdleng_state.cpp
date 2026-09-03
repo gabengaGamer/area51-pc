@@ -6,7 +6,7 @@
 
 #include "x_target.hpp"
 
-#if defined(TARGET_DESKTOP) && defined(ENTROPY_RENDER_SDL)
+#if (defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)) && defined(ENTROPY_RENDER_SDL)
 
 //==============================================================================
 //  INCLUDES
@@ -1546,5 +1546,5 @@ xbool render_SetStencilRef( u8 StencilRef )
 }
 
 //==============================================================================
-#endif // defined(TARGET_DESKTOP) && defined(ENTROPY_RENDER_SDL)
+#endif // (defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)) && defined(ENTROPY_RENDER_SDL)
 //==============================================================================

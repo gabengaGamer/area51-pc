@@ -63,9 +63,9 @@ public:
     void                CleanTemp           ( void );
 
     s32                 GetPlatformCount    ( void ) const;
-    platform            GetPlatformType     ( const char* pString ) const;
-    const char*         GetPlatformString   ( platform Type ) const;
-    platform            GetPlatformTypeI    ( s32 Index ) const;
+    asset_platform      GetPlatformType     ( const char* pString ) const;
+    const char*         GetPlatformString   ( asset_platform Type ) const;
+    asset_platform      GetPlatformTypeI    ( s32 Index ) const;
     const char*         GetPlatformStringI  ( s32 Index ) const;
     xbool               GetPlatfromExportI  ( s32 Imdex ) const;
     void                SetPlatfromExportI  ( s32 Imdex, xbool State );
@@ -95,10 +95,10 @@ protected:
     struct platform_info
     {
         platform_info( void ){}
-        platform_info( platform aPlatform, xbool aExport ) : 
+        platform_info( asset_platform aPlatform, xbool aExport ) :
             Platform(aPlatform), bExport(aExport) {}
 
-        platform    Platform;
+        asset_platform    Platform;
         xbool       bExport;
     };
 

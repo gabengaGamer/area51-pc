@@ -60,7 +60,7 @@ xbool ObjectFileNeedsToBeBuilt( const char* SourceFilename, const char* ObjectFi
 
             switch( Target )
             {
-                case EXPORT_PC:   TargetString = PC_PACKAGE_VERSION; break;
+                case EXPORT_DESKTOP:   TargetString = PC_PACKAGE_VERSION; break;
                 case EXPORT_PS2:  TargetString = PS2_PACKAGE_VERSION; break;
                 case EXPORT_GCN:  TargetString = GCN_PACKAGE_VERSION; break;
                 case EXPORT_XBOX: TargetString = XBOX_PACKAGE_VERSION; break;
@@ -100,7 +100,7 @@ void WriteVersionIdentifier( X_FILE* f, s32 Target )
 
     switch( Target )
     {
-        case EXPORT_PC:   TargetString = PC_PACKAGE_VERSION; break;
+        case EXPORT_DESKTOP:   TargetString = PC_PACKAGE_VERSION; break;
         case EXPORT_PS2:  TargetString = PS2_PACKAGE_VERSION; break;
         case EXPORT_GCN:  TargetString = GCN_PACKAGE_VERSION; break;
         case EXPORT_XBOX: TargetString = XBOX_PACKAGE_VERSION; break;
@@ -266,7 +266,7 @@ u32 CompressAudioFile( X_FILE* in, X_FILE* out, s32 Temperature, s32* NumChannel
         case ADPCM:
             switch( Target )
             {
-                case EXPORT_PC:
+                case EXPORT_DESKTOP:
                     Result = CompressAudioFilePC_ADPCM( in, out, NumChannels, &SyncSize );
                     break;
 
@@ -296,7 +296,7 @@ u32 CompressAudioFile( X_FILE* in, X_FILE* out, s32 Temperature, s32* NumChannel
         case PCM:
             switch( Target )
             {
-                case EXPORT_PC:
+                case EXPORT_DESKTOP:
                     Result = CompressAudioFilePC_PCM( in, out, NumChannels, &SyncSize );
                     break;
 
@@ -313,7 +313,7 @@ u32 CompressAudioFile( X_FILE* in, X_FILE* out, s32 Temperature, s32* NumChannel
         case MP3:
             switch( Target )
             {
-                case EXPORT_PC:
+                case EXPORT_DESKTOP:
                     Result = CompressAudioFilePC_MP3( in, out, NumChannels, &SyncSize );
                     break;
 
@@ -1600,8 +1600,8 @@ void DumpSamples( void )
                             pTarget = "gcn";
                             break;
 
-                        case EXPORT_PC:
-                            pDefine = "#ifdef TARGET_PC";
+                        case EXPORT_DESKTOP:
+                            pDefine = "#ifdef TARGET_WINDOWS";
                             pTarget = "pc";
                             break;
 

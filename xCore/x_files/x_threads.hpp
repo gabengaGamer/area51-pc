@@ -43,7 +43,7 @@
 #include "Implementation/x_threads_private.hpp"
 
 #define X_MAX_THREADS           16
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
 #define THREAD_BASE_PRIORITY    THREAD_PRIORITY_NORMAL
 #else
 #define THREAD_BASE_PRIORITY    0

@@ -6,12 +6,12 @@
         "${CMAKE_CURRENT_LIST_DIR}/Network/Backend/NetLib_Windows.cpp"
     )
     set( A51_ENTROPY_NETWORK_DEPENDENCIES ws2_32 )
-elseif( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
+elseif( CMAKE_SYSTEM_NAME MATCHES "^(Linux|Android)$" )
     set( A51_ENTROPY_INPUT_BACKEND
         "${CMAKE_CURRENT_LIST_DIR}/Input/backend/sdl/input_sdl.cpp"
     )
     set( A51_ENTROPY_NETWORK_BACKEND
-        "${CMAKE_CURRENT_LIST_DIR}/Network/Backend/NetLib_Linux.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Network/Backend/NetLib_POSIX.cpp"
     )
 else()
     message( FATAL_ERROR "Entropy network backend is not defined for ${CMAKE_SYSTEM_NAME}." )

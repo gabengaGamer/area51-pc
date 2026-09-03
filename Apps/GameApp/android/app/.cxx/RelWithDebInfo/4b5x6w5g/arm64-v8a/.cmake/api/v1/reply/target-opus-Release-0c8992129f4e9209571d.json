@@ -1,0 +1,2288 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "thirdparty/Libopus/libopus.a"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"install",
+			"add_compile_options",
+			"include",
+			"target_compile_options",
+			"target_compile_definitions",
+			"add_definitions",
+			"target_include_directories",
+			"target_sources",
+			"add_sources_group"
+		],
+		"files" : 
+		[
+			"xCore/3rdParty/Libopus/CMakeLists.txt",
+			"xCore/3rdParty/Libopus/cmake/OpusConfig.cmake",
+			"xCore/3rdParty/Libopus/cmake/OpusFunctions.cmake"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 290,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 616,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 11,
+				"parent" : 0
+			},
+			{
+				"file" : 1,
+				"parent" : 3
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 127,
+				"parent" : 4
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 127,
+				"parent" : 4
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 127,
+				"parent" : 4
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 127,
+				"parent" : 4
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 127,
+				"parent" : 4
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 127,
+				"parent" : 4
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 127,
+				"parent" : 4
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 377,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 348,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 336,
+				"parent" : 0
+			},
+			{
+				"command" : 6,
+				"file" : 1,
+				"line" : 34,
+				"parent" : 4
+			},
+			{
+				"command" : 6,
+				"file" : 1,
+				"line" : 9,
+				"parent" : 4
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 599,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 571,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 591,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 316,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 563,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 352,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 323,
+				"parent" : 0
+			},
+			{
+				"command" : 7,
+				"file" : 0,
+				"line" : 304,
+				"parent" : 0
+			},
+			{
+				"command" : 7,
+				"file" : 0,
+				"line" : 400,
+				"parent" : 0
+			},
+			{
+				"command" : 7,
+				"file" : 0,
+				"line" : 584,
+				"parent" : 0
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 391,
+				"parent" : 0
+			},
+			{
+				"command" : 8,
+				"file" : 2,
+				"line" : 180,
+				"parent" : 27
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 392,
+				"parent" : 0
+			},
+			{
+				"command" : 8,
+				"file" : 2,
+				"line" : 180,
+				"parent" : 29
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 399,
+				"parent" : 0
+			},
+			{
+				"command" : 8,
+				"file" : 2,
+				"line" : 180,
+				"parent" : 31
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 564,
+				"parent" : 0
+			},
+			{
+				"command" : 8,
+				"file" : 2,
+				"line" : 180,
+				"parent" : 33
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 565,
+				"parent" : 0
+			},
+			{
+				"command" : 8,
+				"file" : 2,
+				"line" : 180,
+				"parent" : 35
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 566,
+				"parent" : 0
+			},
+			{
+				"command" : 8,
+				"file" : 2,
+				"line" : 180,
+				"parent" : 37
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 577,
+				"parent" : 0
+			},
+			{
+				"command" : 8,
+				"file" : 2,
+				"line" : 180,
+				"parent" : 39
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 578,
+				"parent" : 0
+			},
+			{
+				"command" : 8,
+				"file" : 2,
+				"line" : 180,
+				"parent" : 41
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -O3 -DNDEBUG  -std=gnu99 -fPIC"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-W"
+				},
+				{
+					"backtrace" : 7,
+					"fragment" : "-Wstrict-prototypes"
+				},
+				{
+					"backtrace" : 8,
+					"fragment" : "-Wextra"
+				},
+				{
+					"backtrace" : 9,
+					"fragment" : "-Wcast-align"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Wnested-externs"
+				},
+				{
+					"backtrace" : 11,
+					"fragment" : "-Wshadow"
+				},
+				{
+					"backtrace" : 12,
+					"fragment" : "-fstack-protector-strong"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 13,
+					"define" : "DISABLE_DEBUG_FLOAT"
+				},
+				{
+					"backtrace" : 14,
+					"define" : "ENABLE_HARDENING"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "HAVE_ALLOCA_H"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "HAVE_CONFIG_H"
+				},
+				{
+					"backtrace" : 17,
+					"define" : "HAVE_LRINT"
+				},
+				{
+					"backtrace" : 17,
+					"define" : "HAVE_LRINTF"
+				},
+				{
+					"backtrace" : 18,
+					"define" : "OPUS_ARM_MAY_HAVE_NEON"
+				},
+				{
+					"backtrace" : 18,
+					"define" : "OPUS_ARM_MAY_HAVE_NEON_INTR"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "OPUS_ARM_PRESUME_NEON"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "OPUS_ARM_PRESUME_NEON_INTR"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "OPUS_BUILD"
+				},
+				{
+					"backtrace" : 21,
+					"define" : "OPUS_HAVE_RTCD"
+				},
+				{
+					"backtrace" : 22,
+					"define" : "VAR_ARRAYS"
+				},
+				{
+					"backtrace" : 23,
+					"define" : "_FORTIFY_SOURCE=2"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 24,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/include"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/Libopus"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/dnn"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/celt"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/silk"
+				},
+				{
+					"backtrace" : 25,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/silk/float"
+				},
+				{
+					"backtrace" : 26,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/silk/fixed"
+				}
+			],
+			"language" : "C",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					1
+				],
+				"standard" : "99"
+			},
+			"sourceIndexes" : 
+			[
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				65,
+				66,
+				67,
+				68,
+				69,
+				70,
+				71,
+				72,
+				73,
+				74,
+				75,
+				76,
+				77,
+				78,
+				79,
+				80,
+				81,
+				82,
+				83,
+				84,
+				85,
+				86,
+				87,
+				88,
+				89,
+				90,
+				91,
+				92,
+				93,
+				94,
+				95,
+				96,
+				97,
+				98,
+				99,
+				100,
+				101,
+				102,
+				103,
+				104,
+				105,
+				106,
+				107,
+				108,
+				109,
+				110,
+				111,
+				112,
+				113,
+				114,
+				115,
+				116,
+				117,
+				118,
+				119,
+				120,
+				121,
+				122,
+				123,
+				124,
+				125,
+				126,
+				127,
+				128,
+				129,
+				130,
+				131,
+				132,
+				133,
+				134,
+				135,
+				136,
+				137,
+				138,
+				139,
+				140,
+				141,
+				193,
+				194,
+				195,
+				196,
+				197,
+				198,
+				199,
+				200,
+				201,
+				202,
+				203,
+				204,
+				205,
+				206,
+				207,
+				208,
+				209,
+				210,
+				211,
+				212,
+				213,
+				214,
+				215,
+				216,
+				217,
+				218,
+				219,
+				220,
+				221,
+				222,
+				223,
+				224,
+				225,
+				226,
+				227,
+				228,
+				229,
+				230,
+				231,
+				232,
+				233,
+				234,
+				235,
+				236,
+				237,
+				238,
+				239,
+				240,
+				241,
+				242,
+				243,
+				244,
+				245,
+				246,
+				247,
+				248
+			],
+			"sysroot" : 
+			{
+				"path" : "/home/gamespy/Android/Sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
+			}
+		}
+	],
+	"id" : "opus::@db1f5d02734a3fc5eb79",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 2,
+				"path" : "lib"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "/usr/local"
+		}
+	},
+	"name" : "opus",
+	"nameOnDisk" : "libopus.a",
+	"paths" : 
+	{
+		"build" : "thirdparty/Libopus",
+		"source" : "xCore/3rdParty/Libopus"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6
+			]
+		},
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20
+			]
+		},
+		{
+			"name" : "celt",
+			"sourceIndexes" : 
+			[
+				21,
+				22,
+				142,
+				143,
+				144,
+				145,
+				146,
+				147,
+				148,
+				149,
+				150,
+				151,
+				152,
+				153,
+				154,
+				155,
+				156,
+				157,
+				158,
+				159,
+				160,
+				161,
+				162,
+				163,
+				164,
+				165,
+				166,
+				167,
+				168,
+				169,
+				170,
+				171,
+				172,
+				173,
+				174,
+				175,
+				176,
+				177,
+				178,
+				179,
+				180,
+				181,
+				182,
+				183,
+				184,
+				185,
+				186,
+				187,
+				188,
+				189,
+				190,
+				191,
+				192,
+				193,
+				194,
+				195,
+				196,
+				197,
+				198,
+				199,
+				200,
+				201,
+				202,
+				203,
+				204,
+				205,
+				206,
+				207,
+				208,
+				209,
+				210,
+				239,
+				240,
+				243,
+				244
+			]
+		},
+		{
+			"name" : "silk",
+			"sourceIndexes" : 
+			[
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				30,
+				31,
+				32,
+				33,
+				34,
+				35,
+				36,
+				37,
+				38,
+				39,
+				40,
+				41,
+				42,
+				43,
+				44,
+				45,
+				46,
+				47,
+				48,
+				49,
+				50,
+				51,
+				52,
+				53,
+				54,
+				55,
+				56,
+				57,
+				58,
+				59,
+				60,
+				61,
+				62,
+				63,
+				64,
+				65,
+				66,
+				67,
+				68,
+				69,
+				70,
+				71,
+				72,
+				73,
+				74,
+				75,
+				76,
+				77,
+				78,
+				79,
+				80,
+				81,
+				82,
+				83,
+				84,
+				85,
+				86,
+				87,
+				88,
+				89,
+				90,
+				91,
+				92,
+				93,
+				94,
+				95,
+				96,
+				97,
+				98,
+				99,
+				100,
+				101,
+				102,
+				103,
+				104,
+				105,
+				106,
+				107,
+				108,
+				109,
+				110,
+				111,
+				112,
+				113,
+				114,
+				115,
+				116,
+				117,
+				118,
+				119,
+				120,
+				121,
+				122,
+				123,
+				124,
+				125,
+				126,
+				127,
+				128,
+				129,
+				130,
+				131,
+				132,
+				133,
+				134,
+				135,
+				136,
+				137,
+				138,
+				139,
+				140,
+				141,
+				211,
+				212,
+				213,
+				214,
+				215,
+				216,
+				217,
+				218,
+				219,
+				220,
+				221,
+				222,
+				223,
+				224,
+				225,
+				226,
+				227,
+				228,
+				229,
+				230,
+				231,
+				232,
+				233,
+				234,
+				235,
+				236,
+				237,
+				238,
+				241,
+				245,
+				246,
+				247,
+				248
+			]
+		},
+		{
+			"name" : "lpcnet",
+			"sourceIndexes" : 
+			[
+				242
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"path" : "xCore/3rdParty/Libopus/include/opus.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "xCore/3rdParty/Libopus/include/opus_multistream.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "xCore/3rdParty/Libopus/include/opus_projection.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "xCore/3rdParty/Libopus/src/opus_private.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "xCore/3rdParty/Libopus/src/analysis.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "xCore/3rdParty/Libopus/src/mapping_matrix.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "xCore/3rdParty/Libopus/src/mlp.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/opus.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/opus_decoder.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/opus_encoder.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/extensions.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/opus_multistream.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/opus_multistream_encoder.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/opus_multistream_decoder.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/repacketizer.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/opus_projection_encoder.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/opus_projection_decoder.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/mapping_matrix.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/analysis.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/mlp.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/src/mlp_data.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "xCore/3rdParty/Libopus/include/opus_defines.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 1,
+			"path" : "xCore/3rdParty/Libopus/include/opus_types.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/debug.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/control.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/errors.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/API.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/typedef.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/define.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/main.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/x86/main_sse.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/PLC.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/structs.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/tables.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/tuning_parameters.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/Inlines.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/MacroCount.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/MacroDebug.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/macros.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/NSQ.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/pitch_est_defines.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/resampler_private.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/resampler_rom.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/resampler_structs.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/SigProc_FIX.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/x86/SigProc_FIX_sse.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/biquad_alt_arm.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/LPC_inv_pred_gain_arm.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/macros_armv4.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/macros_armv5e.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/macros_arm64.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/SigProc_FIX_armv4.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/SigProc_FIX_armv5e.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/NSQ_del_dec_arm.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/NSQ_neon.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/fixed/main_FIX.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/fixed/structs_FIX.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/fixed/arm/warped_autocorrelation_FIX_arm.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/fixed/mips/warped_autocorrelation_FIX_mipsr1.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/float/main_FLP.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/float/structs_FLP.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/float/SigProc_FLP.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/mips/macros_mipsr1.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/mips/NSQ_mips.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"path" : "xCore/3rdParty/Libopus/silk/mips/sigproc_fix_mipsr1.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/CNG.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/code_signs.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/init_decoder.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/decode_core.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/decode_frame.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/decode_parameters.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/decode_indices.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/decode_pulses.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/decoder_set_fs.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/dec_API.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/enc_API.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/encode_indices.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/encode_pulses.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/gain_quant.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/interpolate.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/LP_variable_cutoff.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/NLSF_decode.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/NSQ.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/NSQ_del_dec.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/PLC.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/shell_coder.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/tables_gain.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/tables_LTP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/tables_NLSF_CB_NB_MB.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/tables_NLSF_CB_WB.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/tables_other.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/tables_pitch_lag.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/tables_pulses_per_block.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/VAD.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/control_audio_bandwidth.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/quant_LTP_gains.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/VQ_WMat_EC.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/HP_variable_cutoff.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/NLSF_encode.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/NLSF_VQ.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/NLSF_unpack.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/NLSF_del_dec_quant.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/process_NLSFs.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/stereo_LR_to_MS.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/stereo_MS_to_LR.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/check_control_input.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/control_SNR.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/init_encoder.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/control_codec.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/A2NLSF.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/ana_filt_bank_1.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/biquad_alt.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/bwexpander_32.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/bwexpander.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/debug.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/decode_pitch.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/inner_prod_aligned.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/lin2log.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/log2lin.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/LPC_analysis_filter.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/LPC_inv_pred_gain.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/table_LSF_cos.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/NLSF2A.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/NLSF_stabilize.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/NLSF_VQ_weights_laroia.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/pitch_est_tables.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/resampler.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/resampler_down2_3.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/resampler_down2.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/resampler_private_AR2.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/resampler_private_down_FIR.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/resampler_private_IIR_FIR.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/resampler_private_up2_HQ.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/resampler_rom.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/sigm_Q15.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/sort.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/sum_sqr_shift.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/stereo_decode_pred.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/stereo_encode_pred.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/stereo_find_predictor.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/stereo_quant_pred.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 28,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/LPC_fit.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/arch.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/bands.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/celt.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/cpu_support.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/include/opus_custom.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/cwrs.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/ecintrin.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/entcode.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/entdec.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/entenc.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/fixed_debug.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/fixed_generic.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/float_cast.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/_kiss_fft_guts.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/kiss_fft.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/laplace.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/mathops.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/mdct.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/mfrngcod.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/modes.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/os_support.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/pitch.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/celt_lpc.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/x86/celt_lpc_sse.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/quant_bands.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/rate.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/stack_alloc.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/vq.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/static_modes_float.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/static_modes_fixed.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/static_modes_float_arm_ne10.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/static_modes_fixed_arm_ne10.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/armcpu.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/fixed_armv4.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/fixed_armv5e.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/fixed_arm64.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/kiss_fft_armv4.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/kiss_fft_armv5e.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/mathops_arm.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/pitch_arm.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/fft_arm.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/mdct_arm.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/mips/celt_mipsr1.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/mips/fixed_generic_mipsr1.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/mips/kiss_fft_mipsr1.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/mips/mdct_mipsr1.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/mips/pitch_mipsr1.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/x86/pitch_sse.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/x86/vq_sse.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/x86/x86_arch_macros.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"path" : "xCore/3rdParty/Libopus/celt/x86/x86cpu.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/bands.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/celt.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/celt_encoder.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/celt_decoder.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/cwrs.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/entcode.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/entdec.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/entenc.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/kiss_fft.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/laplace.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/mathops.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/mdct.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/modes.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/pitch.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/celt_lpc.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/quant_bands.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/rate.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 30,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/vq.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/apply_sine_window_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/corrMatrix_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/encode_frame_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/find_LPC_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/find_LTP_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/find_pitch_lags_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/find_pred_coefs_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/LPC_analysis_filter_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/LTP_analysis_filter_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/LTP_scale_ctrl_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/noise_shape_analysis_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/process_gains_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/regularize_correlations_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/residual_energy_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/warped_autocorrelation_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/wrappers_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/autocorrelation_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/burg_modified_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/bwexpander_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/energy_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/inner_product_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/k2a_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/LPC_inv_pred_gain_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/pitch_analysis_core_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/scale_copy_vector_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/scale_vector_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/schur_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 32,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/float/sort_FLP.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 34,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/armcpu.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 34,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/arm_celt_map.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 36,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/arm_silk_map.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 38,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/dnn/arm/arm_dnn_map.c",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 40,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/celt_neon_intr.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 40,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/celt/arm/pitch_neon_intr.c",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 42,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/biquad_alt_neon_intr.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 42,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/LPC_inv_pred_gain_neon_intr.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 42,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/NSQ_del_dec_neon_intr.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 42,
+			"compileGroupIndex" : 0,
+			"path" : "xCore/3rdParty/Libopus/silk/arm/NSQ_neon.c",
+			"sourceGroupIndex" : 3
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

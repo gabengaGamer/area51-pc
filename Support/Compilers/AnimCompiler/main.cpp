@@ -4,7 +4,7 @@
 #include "AnimCompiler.hpp"
 #include "x_plus.hpp"
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 #include "Windows.h"
 #endif
 
@@ -20,7 +20,7 @@ xbool g_Verbose     = FALSE;
 
 struct export_info
 {
-    platform    Platform;
+    asset_platform    Platform;
     xstring     OutName;
 };
 
@@ -140,19 +140,19 @@ void ExecuteScript( command_line& CommandLine )
         else if( OptName == xstring( "XBOX" ) )
         {
             ExpotName[nExportNames].OutName  = OptString;
-            ExpotName[nExportNames].Platform = PLATFORM_XBOX;
+            ExpotName[nExportNames].Platform = ASSET_PLATFORM_XBOX;
             nExportNames++;
         }
         else if( OptName == xstring( "PS2" ) )
         {
             ExpotName[nExportNames].OutName  = OptString;
-            ExpotName[nExportNames].Platform = PLATFORM_PS2;
+            ExpotName[nExportNames].Platform = ASSET_PLATFORM_PS2;
             nExportNames++;
         }
         else if( OptName == xstring( "PC" ) )
         {
             ExpotName[nExportNames].OutName  = OptString;
-            ExpotName[nExportNames].Platform = PLATFORM_PC;
+            ExpotName[nExportNames].Platform = ASSET_PLATFORM_DESKTOP;
             Compiler.SetOutputName(ExpotName[nExportNames].OutName);
             nExportNames++;
         }

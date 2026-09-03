@@ -1,0 +1,87 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"xCore/3rdParty/Libvorbis/lib/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 119,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 121,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "/usr/local/include/vorbis",
+			"paths" : 
+			[
+				"xCore/3rdParty/Libvorbis/lib/../include/vorbis/codec.h",
+				"xCore/3rdParty/Libvorbis/lib/../include/vorbis/vorbisenc.h",
+				"xCore/3rdParty/Libvorbis/lib/../include/vorbis/vorbisfile.h"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"thirdparty/Libvorbis/lib/libvorbis.a"
+			],
+			"targetId" : "vorbis::@72c5c1225e07575939fc",
+			"targetIndex" : 28,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"thirdparty/Libvorbis/lib/libvorbisenc.a"
+			],
+			"targetId" : "vorbisenc::@72c5c1225e07575939fc",
+			"targetIndex" : 29,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"thirdparty/Libvorbis/lib/libvorbisfile.a"
+			],
+			"targetId" : "vorbisfile::@72c5c1225e07575939fc",
+			"targetIndex" : 30,
+			"type" : "target"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "thirdparty/Libvorbis/lib",
+		"source" : "xCore/3rdParty/Libvorbis/lib"
+	}
+}

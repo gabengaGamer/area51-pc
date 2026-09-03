@@ -250,7 +250,7 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_PC_BTN_31 )    
     DEFINE_GADGET_RANGE( INPUT_PC_BTN_0,
                          INPUT_PC_BTN_31,
-                         INPUT_PLATFORM_PC,
+                         INPUT_PLATFORM_DESKTOP,
                          INPUT_DEVICE_GAMEPAD,
                          INPUT_VALUE_DIGITAL,
                          INPUT_CONTROL_BUTTON,
@@ -270,7 +270,7 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_PC_STICK_RZ )
     DEFINE_GADGET_RANGE( INPUT_PC_STICK_X,
                          INPUT_PC_STICK_RZ,
-                         INPUT_PLATFORM_PC,
+                         INPUT_PLATFORM_DESKTOP,
                          INPUT_DEVICE_GAMEPAD,
                          INPUT_VALUE_ABSOLUTE_AXIS,
                          INPUT_CONTROL_STICK_AXIS,
@@ -302,7 +302,7 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_MOUSE_BTN_4 )
     DEFINE_GADGET_RANGE( INPUT_MOUSE_BTN_L,
                          INPUT_MOUSE_BTN_4,
-                         INPUT_PLATFORM_PC,
+                         INPUT_PLATFORM_DESKTOP,
                          INPUT_DEVICE_MOUSE,
                          INPUT_VALUE_DIGITAL,
                          INPUT_CONTROL_BUTTON,
@@ -318,7 +318,7 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_MOUSE_Y_REL )                
     DEFINE_GADGET_RANGE( INPUT_MOUSE_X_REL,
                          INPUT_MOUSE_Y_REL,
-                         INPUT_PLATFORM_PC,
+                         INPUT_PLATFORM_DESKTOP,
                          INPUT_DEVICE_MOUSE,
                          INPUT_VALUE_RELATIVE_AXIS,
                          INPUT_CONTROL_AXIS,
@@ -326,7 +326,7 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_MOUSE_WHEEL_REL )             
     DEFINE_GADGET_RANGE( INPUT_MOUSE_WHEEL_REL,
                          INPUT_MOUSE_WHEEL_REL,
-                         INPUT_PLATFORM_PC,
+                         INPUT_PLATFORM_DESKTOP,
                          INPUT_DEVICE_MOUSE,
                          INPUT_VALUE_PULSE,
                          INPUT_CONTROL_WHEEL,
@@ -336,7 +336,7 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_MOUSE_Y_ABS )                
     DEFINE_GADGET_RANGE( INPUT_MOUSE_X_ABS,
                          INPUT_MOUSE_Y_ABS,
-                         INPUT_PLATFORM_PC,
+                         INPUT_PLATFORM_DESKTOP,
                          INPUT_DEVICE_MOUSE,
                          INPUT_VALUE_ABSOLUTE_AXIS,
                          INPUT_CONTROL_AXIS,
@@ -344,7 +344,7 @@ BEGIN_GADGETS
     DEFINE_GADGET ( INPUT_MOUSE_WHEEL_ABS )             
     DEFINE_GADGET_RANGE( INPUT_MOUSE_WHEEL_ABS,
                          INPUT_MOUSE_WHEEL_ABS,
-                         INPUT_PLATFORM_PC,
+                         INPUT_PLATFORM_DESKTOP,
                          INPUT_DEVICE_MOUSE,
                          INPUT_VALUE_ABSOLUTE_AXIS,
                          INPUT_CONTROL_WHEEL,
@@ -511,7 +511,7 @@ BEGIN_GADGETS
     DEFINE_GADGET_VALUE ( INPUT_KBD_MEDIASELECT      , INPUT_KBD__BEGIN + 0xED )    // Media Select 
     DEFINE_GADGET_RANGE( INPUT_KBD_ESCAPE,
                          INPUT_KBD_MEDIASELECT,
-                         INPUT_PLATFORM_PC,
+                         INPUT_PLATFORM_DESKTOP,
                          INPUT_DEVICE_KEYBOARD,
                          INPUT_VALUE_DIGITAL,
                          INPUT_CONTROL_KEY,

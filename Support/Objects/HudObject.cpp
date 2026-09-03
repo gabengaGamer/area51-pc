@@ -32,7 +32,7 @@
 //=========================================================================
 
 // Screen margins given in pixels
-#if defined( TARGET_DESKTOP ) || defined( X_EDITOR )
+#if defined( TARGET_DESKTOP ) || defined( TARGET_MOBILE ) || defined( X_EDITOR )
 #define LEFTMARGIN              16
 #define TOPMARGIN               16
 #define RIGHTMARGIN             16

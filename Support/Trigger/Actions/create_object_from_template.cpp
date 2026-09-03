@@ -55,7 +55,7 @@ void create_object_from_template::Execute ( trigger_object* pParent )
     }
     
     g_TemplateMgr.CreateTemplate( m_TemplateID.Get(), FinalPos, m_Orientation, pParent->GetZone1(), pParent->GetZone2() );
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     x_DebugMsg(xfs("Trigger %s creating template %s\n",guid_ToString(pParent->GetGuid()), m_TemplateID.Get()));
 #endif
 }
@@ -64,7 +64,7 @@ void create_object_from_template::Execute ( trigger_object* pParent )
 
 void  create_object_from_template::OnRender ( void )
 {
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     vector3 MyPosition =  GetPositionOwner() + SMP_UTIL_RandomVector(k_rand_draw_displace_amt);
 
     render::debug::Line( MyPosition, m_Position, s_CreateTemplateColor );

@@ -92,7 +92,7 @@ xbool give_player_item::OnProperty ( prop_query& rPropQuery )
             x_strcpy( m_TemplateName, rPropQuery.GetVarExternal() );
 
            //add new blueprint
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
             g_TemplateMgr.EditorAddBlueprintRef(rPropQuery.GetVarExternal());
 #endif
         }

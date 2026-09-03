@@ -15,6 +15,11 @@
 
 #include "common/fog_functions.hlsl"
 
+// GS: TEMP: Disable only alpha-driven illumination.
+#ifndef A51_DISABLE_ALPHA_ILLUMINATION
+    #define A51_DISABLE_ALPHA_ILLUMINATION 0
+#endif
+
 //==============================================================================
 //  TYPES
 //==============================================================================

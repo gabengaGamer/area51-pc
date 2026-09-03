@@ -53,7 +53,7 @@ x_try;
 
     if( SlotID == SLOT_NULL )
     {
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
         x_throw( "No music logic object found\n" );
 #endif
         return;

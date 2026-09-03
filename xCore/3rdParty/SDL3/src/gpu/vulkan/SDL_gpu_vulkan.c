@@ -5175,7 +5175,9 @@ static void VULKAN_INTERNAL_BindGraphicsDescriptorSets(
         MAX_STORAGE_TEXTURES_PER_STAGE +
         MAX_STORAGE_BUFFERS_PER_STAGE +
         MAX_UNIFORM_BUFFERS_PER_STAGE) * 2];
-    VkDescriptorBufferInfo bufferInfos[MAX_STORAGE_BUFFERS_PER_STAGE * 2];
+    /* Storage and uniform buffers share this temporary array. */
+    VkDescriptorBufferInfo bufferInfos[
+        (MAX_STORAGE_BUFFERS_PER_STAGE + MAX_UNIFORM_BUFFERS_PER_STAGE) * 2];
     VkDescriptorImageInfo imageInfos[(MAX_TEXTURE_SAMPLERS_PER_STAGE + MAX_STORAGE_TEXTURES_PER_STAGE) * 2];
     Uint32 dynamicOffsets[MAX_UNIFORM_BUFFERS_PER_STAGE * 2];
     Uint32 writeCount = 0;
@@ -6899,7 +6901,7 @@ static SDL_GPUShader *VULKAN_CreateShader(
 
     SDL_SetAtomicInt(&vulkanShader->referenceCount, 0);
 
-    if (renderer->debugMode && SDL_HasProperty(createinfo->props, SDL_PROP_GPU_SHADER_CREATE_NAME_STRING)) {
+    if (renderer->debugMode && renderer->supportsDebugUtils && SDL_HasProperty(createinfo->props, SDL_PROP_GPU_SHADER_CREATE_NAME_STRING)) {
         VkDebugUtilsObjectNameInfoEXT nameInfo;
         nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
         nameInfo.pNext = NULL;
@@ -9270,16 +9272,20 @@ static void VULKAN_GenerateMipmaps(
             blit.srcOffsets[0].y = 0;
             blit.srcOffsets[0].z = depth;
 
-            blit.srcOffsets[1].x = container->header.info.width >> (level - 1);
-            blit.srcOffsets[1].y = container->header.info.height >> (level - 1);
+            /* Mip dimensions are clamped to 1. Without this clamp, a
+             * non-square texture reaches a zero-sized extent before the
+             * largest dimension does. Adreno treats the resulting blit as a
+             * malformed GPU command and can page-fault. */
+            blit.srcOffsets[1].x = SDL_max(1u, container->header.info.width >> (level - 1));
+            blit.srcOffsets[1].y = SDL_max(1u, container->header.info.height >> (level - 1));
             blit.srcOffsets[1].z = depth + 1;
 
             blit.dstOffsets[0].x = 0;
             blit.dstOffsets[0].y = 0;
             blit.dstOffsets[0].z = depth;
 
-            blit.dstOffsets[1].x = container->header.info.width >> level;
-            blit.dstOffsets[1].y = container->header.info.height >> level;
+            blit.dstOffsets[1].x = SDL_max(1u, container->header.info.width >> level);
+            blit.dstOffsets[1].y = SDL_max(1u, container->header.info.height >> level);
             blit.dstOffsets[1].z = depth + 1;
 
             blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -10278,7 +10284,6 @@ static bool VULKAN_INTERNAL_AcquireSwapchainTexture(
     swapchainTextureContainer = &windowData->textureContainers[swapchainImageIndex];
 
     // We need a special execution dependency with pWaitDstStageMask or image transition can start before acquire finishes
-
     VkImageMemoryBarrier imageBarrier;
     imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     imageBarrier.pNext = NULL;
@@ -10306,7 +10311,6 @@ static bool VULKAN_INTERNAL_AcquireSwapchainTexture(
         NULL,
         1,
         &imageBarrier);
-
     // Set up present struct
 
     if (vulkanCommandBuffer->presentDataCount == vulkanCommandBuffer->presentDataCapacity) {

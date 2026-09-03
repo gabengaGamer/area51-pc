@@ -674,9 +674,9 @@ editor_settings::editor_settings( void )
 
     // NOTE: for now put PC at end!
     // When exporting lighting, it will reset color table info back to PC
-    m_lPlatform.Add( "XBOX", platform_info( PLATFORM_XBOX, FALSE ) );
-    m_lPlatform.Add( "PS2",  platform_info( PLATFORM_PS2, TRUE )  );
-    m_lPlatform.Add( "PC",   platform_info( PLATFORM_PC, FALSE )   );
+    m_lPlatform.Add( "XBOX", platform_info( ASSET_PLATFORM_XBOX, FALSE ) );
+    m_lPlatform.Add( "PS2",  platform_info( ASSET_PLATFORM_PS2, TRUE )  );
+    m_lPlatform.Add( "PC",   platform_info( ASSET_PLATFORM_DESKTOP, FALSE )   );
 
     // Lookup the current directory and keep this for saving/loading
     m_SettingsDirectory[0] = 0 ;
@@ -816,14 +816,14 @@ s32 editor_settings::GetPlatformCount( void ) const
 
 //==============================================================================
 
-platform editor_settings::GetPlatformType( const char* pString ) const
+asset_platform editor_settings::GetPlatformType( const char* pString ) const
 {
     return( m_lPlatform.GetValue( pString ).Platform );
 }
 
 //==============================================================================
 
-const char* editor_settings::GetPlatformString( platform Type ) const
+const char* editor_settings::GetPlatformString( asset_platform Type ) const
 {
     for( s32 i=0; i<m_lPlatform.GetCount(); i++ )
     {
@@ -836,7 +836,7 @@ const char* editor_settings::GetPlatformString( platform Type ) const
 
 //==============================================================================
 
-platform editor_settings::GetPlatformTypeI( s32 Index ) const
+asset_platform editor_settings::GetPlatformTypeI( s32 Index ) const
 {
     return( m_lPlatform.GetValueFromIndex( Index ).Platform );
 }

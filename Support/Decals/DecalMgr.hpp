@@ -151,7 +151,7 @@ public:
                                       const decal_vert    Verts[MAX_VERTS_PER_DECAL],
                                       const matrix4&      L2W,
                                       u16                 ZoneInfo );
-    void    EndStaticDecalExport    ( platform            PlatformType );
+    void    EndStaticDecalExport    ( asset_platform            PlatformType );
 
 protected:
 
@@ -445,7 +445,7 @@ protected:
     //==========================================================================
     // Internal functions for exporting static decals
     //==========================================================================
-    void        SetupExportVertBuffers  ( platform      PlatformType );
+    void        SetupExportVertBuffers  ( asset_platform      PlatformType );
 
     //==========================================================================
     // Rendering functions

@@ -147,8 +147,8 @@ void ExportFile( const char* pFileName )
     if( !Effect.m_ExportPC.IsEmpty() )
     {
         exporter Export;
-        Export.ConstructData( &Effect, EXPORT_TARGET_PC );
-        Export.SaveData( (const char*)Effect.m_ExportPC, EXPORT_TARGET_PC );
+        Export.ConstructData( &Effect, EXPORT_TARGET_DESKTOP );
+        Export.SaveData( (const char*)Effect.m_ExportPC, EXPORT_TARGET_DESKTOP );
         x_printf( " -PC  : %s\n", Effect.m_ExportPC );
     }
 

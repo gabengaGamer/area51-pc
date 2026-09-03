@@ -60,7 +60,7 @@ io_fs g_IOFSMgr;
 
 static char io_path_separator( void )
 {
-#if defined( TARGET_LINUX )
+#if defined( TARGET_POSIX )
     return '/';
 #else
     return '\\';
@@ -71,7 +71,7 @@ static char io_path_separator( void )
 // implementation. The host path of an emulated Linux DFS keeps its real case.
 static xbool io_path_chars_equal( char Left, char Right )
 {
-#if defined( TARGET_LINUX )
+#if defined( TARGET_POSIX )
     if( ((Left == '\\') || (Left == '/')) && ((Right == '\\') || (Right == '/')) )
         return TRUE;
 
@@ -123,12 +123,12 @@ static void io_clean_path( char* pClean, const char* pFilename )
 
     *pClean = 0;
 
-#if !defined( TARGET_LINUX )
+#if !defined( TARGET_POSIX )
     x_strtoupper( pOrig );
 #endif
 }
 
-#if defined( TARGET_DESKTOP )
+#if defined( TARGET_DESKTOP ) || defined( TARGET_MOBILE )
 static void io_clean_host_path( char* pClean, const char* pFilename )
 {
     const char* pSource = pFilename;
@@ -413,7 +413,7 @@ xbool io_fs::Init( void )
                        old_EOF,
                        old_Length );
 
-#if ( defined(TARGET_DESKTOP) && !defined(X_EDITOR) )
+#if ( (defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)) && !defined(X_EDITOR) )
     // Set new IOHooks
     x_SetFileIOHooks(  io_open,
                        io_close,
@@ -548,7 +548,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     dfs_header*     pHeader = NULL;
     xbool           bSuccess = FALSE;
     char            pCleanFilename[X_MAX_PATH];
-#if defined( TARGET_DESKTOP )
+#if defined( TARGET_DESKTOP ) || defined( TARGET_MOBILE )
     char            pEmuRootPath[X_MAX_PATH];
 #endif
 
@@ -565,7 +565,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     char pHostPrefix[IO_DEVICE_MAX_PREFIX_LENGTH];
     g_IoMgr.GetDevicePathPrefix( pHostPrefix, IO_DEVICE_HOST );
 
-#if defined( TARGET_DESKTOP )
+#if defined( TARGET_DESKTOP ) || defined( TARGET_MOBILE )
     io_clean_host_path( pEmuRootPath, xfs( "%s%s", pHostPrefix, pPathName ) );
 #endif
 
@@ -699,7 +699,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
     // Attempt DFS emulation from directory if load failed.
     if( !bSuccess )
     {
-#if defined( TARGET_DESKTOP )
+#if defined( TARGET_DESKTOP ) || defined( TARGET_MOBILE )
         pHeader = dfs_BuildHeaderFromDirectory( pEmuRootPath );
 #else
         pHeader = dfs_BuildHeaderFromDirectory( pCleanFilename );
@@ -716,7 +716,7 @@ xbool io_fs::MountFileSystem( const char* pPathName, s32 SearchPriority )
             m_DFS[FileIndex].pHeader        = pHeader;
             m_DFS[FileIndex].FindIndex      = -1;
             m_DFS[FileIndex].bEmulated      = TRUE;
-#if defined( TARGET_LINUX )
+#if defined( TARGET_POSIX )
             m_DFS[FileIndex].EmuRootPath    = pEmuRootPath;
 #else
             m_DFS[FileIndex].EmuRootPath    = pCleanFilename;

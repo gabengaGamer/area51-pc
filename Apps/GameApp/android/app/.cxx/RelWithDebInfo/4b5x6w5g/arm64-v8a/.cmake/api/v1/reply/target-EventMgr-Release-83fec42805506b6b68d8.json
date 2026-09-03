@@ -1,0 +1,183 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "Support/EventMgr/libEventMgr.a"
+		}
+	],
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"a51_add_project",
+			"target_compile_definitions",
+			"target_include_directories"
+		],
+		"files" : 
+		[
+			"cmake/A51Project.cmake",
+			"Support/EventMgr/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 1,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 58,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 97,
+				"parent" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 63,
+				"parent" : 1
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -O3 -DNDEBUG  -fPIC"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 3,
+					"define" : "CONFIG_RETAIL"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "TARGET_ANDROID"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/x_files"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/Entropy"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/Parsing"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/MeshUtil"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/Auxiliary"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/Auxiliary/Bitmap"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/Auxiliary/CommandLine"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/Auxiliary/fx_Core"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/Support"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/MiscUtils"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/Support/EventMgr"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/../Support"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0
+			],
+			"sysroot" : 
+			{
+				"path" : "/home/gamespy/Android/Sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
+			}
+		}
+	],
+	"id" : "EventMgr::@dcc2970907b400bf90f1",
+	"name" : "EventMgr",
+	"nameOnDisk" : "libEventMgr.a",
+	"paths" : 
+	{
+		"build" : "Support/EventMgr",
+		"source" : "Support/EventMgr"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Support\\EventMgr",
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "Support/EventMgr/EventMgr.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "Support/EventMgr/EventMgr.hpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

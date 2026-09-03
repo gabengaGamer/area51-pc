@@ -68,7 +68,7 @@ static  void                SetVerbose               ( xbool bVerbose ) { s_bVer
         virtual void        OnGetCompilerRules       ( xstring&          CompilerRules    ) = 0;
         virtual const char* OnGetCompilerOutputOption( void ) const                         { return NULL; }
         virtual void        OnCheckIntegrity         ( void )                               = 0;
-        virtual void        OnGetFinalDependencies   ( xarray<xstring>& List, platform Platform, const char* pDirectory ) = 0;
+        virtual void        OnGetFinalDependencies   ( xarray<xstring>& List, asset_platform Platform, const char* pDirectory ) = 0;
 
 protected:
 
@@ -177,7 +177,7 @@ protected:
         char        OutputDir[256];
         char        Cmd[32];
         xbool       bCompile;
-        platform    Platform;
+        asset_platform    Platform;
     };
 
 

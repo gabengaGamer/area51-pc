@@ -1102,7 +1102,7 @@ void WritePackageToDisk( const char*Filename, xbool ReverseEndian, s32 Target )
     x_memset( VersionID, 0, VERSION_ID_SIZE );
     switch( Target )
     {
-        case EXPORT_PC:   TargetString = PC_PACKAGE_VERSION; break;
+        case EXPORT_DESKTOP:   TargetString = PC_PACKAGE_VERSION; break;
         case EXPORT_PS2:  TargetString = PS2_PACKAGE_VERSION; break;
         case EXPORT_GCN:  TargetString = GCN_PACKAGE_VERSION; break;
         case EXPORT_XBOX: TargetString = XBOX_PACKAGE_VERSION; break;
@@ -1114,7 +1114,7 @@ void WritePackageToDisk( const char*Filename, xbool ReverseEndian, s32 Target )
     x_memset( TargetID, 0, TARGET_ID_SIZE );
     switch( Target )
     {
-        case EXPORT_PC:   TargetString = PC_TARGET_ID; break;
+        case EXPORT_DESKTOP:   TargetString = PC_TARGET_ID; break;
         case EXPORT_PS2:  TargetString = PS2_TARGET_ID; break;
         case EXPORT_GCN:  TargetString = GCN_TARGET_ID; break;
         case EXPORT_XBOX: TargetString = XBOX_TARGET_ID; break;

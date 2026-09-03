@@ -92,13 +92,12 @@ function( a51_add_project TargetName ProjectType )
     target_compile_features( ${TargetName} PRIVATE cxx_std_17 )
     set_property( TARGET ${TargetName} PROPERTY C_STANDARD 11 )
 
-    # Platform target definitions:
-    #   TARGET_PC      Windows desktop only.
-    #   TARGET_LINUX   Linux desktop only.
-    #   TARGET_DESKTOP Common desktop code for both platforms.
+    # Platform target definitions. TARGET_DESKTOP and TARGET_POSIX are
+    # derived by x_target.hpp from the selected leaf target.
     target_compile_definitions( ${TargetName} PRIVATE
-        "$<$<PLATFORM_ID:Windows>:TARGET_PC>"
+        "$<$<PLATFORM_ID:Windows>:TARGET_WINDOWS>"
         "$<$<PLATFORM_ID:Linux>:TARGET_LINUX>"
+        "$<$<PLATFORM_ID:Android>:TARGET_ANDROID>"
         "$<$<STREQUAL:$<CONFIG>,Debug>:CONFIG_DEBUG>"
         "$<$<STREQUAL:$<CONFIG>,OptDebug>:CONFIG_OPTDEBUG>"
         "$<$<STREQUAL:$<CONFIG>,QA>:CONFIG_QA>"

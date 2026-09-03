@@ -1838,7 +1838,7 @@ void xbitmap::GCNUnswizzleData( void )
 
 xbool xbitmap::ReplaceAlphaWithRed ( void )
 {
-#if defined TARGET_PC
+#if defined TARGET_WINDOWS
     if(!( m_Format == FMT_32_ARGB_8888 || m_Format == FMT_32_URGB_8888))
     {
         ASSERTS(0,"Blend textures must be 24 or 32-bit tgas.\n");

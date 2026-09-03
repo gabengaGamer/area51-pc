@@ -1,0 +1,49 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target",
+			"add_dependencies"
+		],
+		"files" : 
+		[
+			"Apps/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 57,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 58,
+				"parent" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "main::@538fa2456b0d78962e95"
+		}
+	],
+	"id" : "a51_portable_apps::@baaa7a1a4213a52c26f3",
+	"name" : "a51_portable_apps",
+	"paths" : 
+	{
+		"build" : "Apps",
+		"source" : "Apps"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

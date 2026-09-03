@@ -1,0 +1,293 @@
+{
+  "buildFiles": [
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/AudioMgr/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/ConversationMgr/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/Dialogs/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/EventMgr/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/FX/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/GameLib/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/Music_mgr/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/NetworkMgr/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/Render/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/ScriptMgr/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Support/StringMgr/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/cmake/A51Platform.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/cmake/A51Project.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/cmake/A51ThirdParty.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libogg/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libogg/cmake/CheckSizes.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/cmake/CFeatureCheck.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/cmake/OpusBuildtype.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/cmake/OpusConfig.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/cmake/OpusFunctions.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/cmake/OpusPackageVersion.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/cmake/OpusSources.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libopus/cmake/config.h.cmake.in",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libvorbis/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libvorbis/lib/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libwebm/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libwebm/build/cxx_flags.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/Libwebm/build/msvc_runtime.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/3rdparty.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/FindLibUSB.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/GetGitRevisionDescription.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/PreseedEmscriptenCache.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/PreseedMSVCCache.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/PreseedNokiaNGageCache.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/SDL3Config.cmake.in",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/macros.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/sdlchecks.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/sdlcommands.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/sdlcompilers.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/sdlcpu.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/sdlmanpages.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/cmake/sdlplatform.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/include/build_config/SDL_build_config.h.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/3rdParty/SDL3/include/build_config/SDL_revision.h.cmake",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/Auxiliary/Bitmap/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/Auxiliary/CommandLine/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/Auxiliary/fx_Core/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/Entropy/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/MeshUtil/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/Parsing/CMakeLists.txt",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/xCore/x_files/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/gamespy/Android/Sdk/cmake/3.31.6/bin/ninja",
+      "-C",
+      "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/gamespy/Android/Sdk/cmake/3.31.6/bin/ninja",
+    "-C",
+    "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "AudioMgr::@35913dcc7d54bbc011cf": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "AudioMgr",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/Support/AudioMgr/libAudioMgr.a"
+    },
+    "CommandLine::@963465606554e994d524": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "CommandLine",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/xCore/Auxiliary/CommandLine/libCommandLine.a"
+    },
+    "ConversationMgr::@11ab260925161d9e9094": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "ConversationMgr",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/Support/ConversationMgr/libConversationMgr.a"
+    },
+    "Entropy::@856e0f9d459ef52aaefd": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "Entropy",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/xCore/Entropy/libEntropy.a"
+    },
+    "EventMgr::@dcc2970907b400bf90f1": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "EventMgr",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/Support/EventMgr/libEventMgr.a"
+    },
+    "FX::@eb24897a4a094bf9bf07": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "FX",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/Support/FX/libFX.a"
+    },
+    "Gamelib::@983434779a8e2e0eef62": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "Gamelib",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/Support/GameLib/libGamelib.a"
+    },
+    "MeshUtil::@08b6ef036cb57dd7a396": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "MeshUtil",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/xCore/MeshUtil/libMeshUtil.a"
+    },
+    "Music_mgr::@d904fc691e8027ff945e": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "Music_mgr",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/Support/Music_mgr/libMusic_mgr.a"
+    },
+    "NetworkMgr::@ef94e88b9f3a9c435306": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "NetworkMgr",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/Support/NetworkMgr/libNetworkMgr.a"
+    },
+    "Parsing::@0ba990b7165ddbfe2329": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "Parsing",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/xCore/Parsing/libParsing.a"
+    },
+    "Render::@9c5c33b62f41303e98db": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "Render",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/Support/Render/libRender.a"
+    },
+    "SDL3-shared::@fae1560e3fa989a21a8e": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "SDL3-shared",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/build/intermediates/cxx/RelWithDebInfo/4b5x6w5g/obj/arm64-v8a/libSDL3.so",
+      "runtimeFiles": []
+    },
+    "SDL_uclibc::@fae1560e3fa989a21a8e": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "SDL_uclibc",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/SDL3/libSDL_uclibc.a"
+    },
+    "Script_mgr::@0d4749cead8448c83432": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "Script_mgr",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/Support/ScriptMgr/libScript_mgr.a"
+    },
+    "StringMgr::@481c6999204dbd044d1b": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "StringMgr",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/Support/StringMgr/libStringMgr.a"
+    },
+    "UserInterface::@7ea7f42f2fa63de3fabb": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "UserInterface",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/Support/Dialogs/libUserInterface.a"
+    },
+    "a51_libvpx_external::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "a51_libvpx_external"
+    },
+    "a51_portable_apps::@baaa7a1a4213a52c26f3": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "a51_portable_apps"
+    },
+    "a51_selected_apps::@baaa7a1a4213a52c26f3": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "a51_selected_apps"
+    },
+    "a51_support::@08b3c54efab49747a530": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "a51_support"
+    },
+    "aux_Bitmap::@b0be7d3788cfd232acf3": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "aux_Bitmap",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/xCore/Auxiliary/Bitmap/libaux_Bitmap.a"
+    },
+    "fx_Core::@b79104c62ff41238d641": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "fx_Core",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/xCore/Auxiliary/fx_Core/libfx_Core.a"
+    },
+    "main::@538fa2456b0d78962e95": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "main",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/build/intermediates/cxx/RelWithDebInfo/4b5x6w5g/obj/arm64-v8a/libmain.so",
+      "runtimeFiles": [
+        "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/build/intermediates/cxx/RelWithDebInfo/4b5x6w5g/obj/arm64-v8a/libSDL3.so"
+      ]
+    },
+    "mkvmuxer::@0531f3ccdb08cd0bfb17": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "mkvmuxer"
+    },
+    "mkvparser::@0531f3ccdb08cd0bfb17": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "mkvparser"
+    },
+    "ogg::@b4bb1e11f88f3a2ec7ca": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "ogg",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/Libogg/libogg.a"
+    },
+    "opus::@db1f5d02734a3fc5eb79": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "opus",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/Libopus/libopus.a"
+    },
+    "vorbis::@72c5c1225e07575939fc": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "vorbis",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/Libvorbis/lib/libvorbis.a"
+    },
+    "vorbisenc::@72c5c1225e07575939fc": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "vorbisenc",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/Libvorbis/lib/libvorbisenc.a"
+    },
+    "vorbisfile::@72c5c1225e07575939fc": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "vorbisfile",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/Libvorbis/lib/libvorbisfile.a"
+    },
+    "webm::@0531f3ccdb08cd0bfb17": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "webm",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/thirdparty/Libwebm/libwebm.a"
+    },
+    "webvtt_common::@0531f3ccdb08cd0bfb17": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "webvtt_common"
+    },
+    "x_files::@a5f9b76716d0d153b0da": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "x_files",
+      "output": "/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/.cxx/RelWithDebInfo/4b5x6w5g/arm64-v8a/xCore/x_files/libx_files.a"
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/home/gamespy/Android/Sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/linux-x86_64/bin/clang.lld",
+      "cppCompilerExecutable": "/home/gamespy/Android/Sdk/ndk/29.0.14206865/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++.lld"
+    }
+  },
+  "cFileExtensions": [
+    "c"
+  ],
+  "cppFileExtensions": [
+    "cpp",
+    "cxx",
+    "cc"
+  ]
+}

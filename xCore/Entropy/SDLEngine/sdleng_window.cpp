@@ -6,7 +6,7 @@
 
 #include "x_target.hpp"
 
-#if defined(TARGET_DESKTOP)
+#if defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
 
 //==============================================================================
 //  INCLUDES
@@ -111,7 +111,7 @@ void sdleng_WindowUpdateNativeHandle( void )
     if( !s_Window.pWindow )
         return;
 
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
     SDL_PropertiesID Props = SDL_GetWindowProperties( s_Window.pWindow );
     if( !Props )
         return;
@@ -135,7 +135,7 @@ void sdleng_WindowUpdateNativeHandle( void )
 static
 SDL_Window* sdleng_WindowCreateWrapped( sdleng_native_window_handle hWindow )
 {
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
     SDL_PropertiesID Props = SDL_CreateProperties();
     if( !Props )
     {
@@ -335,7 +335,7 @@ xbool sdleng_WindowInit( const sdleng_window_desc& Desc )
     if( s_Window.hWindow )
     {
         s_Window.pWindow = sdleng_WindowCreateWrapped( s_Window.hWindow );
-#if defined(TARGET_PC)
+#if defined(TARGET_WINDOWS)
         s_Window.OwnsWindow = TRUE;
 #endif
     }
@@ -750,6 +750,20 @@ xbool sdleng_WindowApplyDisplayMode( s32                 Width,
         return FALSE;
     }
 
+#if defined(TARGET_ANDROID)
+    (void)Width;
+    (void)Height;
+    (void)Mode;
+
+    sdleng_WindowRefreshClientSize();
+    ClientWidth  = s_Window.ClientWidth;
+    ClientHeight = s_Window.ClientHeight;
+    s_Window.ResolutionWidth  = ClientWidth;
+    s_Window.ResolutionHeight = ClientHeight;
+    s_Window.DisplayMode      = SDLENG_DISPLAY_WINDOWED;
+    return (ClientWidth > 0) && (ClientHeight > 0);
+#endif
+
     if( (Width <= 0) || (Height <= 0) ||
         (Mode < SDLENG_DISPLAY_WINDOWED) || (Mode > SDLENG_DISPLAY_BORDERLESS) )
     {
@@ -764,7 +778,7 @@ xbool sdleng_WindowApplyDisplayMode( s32                 Width,
 
     if( Mode == SDLENG_DISPLAY_BORDERLESS )
     {
-#if defined(TARGET_LINUX)
+#if defined(TARGET_POSIX)
         if( !SDL_SetWindowFullscreenMode( s_Window.pWindow, NULL ) ||
             !SDL_SetWindowFullscreen( s_Window.pWindow, true ) )
         {
@@ -792,7 +806,7 @@ xbool sdleng_WindowApplyDisplayMode( s32                 Width,
     }
     else
     {
-#if defined(TARGET_LINUX)
+#if defined(TARGET_POSIX)
         const xbool bCanSetPosition = sdleng_WindowCanSetPosition();
         if( !SDL_SetWindowFullscreen( s_Window.pWindow, false ) ||
             !SDL_SetWindowBordered( s_Window.pWindow, true ) ||
@@ -900,5 +914,5 @@ xbool sdleng_WindowIsCloseRequested( void )
 }
 
 //==============================================================================
-#endif // defined(TARGET_DESKTOP)
+#endif // defined(TARGET_DESKTOP) || defined(TARGET_MOBILE)
 //==============================================================================

@@ -553,8 +553,8 @@ void CPartEdDoc::OnFileExport()
     if( !m_Effect.m_ExportPC.IsEmpty() )
     {
         fx_core::export Export;
-        Export.ConstructData( &m_Effect, fx_core::EXPORT_TARGET_PC );
-        Export.SaveData( (const char*)m_Effect.m_ExportPC, fx_core::EXPORT_TARGET_PC );
+        Export.ConstructData( &m_Effect, fx_core::EXPORT_TARGET_DESKTOP );
+        Export.SaveData( (const char*)m_Effect.m_ExportPC, fx_core::EXPORT_TARGET_DESKTOP );
     }
 
     // Export to PS2

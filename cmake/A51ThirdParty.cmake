@@ -26,15 +26,32 @@ set( BUILD_TESTING OFF CACHE BOOL
     "Disable bundled third-party tests" FORCE )
 
 # SDL
-set( SDL_SHARED OFF CACHE BOOL "Build SDL3 shared library" FORCE )
-set( SDL_STATIC ON CACHE BOOL "Build SDL3 static library" FORCE )
+if( A51_TARGET_PLATFORM STREQUAL "Android" )
+    # SDLActivity loads libSDL3.so before the application library.
+    set( SDL_SHARED ON CACHE BOOL "Build SDL3 shared library" FORCE )
+    set( SDL_STATIC OFF CACHE BOOL "Build SDL3 static library" FORCE )
+
+    # The Android renderer uses SDL_GPU/Vulkan exclusively.  Do not build
+    # SDL's GLES/OpenGL paths into this target: RenderDoc's Android GLES
+    # layer can otherwise expose a second API and steal frame selection.
+    set( SDL_OPENGL OFF CACHE BOOL "Include OpenGL support" FORCE )
+    set( SDL_OPENGLES OFF CACHE BOOL "Include OpenGL ES support" FORCE )
+    set( SDL_VULKAN ON CACHE BOOL "Enable Vulkan support" FORCE )
+else()
+    set( SDL_SHARED OFF CACHE BOOL "Build SDL3 shared library" FORCE )
+    set( SDL_STATIC ON CACHE BOOL "Build SDL3 static library" FORCE )
+endif()
 set( SDL_TEST_LIBRARY OFF CACHE BOOL "Build SDL3 test library" FORCE )
 set( SDL_TESTS OFF CACHE BOOL "Build SDL3 tests" FORCE )
 set( SDL_EXAMPLES OFF CACHE BOOL "Build SDL3 examples" FORCE )
 set( SDL_INSTALL OFF CACHE BOOL "Install SDL3" FORCE )
 add_subdirectory( "${A51_THIRDPARTY_ROOT}/SDL3"
     "${CMAKE_BINARY_DIR}/thirdparty/SDL3" EXCLUDE_FROM_ALL )
-add_library( a51::SDL3 ALIAS SDL3-static )
+if( A51_TARGET_PLATFORM STREQUAL "Android" )
+    add_library( a51::SDL3 ALIAS SDL3-shared )
+else()
+    add_library( a51::SDL3 ALIAS SDL3-static )
+endif()
 
 # Xiph libraries
 set( INSTALL_DOCS OFF CACHE BOOL "Install bundled third-party docs" FORCE )
@@ -96,15 +113,59 @@ else()
     find_program( A51_LIBVPX_MAKE_PROGRAM NAMES make REQUIRED )
 
     set( A51_LIBVPX_BINARY_DIR "${CMAKE_BINARY_DIR}/thirdparty/Libvpx" )
+    set( A51_LIBVPX_TARGET generic-gnu )
+    set( A51_LIBVPX_CONFIGURE_ENV
+        "CC=${CMAKE_C_COMPILER}"
+        "CXX=${CMAKE_CXX_COMPILER}"
+    )
+    if( A51_TARGET_PLATFORM STREQUAL "Android" )
+        if( A51_TARGET_ARCHITECTURE STREQUAL "arm64" )
+            set( A51_LIBVPX_TARGET arm64-android-gcc )
+            set( A51_LIBVPX_ANDROID_TRIPLE aarch64-linux-android )
+        elseif( A51_TARGET_ARCHITECTURE STREQUAL "arm32" )
+            set( A51_LIBVPX_TARGET armv7-android-gcc )
+            set( A51_LIBVPX_ANDROID_TRIPLE armv7a-linux-androideabi )
+        elseif( A51_TARGET_ARCHITECTURE STREQUAL "x86" )
+            set( A51_LIBVPX_TARGET x86-android-gcc )
+            set( A51_LIBVPX_ANDROID_TRIPLE i686-linux-android )
+        elseif( A51_TARGET_ARCHITECTURE STREQUAL "x64" )
+            set( A51_LIBVPX_TARGET x86_64-android-gcc )
+            set( A51_LIBVPX_ANDROID_TRIPLE x86_64-linux-android )
+        else()
+            message( FATAL_ERROR
+                "Android ${A51_TARGET_ARCHITECTURE} has no bundled libvpx target." )
+        endif()
+
+        # libvpx's configure script predates the NDK's unified clang driver.
+        # Pass the Android target explicitly and use clang for linking and
+        # assembly; otherwise configure can silently select the host GNU tools.
+        set( A51_LIBVPX_ANDROID_API "${CMAKE_ANDROID_API}" )
+        if( NOT A51_LIBVPX_ANDROID_API )
+            set( A51_LIBVPX_ANDROID_API 21 )
+        endif()
+        set( A51_LIBVPX_ANDROID_FLAGS
+            "--target=${A51_LIBVPX_ANDROID_TRIPLE}${A51_LIBVPX_ANDROID_API}"
+        )
+        list( APPEND A51_LIBVPX_CONFIGURE_ENV
+            "AR=${CMAKE_AR}"
+            "AS=${CMAKE_C_COMPILER}"
+            "LD=${CMAKE_CXX_COMPILER}"
+            "STRIP=${CMAKE_STRIP}"
+            "CFLAGS=${A51_LIBVPX_ANDROID_FLAGS}"
+            "CXXFLAGS=${A51_LIBVPX_ANDROID_FLAGS}"
+            "LDFLAGS=${A51_LIBVPX_ANDROID_FLAGS}"
+            "ASFLAGS=${A51_LIBVPX_ANDROID_FLAGS}"
+        )
+    endif()
+
     ExternalProject_Add( a51_libvpx_external
         SOURCE_DIR "${A51_LIBVPX_ROOT}"
         BINARY_DIR "${A51_LIBVPX_BINARY_DIR}"
         CONFIGURE_COMMAND
             "${CMAKE_COMMAND}" -E env
-            "CC=${CMAKE_C_COMPILER}"
-            "CXX=${CMAKE_CXX_COMPILER}"
+            ${A51_LIBVPX_CONFIGURE_ENV}
             "${A51_LIBVPX_ROOT}/configure"
-            --target=generic-gnu
+            "--target=${A51_LIBVPX_TARGET}"
             --disable-shared
             --enable-static
             --disable-examples

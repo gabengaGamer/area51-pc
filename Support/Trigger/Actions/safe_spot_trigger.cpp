@@ -56,7 +56,7 @@ void safe_spot_trigger::OnRender ( void )
 {
     actions_base::OnRender();
     
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 #endif
 }
 

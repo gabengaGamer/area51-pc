@@ -53,10 +53,10 @@
 #endif
 
 //
-// PC Target macroses.
+// Windows target includes.
 //
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
     #ifndef WIN32_LEAN_AND_MEAN
     #define WIN32_LEAN_AND_MEAN
     #endif
@@ -157,7 +157,7 @@
 
 //==============================================================================
 
-#ifdef TARGET_DESKTOP
+#ifdef VALID_TARGET
     #ifdef __cplusplus
         typedef std::uint8_t        u8;
         typedef std::uint16_t       u16;

@@ -248,7 +248,7 @@ public:
     xbool               BuildDFSFile                    ( const char* pExportName,
                                                           const char* pReleasePath,
                                                           const char* pPlatformString,
-                                                          platform     PlatformType
+                                                          asset_platform     PlatformType
                                                          );
 
     //initial state options
@@ -375,7 +375,7 @@ public:
     void                StartNewDecal                   ( void );
     xbool               CalcDecalPlacement              ( vector3& RayStart, vector3& RayEnd );
     guid                PlaceDecalFromTemporary         ( void );
-    void                ExportDecals                    ( const char* FileName, xarray<guid>& lstGuids, platform PlatformType );
+    void                ExportDecals                    ( const char* FileName, xarray<guid>& lstGuids, asset_platform PlatformType );
 
     //handle objects given a guid
     guid                CreateObject                    ( const char* pName, const char* pObjectType, const vector3& Pos, const char* pLayer, const char* pPath );

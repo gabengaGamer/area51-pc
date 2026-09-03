@@ -657,7 +657,7 @@ void physics_inst::DebugRender( void )
 
         case geom::rigid_body::TYPE_CYLINDER:
             {
-#ifdef TARGET_PC            
+#ifdef TARGET_WINDOWS
                 render::debug::Cylinder( localToWorld.GetTranslation(),
                                Radius, 
                                Height, 

@@ -2008,7 +2008,7 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
         // the active input mode and hide the mouse cursor.
         if( g_Input.WasFrameDeviceButtonPressed( INPUT_DEVICE_KEYBOARD ) )
         {
-            SetInputMode( pUser, ui_input_device::Keyboard, INPUT_PLATFORM_PC );
+            SetInputMode( pUser, ui_input_device::Keyboard, INPUT_PLATFORM_DESKTOP );
         }
 
         // Update mouse position and switch to mouse mode if it moved
@@ -2038,7 +2038,7 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
 
             if( HasMouseInput )
             {
-                SetInputMode( pUser, ui_input_device::Mouse, INPUT_PLATFORM_PC );
+                SetInputMode( pUser, ui_input_device::Mouse, INPUT_PLATFORM_DESKTOP );
             }
 
             // Hover and keyboard/gamepad focus are independent. A pointer move
@@ -2268,7 +2268,7 @@ xbool ui_manager::ProcessInput( f32 DeltaTime, s32 UserID )
                         const input_platform SemanticPlatform =
                             (SemanticDevice == ui_input_device::Gamepad)
                             ? g_Input.GetCurrentInputPlatform()
-                            : INPUT_PLATFORM_PC;
+                            : INPUT_PLATFORM_DESKTOP;
                         SetInputMode( pUser, SemanticDevice, SemanticPlatform );
                     }
 

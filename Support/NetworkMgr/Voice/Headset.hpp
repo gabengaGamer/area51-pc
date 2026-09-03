@@ -87,7 +87,7 @@ private:
         void            OnHeadsetInsert             ( void );
         void            OnHeadsetRemove             ( void );
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
         void*           m_pWindowsState;
 #endif
 };

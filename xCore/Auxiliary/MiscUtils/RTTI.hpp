@@ -74,7 +74,7 @@ private:
 //==============================================================================
 // IMPLEMENTATION
 //==============================================================================
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 #pragma warning( push ) 
 #pragma warning( disable : 4355 ) // warning 'this' used in base member initializer list
 #endif
@@ -140,7 +140,7 @@ inline xbool rtti::IsKindOf( const rtti& RTTI ) const
     }                                                                 \
     PRIVATE_RTTI_FUNCTION_SET(TYPE,TYPE)
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 #pragma warning( pop )
 #endif
 //==============================================================================

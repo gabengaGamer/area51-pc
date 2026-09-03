@@ -264,7 +264,7 @@ xbool IsPointInsideTri( const vector3& P, const vector3& TriP0, const vector3& T
 
 //==============================================================================
 
-#ifdef TARGET_PC
+#ifdef TARGET_WINDOWS
 s32 RPC_COUNT=0;
 void RigidGeom_RayVsPCHiPoly(      guid        Guid, 
                                const bbox&      WorldBBox,
@@ -637,7 +637,7 @@ void RigidGeom_ApplyCollision(       guid        Guid,
         return;
     }
 
-    #ifdef TARGET_PC
+    #ifdef TARGET_WINDOWS
     //
     // Check for Ray vs. PC High poly
     //

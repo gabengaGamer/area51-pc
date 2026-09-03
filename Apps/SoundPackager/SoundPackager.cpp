@@ -234,7 +234,7 @@ int main(int argc, char* argv[])
     }
     if( CommandLine.FindOption( xstring("PC") ) != -1 )
     {
-        s_Targets.Append() = EXPORT_PC;
+        s_Targets.Append() = EXPORT_DESKTOP;
     }
     if( CommandLine.FindOption( xstring("PS2") ) != -1 )
     {
