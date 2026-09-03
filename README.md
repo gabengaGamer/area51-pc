@@ -66,7 +66,7 @@ Platform | Status
 Windows  | Working
 Linux    | Working
 macOS    | Not planed
-Android  | **UNDER CONSTRUCTION**
+Android  | Working
 iOS      | Not planed
 
 </details>
