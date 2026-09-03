@@ -24,7 +24,7 @@ OPEN-SOURCE COMPONENTS
 
 Some files within this codebase reference or utilize open-source libraries
 distributed under licenses (e.g. Unlicense, BSD, MIT, LGPLv3).
-Full license texts for these components are included in `thirdpartylegalnotices.txt`.
+Full license texts for these components are included in `xCore/3rdParty/thirdpartylegalnotices.txt`.
 
 ------------------------------------------------------------------------------------
 DISCLAIMER
