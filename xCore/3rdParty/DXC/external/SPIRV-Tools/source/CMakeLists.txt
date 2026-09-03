@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(VIMSYNTAX_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/vim/generate_syntax.py")
 set(XML_REGISTRY_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_registry_tables.py")
 set(LANG_HEADER_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_language_headers.py")
 set(GGT_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/ggt.py")
@@ -78,23 +77,6 @@ add_custom_command(OUTPUT ${CORE_TABLES_BODY_INC_FILE} ${CORE_TABLES_HEADER_INC_
     COMMENT "Generate grammar tables")
 add_custom_target(spirv-tools-tables DEPENDS ${CORE_TABLES_BODY_INC_FILE} ${CORE_TABLES_HEADER_INC_FILE})
 
-macro(spvtools_vimsyntax CONFIG_VERSION CLVERSION)
-  set(GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/spirv.core.grammar.json")
-  set(GLSL_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/extinst.glsl.std.450.grammar.json")
-  set(OPENCL_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/extinst.opencl.std.100.grammar.json")
-  set(VIMSYNTAX_FILE "${spirv-tools_BINARY_DIR}/spvasm.vim")
-  add_custom_command(OUTPUT ${VIMSYNTAX_FILE}
-      COMMAND Python3::Interpreter ${VIMSYNTAX_PROCESSING_SCRIPT}
-      --spirv-core-grammar=${GRAMMAR_JSON_FILE}
-      --extinst-debuginfo-grammar=${EI_debuginfo}
-      --extinst-glsl-grammar=${GLSL_GRAMMAR_JSON_FILE}
-      --extinst-opencl-grammar=${OPENCL_GRAMMAR_JSON_FILE}
-      >${VIMSYNTAX_FILE}
-    DEPENDS ${VIMSYNTAX_PROCESSING_SCRIPT} ${GRAMMAR_JSON_FILE}
-	    ${GLSL_GRAMMAR_JSON_FILE} ${OPENCL_GRAMMAR_JSON_FILE} ${EI_debuinfo}
-    COMMENT "Generate spvasm.vim: Vim syntax file for SPIR-V assembly.")
-endmacro(spvtools_vimsyntax)
-
 macro(spvtools_extinst_lang_headers NAME GRAMMAR_FILE)
   set(OUT_H ${spirv-tools_BINARY_DIR}/${NAME}.h)
   add_custom_command(OUTPUT ${OUT_H}
@@ -110,10 +92,6 @@ endmacro(spvtools_extinst_lang_headers)
 
 spvtools_extinst_lang_headers("DebugInfo" ${EI_debuginfo})
 spvtools_extinst_lang_headers("OpenCLDebugInfo100" ${EI_cldebuginfo})
-
-spvtools_vimsyntax("unified1" "1.0")
-add_custom_target(spirv-tools-vimsyntax DEPENDS ${VIMSYNTAX_FILE})
-set_property(TARGET spirv-tools-vimsyntax PROPERTY FOLDER "SPIRV-Tools utilities")
 
 # Extract the list of known generators from the SPIR-V XML registry file.
 set(GENERATOR_INC_FILE ${spirv-tools_BINARY_DIR}/generators.inc)
@@ -143,17 +121,8 @@ set_source_files_properties(
 
 set(SPIRV_TOOLS_BUILD_VERSION_INC
   ${spirv-tools_BINARY_DIR}/build-version.inc)
-set(SPIRV_TOOLS_BUILD_VERSION_INC_GENERATOR
-  ${spirv-tools_SOURCE_DIR}/utils/update_build_version.py)
-set(SPIRV_TOOLS_CHANGES_FILE
-  ${spirv-tools_SOURCE_DIR}/CHANGES)
-add_custom_command(OUTPUT ${SPIRV_TOOLS_BUILD_VERSION_INC}
-   COMMAND Python3::Interpreter
-           ${SPIRV_TOOLS_BUILD_VERSION_INC_GENERATOR}
-           ${SPIRV_TOOLS_CHANGES_FILE} ${SPIRV_TOOLS_BUILD_VERSION_INC}
-   DEPENDS ${SPIRV_TOOLS_BUILD_VERSION_INC_GENERATOR}
-           ${SPIRV_TOOLS_CHANGES_FILE}
-   COMMENT "Update build-version.inc in the SPIRV-Tools build directory (if necessary).")
+file(GENERATE OUTPUT ${SPIRV_TOOLS_BUILD_VERSION_INC}
+     CONTENT "\"unknown\", \"SPIRV-Tools unknown\"\n")
 
 list(APPEND PCH_DEPENDS
 	${CORE_TABLES_HEADER_INC_FILE}
@@ -166,7 +135,6 @@ set_source_files_properties(
 
 add_subdirectory(opt)
 add_subdirectory(reduce)
-add_subdirectory(fuzz)
 add_subdirectory(link)
 add_subdirectory(lint)
 add_subdirectory(diff)
@@ -340,7 +308,6 @@ function(spirv_tools_default_target_options target)
     PRIVATE ${SPIRV_HEADER_INCLUDE_DIR}
   )
   set_property(TARGET ${target} PROPERTY FOLDER "SPIRV-Tools libraries")
-  spvtools_check_symbol_exports(${target})
   add_dependencies(${target} core_tables extinst_tables)
 endfunction()
 

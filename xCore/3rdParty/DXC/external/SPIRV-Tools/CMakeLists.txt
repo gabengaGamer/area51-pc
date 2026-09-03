@@ -78,12 +78,6 @@ if(SPIRV_BUILD_COMPRESSION)
           "Please remove SPIRV_BUILD_COMPRESSION from your build options.")
 endif(SPIRV_BUILD_COMPRESSION)
 
-option(SPIRV_BUILD_FUZZER "Build spirv-fuzz" OFF)
-
-set(SPIRV_LIB_FUZZING_ENGINE_LINK_OPTIONS "" CACHE STRING "Used by OSS-Fuzz to control, via link options, which fuzzing engine should be used")
-
-option(SPIRV_BUILD_LIBFUZZER_TARGETS "Build libFuzzer targets" OFF)
-
 option(SPIRV_WERROR "Enable error on warning" ON)
 if(("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU") OR (("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") AND (NOT CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")))
   set(COMPILER_IS_LIKE_GNU TRUE)
@@ -246,39 +240,6 @@ endif()
 # Tests require Python3
 find_host_package(Python3 REQUIRED)
 
-# Check type annotations in Perl code. Assumes mypy.
-add_custom_target(spirv-tools-check-python-types
-	COMMAND mypy Table
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/utils
-)
-set_target_properties(spirv-tools-check-python-types
-  PROPERTIES EXCLUDE_FROM_ALL ON)
-
-# Run Python unit tests
-add_custom_target(spirv-tools-check-python-tests
-	COMMAND Python3::Interpreter -m unittest discover -v -p "*test.py"
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/utils
-)
-
-# Check for symbol exports on Linux.
-# At the moment, this check will fail on the OSX build machines for the Android NDK.
-# It appears they don't have objdump.
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-  macro(spvtools_check_symbol_exports TARGET)
-    if (NOT "${SPIRV_SKIP_TESTS}")
-      add_test(NAME spirv-tools-symbol-exports-${TARGET}
-               COMMAND Python3::Interpreter
-               ${spirv-tools_SOURCE_DIR}/utils/check_symbol_exports.py "$<TARGET_FILE:${TARGET}>")
-    endif()
-  endmacro()
-else()
-  macro(spvtools_check_symbol_exports TARGET)
-    if (NOT "${SPIRV_SKIP_TESTS}")
-      message("Skipping symbol exports test for ${TARGET}")
-    endif()
-  endmacro()
-endif()
-
 if(ENABLE_SPIRV_TOOLS_INSTALL)
   if(WIN32 AND NOT MINGW)
     macro(spvtools_config_package_dir TARGET PATH)
@@ -355,10 +316,14 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 endif()
 
 add_subdirectory(source)
-add_subdirectory(tools)
+if (NOT SPIRV_SKIP_EXECUTABLES)
+  add_subdirectory(tools)
+  add_subdirectory(examples)
+endif()
 
-add_subdirectory(test)
-add_subdirectory(examples)
+if (NOT SPIRV_SKIP_TESTS)
+  add_subdirectory(test)
+endif()
 
 if(ENABLE_SPIRV_TOOLS_INSTALL)
   install(
@@ -379,43 +344,3 @@ endif()
 
 set(SPIRV_LIBRARIES "-lSPIRV-Tools-opt -lSPIRV-Tools -lSPIRV-Tools-link")
 set(SPIRV_SHARED_LIBRARIES "-lSPIRV-Tools-shared")
-
-# Build pkg-config file
-# Use a first-class target so it's regenerated when relevant files are updated.
-add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/SPIRV-Tools.pc
-        COMMAND ${CMAKE_COMMAND}
-                      -DCHANGES_FILE=${CMAKE_CURRENT_SOURCE_DIR}/CHANGES
-                      -DTEMPLATE_FILE=${CMAKE_CURRENT_SOURCE_DIR}/cmake/SPIRV-Tools.pc.in
-                      -DOUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/SPIRV-Tools.pc
-                      -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-                      -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
-                      -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
-                      -DSPIRV_LIBRARIES=${SPIRV_LIBRARIES}
-                      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/write_pkg_config.cmake
-        DEPENDS "CHANGES" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/SPIRV-Tools.pc.in" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/write_pkg_config.cmake")
-add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/SPIRV-Tools-shared.pc
-        COMMAND ${CMAKE_COMMAND}
-                      -DCHANGES_FILE=${CMAKE_CURRENT_SOURCE_DIR}/CHANGES
-                      -DTEMPLATE_FILE=${CMAKE_CURRENT_SOURCE_DIR}/cmake/SPIRV-Tools-shared.pc.in
-                      -DOUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/SPIRV-Tools-shared.pc
-                      -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-                      -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
-                      -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
-                      -DSPIRV_SHARED_LIBRARIES=${SPIRV_SHARED_LIBRARIES}
-                      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/write_pkg_config.cmake
-        DEPENDS "CHANGES" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/SPIRV-Tools-shared.pc.in" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/write_pkg_config.cmake")
-add_custom_target(spirv-tools-pkg-config 
-        ALL 
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/SPIRV-Tools-shared.pc ${CMAKE_CURRENT_BINARY_DIR}/SPIRV-Tools.pc)
-
-# Install pkg-config file
-if (ENABLE_SPIRV_TOOLS_INSTALL)
-  install(
-    FILES
-      ${CMAKE_CURRENT_BINARY_DIR}/SPIRV-Tools.pc
-      ${CMAKE_CURRENT_BINARY_DIR}/SPIRV-Tools-shared.pc
-    DESTINATION
-      ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-endif()

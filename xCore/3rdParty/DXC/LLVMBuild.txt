@@ -16,7 +16,7 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories = docs examples lib projects tools utils
+subdirectories = lib projects tools utils
 
 [component_0]
 type = Group

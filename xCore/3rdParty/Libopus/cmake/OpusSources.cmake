@@ -53,20 +53,3 @@ get_opus_sources(DNN_SOURCES_AVX2 lpcnet_sources.mk dnn_sources_avx2)
 get_opus_sources(DNN_SOURCES_NEON lpcnet_sources.mk dnn_sources_arm_neon)
 get_opus_sources(DNN_SOURCES_DOTPROD lpcnet_sources.mk dnn_sources_arm_dotprod)
 get_opus_sources(DNN_SOURCES_ARM_RTCD lpcnet_sources.mk dnn_sources_arm_rtcd)
-
-get_opus_sources(opus_demo_SOURCES Makefile.am opus_demo_sources)
-get_opus_sources(opus_custom_demo_SOURCES Makefile.am opus_custom_demo_sources)
-get_opus_sources(opus_compare_SOURCES Makefile.am opus_compare_sources)
-get_opus_sources(tests_test_opus_api_SOURCES Makefile.am test_opus_api_sources)
-get_opus_sources(tests_test_opus_encode_SOURCES Makefile.am
-                 test_opus_encode_sources)
-get_opus_sources(tests_test_opus_extensions_SOURCES Makefile.am
-                 test_opus_extensions_sources)
-get_opus_sources(tests_test_opus_decode_SOURCES Makefile.am
-                 test_opus_decode_sources)
-get_opus_sources(tests_test_opus_padding_SOURCES Makefile.am
-                 test_opus_padding_sources)
-get_opus_sources(tests_test_opus_dred_SOURCES Makefile.am
-                 test_opus_dred_sources)
-get_opus_sources(tests_test_opus_custom_SOURCES Makefile.am
-                 test_opus_custom_sources)

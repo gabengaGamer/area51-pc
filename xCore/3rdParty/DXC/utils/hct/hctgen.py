@@ -17,7 +17,6 @@ parser.add_argument(
         "DxilSigPoint",
         "DxilIntrinsicTables",
         "DxilOperations",
-        "DxilDocs",
         "DxilShaderModelInc",
         "DxilShaderModel",
         "DxilValidationInc",

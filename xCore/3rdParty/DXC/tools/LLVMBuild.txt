@@ -17,26 +17,13 @@
 
 [common]
 subdirectories =
- dsymutil
- llc
- lli
  llvm-as
  llvm-bcanalyzer
- llvm-cov
  llvm-diff
  llvm-dis
- llvm-dwarfdump
  llvm-extract
  llvm-link
- llvm-mc
- llvm-mcmarkup
- llvm-nm
- llvm-objdump
- llvm-pdbdump
- llvm-profdata
- llvm-rtdyld
- llvm-size
- macho-dump
+ llvm-stress
  opt
  verify-uselistorder
 

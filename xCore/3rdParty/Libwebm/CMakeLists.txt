@@ -20,13 +20,13 @@ endif()
 set(LIBWEBM_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Build/test configuration flags.
-option(ENABLE_WEBMTS "Enables WebM PES/TS support." ON)
-option(ENABLE_WEBMINFO "Enables building webm_info." ON)
+option(ENABLE_WEBMTS "Enables WebM PES/TS support." OFF)
+option(ENABLE_WEBMINFO "Enables building webm_info." OFF)
 option(ENABLE_TESTS "Enables tests." OFF)
 option(ENABLE_IWYU "Enables include-what-you-use support." OFF)
 option(ENABLE_WERROR "Enable warnings as errors." OFF)
 option(ENABLE_WEBM_PARSER "Enables new parser API." OFF)
-option(ENABLE_SAMPLE_PROGRAMS "Enables building sample programs." ON)
+option(ENABLE_SAMPLE_PROGRAMS "Enables building sample programs." OFF)
 
 if(WIN32
    OR CYGWIN
@@ -458,7 +458,7 @@ endif()
 
 # webm_parser headers are rooted at webm/.
 set_target_properties(webm PROPERTIES PUBLIC_HEADER
-                                      "${webm_parser_public_headers}")
+                                      "${libwebm_common_public_headers};${mkvmuxer_public_headers};${mkvparser_public_headers};${webvtt_common_headers}")
 install(
   TARGETS webm
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

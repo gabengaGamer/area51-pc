@@ -26,3 +26,4 @@ class StringList(list):
 
     def __hash__(self) -> int: # type: ignore[override]
         return functools.reduce(lambda h, ir: hash((h, hash(ir))), self, 0)
+

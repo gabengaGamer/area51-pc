@@ -32,3 +32,4 @@ class IndexRange():
 
   def __str__(self) -> str:
     return "IR({}, {})".format(self.first, self.count)
+

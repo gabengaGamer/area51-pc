@@ -64,3 +64,4 @@ class Operand():
     @property
     def lastVersion(self): #  -> str | None # Invalid in Python 3.8
         return self._obj.get('lastVersion',None)
+

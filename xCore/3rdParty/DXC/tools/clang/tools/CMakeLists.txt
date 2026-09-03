@@ -4,7 +4,10 @@ add_subdirectory(driver)
 # add_subdirectory(clang-fuzzer)    # HLSL Change
 
 # add_subdirectory(c-index-test)    # HLSL Change
-add_subdirectory(libclang)
+option(CLANG_BUILD_LIBCLANG "Build the optional libclang indexing library" OFF)
+if(CLANG_BUILD_LIBCLANG)
+  add_subdirectory(libclang)
+endif()
 
 if(0 AND CLANG_ENABLE_ARCMT)        # HLSL Change
   add_subdirectory(arcmt-test)
@@ -38,8 +41,5 @@ add_subdirectory(dxv)
 if (MSVC)
 add_subdirectory(d3dcomp)
 add_subdirectory(dxrfallbackcompiler)
-add_subdirectory(dxlib-sample)
-# UI powered by .NET.
-add_subdirectory(dotnetc)
 endif (MSVC)
 # HLSL Change Ends

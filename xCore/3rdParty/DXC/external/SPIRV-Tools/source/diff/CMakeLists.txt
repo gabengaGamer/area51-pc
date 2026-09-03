@@ -44,7 +44,6 @@ target_link_libraries(SPIRV-Tools-diff
   PUBLIC SPIRV-Tools-opt)
 
 set_property(TARGET SPIRV-Tools-diff PROPERTY FOLDER "SPIRV-Tools libraries")
-spvtools_check_symbol_exports(SPIRV-Tools-diff)
 
 if(ENABLE_SPIRV_TOOLS_INSTALL)
   set(SPIRV-Tools-diff-InstallTargets SPIRV-Tools-diff)

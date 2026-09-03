@@ -9,7 +9,6 @@ dnn/lpcnet_tables.c \
 dnn/nnet.c \
 dnn/nnet_default.c \
 dnn/plc_data.c \
-dnn/parse_lpcnet_weights.c \
 dnn/pitchdnn.c \
 dnn/pitchdnn_data.c
 
