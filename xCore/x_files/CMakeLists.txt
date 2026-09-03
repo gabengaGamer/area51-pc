@@ -1,7 +1,7 @@
 ﻿if( WIN32 )
     set( X_FILES_PLATFORM_SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_atomic_pc.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_threads_pc.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_atomic_windows.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Implementation/x_threads_windows.cpp"
     )
     set( X_FILES_PLATFORM_DEPENDENCIES )
 elseif( CMAKE_SYSTEM_NAME MATCHES "^(Linux|Android)$" )
