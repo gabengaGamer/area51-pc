@@ -1,0 +1,16 @@
+# Copyright (c) 2026 The WebM project authors. All Rights Reserved.
+# Use of this source code is governed by the BSD-style license in LICENSE.
+
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: vpx
+Description: WebM Project VPx codec implementation
+Version: @LIBVPX_VERSION_MAJOR@.@LIBVPX_VERSION_MINOR@.@LIBVPX_VERSION_PATCH@
+Requires:
+Conflicts:
+Libs: -L${libdir} -lvpx
+Libs.private: @LIBVPX_PC_LIBS_PRIVATE@
+Cflags: -I${includedir}

@@ -1,0 +1,7 @@
+/* Copyright (c) 2026 The WebM project authors. All Rights Reserved.
+ * Use of this source code is governed by the BSD-style license in LICENSE.
+ * Generated compatibility header for the Windows ARM64 SDK. */
+#ifndef VPX_WIN_ARM_NEON_H_WORKAROUND
+#define VPX_WIN_ARM_NEON_H_WORKAROUND
+#include <arm64_neon.h>
+#endif

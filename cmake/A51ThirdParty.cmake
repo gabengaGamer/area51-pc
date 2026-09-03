@@ -8,8 +8,6 @@
 
 include_guard( GLOBAL )
 
-include( ExternalProject )
-
 option( A51_USE_BUNDLED_DEPENDENCIES
     "Build the bundled third-party dependencies from source" ON )
 
@@ -85,113 +83,32 @@ add_library( a51::vorbisfile ALIAS vorbisfile )
 
 # libvpx
 set( A51_LIBVPX_ROOT "${A51_THIRDPARTY_ROOT}/Libvpx" )
-add_library( a51_libvpx STATIC IMPORTED GLOBAL )
-
-if( A51_TARGET_PLATFORM STREQUAL "Windows" )
-    if( A51_TARGET_ARCHITECTURE STREQUAL "x86" )
-        set( A51_LIBVPX_LIBRARY "${A51_LIBVPX_ROOT}/bin/x32/vpx.lib" )
-    elseif( A51_TARGET_ARCHITECTURE STREQUAL "x64" )
-        set( A51_LIBVPX_LIBRARY "${A51_LIBVPX_ROOT}/bin/x64/vpx.lib" )
-    else()
-        message( FATAL_ERROR
-            "Windows ${A51_TARGET_ARCHITECTURE} has no bundled libvpx library." )
-    endif()
-
-    if( NOT EXISTS "${A51_LIBVPX_LIBRARY}" )
-        message( FATAL_ERROR
-            "Bundled Windows libvpx library is missing: ${A51_LIBVPX_LIBRARY}" )
-    endif()
-
-    set_target_properties( a51_libvpx PROPERTIES
-        IMPORTED_LOCATION "${A51_LIBVPX_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${A51_LIBVPX_ROOT}"
-    )
-else()
-    if( NOT EXISTS "${A51_LIBVPX_ROOT}/configure" )
-        message( FATAL_ERROR "Bundled libvpx source tree is missing its configure script." )
-    endif()
-    find_program( A51_LIBVPX_MAKE_PROGRAM NAMES make REQUIRED )
-
-    set( A51_LIBVPX_BINARY_DIR "${CMAKE_BINARY_DIR}/thirdparty/Libvpx" )
-    set( A51_LIBVPX_TARGET generic-gnu )
-    set( A51_LIBVPX_CONFIGURE_ENV
-        "CC=${CMAKE_C_COMPILER}"
-        "CXX=${CMAKE_CXX_COMPILER}"
-    )
-    if( A51_TARGET_PLATFORM STREQUAL "Android" )
-        if( A51_TARGET_ARCHITECTURE STREQUAL "arm64" )
-            set( A51_LIBVPX_TARGET arm64-android-gcc )
-            set( A51_LIBVPX_ANDROID_TRIPLE aarch64-linux-android )
-        elseif( A51_TARGET_ARCHITECTURE STREQUAL "arm32" )
-            set( A51_LIBVPX_TARGET armv7-android-gcc )
-            set( A51_LIBVPX_ANDROID_TRIPLE armv7a-linux-androideabi )
-        elseif( A51_TARGET_ARCHITECTURE STREQUAL "x86" )
-            set( A51_LIBVPX_TARGET x86-android-gcc )
-            set( A51_LIBVPX_ANDROID_TRIPLE i686-linux-android )
-        elseif( A51_TARGET_ARCHITECTURE STREQUAL "x64" )
-            set( A51_LIBVPX_TARGET x86_64-android-gcc )
-            set( A51_LIBVPX_ANDROID_TRIPLE x86_64-linux-android )
-        else()
-            message( FATAL_ERROR
-                "Android ${A51_TARGET_ARCHITECTURE} has no bundled libvpx target." )
-        endif()
-
-        # libvpx's configure script predates the NDK's unified clang driver.
-        # Pass the Android target explicitly and use clang for linking and
-        # assembly; otherwise configure can silently select the host GNU tools.
-        set( A51_LIBVPX_ANDROID_API "${CMAKE_ANDROID_API}" )
-        if( NOT A51_LIBVPX_ANDROID_API )
-            set( A51_LIBVPX_ANDROID_API 21 )
-        endif()
-        set( A51_LIBVPX_ANDROID_FLAGS
-            "--target=${A51_LIBVPX_ANDROID_TRIPLE}${A51_LIBVPX_ANDROID_API}"
-        )
-        list( APPEND A51_LIBVPX_CONFIGURE_ENV
-            "AR=${CMAKE_AR}"
-            "AS=${CMAKE_C_COMPILER}"
-            "LD=${CMAKE_CXX_COMPILER}"
-            "STRIP=${CMAKE_STRIP}"
-            "CFLAGS=${A51_LIBVPX_ANDROID_FLAGS}"
-            "CXXFLAGS=${A51_LIBVPX_ANDROID_FLAGS}"
-            "LDFLAGS=${A51_LIBVPX_ANDROID_FLAGS}"
-            "ASFLAGS=${A51_LIBVPX_ANDROID_FLAGS}"
-        )
-    endif()
-
-    ExternalProject_Add( a51_libvpx_external
-        SOURCE_DIR "${A51_LIBVPX_ROOT}"
-        BINARY_DIR "${A51_LIBVPX_BINARY_DIR}"
-        CONFIGURE_COMMAND
-            "${CMAKE_COMMAND}" -E env
-            ${A51_LIBVPX_CONFIGURE_ENV}
-            "${A51_LIBVPX_ROOT}/configure"
-            "--target=${A51_LIBVPX_TARGET}"
-            --disable-shared
-            --enable-static
-            --disable-examples
-            --disable-tools
-            --disable-docs
-            --disable-unit-tests
-            --disable-vp8-encoder
-            --disable-vp9-encoder
-            --disable-webm-io
-            --disable-libyuv
-            --enable-pic
-        BUILD_COMMAND "${A51_LIBVPX_MAKE_PROGRAM}" -j2
-        INSTALL_COMMAND ""
-        BUILD_BYPRODUCTS "${A51_LIBVPX_BINARY_DIR}/libvpx.a"
-        LOG_CONFIGURE ON
-        LOG_BUILD ON
-    )
-    set_target_properties( a51_libvpx PROPERTIES
-        IMPORTED_LOCATION "${A51_LIBVPX_BINARY_DIR}/libvpx.a"
-        INTERFACE_INCLUDE_DIRECTORIES
-            "${A51_LIBVPX_ROOT};${A51_LIBVPX_BINARY_DIR}"
-    )
-    add_dependencies( a51_libvpx a51_libvpx_external )
+if( NOT EXISTS "${A51_LIBVPX_ROOT}/CMakeLists.txt" )
+    message( FATAL_ERROR "Bundled libvpx source tree is missing its CMakeLists.txt." )
 endif()
 
-add_library( a51::vpx ALIAS a51_libvpx )
+set( LIBVPX_BUILD_SHARED OFF CACHE BOOL
+    "Build bundled libvpx as a shared library" )
+set( LIBVPX_BUILD_STATIC ON CACHE BOOL
+    "Build bundled libvpx as a static library" )
+set( LIBVPX_BUILD_ENCODER OFF CACHE BOOL
+    "Build bundled libvpx encoders" )
+set( LIBVPX_ENABLE_POSTPROC OFF CACHE BOOL
+    "Build bundled libvpx VP8 postprocessing" )
+set( LIBVPX_ENABLE_VP9_POSTPROC OFF CACHE BOOL
+    "Build bundled libvpx VP9 postprocessing" )
+set( LIBVPX_ASM_MODE AUTO CACHE STRING
+    "Assembly policy for bundled libvpx" )
+set( LIBVPX_ENABLE_SIMD ON CACHE BOOL
+    "Build bundled libvpx architecture-specific C implementations" )
+set( LIBVPX_ENABLE_RUNTIME_CPU_DETECT ON CACHE BOOL
+    "Enable bundled libvpx runtime CPU detection" )
+set( LIBVPX_ENABLE_VP9_HIGHBITDEPTH OFF CACHE BOOL
+    "Enable bundled libvpx VP9 high bitdepth support" )
+
+add_subdirectory( "${A51_LIBVPX_ROOT}"
+    "${CMAKE_BINARY_DIR}/thirdparty/Libvpx" EXCLUDE_FROM_ALL )
+add_library( a51::vpx ALIAS libvpx )
 
 # opusfile is not used by the current movie backend.
 
@@ -222,8 +139,4 @@ target_include_directories( webm PUBLIC
 )
 add_library( a51::webm ALIAS webm )
 
-if( A51_TARGET_PLATFORM STREQUAL "Windows" )
-    message( STATUS "Using bundled SDL3, Ogg, Opus, Vorbis, WebM and Windows libvpx." )
-else()
-    message( STATUS "Using bundled SDL3, Ogg, Opus, Vorbis, libvpx and WebM sources." )
-endif()
+message( STATUS "Using bundled SDL3, Ogg, Opus, Vorbis, WebM and native CMake libvpx." )
