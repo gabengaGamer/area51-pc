@@ -1,1 +1,0 @@
-/mnt/Mount2/DeveloperSurface/area51-pc/Apps/GameApp/android/app/build/intermediates/cxx/RelWithDebInfo/4b5x6w5g/obj/arm64-v8a

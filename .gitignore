@@ -467,6 +467,10 @@ _Win32*/
 _x64*/
 _ARM64*/
 
+# Some android stuff
+.gradle/
+.cxx/
+
 # vcpkg manifest mode: only vcpkg.json (and vcpkg-configuration.json) are
 # committed; the installed tree, compiler-file-hash-cache.json and the
 # vcpkg-running.lock under it are per-checkout build artifacts.
