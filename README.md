@@ -19,8 +19,10 @@ The main goal is to get the source code into a buildable state on modern systems
 
 The following prerequisites are required to build the source tree:
 
-1. **CMake**
-1. Or legacy **Visual Studio 2022**
+1. **CMake** and **Make**
+2. **GCC** or **MSVC**
+
+**Visual Studio solutions is deprecated**
 
 ## Running Build
 
