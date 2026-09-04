@@ -474,6 +474,8 @@ _ARM64*/
 # Some android stuff
 .gradle/
 .cxx/
+/Apps/GameApp/android/build/
+/Apps/GameApp/android/app/build/
 
 # vcpkg manifest mode: only vcpkg.json (and vcpkg-configuration.json) are
 # committed; the installed tree, compiler-file-hash-cache.json and the

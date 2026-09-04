@@ -10,7 +10,7 @@ Build with the Gradle wrapper shipped with SDL3:
 xCore/3rdParty/SDL3/android-project/gradlew \
     -p Apps/GameApp/android \
     -PA51_ASSET_DIR=/absolute/path/to/android-assets \
-    assembleDebug
+    assembleRelease
 ```
 
 `A51_ASSET_DIR` must contain the packaged runtime data, including the DFS

@@ -46,8 +46,13 @@ set( A51_CONFIGURATION_TYPES Debug OptDebug QA Release EDITOR-Debug CACHE STRING
 if( CMAKE_CONFIGURATION_TYPES )
     set( CMAKE_CONFIGURATION_TYPES "${A51_CONFIGURATION_TYPES}" CACHE STRING "Supported Area 51 configurations" FORCE )
 elseif( NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "" )
-    set( CMAKE_BUILD_TYPE Debug CACHE STRING
-        "Default Area 51 configuration for single-config generators" FORCE )
+    if( CMAKE_SYSTEM_NAME STREQUAL "Android" )
+        set( CMAKE_BUILD_TYPE Release CACHE STRING
+            "Default Area 51 configuration for Android builds" FORCE )
+    else()
+        set( CMAKE_BUILD_TYPE Debug CACHE STRING
+            "Default Area 51 configuration for single-config generators" FORCE )
+    endif()
 endif()
 
 foreach( _a51_configuration IN LISTS A51_CONFIGURATION_TYPES )

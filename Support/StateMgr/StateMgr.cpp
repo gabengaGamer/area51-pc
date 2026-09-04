@@ -851,13 +851,11 @@ void state_mgr::CheckControllers( void )
 {
 #if !defined(X_EDITOR)
 
-// TODO: GS: Handle PC normaly
+// TODO: GS: Handle THIS normally
 
-#ifdef TARGET_DESKTOP
     input_gadget ControllerQuery;
     input_gadget AnalogQuery;
     return;
-#endif
 
     if( !g_bControllerCheck )
         return;
